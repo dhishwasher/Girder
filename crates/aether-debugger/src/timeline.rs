@@ -5,7 +5,7 @@
 //! Branches form a tree, enabling side-by-side "what-if" exploration and
 //! divergence analysis — the backbone of AI-guided root-cause debugging.
 
-use crate::interp::{Intervention, Interpreter};
+use crate::interp::{Interpreter, Intervention};
 use crate::lang::{Program, Value};
 use crate::trace::Trace;
 use aether_ai::{Prompt, Router, TaskClass};

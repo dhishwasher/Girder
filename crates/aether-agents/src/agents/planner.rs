@@ -37,6 +37,9 @@ impl Agent for PlannerAgent {
             .filter(|l| !l.is_empty())
             .collect();
 
-        AgentResult::one(SwarmMessage::new(Role::Planner, MsgKind::PlanReady { steps }))
+        AgentResult::one(SwarmMessage::new(
+            Role::Planner,
+            MsgKind::PlanReady { steps },
+        ))
     }
 }

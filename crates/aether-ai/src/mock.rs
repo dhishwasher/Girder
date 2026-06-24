@@ -95,7 +95,11 @@ mod tests {
     async fn codegen_reacts_to_intent() {
         let p = MockProvider::new();
         let mult = p
-            .complete(Prompt::new(TaskClass::Codegen, "", "add a multiply function"))
+            .complete(Prompt::new(
+                TaskClass::Codegen,
+                "",
+                "add a multiply function",
+            ))
             .await
             .unwrap();
         assert!(mult.text.contains("fn multiply"));

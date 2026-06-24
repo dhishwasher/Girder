@@ -96,7 +96,10 @@ pub async fn run() {
                 println!("      [{}] plan: {} steps", msg.from.label(), steps.len())
             }
             MsgKind::CodeReady { name, .. } => {
-                println!("      [{}] wrote fn {name} into the graph", msg.from.label())
+                println!(
+                    "      [{}] wrote fn {name} into the graph",
+                    msg.from.label()
+                )
             }
             MsgKind::TestsReady { for_fn, .. } => {
                 println!("      [{}] generated tests for {for_fn}", msg.from.label())
@@ -124,7 +127,10 @@ pub async fn run() {
         let g = graph.lock().unwrap();
         let add = NodeId::from_path("crate::math::add");
         let report = g.impact_of(add);
-        println!("\n[3] Impact of changing `add`: {} affected node(s)", report.affected.len());
+        println!(
+            "\n[3] Impact of changing `add`: {} affected node(s)",
+            report.affected.len()
+        );
         for (id, dist) in report.ranked() {
             if let Some(n) = g.get(id) {
                 println!("      {} (distance {dist})", n.path);

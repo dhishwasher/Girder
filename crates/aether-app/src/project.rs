@@ -226,11 +226,7 @@ mod tests {
             "fn double(x: i64) -> i64 { x + x }\n",
         )
         .unwrap();
-        std::fs::write(
-            dir.join("src/app.rs"),
-            "fn run() -> i64 { double(21) }\n",
-        )
-        .unwrap();
+        std::fs::write(dir.join("src/app.rs"), "fn run() -> i64 { double(21) }\n").unwrap();
 
         let (graph, _builder, files) = build_from_dir(&dir).unwrap();
         assert_eq!(files, 2);

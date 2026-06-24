@@ -97,13 +97,19 @@ mod tests {
                 .with_source("fn add(a: i64, b: i64) -> i64 { a + b }")
                 .with_language("rust"),
         );
-        let sum = g.upsert_node(Node::new(NodeKind::Function, "sum_list", "crate::math::sum_list"));
+        let sum = g.upsert_node(Node::new(
+            NodeKind::Function,
+            "sum_list",
+            "crate::math::sum_list",
+        ));
         let main = g.upsert_node(Node::new(NodeKind::Function, "main", "crate::main"));
 
-        g.add_edge(math, add, Edge::new(EdgeKind::Contains)).unwrap();
+        g.add_edge(math, add, Edge::new(EdgeKind::Contains))
+            .unwrap();
         g.add_edge(sum, add, Edge::new(EdgeKind::Calls)).unwrap();
         g.add_edge(main, sum, Edge::new(EdgeKind::Calls)).unwrap();
-        g.add_edge(sum, main, Edge::new(EdgeKind::DataFlow)).unwrap();
+        g.add_edge(sum, main, Edge::new(EdgeKind::DataFlow))
+            .unwrap();
         g
     }
 

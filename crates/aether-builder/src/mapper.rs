@@ -243,11 +243,7 @@ fn callee_name(call: TsNode, source: &str, _lang: Lang) -> Option<String> {
     let func = call.child_by_field_name("function")?;
     // For `a.b.c()` / `path::to::f()` take the last identifier-ish leaf.
     let text = node_text(func, source);
-    let last = text
-        .rsplit(|c| c == '.' || c == ':')
-        .next()
-        .unwrap_or(text)
-        .trim();
+    let last = text.rsplit(['.', ':']).next().unwrap_or(text).trim();
     if last.is_empty() {
         None
     } else {

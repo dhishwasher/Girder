@@ -31,16 +31,31 @@ pub fn layout(source: &str, font: FontId) -> LayoutJob {
         }
         // Gap before the token -> default color.
         if span.start > cursor {
-            push(&mut job, &source[cursor..span.start], color(HlKind::Plain), font.clone());
+            push(
+                &mut job,
+                &source[cursor..span.start],
+                color(HlKind::Plain),
+                font.clone(),
+            );
         }
         let end = span.end.min(source.len());
         if span.start < end {
-            push(&mut job, &source[span.start..end], color(span.kind), font.clone());
+            push(
+                &mut job,
+                &source[span.start..end],
+                color(span.kind),
+                font.clone(),
+            );
         }
         cursor = end;
     }
     if cursor < source.len() {
-        push(&mut job, &source[cursor..], color(HlKind::Plain), font.clone());
+        push(
+            &mut job,
+            &source[cursor..],
+            color(HlKind::Plain),
+            font.clone(),
+        );
     }
     job
 }

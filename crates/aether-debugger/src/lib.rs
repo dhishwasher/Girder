@@ -11,7 +11,7 @@ pub mod lang;
 pub mod timeline;
 pub mod trace;
 
-pub use interp::{Intervention, Interpreter};
+pub use interp::{Interpreter, Intervention};
 pub use lang::{bin, call, if_, num, var, Function, Op, Program, Stmt, Value};
 pub use timeline::{Branch, Timeline};
 pub use trace::{Env, Step, Trace};

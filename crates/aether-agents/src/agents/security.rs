@@ -19,7 +19,12 @@ impl Agent for SecurityAuditorAgent {
     }
 
     async fn handle(&self, msg: &SwarmMessage, ctx: &SwarmContext) -> AgentResult {
-        let MsgKind::CodeReady { module, name, source } = &msg.kind else {
+        let MsgKind::CodeReady {
+            module,
+            name,
+            source,
+        } = &msg.kind
+        else {
             return AgentResult::Idle;
         };
         // EXTENSION POINT: real taint analysis. Cheap heuristic for the demo.

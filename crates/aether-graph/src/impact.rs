@@ -75,7 +75,11 @@ impl SemanticGraph {
         let report = self.impact_of(origin);
         for (target, dist) in report.affected {
             let weight = (1.0 / (dist as f32 + 1.0)).max(0.05);
-            let _ = self.add_edge(origin, target, crate::Edge::with_weight(EdgeKind::Impacts, weight));
+            let _ = self.add_edge(
+                origin,
+                target,
+                crate::Edge::with_weight(EdgeKind::Impacts, weight),
+            );
         }
     }
 }

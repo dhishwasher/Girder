@@ -25,7 +25,10 @@ impl EdgeKind {
     /// Impact propagates through call/dataflow/explicit-impact edges, not
     /// through mere containment or similarity.
     pub fn propagates_impact(self) -> bool {
-        matches!(self, EdgeKind::Calls | EdgeKind::DataFlow | EdgeKind::Impacts)
+        matches!(
+            self,
+            EdgeKind::Calls | EdgeKind::DataFlow | EdgeKind::Impacts
+        )
     }
 }
 

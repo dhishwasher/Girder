@@ -55,7 +55,9 @@ pub struct Completion {
 /// Errors a provider can surface.
 #[derive(Debug, thiserror::Error)]
 pub enum AiError {
-    #[error("provider '{0}' is not enabled (build with --features live-providers and set an API key)")]
+    #[error(
+        "provider '{0}' is not enabled (build with --features live-providers and set an API key)"
+    )]
     Unsupported(String),
     #[error("transport error: {0}")]
     Transport(String),

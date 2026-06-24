@@ -69,7 +69,10 @@ impl SemanticGraph {
 
     /// Add a directed edge `from -> to`. Both nodes must already exist.
     pub fn add_edge(&mut self, from: NodeId, to: NodeId, edge: Edge) -> Result<(), GraphError> {
-        let a = *self.index.get(&from).ok_or(GraphError::NodeNotFound(from))?;
+        let a = *self
+            .index
+            .get(&from)
+            .ok_or(GraphError::NodeNotFound(from))?;
         let b = *self.index.get(&to).ok_or(GraphError::NodeNotFound(to))?;
         self.graph.add_edge(a, b, edge);
         Ok(())

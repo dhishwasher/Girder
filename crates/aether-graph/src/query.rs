@@ -22,7 +22,13 @@ impl SemanticGraph {
         use petgraph::visit::{EdgeRef, IntoEdgeReferences};
         self.raw()
             .edge_references()
-            .map(|e| (self.id_at(e.source()), self.id_at(e.target()), e.weight().kind))
+            .map(|e| {
+                (
+                    self.id_at(e.source()),
+                    self.id_at(e.target()),
+                    e.weight().kind,
+                )
+            })
             .collect()
     }
 

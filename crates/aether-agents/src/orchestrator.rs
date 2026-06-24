@@ -119,8 +119,8 @@ impl Orchestrator {
             let wait = quiescence.min(remaining);
             match tokio::time::timeout(wait, transcript_rx.recv()).await {
                 Ok(Ok(msg)) => transcript.push(msg),
-                Ok(Err(_)) => break,  // bus closed
-                Err(_) => break,      // quiescence reached
+                Ok(Err(_)) => break, // bus closed
+                Err(_) => break,     // quiescence reached
             }
         }
 

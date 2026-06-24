@@ -82,8 +82,10 @@ fn classify(node: TsNode) -> Option<HlKind> {
     // Identifiers: call targets / function names render as Function.
     if kind == "identifier" {
         let parent_kind = node.parent().map(|p| p.kind()).unwrap_or("");
-        if matches!(parent_kind, "call_expression" | "call" | "function_item" | "function_definition")
-        {
+        if matches!(
+            parent_kind,
+            "call_expression" | "call" | "function_item" | "function_definition"
+        ) {
             return Some(HlKind::Function);
         }
         return Some(HlKind::Ident);

@@ -76,12 +76,15 @@ impl GraphBuilder {
             .map(|s| s.owned.clone())
             .unwrap_or_default();
 
-        let entry = self.files.entry(file.to_string()).or_insert_with(|| FileState {
-            parser: IncrementalParser::new(lang),
-            source: String::new(),
-            owned: HashSet::new(),
-            calls: Vec::new(),
-        });
+        let entry = self
+            .files
+            .entry(file.to_string())
+            .or_insert_with(|| FileState {
+                parser: IncrementalParser::new(lang),
+                source: String::new(),
+                owned: HashSet::new(),
+                calls: Vec::new(),
+            });
 
         // Inform tree-sitter where the edit happened so it reparses incrementally.
         let edit = whole_buffer_edit(&entry.source, new_source);
@@ -125,21 +128,16 @@ impl GraphBuilder {
                 let Some(candidates) = by_name.get(&call.callee) else {
                     continue;
                 };
-                let chosen = candidates
-                    .iter()
-                    .find(|(m, _)| *m == caller_module)
-                    .or(if candidates.len() == 1 {
+                let chosen = candidates.iter().find(|(m, _)| *m == caller_module).or(
+                    if candidates.len() == 1 {
                         candidates.first()
                     } else {
                         None
-                    });
+                    },
+                );
                 if let Some((_, callee_id)) = chosen {
                     if *callee_id != call.caller && added.insert((call.caller, *callee_id)) {
-                        let _ = graph.add_edge(
-                            call.caller,
-                            *callee_id,
-                            Edge::new(EdgeKind::Calls),
-                        );
+                        let _ = graph.add_edge(call.caller, *callee_id, Edge::new(EdgeKind::Calls));
                     }
                 }
             }

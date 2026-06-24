@@ -13,10 +13,9 @@ use std::collections::BTreeSet;
 
 /// Common language tokens that carry no semantic signal.
 const STOPWORDS: &[&str] = &[
-    "let", "mut", "fn", "pub", "return", "self", "for", "while", "loop", "if",
-    "else", "match", "the", "and", "def", "class", "import", "from", "i64",
-    "i32", "u64", "u32", "f64", "usize", "str", "string", "int", "float", "none",
-    "true", "false", "result", "option", "vec", "new",
+    "let", "mut", "fn", "pub", "return", "self", "for", "while", "loop", "if", "else", "match",
+    "the", "and", "def", "class", "import", "from", "i64", "i32", "u64", "u32", "f64", "usize",
+    "str", "string", "int", "float", "none", "true", "false", "result", "option", "vec", "new",
 ];
 
 /// Tokenize source text into a set of meaningful lowercase terms.
@@ -127,16 +126,28 @@ mod tests {
     fn graph() -> SemanticGraph {
         let mut g = SemanticGraph::new();
         g.upsert_node(
-            Node::new(NodeKind::Function, "encrypt_password", "crate::auth::encrypt_password")
-                .with_source("fn encrypt_password(password: String) -> String { hash(password) }"),
+            Node::new(
+                NodeKind::Function,
+                "encrypt_password",
+                "crate::auth::encrypt_password",
+            )
+            .with_source("fn encrypt_password(password: String) -> String { hash(password) }"),
         );
         g.upsert_node(
-            Node::new(NodeKind::Function, "hash_password", "crate::auth::hash_password")
-                .with_source("fn hash_password(password: String) -> String { hash(password) }"),
+            Node::new(
+                NodeKind::Function,
+                "hash_password",
+                "crate::auth::hash_password",
+            )
+            .with_source("fn hash_password(password: String) -> String { hash(password) }"),
         );
         g.upsert_node(
-            Node::new(NodeKind::Function, "render_pixel", "crate::gfx::render_pixel")
-                .with_source("fn render_pixel(buffer: Frame) { buffer.draw() }"),
+            Node::new(
+                NodeKind::Function,
+                "render_pixel",
+                "crate::gfx::render_pixel",
+            )
+            .with_source("fn render_pixel(buffer: Frame) { buffer.draw() }"),
         );
         g
     }
