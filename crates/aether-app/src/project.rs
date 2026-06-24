@@ -211,6 +211,46 @@ pub fn inspect(args: &[String]) -> std::io::Result<()> {
     Ok(())
 }
 
+/// `aetherforge refactor <dir> rename <node::path> <new_name>` — semantic rename
+/// across the graph (follows `Calls` edges, not text search), then persist.
+pub fn refactor(args: &[String]) -> std::io::Result<()> {
+    let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
+    let op = args.get(1).map(String::as_str);
+    let target = args.get(2);
+    let new_name = args.get(3);
+    let (Some("rename"), Some(target), Some(new_name)) = (op, target, new_name) else {
+        eprintln!("usage: aetherforge refactor <dir> rename <node::path> <new_name>");
+        return Ok(());
+    };
+
+    let (mut graph, _builder, _files) = build_from_dir(&root)?;
+    let Some(node) = graph.find_by_path(target) else {
+        eprintln!("no node with path '{target}'");
+        return Ok(());
+    };
+    let id = node.id;
+    match graph.rename_node(id, new_name) {
+        Ok(outcome) => {
+            println!("Renamed {} -> {}", outcome.old_path, outcome.new_path);
+            if outcome.updated_callers.is_empty() {
+                println!("  no callers needed updating");
+            } else {
+                println!("  rewrote {} call site(s):", outcome.updated_callers.len());
+                for caller in &outcome.updated_callers {
+                    println!("    {caller}");
+                }
+            }
+            let out = default_aether_path(&root);
+            match graph.save(&out) {
+                Ok(()) => println!("  saved graph -> {}", out.display()),
+                Err(e) => eprintln!("  ! could not save {}: {e}", out.display()),
+            }
+        }
+        Err(e) => eprintln!("rename failed: {e}"),
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

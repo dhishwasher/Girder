@@ -32,6 +32,10 @@ cargo run -p aether-app -- inspect sample-project/project.aether crate::lib::add
 # Concept search: rank functions by relevance to a natural-language query:
 cargo run -p aether-app -- search sample-project "sum numbers in a list"
 
+# Graph-semantic rename — follows Calls edges (not text search) and rewrites
+# only the real callers, then saves the updated graph:
+cargo run -p aether-app -- refactor sample-project rename crate::lib::add plus
+
 # Dispatch the agent swarm on a project with a natural-language intent:
 cargo run -p aether-app -- forge sample-project "add a subtract function"
 

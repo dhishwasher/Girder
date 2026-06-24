@@ -28,6 +28,9 @@ COMMANDS:
                               natural-language query
     forge <dir> <intent...>   Dispatch the agent swarm on a project with a
                               natural-language intent, then save the graph
+    refactor <dir> rename <node::path> <new_name>
+                              Semantic rename across the graph (follows Calls
+                              edges, not text search), then save
     inspect <file.aether> [path]
                               Load a saved graph; with a node path, show its
                               impact set
@@ -55,6 +58,7 @@ fn main() {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             report(rt.block_on(project::forge(&args[1..])));
         }
+        Some("refactor") => report(project::refactor(&args[1..])),
         Some("inspect") => report(project::inspect(&args[1..])),
         Some("demo") | None => run_headless(),
         Some(other) => {

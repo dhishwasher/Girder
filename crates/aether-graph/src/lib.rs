@@ -14,8 +14,11 @@ mod edge;
 mod impact;
 mod node;
 mod query;
+mod refactor;
 mod serialize;
 mod similarity;
+
+pub use refactor::RenameOutcome;
 
 pub use edge::{Edge, EdgeKind};
 pub use impact::ImpactReport;
@@ -36,6 +39,8 @@ pub enum GraphError {
     Deserialize(String),
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
+    #[error("rename target already exists: {0:?}")]
+    RenameConflict(NodeId),
 }
 
 /// The semantic graph.
