@@ -38,23 +38,39 @@ fn main() {
 }
 "#;
 
+/// A second module that calls into `math` — exercises cross-file resolution.
+const APP_RS: &str = r#"
+fn run() -> i64 {
+    sum_list(&[10, 20, 30])
+}
+"#;
+
 pub async fn run() {
     println!("\n=== AetherForge IDE — headless pipeline demo ===\n");
 
-    // 1. Build the graph from source.
+    // 1. Build the graph from source — two files, to show CROSS-FILE linking.
     let graph = Arc::new(Mutex::new(SemanticGraph::new()));
     {
         let mut g = graph.lock().unwrap();
         let mut builder = GraphBuilder::new();
         builder.load_file(&mut g, "src/math.rs", SAMPLE_RS);
+        builder.load_file(&mut g, "src/app.rs", APP_RS);
         println!(
-            "[1] Built semantic graph from src/math.rs: {} nodes, {} edges",
+            "[1] Built semantic graph from src/math.rs + src/app.rs: {} nodes, {} edges",
             g.node_count(),
             g.edge_count()
         );
         for f in g.query_by_kind(NodeKind::Function) {
             println!("      fn {}  ({})", f.name, f.path);
         }
+        // `run` lives in src/app.rs but calls `sum_list` defined in src/math.rs.
+        let run = NodeId::from_path("crate::app::run");
+        let callees: Vec<String> = g
+            .neighbors(run, Some(aether_graph::EdgeKind::Calls))
+            .into_iter()
+            .filter_map(|n| g.get(n.id).map(|node| node.path.clone()))
+            .collect();
+        println!("      cross-file: crate::app::run -> {callees:?}");
     }
 
     // 2. Run the agent swarm on a natural-language intent.

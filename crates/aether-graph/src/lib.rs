@@ -79,6 +79,19 @@ impl SemanticGraph {
         self.graph.remove_node(idx)
     }
 
+    /// Remove every edge of a given kind. Used by the project-wide call resolver
+    /// to rebuild `Calls` edges from scratch after any source change.
+    pub fn clear_edges_of_kind(&mut self, kind: EdgeKind) {
+        let to_remove: Vec<_> = self
+            .graph
+            .edge_indices()
+            .filter(|&e| self.graph[e].kind == kind)
+            .collect();
+        for e in to_remove {
+            self.graph.remove_edge(e);
+        }
+    }
+
     pub fn get(&self, id: NodeId) -> Option<&Node> {
         self.index.get(&id).map(|&idx| &self.graph[idx])
     }

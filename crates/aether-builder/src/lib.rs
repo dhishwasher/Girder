@@ -99,6 +99,34 @@ fn main() {
     }
 
     #[test]
+    fn resolves_calls_across_files() {
+        // `multiply` is defined in math.rs; `compute` in app.rs calls it.
+        // Cross-file resolution must link compute -> multiply.
+        let math_rs = "fn multiply(a: i64, b: i64) -> i64 { a * b }\n";
+        let app_rs = "fn compute() -> i64 { multiply(6, 7) }\n";
+
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/math.rs", math_rs);
+        builder.load_file(&mut graph, "src/app.rs", app_rs);
+
+        let compute = NodeId::from_path("crate::app::compute");
+        let multiply = NodeId::from_path("crate::math::multiply");
+        let calls: Vec<_> = graph
+            .neighbors(compute, Some(EdgeKind::Calls))
+            .into_iter()
+            .map(|n| n.id)
+            .collect();
+        assert!(
+            calls.contains(&multiply),
+            "compute (src/app.rs) should call multiply (src/math.rs) across files"
+        );
+
+        // And impact flows across the file boundary: changing multiply hits compute.
+        assert!(graph.impact_of(multiply).affected.contains_key(&compute));
+    }
+
+    #[test]
     fn parses_python_too() {
         let py = "def greet(name):\n    return hello(name)\n\ndef hello(name):\n    return name\n";
         let mut graph = SemanticGraph::new();

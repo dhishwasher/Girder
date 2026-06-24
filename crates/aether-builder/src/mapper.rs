@@ -1,21 +1,31 @@
 //! Map a tree-sitter syntax tree into semantic-graph nodes and edges.
 //!
 //! This is deliberately a *pragmatic* extractor, not a full type checker: it
-//! recovers modules, functions, types, fields, and intra-file call edges — more
-//! than enough to demonstrate semantic navigation, impact analysis, and agent
-//! edits. Cross-file resolution is an EXTENSION POINT (see `resolve` notes).
+//! recovers modules, functions, types, fields, and call *references*. Call sites
+//! are emitted unresolved (`caller id` + `callee name`); the project-wide
+//! resolver in `sync` turns them into `Calls` edges, which is what enables
+//! **cross-file** call graphs (a callee defined in another module still links).
 
 use crate::parser::Lang;
 use aether_graph::{Edge, EdgeKind, Node, NodeId, NodeKind, Span};
-use std::collections::HashMap;
 use tree_sitter::{Node as TsNode, Tree};
 
-/// Everything extracted from a single file: the nodes to upsert and the edges
-/// to add between them (by stable id).
+/// An unresolved call site: `caller` invokes something named `callee` (the
+/// trailing identifier of the call target). Resolved later against the whole
+/// graph so cross-module calls link correctly.
+#[derive(Debug, Clone)]
+pub struct CallRef {
+    pub caller: NodeId,
+    pub callee: String,
+}
+
+/// Everything extracted from a single file: nodes to upsert, non-call edges to
+/// add (Contains), and unresolved call references for the project-wide resolver.
 #[derive(Debug, Default)]
 pub struct BuildOutput {
     pub nodes: Vec<Node>,
     pub edges: Vec<(NodeId, NodeId, Edge)>,
+    pub calls: Vec<CallRef>,
 }
 
 impl BuildOutput {
@@ -50,22 +60,13 @@ pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput
         ..module_node
     });
 
-    // Pass 1: collect definitions and a name -> id map for call resolution.
-    let mut name_to_id: HashMap<String, NodeId> = HashMap::new();
+    // Pass 1: collect definitions (functions, types, fields) + Contains edges.
     let root = tree.root_node();
-    collect_defs(
-        root,
-        source,
-        file,
-        lang,
-        &module,
-        module_id,
-        &mut out,
-        &mut name_to_id,
-    );
+    collect_defs(root, source, file, lang, &module, module_id, &mut out);
 
-    // Pass 2: resolve intra-file calls into Calls edges.
-    collect_calls(root, source, lang, &module, &name_to_id, &mut out);
+    // Pass 2: record every call site as an unresolved reference. Resolution to
+    // a concrete callee happens project-wide in `sync`, enabling cross-file links.
+    collect_calls(root, source, lang, &module, &mut out);
 
     out
 }
@@ -104,7 +105,6 @@ fn is_type_kind(lang: Lang, kind: &str) -> bool {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn collect_defs(
     node: TsNode,
     source: &str,
@@ -113,7 +113,6 @@ fn collect_defs(
     module: &str,
     module_id: NodeId,
     out: &mut BuildOutput,
-    name_to_id: &mut HashMap<String, NodeId>,
 ) {
     let kind = node.kind();
 
@@ -130,7 +129,6 @@ fn collect_defs(
             out.nodes.push(n);
             out.edges
                 .push((module_id, id, Edge::new(EdgeKind::Contains)));
-            name_to_id.insert(name, id);
         }
     } else if is_type_kind(lang, kind) {
         if let Some(name_node) = node.child_by_field_name("name") {
@@ -145,14 +143,13 @@ fn collect_defs(
             out.nodes.push(n);
             out.edges
                 .push((module_id, id, Edge::new(EdgeKind::Contains)));
-            name_to_id.insert(name, id);
             extract_fields(node, source, file, lang, &path, id, out);
         }
     }
 
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
-        collect_defs(child, source, file, lang, module, module_id, out, name_to_id);
+        collect_defs(child, source, file, lang, module, module_id, out);
     }
 }
 
@@ -192,14 +189,7 @@ fn extract_fields(
     }
 }
 
-fn collect_calls(
-    node: TsNode,
-    source: &str,
-    lang: Lang,
-    module: &str,
-    name_to_id: &HashMap<String, NodeId>,
-    out: &mut BuildOutput,
-) {
+fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut BuildOutput) {
     // Track the enclosing function as we descend so calls attach to a caller.
     fn walk(
         node: TsNode,
@@ -207,7 +197,6 @@ fn collect_calls(
         lang: Lang,
         module: &str,
         current_fn: Option<NodeId>,
-        name_to_id: &HashMap<String, NodeId>,
         out: &mut BuildOutput,
     ) {
         let mut current = current_fn;
@@ -224,22 +213,18 @@ fn collect_calls(
         };
         if node.kind() == call_kind {
             if let (Some(caller), Some(callee)) = (current, callee_name(node, source, lang)) {
-                if let Some(&callee_id) = name_to_id.get(&callee) {
-                    if callee_id != caller {
-                        out.edges
-                            .push((caller, callee_id, Edge::new(EdgeKind::Calls)));
-                    }
-                }
+                // Emit unresolved; the project resolver picks the concrete callee.
+                out.calls.push(CallRef { caller, callee });
             }
         }
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            walk(child, source, lang, module, current, name_to_id, out);
+            walk(child, source, lang, module, current, out);
         }
     }
 
-    walk(node, source, lang, module, None, name_to_id, out);
+    walk(node, source, lang, module, None, out);
 }
 
 /// Best-effort callee name: the trailing identifier of the call target.

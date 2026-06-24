@@ -6,9 +6,9 @@
 //! nodes are upserted, vanished nodes are removed, and edges are rebuilt for the
 //! file. This is the machinery behind bidirectional editor⇄graph sync.
 
-use crate::mapper::{extract, BuildOutput};
+use crate::mapper::{extract, BuildOutput, CallRef};
 use crate::parser::{IncrementalParser, Lang};
-use aether_graph::{NodeId, SemanticGraph};
+use aether_graph::{Edge, EdgeKind, NodeId, NodeKind, SemanticGraph};
 use std::collections::{HashMap, HashSet};
 use tree_sitter::{InputEdit, Point};
 
@@ -18,6 +18,17 @@ struct FileState {
     source: String,
     /// Node ids this file currently contributes to the graph.
     owned: HashSet<NodeId>,
+    /// Unresolved call references found in this file, for the project resolver.
+    calls: Vec<CallRef>,
+}
+
+/// The module path that owns a node, derived from its full path:
+/// `crate::math::add` -> `crate::math`.
+fn module_of(path: &str) -> String {
+    match path.rfind("::") {
+        Some(i) => path[..i].to_string(),
+        None => path.to_string(),
+    }
 }
 
 /// Incrementally maps source files into a [`SemanticGraph`].
@@ -46,8 +57,10 @@ impl GraphBuilder {
                 parser,
                 source: source.to_string(),
                 owned,
+                calls: out.calls.clone(),
             },
         );
+        self.resolve_calls(graph);
     }
 
     /// Re-sync a file after its full text changed (e.g. the editor buffer).
@@ -67,6 +80,7 @@ impl GraphBuilder {
             parser: IncrementalParser::new(lang),
             source: String::new(),
             owned: HashSet::new(),
+            calls: Vec::new(),
         });
 
         // Inform tree-sitter where the edit happened so it reparses incrementally.
@@ -79,6 +93,56 @@ impl GraphBuilder {
         let new_owned = self.apply(graph, file, &out, &prev_owned);
         if let Some(state) = self.files.get_mut(file) {
             state.owned = new_owned;
+            state.calls = out.calls.clone();
+        }
+        self.resolve_calls(graph);
+    }
+
+    /// Project-wide call resolution. Rebuilds **all** `Calls` edges from the
+    /// accumulated unresolved references against a whole-graph symbol index, so a
+    /// call links to its callee even when the callee lives in another file. When
+    /// a name is ambiguous, a same-module definition wins; otherwise a unique
+    /// global match is used, and truly ambiguous names are left unlinked.
+    pub fn resolve_calls(&self, graph: &mut SemanticGraph) {
+        graph.clear_edges_of_kind(EdgeKind::Calls);
+
+        // name -> [(owning module, function id)]
+        let mut by_name: HashMap<String, Vec<(String, NodeId)>> = HashMap::new();
+        for n in graph.query_by_kind(NodeKind::Function) {
+            by_name
+                .entry(n.name.clone())
+                .or_default()
+                .push((module_of(&n.path), n.id));
+        }
+
+        let mut added: HashSet<(NodeId, NodeId)> = HashSet::new();
+        for state in self.files.values() {
+            for call in &state.calls {
+                let caller_module = match graph.get(call.caller) {
+                    Some(node) => module_of(&node.path),
+                    None => continue,
+                };
+                let Some(candidates) = by_name.get(&call.callee) else {
+                    continue;
+                };
+                let chosen = candidates
+                    .iter()
+                    .find(|(m, _)| *m == caller_module)
+                    .or(if candidates.len() == 1 {
+                        candidates.first()
+                    } else {
+                        None
+                    });
+                if let Some((_, callee_id)) = chosen {
+                    if *callee_id != call.caller && added.insert((call.caller, *callee_id)) {
+                        let _ = graph.add_edge(
+                            call.caller,
+                            *callee_id,
+                            Edge::new(EdgeKind::Calls),
+                        );
+                    }
+                }
+            }
         }
     }
 
@@ -97,8 +161,8 @@ impl GraphBuilder {
             graph.upsert_node(node.clone());
         }
         for (from, to, edge) in &out.edges {
-            // Both endpoints exist because defs are emitted before call edges,
-            // and intra-file calls only reference ids we just inserted.
+            // These are Contains edges (module->fn/type, type->field); both
+            // endpoints were just upserted. Calls are resolved project-wide later.
             let _ = graph.add_edge(*from, *to, edge.clone());
         }
 
