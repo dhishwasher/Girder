@@ -83,12 +83,28 @@ pub fn analyze(args: &[String]) -> std::io::Result<()> {
     println!("  loaded {files} source file(s)");
     print_summary(&graph);
 
+    // Report inheritance relationships (Python class bases, Rust trait impls).
+    let inherits: Vec<_> = graph
+        .edges()
+        .into_iter()
+        .filter(|(_, _, k)| *k == aether_graph::EdgeKind::Inherits)
+        .collect();
+    if !inherits.is_empty() {
+        println!("  inheritance: {} relationship(s):", inherits.len());
+        for (a, b, _) in &inherits {
+            if let (Some(na), Some(nb)) = (graph.get(*a), graph.get(*b)) {
+                println!("    {}  ⊳  {}", na.path, nb.path);
+            }
+        }
+    }
+
     // Derive semantic-similarity edges and report likely duplicate functions.
+    // SemanticSimilar edges are stored both ways; print each unordered pair once.
     let linked = graph.compute_similarity_edges(0.6);
     if linked > 0 {
         println!("  similarity: {linked} likely-duplicate function pair(s):");
         for (a, b, kind) in graph.edges() {
-            if kind == aether_graph::EdgeKind::SemanticSimilar {
+            if kind == aether_graph::EdgeKind::SemanticSimilar && a < b {
                 if let (Some(na), Some(nb)) = (graph.get(a), graph.get(b)) {
                     println!("    {}  ~  {}", na.path, nb.path);
                 }

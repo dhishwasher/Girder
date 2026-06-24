@@ -19,13 +19,24 @@ pub struct CallRef {
     pub callee: String,
 }
 
+/// An unresolved inheritance: type `sub` inherits/implements something named
+/// `base` (a superclass in Python, a trait in Rust). Resolved project-wide like
+/// calls so `Inherits` edges link across files.
+#[derive(Debug, Clone)]
+pub struct InheritRef {
+    pub sub: NodeId,
+    pub base: String,
+}
+
 /// Everything extracted from a single file: nodes to upsert, non-call edges to
-/// add (Contains), and unresolved call references for the project-wide resolver.
+/// add (Contains), and unresolved call/inheritance references for the
+/// project-wide resolver.
 #[derive(Debug, Default)]
 pub struct BuildOutput {
     pub nodes: Vec<Node>,
     pub edges: Vec<(NodeId, NodeId, Edge)>,
     pub calls: Vec<CallRef>,
+    pub inherits: Vec<InheritRef>,
 }
 
 impl BuildOutput {
@@ -78,6 +89,11 @@ pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput
     // Pass 2: record every call site as an unresolved reference. Resolution to
     // a concrete callee happens project-wide in `sync`, enabling cross-file links.
     collect_calls(root, source, lang, &module, &mut out);
+
+    // Pass 3: Rust `impl Trait for Type` blocks -> Type Inherits Trait.
+    if matches!(lang, Lang::Rust) {
+        collect_impls(root, source, &module, &mut out);
+    }
 
     out
 }
@@ -155,12 +171,90 @@ fn collect_defs(
             out.edges
                 .push((module_id, id, Edge::new(EdgeKind::Contains)));
             extract_fields(node, source, file, lang, &path, id, out);
+            extract_supertypes(node, source, lang, id, out);
         }
     }
 
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         collect_defs(child, source, file, lang, module, module_id, out);
+    }
+}
+
+/// Record unresolved `Inherits` references for a type definition: Python class
+/// bases (`class Foo(Bar):`) and Rust supertraits (`trait Sub: Super`). Rust
+/// `impl Trait for Type` is handled separately in [`collect_impls`] because the
+/// subtype there is itself a name reference, not the node we're defining.
+fn extract_supertypes(
+    type_node: TsNode,
+    source: &str,
+    lang: Lang,
+    sub: NodeId,
+    out: &mut BuildOutput,
+) {
+    let mut cursor = type_node.walk();
+    match lang {
+        Lang::Python => {
+            // class_definition has a `superclasses` argument_list of bases.
+            if let Some(supers) = type_node.child_by_field_name("superclasses") {
+                for child in supers.children(&mut supers.walk()) {
+                    if child.kind() == "identifier" {
+                        out.inherits.push(InheritRef {
+                            sub,
+                            base: node_text(child, source).to_string(),
+                        });
+                    }
+                }
+            }
+        }
+        Lang::Rust => {
+            // `trait Sub: Super + Other` — the trait_bounds list sits after `:`.
+            for child in type_node.children(&mut cursor) {
+                if child.kind() == "trait_bounds" {
+                    let mut inner = child.walk();
+                    for b in child.children(&mut inner) {
+                        if matches!(b.kind(), "type_identifier" | "scoped_type_identifier") {
+                            out.inherits.push(InheritRef {
+                                sub,
+                                base: last_ident(node_text(b, source)).to_string(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Trailing identifier of a possibly-qualified type path (`a::b::Trait` -> `Trait`).
+fn last_ident(text: &str) -> &str {
+    text.rsplit("::").next().unwrap_or(text).trim()
+}
+
+/// Walk Rust `impl Trait for Type` blocks, recording `Type Inherits Trait`.
+/// Both ends are name references resolved project-wide by the sync resolver.
+fn collect_impls(root: TsNode, source: &str, module: &str, out: &mut BuildOutput) {
+    let mut stack = vec![root];
+    while let Some(node) = stack.pop() {
+        if node.kind() == "impl_item" {
+            if let (Some(trait_node), Some(type_node)) = (
+                node.child_by_field_name("trait"),
+                node.child_by_field_name("type"),
+            ) {
+                let trait_name = last_ident(node_text(trait_node, source));
+                let type_name = last_ident(node_text(type_node, source));
+                // The implementing type's node id is its in-module path.
+                let sub = NodeId::from_path(&format!("{module}::{type_name}"));
+                out.inherits.push(InheritRef {
+                    sub,
+                    base: trait_name.to_string(),
+                });
+            }
+        }
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            stack.push(child);
+        }
     }
 }
 

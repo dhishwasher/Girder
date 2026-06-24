@@ -107,6 +107,40 @@ fn main() {
     }
 
     #[test]
+    fn extracts_python_class_inheritance() {
+        let py = "class Animal:\n    def speak(self):\n        return \"\"\n\nclass Dog(Animal):\n    def speak(self):\n        return \"woof\"\n";
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/pets.py", py);
+
+        let dog = NodeId::from_path("crate::pets::Dog");
+        let animal = NodeId::from_path("crate::pets::Animal");
+        let bases: Vec<_> = graph
+            .neighbors(dog, Some(EdgeKind::Inherits))
+            .into_iter()
+            .map(|n| n.id)
+            .collect();
+        assert!(bases.contains(&animal), "Dog should inherit Animal");
+    }
+
+    #[test]
+    fn extracts_rust_trait_impl_as_inherits() {
+        let rs = "struct Logger;\ntrait Writer { fn write(&self); }\nimpl Writer for Logger { fn write(&self) {} }\n";
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/zoo.rs", rs);
+
+        let logger = NodeId::from_path("crate::zoo::Logger");
+        let writer = NodeId::from_path("crate::zoo::Writer");
+        let impls: Vec<_> = graph
+            .neighbors(logger, Some(EdgeKind::Inherits))
+            .into_iter()
+            .map(|n| n.id)
+            .collect();
+        assert!(impls.contains(&writer), "Logger should implement Writer");
+    }
+
+    #[test]
     fn resolves_calls_across_files() {
         // `multiply` is defined in math.rs; `compute` in app.rs calls it.
         // Cross-file resolution must link compute -> multiply.

@@ -15,3 +15,8 @@ class Calculator:
     def add(self, value):
         self.total = self.total + value
         return self.total
+
+
+class ScientificCalculator(Calculator):
+    def square(self, value):
+        return value * value

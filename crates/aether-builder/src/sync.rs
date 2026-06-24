@@ -6,7 +6,7 @@
 //! nodes are upserted, vanished nodes are removed, and edges are rebuilt for the
 //! file. This is the machinery behind bidirectional editor⇄graph sync.
 
-use crate::mapper::{extract, BuildOutput, CallRef};
+use crate::mapper::{extract, BuildOutput, CallRef, InheritRef};
 use crate::parser::{IncrementalParser, Lang};
 use aether_graph::{Edge, EdgeKind, NodeId, NodeKind, SemanticGraph};
 use std::collections::{HashMap, HashSet};
@@ -20,6 +20,8 @@ struct FileState {
     owned: HashSet<NodeId>,
     /// Unresolved call references found in this file, for the project resolver.
     calls: Vec<CallRef>,
+    /// Unresolved inheritance references found in this file.
+    inherits: Vec<InheritRef>,
 }
 
 /// The module path that owns a node, derived from its full path:
@@ -58,6 +60,7 @@ impl GraphBuilder {
                 source: source.to_string(),
                 owned,
                 calls: out.calls.clone(),
+                inherits: out.inherits.clone(),
             },
         );
         self.resolve_calls(graph);
@@ -84,6 +87,7 @@ impl GraphBuilder {
                 source: String::new(),
                 owned: HashSet::new(),
                 calls: Vec::new(),
+                inherits: Vec::new(),
             });
 
         // Inform tree-sitter where the edit happened so it reparses incrementally.
@@ -97,6 +101,7 @@ impl GraphBuilder {
         if let Some(state) = self.files.get_mut(file) {
             state.owned = new_owned;
             state.calls = out.calls.clone();
+            state.inherits = out.inherits.clone();
         }
         self.resolve_calls(graph);
     }
@@ -138,6 +143,50 @@ impl GraphBuilder {
                 if let Some((_, callee_id)) = chosen {
                     if *callee_id != call.caller && added.insert((call.caller, *callee_id)) {
                         let _ = graph.add_edge(call.caller, *callee_id, Edge::new(EdgeKind::Calls));
+                    }
+                }
+            }
+        }
+
+        self.resolve_inherits(graph);
+    }
+
+    /// Project-wide inheritance resolution. Rebuilds **all** `Inherits` edges
+    /// from accumulated references against a whole-graph *type* index, so a
+    /// Python subclass or Rust trait impl links to its base even across files.
+    /// Same-module definitions win ties; otherwise a unique global match is used.
+    fn resolve_inherits(&self, graph: &mut SemanticGraph) {
+        graph.clear_edges_of_kind(EdgeKind::Inherits);
+
+        // name -> [(owning module, type id)]
+        let mut by_type: HashMap<String, Vec<(String, NodeId)>> = HashMap::new();
+        for n in graph.query_by_kind(NodeKind::Type) {
+            by_type
+                .entry(n.name.clone())
+                .or_default()
+                .push((module_of(&n.path), n.id));
+        }
+
+        let mut added: HashSet<(NodeId, NodeId)> = HashSet::new();
+        for state in self.files.values() {
+            for inh in &state.inherits {
+                let sub_module = match graph.get(inh.sub) {
+                    Some(node) => module_of(&node.path),
+                    None => continue,
+                };
+                let Some(candidates) = by_type.get(&inh.base) else {
+                    continue;
+                };
+                let chosen = candidates.iter().find(|(m, _)| *m == sub_module).or(
+                    if candidates.len() == 1 {
+                        candidates.first()
+                    } else {
+                        None
+                    },
+                );
+                if let Some((_, base_id)) = chosen {
+                    if *base_id != inh.sub && added.insert((inh.sub, *base_id)) {
+                        let _ = graph.add_edge(inh.sub, *base_id, Edge::new(EdgeKind::Inherits));
                     }
                 }
             }
