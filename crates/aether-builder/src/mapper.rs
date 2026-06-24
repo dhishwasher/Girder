@@ -132,13 +132,18 @@ fn is_type_kind(lang: Lang, kind: &str) -> bool {
     }
 }
 
+/// Recursively map definitions, carrying the **enclosing scope** so that methods
+/// belong to their type rather than the module: `scope_path`/`scope_id` is the
+/// current container (a module at top level, a type inside a class body or Rust
+/// `impl` block). A Python method `Calculator.add` becomes
+/// `crate::calc::Calculator::add`, `Contains`-ed by the class — not the module.
 fn collect_defs(
     node: TsNode,
     source: &str,
     file: &str,
     lang: Lang,
-    module: &str,
-    module_id: NodeId,
+    scope_path: &str,
+    scope_id: NodeId,
     out: &mut BuildOutput,
 ) {
     let kind = node.kind();
@@ -146,7 +151,7 @@ fn collect_defs(
     if is_function_kind(lang, kind) {
         if let Some(name_node) = node.child_by_field_name("name") {
             let name = node_text(name_node, source).to_string();
-            let path = format!("{module}::{name}");
+            let path = format!("{scope_path}::{name}");
             let id = NodeId::from_path(&path);
             let mut n = Node::new(NodeKind::Function, &name, &path)
                 .with_language(lang.name())
@@ -155,12 +160,17 @@ fn collect_defs(
             n.span = span_of(node);
             out.nodes.push(n);
             out.edges
-                .push((module_id, id, Edge::new(EdgeKind::Contains)));
+                .push((scope_id, id, Edge::new(EdgeKind::Contains)));
+            // Recurse into the body with the same scope (nested functions).
+            recurse_children(node, source, file, lang, scope_path, scope_id, out);
         }
-    } else if is_type_kind(lang, kind) {
+        return;
+    }
+
+    if is_type_kind(lang, kind) {
         if let Some(name_node) = node.child_by_field_name("name") {
             let name = node_text(name_node, source).to_string();
-            let path = format!("{module}::{name}");
+            let path = format!("{scope_path}::{name}");
             let id = NodeId::from_path(&path);
             let mut n = Node::new(NodeKind::Type, &name, &path)
                 .with_language(lang.name())
@@ -169,15 +179,42 @@ fn collect_defs(
             n.span = span_of(node);
             out.nodes.push(n);
             out.edges
-                .push((module_id, id, Edge::new(EdgeKind::Contains)));
+                .push((scope_id, id, Edge::new(EdgeKind::Contains)));
             extract_fields(node, source, file, lang, &path, id, out);
             extract_supertypes(node, source, lang, id, out);
+            // Methods inside the type body are scoped to the type.
+            recurse_children(node, source, file, lang, &path, id, out);
+        }
+        return;
+    }
+
+    // Rust `impl Type { ... }` / `impl Trait for Type { ... }`: not a node, but a
+    // scope container — its methods belong to the implemented type.
+    if matches!(lang, Lang::Rust) && kind == "impl_item" {
+        if let Some(type_node) = node.child_by_field_name("type") {
+            let type_name = last_ident(node_text(type_node, source));
+            let type_path = format!("{scope_path}::{type_name}");
+            let type_id = NodeId::from_path(&type_path);
+            recurse_children(node, source, file, lang, &type_path, type_id, out);
+            return;
         }
     }
 
+    recurse_children(node, source, file, lang, scope_path, scope_id, out);
+}
+
+fn recurse_children(
+    node: TsNode,
+    source: &str,
+    file: &str,
+    lang: Lang,
+    scope_path: &str,
+    scope_id: NodeId,
+    out: &mut BuildOutput,
+) {
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
-        collect_defs(child, source, file, lang, module, module_id, out);
+        collect_defs(child, source, file, lang, scope_path, scope_id, out);
     }
 }
 

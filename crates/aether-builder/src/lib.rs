@@ -107,6 +107,39 @@ fn main() {
     }
 
     #[test]
+    fn methods_belong_to_their_type() {
+        // Python class method.
+        let py = "class Calculator:\n    def add(self, v):\n        return v\n";
+        let mut g = SemanticGraph::new();
+        let mut b = GraphBuilder::new();
+        b.load_file(&mut g, "src/calc.py", py);
+        let calc = NodeId::from_path("crate::calc::Calculator");
+        let method = NodeId::from_path("crate::calc::Calculator::add");
+        assert!(g.get(method).is_some(), "method is scoped to its class");
+        let members: Vec<_> = g
+            .neighbors(calc, Some(EdgeKind::Contains))
+            .into_iter()
+            .map(|n| n.id)
+            .collect();
+        assert!(members.contains(&method), "class contains its method");
+
+        // Rust inherent impl method.
+        let rs = "struct Logger;\nimpl Logger { fn write(&self) {} }\n";
+        let mut g2 = SemanticGraph::new();
+        let mut b2 = GraphBuilder::new();
+        b2.load_file(&mut g2, "src/zoo.rs", rs);
+        let logger = NodeId::from_path("crate::zoo::Logger");
+        let write = NodeId::from_path("crate::zoo::Logger::write");
+        assert!(g2.get(write).is_some(), "impl method is scoped to its type");
+        let members2: Vec<_> = g2
+            .neighbors(logger, Some(EdgeKind::Contains))
+            .into_iter()
+            .map(|n| n.id)
+            .collect();
+        assert!(members2.contains(&write), "type contains its impl method");
+    }
+
+    #[test]
     fn extracts_python_class_inheritance() {
         let py = "class Animal:\n    def speak(self):\n        return \"\"\n\nclass Dog(Animal):\n    def speak(self):\n        return \"woof\"\n";
         let mut graph = SemanticGraph::new();
