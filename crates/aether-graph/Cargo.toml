@@ -10,3 +10,4 @@ ron = { workspace = true }
 bincode = { workspace = true }
 thiserror = { workspace = true }
 petgraph = { workspace = true }
+rayon = { workspace = true }

@@ -15,10 +15,12 @@ mod impact;
 mod node;
 mod query;
 mod serialize;
+mod similarity;
 
 pub use edge::{Edge, EdgeKind};
 pub use impact::ImpactReport;
 pub use node::{Node, NodeId, NodeKind, Span};
+pub use similarity::{jaccard, tokenize};
 
 use petgraph::stable_graph::{NodeIndex, StableDiGraph};
 use std::collections::HashMap;

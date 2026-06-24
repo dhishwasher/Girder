@@ -74,18 +74,54 @@ fn print_summary(graph: &SemanticGraph) {
     println!("  {modules} modules · {funcs} functions · {types} types");
 }
 
-/// `aetherforge analyze <dir>` — build the graph, print a summary, save `.aether`.
+/// `aetherforge analyze <dir>` — build the graph, derive similarity, print a
+/// summary + likely duplicates, save `.aether`.
 pub fn analyze(args: &[String]) -> std::io::Result<()> {
     let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
     println!("Analyzing {} ...", root.display());
-    let (graph, _builder, files) = build_from_dir(&root)?;
+    let (mut graph, _builder, files) = build_from_dir(&root)?;
     println!("  loaded {files} source file(s)");
     print_summary(&graph);
+
+    // Derive semantic-similarity edges and report likely duplicate functions.
+    let linked = graph.compute_similarity_edges(0.6);
+    if linked > 0 {
+        println!("  similarity: {linked} likely-duplicate function pair(s):");
+        for (a, b, kind) in graph.edges() {
+            if kind == aether_graph::EdgeKind::SemanticSimilar {
+                if let (Some(na), Some(nb)) = (graph.get(a), graph.get(b)) {
+                    println!("    {}  ~  {}", na.path, nb.path);
+                }
+            }
+        }
+    }
 
     let out = default_aether_path(&root);
     match graph.save(&out) {
         Ok(()) => println!("  saved semantic graph -> {}", out.display()),
         Err(e) => eprintln!("  ! could not save {}: {e}", out.display()),
+    }
+    Ok(())
+}
+
+/// `aetherforge search <dir> <query...>` — concept search over the codebase.
+pub fn search(args: &[String]) -> std::io::Result<()> {
+    let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
+    let query = args.get(1..).map(|rest| rest.join(" ")).unwrap_or_default();
+    if query.trim().is_empty() {
+        eprintln!("usage: aetherforge search <dir> <query...>");
+        return Ok(());
+    }
+    let (graph, _builder, _files) = build_from_dir(&root)?;
+    println!("Searching {} for \"{query}\" ...", root.display());
+    let hits = graph.semantic_search(&query, 10);
+    if hits.is_empty() {
+        println!("  no matches");
+    }
+    for (id, score) in hits {
+        if let Some(n) = graph.get(id) {
+            println!("  {:.2}  {}", score, n.path);
+        }
     }
     Ok(())
 }

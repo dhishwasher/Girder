@@ -29,6 +29,9 @@ cargo run -p aether-app -- analyze sample-project
 # Inspect a saved graph and a node's impact set:
 cargo run -p aether-app -- inspect sample-project/project.aether crate::lib::add
 
+# Concept search: rank functions by relevance to a natural-language query:
+cargo run -p aether-app -- search sample-project "sum numbers in a list"
+
 # Dispatch the agent swarm on a project with a natural-language intent:
 cargo run -p aether-app -- forge sample-project "add a subtract function"
 

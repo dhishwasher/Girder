@@ -22,8 +22,10 @@ USAGE:
 
 COMMANDS:
     demo                      Run the headless end-to-end pipeline demo (default)
-    analyze <dir>             Build the semantic graph from a project directory
-                              and save it as <dir>/project.aether
+    analyze <dir>             Build the semantic graph from a project directory,
+                              report likely duplicates, save <dir>/project.aether
+    search <dir> <query...>   Concept search: rank functions by relevance to a
+                              natural-language query
     forge <dir> <intent...>   Dispatch the agent swarm on a project with a
                               natural-language intent, then save the graph
     inspect <file.aether> [path]
@@ -49,6 +51,7 @@ fn main() {
         Some("--help") | Some("-h") => println!("{USAGE}"),
         Some("--gui") => launch_gui_or_fallback(),
         Some("analyze") => report(project::analyze(&args[1..])),
+        Some("search") => report(project::search(&args[1..])),
         Some("forge") => {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             report(rt.block_on(project::forge(&args[1..])));
