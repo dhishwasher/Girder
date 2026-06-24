@@ -92,8 +92,11 @@ impl SemanticGraph {
             })
             .collect();
 
+        // Similarity is symmetric — add both directions so a query from either
+        // node sees the relationship (neighbors() only walks outgoing edges).
         for (a, b, score) in &pairs {
             let _ = self.add_edge(*a, *b, Edge::with_weight(EdgeKind::SemanticSimilar, *score));
+            let _ = self.add_edge(*b, *a, Edge::with_weight(EdgeKind::SemanticSimilar, *score));
         }
         pairs.len()
     }

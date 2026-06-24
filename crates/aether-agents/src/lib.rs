@@ -72,4 +72,62 @@ mod tests {
             .collect();
         assert!(contained.contains(&NodeId::from_path("crate::math::multiply")));
     }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn refactorer_flags_a_semantic_duplicate() {
+        use crate::agents::{Agent, AgentResult, RefactorerAgent};
+        use aether_graph::Node;
+
+        // Two near-identical functions already in the graph.
+        let graph = Arc::new(Mutex::new(SemanticGraph::new()));
+        {
+            let mut g = graph.lock().unwrap();
+            g.upsert_node(
+                Node::new(
+                    NodeKind::Function,
+                    "hash_password",
+                    "crate::auth::hash_password",
+                )
+                .with_source(
+                    "fn hash_password(password: String) -> String { compute_hash(password) }",
+                ),
+            );
+            g.upsert_node(
+                Node::new(
+                    NodeKind::Function,
+                    "hash_password_v2",
+                    "crate::auth::hash_password_v2",
+                )
+                .with_source(
+                    "fn hash_password_v2(password: String) -> String { compute_hash(password) }",
+                ),
+            );
+        }
+
+        let ctx = Arc::new(SwarmContext::new(
+            aether_ai::default_router(),
+            graph.clone(),
+            "crate::auth",
+            "src/auth.rs",
+        ));
+
+        // Tell the Refactorer the v2 function just landed.
+        let msg = SwarmMessage::new(
+            Role::Coder,
+            MsgKind::CodeReady {
+                module: "crate::auth".to_string(),
+                name: "hash_password_v2".to_string(),
+                source:
+                    "fn hash_password_v2(password: String) -> String { compute_hash(password) }"
+                        .to_string(),
+            },
+        );
+        let result = RefactorerAgent.handle(&msg, &ctx).await;
+        assert!(matches!(result, AgentResult::Emit(_)));
+
+        let g = graph.lock().unwrap();
+        let v2 = g.find_by_path("crate::auth::hash_password_v2").unwrap();
+        assert_eq!(v2.attr("duplicate_candidates"), Some("1"));
+        assert_eq!(v2.attr("duplicate_of"), Some("crate::auth::hash_password"));
+    }
 }

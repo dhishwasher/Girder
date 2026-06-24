@@ -13,7 +13,9 @@ use async_trait::async_trait;
 
 /// Default model — the most capable Claude model (per the Anthropic API guidance).
 const DEFAULT_MODEL: &str = "claude-opus-4-8";
+#[cfg(feature = "live-providers")]
 const ENDPOINT: &str = "https://api.anthropic.com/v1/messages";
+#[cfg(feature = "live-providers")]
 const API_VERSION: &str = "2023-06-01";
 
 pub struct AnthropicProvider {
