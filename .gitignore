@@ -1,4 +1,7 @@
 /target
 **/*.rs.bk
-*.aether.bak
 .DS_Store
+# Generated project graphs (the .aether format is real output, not source)
+project.aether
+*.aetherb
+*.aether.bak

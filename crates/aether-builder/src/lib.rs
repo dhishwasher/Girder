@@ -99,6 +99,14 @@ fn main() {
     }
 
     #[test]
+    fn module_paths_are_directory_aware() {
+        assert_eq!(module_path_for("src/math.rs"), "crate::math");
+        assert_eq!(module_path_for("src/net/client.rs"), "crate::net::client");
+        assert_eq!(module_path_for("app/main.py"), "crate::app::main");
+        assert_eq!(module_path_for("lib.rs"), "crate::lib");
+    }
+
+    #[test]
     fn resolves_calls_across_files() {
         // `multiply` is defined in math.rs; `compute` in app.rs calls it.
         // Cross-file resolution must link compute -> multiply.
@@ -132,9 +140,9 @@ fn main() {
         let mut graph = SemanticGraph::new();
         let mut builder = GraphBuilder::new();
         builder.load_file(&mut graph, "app/main.py", py);
-        assert!(graph.find_by_path("crate::main::greet").is_some());
-        let greet = NodeId::from_path("crate::main::greet");
-        let hello = NodeId::from_path("crate::main::hello");
+        assert!(graph.find_by_path("crate::app::main::greet").is_some());
+        let greet = NodeId::from_path("crate::app::main::greet");
+        let hello = NodeId::from_path("crate::app::main::hello");
         let calls: Vec<_> = graph
             .neighbors(greet, Some(EdgeKind::Calls))
             .into_iter()

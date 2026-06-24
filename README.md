@@ -18,7 +18,31 @@ cargo run -p aether-app
 cargo test --workspace
 ```
 
-`cargo run -p aether-app` walks the entire pipeline over stdout:
+### Use it on a real project
+
+AetherForge is also a CLI that operates on actual directories:
+
+```bash
+# Build the semantic graph from a project and save it as <dir>/project.aether:
+cargo run -p aether-app -- analyze sample-project
+
+# Inspect a saved graph and a node's impact set:
+cargo run -p aether-app -- inspect sample-project/project.aether crate::lib::add
+
+# Dispatch the agent swarm on a project with a natural-language intent:
+cargo run -p aether-app -- forge sample-project "add a subtract function"
+
+# Full help:
+cargo run -p aether-app -- --help
+```
+
+`analyze`/`forge` walk every `.rs`/`.py` file (skipping `target`, `.git`, …),
+build the graph with directory-aware module paths, resolve calls across files,
+and persist the `.aether` graph.
+
+### The pipeline demo
+
+`cargo run -p aether-app` (no args) walks the entire pipeline over stdout:
 
 1. **Builds a semantic graph** from source with tree-sitter (the graph is the
    source of truth; text is a projection).

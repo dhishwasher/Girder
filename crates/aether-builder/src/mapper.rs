@@ -36,14 +36,25 @@ impl BuildOutput {
     }
 }
 
-/// Derive a module path from a file path: `src/math.rs` -> `crate::math`.
+/// Derive a module path from a (relative) file path, directory-aware so files
+/// in different folders don't collide:
+///   `src/math.rs`       -> `crate::math`
+///   `src/net/client.rs` -> `crate::net::client`
+///   `app/main.py`       -> `crate::app::main`
+/// A leading `src/` (or `./`) is dropped; remaining path segments become `::`.
 pub fn module_path_for(file: &str) -> String {
-    let stem = file
-        .rsplit('/')
-        .next()
-        .and_then(|f| f.split('.').next())
-        .unwrap_or("root");
-    format!("crate::{stem}")
+    let no_ext = file.rsplit_once('.').map(|(head, _)| head).unwrap_or(file);
+    let mut parts: Vec<&str> = no_ext
+        .split(['/', '\\'])
+        .filter(|p| !p.is_empty() && *p != ".")
+        .collect();
+    if parts.first() == Some(&"src") {
+        parts.remove(0);
+    }
+    if parts.is_empty() {
+        return "crate".to_string();
+    }
+    format!("crate::{}", parts.join("::"))
 }
 
 /// Extract a [`BuildOutput`] from a parsed tree.
