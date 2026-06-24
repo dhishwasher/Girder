@@ -15,6 +15,10 @@ path = "src/main.rs"
 # Enable the real egui/wgpu window with `--features gui`.
 default = []
 gui = ["dep:eframe", "dep:egui"]
+# Opt in to the real HTTP-backed Anthropic provider. With this enabled and
+# ANTHROPIC_API_KEY set, the swarm/router calls Claude instead of the offline
+# mock. Example: `cargo run -p aether-app --features live-providers -- forge .`
+live-providers = ["aether-ai/live-providers"]
 
 [dependencies]
 aether-graph = { workspace = true }

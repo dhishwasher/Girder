@@ -6,14 +6,20 @@ license.workspace = true
 
 [features]
 # Off by default so the workspace builds and the demo runs with no network /
-# API keys. Turning this on compiles the real HTTP-backed providers.
+# API keys. Turning this on compiles the real HTTP-backed Anthropic provider.
 default = []
-live-providers = []
+live-providers = ["dep:reqwest", "dep:serde_json"]
 
 [dependencies]
 async-trait = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
+# Live HTTP client (rustls so there's no OpenSSL system dependency).
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "rustls-tls",
+], optional = true }
+serde_json = { version = "1", optional = true }
 
 [dev-dependencies]
 tokio = { workspace = true }

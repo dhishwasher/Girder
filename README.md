@@ -89,10 +89,18 @@ and a time-travel debugger timeline with branch controls.
 ## Local-first AI
 
 The default provider is a deterministic, offline `MockProvider`, so everything
-runs with no network and no API key. Real providers (Anthropic Claude, OpenAI,
-Gemini, xAI Grok, local Ollama) are compile-clean extension points behind the
-`live-providers` feature; the `Router` prefers them when keys are present and
-falls back to the mock otherwise.
+runs with no network and no API key. The **Anthropic Claude** provider is fully
+implemented (raw HTTPS to the Messages API, default model `claude-opus-4-8`) and
+activates with the `live-providers` feature:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+cargo run -p aether-app --features live-providers -- forge sample-project "add a divide function"
+```
+
+The `Router` prefers Claude when the key is present and falls back to the mock
+otherwise. OpenAI, Gemini, xAI Grok, and local Ollama remain compile-clean
+extension points behind the same feature.
 
 ## Status
 
