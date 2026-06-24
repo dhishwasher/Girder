@@ -1,0 +1,19 @@
+[package]
+name = "aether-ai"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+# Off by default so the workspace builds and the demo runs with no network /
+# API keys. Turning this on compiles the real HTTP-backed providers.
+default = []
+live-providers = []
+
+[dependencies]
+async-trait = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

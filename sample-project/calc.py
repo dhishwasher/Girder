@@ -1,0 +1,17 @@
+"""Sample Python module — demonstrates AetherForge's multi-language graph."""
+
+
+def greet(name):
+    return hello(name)
+
+
+def hello(name):
+    return "hello " + name
+
+
+class Calculator:
+    total = 0
+
+    def add(self, value):
+        self.total = self.total + value
+        return self.total

@@ -1,0 +1,30 @@
+[package]
+name = "aether-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "aetherforge"
+path = "src/main.rs"
+
+[features]
+# GUI is OFF by default so `cargo build/run` works in headless/CI environments
+# without a display, GPU, or windowing system libraries. The default binary runs
+# the `--headless` smoke demo, which exercises every subsystem over stdout.
+# Enable the real egui/wgpu window with `--features gui`.
+default = []
+gui = ["dep:eframe", "dep:egui"]
+
+[dependencies]
+aether-graph = { workspace = true }
+aether-builder = { workspace = true }
+aether-ai = { workspace = true }
+aether-agents = { workspace = true }
+aether-debugger = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+eframe = { workspace = true, optional = true }
+egui = { workspace = true, optional = true }
