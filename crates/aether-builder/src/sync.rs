@@ -1,0 +1,266 @@
+//! Keep the semantic graph in sync with source edits.
+//!
+//! The [`GraphBuilder`] owns one [`IncrementalParser`] per open file and the set
+//! of node ids each file currently contributes. On every edit it incrementally
+//! reparses, re-extracts, and *diffs* the result into the graph: new/changed
+//! nodes are upserted, vanished nodes are removed, and edges are rebuilt for the
+//! file. This is the machinery behind bidirectional editor⇄graph sync.
+
+use crate::mapper::{extract, BuildOutput, CallRef, InheritRef};
+use crate::parser::{IncrementalParser, Lang};
+use aether_graph::{Edge, EdgeKind, NodeId, NodeKind, SemanticGraph};
+use std::collections::{HashMap, HashSet};
+use tree_sitter::{InputEdit, Point};
+
+/// Per-file parsing state.
+struct FileState {
+    parser: IncrementalParser,
+    source: String,
+    /// Node ids this file currently contributes to the graph.
+    owned: HashSet<NodeId>,
+    /// Unresolved call references found in this file, for the project resolver.
+    calls: Vec<CallRef>,
+    /// Unresolved inheritance references found in this file.
+    inherits: Vec<InheritRef>,
+}
+
+/// The module path that owns a node, derived from its full path:
+/// `crate::math::add` -> `crate::math`.
+fn module_of(path: &str) -> String {
+    match path.rfind("::") {
+        Some(i) => path[..i].to_string(),
+        None => path.to_string(),
+    }
+}
+
+/// Incrementally maps source files into a [`SemanticGraph`].
+#[derive(Default)]
+pub struct GraphBuilder {
+    files: HashMap<String, FileState>,
+}
+
+impl GraphBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Initial load of a file. Full parse + extract + insert.
+    pub fn load_file(&mut self, graph: &mut SemanticGraph, file: &str, source: &str) {
+        let Some(lang) = Lang::from_path(file) else {
+            return;
+        };
+        let mut parser = IncrementalParser::new(lang);
+        let tree = parser.parse(source);
+        let out = extract(&tree, source, file, lang);
+        let owned = self.apply(graph, file, &out, &HashSet::new());
+        self.files.insert(
+            file.to_string(),
+            FileState {
+                parser,
+                source: source.to_string(),
+                owned,
+                calls: out.calls.clone(),
+                inherits: out.inherits.clone(),
+            },
+        );
+        self.resolve_calls(graph);
+    }
+
+    /// Re-sync a file after its full text changed (e.g. the editor buffer).
+    /// Uses tree-sitter incremental reparse seeded with a coarse whole-buffer
+    /// edit, then diffs the freshly-extracted nodes against what the file owned.
+    pub fn update_file(&mut self, graph: &mut SemanticGraph, file: &str, new_source: &str) {
+        let Some(lang) = Lang::from_path(file) else {
+            return;
+        };
+        let prev_owned = self
+            .files
+            .get(file)
+            .map(|s| s.owned.clone())
+            .unwrap_or_default();
+
+        let entry = self
+            .files
+            .entry(file.to_string())
+            .or_insert_with(|| FileState {
+                parser: IncrementalParser::new(lang),
+                source: String::new(),
+                owned: HashSet::new(),
+                calls: Vec::new(),
+                inherits: Vec::new(),
+            });
+
+        // Inform tree-sitter where the edit happened so it reparses incrementally.
+        let edit = whole_buffer_edit(&entry.source, new_source);
+        entry.parser.apply_edit(&edit);
+        let tree = entry.parser.reparse(new_source);
+        entry.source = new_source.to_string();
+
+        let out = extract(&tree, new_source, file, lang);
+        let new_owned = self.apply(graph, file, &out, &prev_owned);
+        if let Some(state) = self.files.get_mut(file) {
+            state.owned = new_owned;
+            state.calls = out.calls.clone();
+            state.inherits = out.inherits.clone();
+        }
+        self.resolve_calls(graph);
+    }
+
+    /// Project-wide call resolution. Rebuilds **all** `Calls` edges from the
+    /// accumulated unresolved references against a whole-graph symbol index, so a
+    /// call links to its callee even when the callee lives in another file. When
+    /// a name is ambiguous, a same-module definition wins; otherwise a unique
+    /// global match is used, and truly ambiguous names are left unlinked.
+    pub fn resolve_calls(&self, graph: &mut SemanticGraph) {
+        graph.clear_edges_of_kind(EdgeKind::Calls);
+
+        // name -> [(owning module, function id)]
+        let mut by_name: HashMap<String, Vec<(String, NodeId)>> = HashMap::new();
+        for n in graph.query_by_kind(NodeKind::Function) {
+            by_name
+                .entry(n.name.clone())
+                .or_default()
+                .push((module_of(&n.path), n.id));
+        }
+
+        let mut added: HashSet<(NodeId, NodeId)> = HashSet::new();
+        for state in self.files.values() {
+            for call in &state.calls {
+                let caller_module = match graph.get(call.caller) {
+                    Some(node) => module_of(&node.path),
+                    None => continue,
+                };
+                let Some(candidates) = by_name.get(&call.callee) else {
+                    continue;
+                };
+                let chosen = candidates.iter().find(|(m, _)| *m == caller_module).or(
+                    if candidates.len() == 1 {
+                        candidates.first()
+                    } else {
+                        None
+                    },
+                );
+                if let Some((_, callee_id)) = chosen {
+                    if *callee_id != call.caller && added.insert((call.caller, *callee_id)) {
+                        let _ = graph.add_edge(call.caller, *callee_id, Edge::new(EdgeKind::Calls));
+                    }
+                }
+            }
+        }
+
+        self.resolve_inherits(graph);
+    }
+
+    /// Project-wide inheritance resolution. Rebuilds **all** `Inherits` edges
+    /// from accumulated references against a whole-graph *type* index, so a
+    /// Python subclass or Rust trait impl links to its base even across files.
+    /// Same-module definitions win ties; otherwise a unique global match is used.
+    fn resolve_inherits(&self, graph: &mut SemanticGraph) {
+        graph.clear_edges_of_kind(EdgeKind::Inherits);
+
+        // name -> [(owning module, type id)]
+        let mut by_type: HashMap<String, Vec<(String, NodeId)>> = HashMap::new();
+        for n in graph.query_by_kind(NodeKind::Type) {
+            by_type
+                .entry(n.name.clone())
+                .or_default()
+                .push((module_of(&n.path), n.id));
+        }
+
+        let mut added: HashSet<(NodeId, NodeId)> = HashSet::new();
+        for state in self.files.values() {
+            for inh in &state.inherits {
+                let sub_module = match graph.get(inh.sub) {
+                    Some(node) => module_of(&node.path),
+                    None => continue,
+                };
+                let Some(candidates) = by_type.get(&inh.base) else {
+                    continue;
+                };
+                let chosen = candidates.iter().find(|(m, _)| *m == sub_module).or(
+                    if candidates.len() == 1 {
+                        candidates.first()
+                    } else {
+                        None
+                    },
+                );
+                if let Some((_, base_id)) = chosen {
+                    if *base_id != inh.sub && added.insert((inh.sub, *base_id)) {
+                        let _ = graph.add_edge(inh.sub, *base_id, Edge::new(EdgeKind::Inherits));
+                    }
+                }
+            }
+        }
+    }
+
+    /// Upsert all nodes/edges from `out`, then remove any previously-owned node
+    /// that is no longer present. Returns the new owned-id set.
+    fn apply(
+        &self,
+        graph: &mut SemanticGraph,
+        _file: &str,
+        out: &BuildOutput,
+        prev_owned: &HashSet<NodeId>,
+    ) -> HashSet<NodeId> {
+        let new_owned: HashSet<NodeId> = out.node_ids().into_iter().collect();
+
+        for node in &out.nodes {
+            graph.upsert_node(node.clone());
+        }
+        for (from, to, edge) in &out.edges {
+            // These are Contains edges (module->fn/type, type->field); both
+            // endpoints were just upserted. Calls are resolved project-wide later.
+            let _ = graph.add_edge(*from, *to, edge.clone());
+        }
+
+        // Remove nodes that this file used to own but no longer does (deletions).
+        for stale in prev_owned.difference(&new_owned) {
+            graph.remove_node(*stale);
+        }
+        new_owned
+    }
+
+    /// The current text projection of a file, if loaded.
+    pub fn source_of(&self, file: &str) -> Option<&str> {
+        self.files.get(file).map(|s| s.source.as_str())
+    }
+}
+
+/// Build a conservative [`InputEdit`] describing "the whole buffer changed".
+///
+/// A production editor would derive a minimal edit from the keystroke; for the
+/// prototype we hand tree-sitter the changed byte range from the start of the
+/// first difference, which still lets it reuse the unchanged prefix's subtree.
+fn whole_buffer_edit(old: &str, new: &str) -> InputEdit {
+    let common = old
+        .bytes()
+        .zip(new.bytes())
+        .take_while(|(a, b)| a == b)
+        .count();
+    let start_point = byte_to_point(old, common);
+    InputEdit {
+        start_byte: common,
+        old_end_byte: old.len(),
+        new_end_byte: new.len(),
+        start_position: start_point,
+        old_end_position: byte_to_point(old, old.len()),
+        new_end_position: byte_to_point(new, new.len()),
+    }
+}
+
+fn byte_to_point(text: &str, byte: usize) -> Point {
+    let mut row = 0;
+    let mut col = 0;
+    for (i, c) in text.char_indices() {
+        if i >= byte {
+            break;
+        }
+        if c == '\n' {
+            row += 1;
+            col = 0;
+        } else {
+            col += c.len_utf8();
+        }
+    }
+    Point::new(row, col)
+}

@@ -1,0 +1,12 @@
+[package]
+name = "aether-debugger"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+aether-ai = { workspace = true }
+serde = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

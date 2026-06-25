@@ -1,0 +1,12 @@
+[package]
+name = "aether-builder"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+aether-graph = { workspace = true }
+tree-sitter = { workspace = true }
+tree-sitter-rust = { workspace = true }
+tree-sitter-python = { workspace = true }
+thiserror = { workspace = true }
