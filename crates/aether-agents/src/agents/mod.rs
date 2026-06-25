@@ -16,7 +16,7 @@ mod tester;
 
 pub use coder::CoderAgent;
 pub use documenter::DocumenterAgent;
-pub use optimizer::OptimizerAgent;
+pub use optimizer::{HotTarget, OptimizerAgent};
 pub use planner::PlannerAgent;
 pub use refactorer::RefactorerAgent;
 pub use security::SecurityAuditorAgent;

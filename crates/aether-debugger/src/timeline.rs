@@ -5,7 +5,7 @@
 //! Branches form a tree, enabling side-by-side "what-if" exploration and
 //! divergence analysis — the backbone of AI-guided root-cause debugging.
 
-use crate::interp::{Interpreter, Intervention};
+use crate::interp::{CallCounts, Interpreter, Intervention};
 use crate::lang::{Program, Value};
 use crate::trace::Trace;
 use aether_ai::{Prompt, Router, TaskClass};
@@ -18,6 +18,8 @@ pub struct Branch {
     /// Where this branch was forked from: `(parent_branch_id, step_index)`.
     pub origin: Option<(usize, usize)>,
     pub trace: Trace,
+    /// Per-function execution counts for this branch's run (hot-path profile).
+    pub call_counts: CallCounts,
 }
 
 /// A tree of execution branches over one program.
@@ -29,12 +31,13 @@ pub struct Timeline {
 impl Timeline {
     /// Record the baseline run as branch 0.
     pub fn record(program: Program) -> Self {
-        let trace = Interpreter::new(&program).run();
+        let (trace, call_counts) = Interpreter::new(&program).run_with_counts(None);
         let root = Branch {
             id: 0,
             label: "main".to_string(),
             origin: None,
             trace,
+            call_counts,
         };
         Timeline {
             program,
@@ -65,15 +68,33 @@ impl Timeline {
             var: var.to_string(),
             value,
         };
-        let trace = Interpreter::new(&self.program).run_with(Some(&intervention));
+        let (trace, call_counts) =
+            Interpreter::new(&self.program).run_with_counts(Some(&intervention));
         let id = self.branches.len();
         self.branches.push(Branch {
             id,
             label: label.to_string(),
             origin: Some((from_branch, at_step)),
             trace,
+            call_counts,
         });
         id
+    }
+
+    /// Hot-path profile for a branch: functions ranked by execution count,
+    /// busiest first (ties broken by name for determinism). This is the raw
+    /// signal the Optimizer mines to pick what to optimize.
+    pub fn hot_functions(&self, branch: usize) -> Vec<(String, usize)> {
+        let Some(b) = self.branches.get(branch) else {
+            return Vec::new();
+        };
+        let mut ranked: Vec<(String, usize)> = b
+            .call_counts
+            .iter()
+            .map(|(name, count)| (name.clone(), *count))
+            .collect();
+        ranked.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        ranked
     }
 
     /// First step index at which two branches' environments differ. This is the

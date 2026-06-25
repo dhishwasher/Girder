@@ -130,4 +130,41 @@ mod tests {
         assert_eq!(v2.attr("duplicate_candidates"), Some("1"));
         assert_eq!(v2.attr("duplicate_of"), Some("crate::auth::hash_password"));
     }
+
+    #[test]
+    fn optimizer_consumes_a_hot_path_profile() {
+        use crate::agents::{HotTarget, OptimizerAgent};
+        use aether_graph::{Node, NodeKind};
+
+        // A profile as the debugger's Timeline::hot_functions would produce it.
+        let profile = vec![("inner".to_string(), 5), ("outer".to_string(), 1)];
+
+        // Ranking: hottest first, with a stronger recommendation.
+        let ranked = OptimizerAgent::rank_hot_paths(&profile);
+        assert_eq!(ranked[0].function, "inner");
+        assert_eq!(ranked[0].calls, 5);
+        assert!(ranked[0].recommendation.contains("hottest"));
+        assert_eq!(
+            ranked[1],
+            HotTarget {
+                function: "outer".to_string(),
+                calls: 1,
+                recommendation: "called 1×".to_string(),
+            }
+        );
+
+        // Annotation lands on matching graph function nodes.
+        let mut g = SemanticGraph::new();
+        g.upsert_node(Node::new(NodeKind::Function, "inner", "crate::m::inner"));
+        g.upsert_node(Node::new(NodeKind::Function, "outer", "crate::m::outer"));
+        let annotated = OptimizerAgent::annotate_graph(&mut g, &profile);
+        assert_eq!(annotated.len(), 2);
+
+        let inner = g.find_by_path("crate::m::inner").unwrap();
+        assert_eq!(inner.attr("hot_calls"), Some("5"));
+        assert_eq!(inner.attr("optimize_priority"), Some("hot"));
+        let outer = g.find_by_path("crate::m::outer").unwrap();
+        assert_eq!(outer.attr("hot_calls"), Some("1"));
+        assert_eq!(outer.attr("optimize_priority"), None);
+    }
 }

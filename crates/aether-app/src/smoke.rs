@@ -166,5 +166,16 @@ pub async fn run() {
         println!("      AI root-cause: {}", rc.lines().next().unwrap_or(""));
     }
 
+    // The debugger feeds the Optimizer: mine the run's hot-path profile and let
+    // the Optimizer rank what to optimize.
+    println!("\n[5] Optimizer mines the debugger's hot-path profile:");
+    let profile = timeline.hot_functions(0);
+    for target in aether_agents::agents::OptimizerAgent::rank_hot_paths(&profile) {
+        println!(
+            "      [Optimizer] {} — {}",
+            target.function, target.recommendation
+        );
+    }
+
     println!("\n=== demo complete ===\n");
 }

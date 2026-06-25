@@ -72,6 +72,31 @@ mod tests {
         assert_eq!(tl.first_divergence(0, b), Some(2));
     }
 
+    #[test]
+    fn hot_functions_rank_by_execution_count() {
+        // `inc` is called twice, `dbl` once.
+        let program = Program::new()
+            .function(Function {
+                name: "inc".to_string(),
+                params: vec!["x".to_string()],
+                body: vec![],
+                ret: bin(Op::Add, var("x"), num(1)),
+            })
+            .function(Function {
+                name: "dbl".to_string(),
+                params: vec!["x".to_string()],
+                body: vec![],
+                ret: bin(Op::Mul, var("x"), num(2)),
+            })
+            .stmt("a", call("inc", vec![num(1)]))
+            .stmt("b", call("inc", vec![var("a")]))
+            .stmt("c", call("dbl", vec![var("b")]));
+
+        let tl = Timeline::record(program);
+        let hot = tl.hot_functions(0);
+        assert_eq!(hot, vec![("inc".to_string(), 2), ("dbl".to_string(), 1)]);
+    }
+
     #[tokio::test(flavor = "current_thread")]
     async fn ai_root_cause_returns_an_explanation() {
         let tl = Timeline::record(buggy_demo_program());

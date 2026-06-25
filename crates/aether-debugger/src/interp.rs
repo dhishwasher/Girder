@@ -7,6 +7,11 @@
 
 use crate::lang::{Expr, Op, Program, Value};
 use crate::trace::{Env, Step, Trace};
+use std::collections::BTreeMap;
+
+/// How many times each function was *executed* during a run — the raw hot-path
+/// signal the Optimizer mines (`function name -> invocation count`).
+pub type CallCounts = BTreeMap<String, usize>;
 
 /// An optional what-if override applied during a run.
 #[derive(Debug, Clone)]
@@ -33,11 +38,19 @@ impl<'a> Interpreter<'a> {
 
     /// Run `main`, optionally applying a single [`Intervention`].
     pub fn run_with(&self, intervention: Option<&Intervention>) -> Trace {
+        self.run_with_counts(intervention).0
+    }
+
+    /// Run `main` and also return the per-function execution counts (hot-path
+    /// profile). Counts reflect what actually executed, so an intervention that
+    /// changes a branch changes the profile too.
+    pub fn run_with_counts(&self, intervention: Option<&Intervention>) -> (Trace, CallCounts) {
         let mut env: Env = Env::new();
         let mut trace = Trace::default();
+        let mut counts: CallCounts = CallCounts::new();
 
         for (i, stmt) in self.program.main.iter().enumerate() {
-            let mut value = self.eval(&stmt.expr, &env);
+            let mut value = self.eval(&stmt.expr, &env, &mut counts);
             let mut intervened = false;
 
             // Apply a what-if to this very binding if it targets this step+var.
@@ -64,41 +77,43 @@ impl<'a> Interpreter<'a> {
                 intervened,
             });
         }
-        trace
+        (trace, counts)
     }
 
-    /// Evaluate an expression in `env`. Function calls recurse with a fresh
-    /// scope; these inner steps are not recorded (top-level stepping only).
-    fn eval(&self, expr: &Expr, env: &Env) -> Value {
+    /// Evaluate an expression in `env`, tallying each executed call into `counts`.
+    /// Function calls recurse with a fresh scope; these inner steps are not
+    /// recorded (top-level stepping only) but their calls *are* counted.
+    fn eval(&self, expr: &Expr, env: &Env, counts: &mut CallCounts) -> Value {
         match expr {
             Expr::Num(n) => *n,
             Expr::Var(name) => env.get(name).copied().unwrap_or(0),
             Expr::Bin(op, a, b) => {
-                let x = self.eval(a, env);
-                let y = self.eval(b, env);
+                let x = self.eval(a, env, counts);
+                let y = self.eval(b, env, counts);
                 apply_op(*op, x, y)
             }
             Expr::If(cond, then, els) => {
-                if self.eval(cond, env) != 0 {
-                    self.eval(then, env)
+                if self.eval(cond, env, counts) != 0 {
+                    self.eval(then, env, counts)
                 } else {
-                    self.eval(els, env)
+                    self.eval(els, env, counts)
                 }
             }
             Expr::Call(name, args) => {
                 let Some(func) = self.program.funcs.get(name) else {
                     return 0;
                 };
+                *counts.entry(name.clone()).or_insert(0) += 1;
                 let mut scope: Env = Env::new();
                 for (param, arg) in func.params.iter().zip(args) {
-                    let v = self.eval(arg, env);
+                    let v = self.eval(arg, env, counts);
                     scope.insert(param.clone(), v);
                 }
                 for stmt in &func.body {
-                    let v = self.eval(&stmt.expr, &scope);
+                    let v = self.eval(&stmt.expr, &scope, counts);
                     scope.insert(stmt.var.clone(), v);
                 }
-                self.eval(&func.ret, &scope)
+                self.eval(&func.ret, &scope, counts)
             }
         }
     }
