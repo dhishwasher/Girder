@@ -68,18 +68,81 @@ impl SemanticGraph {
         report
     }
 
-    /// Materialize predicted-impact edges from a fresh analysis. The Optimizer
-    /// and Refactorer agents call this so the impact relationships become
+    /// Materialize predicted-impact edges from a fresh analysis. The Coder /
+    /// Optimizer / Refactorer agents call this so the impact relationships become
     /// first-class, queryable graph edges (with decaying confidence by distance).
-    pub fn materialize_impact_edges(&mut self, origin: NodeId) {
+    ///
+    /// Idempotent: an `Impacts` edge is only added where one doesn't already
+    /// exist from `origin`, so calling it repeatedly (e.g. after each edit) won't
+    /// accumulate duplicates. Returns the number of new edges added.
+    pub fn materialize_impact_edges(&mut self, origin: NodeId) -> usize {
+        use std::collections::HashSet;
+        let existing: HashSet<NodeId> = self
+            .neighbors(origin, Some(EdgeKind::Impacts))
+            .into_iter()
+            .map(|n| n.id)
+            .collect();
+
         let report = self.impact_of(origin);
+        let mut added = 0;
         for (target, dist) in report.affected {
+            if existing.contains(&target) {
+                continue;
+            }
             let weight = (1.0 / (dist as f32 + 1.0)).max(0.05);
-            let _ = self.add_edge(
-                origin,
-                target,
-                crate::Edge::with_weight(EdgeKind::Impacts, weight),
-            );
+            if self
+                .add_edge(
+                    origin,
+                    target,
+                    crate::Edge::with_weight(EdgeKind::Impacts, weight),
+                )
+                .is_ok()
+            {
+                added += 1;
+            }
         }
+        added
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Edge, EdgeKind, Node, NodeKind, SemanticGraph};
+
+    #[test]
+    fn materialize_impact_edges_is_queryable_and_idempotent() {
+        // sum_list calls add; changing add impacts sum_list.
+        let mut g = SemanticGraph::new();
+        let add = g.upsert_node(Node::new(NodeKind::Function, "add", "crate::m::add"));
+        let sum = g.upsert_node(Node::new(NodeKind::Function, "sum", "crate::m::sum"));
+        g.add_edge(sum, add, Edge::new(EdgeKind::Calls)).unwrap();
+
+        // Prediction becomes a first-class, re-queryable Impacts edge.
+        let added = g.materialize_impact_edges(add);
+        assert_eq!(added, 1);
+        let impacted: Vec<_> = g
+            .neighbors(add, Some(EdgeKind::Impacts))
+            .into_iter()
+            .map(|n| n.id)
+            .collect();
+        assert_eq!(impacted, vec![sum]);
+
+        // Calling again adds nothing (idempotent — no duplicate edges).
+        assert_eq!(g.materialize_impact_edges(add), 0);
+        assert_eq!(g.neighbors(add, Some(EdgeKind::Impacts)).len(), 1);
+    }
+
+    #[test]
+    fn ranked_orders_nearest_first() {
+        // a <- b <- c (calls), so changing a impacts b (1) then c (2).
+        let mut g = SemanticGraph::new();
+        let a = g.upsert_node(Node::new(NodeKind::Function, "a", "crate::m::a"));
+        let b = g.upsert_node(Node::new(NodeKind::Function, "b", "crate::m::b"));
+        let c = g.upsert_node(Node::new(NodeKind::Function, "c", "crate::m::c"));
+        g.add_edge(b, a, Edge::new(EdgeKind::Calls)).unwrap();
+        g.add_edge(c, b, Edge::new(EdgeKind::Calls)).unwrap();
+
+        let ranked = g.impact_of(a).ranked();
+        assert_eq!(ranked, vec![(b, 1), (c, 2)]);
     }
 }
