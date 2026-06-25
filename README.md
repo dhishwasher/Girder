@@ -83,12 +83,17 @@ Four resizable panels: a graph visualizer, a code-projection editor with
 tree-sitter highlighting that folds edits back into the graph, an agent console,
 and a time-travel debugger timeline with branch controls.
 
-> **Known limitation:** the `gui` feature currently fails to **compile on rustc
-> 1.94** because the transitive `winit` crate hits an upstream closure
-> type-inference regression (`E0282`) on that toolchain — before any AetherForge
-> UI code is reached. The UI is written against the egui 0.31 API and is expected
-> to build on a toolchain where `winit` compiles. **The default headless build,
-> all tests, and the `cargo run` demo are unaffected.**
+The `gui` feature **compiles and runs** on stable rustc 1.94.1 (the earlier
+`winit` `E0282` inference regression is resolved in the current `winit 0.30.13`).
+Rendering needs a GPU — or a software Vulkan adapter (Mesa **lavapipe**) plus the
+usual X11 libs (e.g. `libxkbcommon-x11`). If no surface can be created the binary
+logs the wgpu error and **falls back to the headless demo** automatically, so it
+never hard-fails. It was verified headlessly under `Xvfb` + lavapipe:
+
+![AetherForge GUI](docs/aetherforge-gui.png)
+
+> The **default headless build, all tests, and the `cargo run` demo require none
+> of this** — no GPU, display, or extra system libraries.
 
 ## Local-first AI
 

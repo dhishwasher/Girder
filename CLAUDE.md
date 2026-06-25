@@ -53,9 +53,13 @@ cargo run -p aether-app -- analyze sample-project
   network or API key. Remote providers are EXTENSION POINTs.
 - Mark unfinished depth with `// EXTENSION POINT` rather than leaving it implicit.
 
-## Known limitation
+## GUI notes
 
-The `gui` feature does **not compile on rustc 1.94** due to an upstream `winit`
-type-inference regression (`E0282`), independent of this code. CI and the
-default build deliberately do not build the GUI. The headless paths are the
-verification surface in restricted environments.
+The `gui` feature **compiles and runs** on stable rustc 1.94.1 (the old `winit`
+`E0282` regression is gone in `winit 0.30.13`) and is clippy-clean. Rendering
+needs a GPU or a software Vulkan adapter (Mesa **lavapipe**) plus X11 libs
+(e.g. `libxkbcommon-x11`); with no surface it logs the wgpu error and falls back
+to the headless demo. CI builds the default (headless) profile; the headless
+paths remain the verification surface in GPU-less environments. To run the GUI
+headlessly: `Xvfb` + lavapipe (`WGPU_BACKEND=vulkan`,
+`VK_ICD_FILENAMES=.../lvp_icd.json`).

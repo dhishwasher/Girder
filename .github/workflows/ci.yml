@@ -30,9 +30,6 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      # Default (headless) build only. The `gui` feature is intentionally not
-      # built in CI: it pulls winit, which currently fails to compile on recent
-      # rustc (see README "Known limitations").
       - name: Formatting
         run: cargo fmt --all --check
 
@@ -44,3 +41,9 @@ jobs:
 
       - name: Smoke demo runs
         run: cargo run -p aether-app -- demo
+
+      # Compile-only guard for the GUI so it can't silently regress. winit/wgpu
+      # dlopen their system libs at runtime, so no -dev packages are needed to
+      # type-check; actually *running* the window needs a GPU or software Vulkan.
+      - name: GUI compiles
+        run: cargo clippy -p aether-app --features gui
