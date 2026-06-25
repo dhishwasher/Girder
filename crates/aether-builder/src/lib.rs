@@ -107,6 +107,29 @@ fn main() {
     }
 
     #[test]
+    fn field_access_emits_dataflow_and_impact() {
+        let py = "class Calculator:\n    total = 0\n    def add(self, v):\n        self.total = self.total + v\n        return self.total\n";
+        let mut g = SemanticGraph::new();
+        let mut b = GraphBuilder::new();
+        b.load_file(&mut g, "src/calc.py", py);
+
+        let method = NodeId::from_path("crate::calc::Calculator::add");
+        let field = NodeId::from_path("crate::calc::Calculator::total");
+        // The method has a DataFlow edge to the field it touches.
+        let flows: Vec<_> = g
+            .neighbors(method, Some(EdgeKind::DataFlow))
+            .into_iter()
+            .map(|n| n.id)
+            .collect();
+        assert!(flows.contains(&field), "add should flow to total");
+        // Impact propagates through DataFlow: changing the field reaches the method.
+        assert!(
+            g.impact_of(field).affected.contains_key(&method),
+            "changing total should impact add"
+        );
+    }
+
+    #[test]
     fn methods_belong_to_their_type() {
         // Python class method.
         let py = "class Calculator:\n    def add(self, v):\n        return v\n";

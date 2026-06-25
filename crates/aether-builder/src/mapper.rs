@@ -84,7 +84,12 @@ pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput
 
     // Pass 1: collect definitions (functions, types, fields) + Contains edges.
     let root = tree.root_node();
-    collect_defs(root, source, file, lang, &module, module_id, &mut out);
+    let scope = Scope {
+        path: &module,
+        id: module_id,
+        ty: None,
+    };
+    collect_defs(root, source, file, lang, &scope, &mut out);
 
     // Pass 2: record every call site as an unresolved reference. Resolution to
     // a concrete callee happens project-wide in `sync`, enabling cross-file links.
@@ -132,18 +137,26 @@ fn is_type_kind(lang: Lang, kind: &str) -> bool {
     }
 }
 
-/// Recursively map definitions, carrying the **enclosing scope** so that methods
-/// belong to their type rather than the module: `scope_path`/`scope_id` is the
-/// current container (a module at top level, a type inside a class body or Rust
-/// `impl` block). A Python method `Calculator.add` becomes
-/// `crate::calc::Calculator::add`, `Contains`-ed by the class — not the module.
+/// The enclosing container while walking definitions. `path`/`id` name the
+/// container a new def is attached to (a module at top level, a type inside a
+/// class body or Rust `impl`). `ty` is the enclosing *type* path when we're
+/// inside a class/impl, so a method's `self.field` accesses can be resolved to
+/// field nodes and emitted as `DataFlow` edges.
+struct Scope<'a> {
+    path: &'a str,
+    id: NodeId,
+    ty: Option<&'a str>,
+}
+
+/// Recursively map definitions, carrying the [`Scope`] so methods belong to
+/// their type (`crate::calc::Calculator::add`, not `crate::calc::add`) and field
+/// accesses inside methods become `DataFlow` edges.
 fn collect_defs(
     node: TsNode,
     source: &str,
     file: &str,
     lang: Lang,
-    scope_path: &str,
-    scope_id: NodeId,
+    scope: &Scope,
     out: &mut BuildOutput,
 ) {
     let kind = node.kind();
@@ -151,7 +164,7 @@ fn collect_defs(
     if is_function_kind(lang, kind) {
         if let Some(name_node) = node.child_by_field_name("name") {
             let name = node_text(name_node, source).to_string();
-            let path = format!("{scope_path}::{name}");
+            let path = format!("{}::{name}", scope.path);
             let id = NodeId::from_path(&path);
             let mut n = Node::new(NodeKind::Function, &name, &path)
                 .with_language(lang.name())
@@ -160,9 +173,12 @@ fn collect_defs(
             n.span = span_of(node);
             out.nodes.push(n);
             out.edges
-                .push((scope_id, id, Edge::new(EdgeKind::Contains)));
-            // Recurse into the body with the same scope (nested functions).
-            recurse_children(node, source, file, lang, scope_path, scope_id, out);
+                .push((scope.id, id, Edge::new(EdgeKind::Contains)));
+            // A method's `self.field` accesses flow data between method and field.
+            if let Some(type_path) = scope.ty {
+                extract_field_flows(node, source, lang, id, type_path, out);
+            }
+            recurse_children(node, source, file, lang, scope, out);
         }
         return;
     }
@@ -170,7 +186,7 @@ fn collect_defs(
     if is_type_kind(lang, kind) {
         if let Some(name_node) = node.child_by_field_name("name") {
             let name = node_text(name_node, source).to_string();
-            let path = format!("{scope_path}::{name}");
+            let path = format!("{}::{name}", scope.path);
             let id = NodeId::from_path(&path);
             let mut n = Node::new(NodeKind::Type, &name, &path)
                 .with_language(lang.name())
@@ -179,11 +195,16 @@ fn collect_defs(
             n.span = span_of(node);
             out.nodes.push(n);
             out.edges
-                .push((scope_id, id, Edge::new(EdgeKind::Contains)));
+                .push((scope.id, id, Edge::new(EdgeKind::Contains)));
             extract_fields(node, source, file, lang, &path, id, out);
             extract_supertypes(node, source, lang, id, out);
             // Methods inside the type body are scoped to the type.
-            recurse_children(node, source, file, lang, &path, id, out);
+            let inner = Scope {
+                path: &path,
+                id,
+                ty: Some(&path),
+            };
+            recurse_children(node, source, file, lang, &inner, out);
         }
         return;
     }
@@ -193,14 +214,19 @@ fn collect_defs(
     if matches!(lang, Lang::Rust) && kind == "impl_item" {
         if let Some(type_node) = node.child_by_field_name("type") {
             let type_name = last_ident(node_text(type_node, source));
-            let type_path = format!("{scope_path}::{type_name}");
+            let type_path = format!("{}::{type_name}", scope.path);
             let type_id = NodeId::from_path(&type_path);
-            recurse_children(node, source, file, lang, &type_path, type_id, out);
+            let inner = Scope {
+                path: &type_path,
+                id: type_id,
+                ty: Some(&type_path),
+            };
+            recurse_children(node, source, file, lang, &inner, out);
             return;
         }
     }
 
-    recurse_children(node, source, file, lang, scope_path, scope_id, out);
+    recurse_children(node, source, file, lang, scope, out);
 }
 
 fn recurse_children(
@@ -208,13 +234,65 @@ fn recurse_children(
     source: &str,
     file: &str,
     lang: Lang,
-    scope_path: &str,
-    scope_id: NodeId,
+    scope: &Scope,
     out: &mut BuildOutput,
 ) {
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
-        collect_defs(child, source, file, lang, scope_path, scope_id, out);
+        collect_defs(child, source, file, lang, scope, out);
+    }
+}
+
+/// Emit `DataFlow` edges from a method to each `self.field` it touches, so impact
+/// flows through fields (changing a field reaches the methods that use it). The
+/// field node id is the enclosing type's path plus the accessed name; edges that
+/// reference a field the type never declared are simply never applied.
+fn extract_field_flows(
+    fn_node: TsNode,
+    source: &str,
+    lang: Lang,
+    fn_id: NodeId,
+    type_path: &str,
+    out: &mut BuildOutput,
+) {
+    use std::collections::HashSet;
+    let mut seen: HashSet<String> = HashSet::new();
+    let mut cursor = fn_node.walk();
+    for d in descendants(fn_node, &mut cursor) {
+        let field = match lang {
+            // Python `self.total` -> attribute(object: identifier "self", attribute: identifier)
+            Lang::Python if d.kind() == "attribute" => {
+                let obj = d.child_by_field_name("object");
+                let attr = d.child_by_field_name("attribute");
+                match (obj, attr) {
+                    (Some(o), Some(a)) if node_text(o, source) == "self" => {
+                        Some(node_text(a, source).to_string())
+                    }
+                    _ => None,
+                }
+            }
+            // Rust `self.total` -> field_expression(value: self, field: field_identifier)
+            Lang::Rust if d.kind() == "field_expression" => {
+                let val = d.child_by_field_name("value");
+                let fld = d.child_by_field_name("field");
+                match (val, fld) {
+                    (Some(v), Some(f)) if node_text(v, source) == "self" => {
+                        Some(node_text(f, source).to_string())
+                    }
+                    _ => None,
+                }
+            }
+            _ => None,
+        };
+        if let Some(name) = field {
+            if seen.insert(name.clone()) {
+                let field_id = NodeId::from_path(&format!("{type_path}::{name}"));
+                if field_id != fn_id {
+                    out.edges
+                        .push((fn_id, field_id, Edge::new(EdgeKind::DataFlow)));
+                }
+            }
+        }
     }
 }
 
