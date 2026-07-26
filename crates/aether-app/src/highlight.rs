@@ -19,9 +19,9 @@ fn color(kind: HlKind) -> Color32 {
 }
 
 /// Build a syntax-highlighted layout job for `source`.
-pub fn layout(source: &str, font: FontId) -> LayoutJob {
+pub fn layout(source: &str, language: Lang, font: FontId) -> LayoutJob {
     let mut job = LayoutJob::default();
-    let spans = spans(source, Lang::Rust);
+    let spans = spans(source, language);
 
     let mut cursor = 0usize;
     for span in spans {
