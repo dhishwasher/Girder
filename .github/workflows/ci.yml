@@ -39,6 +39,15 @@ jobs:
       - name: Tests
         run: cargo test --workspace
 
+      - name: Live provider feature compiles
+        run: cargo check -p aether-ai --features live-providers
+
+      - name: Install debugpy adapter
+        run: python3 -m pip install debugpy
+
+      - name: DAP debugpy integration test
+        run: cargo test -p aether-dap --test debugpy -- --ignored
+
       - name: Smoke demo runs
         run: cargo run -p aether-app -- demo
 

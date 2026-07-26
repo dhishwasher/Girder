@@ -8,6 +8,7 @@
 
 pub mod interp;
 pub mod lang;
+pub mod python_tracer;
 pub mod timeline;
 pub mod trace;
 
