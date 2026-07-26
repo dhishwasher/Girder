@@ -20,7 +20,8 @@ struct AetherFile {
     graph: StableDiGraph<crate::Node, crate::Edge>,
 }
 
-const MAGIC: &str = "AETHERFORGE";
+const MAGIC: &str = "BITCODE";
+const LEGACY_MAGIC: &str = "AETHERFORGE";
 const VERSION: u32 = 1;
 
 impl SemanticGraph {
@@ -39,9 +40,7 @@ impl SemanticGraph {
     pub fn from_ron(text: &str) -> Result<Self, GraphError> {
         let file: AetherFile =
             ron::from_str(text).map_err(|e| GraphError::Deserialize(e.to_string()))?;
-        if file.magic != MAGIC {
-            return Err(GraphError::Deserialize("bad magic".into()));
-        }
+        validate_header(&file)?;
         Ok(SemanticGraph::from_raw(file.graph))
     }
 
@@ -58,6 +57,7 @@ impl SemanticGraph {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, GraphError> {
         let file: AetherFile =
             bincode::deserialize(bytes).map_err(|e| GraphError::Deserialize(e.to_string()))?;
+        validate_header(&file)?;
         Ok(SemanticGraph::from_raw(file.graph))
     }
 
@@ -81,6 +81,19 @@ impl SemanticGraph {
             SemanticGraph::from_ron(&std::fs::read_to_string(path)?)
         }
     }
+}
+
+fn validate_header(file: &AetherFile) -> Result<(), GraphError> {
+    if file.magic != MAGIC && file.magic != LEGACY_MAGIC {
+        return Err(GraphError::Deserialize("bad magic".into()));
+    }
+    if file.version != VERSION {
+        return Err(GraphError::Deserialize(format!(
+            "unsupported graph version {}; expected {VERSION}",
+            file.version
+        )));
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -132,6 +145,22 @@ mod tests {
         let back = SemanticGraph::from_bytes(&bytes).unwrap();
         assert_eq!(back.node_count(), g.node_count());
         assert_eq!(back.edge_count(), g.edge_count());
+    }
+
+    #[test]
+    fn rejects_unknown_format_version() {
+        let text = fixture().to_ron().unwrap();
+        let incompatible = text.replacen("version: 1", "version: 999", 1);
+        let error = SemanticGraph::from_ron(&incompatible).unwrap_err();
+        assert!(error.to_string().contains("unsupported graph version"));
+    }
+
+    #[test]
+    fn accepts_legacy_magic_and_writes_bit_code_magic() {
+        let text = fixture().to_ron().unwrap();
+        assert!(text.contains("BITCODE"));
+        let legacy = text.replacen("BITCODE", "AETHERFORGE", 1);
+        assert!(SemanticGraph::from_ron(&legacy).is_ok());
     }
 
     #[test]

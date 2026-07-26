@@ -6,12 +6,11 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Stable, content-independent identifier for a node.
+/// Deterministic identifier for a semantic path.
 ///
-/// IDs are stable across edits (renames, body changes) so edges, agent
-/// references, and debugger traces survive re-parsing. The builder assigns IDs
-/// deterministically from a node's *semantic path* (e.g. `crate::math::add`),
-/// falling back to a monotonic counter for anonymous constructs.
+/// IDs are stable across reparses, body edits, and serialization as long as the
+/// semantic path stays the same. A semantic rename changes the path, produces a
+/// new `NodeId`, and must remap edges/references as part of the rename.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct NodeId(pub u64);
 

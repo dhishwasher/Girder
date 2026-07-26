@@ -1,6 +1,6 @@
 //! # aether-graph
 //!
-//! The **living semantic knowledge graph** that is AetherForge's single source
+//! The **living semantic knowledge graph** that is Bit Code's single source
 //! of truth. Nodes are code concepts (functions, types, modules, …); edges are
 //! semantic relationships (calls, inherits, dataflow, impact, …). Source text is
 //! a *projection* derived from nodes — never the other way around.
@@ -10,14 +10,20 @@
 //! app renders projections of it. Everything else in the workspace depends on
 //! this crate.
 
+mod diff;
 mod edge;
 mod impact;
+mod knowledge;
 mod node;
 mod query;
+mod reconcile;
 mod refactor;
 mod serialize;
 mod similarity;
 
+pub use diff::{GraphDiff, NodeChange};
+pub use knowledge::{parse_query, KnowledgeQuery, QueryResult};
+pub use reconcile::ReconcileReport;
 pub use refactor::RenameOutcome;
 
 pub use edge::{Edge, EdgeKind};
@@ -72,6 +78,25 @@ impl SemanticGraph {
         id
     }
 
+    /// Upsert a node parsed from a source projection while retaining metadata
+    /// owned by agents and other graph-native systems.
+    ///
+    /// Parser-owned attributes are deliberately replaced by the fresh parse so
+    /// stale syntax facts, such as a removed test annotation, do not survive.
+    pub fn upsert_projection_node(&mut self, mut node: Node) -> NodeId {
+        const PARSER_OWNED_ATTRIBUTES: &[&str] = &["is_test"];
+        if let Some(existing) = self.get(node.id) {
+            for (key, value) in &existing.attributes {
+                if !PARSER_OWNED_ATTRIBUTES.contains(&key.as_str())
+                    && !node.attributes.iter().any(|(current, _)| current == key)
+                {
+                    node.attributes.push((key.clone(), value.clone()));
+                }
+            }
+        }
+        self.upsert_node(node)
+    }
+
     /// Add a directed edge `from -> to`. Both nodes must already exist.
     pub fn add_edge(&mut self, from: NodeId, to: NodeId, edge: Edge) -> Result<(), GraphError> {
         let a = *self
@@ -79,6 +104,18 @@ impl SemanticGraph {
             .get(&from)
             .ok_or(GraphError::NodeNotFound(from))?;
         let b = *self.index.get(&to).ok_or(GraphError::NodeNotFound(to))?;
+        {
+            use petgraph::visit::EdgeRef;
+            if let Some(existing) = self
+                .graph
+                .edges_connecting(a, b)
+                .find(|e| e.weight().kind == edge.kind)
+                .map(|e| e.id())
+            {
+                self.graph[existing] = edge;
+                return Ok(());
+            }
+        }
         self.graph.add_edge(a, b, edge);
         Ok(())
     }
@@ -100,6 +137,22 @@ impl SemanticGraph {
         for e in to_remove {
             self.graph.remove_edge(e);
         }
+    }
+
+    /// Remove one typed relationship between two nodes.
+    pub fn remove_edge(&mut self, from: NodeId, to: NodeId, kind: EdgeKind) -> bool {
+        use petgraph::visit::EdgeRef;
+        let (Some(&source), Some(&target)) = (self.index.get(&from), self.index.get(&to)) else {
+            return false;
+        };
+        let matching = self
+            .graph
+            .edges_connecting(source, target)
+            .find(|edge| edge.weight().kind == kind)
+            .map(|edge| edge.id());
+        matching
+            .and_then(|edge| self.graph.remove_edge(edge))
+            .is_some()
     }
 
     pub fn get(&self, id: NodeId) -> Option<&Node> {

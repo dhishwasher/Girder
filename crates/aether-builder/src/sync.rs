@@ -112,6 +112,19 @@ impl GraphBuilder {
     /// a name is ambiguous, a same-module definition wins; otherwise a unique
     /// global match is used, and truly ambiguous names are left unlinked.
     pub fn resolve_calls(&self, graph: &mut SemanticGraph) {
+        let source_owned: HashSet<NodeId> = self
+            .files
+            .values()
+            .flat_map(|state| state.owned.iter().copied())
+            .collect();
+        let graph_owned_calls: Vec<_> = graph
+            .edge_records()
+            .into_iter()
+            .filter(|(from, to, edge)| {
+                edge.kind == EdgeKind::Calls
+                    && (!source_owned.contains(from) || !source_owned.contains(to))
+            })
+            .collect();
         graph.clear_edges_of_kind(EdgeKind::Calls);
 
         // name -> [(owning module, function id)]
@@ -147,6 +160,11 @@ impl GraphBuilder {
                 }
             }
         }
+        for (from, to, edge) in graph_owned_calls {
+            if graph.contains(from) && graph.contains(to) {
+                let _ = graph.add_edge(from, to, edge);
+            }
+        }
 
         self.resolve_inherits(graph);
     }
@@ -156,6 +174,19 @@ impl GraphBuilder {
     /// Python subclass or Rust trait impl links to its base even across files.
     /// Same-module definitions win ties; otherwise a unique global match is used.
     fn resolve_inherits(&self, graph: &mut SemanticGraph) {
+        let source_owned: HashSet<NodeId> = self
+            .files
+            .values()
+            .flat_map(|state| state.owned.iter().copied())
+            .collect();
+        let graph_owned_inherits: Vec<_> = graph
+            .edge_records()
+            .into_iter()
+            .filter(|(from, to, edge)| {
+                edge.kind == EdgeKind::Inherits
+                    && (!source_owned.contains(from) || !source_owned.contains(to))
+            })
+            .collect();
         graph.clear_edges_of_kind(EdgeKind::Inherits);
 
         // name -> [(owning module, type id)]
@@ -191,6 +222,11 @@ impl GraphBuilder {
                 }
             }
         }
+        for (from, to, edge) in graph_owned_inherits {
+            if graph.contains(from) && graph.contains(to) {
+                let _ = graph.add_edge(from, to, edge);
+            }
+        }
     }
 
     /// Upsert all nodes/edges from `out`, then remove any previously-owned node
@@ -204,8 +240,19 @@ impl GraphBuilder {
     ) -> HashSet<NodeId> {
         let new_owned: HashSet<NodeId> = out.node_ids().into_iter().collect();
 
+        let stale_projection_edges: Vec<_> = graph
+            .edges()
+            .into_iter()
+            .filter(|(from, _, kind)| {
+                prev_owned.contains(from) && matches!(kind, EdgeKind::Contains | EdgeKind::DataFlow)
+            })
+            .collect();
+        for (from, to, kind) in stale_projection_edges {
+            graph.remove_edge(from, to, kind);
+        }
+
         for node in &out.nodes {
-            graph.upsert_node(node.clone());
+            graph.upsert_projection_node(node.clone());
         }
         for (from, to, edge) in &out.edges {
             // These are Contains edges (module->fn/type, type->field); both

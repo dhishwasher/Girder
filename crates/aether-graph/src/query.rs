@@ -19,6 +19,14 @@ impl SemanticGraph {
 
     /// Every edge as `(source_id, target_id, kind)` — used by the graph viewer.
     pub fn edges(&self) -> Vec<(NodeId, NodeId, EdgeKind)> {
+        self.edge_records()
+            .into_iter()
+            .map(|(from, to, edge)| (from, to, edge.kind))
+            .collect()
+    }
+
+    /// Every edge with its complete payload.
+    pub fn edge_records(&self) -> Vec<(NodeId, NodeId, Edge)> {
         use petgraph::visit::{EdgeRef, IntoEdgeReferences};
         self.raw()
             .edge_references()
@@ -26,7 +34,7 @@ impl SemanticGraph {
                 (
                     self.id_at(e.source()),
                     self.id_at(e.target()),
-                    e.weight().kind,
+                    e.weight().clone(),
                 )
             })
             .collect()
@@ -58,6 +66,36 @@ impl SemanticGraph {
         self.directional_neighbors(id, Direction::Incoming, Some(EdgeKind::Calls))
     }
 
+    /// All test-marked nodes in the impact set of `origin` — i.e. every test
+    /// that can be reached by a change to `origin` via the call graph. This is
+    /// the minimal set of tests that must re-run when that function changes.
+    pub fn tests_for(&self, origin: NodeId) -> Vec<NodeId> {
+        let impact = self.impact_of(origin);
+        impact
+            .affected
+            .keys()
+            .copied()
+            .chain(std::iter::once(origin))
+            .filter(|&id| {
+                self.get(id)
+                    .map(|n| n.attr("is_test").is_some())
+                    .unwrap_or(false)
+            })
+            .collect()
+    }
+
+    /// Union of test nodes reachable from any of the given origin nodes.
+    /// Deduplicates so each test appears at most once.
+    pub fn tests_for_nodes(&self, origins: &[NodeId]) -> Vec<NodeId> {
+        use std::collections::HashSet;
+        let mut seen = HashSet::new();
+        origins
+            .iter()
+            .flat_map(|&id| self.tests_for(id))
+            .filter(|id| seen.insert(*id))
+            .collect()
+    }
+
     fn directional_neighbors(
         &self,
         id: NodeId,
@@ -85,5 +123,69 @@ impl SemanticGraph {
             }
         }
         out
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tests_for_finds_test_in_impact_set() {
+        let mut g = SemanticGraph::new();
+        let add = g.upsert_node(Node::new(NodeKind::Function, "add", "crate::m::add"));
+        let mut test_add = Node::new(NodeKind::Function, "test_add", "crate::m::test_add");
+        test_add.set_attr("is_test", "true");
+        let test_add_id = g.upsert_node(test_add);
+        // test_add calls add, so changing add puts test_add in impact set
+        g.add_edge(test_add_id, add, Edge::new(EdgeKind::Calls))
+            .unwrap();
+
+        let tests = g.tests_for(add);
+        assert_eq!(tests, vec![test_add_id]);
+    }
+
+    #[test]
+    fn tests_for_nodes_deduplicates_shared_tests() {
+        // test_both calls add and sub; changing either should return test_both once.
+        let mut g = SemanticGraph::new();
+        let add = g.upsert_node(Node::new(NodeKind::Function, "add", "crate::m::add"));
+        let sub = g.upsert_node(Node::new(NodeKind::Function, "sub", "crate::m::sub"));
+        let mut t = Node::new(NodeKind::Function, "test_both", "crate::m::test_both");
+        t.set_attr("is_test", "true");
+        let t_id = g.upsert_node(t);
+        g.add_edge(t_id, add, Edge::new(EdgeKind::Calls)).unwrap();
+        g.add_edge(t_id, sub, Edge::new(EdgeKind::Calls)).unwrap();
+
+        let tests = g.tests_for_nodes(&[add, sub]);
+        assert_eq!(tests.len(), 1);
+        assert_eq!(tests[0], t_id);
+    }
+
+    #[test]
+    fn non_test_callers_excluded() {
+        let mut g = SemanticGraph::new();
+        let add = g.upsert_node(Node::new(NodeKind::Function, "add", "crate::m::add"));
+        let sum = g.upsert_node(Node::new(NodeKind::Function, "sum", "crate::m::sum"));
+        g.add_edge(sum, add, Edge::new(EdgeKind::Calls)).unwrap();
+
+        // sum calls add but is not a test — should not appear
+        assert!(g.tests_for(add).is_empty());
+    }
+
+    #[test]
+    fn duplicate_edges_are_updated_not_accumulated() {
+        let mut g = SemanticGraph::new();
+        let add = g.upsert_node(Node::new(NodeKind::Function, "add", "crate::m::add"));
+        let sum = g.upsert_node(Node::new(NodeKind::Function, "sum", "crate::m::sum"));
+
+        g.add_edge(sum, add, Edge::new(EdgeKind::Calls)).unwrap();
+        g.add_edge(sum, add, Edge::with_weight(EdgeKind::Calls, 0.5))
+            .unwrap();
+
+        let callers = g.callers(add);
+        assert_eq!(callers.len(), 1);
+        assert_eq!(callers[0].id, sum);
+        assert_eq!(callers[0].weight, 0.5);
     }
 }

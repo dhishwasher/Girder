@@ -129,6 +129,31 @@ fn is_function_kind(lang: Lang, kind: &str) -> bool {
     }
 }
 
+/// Returns true if this function node is a test.
+///
+/// Rust: any preceding `attribute_item` sibling whose text contains "test"
+/// (covers `#[test]`, `#[tokio::test]`, `#[rstest]`, etc.).
+/// Python: pytest convention — name starts with `test_`.
+fn is_test_fn(lang: Lang, node: TsNode, name: &str, source: &str) -> bool {
+    match lang {
+        Lang::Rust => {
+            let mut sib = node.prev_named_sibling();
+            while let Some(s) = sib {
+                if s.kind() == "attribute_item" {
+                    if node_text(s, source).contains("test") {
+                        return true;
+                    }
+                    sib = s.prev_named_sibling();
+                } else {
+                    break;
+                }
+            }
+            false
+        }
+        Lang::Python => name.starts_with("test_") || name == "test",
+    }
+}
+
 /// tree-sitter node kinds that define a type, per language.
 fn is_type_kind(lang: Lang, kind: &str) -> bool {
     match lang {
@@ -171,6 +196,9 @@ fn collect_defs(
                 .with_source(node_text(node, source));
             n.file = Some(file.to_string());
             n.span = span_of(node);
+            if is_test_fn(lang, node, &name, source) {
+                n.set_attr("is_test", "true");
+            }
             out.nodes.push(n);
             out.edges
                 .push((scope.id, id, Edge::new(EdgeKind::Contains)));
@@ -411,19 +439,40 @@ fn extract_fields(
 
 fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut BuildOutput) {
     // Track the enclosing function as we descend so calls attach to a caller.
-    fn walk(
+    // `current_class` tracks the enclosing Python class name so that method
+    // ids are built as `module::Class::method` to match what `collect_defs`
+    // put in the graph — without this, Python method call edges are silently
+    // dropped because the caller NodeId doesn't resolve.
+    fn walk<'src>(
         node: TsNode,
-        source: &str,
+        source: &'src str,
         lang: Lang,
-        module: &str,
+        module: &'src str,
+        current_class: Option<&'src str>,
         current_fn: Option<NodeId>,
         out: &mut BuildOutput,
     ) {
         let mut current = current_fn;
+        let mut class = current_class;
+
+        if matches!(lang, Lang::Python) && node.kind() == "class_definition" {
+            if let Some(name_node) = node.child_by_field_name("name") {
+                class = Some(node_text(name_node, source));
+            }
+        }
+
         if is_function_kind(lang, node.kind()) {
             if let Some(name_node) = node.child_by_field_name("name") {
                 let name = node_text(name_node, source);
-                current = Some(NodeId::from_path(&format!("{module}::{name}")));
+                let path = match class {
+                    Some(cls) => format!("{module}::{cls}::{name}"),
+                    None => format!("{module}::{name}"),
+                };
+                let caller = NodeId::from_path(&path);
+                current = Some(caller);
+                for callee in textual_call_names(node_text(node, source)) {
+                    out.calls.push(CallRef { caller, callee });
+                }
             }
         }
 
@@ -440,11 +489,11 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            walk(child, source, lang, module, current, out);
+            walk(child, source, lang, module, class, current, out);
         }
     }
 
-    walk(node, source, lang, module, None, out);
+    walk(node, source, lang, module, None, None, out);
 }
 
 /// Best-effort callee name: the trailing identifier of the call target.
@@ -458,6 +507,41 @@ fn callee_name(call: TsNode, source: &str, _lang: Lang) -> Option<String> {
     } else {
         Some(last.to_string())
     }
+}
+
+/// Conservative fallback for call-like identifiers inside syntax tree regions
+/// that tree-sitter does not expose as normal call expressions, notably Rust
+/// macro token trees such as `assert_eq!(add(1, 2), 3)`.
+fn textual_call_names(text: &str) -> Vec<String> {
+    let mut names = Vec::new();
+    let mut chars = text.char_indices().peekable();
+    while let Some((start, ch)) = chars.next() {
+        if !(ch == '_' || ch.is_ascii_alphabetic()) {
+            continue;
+        }
+        let mut end = start + ch.len_utf8();
+        while let Some(&(idx, next)) = chars.peek() {
+            if next == '_' || next.is_ascii_alphanumeric() {
+                end = idx + next.len_utf8();
+                chars.next();
+            } else {
+                break;
+            }
+        }
+        let name = &text[start..end];
+        let rest = text[end..].trim_start();
+        if rest.starts_with('(') && !is_call_noise(name) {
+            names.push(name.to_string());
+        }
+    }
+    names
+}
+
+fn is_call_noise(name: &str) -> bool {
+    matches!(
+        name,
+        "fn" | "if" | "for" | "while" | "loop" | "match" | "return" | "Some" | "Ok" | "Err"
+    )
 }
 
 /// Iterative pre-order descendant collection (avoids borrow gymnastics).

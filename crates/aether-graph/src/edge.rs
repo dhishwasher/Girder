@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 /// The semantic relationship an edge encodes. Direction is `source -> target`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum EdgeKind {
     /// `source` calls `target` (function-call graph).
     Calls,
@@ -28,6 +28,14 @@ impl EdgeKind {
         matches!(
             self,
             EdgeKind::Calls | EdgeKind::DataFlow | EdgeKind::Impacts
+        )
+    }
+
+    /// Relationships rebuilt directly from source projections.
+    pub fn is_projection_derived(self) -> bool {
+        matches!(
+            self,
+            EdgeKind::Calls | EdgeKind::Inherits | EdgeKind::DataFlow | EdgeKind::Contains
         )
     }
 }

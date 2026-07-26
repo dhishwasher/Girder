@@ -2,7 +2,7 @@
 
 use tree_sitter::{Language, Parser, Tree};
 
-/// Languages AetherForge can currently project into the graph.
+/// Languages Bit Code can currently project into the graph.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Lang {
     Rust,

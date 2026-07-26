@@ -18,7 +18,7 @@ pub use sync::GraphBuilder;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use aether_graph::{EdgeKind, NodeId, NodeKind, SemanticGraph};
+    use aether_graph::{Edge, EdgeKind, Node, NodeId, NodeKind, SemanticGraph};
 
     const SAMPLE_RS: &str = r#"
 struct Point {
@@ -225,6 +225,99 @@ fn main() {
     }
 
     #[test]
+    fn rust_test_functions_marked_is_test() {
+        let rs = r#"
+fn add(a: i64, b: i64) -> i64 { a + b }
+
+#[test]
+fn test_add() { assert_eq!(add(1, 2), 3); }
+
+#[tokio::test]
+async fn test_add_async() { assert_eq!(add(1, 2), 3); }
+
+fn helper() {}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/math.rs", rs);
+
+        let test_add = graph.find_by_path("crate::math::test_add").unwrap();
+        assert_eq!(
+            test_add.attr("is_test"),
+            Some("true"),
+            "#[test] fn should be marked"
+        );
+
+        let test_async = graph.find_by_path("crate::math::test_add_async").unwrap();
+        assert_eq!(
+            test_async.attr("is_test"),
+            Some("true"),
+            "#[tokio::test] should be marked"
+        );
+
+        let add = graph.find_by_path("crate::math::add").unwrap();
+        assert_eq!(add.attr("is_test"), None, "regular fn should not be marked");
+
+        let helper = graph.find_by_path("crate::math::helper").unwrap();
+        assert_eq!(
+            helper.attr("is_test"),
+            None,
+            "helper fn should not be marked"
+        );
+    }
+
+    #[test]
+    fn python_test_functions_marked_is_test() {
+        let py = "def test_add():\n    assert add(1,2)==3\n\ndef add(a,b):\n    return a+b\n\ndef helper():\n    pass\n";
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/math.py", py);
+
+        let test_add = graph.find_by_path("crate::math::test_add").unwrap();
+        assert_eq!(
+            test_add.attr("is_test"),
+            Some("true"),
+            "test_ fn should be marked"
+        );
+
+        let add = graph.find_by_path("crate::math::add").unwrap();
+        assert_eq!(add.attr("is_test"), None, "regular fn should not be marked");
+    }
+
+    #[test]
+    fn test_impact_finds_minimal_test_set() {
+        // add is called by test_add (marked) and by sum_list (not marked).
+        // Only test_add should appear in the impact set.
+        let rs = r#"
+fn add(a: i64, b: i64) -> i64 { a + b }
+
+fn sum_list(xs: &[i64]) -> i64 {
+    xs.iter().fold(0, |acc, x| add(acc, *x))
+}
+
+#[test]
+fn test_add() { assert_eq!(add(2, 3), 5); }
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/math.rs", rs);
+
+        let add = NodeId::from_path("crate::math::add");
+        let test_add = NodeId::from_path("crate::math::test_add");
+
+        let tests = graph.tests_for(add);
+        assert!(
+            tests.contains(&test_add),
+            "test_add should be in impact set of add"
+        );
+        assert_eq!(
+            tests.len(),
+            1,
+            "sum_list is not a test and should be excluded"
+        );
+    }
+
+    #[test]
     fn parses_python_too() {
         let py = "def greet(name):\n    return hello(name)\n\ndef hello(name):\n    return name\n";
         let mut graph = SemanticGraph::new();
@@ -239,5 +332,76 @@ fn main() {
             .map(|n| n.id)
             .collect();
         assert!(calls.contains(&hello));
+    }
+
+    #[test]
+    fn source_refresh_preserves_agent_metadata() {
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/lib.rs", "fn run() -> i64 { 1 }\n");
+        graph
+            .find_by_path("crate::lib::run")
+            .map(|node| node.id)
+            .and_then(|id| graph.get_mut(id))
+            .unwrap()
+            .set_attr("summary", "durable summary");
+
+        builder.update_file(&mut graph, "src/lib.rs", "fn run() -> i64 { 2 }\n");
+
+        let run = graph.find_by_path("crate::lib::run").unwrap();
+        assert_eq!(run.source, "fn run() -> i64 { 2 }");
+        assert_eq!(run.attr("summary"), Some("durable summary"));
+    }
+
+    #[test]
+    fn source_refresh_removes_stale_dataflow_edges() {
+        let initial = "class Counter:\n    total = 0\n    other = 0\n    def read(self):\n        return self.total\n";
+        let edited = "class Counter:\n    total = 0\n    other = 0\n    def read(self):\n        return self.other\n";
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "counter.py", initial);
+        let read = NodeId::from_path("crate::counter::Counter::read");
+        let total = NodeId::from_path("crate::counter::Counter::total");
+        let other = NodeId::from_path("crate::counter::Counter::other");
+
+        builder.update_file(&mut graph, "counter.py", edited);
+
+        let flows: Vec<_> = graph
+            .neighbors(read, Some(EdgeKind::DataFlow))
+            .into_iter()
+            .map(|neighbor| neighbor.id)
+            .collect();
+        assert!(!flows.contains(&total));
+        assert!(flows.contains(&other));
+    }
+
+    #[test]
+    fn source_refresh_preserves_calls_involving_graph_owned_nodes() {
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/lib.rs", "fn existing() {}\n");
+        let existing = NodeId::from_path("crate::lib::existing");
+        let mut generated = Node::new(NodeKind::Function, "generated", "crate::forge::generated")
+            .with_language("rust")
+            .with_source("fn generated() { existing() }");
+        generated.file = Some("src/forge.rs".into());
+        generated.set_attr("authored_by", "Coder");
+        let generated = graph.upsert_node(generated);
+        graph
+            .add_edge(generated, existing, Edge::new(EdgeKind::Calls))
+            .unwrap();
+
+        builder.update_file(
+            &mut graph,
+            "src/lib.rs",
+            "fn existing() { println!(\"ok\"); }\n",
+        );
+
+        let calls: Vec<_> = graph
+            .neighbors(generated, Some(EdgeKind::Calls))
+            .into_iter()
+            .map(|neighbor| neighbor.id)
+            .collect();
+        assert!(calls.contains(&existing));
     }
 }

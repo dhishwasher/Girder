@@ -1,6 +1,6 @@
 //! Impact analysis: "if I change node X, what else is affected?"
 //!
-//! This powers AetherForge's real-time predictive impact panel. Because the
+//! This powers Bit Code's real-time predictive impact panel. Because the
 //! graph is the source of truth, impact is a graph reachability query rather
 //! than a fragile text/heuristic search.
 
@@ -21,7 +21,7 @@ impl ImpactReport {
     /// Affected nodes ordered nearest-first (most likely to break first).
     pub fn ranked(&self) -> Vec<(NodeId, u32)> {
         let mut v: Vec<_> = self.affected.iter().map(|(&id, &d)| (id, d)).collect();
-        v.sort_by_key(|(_, d)| *d);
+        v.sort_by_key(|(id, d)| (*d, *id));
         v
     }
 
