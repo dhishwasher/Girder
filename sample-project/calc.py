@@ -1,4 +1,4 @@
-"""Sample Python module — demonstrates AetherForge's multi-language graph."""
+"""Sample Python module — demonstrates Bit Code's multi-language graph."""
 
 
 def greet(name):

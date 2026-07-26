@@ -1,4 +1,4 @@
-//! Tiny sample crate that AetherForge loads into its semantic graph.
+//! Tiny sample crate that Bit Code loads into its semantic graph.
 //! The GUI's "Code Projection" panel mirrors this file; the agent swarm adds a
 //! `multiply` function to it on demand.
 
