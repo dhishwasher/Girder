@@ -1,10 +1,11 @@
 //! # aether-ai
 //!
-//! AetherForge's pluggable, multi-provider AI layer. One [`AiProvider`] trait;
-//! many backends (a deterministic offline [`MockProvider`] plus compile-clean
-//! EXTENSION POINTs for Anthropic Claude, OpenAI, Google Gemini, xAI Grok, and
-//! local Ollama models). A [`Router`] picks the best provider per [`TaskClass`]
-//! and falls back gracefully — *local-first by default*.
+//! Bit Code's pluggable AI layer. One [`AiProvider`] trait; a deterministic
+//! offline [`MockProvider`] that is always available; implemented OpenAI and
+//! Anthropic providers behind the `live-providers` feature; and compile-clean
+//! extension-point structs for Google Gemini, xAI Grok, and local Ollama. The
+//! [`Router`] selects among implemented providers per [`TaskClass`] and falls
+//! back gracefully — local-first by default.
 
 pub mod anthropic;
 pub mod gemini;
@@ -27,22 +28,46 @@ pub use openai::OpenAiProvider;
 
 use std::sync::Arc;
 
-/// Build the default local-first router used by the demo: prefer real providers
-/// per task class (they self-disable without keys), always backed by the mock.
+/// Build the default local-first router used by the demo.
+///
+/// The deterministic mock is always the fallback. When the crate is built with
+/// `live-providers`, `OPENAI_API_KEY` enables the OpenAI Responses API provider
+/// and `ANTHROPIC_API_KEY` enables Anthropic. OpenAI is tried first so users can
+/// opt into it directly; Anthropic remains a secondary live provider for
+/// planning and code generation. Gemini/Grok/Ollama are intentionally not part
+/// of default routing until their HTTP bodies are implemented.
 pub fn default_router() -> Router {
     let mock: Arc<dyn AiProvider> = Arc::new(MockProvider::new());
+    let openai: Arc<dyn AiProvider> = Arc::new(OpenAiProvider::from_env());
+    let anthropic: Arc<dyn AiProvider> = Arc::new(AnthropicProvider::from_env());
     Router::new()
-        .route(
-            TaskClass::Planning,
-            vec![Arc::new(AnthropicProvider::from_env())],
-        )
-        .route(
-            TaskClass::Codegen,
-            vec![
-                Arc::new(AnthropicProvider::from_env()),
-                Arc::new(OpenAiProvider::from_env()),
-            ],
-        )
-        .route(TaskClass::Quick, vec![Arc::new(OllamaProvider::from_env())])
+        .route(TaskClass::Planning, vec![openai.clone(), anthropic.clone()])
+        .route(TaskClass::Codegen, vec![openai.clone(), anthropic])
+        .route(TaskClass::Testing, vec![openai.clone()])
+        .route(TaskClass::Summarize, vec![openai.clone()])
+        .route(TaskClass::Quick, vec![openai])
         .with_fallback(mock)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn default_router_is_mock_backed_for_every_task_class() {
+        let router = default_router();
+        for class in [
+            TaskClass::Planning,
+            TaskClass::Codegen,
+            TaskClass::Testing,
+            TaskClass::Summarize,
+            TaskClass::Quick,
+        ] {
+            let completion = router
+                .complete(Prompt::new(class, "", "add a multiply function"))
+                .await
+                .unwrap();
+            assert_eq!(completion.model, "mock-deterministic-v1");
+        }
+    }
 }

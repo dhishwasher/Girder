@@ -11,8 +11,9 @@
 use crate::provider::{AiError, AiProvider, Completion, Prompt, TaskClass};
 use async_trait::async_trait;
 
-/// Default model — the most capable Claude model (per the Anthropic API guidance).
-const DEFAULT_MODEL: &str = "claude-opus-4-8";
+/// Default model. Override with `ANTHROPIC_MODEL` or
+/// [`AnthropicProvider::with_model`].
+const DEFAULT_MODEL: &str = "claude-opus-5";
 #[cfg(feature = "live-providers")]
 const ENDPOINT: &str = "https://api.anthropic.com/v1/messages";
 #[cfg(feature = "live-providers")]
@@ -20,20 +21,20 @@ const API_VERSION: &str = "2023-06-01";
 
 pub struct AnthropicProvider {
     api_key: Option<String>,
-    /// The Anthropic model id used on the wire (e.g. `claude-opus-4-8`).
+    /// The Anthropic model id used on the wire.
     model: String,
 }
 
 impl AnthropicProvider {
-    /// Reads the key from `ANTHROPIC_API_KEY` if present.
+    /// Reads `ANTHROPIC_API_KEY` and optional `ANTHROPIC_MODEL` if present.
     pub fn from_env() -> Self {
         AnthropicProvider {
             api_key: std::env::var("ANTHROPIC_API_KEY").ok(),
-            model: DEFAULT_MODEL.to_string(),
+            model: std::env::var("ANTHROPIC_MODEL").unwrap_or_else(|_| DEFAULT_MODEL.to_string()),
         }
     }
 
-    /// Override the model id (e.g. `claude-sonnet-4-6`).
+    /// Override the model id.
     pub fn with_model(mut self, model: impl Into<String>) -> Self {
         self.model = model.into();
         self

@@ -9,7 +9,8 @@
 mod coder;
 mod documenter;
 mod optimizer;
-mod planner;
+pub mod planner;
+mod querier;
 mod refactorer;
 mod security;
 mod tester;
@@ -18,6 +19,7 @@ pub use coder::CoderAgent;
 pub use documenter::DocumenterAgent;
 pub use optimizer::{HotTarget, OptimizerAgent};
 pub use planner::PlannerAgent;
+pub use querier::QueryAgent;
 pub use refactorer::RefactorerAgent;
 pub use security::SecurityAuditorAgent;
 pub use tester::TesterAgent;

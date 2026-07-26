@@ -3,7 +3,7 @@
 //! Agents don't talk to a model directly; they ask the [`Router`], which picks
 //! the best available provider for a task class and transparently falls back
 //! (e.g. a remote provider that's `Unsupported` because no key is set drops to
-//! the local mock). This is what makes AetherForge *local-first by default* yet
+//! the local mock). This is what makes Bit Code *local-first by default* yet
 //! able to escalate to frontier models when configured.
 
 use crate::provider::{AiError, AiProvider, Completion, Prompt, TaskClass};

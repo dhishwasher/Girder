@@ -6,7 +6,8 @@ license.workspace = true
 
 [features]
 # Off by default so the workspace builds and the demo runs with no network /
-# API keys. Turning this on compiles the real HTTP-backed Anthropic provider.
+# API keys. Turning this on compiles the real HTTP-backed OpenAI and Anthropic
+# providers.
 default = []
 live-providers = ["dep:reqwest", "dep:serde_json"]
 

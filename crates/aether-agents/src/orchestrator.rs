@@ -48,7 +48,8 @@ impl Orchestrator {
         }
     }
 
-    /// Register the full default swarm (3 live agents + 4 EXTENSION-POINT stubs).
+    /// Register the full default swarm (3 live agents + 4 EXTENSION-POINT stubs
+    /// + the QueryAgent for knowledge-graph questions).
     pub fn with_default_swarm(mut self) -> Self {
         use crate::agents::*;
         self.agents = vec![
@@ -59,12 +60,51 @@ impl Orchestrator {
             Arc::new(RefactorerAgent),
             Arc::new(OptimizerAgent),
             Arc::new(SecurityAuditorAgent),
+            Arc::new(QueryAgent),
         ];
         self
     }
 
     pub fn add_agent(&mut self, agent: Arc<dyn Agent>) {
         self.agents.push(agent);
+    }
+
+    /// Run only the [`PlannerAgent`] for `intent` and return its messages.
+    ///
+    /// Used by the `bitcode plan` CLI command to preview what the swarm
+    /// *would* build — graph context is gathered and fn specs are produced,
+    /// but the Coder never runs and no code is written to the graph.
+    pub async fn plan_only(&self, intent: &str) -> Vec<SwarmMessage> {
+        use crate::agents::AgentResult;
+        let trigger = SwarmMessage::new(Role::Conductor, MsgKind::Intent(intent.to_string()));
+        for agent in &self.agents {
+            if agent.role() == Role::Planner {
+                if let AgentResult::Emit(msgs) = agent.handle(&trigger, &self.ctx).await {
+                    return msgs;
+                }
+                break;
+            }
+        }
+        vec![]
+    }
+
+    /// Run only the [`QueryAgent`] for `question` and return the answer as a
+    /// `Note` message (or an empty vec if the question cannot be parsed).
+    ///
+    /// Used by `bitcode query` to answer knowledge-graph questions without
+    /// touching the graph or running any code generation.
+    pub async fn query_only(&self, question: &str) -> Vec<SwarmMessage> {
+        use crate::agents::AgentResult;
+        let trigger = SwarmMessage::new(Role::Conductor, MsgKind::Intent(question.to_string()));
+        for agent in &self.agents {
+            if agent.role() == Role::QueryAgent {
+                if let AgentResult::Emit(msgs) = agent.handle(&trigger, &self.ctx).await {
+                    return msgs;
+                }
+                break;
+            }
+        }
+        vec![]
     }
 
     /// Inject `intent`, run the swarm concurrently, and collect the transcript.

@@ -36,8 +36,10 @@ impl AiProvider for OllamaProvider {
     }
 
     fn handles(&self, _class: TaskClass) -> bool {
-        // Once live, this provider could decline classes it's poorly suited to.
-        self.api_key.is_some()
+        // Extension point only: do not enter routing until complete() performs
+        // a real Ollama request.
+        let _configured = self.api_key.is_some();
+        false
     }
 
     async fn complete(&self, _prompt: Prompt) -> Result<Completion, AiError> {
@@ -53,5 +55,19 @@ impl AiProvider for OllamaProvider {
         }
         #[cfg(not(feature = "live-providers"))]
         Err(AiError::Unsupported("ollama:local".into()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extension_point_declines_routing_even_when_configured() {
+        let provider = OllamaProvider {
+            api_key: Some("http://localhost:11434".to_string()),
+            model: "test-model".to_string(),
+        };
+        assert!(!provider.handles(TaskClass::Quick));
     }
 }
