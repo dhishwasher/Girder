@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "aetherforge"
+name = "bitcode"
 path = "src/main.rs"
 
 [features]
@@ -15,9 +15,9 @@ path = "src/main.rs"
 # Enable the real egui/wgpu window with `--features gui`.
 default = []
 gui = ["dep:eframe", "dep:egui"]
-# Opt in to the real HTTP-backed Anthropic provider. With this enabled and
-# ANTHROPIC_API_KEY set, the swarm/router calls Claude instead of the offline
-# mock. Example: `cargo run -p aether-app --features live-providers -- forge .`
+# Opt in to the real HTTP-backed OpenAI and Anthropic providers. With this
+# enabled, configured API keys let the router use live models before falling
+# back to the offline mock.
 live-providers = ["aether-ai/live-providers"]
 
 [dependencies]
@@ -26,7 +26,13 @@ aether-builder = { workspace = true }
 aether-ai = { workspace = true }
 aether-agents = { workspace = true }
 aether-debugger = { workspace = true }
+aether-dap = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time"] }
+serde_json = { workspace = true }
+serde = { workspace = true }
+toml = { workspace = true }
+globset = { workspace = true }
+libc = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
