@@ -464,7 +464,7 @@ impl GraphViewState {
     }
 }
 
-pub(crate) fn all_node_kinds() -> [NodeKind; 6] {
+pub(crate) fn all_node_kinds() -> [NodeKind; 8] {
     [
         NodeKind::Module,
         NodeKind::Function,
@@ -472,10 +472,12 @@ pub(crate) fn all_node_kinds() -> [NodeKind; 6] {
         NodeKind::Field,
         NodeKind::Concept,
         NodeKind::Dependency,
+        NodeKind::Extension,
+        NodeKind::ExtensionContribution,
     ]
 }
 
-pub(crate) fn all_edge_kinds() -> [EdgeKind; 6] {
+pub(crate) fn all_edge_kinds() -> [EdgeKind; 7] {
     [
         EdgeKind::Calls,
         EdgeKind::Inherits,
@@ -483,6 +485,7 @@ pub(crate) fn all_edge_kinds() -> [EdgeKind; 6] {
         EdgeKind::Contains,
         EdgeKind::SemanticSimilar,
         EdgeKind::Impacts,
+        EdgeKind::Contributes,
     ]
 }
 

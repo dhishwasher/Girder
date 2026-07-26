@@ -69,6 +69,11 @@ COMMANDS:
                               (a Python literal, e.g. 42) at step <N> and shows
                               where execution diverges. Step numbers come from
                               the trace output (inject AFTER the assignment).
+    extension <dir> <operation>
+                              Manage declarative, capability-bound extensions.
+                              Operations: list; generate <intent...> [--approve];
+                              install <recipe.json> [--approve];
+                              enable|disable|remove <extension-id>.
     --gui [dir]               Launch the native egui/wgpu window for a project
     --help                    Show this help
 ";
@@ -108,6 +113,10 @@ fn main() {
         }
         Some("query") => report(project::query(&args[1..])),
         Some("debug") => report(project::debug(&args[1..])),
+        Some("extension") => {
+            let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+            report(rt.block_on(project::extensions(&args[1..])));
+        }
         Some("demo") | None => run_headless(),
         Some(other) => {
             eprintln!("unknown command: {other}\n");

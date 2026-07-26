@@ -27,6 +27,7 @@ aether-ai = { workspace = true }
 aether-agents = { workspace = true }
 aether-debugger = { workspace = true }
 aether-dap = { workspace = true }
+aether-extensions = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time"] }
 serde_json = { workspace = true }
 serde = { workspace = true }

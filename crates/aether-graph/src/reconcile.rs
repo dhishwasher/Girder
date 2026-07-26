@@ -70,7 +70,13 @@ impl SemanticGraph {
 fn is_graph_owned(node: &Node) -> bool {
     node.attr("authored_by").is_some()
         || node.file.is_none()
-        || matches!(node.kind, NodeKind::Concept | NodeKind::Dependency)
+        || matches!(
+            node.kind,
+            NodeKind::Concept
+                | NodeKind::Dependency
+                | NodeKind::Extension
+                | NodeKind::ExtensionContribution
+        )
 }
 
 fn merge_graph_metadata(projected: &mut Node, persisted: &Node) {

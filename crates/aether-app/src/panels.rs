@@ -1,7 +1,10 @@
 //! The four resizable IDE panels, each a *projection* of shared state.
 
-use crate::app::AetherApp;
+use crate::app::{AetherApp, RightPanel};
 use crate::graph_view::{all_edge_kinds, all_node_kinds, GraphScope, ViewEdge, ViewNode};
+use aether_extensions::{
+    Capability, CommandAction, Contribution, ExtensionState, PanelLocation, PanelView,
+};
 use aether_graph::{EdgeKind, NodeKind};
 use egui::{Align2, Color32, FontId, Rect, Sense, Stroke};
 
@@ -13,6 +16,8 @@ fn node_color(kind: NodeKind) -> Color32 {
         NodeKind::Field => Color32::from_rgb(0x9C, 0xDC, 0xFE),
         NodeKind::Concept => Color32::from_rgb(0xC5, 0x86, 0xC0),
         NodeKind::Dependency => Color32::from_rgb(0x80, 0x80, 0x80),
+        NodeKind::Extension => Color32::from_rgb(0xD7, 0xBA, 0x7D),
+        NodeKind::ExtensionContribution => Color32::from_rgb(0xB5, 0xCE, 0xA8),
     }
 }
 
@@ -24,6 +29,7 @@ fn edge_color(kind: EdgeKind) -> Color32 {
         EdgeKind::Contains => Color32::from_rgb(0x55, 0x55, 0x55),
         EdgeKind::SemanticSimilar => Color32::from_rgb(0xC5, 0x86, 0xC0),
         EdgeKind::Impacts => Color32::from_rgb(0xCE, 0x91, 0x78),
+        EdgeKind::Contributes => Color32::from_rgb(0xD7, 0xBA, 0x7D),
     }
 }
 
@@ -438,6 +444,8 @@ fn node_kind_label(kind: NodeKind) -> &'static str {
         NodeKind::Field => "Field",
         NodeKind::Concept => "Concept",
         NodeKind::Dependency => "Dependency",
+        NodeKind::Extension => "Extension",
+        NodeKind::ExtensionContribution => "Contribution",
     }
 }
 
@@ -449,6 +457,7 @@ fn edge_kind_label(kind: EdgeKind) -> &'static str {
         EdgeKind::Contains => "Contains",
         EdgeKind::SemanticSimilar => "Similar",
         EdgeKind::Impacts => "Impacts",
+        EdgeKind::Contributes => "Contributes",
     }
 }
 
@@ -479,7 +488,9 @@ pub fn editor_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         ui.fonts(|f| f.layout_job(job))
     };
 
-    let editable = !app.workspace.has_pending_agent_changes() && app.swarm_rx.is_none();
+    let editable = !app.workspace.has_pending_agent_changes()
+        && app.swarm_rx.is_none()
+        && !app.extension_busy();
     let editor_jump = app.editor_jump.take();
     let output = egui::ScrollArea::vertical()
         .show(ui, |ui| {
@@ -523,9 +534,19 @@ pub fn editor_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
 
 /// Right panel: the agent swarm console.
 pub fn agents_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
-    ui.heading("Agents");
+    ui.horizontal(|ui| {
+        ui.selectable_value(&mut app.right_panel, RightPanel::Agents, "Agents");
+        ui.selectable_value(&mut app.right_panel, RightPanel::Extensions, "Extensions");
+    });
     ui.separator();
 
+    match app.right_panel {
+        RightPanel::Agents => agent_console(app, ui),
+        RightPanel::Extensions => extensions_panel(app, ui),
+    }
+}
+
+fn agent_console(app: &mut AetherApp, ui: &mut egui::Ui) {
     ui.add(
         egui::TextEdit::multiline(&mut app.intent)
             .desired_rows(2)
@@ -534,6 +555,7 @@ pub fn agents_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     );
     let running = app.swarm_rx.is_some();
     let can_run = !running
+        && !app.extension_busy()
         && !app.workspace.is_dirty()
         && !app.workspace.has_pending_agent_changes()
         && app.workspace.active_file().is_some()
@@ -655,6 +677,315 @@ pub fn agents_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
                 }
             });
         }
+    }
+}
+
+#[derive(Debug)]
+enum PendingExtensionAction {
+    AskGraph(String),
+    OpenFile(String, Option<u32>),
+    RunValidation(String, String),
+    SetEnabled(String, bool),
+    Remove(String),
+}
+
+fn extensions_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
+    let busy = app.extension_busy();
+    ui.strong("Generate");
+    ui.add_enabled(
+        !busy,
+        egui::TextEdit::multiline(&mut app.extension_intent)
+            .desired_rows(2)
+            .desired_width(f32::INFINITY)
+            .hint_text("Describe an extension"),
+    );
+    let can_generate = !busy
+        && !app.extension_intent.trim().is_empty()
+        && !app.workspace.is_dirty()
+        && !app.workspace.has_pending_agent_changes();
+    if ui
+        .add_enabled(can_generate, egui::Button::new("Generate recipe"))
+        .clicked()
+    {
+        app.generate_extension();
+    }
+    if busy {
+        ui.horizontal(|ui| {
+            ui.spinner();
+            ui.label("Extension operation in progress");
+        });
+    }
+
+    if let Some(recipe) = app.extension_candidate.clone() {
+        ui.separator();
+        ui.strong("Approval required");
+        ui.label(&recipe.name);
+        ui.weak(&recipe.description);
+        ui.monospace(&recipe.id);
+        match recipe.digest() {
+            Ok(digest) => ui.monospace(format!("SHA-256 {digest}")),
+            Err(error) => ui.colored_label(
+                Color32::from_rgb(0xF4, 0x87, 0x71),
+                format!("Invalid recipe: {error}"),
+            ),
+        };
+        ui.label("Requested capabilities");
+        if recipe.capabilities.is_empty() {
+            ui.weak("None");
+        } else {
+            for capability in &recipe.capabilities {
+                ui.label(format!("• {}", extension_capability_label(capability)));
+            }
+        }
+        ui.label(format!(
+            "{} contribution(s), {} project projection(s)",
+            recipe.contributions.len(),
+            recipe.projections.len()
+        ));
+        ui.collapsing("Exact recipe JSON", |ui| {
+            egui::ScrollArea::vertical()
+                .id_salt("extension_candidate_json")
+                .max_height(240.0)
+                .show(ui, |ui| match recipe.to_json_pretty() {
+                    Ok(json) => {
+                        ui.monospace(json);
+                    }
+                    Err(error) => {
+                        ui.colored_label(Color32::from_rgb(0xF4, 0x87, 0x71), error.to_string());
+                    }
+                });
+        });
+        ui.horizontal(|ui| {
+            if ui
+                .add_enabled(!busy, egui::Button::new("Approve and install"))
+                .on_hover_text("Grant exactly these capabilities to this recipe digest")
+                .clicked()
+            {
+                app.approve_extension();
+            }
+            if ui
+                .add_enabled(!busy, egui::Button::new("Dismiss"))
+                .clicked()
+            {
+                app.extension_candidate = None;
+            }
+        });
+    }
+
+    ui.separator();
+    ui.strong("Installed");
+    let records = match app.workspace.extension_records() {
+        Ok(records) => records,
+        Err(error) => {
+            ui.colored_label(
+                Color32::from_rgb(0xF4, 0x87, 0x71),
+                format!("Could not read extensions: {error}"),
+            );
+            return;
+        }
+    };
+    if records.is_empty() {
+        ui.weak("No extensions installed");
+    }
+
+    let mut pending = None;
+    for record in records {
+        let record = match record {
+            Ok(record) => record,
+            Err(error) => {
+                ui.colored_label(
+                    Color32::from_rgb(0xF4, 0x87, 0x71),
+                    format!("Corrupt extension record: {error}"),
+                );
+                continue;
+            }
+        };
+        let extension_id = record.recipe.id.clone();
+        let enabled = record.state == ExtensionState::Enabled;
+        ui.collapsing(
+            format!("{}  ·  {}", record.recipe.name, extension_id),
+            |ui| {
+                ui.label(&record.recipe.description);
+                ui.monospace(format!("SHA-256 {}", record.grant.recipe_digest));
+                let mut next_enabled = enabled;
+                if ui
+                    .add_enabled(!busy, egui::Checkbox::new(&mut next_enabled, "Enabled"))
+                    .changed()
+                {
+                    pending = Some(PendingExtensionAction::SetEnabled(
+                        extension_id.clone(),
+                        next_enabled,
+                    ));
+                }
+
+                if enabled {
+                    render_extension_contributions(
+                        app,
+                        ui,
+                        &extension_id,
+                        &record.recipe.contributions,
+                        &mut pending,
+                    );
+                } else {
+                    ui.weak("Contributions are disabled");
+                }
+
+                let confirming =
+                    app.extension_remove_confirmation.as_deref() == Some(extension_id.as_str());
+                if confirming {
+                    ui.horizontal(|ui| {
+                        ui.colored_label(
+                            Color32::from_rgb(0xF4, 0x87, 0x71),
+                            "Restore projections and remove?",
+                        );
+                        if ui.add_enabled(!busy, egui::Button::new("Remove")).clicked() {
+                            pending = Some(PendingExtensionAction::Remove(extension_id.clone()));
+                        }
+                        if ui.button("Cancel").clicked() {
+                            app.extension_remove_confirmation = None;
+                        }
+                    });
+                } else if ui
+                    .add_enabled(!busy, egui::Button::new("Remove extension"))
+                    .clicked()
+                {
+                    app.extension_remove_confirmation = Some(extension_id.clone());
+                }
+            },
+        );
+    }
+
+    if !app.extension_action_output.is_empty() {
+        ui.separator();
+        ui.strong("Output");
+        egui::ScrollArea::vertical()
+            .id_salt("extension_action_output")
+            .max_height(220.0)
+            .show(ui, |ui| {
+                ui.monospace(&app.extension_action_output);
+            });
+    }
+
+    match pending {
+        Some(PendingExtensionAction::AskGraph(question)) => {
+            app.ask_extension_graph(&question);
+        }
+        Some(PendingExtensionAction::OpenFile(path, line)) => {
+            app.open_extension_file(&path, line);
+        }
+        Some(PendingExtensionAction::RunValidation(extension_id, contribution_id)) => {
+            app.run_extension_command(extension_id, contribution_id);
+        }
+        Some(PendingExtensionAction::SetEnabled(extension_id, enabled)) => {
+            app.set_extension_enabled(extension_id, enabled);
+        }
+        Some(PendingExtensionAction::Remove(extension_id)) => {
+            app.remove_extension(extension_id);
+        }
+        None => {}
+    }
+}
+
+fn render_extension_contributions(
+    app: &AetherApp,
+    ui: &mut egui::Ui,
+    extension_id: &str,
+    contributions: &[Contribution],
+    pending: &mut Option<PendingExtensionAction>,
+) {
+    for contribution in contributions {
+        match contribution {
+            Contribution::Panel {
+                title,
+                location,
+                view,
+                ..
+            } => {
+                ui.separator();
+                ui.horizontal(|ui| {
+                    ui.strong(title);
+                    ui.weak(panel_location_label(*location));
+                });
+                match view {
+                    PanelView::Markdown { content } => {
+                        ui.label(content);
+                    }
+                    PanelView::GraphQuery { question } => {
+                        let query = aether_graph::parse_query(question);
+                        let answer = app
+                            .workspace
+                            .graph()
+                            .lock()
+                            .unwrap()
+                            .answer_query(&query)
+                            .display();
+                        ui.monospace(answer);
+                    }
+                    PanelView::File { path } => {
+                        match app.workspace.read_extension_file(path) {
+                            Ok(contents) => ui.monospace(contents),
+                            Err(error) => ui.colored_label(
+                                Color32::from_rgb(0xF4, 0x87, 0x71),
+                                error.to_string(),
+                            ),
+                        };
+                    }
+                };
+            }
+            Contribution::Command {
+                id, title, action, ..
+            } => {
+                if ui
+                    .add_enabled(!app.extension_busy(), egui::Button::new(title))
+                    .clicked()
+                {
+                    *pending = Some(match action {
+                        CommandAction::AskGraph { question } => {
+                            PendingExtensionAction::AskGraph(question.clone())
+                        }
+                        CommandAction::OpenFile { path, line } => {
+                            PendingExtensionAction::OpenFile(path.clone(), *line)
+                        }
+                        CommandAction::RunValidation { .. } => {
+                            PendingExtensionAction::RunValidation(
+                                extension_id.to_string(),
+                                id.clone(),
+                            )
+                        }
+                    });
+                }
+            }
+        }
+    }
+}
+
+fn extension_capability_label(capability: &Capability) -> String {
+    match capability {
+        Capability::ReadGraph => "Read semantic graph".into(),
+        Capability::WriteGraph { namespaces } => {
+            format!("Write graph: {}", namespaces.join(", "))
+        }
+        Capability::ReadProject { paths } => {
+            format!("Read project: {}", paths.join(", "))
+        }
+        Capability::WriteProject { paths } => {
+            format!("Write project: {}", paths.join(", "))
+        }
+        Capability::RunValidation { programs } => {
+            format!("Run validation: {}", programs.join(", "))
+        }
+        Capability::Network { hosts } => {
+            format!("Network: {}", hosts.join(", "))
+        }
+        Capability::ContributeUi => "Contribute UI".into(),
+    }
+}
+
+fn panel_location_label(location: PanelLocation) -> &'static str {
+    match location {
+        PanelLocation::Left => "left",
+        PanelLocation::Right => "right",
+        PanelLocation::Bottom => "bottom",
     }
 }
 

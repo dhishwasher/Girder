@@ -135,6 +135,70 @@ impl MockProvider {
             }
         )
     }
+
+    fn extension(input: &str) -> String {
+        let parsed = serde_json::from_str::<serde_json::Value>(input).unwrap_or_default();
+        let intent = parsed
+            .get("intent")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("workspace insight");
+        let mut slug = intent
+            .chars()
+            .map(|character| {
+                if character.is_ascii_alphanumeric() {
+                    character.to_ascii_lowercase()
+                } else {
+                    '-'
+                }
+            })
+            .collect::<String>();
+        while slug.contains("--") {
+            slug = slug.replace("--", "-");
+        }
+        slug = slug
+            .trim_matches('-')
+            .chars()
+            .take(48)
+            .collect::<String>()
+            .trim_matches('-')
+            .to_string();
+        if slug.is_empty() {
+            slug = "workspace-insight".into();
+        }
+        let title = intent
+            .split_whitespace()
+            .take(6)
+            .collect::<Vec<_>>()
+            .join(" ")
+            .chars()
+            .take(60)
+            .collect::<String>();
+        serde_json::json!({
+            "version": 1,
+            "id": format!("dev.bitcode.generated.{slug}"),
+            "name": if title.is_empty() { "Workspace Insight" } else { &title },
+            "description": format!("A graph-backed workspace view for: {intent}"),
+            "intent": intent,
+            "capabilities": [
+                { "kind": "read_graph" },
+                { "kind": "contribute_ui" }
+            ],
+            "contributions": [
+                {
+                    "kind": "panel",
+                    "id": "workspace-view",
+                    "title": if title.is_empty() { "Workspace Insight" } else { &title },
+                    "location": "right",
+                    "view": {
+                        "kind": "graph_query",
+                        "question": intent
+                    }
+                }
+            ],
+            "projections": []
+        })
+        .to_string()
+    }
 }
 
 #[async_trait]
@@ -153,6 +217,7 @@ impl AiProvider for MockProvider {
                 prompt.user.lines().next().unwrap_or("(unknown)").trim()
             ),
             TaskClass::Quick => prompt.user.chars().take(40).collect(),
+            TaskClass::Extension => Self::extension(&prompt.user),
         };
         let tokens = (text.len() / 4) as u32;
         Ok(Completion {
@@ -180,5 +245,25 @@ mod tests {
             .unwrap();
         assert!(mult.text.contains("fn multiply"));
         assert!(mult.text.contains("a * b"));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn extension_generation_is_strict_json() {
+        let provider = MockProvider::new();
+        let completion = provider
+            .complete(Prompt::new(
+                TaskClass::Extension,
+                "",
+                r#"{"intent":"show authentication impact"}"#,
+            ))
+            .await
+            .unwrap();
+        let value: serde_json::Value = serde_json::from_str(&completion.text).unwrap();
+
+        assert_eq!(
+            value["id"],
+            "dev.bitcode.generated.show-authentication-impact"
+        );
+        assert_eq!(value["capabilities"][0]["kind"], "read_graph");
     }
 }

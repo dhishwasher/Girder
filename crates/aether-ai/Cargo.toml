@@ -9,7 +9,7 @@ license.workspace = true
 # API keys. Turning this on compiles the real HTTP-backed OpenAI and Anthropic
 # providers.
 default = []
-live-providers = ["dep:reqwest", "dep:serde_json"]
+live-providers = ["dep:reqwest"]
 
 [dependencies]
 async-trait = { workspace = true }
@@ -20,7 +20,7 @@ reqwest = { version = "0.12", default-features = false, features = [
     "json",
     "rustls-tls",
 ], optional = true }
-serde_json = { version = "1", optional = true }
+serde_json = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }

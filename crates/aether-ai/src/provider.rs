@@ -16,6 +16,8 @@ pub enum TaskClass {
     Summarize,
     /// Cheap, latency-sensitive completions (inline hints).
     Quick,
+    /// Strict declarative extension-recipe generation.
+    Extension,
 }
 
 /// A request to a model. Deliberately minimal but provider-agnostic.

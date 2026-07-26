@@ -64,6 +64,18 @@ cargo run -p aether-app -- debug script.py --what-if x=10 at 2
 # DAP adapter dry-run: resolve graph breakpoints without launching an adapter:
 cargo run -p aether-app -- dap script.py --dry-run
 
+# Generate and review an extension recipe without changing the project:
+cargo run -p aether-app -- extension sample-project generate "show call impact"
+
+# Grant the exact recipe digest/capabilities, then manage its lifecycle:
+cargo run -p aether-app -- extension sample-project generate "show call impact" --approve
+cargo run -p aether-app -- extension sample-project list
+cargo run -p aether-app -- extension sample-project disable dev.bitcode.generated.show-call-impact
+cargo run -p aether-app -- extension sample-project remove dev.bitcode.generated.show-call-impact
+
+# Install a hand-authored declarative recipe after the same explicit review:
+cargo run -p aether-app -- extension sample-project install recipe.json --approve
+
 # Full help:
 cargo run -p aether-app -- --help
 ```
@@ -121,6 +133,7 @@ versions fail before project analysis starts.
 | `aether-agents` | The parallel swarm: message bus, orchestrator, 8 specialized agents. |
 | `aether-debugger` | Recording interpreter, execution trace, branching timeline, what-if + AI root-cause. |
 | `aether-dap` | Debug Adapter Protocol client/session layer with graph-aware breakpoint support. |
+| `aether-extensions` | Strict declarative recipes, digest-bound grants, graph-native lifecycle, bounded UI and project contributions. |
 | `aether-app` | egui/wgpu GUI (feature `gui`) + the headless `smoke` demo binary. |
 
 ## The GUI
@@ -156,6 +169,18 @@ diagnostics remain inspectable and failed candidates can be revalidated or
 rolled back. **Commit** projects generated functions to the configured output
 file and persists the graph, while **Roll back** cancels validation and restores
 the pre-run graph without touching source files.
+
+The right workspace has separate **Agents** and **Extensions** views. Extension
+generation returns a strict JSON recipe; installation stays disabled until the
+user reviews its exact SHA-256 digest, capabilities, contributions, projections,
+and full JSON. Installed records and their contribution nodes live in the
+semantic graph and survive source reconciliation. Enable/disable affects only
+contribution visibility. Removal conflict-checks every installed projection,
+restores replaced files, deletes files created by the extension, and commits the
+project plus graph as one recoverable transaction. Model output is never loaded
+as native code. Contributed validation commands resolve back to an installed,
+enabled recipe and require Bubblewrap; they run with networking disabled and a
+cleared environment in the disposable candidate workspace.
 
 CI type-checks the `gui` feature on the stable Rust toolchain. Rendering needs a
 GPU — or a software Vulkan adapter (Mesa **lavapipe**) plus the usual X11 libs
@@ -212,6 +237,7 @@ time-travel debug) are real, tested, and runnable. Implemented features:
 | Source projection | GUI/CLI agent output and graph rename commit validated source plus graph through recoverable journaled transactions |
 | Candidate validation | Disposable project copy, optional bubblewrap isolation, Cargo build/tests, configured checks, cancellation/timeouts, bounded diagnostics, snapshot-bound commit gate |
 | DAP integration | Two-phase DAP launch, graph-node breakpoints, stop/stack inspection, and real `debugpy` coverage |
+| Declarative extensions | AI/JSON recipe generation, exact digest-bound approval, parameterized capabilities, graph-native records/contributions, GUI/CLI lifecycle, reversible validated projections |
 
 Optional DAP adapter smoke test:
 

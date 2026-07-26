@@ -4,7 +4,7 @@ use aether_graph::SemanticGraph;
 use globset::GlobSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashSet};
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -13,7 +13,6 @@ const TRANSACTION_ROOT: &str = ".bitcode/transactions";
 const TRANSACTION_MANIFEST: &str = "manifest.json";
 const TRANSACTION_COMMITTED: &str = "COMMITTED";
 
-#[cfg(any(feature = "gui", test))]
 #[derive(Debug)]
 pub(crate) struct GraphSnapshot {
     pub(crate) graph: Option<SemanticGraph>,
@@ -25,7 +24,7 @@ pub(crate) struct GraphSnapshot {
 pub(crate) struct ProjectWrite {
     relative: PathBuf,
     expected: Option<Vec<u8>>,
-    contents: Vec<u8>,
+    contents: Option<Vec<u8>>,
 }
 
 impl ProjectWrite {
@@ -37,7 +36,7 @@ impl ProjectWrite {
         Self {
             relative: relative.into(),
             expected,
-            contents,
+            contents: Some(contents),
         }
     }
 
@@ -53,8 +52,16 @@ impl ProjectWrite {
         &self.relative
     }
 
-    pub(crate) fn contents(&self) -> &[u8] {
-        &self.contents
+    pub(crate) fn contents(&self) -> Option<&[u8]> {
+        self.contents.as_deref()
+    }
+
+    pub(crate) fn delete(relative: impl Into<PathBuf>, expected: Vec<u8>) -> Self {
+        Self {
+            relative: relative.into(),
+            expected: Some(expected),
+            contents: None,
+        }
     }
 }
 
@@ -68,7 +75,8 @@ struct TransactionManifest {
 struct TransactionEntry {
     relative: String,
     had_original: bool,
-    staged: String,
+    #[serde(default)]
+    staged: Option<String>,
     backup: String,
 }
 
@@ -265,7 +273,6 @@ pub(crate) fn graph_project_write(
     ))
 }
 
-#[cfg(any(feature = "gui", test))]
 pub(crate) fn load_graph_snapshot(
     root: &Path,
     config: &ProjectConfig,
@@ -321,6 +328,31 @@ pub(crate) fn read_project_bytes(
     read_optional_bytes(&path)
 }
 
+pub(crate) fn read_project_bytes_bounded(
+    root: &Path,
+    relative: impl AsRef<Path>,
+    max_bytes: usize,
+) -> std::io::Result<Option<Vec<u8>>> {
+    let path = safe_project_input_path(root, relative)?;
+    let file = match std::fs::File::open(&path) {
+        Ok(file) => file,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(error),
+    };
+    let limit = u64::try_from(max_bytes)
+        .unwrap_or(u64::MAX)
+        .saturating_add(1);
+    let mut bytes = Vec::with_capacity(max_bytes.min(64 * 1024));
+    file.take(limit).read_to_end(&mut bytes)?;
+    if bytes.len() > max_bytes {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("project file {} exceeds {max_bytes} bytes", path.display()),
+        ));
+    }
+    Ok(Some(bytes))
+}
+
 fn read_optional_bytes(path: &Path) -> std::io::Result<Option<Vec<u8>>> {
     match std::fs::read(path) {
         Ok(bytes) => Ok(Some(bytes)),
@@ -366,7 +398,7 @@ pub(crate) fn commit_project_writes(
                 ),
             ));
         }
-        if current.as_deref() == Some(write.contents.as_slice()) {
+        if current.as_deref() == write.contents.as_deref() {
             continue;
         }
         prepared.push((write, target, current));
@@ -393,15 +425,17 @@ pub(crate) fn commit_project_writes(
 
     let mut entries = Vec::with_capacity(prepared.len());
     for (index, (write, target, current)) in prepared.iter().enumerate() {
-        let staged = format!("{index}.staged");
+        let staged = write.contents.as_ref().map(|_| format!("{index}.staged"));
         let backup = format!("{index}.backup");
-        write_synced_file(
-            &transaction_dir.join(&staged),
-            &write.contents,
-            std::fs::metadata(target)
-                .ok()
-                .map(|metadata| metadata.permissions()),
-        )?;
+        if let (Some(staged), Some(contents)) = (&staged, &write.contents) {
+            write_synced_file(
+                &transaction_dir.join(staged),
+                contents,
+                std::fs::metadata(target)
+                    .ok()
+                    .map(|metadata| metadata.permissions()),
+            )?;
+        }
         if let Some(bytes) = current {
             write_synced_file(&transaction_dir.join(&backup), bytes, None)?;
         }
@@ -425,10 +459,11 @@ pub(crate) fn commit_project_writes(
     let commit_result: std::io::Result<()> = (|| {
         for entry in &manifest.entries {
             let target = safe_project_output_path(root, &entry.relative)?;
-            std::fs::rename(
-                transaction_member(&transaction_dir, &entry.staged)?,
-                &target,
-            )?;
+            if let Some(staged) = &entry.staged {
+                std::fs::rename(transaction_member(&transaction_dir, staged)?, &target)?;
+            } else {
+                std::fs::remove_file(&target)?;
+            }
             if let Some(parent) = target.parent() {
                 sync_dir(parent)?;
             }
@@ -945,6 +980,30 @@ mod tests {
     }
 
     #[test]
+    fn project_writes_delete_as_part_of_the_atomic_batch() {
+        let dir = TempDir::new("transaction-delete");
+        std::fs::write(dir.0.join("remove.rs"), b"generated\n").unwrap();
+        std::fs::write(dir.0.join("keep.rs"), b"old\n").unwrap();
+
+        let written = commit_project_writes(
+            &dir.0,
+            vec![
+                ProjectWrite::delete("remove.rs", b"generated\n".to_vec()),
+                ProjectWrite::bytes("keep.rs", Some(b"old\n".to_vec()), b"new\n".to_vec()),
+            ],
+        )
+        .unwrap();
+
+        assert_eq!(
+            written,
+            [PathBuf::from("remove.rs"), PathBuf::from("keep.rs")]
+        );
+        assert!(!dir.0.join("remove.rs").exists());
+        assert_eq!(std::fs::read(dir.0.join("keep.rs")).unwrap(), b"new\n");
+        assert!(!dir.0.join(".bitcode").exists());
+    }
+
+    #[test]
     fn project_writes_reject_stale_inputs_before_replacing_anything() {
         let dir = TempDir::new("transaction-conflict");
         std::fs::write(dir.0.join("a.rs"), b"external\n").unwrap();
@@ -980,13 +1039,13 @@ mod tests {
                 TransactionEntry {
                     relative: "existing.rs".into(),
                     had_original: true,
-                    staged: "0.staged".into(),
+                    staged: Some("0.staged".into()),
                     backup: "0.backup".into(),
                 },
                 TransactionEntry {
                     relative: "created.rs".into(),
                     had_original: false,
-                    staged: "1.staged".into(),
+                    staged: Some("1.staged".into()),
                     backup: "1.backup".into(),
                 },
             ],
@@ -1007,6 +1066,35 @@ mod tests {
     }
 
     #[test]
+    fn startup_restores_a_file_deleted_by_an_interrupted_transaction() {
+        let dir = TempDir::new("transaction-delete-recovery");
+        let transaction_dir = dir.0.join(TRANSACTION_ROOT).join("interrupted");
+        std::fs::create_dir_all(&transaction_dir).unwrap();
+        std::fs::write(transaction_dir.join("0.backup"), b"original\n").unwrap();
+        let manifest = TransactionManifest {
+            version: 1,
+            entries: vec![TransactionEntry {
+                relative: "deleted.rs".into(),
+                had_original: true,
+                staged: None,
+                backup: "0.backup".into(),
+            }],
+        };
+        std::fs::write(
+            transaction_dir.join(TRANSACTION_MANIFEST),
+            serde_json::to_vec(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        assert_eq!(recover_project_transactions(&dir.0).unwrap(), 1);
+        assert_eq!(
+            std::fs::read(dir.0.join("deleted.rs")).unwrap(),
+            b"original\n"
+        );
+        assert!(!dir.0.join(".bitcode").exists());
+    }
+
+    #[test]
     fn directory_build_recovers_before_parsing_sources() {
         let dir = TempDir::new("build-recovery");
         std::fs::create_dir_all(dir.0.join("src")).unwrap();
@@ -1020,7 +1108,7 @@ mod tests {
             entries: vec![TransactionEntry {
                 relative: "src/lib.rs".into(),
                 had_original: true,
-                staged: "0.staged".into(),
+                staged: Some("0.staged".into()),
                 backup: "0.backup".into(),
             }],
         };
@@ -1049,7 +1137,7 @@ mod tests {
             entries: vec![TransactionEntry {
                 relative: "file.rs".into(),
                 had_original: true,
-                staged: "0.staged".into(),
+                staged: Some("0.staged".into()),
                 backup: "0.backup".into(),
             }],
         };
@@ -1090,5 +1178,20 @@ mod tests {
 
         assert!(snapshot.graph.is_none());
         assert!(!dir.0.join(".cache").exists());
+    }
+
+    #[test]
+    fn bounded_project_reads_stop_at_the_limit() {
+        let dir = TempDir::new("bounded-read");
+        std::fs::write(dir.0.join("large.txt"), b"12345").unwrap();
+
+        assert_eq!(
+            read_project_bytes_bounded(&dir.0, "large.txt", 5)
+                .unwrap()
+                .unwrap(),
+            b"12345"
+        );
+        let error = read_project_bytes_bounded(&dir.0, "large.txt", 4).unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
     }
 }

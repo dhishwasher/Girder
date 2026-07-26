@@ -45,6 +45,10 @@ pub enum NodeKind {
     Concept,
     /// An external dependency / crate / package.
     Dependency,
+    /// A declarative, permission-bound Bit Code extension recipe.
+    Extension,
+    /// A panel, command, or other contribution owned by an extension.
+    ExtensionContribution,
 }
 
 /// A position in a source projection, used to render text and map edits back.

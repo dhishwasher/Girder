@@ -18,6 +18,8 @@ pub enum EdgeKind {
     /// Changing `source` is predicted to impact `target`. Derived/maintained by
     /// impact analysis and the Optimizer/Refactorer agents.
     Impacts,
+    /// An extension provides a declarative panel, command, or projection.
+    Contributes,
 }
 
 impl EdgeKind {

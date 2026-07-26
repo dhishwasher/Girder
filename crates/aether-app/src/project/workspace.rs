@@ -1,13 +1,24 @@
+#[cfg(feature = "gui")]
+use crate::project::commands::extensions::{ExtensionMutation, ExtensionMutationRequest};
 use crate::project::config::ProjectConfig;
 use crate::project::projection::{
     capture_agent_baseline, plan_authored_functions, ProjectionBaseline,
 };
+#[cfg(feature = "gui")]
+use crate::project::source::read_project_bytes_bounded;
 use crate::project::source::{
     collect_sources_with_config, commit_project_writes, graph_project_write, load_graph_snapshot,
     read_project_bytes, recover_project_transactions, ProjectWrite,
 };
+#[cfg(feature = "gui")]
+use crate::project::validation::validate_extension_command;
 use crate::project::validation::{validate_candidate, ValidationReport};
 use aether_builder::{GraphBuilder, Lang};
+#[cfg(feature = "gui")]
+use aether_extensions::{
+    find_record, records, CommandAction, Contribution, ExtensionError, ExtensionRecord,
+    ExtensionState,
+};
 use aether_graph::{NodeId, SemanticGraph};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -64,6 +75,13 @@ pub(crate) struct AgentValidationRequest {
     baseline: ProjectionBaseline,
 }
 
+#[cfg(feature = "gui")]
+pub(crate) struct ExtensionCommandRequest {
+    root: PathBuf,
+    config: ProjectConfig,
+    argv: Vec<String>,
+}
+
 #[derive(Debug)]
 pub(crate) struct AgentValidationOutcome {
     pub(crate) report: ValidationReport,
@@ -88,6 +106,13 @@ impl AgentValidationRequest {
             report,
             graph_bytes,
         })
+    }
+}
+
+#[cfg(feature = "gui")]
+impl ExtensionCommandRequest {
+    pub(crate) fn run(self, cancel: &Arc<AtomicBool>) -> std::io::Result<ValidationReport> {
+        validate_extension_command(&self.root, &self.config, self.argv, cancel)
     }
 }
 
@@ -482,6 +507,123 @@ impl ProjectWorkspace {
 
     pub(crate) fn has_pending_agent_changes(&self) -> bool {
         self.agent_transaction.is_some()
+    }
+
+    #[cfg(feature = "gui")]
+    pub(crate) fn extension_records(
+        &self,
+    ) -> std::io::Result<Vec<Result<ExtensionRecord, ExtensionError>>> {
+        let graph = self
+            .graph
+            .lock()
+            .map_err(|_| std::io::Error::other("semantic graph lock is poisoned"))?;
+        Ok(records(&graph))
+    }
+
+    #[cfg(feature = "gui")]
+    pub(crate) fn extension_mutation_request(
+        &self,
+        mutation: ExtensionMutation,
+    ) -> std::io::Result<ExtensionMutationRequest> {
+        if self.is_dirty() {
+            return Err(dirty_error("change extensions"));
+        }
+        if self.has_pending_agent_changes() {
+            return Err(pending_agent_error("change extensions"));
+        }
+        let graph = self
+            .graph
+            .lock()
+            .map_err(|_| std::io::Error::other("semantic graph lock is poisoned"))?
+            .clone();
+        Ok(ExtensionMutationRequest::new(
+            self.root.clone(),
+            self.config.clone(),
+            read_project_bytes(&self.root, crate::project::config::CONFIG_FILE)?,
+            graph,
+            self.clean_graph_bytes.clone(),
+            mutation,
+        ))
+    }
+
+    #[cfg(feature = "gui")]
+    pub(crate) fn extension_command_request(
+        &self,
+        extension_id: &str,
+        contribution_id: &str,
+    ) -> std::io::Result<ExtensionCommandRequest> {
+        if self.is_dirty() {
+            return Err(dirty_error("run an extension command"));
+        }
+        if self.has_pending_agent_changes() {
+            return Err(pending_agent_error("run an extension command"));
+        }
+        let graph = self
+            .graph
+            .lock()
+            .map_err(|_| std::io::Error::other("semantic graph lock is poisoned"))?;
+        let record = find_record(&graph, extension_id)
+            .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidData, error))?
+            .ok_or_else(|| {
+                std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("extension {extension_id} is not installed"),
+                )
+            })?;
+        if record.state != ExtensionState::Enabled {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                format!("extension {extension_id} is disabled"),
+            ));
+        }
+        let argv = record
+            .recipe
+            .contributions
+            .iter()
+            .find_map(|contribution| match contribution {
+                Contribution::Command {
+                    id,
+                    action: CommandAction::RunValidation { argv },
+                    ..
+                } if id == contribution_id => Some(argv.clone()),
+                _ => None,
+            })
+            .ok_or_else(|| {
+                std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("extension {extension_id} has no validation command {contribution_id}"),
+                )
+            })?;
+        Ok(ExtensionCommandRequest {
+            root: self.root.clone(),
+            config: self.config.clone(),
+            argv,
+        })
+    }
+
+    #[cfg(feature = "gui")]
+    pub(crate) fn read_extension_file(&self, relative: &str) -> std::io::Result<String> {
+        const MAX_EXTENSION_FILE_BYTES: usize = 256 * 1024;
+        let Some(bytes) =
+            read_project_bytes_bounded(&self.root, relative, MAX_EXTENSION_FILE_BYTES)?
+        else {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("extension file does not exist: {relative}"),
+            ));
+        };
+        if bytes.len() > MAX_EXTENSION_FILE_BYTES {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("extension file {relative} exceeds {MAX_EXTENSION_FILE_BYTES} bytes"),
+            ));
+        }
+        String::from_utf8(bytes).map_err(|error| {
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("extension file {relative} is not UTF-8: {error}"),
+            )
+        })
     }
 
     pub(crate) fn agent_validation_request(&mut self) -> std::io::Result<AgentValidationRequest> {

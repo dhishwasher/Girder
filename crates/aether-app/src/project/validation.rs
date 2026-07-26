@@ -12,6 +12,26 @@ static NEXT_VALIDATION: AtomicUsize = AtomicUsize::new(0);
 const VALIDATION_ROOT: &str = ".bitcode/validation";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ValidationPolicy {
+    Project,
+    #[cfg(any(feature = "gui", test))]
+    Extension,
+}
+
+impl ValidationPolicy {
+    fn is_extension(self) -> bool {
+        #[cfg(any(feature = "gui", test))]
+        {
+            self == Self::Extension
+        }
+        #[cfg(not(any(feature = "gui", test)))]
+        {
+            false
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ValidationStatus {
     Passed,
     Failed,
@@ -87,6 +107,36 @@ pub(crate) fn validate_candidate(
     writes: &[ProjectWrite],
     cancel: &Arc<AtomicBool>,
 ) -> std::io::Result<ValidationReport> {
+    validate_candidate_with_policy(root, config, writes, cancel, ValidationPolicy::Project)
+}
+
+#[cfg(any(feature = "gui", test))]
+pub(crate) fn validate_extension_command(
+    root: &Path,
+    config: &ProjectConfig,
+    argv: Vec<String>,
+    cancel: &Arc<AtomicBool>,
+) -> std::io::Result<ValidationReport> {
+    if bubblewrap_path().is_none() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "extension commands require Bubblewrap filesystem and network isolation",
+        ));
+    }
+    let mut config = config.clone();
+    config.validation.enabled = true;
+    config.validation.run_tests = false;
+    config.validation.commands = vec![argv];
+    validate_candidate_with_policy(root, &config, &[], cancel, ValidationPolicy::Extension)
+}
+
+fn validate_candidate_with_policy(
+    root: &Path,
+    config: &ProjectConfig,
+    writes: &[ProjectWrite],
+    cancel: &Arc<AtomicBool>,
+    policy: ValidationPolicy,
+) -> std::io::Result<ValidationReport> {
     verify_project_writes(root, writes)?;
     if !config.validation.enabled {
         return Ok(ValidationReport {
@@ -106,11 +156,15 @@ pub(crate) fn validate_candidate(
     for write in writes {
         check_cancelled(cancel)?;
         let target = sandbox.workspace.join(write.relative());
-        if let Some(parent) = target.parent() {
-            std::fs::create_dir_all(parent)?;
+        if let Some(contents) = write.contents() {
+            if let Some(parent) = target.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            let mut file = std::fs::File::create(&target)?;
+            file.write_all(contents)?;
+        } else {
+            std::fs::remove_file(&target)?;
         }
-        let mut file = std::fs::File::create(&target)?;
-        file.write_all(write.contents())?;
     }
 
     let os_sandbox = bubblewrap_path().is_some();
@@ -129,7 +183,7 @@ pub(crate) fn validate_candidate(
             }
         ),
     }];
-    let commands = validation_commands(&sandbox.workspace, config);
+    let commands = validation_commands(&sandbox.workspace, config, policy);
     if commands.is_empty() {
         steps.push(ValidationStep {
             label: "Build and tests".to_string(),
@@ -150,9 +204,9 @@ pub(crate) fn validate_candidate(
             root,
             &label,
             &command,
-            Duration::from_secs(config.validation.timeout_seconds),
-            config.validation.max_output_bytes,
+            config,
             cancel,
+            policy,
         )?;
         let passed = step.status == ValidationStatus::Passed;
         steps.push(step);
@@ -186,9 +240,10 @@ pub(crate) fn validate_candidate(
 fn validation_commands(
     candidate: &Path,
     config: &ProjectConfig,
+    policy: ValidationPolicy,
 ) -> Vec<(String, ConfiguredCommand)> {
     let mut commands = Vec::new();
-    if candidate.join("Cargo.toml").is_file() {
+    if !policy.is_extension() && candidate.join("Cargo.toml").is_file() {
         commands.push((
             "Rust build".to_string(),
             ConfiguredCommand {
@@ -237,14 +292,14 @@ fn run_validation_command(
     project_root: &Path,
     label: &str,
     configured: &ConfiguredCommand,
-    timeout: Duration,
-    max_output: usize,
+    project_config: &ProjectConfig,
     cancel: &Arc<AtomicBool>,
+    policy: ValidationPolicy,
 ) -> std::io::Result<ValidationStep> {
     let started = Instant::now();
     let target_dir =
         (configured.program == "cargo").then(|| validation_target_dir(project_root, candidate));
-    let mut command = sandboxed_command(candidate, configured, target_dir.as_deref())?;
+    let mut command = sandboxed_command(candidate, configured, target_dir.as_deref(), policy)?;
     command
         .current_dir(candidate)
         .env("BITCODE_VALIDATION", "1")
@@ -274,8 +329,9 @@ fn run_validation_command(
         .stderr
         .take()
         .ok_or_else(|| std::io::Error::other("validation stderr was not captured"))?;
-    let stdout_reader = capture_output(stdout, max_output / 2);
-    let stderr_reader = capture_output(stderr, max_output / 2);
+    let stdout_reader = capture_output(stdout, project_config.validation.max_output_bytes / 2);
+    let stderr_reader = capture_output(stderr, project_config.validation.max_output_bytes / 2);
+    let timeout = Duration::from_secs(project_config.validation.timeout_seconds);
 
     let (status, exit) = loop {
         if cancel.load(Ordering::Relaxed) {
@@ -338,6 +394,7 @@ fn sandboxed_command(
     candidate: &Path,
     configured: &ConfiguredCommand,
     target_dir: Option<&Path>,
+    policy: ValidationPolicy,
 ) -> std::io::Result<Command> {
     let Some(bwrap) = bubblewrap_path() else {
         let mut command = Command::new(&configured.program);
@@ -360,6 +417,23 @@ fn sandboxed_command(
         "--bind",
     ]);
     command.arg(candidate).arg(candidate);
+    if policy.is_extension() {
+        command.arg("--unshare-net");
+        let preserved = [
+            "PATH",
+            "CARGO_HOME",
+            "RUSTUP_HOME",
+            "CARGO_TARGET_DIR",
+            "TMPDIR",
+            "LANG",
+            "LC_ALL",
+        ]
+        .into_iter()
+        .filter_map(|key| std::env::var_os(key).map(|value| (key, value)))
+        .collect::<Vec<_>>();
+        command.env_clear();
+        command.envs(preserved);
+    }
     if let Some(target) = target_dir {
         std::fs::create_dir_all(target)?;
         if !target.starts_with(candidate) {
@@ -379,7 +453,11 @@ fn sandboxed_command(
         .arg(candidate)
         .arg("--setenv")
         .arg("BITCODE_VALIDATION")
-        .arg("1")
+        .arg("1");
+    if policy.is_extension() {
+        command.arg("--setenv").arg("HOME").arg("/tmp");
+    }
+    command
         .arg("--")
         .arg(&configured.program)
         .args(&configured.args);
@@ -978,7 +1056,7 @@ mod tests {
         let mut config = ProjectConfig::default();
         config.validation.commands = vec![vec!["custom-check".to_string()]];
 
-        let commands = validation_commands(&project.0, &config);
+        let commands = validation_commands(&project.0, &config, ValidationPolicy::Project);
 
         assert_eq!(
             commands
@@ -993,6 +1071,51 @@ mod tests {
             ["check", "--workspace", "--all-targets"]
         );
         assert_eq!(commands[1].1.args, ["test", "--workspace"]);
+    }
+
+    #[test]
+    fn extension_policy_runs_only_the_declared_command() {
+        let project = TempProject::new("extension-command-order");
+        project.write("Cargo.toml", "[workspace]\n");
+        let mut config = ProjectConfig::default();
+        config.validation.commands = vec![vec![
+            "cargo".to_string(),
+            "fmt".to_string(),
+            "--check".to_string(),
+        ]];
+
+        let commands = validation_commands(&project.0, &config, ValidationPolicy::Extension);
+
+        assert_eq!(commands.len(), 1);
+        assert_eq!(commands[0].0, "Configured check 1");
+        assert_eq!(commands[0].1.program, "cargo");
+        assert_eq!(commands[0].1.args, ["fmt", "--check"]);
+    }
+
+    #[test]
+    fn extension_command_does_not_inherit_ambient_secrets() {
+        if bubblewrap_path().is_none() {
+            return;
+        }
+        const SECRET: &str = "BITCODE_EXTENSION_SECRET_TEST";
+        let project = TempProject::new("extension-secret-isolation");
+        project.write("src/lib.rs", "pub fn example() {}\n");
+        std::env::set_var(SECRET, "must-not-cross-sandbox");
+
+        let result = validate_extension_command(
+            &project.0,
+            &ProjectConfig::default(),
+            vec![
+                "sh".to_string(),
+                "-c".to_string(),
+                format!("test -z \"${{{SECRET}+x}}\""),
+            ],
+            &Arc::new(AtomicBool::new(false)),
+        );
+        std::env::remove_var(SECRET);
+
+        let report = result.unwrap();
+        assert!(report.passed(), "{:?}", report.steps);
     }
 
     struct HostMarker(PathBuf);

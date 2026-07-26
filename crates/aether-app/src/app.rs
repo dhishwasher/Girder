@@ -2,9 +2,13 @@
 
 use crate::graph_view::GraphViewState;
 use crate::panels;
-use crate::project::{AgentValidationOutcome, ProjectWorkspace, SyncImpact};
+use crate::project::{
+    AgentValidationOutcome, ExtensionCommandRequest, ExtensionMutation, ExtensionMutationOutcome,
+    ExtensionMutationRequest, ProjectWorkspace, SyncImpact, ValidationReport,
+};
 use aether_agents::{MsgKind, Orchestrator, SwarmContext, SwarmMessage};
 use aether_debugger::{buggy_demo_program, python_tracer::PyTimeline, Timeline};
+use aether_extensions::{generation_system_prompt, ExtensionRecipe};
 use aether_graph::NodeId;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -17,6 +21,18 @@ type PythonTraceResult = Result<PythonTraceSteps, String>;
 type PythonTraceReceiver = tokio::sync::oneshot::Receiver<PythonTraceResult>;
 type AgentValidationResult = std::io::Result<AgentValidationOutcome>;
 type AgentValidationReceiver = tokio::sync::oneshot::Receiver<AgentValidationResult>;
+type ExtensionGenerationResult = Result<(ExtensionRecipe, String), String>;
+type ExtensionGenerationReceiver = tokio::sync::oneshot::Receiver<ExtensionGenerationResult>;
+type ExtensionMutationResult = std::io::Result<ExtensionMutationOutcome>;
+type ExtensionMutationReceiver = tokio::sync::oneshot::Receiver<ExtensionMutationResult>;
+type ExtensionCommandResult = std::io::Result<ValidationReport>;
+type ExtensionCommandReceiver = tokio::sync::oneshot::Receiver<ExtensionCommandResult>;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum RightPanel {
+    Agents,
+    Extensions,
+}
 
 /// All live IDE state. The graph is shared (Arc<Mutex>) so the agent swarm can
 /// mutate it concurrently while the UI renders projections of it.
@@ -37,6 +53,16 @@ pub struct AetherApp {
     pub(crate) swarm_rx: Option<tokio::sync::oneshot::Receiver<Vec<SwarmMessage>>>,
     pub(crate) agent_validation_rx: Option<AgentValidationReceiver>,
     agent_validation_cancel: Option<Arc<AtomicBool>>,
+    pub(crate) extension_intent: String,
+    pub(crate) extension_candidate: Option<ExtensionRecipe>,
+    extension_generation_rx: Option<ExtensionGenerationReceiver>,
+    extension_mutation_rx: Option<ExtensionMutationReceiver>,
+    extension_mutation_cancel: Option<Arc<AtomicBool>>,
+    extension_command_rx: Option<ExtensionCommandReceiver>,
+    extension_command_cancel: Option<Arc<AtomicBool>>,
+    pub(crate) extension_action_output: String,
+    pub(crate) extension_remove_confirmation: Option<String>,
+    pub(crate) right_panel: RightPanel,
     /// Nodes currently lit by the impact ripple: node_id -> hop distance from changed node.
     /// Distance 0 = the edited function itself; 1 = direct callers; 2 = their callers; etc.
     pub(crate) impact_nodes: HashMap<NodeId, u32>,
@@ -82,6 +108,16 @@ impl AetherApp {
             swarm_rx: None,
             agent_validation_rx: None,
             agent_validation_cancel: None,
+            extension_intent: String::new(),
+            extension_candidate: None,
+            extension_generation_rx: None,
+            extension_mutation_rx: None,
+            extension_mutation_cancel: None,
+            extension_command_rx: None,
+            extension_command_cancel: None,
+            extension_action_output: String::new(),
+            extension_remove_confirmation: None,
+            right_panel: RightPanel::Agents,
             impact_nodes: HashMap::new(),
             ripple_start: None,
             editor_jump: None,
@@ -92,6 +128,10 @@ impl AetherApp {
     }
 
     pub(crate) fn open_project(&mut self) {
+        if self.extension_busy() {
+            self.set_workspace_error("Wait for the extension operation before opening a project.");
+            return;
+        }
         if self.workspace.has_pending_agent_changes() {
             self.set_workspace_error(
                 "Commit or roll back pending agent changes before opening another project.",
@@ -116,6 +156,10 @@ impl AetherApp {
                 self.editor_jump = None;
                 self.py_file = active_python_path(&self.workspace).unwrap_or_default();
                 self.py_steps.clear();
+                self.extension_intent.clear();
+                self.extension_candidate = None;
+                self.extension_action_output.clear();
+                self.extension_remove_confirmation = None;
                 self.set_workspace_status(workspace_summary(&self.workspace));
             }
             Err(error) => self.set_workspace_error(format!("Open failed: {error}")),
@@ -123,6 +167,10 @@ impl AetherApp {
     }
 
     pub(crate) fn save_active_file(&mut self) {
+        if self.extension_busy() {
+            self.set_workspace_error("Wait for the extension operation before saving.");
+            return;
+        }
         match self.workspace.save() {
             Ok(path) => self.set_workspace_status(format!("Saved {}", path.display())),
             Err(error) => self.set_workspace_error(format!("Save failed: {error}")),
@@ -130,6 +178,10 @@ impl AetherApp {
     }
 
     pub(crate) fn discard_active_changes(&mut self) {
+        if self.extension_busy() {
+            self.set_workspace_error("Wait for the extension operation before discarding changes.");
+            return;
+        }
         match self.workspace.discard_changes() {
             Ok(impact) => {
                 self.apply_sync_impact(impact);
@@ -140,6 +192,10 @@ impl AetherApp {
     }
 
     pub(crate) fn reload_project(&mut self) {
+        if self.extension_busy() {
+            self.set_workspace_error("Wait for the extension operation before reloading.");
+            return;
+        }
         match self.workspace.reload() {
             Ok(()) => {
                 self.py_file = active_python_path(&self.workspace).unwrap_or_default();
@@ -155,6 +211,10 @@ impl AetherApp {
     }
 
     pub(crate) fn select_file(&mut self, relative: &str) {
+        if self.extension_mutation_rx.is_some() {
+            self.set_workspace_error("Wait for the extension change before opening a file.");
+            return;
+        }
         match self.workspace.select_file(relative) {
             Ok(()) => {
                 self.py_file = active_python_path(&self.workspace).unwrap_or_default();
@@ -233,6 +293,10 @@ impl AetherApp {
     /// background tokio task so the egui render thread is never blocked.
     /// Results are collected in `update` via `swarm_rx`.
     pub(crate) fn run_swarm(&mut self) {
+        if self.extension_busy() {
+            self.set_workspace_error("Wait for the extension operation before dispatching agents.");
+            return;
+        }
         if self.workspace.active_file().is_none() {
             self.set_workspace_error("Open a source file before dispatching the swarm.");
             return;
@@ -337,6 +401,178 @@ impl AetherApp {
         self.agent_validation_rx.is_some()
     }
 
+    pub(crate) fn generate_extension(&mut self) {
+        if self.extension_busy() {
+            self.set_workspace_error("An extension operation is already running.");
+            return;
+        }
+        if self.workspace.is_dirty() || self.workspace.has_pending_agent_changes() {
+            self.set_workspace_error(
+                "Save or resolve pending agent changes before generating an extension.",
+            );
+            return;
+        }
+        let intent = self.extension_intent.trim().to_string();
+        if intent.is_empty() {
+            self.set_workspace_error("Describe the extension to generate.");
+            return;
+        }
+        let (nodes, edges) = {
+            let graph = self.workspace.graph().lock().unwrap();
+            (graph.node_count(), graph.edge_count())
+        };
+        let router = self.router.clone();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.rt.spawn(async move {
+            let input = serde_json::json!({
+                "intent": intent,
+                "graph_context": {"nodes": nodes, "edges": edges}
+            });
+            let mut prompt = aether_ai::Prompt::new(
+                aether_ai::TaskClass::Extension,
+                generation_system_prompt(),
+                input.to_string(),
+            );
+            prompt.max_tokens = 4_096;
+            let result = router
+                .complete(prompt)
+                .await
+                .map_err(|error| error.to_string())
+                .and_then(|completion| {
+                    ExtensionRecipe::from_json(&completion.text)
+                        .map(|recipe| (recipe, completion.model))
+                        .map_err(|error| error.to_string())
+                });
+            let _ = tx.send(result);
+        });
+        self.extension_candidate = None;
+        self.extension_generation_rx = Some(rx);
+        self.set_workspace_status("Generating a declarative extension recipe...");
+    }
+
+    pub(crate) fn approve_extension(&mut self) {
+        let Some(recipe) = self.extension_candidate.clone() else {
+            self.set_workspace_error("There is no extension recipe to approve.");
+            return;
+        };
+        self.start_extension_mutation(ExtensionMutation::Install(recipe));
+    }
+
+    pub(crate) fn set_extension_enabled(&mut self, extension_id: String, enabled: bool) {
+        self.start_extension_mutation(ExtensionMutation::SetEnabled {
+            extension_id,
+            enabled,
+        });
+    }
+
+    pub(crate) fn remove_extension(&mut self, extension_id: String) {
+        self.extension_remove_confirmation = None;
+        self.start_extension_mutation(ExtensionMutation::Remove { extension_id });
+    }
+
+    pub(crate) fn extension_busy(&self) -> bool {
+        self.extension_generation_rx.is_some()
+            || self.extension_mutation_rx.is_some()
+            || self.extension_command_rx.is_some()
+    }
+
+    fn start_extension_mutation(&mut self, mutation: ExtensionMutation) {
+        if self.extension_busy() {
+            self.set_workspace_error("An extension operation is already running.");
+            return;
+        }
+        let request: ExtensionMutationRequest = match self
+            .workspace
+            .extension_mutation_request(mutation)
+        {
+            Ok(request) => request,
+            Err(error) => {
+                self.set_workspace_error(format!("Could not prepare extension operation: {error}"));
+                return;
+            }
+        };
+        let cancel = Arc::new(AtomicBool::new(false));
+        let task_cancel = cancel.clone();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.rt.spawn(async move {
+            let result = tokio::task::spawn_blocking(move || request.run(&task_cancel)).await;
+            let result = result.unwrap_or_else(|error| {
+                Err(std::io::Error::other(format!(
+                    "extension task failed: {error}"
+                )))
+            });
+            let _ = tx.send(result);
+        });
+        self.extension_mutation_cancel = Some(cancel);
+        self.extension_mutation_rx = Some(rx);
+        self.set_workspace_status("Validating extension changes in an isolated workspace...");
+    }
+
+    pub(crate) fn ask_extension_graph(&mut self, question: &str) {
+        let query = aether_graph::parse_query(question);
+        self.extension_action_output = self
+            .workspace
+            .graph()
+            .lock()
+            .unwrap()
+            .answer_query(&query)
+            .display();
+        self.set_workspace_status("Extension graph query completed.");
+    }
+
+    pub(crate) fn open_extension_file(&mut self, path: &str, line: Option<u32>) {
+        self.select_file(path);
+        if self.workspace.active_file() != Some(path) {
+            return;
+        }
+        if let Some(line) = line {
+            let target_line = line.saturating_sub(1) as usize;
+            let offset = self
+                .workspace
+                .buffer_mut()
+                .split_inclusive('\n')
+                .take(target_line)
+                .map(str::len)
+                .sum();
+            self.editor_jump = Some(offset);
+        }
+    }
+
+    pub(crate) fn run_extension_command(&mut self, extension_id: String, contribution_id: String) {
+        if self.extension_busy() {
+            self.set_workspace_error("An extension operation is already running.");
+            return;
+        }
+        let request: ExtensionCommandRequest = match self
+            .workspace
+            .extension_command_request(&extension_id, &contribution_id)
+        {
+            Ok(request) => request,
+            Err(error) => {
+                self.set_workspace_error(format!(
+                    "Could not prepare extension validation: {error}"
+                ));
+                return;
+            }
+        };
+        let cancel = Arc::new(AtomicBool::new(false));
+        let task_cancel = cancel.clone();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.rt.spawn(async move {
+            let result = tokio::task::spawn_blocking(move || request.run(&task_cancel)).await;
+            let result = result.unwrap_or_else(|error| {
+                Err(std::io::Error::other(format!(
+                    "extension command task failed: {error}"
+                )))
+            });
+            let _ = tx.send(result);
+        });
+        self.extension_command_cancel = Some(cancel);
+        self.extension_command_rx = Some(rx);
+        self.extension_action_output.clear();
+        self.set_workspace_status("Running extension validation in an isolated workspace...");
+    }
+
     fn cancel_agent_validation(&mut self) {
         if let Some(cancel) = self.agent_validation_cancel.take() {
             cancel.store(true, Ordering::Relaxed);
@@ -391,6 +627,12 @@ impl AetherApp {
 impl Drop for AetherApp {
     fn drop(&mut self) {
         if let Some(cancel) = &self.agent_validation_cancel {
+            cancel.store(true, Ordering::Relaxed);
+        }
+        if let Some(cancel) = &self.extension_mutation_cancel {
+            cancel.store(true, Ordering::Relaxed);
+        }
+        if let Some(cancel) = &self.extension_command_cancel {
             cancel.store(true, Ordering::Relaxed);
         }
     }
@@ -469,6 +711,109 @@ impl eframe::App for AetherApp {
             }
         }
 
+        if let Some(rx) = self.extension_generation_rx.as_mut() {
+            match rx.try_recv() {
+                Ok(Ok((recipe, model))) => {
+                    let digest = recipe.digest().unwrap_or_else(|_| "invalid".into());
+                    self.extension_generation_rx = None;
+                    self.extension_candidate = Some(recipe);
+                    self.set_workspace_status(format!(
+                        "Generated extension recipe with {model}; review digest {digest}"
+                    ));
+                }
+                Ok(Err(error)) => {
+                    self.extension_generation_rx = None;
+                    self.set_workspace_error(format!("Extension generation failed: {error}"));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                    ctx.request_repaint_after(std::time::Duration::from_millis(100));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                    self.extension_generation_rx = None;
+                    self.set_workspace_error("Extension generation stopped unexpectedly.");
+                }
+            }
+        }
+
+        if let Some(rx) = self.extension_mutation_rx.as_mut() {
+            match rx.try_recv() {
+                Ok(Ok(outcome)) => {
+                    self.extension_mutation_rx = None;
+                    self.extension_mutation_cancel = None;
+                    let message = outcome.message;
+                    match self.workspace.reload() {
+                        Ok(()) => {
+                            self.extension_candidate = None;
+                            self.graph_view.reset_for_project();
+                            self.impact_nodes.clear();
+                            self.ripple_start = None;
+                            self.editor_jump = None;
+                            self.set_workspace_status(message);
+                        }
+                        Err(error) => self.set_workspace_error(format!(
+                            "{message}, but workspace refresh failed: {error}"
+                        )),
+                    }
+                }
+                Ok(Err(error)) => {
+                    self.extension_mutation_rx = None;
+                    self.extension_mutation_cancel = None;
+                    self.set_workspace_error(format!("Extension operation failed: {error}"));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                    ctx.request_repaint_after(std::time::Duration::from_millis(100));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                    self.extension_mutation_rx = None;
+                    self.extension_mutation_cancel = None;
+                    self.set_workspace_error("Extension operation stopped unexpectedly.");
+                }
+            }
+        }
+
+        if let Some(rx) = self.extension_command_rx.as_mut() {
+            match rx.try_recv() {
+                Ok(Ok(report)) => {
+                    let passed = report.passed();
+                    let summary = report.summary();
+                    self.extension_action_output = report
+                        .steps
+                        .iter()
+                        .map(|step| {
+                            let command = step.command.as_deref().unwrap_or(&step.label);
+                            let output = step.output.trim();
+                            if output.is_empty() {
+                                format!("[{}] {command}", step.status.label())
+                            } else {
+                                format!("[{}] {command}\n{output}", step.status.label())
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n\n");
+                    self.extension_command_rx = None;
+                    self.extension_command_cancel = None;
+                    if passed {
+                        self.set_workspace_status(summary);
+                    } else {
+                        self.set_workspace_error(summary);
+                    }
+                }
+                Ok(Err(error)) => {
+                    self.extension_command_rx = None;
+                    self.extension_command_cancel = None;
+                    self.set_workspace_error(format!("Extension validation failed: {error}"));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                    ctx.request_repaint_after(std::time::Duration::from_millis(100));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                    self.extension_command_rx = None;
+                    self.extension_command_cancel = None;
+                    self.set_workspace_error("Extension validation stopped unexpectedly.");
+                }
+            }
+        }
+
         // Poll the background swarm task without blocking.
         if let Some(rx) = self.swarm_rx.as_mut() {
             match rx.try_recv() {
@@ -527,11 +872,13 @@ impl eframe::App for AetherApp {
             });
             ui.horizontal(|ui| {
                 ui.label("Project");
-                ui.add(
+                let extension_busy = self.extension_busy();
+                ui.add_enabled(
+                    !extension_busy,
                     egui::TextEdit::singleline(&mut self.project_path_input).desired_width(320.0),
                 );
                 if ui
-                    .button("Open")
+                    .add_enabled(!extension_busy, egui::Button::new("Open"))
                     .on_hover_text("Open project directory")
                     .clicked()
                 {
@@ -541,7 +888,7 @@ impl eframe::App for AetherApp {
                 let pending_agents = self.workspace.has_pending_agent_changes();
                 if ui
                     .add_enabled(
-                        has_file && self.workspace.is_dirty() && !pending_agents,
+                        has_file && self.workspace.is_dirty() && !pending_agents && !extension_busy,
                         egui::Button::new("Save"),
                     )
                     .on_hover_text("Save source and semantic graph")
@@ -551,7 +898,7 @@ impl eframe::App for AetherApp {
                 }
                 if ui
                     .add_enabled(
-                        has_file && self.workspace.is_dirty() && !pending_agents,
+                        has_file && self.workspace.is_dirty() && !pending_agents && !extension_busy,
                         egui::Button::new("Discard"),
                     )
                     .on_hover_text("Discard unsaved editor changes")
@@ -561,7 +908,10 @@ impl eframe::App for AetherApp {
                 }
                 if ui
                     .add_enabled(
-                        !self.workspace.is_dirty() && !pending_agents && self.swarm_rx.is_none(),
+                        !self.workspace.is_dirty()
+                            && !pending_agents
+                            && self.swarm_rx.is_none()
+                            && !extension_busy,
                         egui::Button::new("Reload"),
                     )
                     .on_hover_text("Re-index project from disk")

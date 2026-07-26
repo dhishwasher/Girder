@@ -452,3 +452,148 @@ rust = ["false", "{test}"]
     assert!(stdout.contains("false test_add"), "{stdout}");
     assert!(stderr.contains("Rust command exited with 1"), "{stderr}");
 }
+
+#[test]
+fn generated_extension_requires_approval_and_supports_lifecycle() {
+    let repo = TempRepo::new("extension-generate");
+    repo.write("src/lib.rs", "pub fn existing() {}\n");
+    let root = repo.path().to_str().unwrap();
+
+    let preview = run_bitcode(&["extension", root, "generate", "show authentication impact"]);
+
+    assert!(preview.contains("Preview only"), "{preview}");
+    assert!(preview.contains("read graph"), "{preview}");
+    assert!(!repo.path().join("project.aether").exists());
+
+    let installed = run_bitcode(&[
+        "extension",
+        root,
+        "generate",
+        "show authentication impact",
+        "--approve",
+    ]);
+    assert!(installed.contains("Installed and enabled"), "{installed}");
+
+    let listed = run_bitcode(&["extension", root, "list"]);
+    assert!(
+        listed.contains("dev.bitcode.generated.show-authentication-impact"),
+        "{listed}"
+    );
+    assert!(listed.contains("Enabled"), "{listed}");
+
+    run_bitcode(&[
+        "extension",
+        root,
+        "disable",
+        "dev.bitcode.generated.show-authentication-impact",
+    ]);
+    let listed = run_bitcode(&["extension", root, "list"]);
+    assert!(listed.contains("Disabled"), "{listed}");
+
+    run_bitcode(&[
+        "extension",
+        root,
+        "remove",
+        "dev.bitcode.generated.show-authentication-impact",
+    ]);
+    assert_eq!(
+        run_bitcode(&["extension", root, "list"]).trim(),
+        "No extensions installed."
+    );
+}
+
+#[test]
+fn extension_project_projections_are_restored_on_remove() {
+    let repo = TempRepo::new("extension-projections");
+    repo.write("src/lib.rs", "pub fn existing() {}\n");
+    repo.write("generated/existing.md", "original\n");
+    repo.write(
+        "extension.json",
+        r#"
+{
+  "version": 1,
+  "id": "dev.bitcode.test.report",
+  "name": "Test Report",
+  "description": "Contributes a bounded report panel and files.",
+  "intent": "show a test report",
+  "capabilities": [
+    {"kind": "write_project", "paths": ["generated/**"]},
+    {"kind": "contribute_ui"}
+  ],
+  "contributions": [
+    {
+      "kind": "panel",
+      "id": "report",
+      "title": "Test Report",
+      "location": "right",
+      "view": {"kind": "markdown", "content": "Report ready"}
+    }
+  ],
+  "projections": [
+    {
+      "path": "generated/existing.md",
+      "contents": "replacement\n",
+      "mode": "replace"
+    },
+    {
+      "path": "generated/created.md",
+      "contents": "created\n",
+      "mode": "create"
+    }
+  ]
+}
+"#,
+    );
+    let root = repo.path().to_str().unwrap();
+    let recipe = repo.path().join("extension.json");
+
+    let installed = run_bitcode(&[
+        "extension",
+        root,
+        "install",
+        recipe.to_str().unwrap(),
+        "--approve",
+    ]);
+
+    assert!(installed.contains("Installed and enabled"), "{installed}");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("generated/existing.md")).unwrap(),
+        "replacement\n"
+    );
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("generated/created.md")).unwrap(),
+        "created\n"
+    );
+    let graph = aether_graph::SemanticGraph::load(repo.path().join("project.aether")).unwrap();
+    assert_eq!(
+        graph.query_by_kind(aether_graph::NodeKind::Extension).len(),
+        1
+    );
+
+    repo.write("generated/created.md", "user edit\n");
+    let conflicted = run_bitcode_output(&["extension", root, "remove", "dev.bitcode.test.report"]);
+    assert!(!conflicted.status.success());
+    assert!(
+        String::from_utf8_lossy(&conflicted.stderr).contains("changed on disk"),
+        "{}",
+        String::from_utf8_lossy(&conflicted.stderr)
+    );
+    let graph = aether_graph::SemanticGraph::load(repo.path().join("project.aether")).unwrap();
+    assert_eq!(
+        graph.query_by_kind(aether_graph::NodeKind::Extension).len(),
+        1
+    );
+    repo.write("generated/created.md", "created\n");
+
+    run_bitcode(&["extension", root, "remove", "dev.bitcode.test.report"]);
+
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("generated/existing.md")).unwrap(),
+        "original\n"
+    );
+    assert!(!repo.path().join("generated/created.md").exists());
+    let graph = aether_graph::SemanticGraph::load(repo.path().join("project.aether")).unwrap();
+    assert!(graph
+        .query_by_kind(aether_graph::NodeKind::Extension)
+        .is_empty());
+}

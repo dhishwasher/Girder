@@ -42,6 +42,10 @@ pub fn default_router() -> Router {
     let anthropic: Arc<dyn AiProvider> = Arc::new(AnthropicProvider::from_env());
     Router::new()
         .route(TaskClass::Planning, vec![openai.clone(), anthropic.clone()])
+        .route(
+            TaskClass::Extension,
+            vec![openai.clone(), anthropic.clone()],
+        )
         .route(TaskClass::Codegen, vec![openai.clone(), anthropic])
         .route(TaskClass::Testing, vec![openai.clone()])
         .route(TaskClass::Summarize, vec![openai.clone()])
@@ -62,6 +66,7 @@ mod tests {
             TaskClass::Testing,
             TaskClass::Summarize,
             TaskClass::Quick,
+            TaskClass::Extension,
         ] {
             let completion = router
                 .complete(Prompt::new(class, "", "add a multiply function"))
