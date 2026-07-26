@@ -10,13 +10,15 @@ use crate::parser::Lang;
 use aether_graph::{Edge, EdgeKind, Node, NodeId, NodeKind, Span};
 use tree_sitter::{Node as TsNode, Tree};
 
-/// An unresolved call site: `caller` invokes something named `callee` (the
-/// trailing identifier of the call target). Resolved later against the whole
-/// graph so cross-module calls link correctly.
+/// An unresolved call site. `callee` is the trailing identifier of the call
+/// target and `qualifier` retains the receiver/path when one exists
+/// (`catalog.search()` -> `catalog`). The project resolver uses that hint to
+/// distinguish same-named methods without pretending to be a type checker.
 #[derive(Debug, Clone)]
 pub struct CallRef {
     pub caller: NodeId,
     pub callee: String,
+    pub qualifier: Option<String>,
 }
 
 /// An unresolved inheritance: type `sub` inherits/implements something named
@@ -439,40 +441,45 @@ fn extract_fields(
 
 fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut BuildOutput) {
     // Track the enclosing function as we descend so calls attach to a caller.
-    // `current_class` tracks the enclosing Python class name so that method
-    // ids are built as `module::Class::method` to match what `collect_defs`
-    // put in the graph — without this, Python method call edges are silently
-    // dropped because the caller NodeId doesn't resolve.
+    // `current_type` tracks Python classes plus Rust traits/impls so method ids
+    // match the type-scoped ids emitted by `collect_defs`.
     fn walk<'src>(
         node: TsNode,
         source: &'src str,
         lang: Lang,
         module: &'src str,
-        current_class: Option<&'src str>,
+        current_type: Option<&'src str>,
         current_fn: Option<NodeId>,
         out: &mut BuildOutput,
     ) {
         let mut current = current_fn;
-        let mut class = current_class;
+        let mut enclosing_type = current_type;
 
         if matches!(lang, Lang::Python) && node.kind() == "class_definition" {
             if let Some(name_node) = node.child_by_field_name("name") {
-                class = Some(node_text(name_node, source));
+                enclosing_type = Some(node_text(name_node, source));
+            }
+        } else if matches!(lang, Lang::Rust) {
+            if is_type_kind(lang, node.kind()) {
+                if let Some(name_node) = node.child_by_field_name("name") {
+                    enclosing_type = Some(node_text(name_node, source));
+                }
+            } else if node.kind() == "impl_item" {
+                if let Some(type_node) = node.child_by_field_name("type") {
+                    enclosing_type = Some(last_ident(node_text(type_node, source)));
+                }
             }
         }
 
         if is_function_kind(lang, node.kind()) {
             if let Some(name_node) = node.child_by_field_name("name") {
                 let name = node_text(name_node, source);
-                let path = match class {
-                    Some(cls) => format!("{module}::{cls}::{name}"),
+                let path = match enclosing_type {
+                    Some(ty) => format!("{module}::{ty}::{name}"),
                     None => format!("{module}::{name}"),
                 };
                 let caller = NodeId::from_path(&path);
                 current = Some(caller);
-                for callee in textual_call_names(node_text(node, source)) {
-                    out.calls.push(CallRef { caller, callee });
-                }
             }
         }
 
@@ -481,31 +488,71 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             Lang::Python => "call",
         };
         if node.kind() == call_kind {
-            if let (Some(caller), Some(callee)) = (current, callee_name(node, source, lang)) {
+            if let (Some(caller), Some((callee, qualifier))) =
+                (current, callee_target(node, source))
+            {
                 // Emit unresolved; the project resolver picks the concrete callee.
-                out.calls.push(CallRef { caller, callee });
+                out.calls.push(CallRef {
+                    caller,
+                    callee,
+                    qualifier,
+                });
+            }
+        }
+
+        // Rust macro token trees are not parsed as normal call expressions.
+        // Scan only the macro arguments, not the whole function: whole-function
+        // fallback text loses receiver information and creates false Calls edges.
+        if matches!(lang, Lang::Rust) && node.kind() == "macro_invocation" {
+            if let Some(caller) = current {
+                let mut cursor = node.walk();
+                let mut children = node.children(&mut cursor);
+                let tokens = children.find(|child| child.kind() == "token_tree");
+                drop(children);
+                if let Some(tokens) = tokens {
+                    for callee in textual_call_names(node_text(tokens, source)) {
+                        out.calls.push(CallRef {
+                            caller,
+                            callee,
+                            qualifier: None,
+                        });
+                    }
+                }
             }
         }
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            walk(child, source, lang, module, class, current, out);
+            walk(child, source, lang, module, enclosing_type, current, out);
         }
     }
 
     walk(node, source, lang, module, None, None, out);
 }
 
-/// Best-effort callee name: the trailing identifier of the call target.
-fn callee_name(call: TsNode, source: &str, _lang: Lang) -> Option<String> {
+/// Best-effort call target: trailing identifier plus its receiver/path.
+fn callee_target(call: TsNode, source: &str) -> Option<(String, Option<String>)> {
     let func = call.child_by_field_name("function")?;
-    // For `a.b.c()` / `path::to::f()` take the last identifier-ish leaf.
     let text = node_text(func, source);
-    let last = text.rsplit(['.', ':']).next().unwrap_or(text).trim();
+    let split = text.rfind(['.', ':']);
+    let (qualifier, last) = match split {
+        Some(index) => {
+            let separator_len = text[index..]
+                .chars()
+                .next()
+                .map(char::len_utf8)
+                .unwrap_or(1);
+            (
+                Some(text[..index].trim_end_matches(':').trim().to_string()),
+                text[index + separator_len..].trim(),
+            )
+        }
+        None => (None, text.trim()),
+    };
     if last.is_empty() {
         None
     } else {
-        Some(last.to_string())
+        Some((last.to_string(), qualifier.filter(|q| !q.is_empty())))
     }
 }
 

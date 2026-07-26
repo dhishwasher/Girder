@@ -6,7 +6,7 @@
 //! nodes are upserted, vanished nodes are removed, and edges are rebuilt for the
 //! file. This is the machinery behind bidirectional editor⇄graph sync.
 
-use crate::mapper::{extract, BuildOutput, CallRef, InheritRef};
+use crate::mapper::{extract, module_path_for, BuildOutput, CallRef, InheritRef};
 use crate::parser::{IncrementalParser, Lang};
 use aether_graph::{Edge, EdgeKind, NodeId, NodeKind, SemanticGraph};
 use std::collections::{HashMap, HashSet};
@@ -31,6 +31,44 @@ fn module_of(path: &str) -> String {
         Some(i) => path[..i].to_string(),
         None => path.to_string(),
     }
+}
+
+fn source_module(file: Option<&str>, path: &str) -> String {
+    file.map(module_path_for).unwrap_or_else(|| module_of(path))
+}
+
+fn normalized_symbol(value: &str) -> String {
+    value
+        .chars()
+        .filter(|ch| ch.is_ascii_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
+}
+
+fn qualifier_tail(qualifier: &str) -> &str {
+    qualifier
+        .rsplit(['.', ':'])
+        .find(|part| !part.is_empty())
+        .unwrap_or(qualifier)
+        .trim()
+}
+
+fn qualifier_matches_owner(qualifier: &str, owner: &str) -> bool {
+    let hint = normalized_symbol(qualifier_tail(qualifier));
+    if hint.len() < 3 || matches!(hint.as_str(), "self" | "cls") {
+        return false;
+    }
+    let owner = normalized_symbol(owner.rsplit("::").next().unwrap_or(owner));
+    owner == hint || owner.ends_with(&hint)
+}
+
+type FunctionCandidate = (String, String, NodeId);
+
+fn only_candidate<'a>(
+    mut candidates: impl Iterator<Item = &'a FunctionCandidate>,
+) -> Option<&'a FunctionCandidate> {
+    let first = candidates.next()?;
+    candidates.next().is_none().then_some(first)
 }
 
 /// Incrementally maps source files into a [`SemanticGraph`].
@@ -127,33 +165,67 @@ impl GraphBuilder {
             .collect();
         graph.clear_edges_of_kind(EdgeKind::Calls);
 
-        // name -> [(owning module, function id)]
-        let mut by_name: HashMap<String, Vec<(String, NodeId)>> = HashMap::new();
+        // name -> [(source module, lexical owner, function id)]
+        let mut by_name: HashMap<String, Vec<FunctionCandidate>> = HashMap::new();
         for n in graph.query_by_kind(NodeKind::Function) {
-            by_name
-                .entry(n.name.clone())
-                .or_default()
-                .push((module_of(&n.path), n.id));
+            by_name.entry(n.name.clone()).or_default().push((
+                source_module(n.file.as_deref(), &n.path),
+                module_of(&n.path),
+                n.id,
+            ));
         }
 
         let mut added: HashSet<(NodeId, NodeId)> = HashSet::new();
         for state in self.files.values() {
             for call in &state.calls {
-                let caller_module = match graph.get(call.caller) {
-                    Some(node) => module_of(&node.path),
+                let (caller_source_module, caller_owner) = match graph.get(call.caller) {
+                    Some(node) => (
+                        source_module(node.file.as_deref(), &node.path),
+                        module_of(&node.path),
+                    ),
                     None => continue,
                 };
                 let Some(candidates) = by_name.get(&call.callee) else {
                     continue;
                 };
-                let chosen = candidates.iter().find(|(m, _)| *m == caller_module).or(
-                    if candidates.len() == 1 {
-                        candidates.first()
+                let qualified = call.qualifier.as_deref().and_then(|qualifier| {
+                    if matches!(qualifier_tail(qualifier), "self" | "Self" | "cls") {
+                        only_candidate(
+                            candidates
+                                .iter()
+                                .filter(|(_, owner, _)| owner == &caller_owner),
+                        )
                     } else {
-                        None
-                    },
+                        only_candidate(
+                            candidates
+                                .iter()
+                                .filter(|(_, owner, _)| qualifier_matches_owner(qualifier, owner)),
+                        )
+                    }
+                });
+                let local_free = call.qualifier.is_none().then(|| {
+                    only_candidate(candidates.iter().filter(|(source, owner, _)| {
+                        source == &caller_source_module && owner == source
+                    }))
+                });
+                let local = only_candidate(
+                    candidates
+                        .iter()
+                        .filter(|(source, _, _)| source == &caller_source_module),
                 );
-                if let Some((_, callee_id)) = chosen {
+                let chosen = if call.qualifier.is_some() {
+                    // A qualified call that does not match a recorded owner is
+                    // probably an external API or a receiver whose type we
+                    // cannot infer. Do not attach it to an unrelated unique
+                    // method merely because the names happen to match.
+                    qualified
+                } else {
+                    local_free
+                        .flatten()
+                        .or(local)
+                        .or_else(|| (candidates.len() == 1).then(|| &candidates[0]))
+                };
+                if let Some((_, _, callee_id)) = chosen {
                     if *callee_id != call.caller && added.insert((call.caller, *callee_id)) {
                         let _ = graph.add_edge(call.caller, *callee_id, Edge::new(EdgeKind::Calls));
                     }

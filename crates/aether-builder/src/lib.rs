@@ -225,6 +225,94 @@ fn main() {
     }
 
     #[test]
+    fn resolves_receiver_qualified_methods_and_type_scoped_callers() {
+        let rs = r#"
+struct MarketplaceCatalog;
+impl MarketplaceCatalog {
+    fn search(&self, _query: &str) {}
+    fn refresh(&self) { self.search("impact"); }
+}
+
+struct SemanticGraph;
+impl SemanticGraph {
+    fn search(&self, _query: &str) {}
+}
+
+fn spawn() {}
+
+fn browse(catalog: &MarketplaceCatalog) {
+    catalog.search("graph");
+    std::thread::spawn(|| {});
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/catalog.rs", rs);
+
+        let marketplace_search = NodeId::from_path("crate::catalog::MarketplaceCatalog::search");
+        let semantic_search = NodeId::from_path("crate::catalog::SemanticGraph::search");
+        let refresh = NodeId::from_path("crate::catalog::MarketplaceCatalog::refresh");
+        let browse = NodeId::from_path("crate::catalog::browse");
+
+        let refresh_calls: Vec<_> = graph
+            .neighbors(refresh, Some(EdgeKind::Calls))
+            .into_iter()
+            .map(|node| node.id)
+            .collect();
+        assert!(
+            refresh_calls.contains(&marketplace_search),
+            "self.search should resolve to the enclosing type's method"
+        );
+
+        let browse_calls: Vec<_> = graph
+            .neighbors(browse, Some(EdgeKind::Calls))
+            .into_iter()
+            .map(|node| node.id)
+            .collect();
+        assert!(
+            browse_calls.contains(&marketplace_search),
+            "catalog.search should use the receiver as a type hint"
+        );
+        assert!(
+            !browse_calls.contains(&semantic_search),
+            "receiver-aware resolution should not link every same-named method"
+        );
+        assert!(
+            !browse_calls.contains(&NodeId::from_path("crate::catalog::spawn")),
+            "an unknown qualified receiver must not fall back to a same-named function"
+        );
+
+        let impact = graph.impact_of(marketplace_search);
+        assert!(impact.affected.contains_key(&refresh));
+        assert!(impact.affected.contains_key(&browse));
+
+        let py = r#"
+class MarketplaceCatalog:
+    def search(self, query):
+        return query
+    def refresh(self):
+        return self.search("impact")
+
+class SemanticGraph:
+    def search(self, query):
+        return query
+
+def browse(catalog):
+    return catalog.search("graph")
+"#;
+        let mut python_graph = SemanticGraph::new();
+        let mut python_builder = GraphBuilder::new();
+        python_builder.load_file(&mut python_graph, "src/catalog.py", py);
+
+        let python_search = NodeId::from_path("crate::catalog::MarketplaceCatalog::search");
+        let python_refresh = NodeId::from_path("crate::catalog::MarketplaceCatalog::refresh");
+        let python_browse = NodeId::from_path("crate::catalog::browse");
+        let python_impact = python_graph.impact_of(python_search);
+        assert!(python_impact.affected.contains_key(&python_refresh));
+        assert!(python_impact.affected.contains_key(&python_browse));
+    }
+
+    #[test]
     fn rust_test_functions_marked_is_test() {
         let rs = r#"
 fn add(a: i64, b: i64) -> i64 { a + b }

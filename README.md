@@ -94,11 +94,13 @@ cargo run -p aether-app -- --help
 ```
 
 `analyze`/`forge` walk every `.rs`/`.py` file (skipping `target`, `.git`, …),
-build the graph with directory-aware module paths, resolve calls across files,
-and persist the `.aether` graph. `forge` plans every candidate byte, checks
-conflict baselines, validates the candidate in a copied workspace, runs Cargo
-build/tests when a manifest is present plus configured validation commands, and
-only then journal-commits the source projection and graph together.
+build the graph with directory-aware module paths, resolve free and
+receiver-qualified method calls across files, and persist the `.aether` graph.
+Unknown receiver types remain unresolved rather than being linked to an
+unrelated same-named method. `forge` plans every candidate byte, checks conflict
+baselines, validates the candidate in a copied workspace, runs Cargo build/tests
+when a manifest is present plus configured validation commands, and only then
+journal-commits the source projection and graph together.
 
 ### Project configuration
 
