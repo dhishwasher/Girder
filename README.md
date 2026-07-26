@@ -76,6 +76,19 @@ cargo run -p aether-app -- extension sample-project remove dev.bitcode.generated
 # Install a hand-authored declarative recipe after the same explicit review:
 cargo run -p aether-app -- extension sample-project install recipe.json --approve
 
+# Browse the built-in reviewed marketplace and inspect a listing:
+cargo run -p aether-app -- extension sample-project marketplace search impact
+cargo run -p aether-app -- extension sample-project marketplace show org.bitcode.impact-navigator
+
+# Regenerate a reviewed intent for this project, preview its capability delta,
+# then explicitly approve the adapted recipe:
+cargo run -p aether-app -- extension sample-project marketplace adapt org.bitcode.impact-navigator
+cargo run -p aether-app -- extension sample-project marketplace adapt org.bitcode.impact-navigator --approve
+
+# Portable catalogs use the same bounded parser and print a catalog fingerprint:
+cargo run -p aether-app -- extension sample-project marketplace list \
+  --catalog marketplace/bitcode-extensions.json
+
 # Full help:
 cargo run -p aether-app -- --help
 ```
@@ -170,15 +183,26 @@ rolled back. **Commit** projects generated functions to the configured output
 file and persists the graph, while **Roll back** cancels validation and restores
 the pre-run graph without touching source files.
 
-The right workspace has separate **Agents** and **Extensions** views. Extension
-generation returns a strict JSON recipe; installation stays disabled until the
-user reviews its exact SHA-256 digest, capabilities, contributions, projections,
-and full JSON. Installed records and their contribution nodes live in the
-semantic graph and survive source reconciliation. Enable/disable affects only
-contribution visibility. Removal conflict-checks every installed projection,
-restores replaced files, deletes files created by the extension, and commits the
-project plus graph as one recoverable transaction. Model output is never loaded
-as native code. Contributed validation commands resolve back to an installed,
+The right workspace has separate **Agents** and **Extensions** views. Extensions
+contains Generate, Marketplace, and Installed tabs. Extension generation returns
+a strict JSON recipe; installation stays disabled until the user reviews its
+exact SHA-256 digest, capabilities, contributions, projections, and full JSON.
+The marketplace searches bounded declarative catalogs, displays the catalog and
+listing/reference-recipe fingerprints plus reviews bound to both, and
+regenerates a listing intent against a bounded sample of the current semantic graph. Adapted
+recipes preserve the listing ID and show every added/removed capability scope.
+A catalog review never grants installation authority: the adapted recipe still
+requires a fresh approval bound to its own exact digest.
+Reviewer identities are catalog metadata rather than cryptographic signatures;
+verify an external catalog's printed SHA-256 fingerprint through the channel
+that distributed it.
+
+Installed records and their contribution nodes live in the semantic graph and
+survive source reconciliation. Enable/disable affects only contribution
+visibility. Removal conflict-checks every installed projection, restores
+replaced files, deletes files created by the extension, and commits the project
+plus graph as one recoverable transaction. Model output is never loaded as
+native code. Contributed validation commands resolve back to an installed,
 enabled recipe and require Bubblewrap; they run with networking disabled and a
 cleared environment in the disposable candidate workspace.
 
@@ -238,6 +262,7 @@ time-travel debug) are real, tested, and runnable. Implemented features:
 | Candidate validation | Disposable project copy, optional bubblewrap isolation, Cargo build/tests, configured checks, cancellation/timeouts, bounded diagnostics, snapshot-bound commit gate |
 | DAP integration | Two-phase DAP launch, graph-node breakpoints, stop/stack inspection, and real `debugpy` coverage |
 | Declarative extensions | AI/JSON recipe generation, exact digest-bound approval, parameterized capabilities, graph-native records/contributions, GUI/CLI lifecycle, reversible validated projections |
+| Generative marketplace | Bounded portable catalogs, deterministic fingerprints/search, digest-bound reviews, project-aware regeneration, exact capability deltas, CLI and native browser |
 
 Optional DAP adapter smoke test:
 
@@ -247,4 +272,4 @@ cargo test -p aether-dap --test debugpy -- --ignored --nocapture
 ```
 
 The production roadmap (CRDT collaboration, self-optimization, web/mobile
-projections) is in `BLUEPRINT.md §9`.
+projections, and deeper tracing) is in `BLUEPRINT.md §9`.

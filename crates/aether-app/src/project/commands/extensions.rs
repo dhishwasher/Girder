@@ -6,11 +6,14 @@ use crate::project::source::{
 use crate::project::validation::{validate_candidate, ValidationStatus};
 use aether_ai::{Prompt, TaskClass};
 use aether_extensions::{
-    content_digest, find_record, generation_system_prompt, install_with_receipts, records,
-    set_enabled, uninstall, Capability, ExtensionGrant, ExtensionRecipe, ExtensionRecord,
-    ProjectionMode, ProjectionReceipt, MAX_PROJECTION_BYTES,
+    adaptation_system_prompt, builtin_catalog, content_digest, find_record,
+    generation_system_prompt, install_with_receipts, marketplace_project_context, records,
+    set_enabled, uninstall, Capability, CapabilityDelta, ExtensionGrant, ExtensionRecipe,
+    ExtensionRecord, MarketplaceCatalog, MarketplaceListing, ProjectionMode, ProjectionReceipt,
+    MAX_CATALOG_BYTES, MAX_PROJECTION_BYTES,
 };
 use aether_graph::SemanticGraph;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
@@ -160,6 +163,17 @@ pub(crate) async fn extensions(args: &[String]) -> std::io::Result<()> {
 
     match operation {
         "list" => list_extensions(&graph),
+        "marketplace" => {
+            marketplace(
+                args,
+                &root,
+                &config,
+                config_baseline,
+                &mut graph,
+                graph_baseline,
+            )
+            .await
+        }
         "generate" => {
             let approve = args.iter().any(|argument| argument == "--approve");
             let intent = args
@@ -263,6 +277,242 @@ pub(crate) async fn extensions(args: &[String]) -> std::io::Result<()> {
             std::io::ErrorKind::InvalidInput,
             format!("unknown extension operation {operation:?}"),
         )),
+    }
+}
+
+async fn marketplace(
+    args: &[String],
+    root: &Path,
+    config: &ProjectConfig,
+    config_baseline: Option<Vec<u8>>,
+    graph: &mut SemanticGraph,
+    graph_baseline: Option<Vec<u8>>,
+) -> std::io::Result<()> {
+    let operation = args.get(2).map(String::as_str).unwrap_or("list");
+    let mut catalog_path = None;
+    let mut approve = false;
+    let mut positional = Vec::new();
+    let mut index = 3;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--catalog" => {
+                if catalog_path.is_some() {
+                    return invalid_input("--catalog may only be specified once");
+                }
+                let path = args.get(index + 1).ok_or_else(|| {
+                    std::io::Error::new(
+                        std::io::ErrorKind::InvalidInput,
+                        "--catalog requires a JSON file path",
+                    )
+                })?;
+                catalog_path = Some(PathBuf::from(path));
+                index += 2;
+            }
+            "--approve" => {
+                if approve {
+                    return invalid_input("--approve may only be specified once");
+                }
+                approve = true;
+                index += 1;
+            }
+            option if option.starts_with('-') => {
+                return invalid_input(format!("unknown marketplace option {option:?}"));
+            }
+            _ => {
+                positional.push(args[index].clone());
+                index += 1;
+            }
+        }
+    }
+    let (catalog, source) = load_catalog(catalog_path.as_deref())?;
+
+    match operation {
+        "list" | "search" => {
+            if approve {
+                return invalid_input("--approve is only valid with marketplace adapt");
+            }
+            let query = positional.join(" ");
+            print_catalog_header(&catalog, &source)?;
+            let matches = catalog.search(&query);
+            if matches.is_empty() {
+                println!("No marketplace listings matched {query:?}.");
+            }
+            for listing in matches {
+                println!(
+                    "{}\t{}\t{} approval(s)\t{}",
+                    listing.id,
+                    listing.name,
+                    listing.approved_review_count(),
+                    listing.tags.join(",")
+                );
+                println!("  {}", listing.summary);
+            }
+            Ok(())
+        }
+        "show" => {
+            if approve {
+                return invalid_input("--approve is only valid with marketplace adapt");
+            }
+            let listing = required_listing(&catalog, &positional, "show")?;
+            print_catalog_header(&catalog, &source)?;
+            print_listing(listing)
+        }
+        "adapt" => {
+            let listing = required_listing(&catalog, &positional, "adapt")?.clone();
+            print_catalog_header(&catalog, &source)?;
+            println!(
+                "Adapting reviewed listing {} from recipe {}",
+                listing.id, listing.recipe_digest
+            );
+            let input = serde_json::json!({
+                "listing": listing,
+                "project": marketplace_project_context(graph),
+            });
+            let mut prompt = Prompt::new(
+                TaskClass::Extension,
+                adaptation_system_prompt(),
+                input.to_string(),
+            );
+            prompt.max_tokens = 4_096;
+            let completion =
+                aether_ai::default_router()
+                    .complete(prompt)
+                    .await
+                    .map_err(|error| {
+                        std::io::Error::other(format!("marketplace adaptation failed: {error}"))
+                    })?;
+            let recipe = ExtensionRecipe::from_json(&completion.text).map_err(extension_error)?;
+            let delta = listing.capability_delta(&recipe).map_err(extension_error)?;
+            println!("Adapted by {}", completion.model);
+            print_capability_delta(&delta);
+            preview_or_install(
+                root,
+                config,
+                config_baseline,
+                graph,
+                graph_baseline,
+                recipe,
+                approve,
+            )
+        }
+        _ => invalid_input(format!(
+            "unknown marketplace operation {operation:?}; expected list, search, show, or adapt"
+        )),
+    }
+}
+
+fn load_catalog(path: Option<&Path>) -> std::io::Result<(MarketplaceCatalog, String)> {
+    let Some(path) = path else {
+        return builtin_catalog()
+            .map(|catalog| (catalog, "built-in".into()))
+            .map_err(extension_error);
+    };
+    let file = std::fs::File::open(path).map_err(|error| {
+        std::io::Error::new(
+            error.kind(),
+            format!(
+                "could not open marketplace catalog {}: {error}",
+                path.display()
+            ),
+        )
+    })?;
+    let mut json = String::new();
+    file.take(MAX_CATALOG_BYTES as u64 + 1)
+        .read_to_string(&mut json)
+        .map_err(|error| {
+            std::io::Error::new(
+                error.kind(),
+                format!(
+                    "could not read marketplace catalog {}: {error}",
+                    path.display()
+                ),
+            )
+        })?;
+    if json.len() > MAX_CATALOG_BYTES {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!(
+                "marketplace catalog {} exceeds {MAX_CATALOG_BYTES} bytes",
+                path.display()
+            ),
+        ));
+    }
+    MarketplaceCatalog::from_json(&json)
+        .map(|catalog| (catalog, path.display().to_string()))
+        .map_err(extension_error)
+}
+
+fn required_listing<'a>(
+    catalog: &'a MarketplaceCatalog,
+    positional: &[String],
+    operation: &str,
+) -> std::io::Result<&'a MarketplaceListing> {
+    if positional.len() != 1 {
+        return invalid_input(format!(
+            "usage: bitcode extension <dir> marketplace {operation} <listing-id> \
+             [--catalog <catalog.json>]{}",
+            if operation == "adapt" {
+                " [--approve]"
+            } else {
+                ""
+            }
+        ));
+    }
+    let id = &positional[0];
+    catalog.listing(id).ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("marketplace listing {id} was not found"),
+        )
+    })
+}
+
+fn print_catalog_header(catalog: &MarketplaceCatalog, source: &str) -> std::io::Result<()> {
+    println!("{} ({})", catalog.name, catalog.id);
+    println!("  source: {source}");
+    println!(
+        "  catalog SHA-256: {}",
+        catalog.digest().map_err(extension_error)?
+    );
+    println!("  {} listing(s)", catalog.listings.len());
+    Ok(())
+}
+
+fn print_listing(listing: &MarketplaceListing) -> std::io::Result<()> {
+    println!("\n{} ({})", listing.name, listing.id);
+    println!("  {}", listing.summary);
+    println!("  intent: {}", listing.intent);
+    println!("  tags: {}", listing.tags.join(", "));
+    println!("  listing SHA-256: {}", listing.listing_digest);
+    println!("  reference recipe SHA-256: {}", listing.recipe_digest);
+    println!("  reviews:");
+    for review in &listing.reviews {
+        println!(
+            "    - {:?} by {}: {}",
+            review.decision, review.reviewer, review.evidence
+        );
+    }
+    println!(
+        "\n{}",
+        listing
+            .reference_recipe
+            .to_json_pretty()
+            .map_err(extension_error)?
+    );
+    Ok(())
+}
+
+fn print_capability_delta(delta: &CapabilityDelta) {
+    println!("Capability delta from reviewed reference recipe:");
+    if delta.is_empty() {
+        println!("  unchanged");
+        return;
+    }
+    for capability in &delta.added {
+        println!("  + {}", capability_label(capability));
+    }
+    for capability in &delta.removed {
+        println!("  - {}", capability_label(capability));
     }
 }
 
@@ -565,9 +815,16 @@ fn extension_error(error: impl std::fmt::Display) -> std::io::Error {
     std::io::Error::new(std::io::ErrorKind::InvalidData, error.to_string())
 }
 
+fn invalid_input<T>(message: impl Into<String>) -> std::io::Result<T> {
+    Err(std::io::Error::new(
+        std::io::ErrorKind::InvalidInput,
+        message.into(),
+    ))
+}
+
 fn print_usage() {
     eprintln!(
         "usage: bitcode extension <dir> \
-         list|generate|install|enable|disable|remove ..."
+         list|generate|install|enable|disable|remove|marketplace ..."
     );
 }

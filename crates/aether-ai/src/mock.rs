@@ -138,6 +138,12 @@ impl MockProvider {
 
     fn extension(input: &str) -> String {
         let parsed = serde_json::from_str::<serde_json::Value>(input).unwrap_or_default();
+        if let Some(reference) = parsed
+            .get("listing")
+            .and_then(|listing| listing.get("reference_recipe"))
+        {
+            return reference.to_string();
+        }
         let intent = parsed
             .get("intent")
             .and_then(serde_json::Value::as_str)
@@ -265,5 +271,34 @@ mod tests {
             "dev.bitcode.generated.show-authentication-impact"
         );
         assert_eq!(value["capabilities"][0]["kind"], "read_graph");
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn marketplace_adaptation_preserves_the_reviewed_identity_offline() {
+        let provider = MockProvider::new();
+        let completion = provider
+            .complete(Prompt::new(
+                TaskClass::Extension,
+                "",
+                r#"{
+                    "listing": {
+                        "reference_recipe": {
+                            "version": 1,
+                            "id": "org.bitcode.impact-navigator",
+                            "name": "Impact Navigator",
+                            "description": "Shows semantic impact.",
+                            "intent": "show semantic impact",
+                            "capabilities": [],
+                            "contributions": [],
+                            "projections": []
+                        }
+                    }
+                }"#,
+            ))
+            .await
+            .unwrap();
+        let value: serde_json::Value = serde_json::from_str(&completion.text).unwrap();
+
+        assert_eq!(value["id"], "org.bitcode.impact-navigator");
     }
 }

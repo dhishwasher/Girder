@@ -503,6 +503,62 @@ fn generated_extension_requires_approval_and_supports_lifecycle() {
 }
 
 #[test]
+fn marketplace_browse_adapt_and_approval_reuse_extension_security() {
+    let repo = TempRepo::new("extension-marketplace");
+    repo.write("src/lib.rs", "pub fn existing() {}\n");
+    let root = repo.path().to_str().unwrap();
+
+    let listed = run_bitcode(&["extension", root, "marketplace", "search", "impact"]);
+    assert!(listed.contains("catalog SHA-256:"), "{listed}");
+    assert!(listed.contains("org.bitcode.impact-navigator"), "{listed}");
+    assert!(listed.contains("org.bitcode.test-focus"), "{listed}");
+    assert!(!listed.contains("org.bitcode.rust-check\t"), "{listed}");
+
+    let shown = run_bitcode(&[
+        "extension",
+        root,
+        "marketplace",
+        "show",
+        "org.bitcode.impact-navigator",
+    ]);
+    assert!(
+        shown.contains("189c188f7827271bd88c84a623305e286"),
+        "{shown}"
+    );
+    assert!(
+        shown.contains("Approved by org.bitcode.security"),
+        "{shown}"
+    );
+
+    let preview = run_bitcode(&[
+        "extension",
+        root,
+        "marketplace",
+        "adapt",
+        "org.bitcode.impact-navigator",
+    ]);
+    assert!(preview.contains("Capability delta"), "{preview}");
+    assert!(preview.contains("unchanged"), "{preview}");
+    assert!(preview.contains("Preview only"), "{preview}");
+    assert!(!repo.path().join("project.aether").exists());
+
+    let installed = run_bitcode(&[
+        "extension",
+        root,
+        "marketplace",
+        "adapt",
+        "org.bitcode.impact-navigator",
+        "--approve",
+    ]);
+    assert!(installed.contains("Installed and enabled"), "{installed}");
+    let extensions = run_bitcode(&["extension", root, "list"]);
+    assert!(
+        extensions.contains("org.bitcode.impact-navigator"),
+        "{extensions}"
+    );
+}
+
+#[test]
 fn extension_project_projections_are_restored_on_remove() {
     let repo = TempRepo::new("extension-projections");
     repo.write("src/lib.rs", "pub fn existing() {}\n");

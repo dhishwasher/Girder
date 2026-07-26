@@ -1,6 +1,6 @@
 //! The four resizable IDE panels, each a *projection* of shared state.
 
-use crate::app::{AetherApp, RightPanel};
+use crate::app::{AetherApp, ExtensionPanelView, RightPanel};
 use crate::graph_view::{all_edge_kinds, all_node_kinds, GraphScope, ViewEdge, ViewNode};
 use aether_extensions::{
     Capability, CommandAction, Contribution, ExtensionState, PanelLocation, PanelView,
@@ -690,8 +690,34 @@ enum PendingExtensionAction {
 }
 
 fn extensions_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
+    ui.horizontal(|ui| {
+        ui.selectable_value(
+            &mut app.extension_panel_view,
+            ExtensionPanelView::Generate,
+            "Generate",
+        );
+        ui.selectable_value(
+            &mut app.extension_panel_view,
+            ExtensionPanelView::Marketplace,
+            "Marketplace",
+        );
+        ui.selectable_value(
+            &mut app.extension_panel_view,
+            ExtensionPanelView::Installed,
+            "Installed",
+        );
+    });
+    ui.separator();
+
+    match app.extension_panel_view {
+        ExtensionPanelView::Generate => extension_generate_panel(app, ui),
+        ExtensionPanelView::Marketplace => extension_marketplace_panel(app, ui),
+        ExtensionPanelView::Installed => extension_installed_panel(app, ui),
+    }
+}
+
+fn extension_generate_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     let busy = app.extension_busy();
-    ui.strong("Generate");
     ui.add_enabled(
         !busy,
         egui::TextEdit::multiline(&mut app.extension_intent)
@@ -719,6 +745,42 @@ fn extensions_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     if let Some(recipe) = app.extension_candidate.clone() {
         ui.separator();
         ui.strong("Approval required");
+        if let Some(source) = app.extension_candidate_source.clone() {
+            ui.label(format!("Adapted from {} ({})", source.name, source.id));
+            ui.monospace(format!("Listing SHA-256 {}", source.listing_digest));
+            ui.monospace(format!("Recipe SHA-256 {}", source.recipe_digest));
+            ui.label(format!(
+                "{} exact-digest approval(s)",
+                source.approved_review_count()
+            ));
+            match source.capability_delta(&recipe) {
+                Ok(delta) if delta.is_empty() => {
+                    ui.colored_label(
+                        Color32::from_rgb(0x4E, 0xC9, 0xB0),
+                        "Capability scope unchanged from reviewed reference",
+                    );
+                }
+                Ok(delta) => {
+                    ui.strong("Capability changes from reviewed reference");
+                    for capability in delta.added {
+                        ui.colored_label(
+                            Color32::from_rgb(0xF4, 0x87, 0x71),
+                            format!("+ {}", extension_capability_label(&capability)),
+                        );
+                    }
+                    for capability in delta.removed {
+                        ui.label(format!("- {}", extension_capability_label(&capability)));
+                    }
+                }
+                Err(error) => {
+                    ui.colored_label(
+                        Color32::from_rgb(0xF4, 0x87, 0x71),
+                        format!("Invalid marketplace adaptation: {error}"),
+                    );
+                }
+            }
+            ui.separator();
+        }
         ui.label(&recipe.name);
         ui.weak(&recipe.description);
         ui.monospace(&recipe.id);
@@ -768,12 +830,139 @@ fn extensions_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
                 .clicked()
             {
                 app.extension_candidate = None;
+                app.extension_candidate_source = None;
             }
         });
     }
+}
 
-    ui.separator();
-    ui.strong("Installed");
+fn extension_marketplace_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
+    let busy = app.extension_busy();
+    ui.add_enabled(
+        !busy,
+        egui::TextEdit::singleline(&mut app.marketplace_query)
+            .desired_width(f32::INFINITY)
+            .hint_text("Search extensions"),
+    );
+    let catalog_digest = app.marketplace_catalog.digest();
+    ui.horizontal_wrapped(|ui| {
+        ui.weak(format!(
+            "{} · {} listing(s)",
+            app.marketplace_catalog.name,
+            app.marketplace_catalog.listings.len()
+        ));
+        if let Ok(digest) = &catalog_digest {
+            ui.monospace(format!("SHA-256 {}", &digest[..12]));
+        }
+    });
+    if let Err(error) = catalog_digest {
+        ui.colored_label(
+            Color32::from_rgb(0xF4, 0x87, 0x71),
+            format!("Invalid catalog: {error}"),
+        );
+        return;
+    }
+
+    let records = match app.workspace.extension_records() {
+        Ok(records) => records,
+        Err(error) => {
+            ui.colored_label(
+                Color32::from_rgb(0xF4, 0x87, 0x71),
+                format!("Could not read installed extensions: {error}"),
+            );
+            return;
+        }
+    };
+    let mut installed = std::collections::BTreeSet::new();
+    for record in records {
+        match record {
+            Ok(record) => {
+                installed.insert(record.recipe.id);
+            }
+            Err(error) => {
+                ui.colored_label(
+                    Color32::from_rgb(0xF4, 0x87, 0x71),
+                    format!("Corrupt extension record: {error}"),
+                );
+                return;
+            }
+        }
+    }
+    let listings = app
+        .marketplace_catalog
+        .search(&app.marketplace_query)
+        .into_iter()
+        .cloned()
+        .collect::<Vec<_>>();
+    if listings.is_empty() {
+        ui.weak("No matching extensions");
+        return;
+    }
+
+    let mut adapt = None;
+    egui::ScrollArea::vertical()
+        .id_salt("marketplace_listings")
+        .show(ui, |ui| {
+            for listing in listings {
+                ui.separator();
+                ui.strong(&listing.name);
+                ui.weak(&listing.summary);
+                ui.monospace(&listing.id);
+                ui.horizontal_wrapped(|ui| {
+                    for tag in &listing.tags {
+                        ui.label(tag);
+                    }
+                });
+                ui.label(format!(
+                    "{} exact-digest approval(s)",
+                    listing.approved_review_count()
+                ));
+                ui.collapsing("Review and reference recipe", |ui| {
+                    ui.monospace(format!("Listing SHA-256 {}", listing.listing_digest));
+                    ui.monospace(format!("SHA-256 {}", listing.recipe_digest));
+                    for review in &listing.reviews {
+                        ui.label(format!(
+                            "{:?} by {}: {}",
+                            review.decision, review.reviewer, review.evidence
+                        ));
+                    }
+                    ui.separator();
+                    match listing.reference_recipe.to_json_pretty() {
+                        Ok(json) => {
+                            ui.monospace(json);
+                        }
+                        Err(error) => {
+                            ui.colored_label(
+                                Color32::from_rgb(0xF4, 0x87, 0x71),
+                                error.to_string(),
+                            );
+                        }
+                    }
+                });
+                let is_installed = installed.contains(&listing.id);
+                if ui
+                    .add_enabled(
+                        !busy && !is_installed,
+                        egui::Button::new(if is_installed {
+                            "Installed"
+                        } else {
+                            "Adapt to project"
+                        }),
+                    )
+                    .on_hover_text("Regenerate this reviewed intent for the current semantic graph")
+                    .clicked()
+                {
+                    adapt = Some(listing.id.clone());
+                }
+            }
+        });
+    if let Some(listing_id) = adapt {
+        app.adapt_marketplace_listing(&listing_id);
+    }
+}
+
+fn extension_installed_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
+    let busy = app.extension_busy();
     let records = match app.workspace.extension_records() {
         Ok(records) => records,
         Err(error) => {

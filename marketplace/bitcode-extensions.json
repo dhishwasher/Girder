@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "id": "org.bitcode.marketplace",
+  "name": "Bit Code Extension Catalog",
+  "description": "Reviewed declarative extension intents and reference recipes maintained with Bit Code.",
+  "listings": [
+    {
+      "id": "org.bitcode.impact-navigator",
+      "name": "Impact Navigator",
+      "summary": "Surfaces graph-derived change impact and lets the user ask for affected callers.",
+      "intent": "Show semantic change impact for the selected symbol and provide a command that explains affected callers.",
+      "tags": ["graph", "impact", "review"],
+      "reference_recipe": {
+        "version": 1,
+        "id": "org.bitcode.impact-navigator",
+        "name": "Impact Navigator",
+        "description": "Shows semantic change impact and affected callers.",
+        "intent": "Show semantic change impact for the selected symbol and explain affected callers.",
+        "capabilities": [
+          {
+            "kind": "read_graph"
+          },
+          {
+            "kind": "contribute_ui"
+          }
+        ],
+        "contributions": [
+          {
+            "kind": "panel",
+            "id": "impact-overview",
+            "title": "Impact overview",
+            "location": "right",
+            "view": {
+              "kind": "graph_query",
+              "question": "what is impacted by the selected node?"
+            }
+          },
+          {
+            "kind": "command",
+            "id": "explain-callers",
+            "title": "Explain affected callers",
+            "action": {
+              "kind": "ask_graph",
+              "question": "which callers and dependents are affected by the selected node?"
+            }
+          }
+        ],
+        "projections": []
+      },
+      "recipe_digest": "189c188f7827271bd88c84a623305e286823ef65a1415d1d9ce83cfe108c455d",
+      "listing_digest": "65132c4ea8cc7d9f0e584948fd84912235f7063be739019f95a43d251c19113b",
+      "reviews": [
+        {
+          "reviewer": "org.bitcode.security",
+          "decision": "approved",
+          "recipe_digest": "189c188f7827271bd88c84a623305e286823ef65a1415d1d9ce83cfe108c455d",
+          "listing_digest": "65132c4ea8cc7d9f0e584948fd84912235f7063be739019f95a43d251c19113b",
+          "evidence": "Read-only graph access and bounded native UI contributions reviewed against recipe version 1."
+        }
+      ]
+    },
+    {
+      "id": "org.bitcode.test-focus",
+      "name": "Test Focus",
+      "summary": "Uses graph impact to focus test review around changed code.",
+      "intent": "Show graph-derived test impact around the selected symbol without changing project files.",
+      "tags": ["graph", "testing", "impact"],
+      "reference_recipe": {
+        "version": 1,
+        "id": "org.bitcode.test-focus",
+        "name": "Test Focus",
+        "description": "Shows graph-derived test impact around changed code.",
+        "intent": "Show test impact around the selected symbol without changing project files.",
+        "capabilities": [
+          {
+            "kind": "read_graph"
+          },
+          {
+            "kind": "contribute_ui"
+          }
+        ],
+        "contributions": [
+          {
+            "kind": "panel",
+            "id": "test-impact",
+            "title": "Test impact",
+            "location": "right",
+            "view": {
+              "kind": "graph_query",
+              "question": "which tests cover or are impacted by the selected node?"
+            }
+          }
+        ],
+        "projections": []
+      },
+      "recipe_digest": "880a1e6d0bbfc2c62dad06c975750512097a4b28802812ec131b2fcd9f24b620",
+      "listing_digest": "7d77f1819aa48b2571c56aa8b7680ecc8dda91b1e045bbd1a58095deb1f1acbc",
+      "reviews": [
+        {
+          "reviewer": "org.bitcode.quality",
+          "decision": "approved",
+          "recipe_digest": "880a1e6d0bbfc2c62dad06c975750512097a4b28802812ec131b2fcd9f24b620",
+          "listing_digest": "7d77f1819aa48b2571c56aa8b7680ecc8dda91b1e045bbd1a58095deb1f1acbc",
+          "evidence": "Read-only graph query and UI capability scope reviewed for focused test analysis."
+        }
+      ]
+    },
+    {
+      "id": "org.bitcode.rust-check",
+      "name": "Rust Check",
+      "summary": "Adds an isolated Cargo check command to the extension workspace.",
+      "intent": "Provide an explicit command that runs cargo check in the isolated extension validation environment.",
+      "tags": ["rust", "validation", "cargo"],
+      "reference_recipe": {
+        "version": 1,
+        "id": "org.bitcode.rust-check",
+        "name": "Rust Check",
+        "description": "Runs cargo check in the isolated extension validation environment.",
+        "intent": "Provide an explicit isolated cargo check command.",
+        "capabilities": [
+          {
+            "kind": "run_validation",
+            "programs": ["cargo"]
+          },
+          {
+            "kind": "contribute_ui"
+          }
+        ],
+        "contributions": [
+          {
+            "kind": "command",
+            "id": "cargo-check",
+            "title": "Run cargo check",
+            "action": {
+              "kind": "run_validation",
+              "argv": ["cargo", "check"]
+            }
+          }
+        ],
+        "projections": []
+      },
+      "recipe_digest": "cf0fbf3ec9b0671869b4cd32dbceb3a626ca4d234f06c20cfa86e7fc27cc7869",
+      "listing_digest": "5f2f5a350740a0014c7e4b1f0da0ceae31c2a45babb679ac7331840f41849e6b",
+      "reviews": [
+        {
+          "reviewer": "org.bitcode.security",
+          "decision": "approved",
+          "recipe_digest": "cf0fbf3ec9b0671869b4cd32dbceb3a626ca4d234f06c20cfa86e7fc27cc7869",
+          "listing_digest": "5f2f5a350740a0014c7e4b1f0da0ceae31c2a45babb679ac7331840f41849e6b",
+          "evidence": "Exact cargo executable scope and isolated validation command reviewed against recipe version 1."
+        }
+      ]
+    }
+  ]
+}

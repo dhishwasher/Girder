@@ -11,6 +11,14 @@ use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 use std::path::{Component, Path};
 
+mod marketplace;
+
+pub use marketplace::{
+    adaptation_system_prompt, builtin_catalog, marketplace_project_context, CapabilityDelta,
+    MarketplaceCatalog, MarketplaceListing, MarketplaceReview, ReviewDecision, CATALOG_VERSION,
+    MAX_CATALOG_BYTES,
+};
+
 pub const RECIPE_VERSION: u32 = 1;
 pub const RECORD_VERSION: u32 = 1;
 const MAX_RECIPE_BYTES: usize = 256 * 1024;

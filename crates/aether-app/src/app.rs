@@ -8,7 +8,10 @@ use crate::project::{
 };
 use aether_agents::{MsgKind, Orchestrator, SwarmContext, SwarmMessage};
 use aether_debugger::{buggy_demo_program, python_tracer::PyTimeline, Timeline};
-use aether_extensions::{generation_system_prompt, ExtensionRecipe};
+use aether_extensions::{
+    adaptation_system_prompt, builtin_catalog, generation_system_prompt,
+    marketplace_project_context, ExtensionRecipe, MarketplaceCatalog, MarketplaceListing,
+};
 use aether_graph::NodeId;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -21,7 +24,8 @@ type PythonTraceResult = Result<PythonTraceSteps, String>;
 type PythonTraceReceiver = tokio::sync::oneshot::Receiver<PythonTraceResult>;
 type AgentValidationResult = std::io::Result<AgentValidationOutcome>;
 type AgentValidationReceiver = tokio::sync::oneshot::Receiver<AgentValidationResult>;
-type ExtensionGenerationResult = Result<(ExtensionRecipe, String), String>;
+type ExtensionGenerationResult =
+    Result<(ExtensionRecipe, String, Option<MarketplaceListing>), String>;
 type ExtensionGenerationReceiver = tokio::sync::oneshot::Receiver<ExtensionGenerationResult>;
 type ExtensionMutationResult = std::io::Result<ExtensionMutationOutcome>;
 type ExtensionMutationReceiver = tokio::sync::oneshot::Receiver<ExtensionMutationResult>;
@@ -32,6 +36,13 @@ type ExtensionCommandReceiver = tokio::sync::oneshot::Receiver<ExtensionCommandR
 pub(crate) enum RightPanel {
     Agents,
     Extensions,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ExtensionPanelView {
+    Generate,
+    Marketplace,
+    Installed,
 }
 
 /// All live IDE state. The graph is shared (Arc<Mutex>) so the agent swarm can
@@ -55,6 +66,10 @@ pub struct AetherApp {
     agent_validation_cancel: Option<Arc<AtomicBool>>,
     pub(crate) extension_intent: String,
     pub(crate) extension_candidate: Option<ExtensionRecipe>,
+    pub(crate) extension_candidate_source: Option<MarketplaceListing>,
+    pub(crate) marketplace_catalog: MarketplaceCatalog,
+    pub(crate) marketplace_query: String,
+    pub(crate) extension_panel_view: ExtensionPanelView,
     extension_generation_rx: Option<ExtensionGenerationReceiver>,
     extension_mutation_rx: Option<ExtensionMutationReceiver>,
     extension_mutation_cancel: Option<Arc<AtomicBool>>,
@@ -88,6 +103,8 @@ impl AetherApp {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
 
         let workspace = ProjectWorkspace::open(initial_root)?;
+        let marketplace_catalog =
+            builtin_catalog().map_err(|error| std::io::Error::other(error.to_string()))?;
         let project_path_input = workspace.root().display().to_string();
         let workspace_status = workspace_summary(&workspace);
         let py_file = active_python_path(&workspace).unwrap_or_default();
@@ -110,6 +127,10 @@ impl AetherApp {
             agent_validation_cancel: None,
             extension_intent: String::new(),
             extension_candidate: None,
+            extension_candidate_source: None,
+            marketplace_catalog,
+            marketplace_query: String::new(),
+            extension_panel_view: ExtensionPanelView::Generate,
             extension_generation_rx: None,
             extension_mutation_rx: None,
             extension_mutation_cancel: None,
@@ -158,6 +179,7 @@ impl AetherApp {
                 self.py_steps.clear();
                 self.extension_intent.clear();
                 self.extension_candidate = None;
+                self.extension_candidate_source = None;
                 self.extension_action_output.clear();
                 self.extension_remove_confirmation = None;
                 self.set_workspace_status(workspace_summary(&self.workspace));
@@ -440,14 +462,69 @@ impl AetherApp {
                 .map_err(|error| error.to_string())
                 .and_then(|completion| {
                     ExtensionRecipe::from_json(&completion.text)
-                        .map(|recipe| (recipe, completion.model))
+                        .map(|recipe| (recipe, completion.model, None))
                         .map_err(|error| error.to_string())
                 });
             let _ = tx.send(result);
         });
         self.extension_candidate = None;
+        self.extension_candidate_source = None;
         self.extension_generation_rx = Some(rx);
         self.set_workspace_status("Generating a declarative extension recipe...");
+    }
+
+    pub(crate) fn adapt_marketplace_listing(&mut self, listing_id: &str) {
+        if self.extension_busy() {
+            self.set_workspace_error("An extension operation is already running.");
+            return;
+        }
+        if self.workspace.is_dirty() || self.workspace.has_pending_agent_changes() {
+            self.set_workspace_error(
+                "Save or resolve pending agent changes before adapting an extension.",
+            );
+            return;
+        }
+        let Some(listing) = self.marketplace_catalog.listing(listing_id).cloned() else {
+            self.set_workspace_error(format!(
+                "Marketplace listing {listing_id} is no longer available."
+            ));
+            return;
+        };
+        let project = {
+            let graph = self.workspace.graph().lock().unwrap();
+            marketplace_project_context(&graph)
+        };
+        let router = self.router.clone();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.rt.spawn(async move {
+            let input = serde_json::json!({
+                "listing": listing,
+                "project": project,
+            });
+            let mut prompt = aether_ai::Prompt::new(
+                aether_ai::TaskClass::Extension,
+                adaptation_system_prompt(),
+                input.to_string(),
+            );
+            prompt.max_tokens = 4_096;
+            let result = router
+                .complete(prompt)
+                .await
+                .map_err(|error| error.to_string())
+                .and_then(|completion| {
+                    let recipe = ExtensionRecipe::from_json(&completion.text)
+                        .map_err(|error| error.to_string())?;
+                    listing
+                        .capability_delta(&recipe)
+                        .map_err(|error| error.to_string())?;
+                    Ok((recipe, completion.model, Some(listing)))
+                });
+            let _ = tx.send(result);
+        });
+        self.extension_candidate = None;
+        self.extension_candidate_source = None;
+        self.extension_generation_rx = Some(rx);
+        self.set_workspace_status(format!("Adapting marketplace listing {listing_id}..."));
     }
 
     pub(crate) fn approve_extension(&mut self) {
@@ -713,16 +790,21 @@ impl eframe::App for AetherApp {
 
         if let Some(rx) = self.extension_generation_rx.as_mut() {
             match rx.try_recv() {
-                Ok(Ok((recipe, model))) => {
+                Ok(Ok((recipe, model, source))) => {
                     let digest = recipe.digest().unwrap_or_else(|_| "invalid".into());
                     self.extension_generation_rx = None;
+                    if source.is_some() {
+                        self.extension_panel_view = ExtensionPanelView::Generate;
+                    }
                     self.extension_candidate = Some(recipe);
+                    self.extension_candidate_source = source;
                     self.set_workspace_status(format!(
                         "Generated extension recipe with {model}; review digest {digest}"
                     ));
                 }
                 Ok(Err(error)) => {
                     self.extension_generation_rx = None;
+                    self.extension_candidate_source = None;
                     self.set_workspace_error(format!("Extension generation failed: {error}"));
                 }
                 Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
@@ -730,6 +812,7 @@ impl eframe::App for AetherApp {
                 }
                 Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
                     self.extension_generation_rx = None;
+                    self.extension_candidate_source = None;
                     self.set_workspace_error("Extension generation stopped unexpectedly.");
                 }
             }
@@ -744,6 +827,7 @@ impl eframe::App for AetherApp {
                     match self.workspace.reload() {
                         Ok(()) => {
                             self.extension_candidate = None;
+                            self.extension_candidate_source = None;
                             self.graph_view.reset_for_project();
                             self.impact_nodes.clear();
                             self.ripple_start = None;

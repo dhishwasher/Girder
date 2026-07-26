@@ -73,7 +73,8 @@ COMMANDS:
                               Manage declarative, capability-bound extensions.
                               Operations: list; generate <intent...> [--approve];
                               install <recipe.json> [--approve];
-                              enable|disable|remove <extension-id>.
+                              enable|disable|remove <extension-id>;
+                              marketplace list|search|show|adapt.
     --gui [dir]               Launch the native egui/wgpu window for a project
     --help                    Show this help
 ";
