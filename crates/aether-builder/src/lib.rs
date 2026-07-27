@@ -914,6 +914,108 @@ fn provenance_test() {
     }
 
     #[test]
+    fn resolves_rust_let_else_narrowed_receiver_types() {
+        let source = r#"
+struct SessionIdentity;
+impl SessionIdentity {
+    fn inspect(&self) {}
+    fn verify_selected_operation(&self) {}
+}
+
+struct DecoyIdentity;
+impl DecoyIdentity {
+    fn inspect(&self) {}
+}
+
+struct Failure;
+impl Failure {
+    fn inspect(&self) {}
+}
+
+fn apply(identity: Option<&SessionIdentity>) {
+    let Some(identity) = identity else {
+        return;
+    };
+    identity.inspect();
+    identity.verify_selected_operation();
+}
+
+fn inspect_ok(result: Result<&SessionIdentity, &Failure>) {
+    let Ok(identity) = result else {
+        return;
+    };
+    identity.inspect();
+}
+
+fn inspect_err(result: Result<&SessionIdentity, &Failure>) {
+    let Err(failure) = result else {
+        return;
+    };
+    failure.inspect();
+}
+
+fn nested_scope(identity: Option<&SessionIdentity>, decoy: &DecoyIdentity) {
+    {
+        let Some(identity) = identity else {
+            return;
+        };
+        identity.inspect();
+    }
+    decoy.inspect();
+}
+
+#[test]
+fn provenance_test() {
+    apply(Some(&SessionIdentity));
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/session.rs", source);
+
+        let apply = NodeId::from_path("crate::session::apply");
+        let inspect_ok = NodeId::from_path("crate::session::inspect_ok");
+        let inspect_err = NodeId::from_path("crate::session::inspect_err");
+        let nested_scope = NodeId::from_path("crate::session::nested_scope");
+        let session_inspect = NodeId::from_path("crate::session::SessionIdentity::inspect");
+        let verify =
+            NodeId::from_path("crate::session::SessionIdentity::verify_selected_operation");
+        let decoy_inspect = NodeId::from_path("crate::session::DecoyIdentity::inspect");
+        let failure_inspect = NodeId::from_path("crate::session::Failure::inspect");
+        let provenance_test = NodeId::from_path("crate::session::provenance_test");
+
+        let calls = |graph: &SemanticGraph, caller| {
+            graph
+                .neighbors(caller, Some(EdgeKind::Calls))
+                .into_iter()
+                .map(|node| node.id)
+                .collect::<Vec<_>>()
+        };
+        let apply_calls = calls(&graph, apply);
+        assert!(apply_calls.contains(&session_inspect));
+        assert!(apply_calls.contains(&verify));
+        assert!(!apply_calls.contains(&decoy_inspect));
+        assert_eq!(calls(&graph, inspect_ok), vec![session_inspect]);
+        assert_eq!(calls(&graph, inspect_err), vec![failure_inspect]);
+
+        let nested_calls = calls(&graph, nested_scope);
+        assert!(nested_calls.contains(&session_inspect));
+        assert!(nested_calls.contains(&decoy_inspect));
+        assert_eq!(graph.tests_for(verify), vec![provenance_test]);
+
+        builder.update_file(
+            &mut graph,
+            "src/session.rs",
+            &source.replace("    identity.verify_selected_operation();\n", ""),
+        );
+        assert!(!calls(&graph, apply).contains(&verify));
+        assert!(
+            graph.tests_for(verify).is_empty(),
+            "incremental refresh must remove the stale let-else call edge"
+        );
+    }
+
+    #[test]
     fn rust_test_functions_marked_is_test() {
         let rs = r#"
 fn add(a: i64, b: i64) -> i64 { a + b }

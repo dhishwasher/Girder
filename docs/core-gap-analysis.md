@@ -98,11 +98,34 @@ Acceptance evidence:
 - The end-to-end repository fixture selects exactly its one true provenance
   test after the selected operation changes: precision `1/1`, recall `1/1`.
 
+### Let-else receiver resolution
+
+Verified defect: Rust bindings introduced by `let Some(...) = ... else`,
+`let Ok(...) = ... else`, and `let Err(...) = ... else` were not narrowed for
+the following statements in their block. On the isolated same-method-name
+fixture, the Option and Ok paths had no recorded callees.
+
+Acceptance evidence:
+
+- Before the fix, `apply` and `inspect_ok` each had zero callees;
+  `inspect_err` happened to resolve only `Failure::inspect`.
+- The block walker now applies the narrowed hint only after the declaration and
+  only to following siblings in that block. The diverging alternative and
+  enclosing scope retain their prior hints.
+- The same fixture now resolves exactly
+  `SessionIdentity::{inspect, verify_selected_operation}` from `apply`,
+  `SessionIdentity::inspect` from `inspect_ok`, and `Failure::inspect` from
+  `inspect_err`.
+- The graph regression covers nested block scope, exact owner selection,
+  affected-test propagation, and incremental stale-edge removal.
+- The end-to-end repository fixture selects exactly its one true provenance
+  test after the selected operation changes: precision `1/1`, recall `1/1`.
+
 ## Prioritized open gaps
 
 1. **P0 — call-edge precision and recall.** Model subprocess CLI entry routes
-   and implicit RAII/`Drop`; extend scoped type refinement to `let-else` and
-   let-chains; build equivalent measured Python fixtures.
+   and implicit RAII/`Drop`; extend scoped type refinement to let-chains; build
+   equivalent measured Python fixtures.
 2. **P0 — affected-test oracle.** Add dynamic-coverage comparison fixtures so
    precision/recall claims are reproducible rather than inferred from static
    tests alone.

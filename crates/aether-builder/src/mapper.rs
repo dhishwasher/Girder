@@ -775,8 +775,10 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             }
         }
 
+        let mut following_type_hints = None;
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
+            let sequential_type_hints = following_type_hints.as_ref().unwrap_or(active_type_hints);
             let child_type_hints = match (&scoped_type_hints, narrowed_scope) {
                 (Some(hints), _) if narrows_all_children => hints,
                 (Some(hints), Some(scope))
@@ -785,7 +787,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 {
                     hints
                 }
-                _ => active_type_hints,
+                _ => sequential_type_hints,
             };
             walk(
                 child,
@@ -796,6 +798,12 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 child_type_hints,
                 out,
             );
+            if matches!(lang, Lang::Rust) && node.kind() == "block" {
+                if let Some(hints) = rust_let_else_type_hints(child, sequential_type_hints, source)
+                {
+                    following_type_hints = Some(hints);
+                }
+            }
         }
     }
 
@@ -871,10 +879,7 @@ fn rust_condition_type_hints(
     }
     let pattern = condition.child_by_field_name("pattern")?;
     let value = condition.child_by_field_name("value")?;
-    let (binding, hint) = rust_narrowed_pattern_hint(pattern, value, hints, source)?;
-    let mut narrowed = hints.clone();
-    narrowed.insert(binding, hint);
-    Some(narrowed)
+    rust_narrowed_type_hints(pattern, value, hints, source)
 }
 
 fn rust_match_arm_type_hints(
@@ -893,6 +898,30 @@ fn rust_match_arm_type_hints(
         return None;
     }
     let value = match_expression.child_by_field_name("value")?;
+    rust_narrowed_type_hints(pattern, value, hints, source)
+}
+
+fn rust_let_else_type_hints(
+    declaration: TsNode,
+    hints: &HashMap<String, ReceiverHint>,
+    source: &str,
+) -> Option<HashMap<String, ReceiverHint>> {
+    if declaration.kind() != "let_declaration"
+        || declaration.child_by_field_name("alternative").is_none()
+    {
+        return None;
+    }
+    let pattern = declaration.child_by_field_name("pattern")?;
+    let value = declaration.child_by_field_name("value")?;
+    rust_narrowed_type_hints(pattern, value, hints, source)
+}
+
+fn rust_narrowed_type_hints(
+    pattern: TsNode,
+    value: TsNode,
+    hints: &HashMap<String, ReceiverHint>,
+    source: &str,
+) -> Option<HashMap<String, ReceiverHint>> {
     let (binding, hint) = rust_narrowed_pattern_hint(pattern, value, hints, source)?;
     let mut narrowed = hints.clone();
     narrowed.insert(binding, hint);

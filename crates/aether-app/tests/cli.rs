@@ -377,6 +377,54 @@ fn provenance_test() {{
 }
 
 #[test]
+fn test_impact_follows_let_else_narrowed_receivers() {
+    let repo = TempRepo::new("test-impact-let-else-narrowing");
+    let source = |verifier_body: &str| {
+        format!(
+            r#"
+pub struct SessionIdentity;
+impl SessionIdentity {{
+    pub fn verify_selected_operation(&self) {{ {verifier_body} }}
+}}
+
+pub struct DecoyIdentity;
+impl DecoyIdentity {{
+    pub fn verify_selected_operation(&self) {{}}
+}}
+
+pub fn apply(identity: Option<&SessionIdentity>) {{
+    let Some(identity) = identity else {{
+        return;
+    }};
+    identity.verify_selected_operation();
+}}
+
+#[test]
+fn provenance_test() {{
+    apply(Some(&SessionIdentity));
+}}
+"#
+        )
+    };
+    repo.write("src/lib.rs", &source(""));
+    repo.commit_all("baseline");
+    repo.write("src/lib.rs", &source("let _changed = true;"));
+
+    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+
+    assert!(
+        stdout.contains("crate::lib::SessionIdentity::verify_selected_operation"),
+        "{stdout}"
+    );
+    assert!(stdout.contains("Impacted tests (1)"), "{stdout}");
+    assert!(stdout.contains("crate::lib::provenance_test"), "{stdout}");
+    assert!(
+        stdout.contains("cargo test --workspace provenance_test"),
+        "{stdout}"
+    );
+}
+
+#[test]
 fn forge_projects_generated_functions_to_source_file() {
     let repo = TempRepo::new("forge-writeback");
     repo.write("src/lib.rs", "pub fn existing() -> i64 { 1 }\n");
