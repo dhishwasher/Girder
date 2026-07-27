@@ -125,8 +125,12 @@ receiver-qualified method calls across files, and persist the `.aether` graph.
 Rust parameter annotations and direct type-qualified local constructors provide
 bounded receiver types, including inside macro token trees. Function signatures
 also supply parser-owned return types for local factory bindings through `?`,
-`unwrap`/`expect`, and result-preserving error adapters. Unknown receiver types
-remain unresolved rather than being linked to an unrelated same-named method.
+`unwrap`/`expect`, and result-preserving error adapters. Instance factories
+returning `Self` resolve to their owning type, while single-argument generic
+wrappers propagate an inner receiver only when their signatures prove the same
+direct type parameter flows through. Recursive factory hints have a hard size
+budget. Unknown receiver types remain unresolved rather than being linked to an
+unrelated same-named method.
 `forge` plans every candidate byte, checks conflict
 baselines, validates the candidate in a copied workspace, runs Cargo build/tests
 when a manifest is present plus configured validation commands, and only then

@@ -67,6 +67,8 @@ struct FunctionCandidate {
     owner: String,
     id: NodeId,
     return_type: Option<String>,
+    type_parameters: Option<String>,
+    first_parameter_type: Option<String>,
 }
 
 fn only_candidate<'a>(
@@ -114,22 +116,30 @@ fn select_candidate<'a>(
     }
 }
 
-fn factory_return_type<'a>(
+fn factory_candidate<'a>(
     factory: &CallTargetRef,
     by_name: &'a HashMap<String, Vec<FunctionCandidate>>,
     caller_source_module: &str,
     caller_owner: &str,
-) -> Option<&'a str> {
+) -> Option<&'a FunctionCandidate> {
     let candidates = by_name.get(&factory.callee)?;
-    select_candidate(
-        candidates,
-        caller_source_module,
-        caller_owner,
-        factory.qualifier.as_deref(),
-        factory.receiver_type.as_deref(),
-    )?
-    .return_type
-    .as_deref()
+    if let Some(receiver_factory) = factory.receiver_factory.as_deref() {
+        resolve_factory_receiver(
+            receiver_factory,
+            candidates,
+            by_name,
+            caller_source_module,
+            caller_owner,
+        )
+    } else {
+        select_candidate(
+            candidates,
+            caller_source_module,
+            caller_owner,
+            factory.qualifier.as_deref(),
+            factory.receiver_type.as_deref(),
+        )
+    }
 }
 
 fn return_type_matches_owner(return_type: &str, owner: &str) -> bool {
@@ -139,6 +149,139 @@ fn return_type_matches_owner(return_type: &str, owner: &str) -> bool {
         .map(normalized_symbol)
         .filter(|token| token.len() >= 3)
         .any(|token| owner == token)
+}
+
+fn has_type_token(value: &str, expected: &str) -> bool {
+    value
+        .split(|ch: char| !ch.is_ascii_alphanumeric() && ch != '_')
+        .any(|token| token == expected)
+}
+
+fn top_level_parts(value: &str) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let mut start = 0;
+    let mut depth = 0_u32;
+    for (index, ch) in value.char_indices() {
+        match ch {
+            '<' | '(' | '[' | '{' => depth += 1,
+            '>' | ')' | ']' | '}' => depth = depth.saturating_sub(1),
+            ',' if depth == 0 => {
+                parts.push(value[start..index].trim());
+                start = index + ch.len_utf8();
+            }
+            _ => {}
+        }
+    }
+    parts.push(value[start..].trim());
+    parts
+}
+
+fn generic_type_parameters(value: &str) -> Vec<&str> {
+    let inner = value
+        .trim()
+        .strip_prefix('<')
+        .and_then(|value| value.strip_suffix('>'))
+        .unwrap_or(value);
+    top_level_parts(inner)
+        .into_iter()
+        .filter_map(|parameter| {
+            let parameter = parameter.trim();
+            if parameter.starts_with('\'') || parameter.starts_with("const ") {
+                return None;
+            }
+            let end = parameter
+                .find(|ch: char| !ch.is_ascii_alphanumeric() && ch != '_')
+                .unwrap_or(parameter.len());
+            (end > 0).then(|| &parameter[..end])
+        })
+        .collect()
+}
+
+fn outer_type_name(value: &str) -> Option<&str> {
+    let head = value.split('<').next()?.trim();
+    head.split(|ch: char| !ch.is_ascii_alphanumeric() && ch != '_')
+        .rfind(|token| !token.is_empty())
+}
+
+fn has_direct_generic_argument(value: &str, generic: &str) -> bool {
+    let value = value.trim();
+    if value == generic {
+        return true;
+    }
+    let Some(start) = value.find('<') else {
+        return false;
+    };
+    let Some(end) = value.rfind('>') else {
+        return false;
+    };
+    start < end
+        && top_level_parts(&value[start + 1..end])
+            .into_iter()
+            .any(|argument| argument == generic)
+}
+
+fn passes_generic_type(candidate: &FunctionCandidate) -> bool {
+    let (Some(type_parameters), Some(parameter), Some(return_type)) = (
+        candidate.type_parameters.as_deref(),
+        candidate.first_parameter_type.as_deref(),
+        candidate.return_type.as_deref(),
+    ) else {
+        return false;
+    };
+    if outer_type_name(parameter) != outer_type_name(return_type) {
+        return false;
+    }
+    generic_type_parameters(type_parameters)
+        .into_iter()
+        .any(|generic| {
+            has_direct_generic_argument(parameter, generic)
+                && has_direct_generic_argument(return_type, generic)
+        })
+}
+
+fn resolve_factory_receiver<'a>(
+    factory: &CallTargetRef,
+    candidates: &'a [FunctionCandidate],
+    by_name: &'a HashMap<String, Vec<FunctionCandidate>>,
+    caller_source_module: &str,
+    caller_owner: &str,
+) -> Option<&'a FunctionCandidate> {
+    let producer = factory_candidate(factory, by_name, caller_source_module, caller_owner)?;
+    let return_type = producer.return_type.as_deref()?;
+    let direct = if has_type_token(return_type, "Self") {
+        only_candidate(
+            candidates
+                .iter()
+                .filter(|candidate| candidate.owner == producer.owner),
+        )
+    } else {
+        only_candidate(
+            candidates
+                .iter()
+                .filter(|candidate| return_type_matches_owner(return_type, &candidate.owner)),
+        )
+    };
+    if direct.is_some() || !passes_generic_type(producer) {
+        return direct;
+    }
+    if let Some(fallback_type) = factory.fallback_type.as_deref() {
+        if let Some(candidate) = only_candidate(
+            candidates
+                .iter()
+                .filter(|candidate| return_type_matches_owner(fallback_type, &candidate.owner)),
+        ) {
+            return Some(candidate);
+        }
+    }
+    factory.fallback_factory.as_deref().and_then(|fallback| {
+        resolve_factory_receiver(
+            fallback,
+            candidates,
+            by_name,
+            caller_source_module,
+            caller_owner,
+        )
+    })
 }
 
 /// Incrementally maps source files into a [`SemanticGraph`].
@@ -246,6 +389,8 @@ impl GraphBuilder {
                     owner: module_of(&n.path),
                     id: n.id,
                     return_type: n.attr("return_type").map(str::to_string),
+                    type_parameters: n.attr("type_parameters").map(str::to_string),
+                    first_parameter_type: n.attr("first_parameter_type").map(str::to_string),
                 });
         }
 
@@ -262,13 +407,14 @@ impl GraphBuilder {
                 let Some(candidates) = by_name.get(&call.callee) else {
                     continue;
                 };
-                let factory_return = call.receiver_factory.as_ref().and_then(|factory| {
-                    factory_return_type(factory, &by_name, &caller_source_module, &caller_owner)
-                });
-                let chosen = if let Some(return_type) = factory_return {
-                    only_candidate(candidates.iter().filter(|candidate| {
-                        return_type_matches_owner(return_type, &candidate.owner)
-                    }))
+                let chosen = if let Some(factory) = call.receiver_factory.as_ref() {
+                    resolve_factory_receiver(
+                        factory,
+                        candidates,
+                        &by_name,
+                        &caller_source_module,
+                        &caller_owner,
+                    )
                 } else {
                     select_candidate(
                         candidates,

@@ -21,12 +21,60 @@ pub struct CallTargetRef {
     pub callee: String,
     pub qualifier: Option<String>,
     pub receiver_type: Option<String>,
+    /// Factory that produced this factory call's receiver, when the receiver
+    /// itself is not statically annotated.
+    pub receiver_factory: Option<Box<CallTargetRef>>,
+    /// Single nested result source for generic pass-through wrappers such as
+    /// `collaboration_result(GraphReplica::load(...))?`.
+    pub fallback_type: Option<String>,
+    pub fallback_factory: Option<Box<CallTargetRef>>,
 }
 
 #[derive(Debug, Clone)]
 enum ReceiverHint {
     Type(String),
     ReturnOf(CallTargetRef),
+}
+
+const MAX_RECEIVER_HINT_NODES: usize = 16;
+
+impl CallTargetRef {
+    fn bounded_clone(&self) -> Self {
+        fn clone_with_budget(source: &CallTargetRef, budget: &mut usize) -> Option<CallTargetRef> {
+            if *budget == 0 {
+                return None;
+            }
+            *budget -= 1;
+            Some(CallTargetRef {
+                callee: source.callee.clone(),
+                qualifier: source.qualifier.clone(),
+                receiver_type: source.receiver_type.clone(),
+                receiver_factory: source
+                    .receiver_factory
+                    .as_deref()
+                    .and_then(|factory| clone_with_budget(factory, budget))
+                    .map(Box::new),
+                fallback_type: source.fallback_type.clone(),
+                fallback_factory: source
+                    .fallback_factory
+                    .as_deref()
+                    .and_then(|factory| clone_with_budget(factory, budget))
+                    .map(Box::new),
+            })
+        }
+
+        let mut budget = MAX_RECEIVER_HINT_NODES;
+        clone_with_budget(self, &mut budget).expect("receiver hint budget includes its root")
+    }
+}
+
+impl ReceiverHint {
+    fn bounded_clone(&self) -> Self {
+        match self {
+            Self::Type(name) => Self::Type(name.clone()),
+            Self::ReturnOf(factory) => Self::ReturnOf(factory.bounded_clone()),
+        }
+    }
 }
 
 /// An unresolved call site. `callee` is the trailing identifier of the call
@@ -225,6 +273,24 @@ fn collect_defs(
             }
             if let Some(return_type) = node.child_by_field_name("return_type") {
                 n.set_attr("return_type", node_text(return_type, source).trim());
+            }
+            if matches!(lang, Lang::Rust) {
+                if let Some(type_parameters) = node.child_by_field_name("type_parameters") {
+                    n.set_attr("type_parameters", node_text(type_parameters, source).trim());
+                }
+                if let Some(parameters) = node.child_by_field_name("parameters") {
+                    let mut cursor = parameters.walk();
+                    let first_parameter_type = parameters
+                        .named_children(&mut cursor)
+                        .find(|parameter| parameter.kind() == "parameter")
+                        .and_then(|parameter| parameter.child_by_field_name("type"));
+                    if let Some(first_parameter_type) = first_parameter_type {
+                        n.set_attr(
+                            "first_parameter_type",
+                            node_text(first_parameter_type, source).trim(),
+                        );
+                    }
+                }
             }
             out.nodes.push(n);
             out.edges
@@ -474,7 +540,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             .and_then(|binding| hints.get(binding))
         {
             Some(ReceiverHint::Type(name)) => (Some(name.clone()), None),
-            Some(ReceiverHint::ReturnOf(factory)) => (None, Some(factory.clone())),
+            Some(ReceiverHint::ReturnOf(factory)) => (None, Some(factory.bounded_clone())),
             None => (None, None),
         }
     }
@@ -665,7 +731,7 @@ fn infer_rust_receiver_hint(
             .as_deref()
             .map(qualifier_binding)
             .and_then(|binding| hints.get(binding))
-            .cloned();
+            .map(ReceiverHint::bounded_clone);
     }
 
     if matches!(
@@ -685,17 +751,23 @@ fn infer_rust_receiver_hint(
         return Some(ReceiverHint::Type(callee));
     }
 
-    let receiver_type = qualifier.as_deref().and_then(|value| {
-        let binding = qualifier_binding(value);
-        if binding.starts_with(char::is_uppercase) {
-            Some(binding.to_string())
-        } else {
-            match hints.get(binding) {
-                Some(ReceiverHint::Type(name)) => Some(name.clone()),
-                _ => None,
+    let (receiver_type, receiver_factory) = qualifier
+        .as_deref()
+        .map(qualifier_binding)
+        .map(|binding| {
+            if binding.starts_with(char::is_uppercase) {
+                (Some(binding.to_string()), None)
+            } else {
+                match hints.get(binding) {
+                    Some(ReceiverHint::Type(name)) => (Some(name.clone()), None),
+                    Some(ReceiverHint::ReturnOf(factory)) => {
+                        (None, Some(Box::new(factory.bounded_clone())))
+                    }
+                    None => (None, None),
+                }
             }
-        }
-    });
+        })
+        .unwrap_or((None, None));
     if let Some(type_name) = qualifier
         .as_deref()
         .map(qualifier_binding)
@@ -704,11 +776,38 @@ fn infer_rust_receiver_hint(
         return Some(ReceiverHint::Type(type_name.to_string()));
     }
 
+    let fallback = qualifier
+        .is_none()
+        .then(|| single_rust_argument_hint(value, hints, source))
+        .flatten();
+    let (fallback_type, fallback_factory) = match fallback {
+        Some(ReceiverHint::Type(name)) => (Some(name), None),
+        Some(ReceiverHint::ReturnOf(factory)) => (None, Some(Box::new(factory))),
+        None => (None, None),
+    };
     Some(ReceiverHint::ReturnOf(CallTargetRef {
         callee,
         qualifier,
         receiver_type,
+        receiver_factory,
+        fallback_type,
+        fallback_factory,
     }))
+}
+
+fn single_rust_argument_hint(
+    call: TsNode,
+    hints: &HashMap<String, ReceiverHint>,
+    source: &str,
+) -> Option<ReceiverHint> {
+    let arguments = call.child_by_field_name("arguments")?;
+    let mut cursor = arguments.walk();
+    let mut arguments = arguments.named_children(&mut cursor);
+    let argument = arguments.next()?;
+    if arguments.next().is_some() {
+        return None;
+    }
+    infer_rust_receiver_hint(argument, hints, source)
 }
 
 fn record_type_hint(
@@ -865,4 +964,53 @@ fn descendants<'a>(node: TsNode<'a>, cursor: &mut tree_sitter::TreeCursor<'a>) -
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn receiver_nodes(target: &CallTargetRef) -> usize {
+        1 + target
+            .receiver_factory
+            .as_deref()
+            .map(receiver_nodes)
+            .unwrap_or(0)
+            + target
+                .fallback_factory
+                .as_deref()
+                .map(receiver_nodes)
+                .unwrap_or(0)
+    }
+
+    #[test]
+    fn receiver_hint_clone_budget_bounds_adversarial_factory_chains() {
+        let mut target: CallTargetRef = CallTargetRef {
+            callee: "root".into(),
+            qualifier: None,
+            receiver_type: None,
+            receiver_factory: None,
+            fallback_type: Some("GraphReplica".into()),
+            fallback_factory: None,
+        };
+        for index in 0..(MAX_RECEIVER_HINT_NODES * 4) {
+            target = CallTargetRef {
+                callee: format!("factory_{index}"),
+                qualifier: Some(format!("receiver_{index}")),
+                receiver_type: None,
+                receiver_factory: Some(Box::new(target)),
+                fallback_type: None,
+                fallback_factory: None,
+            };
+        }
+
+        let cloned = target.bounded_clone();
+        assert_eq!(receiver_nodes(&cloned), MAX_RECEIVER_HINT_NODES);
+
+        let hint: ReceiverHint = ReceiverHint::ReturnOf(target);
+        let ReceiverHint::ReturnOf(cloned) = hint.bounded_clone() else {
+            panic!("factory hint changed variant");
+        };
+        assert_eq!(receiver_nodes(&cloned), MAX_RECEIVER_HINT_NODES);
+    }
 }

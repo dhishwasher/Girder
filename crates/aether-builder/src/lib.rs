@@ -265,6 +265,116 @@ fn apply_mapped() -> Result<(), ()> {
     }
 
     #[test]
+    fn resolves_self_factories_through_generic_result_wrappers() {
+        let rs = r#"
+struct GraphReplica;
+impl GraphReplica {
+    fn load() -> Result<Self, ()> { Ok(Self) }
+    fn fork(&mut self) -> Result<Self, ()> { Ok(Self) }
+    fn members(&self) {}
+    fn remove_member(&mut self) -> Result<(), ()> { Ok(()) }
+}
+
+struct OtherReplica;
+impl OtherReplica {
+    fn fork(&mut self) -> Result<Self, ()> { Ok(Self) }
+    fn members(&self) {}
+    fn remove_member(&mut self) -> Result<(), ()> { Ok(()) }
+}
+
+fn collaboration_result<T>(result: Result<T, ()>) -> Result<T, ()> { result }
+fn replace_result<T>(_result: Result<T, ()>) -> Result<OtherReplica, ()> {
+    Ok(OtherReplica)
+}
+fn collect_result<T>(_result: Result<T, ()>) -> Result<Vec<T>, ()> {
+    Ok(Vec::new())
+}
+
+fn inspect() -> Result<(), ()> {
+    let mut alice = collaboration_result(GraphReplica::load())?;
+    let mut bob = alice.fork()?;
+    bob.members();
+    collaboration_result(bob.remove_member())?;
+    Ok(())
+}
+
+fn inspect_replaced() -> Result<(), ()> {
+    let other = replace_result(GraphReplica::load())?;
+    other.members();
+    Ok(())
+}
+
+fn inspect_collected() -> Result<(), ()> {
+    let collected = collect_result(GraphReplica::load())?;
+    collected.members();
+    Ok(())
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/collaboration.rs", rs);
+
+        let wrapper = graph
+            .find_by_path("crate::collaboration::collaboration_result")
+            .unwrap();
+        assert_eq!(wrapper.attr("type_parameters"), Some("<T>"));
+        assert_eq!(wrapper.attr("first_parameter_type"), Some("Result<T, ()>"));
+
+        let inspect = NodeId::from_path("crate::collaboration::inspect");
+        let calls: Vec<_> = graph
+            .neighbors(inspect, Some(EdgeKind::Calls))
+            .into_iter()
+            .map(|node| node.id)
+            .collect();
+        for expected in [
+            "crate::collaboration::GraphReplica::fork",
+            "crate::collaboration::GraphReplica::members",
+            "crate::collaboration::GraphReplica::remove_member",
+        ] {
+            assert!(
+                calls.contains(&NodeId::from_path(expected)),
+                "inspect should call {expected}; calls={calls:?}"
+            );
+        }
+        for incorrect in [
+            "crate::collaboration::OtherReplica::fork",
+            "crate::collaboration::OtherReplica::members",
+            "crate::collaboration::OtherReplica::remove_member",
+        ] {
+            assert!(
+                !calls.contains(&NodeId::from_path(incorrect)),
+                "inspect must not call {incorrect}; calls={calls:?}"
+            );
+        }
+
+        let replaced = NodeId::from_path("crate::collaboration::inspect_replaced");
+        let replaced_calls: Vec<_> = graph
+            .neighbors(replaced, Some(EdgeKind::Calls))
+            .into_iter()
+            .map(|node| node.id)
+            .collect();
+        assert!(replaced_calls.contains(&NodeId::from_path(
+            "crate::collaboration::OtherReplica::members"
+        )));
+        assert!(!replaced_calls.contains(&NodeId::from_path(
+            "crate::collaboration::GraphReplica::members"
+        )));
+
+        let collected = NodeId::from_path("crate::collaboration::inspect_collected");
+        let collected_calls: Vec<_> = graph
+            .neighbors(collected, Some(EdgeKind::Calls))
+            .into_iter()
+            .map(|node| node.id)
+            .collect();
+        assert!(!collected_calls.contains(&NodeId::from_path(
+            "crate::collaboration::GraphReplica::members"
+        )));
+        assert!(!collected_calls.contains(&NodeId::from_path(
+            "crate::collaboration::OtherReplica::members"
+        )));
+    }
+
+    #[test]
     fn extracts_rust_trait_impl_as_inherits() {
         let rs = "struct Logger;\ntrait Writer { fn write(&self); }\nimpl Writer for Logger { fn write(&self) {} }\n";
         let mut graph = SemanticGraph::new();
