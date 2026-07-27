@@ -28,8 +28,11 @@ usage:
   bitcode collab identity generate <bundle> <private-key> <public-key>
   bitcode collab identity show <public-key>
   bitcode collab identity list <trust-store>
+  bitcode collab identity attest <bundle> <private-key>
+  bitcode collab identity verify <bundle> <private-key> <trust-store>
   bitcode collab identity trust <trust-store> <public-key> --approve <fingerprint>
   bitcode collab identity rotate <trust-store> <public-key> --from <old-fingerprint> --approve <new-fingerprint>
+  bitcode collab identity rotate-local <bundle> <old-private-key> <new-private-key> --from <old-fingerprint> --approve <new-fingerprint>
   bitcode collab identity remove <trust-store> <actor> --approve <fingerprint>
   bitcode collab host <bundle> <127.0.0.1:port> --secret-file <path> [--identity-file <path> --trust-store <path>] [--discovery-dir <path>] [--presence <status>] [--once] [--ready-file <path>]
   bitcode collab discover <bundle> <directory> --secret-file <path>
@@ -123,6 +126,39 @@ fn identity(args: &[String]) -> std::io::Result<()> {
             }
             Ok(())
         }
+        Some("attest") => {
+            let [_, bundle, private_key] = args else {
+                return Err(invalid_input(
+                    "identity attest requires <bundle> <private-key>",
+                ));
+            };
+            let summary = collaboration_identity::attest_local_bundle(
+                Path::new(bundle),
+                Path::new(private_key),
+            )?;
+            println!(
+                "Attested {} local operation(s) in {bundle}; {} new proof(s) added",
+                summary.operations, summary.attestations_added
+            );
+            Ok(())
+        }
+        Some("verify") => {
+            let [_, bundle, private_key, trust_store] = args else {
+                return Err(invalid_input(
+                    "identity verify requires <bundle> <private-key> <trust-store>",
+                ));
+            };
+            let summary = collaboration_identity::verify_bundle_provenance(
+                Path::new(bundle),
+                Path::new(private_key),
+                Path::new(trust_store),
+            )?;
+            println!(
+                "Verified {} durable operation attestation(s) across {} actor(s) in {bundle}",
+                summary.operations, summary.actors
+            );
+            Ok(())
+        }
         Some("trust") => {
             let [_, trust_store, public_key, approval, fingerprint] = args else {
                 return Err(invalid_input(
@@ -158,6 +194,36 @@ fn identity(args: &[String]) -> std::io::Result<()> {
                 old,
                 new,
             )?);
+            Ok(())
+        }
+        Some("rotate-local") => {
+            let [_, bundle, old_private, new_private, from, old, approval, new] = args else {
+                return Err(invalid_input(
+                    "identity rotate-local requires <bundle> <old-private-key> <new-private-key> --from <old-fingerprint> --approve <new-fingerprint>",
+                ));
+            };
+            if from != "--from" || approval != "--approve" {
+                return Err(invalid_input(
+                    "identity rotate-local requires --from <old-fingerprint> --approve <new-fingerprint>",
+                ));
+            }
+            let rotation = collaboration_identity::rotate_local_identity(
+                Path::new(bundle),
+                Path::new(old_private),
+                Path::new(new_private),
+                old,
+                new,
+            )?;
+            println!(
+                "Recorded identity rotation for {} at operation {} from Ed25519 SHA-256 {} to {}",
+                rotation.actor,
+                rotation.counter,
+                rotation.previous_fingerprint,
+                rotation.fingerprint
+            );
+            println!(
+                "Peers must pin the successor public identity before the next strict session."
+            );
             Ok(())
         }
         Some("remove") => {
@@ -555,6 +621,14 @@ fn status(args: &[String]) -> std::io::Result<()> {
     println!("Collaboration bundle: {bundle}");
     println!("  actor: {}", replica.actor());
     println!("  operations: {}", replica.operation_count());
+    println!(
+        "  durable operation attestations: {} / {}",
+        replica.attestation_count(),
+        replica
+            .operations()
+            .filter(|(dot, _)| !dot.actor.is_bootstrap())
+            .count()
+    );
     println!("  version: {versions}");
     println!(
         "  compacted through: {}",
@@ -703,13 +777,21 @@ fn merge(args: &[String]) -> std::io::Result<()> {
     };
     let mut replica = collaboration_result(GraphReplica::load(bundle))?;
     let peer_replica = collaboration_result(GraphReplica::load(peer))?;
-    let report = collaboration_result(replica.merge(&peer_replica))?;
+    let mut delta = collaboration_result(peer_replica.delta_since(replica.version()))?;
+    let unverified_attestations = delta.attestations.len();
+    delta.attestations.clear();
+    let report = collaboration_result(replica.apply_delta(&delta))?;
     let graph = collaboration_result(replica.materialize())?;
     collaboration_result(replica.save(out))?;
     println!(
         "Merged {peer} into {bundle} -> {out}: {} inserted, {} already present",
         report.inserted, report.already_present
     );
+    if unverified_attestations != 0 {
+        println!(
+            "  ignored {unverified_attestations} unverified operation attestation(s); use an identity-authenticated live session to import provenance"
+        );
+    }
     println!(
         "  converged graph: {} nodes, {} edges, {} operations",
         graph.node_count(),

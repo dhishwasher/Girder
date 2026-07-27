@@ -85,6 +85,10 @@ cargo run -p aether-app -- collab identity trust alice.trust \
   bob.identity.pub --approve <bob-fingerprint>
 cargo run -p aether-app -- collab identity trust bob.trust \
   alice.identity.pub --approve <alice-fingerprint>
+# Sign existing local-authored history now (strict host/join also does this
+# in memory before exchange), then audit a fully attested bundle offline:
+cargo run -p aether-app -- collab identity attest alice.aetherc alice.identity
+cargo run -p aether-app -- collab identity attest bob.aetherc bob.identity
 
 cargo run -p aether-app -- collab host alice.aetherc 127.0.0.1:7331 \
   --identity-file alice.identity --trust-store alice.trust \
@@ -99,7 +103,18 @@ cargo run -p aether-app -- collab join-peer bob.aetherc alice .bitcode/peers \
 cargo run -p aether-app -- collab join bob.aetherc 127.0.0.1:7331 \
   --secret-file collaboration.secret \
   --identity-file bob.identity --trust-store bob.trust
-# Rotation/removal also requires the exact currently reviewed fingerprints:
+# Verify every retained non-bootstrap operation against the current local pins:
+cargo run -p aether-app -- collab identity verify \
+  alice.aetherc alice.identity alice.trust
+# To rotate your own key, first generate a new pair, then record a dual-signed
+# causal transition while both private keys are available. Peers can then rotate
+# their current pin before the next strict session:
+cargo run -p aether-app -- collab identity generate alice.aetherc \
+  alice-new.identity alice-new.identity.pub
+cargo run -p aether-app -- collab identity rotate-local alice.aetherc \
+  alice.identity alice-new.identity \
+  --from <old-alice-fingerprint> --approve <new-alice-fingerprint>
+# Peer trust rotation/removal also requires the exact reviewed fingerprints:
 cargo run -p aether-app -- collab identity rotate alice.trust \
   bob-new.identity.pub --from <old-bob-fingerprint> --approve <new-bob-fingerprint>
 cargo run -p aether-app -- collab identity remove alice.trust bob \
@@ -184,12 +199,17 @@ and forked bundles; if writing the fork fails, the source roster is rolled back.
 `collab member add|remove ... --approve` records convergent add/remove
 operations, concurrent removal wins, normal replica APIs reject new operations
 after the local actor is removed, and membership changes invalidate stale
-acknowledgements. Version
+acknowledgements. A history has one genesis self-membership root: separately
+initialized actors cannot self-invite through a relayed delta. Removal records
+the highest counter observed for that actor; unseen later counters fail until
+their context observes a causal re-add, so a removed offline actor cannot keep
+extending a stale membership epoch. Version
 1 and 2 bundles migrate conservatively by retaining the local actor, previously
 acknowledged peers, and non-bootstrap actors already present in the causal
 clock. Use `fork` to allocate a new actor replica; direct `member add` is for
 re-authorizing an already allocated unique actor, since it does not create that
-actor's bundle.
+actor's bundle. Version 1-3 bundles load as explicit unsigned legacy history;
+version 4 stores operation attestations without changing existing CRDT dots.
 
 Live host/join uses fresh random challenges, mutual HMAC-SHA256 group
 authentication, direction- and sequence-bound message integrity, bounded frames
@@ -204,6 +224,28 @@ holder cannot calculate from captured traffic. Private identity files receive
 the same ownership, symlink, and permission checks. New trust, rotation, and
 removal are explicit fingerprint-approved operations, and identity files are
 actor-bound to their collaboration bundle.
+
+Strict identity sessions also give every retained non-bootstrap CRDT operation a
+durable Ed25519 attestation. A delta importing a new operation, or a new
+retroactive attestation for an already-known dot, triggers verification of that
+actor's complete retained history before any bundle is replaced. The signature
+binds the dot, causal context, and exact action, so action tampering, actor
+forgery, unsigned relay, conflicting proofs, and replayed dot changes fail
+atomically. Local legacy operations can be upgraded with `identity attest`;
+`identity verify` audits a whole bundle against the local private identity and
+peer trust store.
+
+Key rotation is a causal operation signed by the previous key with a second
+proof from the successor key. Verification walks this chain backward from the
+currently pinned fingerprint, so a retired key remains valid for its historical
+counters but cannot authorize later ones. Rotation operations are never removed
+by compaction. Deterministic bootstrap snapshot operations remain an explicitly
+pre-shared bundle baseline rather than pretending to have a human signature;
+strict deltas cannot introduce new bootstrap history. Group-secret-only live
+sessions and the unpinned `collab merge` workflow ignore incoming attestation
+metadata, preventing an unauthenticated path from poisoning later strict
+verification. Actor-key transparency beyond exact local pins is still a
+separate layer.
 
 The transport deliberately binds loopback only: graph payloads are authenticated
 but not encrypted, so remote peers must connect through an encrypted tunnel such

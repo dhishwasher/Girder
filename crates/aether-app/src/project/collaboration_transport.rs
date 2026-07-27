@@ -7,6 +7,8 @@
 //! Ed25519 identities authenticate ephemeral X25519 key agreement so a different
 //! group member cannot derive that session's integrity key. Both sides also
 //! require the authenticated actor to be active in the causal membership roster.
+//! In identity mode, durable per-operation signatures are verified against the
+//! receiver's exact pins before a staged delta can replace either bundle.
 
 use super::collaboration_discovery::DiscoveryLease;
 use super::collaboration_identity::{SessionIdentity, PUBLIC_KEY_BYTES};
@@ -22,7 +24,7 @@ use std::path::Path;
 use std::time::Duration;
 
 const PROTOCOL_MAGIC: &str = "BITCODE_LIVE_COLLAB";
-pub(super) const PROTOCOL_VERSION: u32 = 5;
+pub(super) const PROTOCOL_VERSION: u32 = 6;
 const NONCE_BYTES: usize = 32;
 const MAC_BYTES: usize = 32;
 const KEY_AGREEMENT_BYTES: usize = 32;
@@ -210,6 +212,8 @@ enum SyncPayload {
 struct WireMergeReport {
     inserted: usize,
     already_present: usize,
+    attestations_inserted: usize,
+    attestations_already_present: usize,
 }
 
 impl From<MergeReport> for WireMergeReport {
@@ -217,6 +221,8 @@ impl From<MergeReport> for WireMergeReport {
         Self {
             inserted: report.inserted,
             already_present: report.already_present,
+            attestations_inserted: report.attestations_inserted,
+            attestations_already_present: report.attestations_already_present,
         }
     }
 }
@@ -423,6 +429,9 @@ fn serve_listener(
     }
     let identity =
         load_session_identity(options.identity_file, options.trust_store, replica.actor())?;
+    if let Some(identity) = identity.as_ref() {
+        identity.attest_local_operations(&mut replica)?;
+    }
     let local_address = listener.local_addr()?;
     if !local_address.ip().is_loopback() {
         return Err(invalid_input("live collaboration must bind to loopback"));
@@ -508,6 +517,9 @@ pub(crate) fn join(
         )));
     }
     let identity = load_session_identity(identity_file, trust_store, replica.actor())?;
+    if let Some(identity) = identity.as_ref() {
+        identity.attest_local_operations(&mut replica)?;
+    }
     let mut stream = TcpStream::connect_timeout(&address, IO_TIMEOUT)?;
     configure_stream(&stream)?;
 
@@ -645,9 +657,10 @@ pub(crate) fn join(
         _ => return Err(invalid_data("expected server delta")),
     };
     let received_operations = server_delta.len();
-    let inserted_operations = collaboration_result(replica.apply_delta(&server_delta))?.inserted;
+    let inserted_operations =
+        apply_session_delta(&mut replica, &server_delta, identity.as_ref())?.inserted;
     ensure_session_members_active(&replica, &challenge.server_actor)?;
-    let client_delta = collaboration_result(replica.delta_since(&server_version))?;
+    let client_delta = session_delta_since(&replica, &server_version, identity.is_some())?;
     let sent_operations = client_delta.len();
     write_signed(
         &mut stream,
@@ -850,21 +863,22 @@ fn handle_peer(
         MAX_HANDSHAKE_BYTES,
     )?;
 
-    let server_delta = match replica.delta_since(&request.client_version) {
-        Ok(delta) => delta,
-        Err(error) => {
-            let _ = write_signed(
-                &mut stream,
-                &session_key,
-                b"server",
-                1,
-                SyncPayload::Error {
-                    message: error.to_string(),
-                },
-            );
-            return Err(std::io::Error::other(error));
-        }
-    };
+    let server_delta =
+        match session_delta_since(replica, &request.client_version, identity.is_some()) {
+            Ok(delta) => delta,
+            Err(error) => {
+                let _ = write_signed(
+                    &mut stream,
+                    &session_key,
+                    b"server",
+                    1,
+                    SyncPayload::Error {
+                        message: error.to_string(),
+                    },
+                );
+                return Err(error);
+            }
+        };
     let sent_operations = server_delta.len();
     write_signed(
         &mut stream,
@@ -884,7 +898,7 @@ fn handle_peer(
     };
     let received_operations = client_delta.len();
     let mut staged = replica.clone();
-    let merge = match staged.apply_delta(&client_delta) {
+    let merge = match apply_session_delta(&mut staged, &client_delta, identity) {
         Ok(report) => report,
         Err(error) => {
             let _ = write_signed(
@@ -958,6 +972,39 @@ fn handle_peer(
         peer_presence: request.client_presence,
         peer_identity_fingerprint,
     })
+}
+
+fn session_delta_since(
+    replica: &GraphReplica,
+    known: &VersionVector,
+    identity_authenticated: bool,
+) -> std::io::Result<GraphDelta> {
+    let mut delta = collaboration_result(replica.delta_since(known))?;
+    if !identity_authenticated {
+        // An unpinned group-secret session cannot authorize actor-to-key
+        // bindings. Do not let it propagate metadata that could conflict with
+        // a later verified attestation.
+        delta.attestations.clear();
+    }
+    Ok(delta)
+}
+
+fn apply_session_delta(
+    replica: &mut GraphReplica,
+    delta: &GraphDelta,
+    identity: Option<&SessionIdentity>,
+) -> std::io::Result<MergeReport> {
+    let mut accepted = delta.clone();
+    if identity.is_none() {
+        accepted.attestations.clear();
+    }
+    let mut staged = replica.clone();
+    let report = collaboration_result(staged.apply_delta(&accepted))?;
+    if let Some(identity) = identity {
+        identity.verify_delta_provenance(replica, &staged, &accepted)?;
+    }
+    *replica = staged;
+    Ok(report)
 }
 
 fn send_auth_rejection(
@@ -1234,7 +1281,7 @@ mod tests {
     use crate::project::collaboration_identity::{
         generate_identity, trust_identity, IdentitySummary,
     };
-    use aether_graph::{Edge, EdgeKind, Node, NodeKind, SemanticGraph};
+    use aether_graph::{Edge, EdgeKind, GraphAction, Node, NodeId, NodeKind, SemanticGraph};
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::thread;
@@ -1541,6 +1588,69 @@ mod tests {
             server.materialize().unwrap().to_ron().unwrap(),
             client.materialize().unwrap().to_ron().unwrap()
         );
+        assert_eq!(server.attestation_count(), 3);
+        assert_eq!(client.attestation_count(), 3);
+    }
+
+    #[test]
+    fn pinned_operation_provenance_rejects_tampering_and_unsigned_relay_atomically() {
+        let temp = TempDir::new();
+        let alice_path = temp.file("alice.aetherc");
+        let bob_path = temp.file("bob.aetherc");
+        let mut alice = GraphReplica::from_graph(actor("alice"), &graph("fn run() {}"));
+        let mut bob = alice.fork(actor("bob")).unwrap();
+        alice.save(&alice_path).unwrap();
+        bob.save(&bob_path).unwrap();
+        let (alice_private, alice_public, alice_identity) =
+            generate_identity_files(&temp, &alice_path, "alice-provenance");
+        let (bob_private, bob_public, bob_identity) =
+            generate_identity_files(&temp, &bob_path, "bob-provenance");
+        let alice_trust = temp.file("alice-provenance.trust");
+        let bob_trust = temp.file("bob-provenance.trust");
+        pin_identity(&alice_trust, &bob_public, &bob_identity);
+        pin_identity(&bob_trust, &alice_public, &alice_identity);
+        let alice_session =
+            SessionIdentity::load(&alice_private, &alice_trust, &actor("alice")).unwrap();
+        let bob_session = SessionIdentity::load(&bob_private, &bob_trust, &actor("bob")).unwrap();
+
+        alice
+            .sync_graph(&graph("fn run() { provenance(); }"))
+            .unwrap();
+        alice_session.attest_local_operations(&mut alice).unwrap();
+        bob_session.attest_local_operations(&mut bob).unwrap();
+        let delta = alice.delta_since(bob.version()).unwrap();
+        assert_eq!(delta.operations.len(), 1);
+
+        let before = bob.to_ron().unwrap();
+        let mut tampered = delta.clone();
+        tampered.operations[0].action =
+            GraphAction::RemoveNode(NodeId::from_path("crate::app::run"));
+        let error = apply_session_delta(&mut bob, &tampered, Some(&bob_session)).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("invalid Ed25519 operation signature"),
+            "{error}"
+        );
+        assert_eq!(bob.to_ron().unwrap(), before);
+
+        let mut unsigned = delta.clone();
+        unsigned.attestations.clear();
+        let error = apply_session_delta(&mut bob, &unsigned, Some(&bob_session)).unwrap_err();
+        assert!(
+            error.to_string().contains("no durable actor attestation"),
+            "{error}"
+        );
+        assert_eq!(bob.to_ron().unwrap(), before);
+
+        let report = apply_session_delta(&mut bob, &delta, Some(&bob_session)).unwrap();
+        assert_eq!(report.inserted, 1);
+        assert!(report.attestations_inserted > 0);
+        let converged = bob.to_ron().unwrap();
+        let replay = apply_session_delta(&mut bob, &delta, Some(&bob_session)).unwrap();
+        assert_eq!(replay.inserted, 0);
+        assert!(replay.already_present > 0);
+        assert_eq!(bob.to_ron().unwrap(), converged);
     }
 
     #[test]

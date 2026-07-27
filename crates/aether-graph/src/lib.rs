@@ -23,8 +23,8 @@ mod serialize;
 mod similarity;
 
 pub use collaboration::{
-    ActorId, Dot, GraphAction, GraphDelta, GraphOperation, GraphReplica, MergeReport, SyncReport,
-    VersionVector,
+    ActorId, Dot, GraphAction, GraphDelta, GraphOperation, GraphReplica, MergeReport,
+    OperationAttestation, SyncReport, VersionVector,
 };
 pub use diff::{GraphDiff, NodeChange};
 pub use knowledge::{parse_query, KnowledgeQuery, QueryResult};

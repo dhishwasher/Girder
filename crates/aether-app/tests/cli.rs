@@ -506,6 +506,19 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
         synchronized.contains("nodes: +2 -0; edges: +0 -0"),
         "{synchronized}"
     );
+    let mut bob_replica = aether_graph::GraphReplica::load(&bob).unwrap();
+    let bob_dot = bob_replica
+        .operations()
+        .find(|(dot, _)| dot.actor.as_str() == "bob")
+        .map(|(dot, _)| dot.clone())
+        .unwrap();
+    bob_replica
+        .attest(
+            &bob_dot,
+            aether_graph::OperationAttestation::new([7; 32], vec![11; 64]).unwrap(),
+        )
+        .unwrap();
+    bob_replica.save(&bob).unwrap();
     let merged_output = run_bitcode(&[
         "collab",
         "merge",
@@ -514,6 +527,10 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
         merged.to_str().unwrap(),
     ]);
     assert!(merged_output.contains("2 inserted"), "{merged_output}");
+    assert!(
+        merged_output.contains("ignored 1 unverified operation attestation"),
+        "{merged_output}"
+    );
     run_bitcode(&[
         "collab",
         "materialize",
@@ -540,6 +557,12 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
     assert!(status.contains("active members:"), "{status}");
     assert!(status.contains("alice (local)"), "{status}");
     assert!(status.contains("bob"), "{status}");
+    assert_eq!(
+        aether_graph::GraphReplica::load(&merged)
+            .unwrap()
+            .attestation_count(),
+        0
+    );
 }
 
 #[test]
@@ -694,6 +717,16 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         "--approve",
         &alice_fingerprint,
     ]);
+    for (bundle, private_key) in [(&alice, &alice_identity), (&bob, &bob_identity)] {
+        let attested = run_bitcode(&[
+            "collab",
+            "identity",
+            "attest",
+            bundle.to_str().unwrap(),
+            private_key.to_str().unwrap(),
+        ]);
+        assert!(attested.contains("new proof(s) added"), "{attested}");
+    }
 
     let mut host = Command::new(env!("CARGO_BIN_EXE_bitcode"))
         .args([
@@ -811,6 +844,24 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         "{}",
         String::from_utf8_lossy(&output.stdout)
     );
+    for (bundle, private_key, trust_store) in [
+        (&alice, &alice_identity, &alice_trust),
+        (&bob, &bob_identity, &bob_trust),
+    ] {
+        let verified = run_bitcode(&[
+            "collab",
+            "identity",
+            "verify",
+            bundle.to_str().unwrap(),
+            private_key.to_str().unwrap(),
+            trust_store.to_str().unwrap(),
+        ]);
+        assert!(
+            verified.contains("Verified")
+                && verified.contains("operation attestation(s) across 2 actor(s)"),
+            "{verified}"
+        );
+    }
     assert!(
         std::fs::read_dir(&discovery_directory)
             .unwrap()
@@ -842,6 +893,22 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         bob_rotated_public.to_str().unwrap(),
     ]);
     let rotated_fingerprint = generated_identity_fingerprint(&rotated);
+    let local_rotation = run_bitcode(&[
+        "collab",
+        "identity",
+        "rotate-local",
+        bob.to_str().unwrap(),
+        bob_identity.to_str().unwrap(),
+        bob_rotated_identity.to_str().unwrap(),
+        "--from",
+        &bob_fingerprint,
+        "--approve",
+        &rotated_fingerprint,
+    ]);
+    assert!(
+        local_rotation.contains("Recorded identity rotation for bob"),
+        "{local_rotation}"
+    );
     let rotation = run_bitcode(&[
         "collab",
         "identity",
@@ -889,6 +956,10 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
     );
     let status = run_bitcode(&["collab", "status", alice.to_str().unwrap()]);
     assert!(status.contains("compacted through:"), "{status}");
+    assert!(
+        status.contains("durable operation attestations:"),
+        "{status}"
+    );
     assert!(status.contains("bob:"), "{status}");
 }
 

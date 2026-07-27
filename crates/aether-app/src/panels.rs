@@ -679,10 +679,10 @@ fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     ui.add_space(4.0);
     ui.checkbox(
         &mut app.collaboration_identity_enabled,
-        "Require pinned per-member identities",
+        "Require pinned identities and operation provenance",
     )
     .on_hover_text(
-        "Authenticate the active roster actor with Ed25519 in addition to the group secret",
+        "Authenticate the active roster actor and verify durable per-operation Ed25519 signatures in addition to the group secret",
     );
     if app.collaboration_identity_enabled {
         ui.label("Private actor identity");
@@ -747,11 +747,11 @@ fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
             ));
         }
         ui.small(
-            "Verify fingerprints out of band. Both endpoints must enable identity mode; downgrade to group-secret-only authentication is refused. Use the CLI for explicit key rotation or removal.",
+            "Verify fingerprints out of band. Strict sessions sign legacy local history and reject unsigned or forged actor operations before persistence. Both endpoints must enable identity mode; use the CLI to attest or audit offline and to record dual-signed rotation or remove a pin.",
         );
     } else {
         ui.small(
-            "Legacy mode authenticates only group membership: any secret holder can claim any active actor. Enable pinned identities to bind each endpoint to an approved Ed25519 key.",
+            "Legacy mode authenticates only group membership: any secret holder can claim any active actor, and incoming operation proofs are ignored. Enable pinned identities to bind endpoints and stored operation authorship to approved Ed25519 keys.",
         );
     }
     ui.label("Session presence (optional)");

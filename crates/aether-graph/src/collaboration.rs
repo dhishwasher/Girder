@@ -13,6 +13,11 @@
 //!   previous node generation.
 //! - membership uses the same causal remove-wins policy and gates authorship,
 //!   live sessions, and safe history compaction.
+//!
+//! Optional dot-keyed attestations preserve immutable Ed25519 proofs separately
+//! from CRDT identity. The application supplies actor-key authorization and
+//! cryptographic verification; this crate keeps proofs deterministic,
+//! conflict-free, migration-safe, and compacted with their operations.
 
 use crate::{Edge, EdgeKind, GraphError, Node, NodeId, SemanticGraph};
 use serde::{Deserialize, Serialize};
@@ -24,11 +29,56 @@ use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 
 const COLLAB_MAGIC: &str = "BITCODE_COLLAB";
-const COLLAB_VERSION: u32 = 3;
+const COLLAB_VERSION: u32 = 4;
+const MEMBERSHIP_COLLAB_VERSION: u32 = 3;
 const PREVIOUS_COLLAB_VERSION: u32 = 2;
 const LEGACY_COLLAB_VERSION: u32 = 1;
 const BOOTSTRAP_ACTOR: &str = "bitcode.bootstrap";
+const OPERATION_SIGNATURE_CONTEXT: &str = "bitcode-graph-operation-v1";
+const IDENTITY_ROTATION_SIGNATURE_CONTEXT: &str = "bitcode-actor-key-rotation-v1";
+const PUBLIC_KEY_BYTES: usize = 32;
+const SIGNATURE_BYTES: usize = 64;
 static NEXT_TEMP_FILE: AtomicUsize = AtomicUsize::new(0);
+
+mod attestation_map {
+    use super::{Dot, OperationAttestation};
+    use serde::de::Error as _;
+    use serde::ser::SerializeSeq;
+    use serde::{Deserialize, Deserializer, Serializer};
+    use std::collections::BTreeMap;
+
+    pub(super) fn serialize<S>(
+        attestations: &BTreeMap<Dot, OperationAttestation>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut sequence = serializer.serialize_seq(Some(attestations.len()))?;
+        for entry in attestations {
+            sequence.serialize_element(&entry)?;
+        }
+        sequence.end()
+    }
+
+    pub(super) fn deserialize<'de, D>(
+        deserializer: D,
+    ) -> Result<BTreeMap<Dot, OperationAttestation>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let entries = Vec::<(Dot, OperationAttestation)>::deserialize(deserializer)?;
+        let mut attestations = BTreeMap::new();
+        for (dot, attestation) in entries {
+            if attestations.insert(dot, attestation).is_some() {
+                return Err(D::Error::custom(
+                    "operation attestation dots must be unique",
+                ));
+            }
+        }
+        Ok(attestations)
+    }
+}
 
 /// Stable identity for one human, agent, or automation replica.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -48,6 +98,10 @@ impl ActorId {
 
     pub fn as_str(&self) -> &str {
         &self.0
+    }
+
+    pub fn is_bootstrap(&self) -> bool {
+        self.0 == BOOTSTRAP_ACTOR
     }
 }
 
@@ -157,20 +211,92 @@ pub enum GraphAction {
     },
     AddMember(ActorId),
     RemoveMember(ActorId),
+    /// Advance this operation author's Ed25519 identity from one key to
+    /// another. The operation attestation is made by `previous_key`; the
+    /// embedded proof is made by `new_key` over the same dot and context.
+    RotateIdentity {
+        previous_key: [u8; PUBLIC_KEY_BYTES],
+        new_key: [u8; PUBLIC_KEY_BYTES],
+        new_key_proof: Vec<u8>,
+    },
 }
 
 /// An immutable operation plus the causal state seen by its author.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct GraphOperation {
     pub dot: Dot,
     pub context: VersionVector,
     pub action: GraphAction,
 }
 
+impl GraphOperation {
+    /// Canonical, domain-separated bytes covered by an operation attestation.
+    ///
+    /// This payload is versioned independently from collaboration bundles so
+    /// historical signatures remain stable across outer format migrations.
+    pub fn signing_bytes(&self) -> Result<Vec<u8>, GraphError> {
+        bincode::serialize(&OperationSigningPayload {
+            context: OPERATION_SIGNATURE_CONTEXT,
+            dot: &self.dot,
+            causal_context: &self.context,
+            action: &self.action,
+        })
+        .map_err(|error| GraphError::Serialize(error.to_string()))
+    }
+
+    /// Canonical bytes the successor key signs for an identity rotation.
+    pub fn identity_rotation_signing_bytes(&self) -> Result<Option<Vec<u8>>, GraphError> {
+        match &self.action {
+            GraphAction::RotateIdentity {
+                previous_key,
+                new_key,
+                ..
+            } => identity_rotation_signing_bytes(&self.dot, &self.context, previous_key, new_key)
+                .map(Some),
+            _ => Ok(None),
+        }
+    }
+}
+
+/// An Ed25519 signature over one immutable graph operation.
+///
+/// Cryptographic actor-to-key authorization is deliberately supplied by the
+/// application trust boundary. The graph crate stores and transports the
+/// durable proof while validating its shape and one-to-one dot association.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct OperationAttestation {
+    public_key: [u8; PUBLIC_KEY_BYTES],
+    signature: Vec<u8>,
+}
+
+impl OperationAttestation {
+    pub fn new(public_key: [u8; PUBLIC_KEY_BYTES], signature: Vec<u8>) -> Result<Self, GraphError> {
+        let attestation = Self {
+            public_key,
+            signature,
+        };
+        validate_attestation(&attestation)?;
+        Ok(attestation)
+    }
+
+    pub fn public_key(&self) -> &[u8; PUBLIC_KEY_BYTES] {
+        &self.public_key
+    }
+
+    pub fn signature(&self) -> &[u8] {
+        &self.signature
+    }
+}
+
 /// Idempotent operations missing from a peer's version vector.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct GraphDelta {
     pub operations: Vec<GraphOperation>,
+    #[serde(default, with = "attestation_map")]
+    pub attestations: BTreeMap<Dot, OperationAttestation>,
 }
 
 impl GraphDelta {
@@ -188,6 +314,8 @@ impl GraphDelta {
 pub struct MergeReport {
     pub inserted: usize,
     pub already_present: usize,
+    pub attestations_inserted: usize,
+    pub attestations_already_present: usize,
 }
 
 /// Semantic mutations recorded while reconciling a replica with a graph snapshot.
@@ -216,6 +344,7 @@ pub struct CompactionReport {
 
 /// Operation-set CRDT for a semantic graph.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct GraphReplica {
     actor: ActorId,
     clock: VersionVector,
@@ -224,6 +353,8 @@ pub struct GraphReplica {
     #[serde(default)]
     acknowledgements: BTreeMap<ActorId, VersionVector>,
     operations: BTreeMap<Dot, GraphOperation>,
+    #[serde(default, with = "attestation_map")]
+    attestations: BTreeMap<Dot, OperationAttestation>,
 }
 
 impl GraphReplica {
@@ -234,6 +365,7 @@ impl GraphReplica {
             history_floor: VersionVector::default(),
             acknowledgements: BTreeMap::new(),
             operations: BTreeMap::new(),
+            attestations: BTreeMap::new(),
         };
         replica
             .record_as(
@@ -255,6 +387,7 @@ impl GraphReplica {
             history_floor: VersionVector::default(),
             acknowledgements: BTreeMap::new(),
             operations: BTreeMap::new(),
+            attestations: BTreeMap::new(),
         };
         let bootstrap = ActorId::bootstrap();
 
@@ -297,6 +430,47 @@ impl GraphReplica {
 
     pub fn operation_count(&self) -> usize {
         self.operations.len()
+    }
+
+    pub fn attestation_count(&self) -> usize {
+        self.attestations.len()
+    }
+
+    pub fn operations(&self) -> impl Iterator<Item = (&Dot, &GraphOperation)> {
+        self.operations.iter()
+    }
+
+    pub fn attestation(&self, dot: &Dot) -> Option<&OperationAttestation> {
+        self.attestations.get(dot)
+    }
+
+    /// Attach a durable signature to an existing immutable operation.
+    ///
+    /// Repeating the exact attestation is idempotent. A dot can never be
+    /// rebound to different signature bytes or a different public key.
+    pub fn attest(
+        &mut self,
+        dot: &Dot,
+        attestation: OperationAttestation,
+    ) -> Result<bool, GraphError> {
+        validate_attestation(&attestation)?;
+        if !self.operations.contains_key(dot) {
+            return Err(GraphError::Collaboration(format!(
+                "cannot attest missing operation {}:{}",
+                dot.actor, dot.counter
+            )));
+        }
+        match self.attestations.get(dot) {
+            Some(existing) if existing == &attestation => Ok(false),
+            Some(_) => Err(GraphError::Collaboration(format!(
+                "conflicting attestations reuse dot {}:{}",
+                dot.actor, dot.counter
+            ))),
+            None => {
+                self.attestations.insert(dot.clone(), attestation);
+                Ok(true)
+            }
+        }
     }
 
     pub fn history_floor(&self) -> &VersionVector {
@@ -347,6 +521,61 @@ impl GraphReplica {
         let dot = self.record(GraphAction::RemoveMember(actor.clone()))?;
         self.acknowledgements.remove(actor);
         Ok(dot)
+    }
+
+    /// Return the exact successor-key proof bytes for the next local operation.
+    pub fn next_identity_rotation_signing_bytes(
+        &self,
+        previous_key: &[u8; PUBLIC_KEY_BYTES],
+        new_key: &[u8; PUBLIC_KEY_BYTES],
+    ) -> Result<Vec<u8>, GraphError> {
+        self.ensure_local_member()?;
+        if previous_key == new_key {
+            return Err(GraphError::Collaboration(
+                "identity rotation requires a different successor key".into(),
+            ));
+        }
+        let counter = self
+            .clock
+            .counter(&self.actor)
+            .checked_add(1)
+            .ok_or_else(|| {
+                GraphError::Collaboration(format!("actor '{}' counter overflow", self.actor))
+            })?;
+        identity_rotation_signing_bytes(
+            &Dot {
+                actor: self.actor.clone(),
+                counter,
+            },
+            &self.clock,
+            previous_key,
+            new_key,
+        )
+    }
+
+    /// Record a dual-authorized local Ed25519 identity transition.
+    pub fn rotate_identity(
+        &mut self,
+        previous_key: [u8; PUBLIC_KEY_BYTES],
+        new_key: [u8; PUBLIC_KEY_BYTES],
+        new_key_proof: Vec<u8>,
+    ) -> Result<Dot, GraphError> {
+        self.ensure_local_member()?;
+        if previous_key == new_key {
+            return Err(GraphError::Collaboration(
+                "identity rotation requires a different successor key".into(),
+            ));
+        }
+        if new_key_proof.len() != SIGNATURE_BYTES {
+            return Err(GraphError::Collaboration(format!(
+                "identity rotation successor proofs must contain exactly {SIGNATURE_BYTES} bytes"
+            )));
+        }
+        self.record(GraphAction::RotateIdentity {
+            previous_key,
+            new_key,
+            new_key_proof,
+        })
     }
 
     /// Register and copy this history for a new unique actor.
@@ -406,6 +635,11 @@ impl GraphReplica {
                 .filter(|operation| !known.observes(&operation.dot))
                 .cloned()
                 .collect(),
+            // Attestations can be added retroactively while migrating an
+            // existing unsigned history. Version vectors cannot represent
+            // that metadata-only change, so bounded deltas carry every
+            // retained attestation and merge them idempotently.
+            attestations: self.attestations.clone(),
         })
     }
 
@@ -445,6 +679,30 @@ impl GraphReplica {
             }
         }
 
+        for (dot, attestation) in &delta.attestations {
+            validate_attestation(attestation)?;
+            let incoming_operation_will_be_retained =
+                staged.contains_key(dot) && !self.clock.observes(dot);
+            if !self.operations.contains_key(dot) && !incoming_operation_will_be_retained {
+                return Err(GraphError::Collaboration(format!(
+                    "attestation references missing operation {}:{}",
+                    dot.actor, dot.counter
+                )));
+            }
+            match self.attestations.get(dot) {
+                Some(existing) if existing == attestation => {
+                    report.attestations_already_present += 1;
+                }
+                Some(_) => {
+                    return Err(GraphError::Collaboration(format!(
+                        "conflicting attestations reuse dot {}:{}",
+                        dot.actor, dot.counter
+                    )));
+                }
+                None => {}
+            }
+        }
+
         let mut available_clock = self.clock.clone();
         for operation in staged.values() {
             if available_clock.observes(&operation.dot) {
@@ -478,18 +736,37 @@ impl GraphReplica {
             }
         }
 
+        let mut candidate = self.clone();
         for (dot, operation) in staged {
-            if self.clock.observes(&dot) {
+            if candidate.clock.observes(&dot) {
                 continue;
             }
-            self.operations.insert(dot.clone(), operation);
-            self.clock.observe(&dot);
+            candidate.operations.insert(dot.clone(), operation);
+            candidate.clock.observe(&dot);
             report.inserted += 1;
         }
-        let members_after = self.active_members_unchecked();
-        for actor in members_before.symmetric_difference(&members_after) {
-            self.acknowledgements.remove(actor);
+        for (dot, attestation) in &delta.attestations {
+            if !candidate.attestations.contains_key(dot) {
+                candidate
+                    .attestations
+                    .insert(dot.clone(), attestation.clone());
+                report.attestations_inserted += 1;
+            }
         }
+        let members_after = candidate.active_members_unchecked();
+        for actor in members_before.symmetric_difference(&members_after) {
+            candidate.acknowledgements.remove(actor);
+        }
+        if self.membership_roots().is_empty()
+            && !self.operations.is_empty()
+            && !candidate.membership_roots().is_empty()
+        {
+            return Err(GraphError::Collaboration(
+                "a non-empty history cannot import a new genesis membership root".into(),
+            ));
+        }
+        candidate.validate()?;
+        *self = candidate;
         Ok(report)
     }
 
@@ -562,6 +839,9 @@ impl GraphReplica {
         let operations_before = self.operations.len();
         let mut by_key: BTreeMap<OperationKey, Vec<&GraphOperation>> = BTreeMap::new();
         for operation in self.operations.values() {
+            if matches!(operation.action, GraphAction::RotateIdentity { .. }) {
+                continue;
+            }
             by_key
                 .entry(OperationKey::from_action(&operation.action))
                 .or_default()
@@ -574,7 +854,10 @@ impl GraphReplica {
                 stable.observes(&candidate.dot)
                     && !matches!(
                         candidate.action,
-                        GraphAction::RemoveNode(_) | GraphAction::RemoveMember(_)
+                        GraphAction::RemoveNode(_)
+                            | GraphAction::AddMember(_)
+                            | GraphAction::RemoveMember(_)
+                            | GraphAction::RotateIdentity { .. }
                     )
                     && by_key[&OperationKey::from_action(&candidate.action)]
                         .iter()
@@ -586,6 +869,7 @@ impl GraphReplica {
 
         for dot in &removable {
             self.operations.remove(dot);
+            self.attestations.remove(dot);
             self.history_floor.observe(dot);
         }
         self.validate()?;
@@ -684,6 +968,7 @@ impl GraphReplica {
                         .push(operation);
                 }
                 GraphAction::AddMember(_) | GraphAction::RemoveMember(_) => {}
+                GraphAction::RotateIdentity { .. } => {}
             }
         }
 
@@ -755,7 +1040,7 @@ impl GraphReplica {
             ron::from_str(text).map_err(|error| GraphError::Deserialize(error.to_string()))?;
         validate_file(&file)?;
         let mut replica = file.replica;
-        if file.version < COLLAB_VERSION {
+        if file.version < MEMBERSHIP_COLLAB_VERSION {
             replica.migrate_legacy_membership()?;
         }
         replica.validate()?;
@@ -776,7 +1061,32 @@ impl GraphReplica {
         if let Ok(file) = bincode::deserialize::<CollaborationFile>(bytes) {
             validate_file(&file)?;
             let mut replica = file.replica;
-            if file.version < COLLAB_VERSION {
+            if file.version < MEMBERSHIP_COLLAB_VERSION {
+                replica.migrate_legacy_membership()?;
+            }
+            replica.validate()?;
+            return Ok(replica);
+        }
+        if let Ok(previous) = bincode::deserialize::<PreviousCollaborationFile>(bytes) {
+            if previous.magic != COLLAB_MAGIC
+                || !matches!(
+                    previous.version,
+                    PREVIOUS_COLLAB_VERSION | MEMBERSHIP_COLLAB_VERSION
+                )
+            {
+                return Err(GraphError::Deserialize(
+                    "unsupported collaboration bundle format".into(),
+                ));
+            }
+            let mut replica = GraphReplica {
+                actor: previous.replica.actor,
+                clock: previous.replica.clock,
+                history_floor: previous.replica.history_floor,
+                acknowledgements: previous.replica.acknowledgements,
+                operations: previous.replica.operations,
+                attestations: BTreeMap::new(),
+            };
+            if previous.version < MEMBERSHIP_COLLAB_VERSION {
                 replica.migrate_legacy_membership()?;
             }
             replica.validate()?;
@@ -795,6 +1105,7 @@ impl GraphReplica {
             history_floor: VersionVector::default(),
             acknowledgements: BTreeMap::new(),
             operations: legacy.replica.operations,
+            attestations: BTreeMap::new(),
         };
         let mut replica = replica;
         replica.migrate_legacy_membership()?;
@@ -890,6 +1201,106 @@ impl GraphReplica {
         }
     }
 
+    fn validate_authorship(&self) -> Result<(), GraphError> {
+        let mut membership_by_actor: BTreeMap<ActorId, Vec<&GraphOperation>> = BTreeMap::new();
+        for operation in self.operations.values() {
+            if let GraphAction::AddMember(actor) | GraphAction::RemoveMember(actor) =
+                &operation.action
+            {
+                membership_by_actor
+                    .entry(actor.clone())
+                    .or_default()
+                    .push(operation);
+            }
+        }
+        let membership_roots = self.membership_roots();
+        if membership_roots.len() > 1
+            || (membership_roots.is_empty() && self.history_floor == VersionVector::default())
+        {
+            return Err(GraphError::Collaboration(format!(
+                "collaboration history must contain exactly one genesis membership root; found {}",
+                membership_roots.len()
+            )));
+        }
+        for operation in self.operations.values() {
+            let author = &operation.dot.actor;
+            if author.is_bootstrap() {
+                continue;
+            }
+            let membership = membership_by_actor
+                .get(author)
+                .map(Vec::as_slice)
+                .unwrap_or(&[]);
+            let observed_membership = membership
+                .iter()
+                .copied()
+                .filter(|membership| operation.context.observes(&membership.dot))
+                .collect::<Vec<_>>();
+            let active_in_context = winning_upsert(&observed_membership, |action| {
+                matches!(action, GraphAction::RemoveMember(_))
+            })
+            .is_some_and(|winner| matches!(winner.action, GraphAction::AddMember(_)));
+            let self_initialization = membership_roots.contains(&operation.dot);
+            let migrated_history = membership
+                .iter()
+                .copied()
+                .any(|membership| membership.context.counter(author) >= operation.dot.counter);
+            if !active_in_context && !self_initialization && !migrated_history {
+                return Err(GraphError::Collaboration(format!(
+                    "operation {}:{} was not authored from an active membership context",
+                    author, operation.dot.counter
+                )));
+            }
+
+            for removal in membership.iter().copied().filter(|membership| {
+                matches!(
+                    &membership.action,
+                    GraphAction::RemoveMember(member) if member == author
+                )
+            }) {
+                let removal_cutoff = removal.context.counter(author);
+                if operation.dot.counter <= removal_cutoff {
+                    continue;
+                }
+                let reauthorized = membership.iter().copied().any(|membership| {
+                    matches!(
+                        &membership.action,
+                        GraphAction::AddMember(member) if member == author
+                    ) && membership.context.observes(&removal.dot)
+                        && operation.context.observes(&membership.dot)
+                });
+                if !reauthorized {
+                    return Err(GraphError::Collaboration(format!(
+                        "operation {}:{} exceeds membership-removal cutoff {} without observing a causal reauthorization",
+                        author, operation.dot.counter, removal_cutoff
+                    )));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn membership_roots(&self) -> BTreeSet<Dot> {
+        self.operations
+            .values()
+            .filter(|operation| {
+                matches!(
+                    &operation.action,
+                    GraphAction::AddMember(member) if member == &operation.dot.actor
+                ) && !self.operations.values().any(|membership| {
+                    membership.dot != operation.dot
+                        && operation.context.observes(&membership.dot)
+                        && matches!(
+                            &membership.action,
+                            GraphAction::AddMember(member) | GraphAction::RemoveMember(member)
+                                if member == &operation.dot.actor
+                        )
+                })
+            })
+            .map(|operation| operation.dot.clone())
+            .collect()
+    }
+
     fn migrate_legacy_membership(&mut self) -> Result<(), GraphError> {
         if self.operations.values().any(|operation| {
             matches!(
@@ -943,6 +1354,16 @@ impl GraphReplica {
                 )));
             }
         }
+        for (dot, attestation) in &self.attestations {
+            validate_attestation(attestation)?;
+            if !self.operations.contains_key(dot) {
+                return Err(GraphError::Collaboration(format!(
+                    "attestation references missing operation {}:{}",
+                    dot.actor, dot.counter
+                )));
+            }
+        }
+        self.validate_authorship()?;
         for (actor, maximum) in self.clock.actors() {
             let floor = self.history_floor.counter(actor);
             if floor == maximum {
@@ -1034,6 +1455,7 @@ enum OperationKey {
     Node(NodeId),
     Edge(EdgeKey),
     Member(ActorId),
+    Identity,
 }
 
 impl OperationKey {
@@ -1050,6 +1472,7 @@ impl OperationKey {
             GraphAction::AddMember(actor) | GraphAction::RemoveMember(actor) => {
                 Self::Member(actor.clone())
             }
+            GraphAction::RotateIdentity { .. } => Self::Identity,
         }
     }
 }
@@ -1061,10 +1484,27 @@ impl EdgeKey {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct CollaborationFile {
     magic: String,
     version: u32,
     replica: GraphReplica,
+}
+
+#[derive(Serialize, Deserialize)]
+struct PreviousCollaborationFile {
+    magic: String,
+    version: u32,
+    replica: PreviousGraphReplica,
+}
+
+#[derive(Serialize, Deserialize)]
+struct PreviousGraphReplica {
+    actor: ActorId,
+    clock: VersionVector,
+    history_floor: VersionVector,
+    acknowledgements: BTreeMap<ActorId, VersionVector>,
+    operations: BTreeMap<Dot, GraphOperation>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -1081,6 +1521,39 @@ struct LegacyGraphReplica {
     operations: BTreeMap<Dot, GraphOperation>,
 }
 
+#[derive(Serialize)]
+struct OperationSigningPayload<'a> {
+    context: &'static str,
+    dot: &'a Dot,
+    causal_context: &'a VersionVector,
+    action: &'a GraphAction,
+}
+
+#[derive(Serialize)]
+struct IdentityRotationSigningPayload<'a> {
+    context: &'static str,
+    dot: &'a Dot,
+    causal_context: &'a VersionVector,
+    previous_key: &'a [u8; PUBLIC_KEY_BYTES],
+    new_key: &'a [u8; PUBLIC_KEY_BYTES],
+}
+
+fn identity_rotation_signing_bytes(
+    dot: &Dot,
+    causal_context: &VersionVector,
+    previous_key: &[u8; PUBLIC_KEY_BYTES],
+    new_key: &[u8; PUBLIC_KEY_BYTES],
+) -> Result<Vec<u8>, GraphError> {
+    bincode::serialize(&IdentityRotationSigningPayload {
+        context: IDENTITY_ROTATION_SIGNATURE_CONTEXT,
+        dot,
+        causal_context,
+        previous_key,
+        new_key,
+    })
+    .map_err(|error| GraphError::Serialize(error.to_string()))
+}
+
 fn validate_file(file: &CollaborationFile) -> Result<(), GraphError> {
     if file.magic != COLLAB_MAGIC {
         return Err(GraphError::Deserialize(
@@ -1089,11 +1562,23 @@ fn validate_file(file: &CollaborationFile) -> Result<(), GraphError> {
     }
     if !matches!(
         file.version,
-        LEGACY_COLLAB_VERSION | PREVIOUS_COLLAB_VERSION | COLLAB_VERSION
+        LEGACY_COLLAB_VERSION
+            | PREVIOUS_COLLAB_VERSION
+            | MEMBERSHIP_COLLAB_VERSION
+            | COLLAB_VERSION
     ) {
         return Err(GraphError::Deserialize(format!(
-            "unsupported collaboration version {}; expected {LEGACY_COLLAB_VERSION}, {PREVIOUS_COLLAB_VERSION}, or {COLLAB_VERSION}",
+            "unsupported collaboration version {}; expected {LEGACY_COLLAB_VERSION}, {PREVIOUS_COLLAB_VERSION}, {MEMBERSHIP_COLLAB_VERSION}, or {COLLAB_VERSION}",
             file.version
+        )));
+    }
+    Ok(())
+}
+
+fn validate_attestation(attestation: &OperationAttestation) -> Result<(), GraphError> {
+    if attestation.signature.len() != SIGNATURE_BYTES {
+        return Err(GraphError::Collaboration(format!(
+            "operation attestation signatures must contain exactly {SIGNATURE_BYTES} bytes"
         )));
     }
     Ok(())
@@ -1153,6 +1638,28 @@ fn validate_operation(operation: &GraphOperation) -> Result<(), GraphError> {
     }
     if let GraphAction::AddMember(actor) | GraphAction::RemoveMember(actor) = &operation.action {
         validate_actor(actor.as_str(), false)?;
+    }
+    if let GraphAction::RotateIdentity {
+        previous_key,
+        new_key,
+        new_key_proof,
+    } = &operation.action
+    {
+        if operation.dot.actor.is_bootstrap() {
+            return Err(GraphError::Collaboration(
+                "the bootstrap actor cannot rotate an identity".into(),
+            ));
+        }
+        if previous_key == new_key {
+            return Err(GraphError::Collaboration(
+                "identity rotation requires a different successor key".into(),
+            ));
+        }
+        if new_key_proof.len() != SIGNATURE_BYTES {
+            return Err(GraphError::Collaboration(format!(
+                "identity rotation successor proofs must contain exactly {SIGNATURE_BYTES} bytes"
+            )));
+        }
     }
     Ok(())
 }
@@ -1229,6 +1736,14 @@ mod tests {
         Node::new(NodeKind::Function, "run", "crate::app::run")
             .with_language("rust")
             .with_source(source)
+    }
+
+    fn attestation(key_byte: u8, signature_byte: u8) -> OperationAttestation {
+        OperationAttestation::new(
+            [key_byte; PUBLIC_KEY_BYTES],
+            vec![signature_byte; SIGNATURE_BYTES],
+        )
+        .unwrap()
     }
 
     #[test]
@@ -1379,13 +1894,84 @@ mod tests {
     }
 
     #[test]
+    fn operation_attestations_backfill_round_trip_and_conflict_atomically() {
+        let (graph, _, _) = fixture();
+        let mut alice = GraphReplica::from_graph(actor("alice"), &graph);
+        let mut bob = alice.fork(actor("bob")).unwrap();
+        let alice_dot = alice
+            .operations()
+            .find(|(dot, _)| dot.actor == actor("alice"))
+            .map(|(dot, _)| dot.clone())
+            .unwrap();
+        let proof = attestation(7, 11);
+        assert!(alice.attest(&alice_dot, proof.clone()).unwrap());
+        assert!(!alice.attest(&alice_dot, proof.clone()).unwrap());
+
+        let metadata_only = alice.delta_since(bob.version()).unwrap();
+        assert!(metadata_only.operations.is_empty());
+        assert_eq!(metadata_only.attestations.len(), 1);
+        let report = bob.apply_delta(&metadata_only).unwrap();
+        assert_eq!(report.inserted, 0);
+        assert_eq!(report.attestations_inserted, 1);
+        assert_eq!(bob.attestation(&alice_dot), Some(&proof));
+
+        for decoded in [
+            GraphReplica::from_ron(&bob.to_ron().unwrap()).unwrap(),
+            GraphReplica::from_bytes(&bob.to_bytes().unwrap()).unwrap(),
+        ] {
+            assert_eq!(decoded.attestation(&alice_dot), Some(&proof));
+            assert_eq!(decoded.attestation_count(), 1);
+        }
+
+        let before = bob.to_ron().unwrap();
+        let mut conflicting = GraphDelta::default();
+        conflicting
+            .attestations
+            .insert(alice_dot.clone(), attestation(8, 12));
+        let error = bob.apply_delta(&conflicting).unwrap_err();
+        assert!(error.to_string().contains("conflicting attestations"));
+        assert_eq!(bob.to_ron().unwrap(), before);
+
+        let missing = Dot {
+            actor: actor("mallory"),
+            counter: 1,
+        };
+        let mut orphan = GraphDelta::default();
+        orphan.attestations.insert(missing, attestation(9, 13));
+        assert!(bob.apply_delta(&orphan).is_err());
+        assert!(OperationAttestation::new([0; PUBLIC_KEY_BYTES], vec![0; 63]).is_err());
+    }
+
+    #[test]
+    fn operation_signing_payload_binds_dot_context_and_action() {
+        let (graph, _, run) = fixture();
+        let mut replica = GraphReplica::from_graph(actor("alice"), &graph);
+        let dot = replica
+            .upsert_node(edited_run("fn run() { signed(); }"))
+            .unwrap();
+        let operation = replica.operations.get(&dot).unwrap().clone();
+        let expected = operation.signing_bytes().unwrap();
+
+        let mut changed = operation.clone();
+        changed.action = GraphAction::RemoveNode(run);
+        assert_ne!(changed.signing_bytes().unwrap(), expected);
+        changed = operation.clone();
+        changed.context = VersionVector::default();
+        assert_ne!(changed.signing_bytes().unwrap(), expected);
+        changed = operation;
+        changed.dot.counter += 1;
+        assert_ne!(changed.signing_bytes().unwrap(), expected);
+    }
+
+    #[test]
     fn acknowledged_compaction_preserves_state_and_rejects_stale_peers() {
         let (graph, _, run) = fixture();
         let mut alice = GraphReplica::from_graph(actor("alice"), &graph);
         let mut bob = alice.fork(actor("bob")).unwrap();
-        alice
+        let superseded = alice
             .upsert_node(edited_run("fn run() { first(); }"))
             .unwrap();
+        alice.attest(&superseded, attestation(7, 11)).unwrap();
         alice
             .upsert_node(edited_run("fn run() { second(); }"))
             .unwrap();
@@ -1398,6 +1984,7 @@ mod tests {
 
         let report = alice.compact_acknowledged().unwrap();
         assert!(report.removed_operations >= 2);
+        assert!(alice.attestation(&superseded).is_none());
         assert_eq!(alice.materialize().unwrap().to_ron().unwrap(), expected);
         assert_eq!(
             alice.materialize().unwrap().get(run).unwrap().source,
@@ -1544,6 +2131,63 @@ mod tests {
     }
 
     #[test]
+    fn membership_removal_cuts_off_unseen_actor_operations_until_causal_reauthorization() {
+        let (graph, _, _) = fixture();
+        let mut alice = GraphReplica::from_graph(actor("alice"), &graph);
+        let mut bob = alice.fork(actor("bob")).unwrap();
+        let mut reauthorized_bob = bob.clone();
+        alice.remove_member(&actor("bob")).unwrap();
+        bob.upsert_node(edited_run("fn run() { stale_after_removal(); }"))
+            .unwrap();
+        let stale = bob.delta_since(alice.version()).unwrap();
+        let before = alice.to_ron().unwrap();
+        let error = alice.apply_delta(&stale).unwrap_err();
+        assert!(
+            error.to_string().contains("membership-removal cutoff"),
+            "{error}"
+        );
+        assert_eq!(alice.to_ron().unwrap(), before);
+
+        alice.add_member(actor("bob")).unwrap();
+        reauthorized_bob
+            .apply_delta(&alice.delta_since(reauthorized_bob.version()).unwrap())
+            .unwrap();
+        reauthorized_bob
+            .upsert_node(edited_run("fn run() { authorized_again(); }"))
+            .unwrap();
+        let report = alice
+            .apply_delta(&reauthorized_bob.delta_since(alice.version()).unwrap())
+            .unwrap();
+        assert!(report.inserted > 0);
+        assert_eq!(
+            alice
+                .materialize()
+                .unwrap()
+                .get(NodeId::from_path("crate::app::run"))
+                .unwrap()
+                .source,
+            "fn run() { authorized_again(); }"
+        );
+    }
+
+    #[test]
+    fn separately_initialized_actor_cannot_import_a_second_membership_root() {
+        let (graph, _, _) = fixture();
+        let mut alice = GraphReplica::from_graph(actor("alice"), &graph);
+        let mallory = GraphReplica::from_graph(actor("mallory"), &graph);
+        let before = alice.to_ron().unwrap();
+        let error = alice
+            .apply_delta(&mallory.delta_since(alice.version()).unwrap())
+            .unwrap_err();
+        assert!(
+            error.to_string().contains("genesis membership root"),
+            "{error}"
+        );
+        assert_eq!(alice.to_ron().unwrap(), before);
+        assert_eq!(alice.members().unwrap(), vec![actor("alice")]);
+    }
+
+    #[test]
     fn legacy_binary_collaboration_bundles_migrate_to_current_state() {
         let (graph, _, _) = fixture();
         let replica = GraphReplica::from_graph(actor("alice"), &graph);
@@ -1602,10 +2246,10 @@ mod tests {
             })
             .map(|(dot, operation)| (dot.clone(), operation.clone()))
             .collect();
-        let previous = CollaborationFile {
+        let previous = PreviousCollaborationFile {
             magic: COLLAB_MAGIC.into(),
             version: PREVIOUS_COLLAB_VERSION,
-            replica: GraphReplica {
+            replica: PreviousGraphReplica {
                 actor: actor("alice"),
                 clock,
                 history_floor: VersionVector::default(),
@@ -1636,6 +2280,32 @@ mod tests {
         for edge in graph.edge_records() {
             assert!(materialized.edge_records().contains(&edge));
         }
+    }
+
+    #[test]
+    fn membership_version_binary_bundles_load_as_unsigned_history() {
+        let (graph, _, _) = fixture();
+        let mut replica = GraphReplica::from_graph(actor("alice"), &graph);
+        let _bob = replica.fork(actor("bob")).unwrap();
+        let previous = PreviousCollaborationFile {
+            magic: COLLAB_MAGIC.into(),
+            version: MEMBERSHIP_COLLAB_VERSION,
+            replica: PreviousGraphReplica {
+                actor: replica.actor.clone(),
+                clock: replica.clock.clone(),
+                history_floor: replica.history_floor.clone(),
+                acknowledgements: replica.acknowledgements.clone(),
+                operations: replica.operations.clone(),
+            },
+        };
+
+        let migrated = GraphReplica::from_bytes(&bincode::serialize(&previous).unwrap()).unwrap();
+        assert_eq!(
+            migrated.members().unwrap(),
+            vec![actor("alice"), actor("bob")]
+        );
+        assert_eq!(migrated.operation_count(), replica.operation_count());
+        assert_eq!(migrated.attestation_count(), 0);
     }
 
     #[test]
@@ -1683,6 +2353,7 @@ mod tests {
                 },
                 action: GraphAction::RemoveNode(run),
             }],
+            ..GraphDelta::default()
         };
         assert!(bob.apply_delta(&missing_history).is_err());
         assert_eq!(bob.operation_count(), previous_count);
@@ -1708,6 +2379,7 @@ mod tests {
                 .into_iter()
                 .filter(|operation| operation.dot == dot)
                 .collect(),
+            ..GraphDelta::default()
         };
         assert!(replica.apply_delta(&conflicting).is_err());
     }

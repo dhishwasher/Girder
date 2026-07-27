@@ -1,12 +1,16 @@
-//! Durable local Ed25519 identities and pinned peer trust for live collaboration.
+//! Durable Ed25519 identities, operation provenance, and pinned peer trust.
 //!
 //! The collaboration group secret remains a bootstrap and session-integrity
 //! credential. Identity-pinned sessions additionally prove that each claimed
 //! actor controls a locally trusted Ed25519 key, so another group-secret holder
-//! cannot impersonate that actor. Public identity records are meant to be
-//! fingerprint-verified out of band before they are pinned.
+//! cannot impersonate that actor. The same key attests retained CRDT operations;
+//! dual-signed causal rotations preserve historical verification without
+//! authorizing retired keys for later counters. Public identity records are
+//! meant to be fingerprint-verified out of band before they are pinned.
 
-use aether_graph::{ActorId, GraphError, GraphReplica};
+use aether_graph::{
+    ActorId, Dot, GraphAction, GraphDelta, GraphError, GraphReplica, OperationAttestation,
+};
 use ring::signature::{Ed25519KeyPair, KeyPair, UnparsedPublicKey, ED25519};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -42,6 +46,21 @@ pub(crate) enum TrustChange {
         fingerprint: String,
     },
     Removed(IdentitySummary),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct IdentityRotationSummary {
+    pub(crate) actor: ActorId,
+    pub(crate) counter: u64,
+    pub(crate) previous_fingerprint: String,
+    pub(crate) fingerprint: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct ProvenanceSummary {
+    pub(crate) actors: usize,
+    pub(crate) operations: usize,
+    pub(crate) attestations_added: usize,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -90,6 +109,12 @@ impl SessionIdentity {
         trust_store: &Path,
         expected_actor: &ActorId,
     ) -> std::io::Result<Self> {
+        let mut identity = Self::load_private(identity_file, expected_actor)?;
+        identity.trusted = load_trust_store(trust_store)?.identities;
+        Ok(identity)
+    }
+
+    fn load_private(identity_file: &Path, expected_actor: &ActorId) -> std::io::Result<Self> {
         let bytes = read_bounded_file(identity_file, MAX_IDENTITY_FILE_BYTES, true)?;
         let identity: PrivateIdentityFile =
             serde_json::from_slice(&bytes).map_err(|error| invalid_data(error.to_string()))?;
@@ -103,12 +128,11 @@ impl SessionIdentity {
         let key_pair =
             Ed25519KeyPair::from_seed_and_public_key(&identity.private_seed, &identity.public_key)
                 .map_err(|_| invalid_data("identity private and public keys are inconsistent"))?;
-        let trusted = load_trust_store(trust_store)?.identities;
         Ok(Self {
             actor: identity.actor,
             key_pair,
             public_key: identity.public_key,
-            trusted,
+            trusted: BTreeMap::new(),
         })
     }
 
@@ -163,6 +187,223 @@ impl SessionIdentity {
             })?;
         Ok(fingerprint(presented_key))
     }
+
+    /// Sign every retained, previously unsigned operation authored by the
+    /// local actor. This upgrades legacy history without changing CRDT dots or
+    /// causal clocks, and refuses to overwrite any existing proof.
+    pub(crate) fn attest_local_operations(
+        &self,
+        replica: &mut GraphReplica,
+    ) -> std::io::Result<usize> {
+        if replica.actor() != &self.actor {
+            return Err(invalid_input(format!(
+                "identity belongs to actor '{}', not replica actor '{}'",
+                self.actor,
+                replica.actor()
+            )));
+        }
+        let expected_keys = expected_operation_keys(replica, &self.actor, &self.public_key)?;
+        let pending = replica
+            .operations()
+            .filter(|(dot, _)| dot.actor == self.actor)
+            .map(|(dot, operation)| {
+                let bytes = collaboration_result(operation.signing_bytes())?;
+                Ok((dot.clone(), bytes, expected_keys[dot]))
+            })
+            .collect::<std::io::Result<Vec<_>>>()?;
+        let mut inserted = 0;
+        for (dot, message, expected_key) in pending {
+            if let Some(existing) = replica.attestation(&dot) {
+                if existing.public_key() != &expected_key {
+                    return Err(permission_denied(format!(
+                        "operation {}:{} is attested by a key outside the actor's authorized rotation history",
+                        dot.actor, dot.counter
+                    )));
+                }
+                verify_operation_signature(&dot.actor, existing, &message)?;
+                continue;
+            }
+            if expected_key != self.public_key {
+                return Err(permission_denied(format!(
+                    "operation {}:{} requires a retired identity key and cannot be backfilled with the current key",
+                    dot.actor, dot.counter
+                )));
+            }
+            let signature = self.key_pair.sign(&message).as_ref().to_vec();
+            let attestation =
+                collaboration_result(OperationAttestation::new(self.public_key, signature))?;
+            if collaboration_result(replica.attest(&dot, attestation))? {
+                inserted += 1;
+            }
+        }
+        Ok(inserted)
+    }
+
+    /// Verify every actor history touched by an authenticated delta against
+    /// this endpoint's exact local actor-to-key pins.
+    ///
+    /// Bootstrap snapshot operations are the pre-shared bundle baseline and
+    /// may not be introduced by an identity-authenticated delta.
+    pub(crate) fn verify_delta_provenance(
+        &self,
+        before: &GraphReplica,
+        after: &GraphReplica,
+        delta: &GraphDelta,
+    ) -> std::io::Result<()> {
+        let mut actors = std::collections::BTreeSet::new();
+        for operation in &delta.operations {
+            if operation.dot.actor.is_bootstrap() {
+                if !before.version().observes(&operation.dot) {
+                    return Err(permission_denied(format!(
+                        "identity-authenticated delta cannot introduce unsigned bootstrap operation {}:{}; transfer an approved current bundle",
+                        operation.dot.actor, operation.dot.counter
+                    )));
+                }
+                continue;
+            }
+            actors.insert(operation.dot.actor.clone());
+        }
+        for dot in delta.attestations.keys() {
+            if before.attestation(dot).is_some() {
+                continue;
+            }
+            if dot.actor.is_bootstrap() {
+                return Err(invalid_data(
+                    "bootstrap operations cannot carry actor attestations",
+                ));
+            }
+            actors.insert(dot.actor.clone());
+        }
+        for actor in actors {
+            self.verify_actor_provenance(after, &actor)?;
+        }
+        Ok(())
+    }
+
+    fn verify_actor_provenance(
+        &self,
+        replica: &GraphReplica,
+        actor: &ActorId,
+    ) -> std::io::Result<()> {
+        let trusted_key = if actor == &self.actor {
+            &self.public_key
+        } else {
+            self.trusted.get(actor).ok_or_else(|| {
+                permission_denied(format!(
+                    "no trusted operation-signing identity is pinned for actor '{actor}'"
+                ))
+            })?
+        };
+        let expected_keys = expected_operation_keys(replica, actor, trusted_key)?;
+        let mut operation_count = 0;
+        for (dot, operation) in replica.operations().filter(|(dot, _)| &dot.actor == actor) {
+            operation_count += 1;
+            let attestation = replica.attestation(dot).ok_or_else(|| {
+                permission_denied(format!(
+                    "operation {}:{} has no durable actor attestation",
+                    dot.actor, dot.counter
+                ))
+            })?;
+            if attestation.public_key() != &expected_keys[dot] {
+                return Err(permission_denied(format!(
+                    "operation {}:{} is signed by a key outside the authorized rotation history for actor '{actor}'",
+                    dot.actor, dot.counter
+                )));
+            }
+            let message = collaboration_result(operation.signing_bytes())?;
+            verify_operation_signature(actor, attestation, &message)?;
+        }
+        if operation_count == 0 {
+            return Err(invalid_data(format!(
+                "delta references actor '{actor}' without retained operation history"
+            )));
+        }
+        Ok(())
+    }
+
+    fn verify_replica_provenance(
+        &self,
+        replica: &GraphReplica,
+    ) -> std::io::Result<ProvenanceSummary> {
+        let actors = replica
+            .operations()
+            .filter(|(dot, _)| !dot.actor.is_bootstrap())
+            .map(|(dot, _)| dot.actor.clone())
+            .collect::<std::collections::BTreeSet<_>>();
+        for actor in &actors {
+            self.verify_actor_provenance(replica, actor)?;
+        }
+        Ok(ProvenanceSummary {
+            actors: actors.len(),
+            operations: replica
+                .operations()
+                .filter(|(dot, _)| !dot.actor.is_bootstrap())
+                .count(),
+            attestations_added: 0,
+        })
+    }
+}
+
+fn expected_operation_keys(
+    replica: &GraphReplica,
+    actor: &ActorId,
+    current_key: &[u8; PUBLIC_KEY_BYTES],
+) -> std::io::Result<BTreeMap<Dot, [u8; PUBLIC_KEY_BYTES]>> {
+    let operations = replica
+        .operations()
+        .filter(|(dot, _)| &dot.actor == actor)
+        .map(|(_, operation)| operation)
+        .collect::<Vec<_>>();
+    let mut expected_key = *current_key;
+    let mut expected_keys = BTreeMap::new();
+    for operation in operations.into_iter().rev() {
+        match &operation.action {
+            GraphAction::RotateIdentity {
+                previous_key,
+                new_key,
+                new_key_proof,
+            } => {
+                if new_key != &expected_key {
+                    return Err(permission_denied(format!(
+                        "identity rotation at {}:{} does not lead to the currently pinned key for actor '{actor}'",
+                        operation.dot.actor, operation.dot.counter
+                    )));
+                }
+                let proof_message = collaboration_result(
+                    operation.identity_rotation_signing_bytes(),
+                )?
+                .ok_or_else(|| invalid_data("identity rotation omitted successor proof bytes"))?;
+                UnparsedPublicKey::new(&ED25519, new_key)
+                    .verify(&proof_message, new_key_proof)
+                    .map_err(|_| {
+                        permission_denied(format!(
+                            "identity rotation at {}:{} has an invalid successor-key proof",
+                            operation.dot.actor, operation.dot.counter
+                        ))
+                    })?;
+                expected_keys.insert(operation.dot.clone(), *previous_key);
+                expected_key = *previous_key;
+            }
+            _ => {
+                expected_keys.insert(operation.dot.clone(), expected_key);
+            }
+        }
+    }
+    Ok(expected_keys)
+}
+
+fn verify_operation_signature(
+    actor: &ActorId,
+    attestation: &OperationAttestation,
+    message: &[u8],
+) -> std::io::Result<()> {
+    UnparsedPublicKey::new(&ED25519, attestation.public_key())
+        .verify(message, attestation.signature())
+        .map_err(|_| {
+            permission_denied(format!(
+                "invalid Ed25519 operation signature for actor '{actor}'"
+            ))
+        })
 }
 
 pub(crate) fn generate_identity(
@@ -280,6 +521,101 @@ pub(crate) fn remove_trusted_identity(
     state.identities.remove(&actor);
     save_trust_store(trust_store, &state)?;
     Ok(TrustChange::Removed(identity_summary(&actor, &key)))
+}
+
+pub(crate) fn rotate_local_identity(
+    bundle: &Path,
+    previous_private_path: &Path,
+    new_private_path: &Path,
+    approved_previous_fingerprint: &str,
+    approved_new_fingerprint: &str,
+) -> std::io::Result<IdentityRotationSummary> {
+    if paths_alias(previous_private_path, new_private_path) {
+        return Err(invalid_input(
+            "previous and successor private identity files must be different paths",
+        ));
+    }
+    let mut replica = collaboration_result(GraphReplica::load(bundle))?;
+    let actor = replica.actor().clone();
+    let previous = SessionIdentity::load_private(previous_private_path, &actor)?;
+    let successor = SessionIdentity::load_private(new_private_path, &actor)?;
+    require_exact_fingerprint(
+        previous.public_key(),
+        approved_previous_fingerprint,
+        "previous",
+    )?;
+    require_exact_fingerprint(successor.public_key(), approved_new_fingerprint, "new")?;
+    if previous.public_key() == successor.public_key() {
+        return Err(invalid_input(
+            "identity rotation requires a different successor key",
+        ));
+    }
+
+    previous.attest_local_operations(&mut replica)?;
+    let successor_message = collaboration_result(
+        replica.next_identity_rotation_signing_bytes(previous.public_key(), successor.public_key()),
+    )?;
+    let successor_proof = successor
+        .key_pair
+        .sign(&successor_message)
+        .as_ref()
+        .to_vec();
+    let dot = collaboration_result(replica.rotate_identity(
+        *previous.public_key(),
+        *successor.public_key(),
+        successor_proof,
+    ))?;
+    let operation_message = {
+        let operation = replica
+            .operations()
+            .find_map(|(candidate, operation)| (candidate == &dot).then_some(operation))
+            .ok_or_else(|| invalid_data("recorded identity rotation is missing"))?;
+        collaboration_result(operation.signing_bytes())?
+    };
+    let attestation = collaboration_result(OperationAttestation::new(
+        *previous.public_key(),
+        previous.key_pair.sign(&operation_message).as_ref().to_vec(),
+    ))?;
+    collaboration_result(replica.attest(&dot, attestation))?;
+    successor.verify_actor_provenance(&replica, &actor)?;
+    collaboration_result(replica.save(bundle))?;
+
+    Ok(IdentityRotationSummary {
+        actor,
+        counter: dot.counter,
+        previous_fingerprint: previous.fingerprint(),
+        fingerprint: successor.fingerprint(),
+    })
+}
+
+pub(crate) fn attest_local_bundle(
+    bundle: &Path,
+    private_identity: &Path,
+) -> std::io::Result<ProvenanceSummary> {
+    let mut replica = collaboration_result(GraphReplica::load(bundle))?;
+    let identity = SessionIdentity::load_private(private_identity, replica.actor())?;
+    let attestations_added = identity.attest_local_operations(&mut replica)?;
+    if attestations_added != 0 {
+        collaboration_result(replica.save(bundle))?;
+    }
+    Ok(ProvenanceSummary {
+        actors: 1,
+        operations: replica
+            .operations()
+            .filter(|(dot, _)| &dot.actor == replica.actor())
+            .count(),
+        attestations_added,
+    })
+}
+
+pub(crate) fn verify_bundle_provenance(
+    bundle: &Path,
+    private_identity: &Path,
+    trust_store: &Path,
+) -> std::io::Result<ProvenanceSummary> {
+    let replica = collaboration_result(GraphReplica::load(bundle))?;
+    let identity = SessionIdentity::load(private_identity, trust_store, replica.actor())?;
+    identity.verify_replica_provenance(&replica)
 }
 
 fn generate_for_actor(
@@ -895,6 +1231,82 @@ mod tests {
             .unwrap_err();
         assert!(error.to_string().contains("does not match"));
         assert_ne!(attacker.fingerprint, alice.fingerprint);
+    }
+
+    #[test]
+    fn operation_history_is_signed_and_key_rotation_revokes_the_old_key_for_new_counters() {
+        let temp = TempDir::new();
+        let bundle_path = temp.path("alice.aetherc");
+        bundle(&bundle_path, "alice");
+        let old_private = temp.path("alice-old.identity");
+        let old_public = temp.path("alice-old.pub");
+        let new_private = temp.path("alice-new.identity");
+        let new_public = temp.path("alice-new.pub");
+        let old = generate_for_actor(&actor("alice"), &old_private, &old_public).unwrap();
+        let new = generate_for_actor(&actor("alice"), &new_private, &new_public).unwrap();
+        let before = std::fs::read(&bundle_path).unwrap();
+        assert!(rotate_local_identity(
+            &bundle_path,
+            &old_private,
+            &new_private,
+            "wrong",
+            &new.fingerprint,
+        )
+        .is_err());
+        assert_eq!(std::fs::read(&bundle_path).unwrap(), before);
+
+        let rotation = rotate_local_identity(
+            &bundle_path,
+            &old_private,
+            &new_private,
+            &old.fingerprint,
+            &new.fingerprint,
+        )
+        .unwrap();
+        assert_eq!(rotation.actor, actor("alice"));
+        assert_eq!(rotation.previous_fingerprint, old.fingerprint);
+        assert_eq!(rotation.fingerprint, new.fingerprint);
+
+        let successor = SessionIdentity::load_private(&new_private, &actor("alice")).unwrap();
+        let retired = SessionIdentity::load_private(&old_private, &actor("alice")).unwrap();
+        let mut replica = GraphReplica::load(&bundle_path).unwrap();
+        successor
+            .verify_actor_provenance(&replica, &actor("alice"))
+            .unwrap();
+        assert!(retired
+            .verify_actor_provenance(&replica, &actor("alice"))
+            .is_err());
+
+        let new_dot = replica.add_member(actor("bob")).unwrap();
+        successor.attest_local_operations(&mut replica).unwrap();
+        assert_eq!(
+            replica.attestation(&new_dot).unwrap().public_key(),
+            successor.public_key()
+        );
+        successor
+            .verify_actor_provenance(&replica, &actor("alice"))
+            .unwrap();
+
+        let forged_dot = replica.add_member(actor("charlie")).unwrap();
+        let forged_message = replica
+            .operations()
+            .find_map(|(dot, operation)| {
+                (dot == &forged_dot).then(|| operation.signing_bytes().unwrap())
+            })
+            .unwrap();
+        let forged = OperationAttestation::new(
+            *retired.public_key(),
+            retired.key_pair.sign(&forged_message).as_ref().to_vec(),
+        )
+        .unwrap();
+        replica.attest(&forged_dot, forged).unwrap();
+        let error = successor
+            .verify_actor_provenance(&replica, &actor("alice"))
+            .unwrap_err();
+        assert!(
+            error.to_string().contains("authorized rotation history"),
+            "{error}"
+        );
     }
 
     #[cfg(unix)]

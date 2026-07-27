@@ -728,7 +728,7 @@ impl AetherApp {
                 .collect::<Vec<_>>()
                 .join(", ");
             Ok(format!(
-                "{}\nactor: {}\nactive members: {}\nversion: {}\ncompacted through: {}\ndurable acknowledgements: {}\noperations: {}\ngraph: {} nodes / {} edges",
+                "{}\nactor: {}\nactive members: {}\nversion: {}\ncompacted through: {}\ndurable acknowledgements: {}\noperations: {}\ndurable operation attestations: {} / {}\ngraph: {} nodes / {} edges",
                 bundle.display(),
                 replica.actor(),
                 members,
@@ -740,6 +740,11 @@ impl AetherApp {
                     &acknowledgements
                 },
                 replica.operation_count(),
+                replica.attestation_count(),
+                replica
+                    .operations()
+                    .filter(|(dot, _)| !dot.actor.is_bootstrap())
+                    .count(),
                 graph.node_count(),
                 graph.edge_count()
             ))
@@ -861,7 +866,7 @@ impl AetherApp {
             "Joining {} with {}...",
             self.collaboration_address_input.trim(),
             if self.collaboration_identity_enabled {
-                "group-secret and pinned Ed25519 authentication"
+                "group-secret, pinned Ed25519 authentication, and signed-operation verification"
             } else {
                 "group-secret authentication (legacy mode)"
             }
