@@ -6,7 +6,7 @@
 //! nodes are upserted, vanished nodes are removed, and edges are rebuilt for the
 //! file. This is the machinery behind bidirectional editor⇄graph sync.
 
-use crate::mapper::{extract, module_path_for, BuildOutput, CallRef, InheritRef};
+use crate::mapper::{extract, module_path_for, BuildOutput, CallRef, CallTargetRef, InheritRef};
 use crate::parser::{IncrementalParser, Lang};
 use aether_graph::{Edge, EdgeKind, NodeId, NodeKind, SemanticGraph};
 use std::collections::{HashMap, HashSet};
@@ -62,13 +62,83 @@ fn qualifier_matches_owner(qualifier: &str, owner: &str) -> bool {
     owner == hint || owner.ends_with(&hint)
 }
 
-type FunctionCandidate = (String, String, NodeId);
+struct FunctionCandidate {
+    source_module: String,
+    owner: String,
+    id: NodeId,
+    return_type: Option<String>,
+}
 
 fn only_candidate<'a>(
     mut candidates: impl Iterator<Item = &'a FunctionCandidate>,
 ) -> Option<&'a FunctionCandidate> {
     let first = candidates.next()?;
     candidates.next().is_none().then_some(first)
+}
+
+fn select_candidate<'a>(
+    candidates: &'a [FunctionCandidate],
+    caller_source_module: &str,
+    caller_owner: &str,
+    qualifier: Option<&str>,
+    receiver_type: Option<&str>,
+) -> Option<&'a FunctionCandidate> {
+    if let Some(qualifier) = qualifier {
+        if matches!(qualifier_tail(qualifier), "self" | "Self" | "cls") {
+            only_candidate(
+                candidates
+                    .iter()
+                    .filter(|candidate| candidate.owner == caller_owner),
+            )
+        } else {
+            let receiver_hint = receiver_type.unwrap_or(qualifier);
+            only_candidate(
+                candidates
+                    .iter()
+                    .filter(|candidate| qualifier_matches_owner(receiver_hint, &candidate.owner)),
+            )
+        }
+    } else {
+        only_candidate(candidates.iter().filter(|candidate| {
+            candidate.source_module == caller_source_module
+                && candidate.owner == candidate.source_module
+        }))
+        .or_else(|| {
+            only_candidate(
+                candidates
+                    .iter()
+                    .filter(|candidate| candidate.source_module == caller_source_module),
+            )
+        })
+        .or_else(|| (candidates.len() == 1).then(|| &candidates[0]))
+    }
+}
+
+fn factory_return_type<'a>(
+    factory: &CallTargetRef,
+    by_name: &'a HashMap<String, Vec<FunctionCandidate>>,
+    caller_source_module: &str,
+    caller_owner: &str,
+) -> Option<&'a str> {
+    let candidates = by_name.get(&factory.callee)?;
+    select_candidate(
+        candidates,
+        caller_source_module,
+        caller_owner,
+        factory.qualifier.as_deref(),
+        factory.receiver_type.as_deref(),
+    )?
+    .return_type
+    .as_deref()
+}
+
+fn return_type_matches_owner(return_type: &str, owner: &str) -> bool {
+    let owner = normalized_symbol(owner.rsplit("::").next().unwrap_or(owner));
+    return_type
+        .split(|ch: char| !ch.is_ascii_alphanumeric() && ch != '_')
+        .map(normalized_symbol)
+        .filter(|token| token.len() >= 3)
+        .any(|token| owner == token)
 }
 
 /// Incrementally maps source files into a [`SemanticGraph`].
@@ -168,11 +238,15 @@ impl GraphBuilder {
         // name -> [(source module, lexical owner, function id)]
         let mut by_name: HashMap<String, Vec<FunctionCandidate>> = HashMap::new();
         for n in graph.query_by_kind(NodeKind::Function) {
-            by_name.entry(n.name.clone()).or_default().push((
-                source_module(n.file.as_deref(), &n.path),
-                module_of(&n.path),
-                n.id,
-            ));
+            by_name
+                .entry(n.name.clone())
+                .or_default()
+                .push(FunctionCandidate {
+                    source_module: source_module(n.file.as_deref(), &n.path),
+                    owner: module_of(&n.path),
+                    id: n.id,
+                    return_type: n.attr("return_type").map(str::to_string),
+                });
         }
 
         let mut added: HashSet<(NodeId, NodeId)> = HashSet::new();
@@ -188,46 +262,26 @@ impl GraphBuilder {
                 let Some(candidates) = by_name.get(&call.callee) else {
                     continue;
                 };
-                let qualified =
-                    call.qualifier.as_deref().and_then(|qualifier| {
-                        if matches!(qualifier_tail(qualifier), "self" | "Self" | "cls") {
-                            only_candidate(
-                                candidates
-                                    .iter()
-                                    .filter(|(_, owner, _)| owner == &caller_owner),
-                            )
-                        } else {
-                            let receiver_hint = call.receiver_type.as_deref().unwrap_or(qualifier);
-                            only_candidate(candidates.iter().filter(|(_, owner, _)| {
-                                qualifier_matches_owner(receiver_hint, owner)
-                            }))
-                        }
-                    });
-                let local_free = call.qualifier.is_none().then(|| {
-                    only_candidate(candidates.iter().filter(|(source, owner, _)| {
-                        source == &caller_source_module && owner == source
-                    }))
+                let factory_return = call.receiver_factory.as_ref().and_then(|factory| {
+                    factory_return_type(factory, &by_name, &caller_source_module, &caller_owner)
                 });
-                let local = only_candidate(
-                    candidates
-                        .iter()
-                        .filter(|(source, _, _)| source == &caller_source_module),
-                );
-                let chosen = if call.qualifier.is_some() {
-                    // A qualified call that does not match a recorded owner is
-                    // probably an external API or a receiver whose type we
-                    // cannot infer. Do not attach it to an unrelated unique
-                    // method merely because the names happen to match.
-                    qualified
+                let chosen = if let Some(return_type) = factory_return {
+                    only_candidate(candidates.iter().filter(|candidate| {
+                        return_type_matches_owner(return_type, &candidate.owner)
+                    }))
                 } else {
-                    local_free
-                        .flatten()
-                        .or(local)
-                        .or_else(|| (candidates.len() == 1).then(|| &candidates[0]))
+                    select_candidate(
+                        candidates,
+                        &caller_source_module,
+                        &caller_owner,
+                        call.qualifier.as_deref(),
+                        call.receiver_type.as_deref(),
+                    )
                 };
-                if let Some((_, _, callee_id)) = chosen {
-                    if *callee_id != call.caller && added.insert((call.caller, *callee_id)) {
-                        let _ = graph.add_edge(call.caller, *callee_id, Edge::new(EdgeKind::Calls));
+                if let Some(candidate) = chosen {
+                    if candidate.id != call.caller && added.insert((call.caller, candidate.id)) {
+                        let _ =
+                            graph.add_edge(call.caller, candidate.id, Edge::new(EdgeKind::Calls));
                     }
                 }
             }

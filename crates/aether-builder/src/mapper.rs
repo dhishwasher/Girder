@@ -11,16 +11,35 @@ use aether_graph::{Edge, EdgeKind, Node, NodeId, NodeKind, Span};
 use std::collections::HashMap;
 use tree_sitter::{Node as TsNode, Tree};
 
+/// A callable used to infer the type of a local binding from its return type.
+///
+/// `let plan = make_plan()?; plan.commit()` records `make_plan` here so the
+/// project-wide resolver can inspect its signature even when it lives in
+/// another file.
+#[derive(Debug, Clone)]
+pub struct CallTargetRef {
+    pub callee: String,
+    pub qualifier: Option<String>,
+    pub receiver_type: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+enum ReceiverHint {
+    Type(String),
+    ReturnOf(CallTargetRef),
+}
+
 /// An unresolved call site. `callee` is the trailing identifier of the call
 /// target and `qualifier` retains the receiver/path when one exists
-/// (`catalog.search()` -> `catalog`). The project resolver uses that hint to
-/// distinguish same-named methods without pretending to be a type checker.
+/// (`catalog.search()` -> `catalog`). The project resolver uses those hints to
+/// distinguish same-named methods without pretending to be a full type checker.
 #[derive(Debug, Clone)]
 pub struct CallRef {
     pub caller: NodeId,
     pub callee: String,
     pub qualifier: Option<String>,
     pub receiver_type: Option<String>,
+    pub receiver_factory: Option<CallTargetRef>,
 }
 
 /// An unresolved inheritance: type `sub` inherits/implements something named
@@ -203,6 +222,9 @@ fn collect_defs(
             n.span = span_of(node);
             if is_test_fn(lang, node, &name, source) {
                 n.set_attr("is_test", "true");
+            }
+            if let Some(return_type) = node.child_by_field_name("return_type") {
+                n.set_attr("return_type", node_text(return_type, source).trim());
             }
             out.nodes.push(n);
             out.edges
@@ -443,6 +465,20 @@ fn extract_fields(
 }
 
 fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut BuildOutput) {
+    fn resolved_receiver_hint(
+        qualifier: Option<&str>,
+        hints: &HashMap<String, ReceiverHint>,
+    ) -> (Option<String>, Option<CallTargetRef>) {
+        match qualifier
+            .map(qualifier_binding)
+            .and_then(|binding| hints.get(binding))
+        {
+            Some(ReceiverHint::Type(name)) => (Some(name.clone()), None),
+            Some(ReceiverHint::ReturnOf(factory)) => (None, Some(factory.clone())),
+            None => (None, None),
+        }
+    }
+
     // Track the enclosing function as we descend so calls attach to a caller.
     // `current_type` tracks Python classes plus Rust traits/impls so method ids
     // match the type-scoped ids emitted by `collect_defs`.
@@ -452,7 +488,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         lang: Lang,
         module: &'src str,
         scope: (Option<&'src str>, Option<NodeId>),
-        type_hints: &HashMap<String, String>,
+        type_hints: &HashMap<String, ReceiverHint>,
         out: &mut BuildOutput,
     ) {
         let (current_type, current_fn) = scope;
@@ -500,16 +536,15 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             if let (Some(caller), Some((callee, qualifier))) =
                 (current, callee_target(node, source))
             {
-                let receiver_type = qualifier
-                    .as_deref()
-                    .and_then(|value| active_type_hints.get(qualifier_binding(value)))
-                    .cloned();
+                let (receiver_type, receiver_factory) =
+                    resolved_receiver_hint(qualifier.as_deref(), active_type_hints);
                 // Emit unresolved; the project resolver picks the concrete callee.
                 out.calls.push(CallRef {
                     caller,
                     callee,
                     qualifier,
                     receiver_type,
+                    receiver_factory,
                 });
             }
         }
@@ -525,15 +560,14 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 drop(children);
                 if let Some(tokens) = tokens {
                     for (callee, qualifier) in textual_call_refs(node_text(tokens, source)) {
-                        let receiver_type = qualifier
-                            .as_deref()
-                            .and_then(|value| active_type_hints.get(qualifier_binding(value)))
-                            .cloned();
+                        let (receiver_type, receiver_factory) =
+                            resolved_receiver_hint(qualifier.as_deref(), active_type_hints);
                         out.calls.push(CallRef {
                             caller,
                             callee,
                             qualifier,
                             receiver_type,
+                            receiver_factory,
                         });
                     }
                 }
@@ -565,7 +599,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
     );
 }
 
-fn rust_function_type_hints(function: TsNode, source: &str) -> HashMap<String, String> {
+fn rust_function_type_hints(function: TsNode, source: &str) -> HashMap<String, ReceiverHint> {
     let mut hints = HashMap::new();
     if let Some(parameters) = function.child_by_field_name("parameters") {
         let mut cursor = parameters.walk();
@@ -608,30 +642,77 @@ fn rust_function_type_hints(function: TsNode, source: &str) -> HashMap<String, S
         let Some(value) = declaration.child_by_field_name("value") else {
             continue;
         };
-        let value = unwrap_rust_expression(value);
-        if value.kind() != "call_expression" {
-            continue;
-        }
-        let Some((callee, Some(qualifier))) = callee_target(value, source) else {
-            continue;
-        };
-        let binding = qualifier_binding(&qualifier);
-        let inferred = if binding.starts_with(char::is_uppercase) {
-            Some(binding.to_string())
-        } else if callee == "clone" {
-            hints.get(binding).cloned()
-        } else {
-            None
-        };
-        if let Some(type_name) = inferred {
-            record_named_hint(&mut hints, pattern, &type_name, source);
+        if let Some(hint) = infer_rust_receiver_hint(value, &hints, source) {
+            record_named_hint(&mut hints, pattern, hint, source);
         }
     }
     hints
 }
 
+fn infer_rust_receiver_hint(
+    value: TsNode,
+    hints: &HashMap<String, ReceiverHint>,
+    source: &str,
+) -> Option<ReceiverHint> {
+    let value = unwrap_rust_expression(value);
+    if value.kind() != "call_expression" {
+        return None;
+    }
+    let (callee, qualifier) = callee_target(value, source)?;
+
+    if callee == "clone" {
+        return qualifier
+            .as_deref()
+            .map(qualifier_binding)
+            .and_then(|binding| hints.get(binding))
+            .cloned();
+    }
+
+    if matches!(
+        callee.as_str(),
+        "unwrap" | "expect" | "map_err" | "inspect" | "inspect_err" | "context" | "with_context"
+    ) {
+        let function = value.child_by_field_name("function")?;
+        if function.kind() == "field_expression" {
+            let receiver = function.child_by_field_name("value")?;
+            if let Some(hint) = infer_rust_receiver_hint(receiver, hints, source) {
+                return Some(hint);
+            }
+        }
+    }
+
+    if callee.starts_with(char::is_uppercase) {
+        return Some(ReceiverHint::Type(callee));
+    }
+
+    let receiver_type = qualifier.as_deref().and_then(|value| {
+        let binding = qualifier_binding(value);
+        if binding.starts_with(char::is_uppercase) {
+            Some(binding.to_string())
+        } else {
+            match hints.get(binding) {
+                Some(ReceiverHint::Type(name)) => Some(name.clone()),
+                _ => None,
+            }
+        }
+    });
+    if let Some(type_name) = qualifier
+        .as_deref()
+        .map(qualifier_binding)
+        .filter(|binding| binding.starts_with(char::is_uppercase))
+    {
+        return Some(ReceiverHint::Type(type_name.to_string()));
+    }
+
+    Some(ReceiverHint::ReturnOf(CallTargetRef {
+        callee,
+        qualifier,
+        receiver_type,
+    }))
+}
+
 fn record_type_hint(
-    hints: &mut HashMap<String, String>,
+    hints: &mut HashMap<String, ReceiverHint>,
     pattern: TsNode,
     type_node: TsNode,
     source: &str,
@@ -646,14 +727,14 @@ fn record_type_hint(
         stack.extend(node.named_children(&mut children));
     }
     if let Some(type_name) = type_name {
-        record_named_hint(hints, pattern, &type_name, source);
+        record_named_hint(hints, pattern, ReceiverHint::Type(type_name), source);
     }
 }
 
 fn record_named_hint(
-    hints: &mut HashMap<String, String>,
+    hints: &mut HashMap<String, ReceiverHint>,
     pattern: TsNode,
-    type_name: &str,
+    hint: ReceiverHint,
     source: &str,
 ) {
     let binding = node_text(pattern, source).trim().trim_start_matches("mut ");
@@ -661,7 +742,7 @@ fn record_named_hint(
         .chars()
         .all(|ch| ch == '_' || ch.is_ascii_alphanumeric())
     {
-        hints.insert(binding.to_string(), type_name.to_string());
+        hints.insert(binding.to_string(), hint);
     }
 }
 

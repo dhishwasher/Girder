@@ -39,6 +39,10 @@ pub use similarity::{jaccard, tokenize};
 use petgraph::stable_graph::{NodeIndex, StableDiGraph};
 use std::collections::HashMap;
 
+pub(crate) fn is_parser_owned_attribute(key: &str) -> bool {
+    matches!(key, "is_test" | "return_type" | "source_projection")
+}
+
 /// Errors surfaced by graph operations.
 #[derive(Debug, thiserror::Error)]
 pub enum GraphError {
@@ -91,10 +95,9 @@ impl SemanticGraph {
     /// Parser-owned attributes are deliberately replaced by the fresh parse so
     /// stale syntax facts, such as a removed test annotation, do not survive.
     pub fn upsert_projection_node(&mut self, mut node: Node) -> NodeId {
-        const PARSER_OWNED_ATTRIBUTES: &[&str] = &["is_test"];
         if let Some(existing) = self.get(node.id) {
             for (key, value) in &existing.attributes {
-                if !PARSER_OWNED_ATTRIBUTES.contains(&key.as_str())
+                if !is_parser_owned_attribute(key)
                     && !node.attributes.iter().any(|(current, _)| current == key)
                 {
                     node.attributes.push((key.clone(), value.clone()));

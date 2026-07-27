@@ -1,6 +1,6 @@
 //! Reconcile a durable semantic graph with fresh source projections.
 
-use crate::{Node, NodeId, NodeKind, SemanticGraph};
+use crate::{is_parser_owned_attribute, Node, NodeId, NodeKind, SemanticGraph};
 use std::collections::HashSet;
 
 /// What survived while a persisted graph was reconciled with files on disk.
@@ -80,9 +80,8 @@ fn is_graph_owned(node: &Node) -> bool {
 }
 
 fn merge_graph_metadata(projected: &mut Node, persisted: &Node) {
-    const PARSER_OWNED_ATTRIBUTES: &[&str] = &["is_test"];
     for (key, value) in &persisted.attributes {
-        if !PARSER_OWNED_ATTRIBUTES.contains(&key.as_str())
+        if !is_parser_owned_attribute(key)
             && !projected
                 .attributes
                 .iter()
@@ -119,6 +118,7 @@ mod tests {
         let mut old = projected(path, "fn run() { old() }");
         old.set_attr("summary", "important entry point");
         old.set_attr("is_test", "true");
+        old.set_attr("return_type", "OldResult");
         persisted.upsert_node(old);
 
         let mut source = SemanticGraph::new();
@@ -130,6 +130,7 @@ mod tests {
         assert_eq!(run.source, "fn run() { fresh() }");
         assert_eq!(run.attr("summary"), Some("important entry point"));
         assert_eq!(run.attr("is_test"), None);
+        assert_eq!(run.attr("return_type"), None);
         assert_eq!(report.metadata_nodes, 1);
         assert_eq!(report.source_changes, 1);
     }

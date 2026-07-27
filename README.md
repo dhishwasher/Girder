@@ -120,9 +120,11 @@ cargo run -p aether-app -- --help
 build the graph with directory-aware module paths, resolve free and
 receiver-qualified method calls across files, and persist the `.aether` graph.
 Rust parameter annotations and direct type-qualified local constructors provide
-bounded receiver types, including inside macro token trees. Unknown receiver
-types remain unresolved rather than being linked to an unrelated same-named
-method. `forge` plans every candidate byte, checks conflict
+bounded receiver types, including inside macro token trees. Function signatures
+also supply parser-owned return types for local factory bindings through `?`,
+`unwrap`/`expect`, and result-preserving error adapters. Unknown receiver types
+remain unresolved rather than being linked to an unrelated same-named method.
+`forge` plans every candidate byte, checks conflict
 baselines, validates the candidate in a copied workspace, runs Cargo build/tests
 when a manifest is present plus configured validation commands, and only then
 journal-commits the source projection and graph together.
@@ -321,7 +323,7 @@ time-travel debug) are real, tested, and runnable. Implemented features:
 
 | Feature | What it does |
 |---|---|
-| Semantic graph | Nodes/edges, impact BFS, similarity edges, strict versioned `.aether` persistence and source reconciliation |
+| Semantic graph | Nodes/edges, return-aware cross-file call resolution, impact BFS, similarity edges, strict versioned `.aether` persistence and source reconciliation |
 | Graph explorer | Retained force layout, pan/zoom, search and typed filters, neighborhood focus, LOD/culling, metadata inspection, source navigation |
 | Agent swarm | Planner + Coder + Tester + Documenter + Refactorer + Optimizer + SecurityAuditor + QueryAgent |
 | Intent-first planning | Planner reads the graph before planning; generates ordered `FeatureSpec` with Calls-edge wiring |

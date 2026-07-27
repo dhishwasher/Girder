@@ -183,6 +183,88 @@ fn main() {
     }
 
     #[test]
+    fn resolves_factory_return_types_across_files() {
+        let projection = r#"
+struct ProjectionPlan;
+impl ProjectionPlan {
+    fn writes(&self) {}
+    fn commit(self) {}
+}
+
+fn plan_authored_functions() -> Result<ProjectionPlan, ()> {
+    Ok(ProjectionPlan)
+}
+"#;
+        let collaboration = r#"
+struct CollaborationProjectionPlan;
+impl CollaborationProjectionPlan {
+    fn writes(&self) {}
+    fn commit(self) {}
+}
+"#;
+        let app = r#"
+fn apply() -> Result<(), ()> {
+    let plan = plan_authored_functions()?;
+    plan.writes();
+    plan.commit();
+    Ok(())
+}
+
+fn apply_unwrapped() {
+    let plan = plan_authored_functions().expect("plan");
+    plan.commit();
+}
+
+fn apply_mapped() -> Result<(), ()> {
+    let plan = plan_authored_functions().map_err(|error| error)?;
+    plan.writes();
+    plan.commit();
+    Ok(())
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/projection.rs", projection);
+        builder.load_file(&mut graph, "src/collaboration.rs", collaboration);
+        builder.load_file(&mut graph, "src/app.rs", app);
+
+        let factory = graph
+            .find_by_path("crate::projection::plan_authored_functions")
+            .unwrap();
+        assert_eq!(
+            factory.attr("return_type"),
+            Some("Result<ProjectionPlan, ()>")
+        );
+
+        let projection_writes = NodeId::from_path("crate::projection::ProjectionPlan::writes");
+        let projection_commit = NodeId::from_path("crate::projection::ProjectionPlan::commit");
+        let collaboration_writes =
+            NodeId::from_path("crate::collaboration::CollaborationProjectionPlan::writes");
+        let collaboration_commit =
+            NodeId::from_path("crate::collaboration::CollaborationProjectionPlan::commit");
+        for caller in [
+            NodeId::from_path("crate::app::apply"),
+            NodeId::from_path("crate::app::apply_unwrapped"),
+            NodeId::from_path("crate::app::apply_mapped"),
+        ] {
+            let calls: Vec<_> = graph
+                .neighbors(caller, Some(EdgeKind::Calls))
+                .into_iter()
+                .map(|node| node.id)
+                .collect();
+            assert!(
+                calls.contains(&projection_commit),
+                "{caller:?} should resolve ProjectionPlan::commit; calls={calls:?}"
+            );
+            assert!(!calls.contains(&collaboration_commit));
+            if caller != NodeId::from_path("crate::app::apply_unwrapped") {
+                assert!(calls.contains(&projection_writes));
+                assert!(!calls.contains(&collaboration_writes));
+            }
+        }
+    }
+
+    #[test]
     fn extracts_rust_trait_impl_as_inherits() {
         let rs = "struct Logger;\ntrait Writer { fn write(&self); }\nimpl Writer for Logger { fn write(&self) {} }\n";
         let mut graph = SemanticGraph::new();
@@ -509,11 +591,19 @@ fn test_add() { assert_eq!(add(2, 3), 5); }
             .unwrap()
             .set_attr("summary", "durable summary");
 
-        builder.update_file(&mut graph, "src/lib.rs", "fn run() -> i64 { 2 }\n");
+        assert_eq!(
+            graph
+                .find_by_path("crate::lib::run")
+                .unwrap()
+                .attr("return_type"),
+            Some("i64")
+        );
+        builder.update_file(&mut graph, "src/lib.rs", "fn run() { let _ = 2; }\n");
 
         let run = graph.find_by_path("crate::lib::run").unwrap();
-        assert_eq!(run.source, "fn run() -> i64 { 2 }");
+        assert_eq!(run.source, "fn run() { let _ = 2; }");
         assert_eq!(run.attr("summary"), Some("durable summary"));
+        assert_eq!(run.attr("return_type"), None);
     }
 
     #[test]
