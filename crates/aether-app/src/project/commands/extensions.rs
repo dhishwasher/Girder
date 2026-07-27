@@ -1,7 +1,7 @@
 use crate::project::config::{ProjectConfig, CONFIG_FILE};
 use crate::project::source::{
-    build_from_dir_with_config, commit_project_writes, graph_project_write, load_graph_snapshot,
-    read_project_bytes, read_project_bytes_bounded, ProjectWrite,
+    commit_project_writes, graph_project_write, load_reconciled_graph, read_project_bytes,
+    read_project_bytes_bounded, ProjectWrite,
 };
 use crate::project::validation::{validate_candidate, ValidationStatus};
 use aether_ai::{Prompt, TaskClass};
@@ -159,7 +159,7 @@ pub(crate) async fn extensions(args: &[String]) -> std::io::Result<()> {
     };
     let config = ProjectConfig::load(&root)?;
     let config_baseline = read_project_bytes(&root, CONFIG_FILE)?;
-    let (mut graph, graph_baseline) = load_reconciled_graph(&root, &config)?;
+    let (mut graph, graph_baseline, _) = load_reconciled_graph(&root, &config)?;
 
     match operation {
         "list" => list_extensions(&graph),
@@ -592,25 +592,6 @@ fn remove_extension(
     )?;
     println!("Removed {extension_id} and restored its project projections");
     Ok(())
-}
-
-fn load_reconciled_graph(
-    root: &Path,
-    config: &ProjectConfig,
-) -> std::io::Result<(SemanticGraph, Option<Vec<u8>>)> {
-    let (source, _, _) = build_from_dir_with_config(root, config)?;
-    let persisted = load_graph_snapshot(root, config)?;
-    if let Some(error) = persisted.error {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            format!("persisted graph is invalid; refusing extension changes: {error}"),
-        ));
-    }
-    let graph = match persisted.graph {
-        Some(durable) => SemanticGraph::reconcile_persisted(source, &durable).0,
-        None => source,
-    };
-    Ok((graph, persisted.bytes))
 }
 
 fn projection_install_writes(

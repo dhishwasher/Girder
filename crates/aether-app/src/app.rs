@@ -3,8 +3,9 @@
 use crate::graph_view::GraphViewState;
 use crate::panels;
 use crate::project::{
-    AgentValidationOutcome, ExtensionCommandRequest, ExtensionMutation, ExtensionMutationOutcome,
-    ExtensionMutationRequest, ProjectWorkspace, SyncImpact, ValidationReport,
+    generate_collaboration_secret, join_collaboration, AgentValidationOutcome,
+    ExtensionCommandRequest, ExtensionMutation, ExtensionMutationOutcome, ExtensionMutationRequest,
+    LiveSyncReport, ProjectWorkspace, SyncImpact, ValidationReport,
 };
 use aether_agents::{MsgKind, Orchestrator, SwarmContext, SwarmMessage};
 use aether_debugger::{buggy_demo_program, python_tracer::PyTimeline, Timeline};
@@ -12,7 +13,7 @@ use aether_extensions::{
     adaptation_system_prompt, builtin_catalog, generation_system_prompt,
     marketplace_project_context, ExtensionRecipe, MarketplaceCatalog, MarketplaceListing,
 };
-use aether_graph::NodeId;
+use aether_graph::{ActorId, GraphReplica, NodeId};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -31,11 +32,13 @@ type ExtensionMutationResult = std::io::Result<ExtensionMutationOutcome>;
 type ExtensionMutationReceiver = tokio::sync::oneshot::Receiver<ExtensionMutationResult>;
 type ExtensionCommandResult = std::io::Result<ValidationReport>;
 type ExtensionCommandReceiver = tokio::sync::oneshot::Receiver<ExtensionCommandResult>;
+type CollaborationReceiver = tokio::sync::oneshot::Receiver<std::io::Result<LiveSyncReport>>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RightPanel {
     Agents,
     Extensions,
+    Collaboration,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -78,6 +81,12 @@ pub struct AetherApp {
     pub(crate) extension_action_output: String,
     pub(crate) extension_remove_confirmation: Option<String>,
     pub(crate) right_panel: RightPanel,
+    pub(crate) collaboration_bundle_input: String,
+    pub(crate) collaboration_actor_input: String,
+    pub(crate) collaboration_address_input: String,
+    pub(crate) collaboration_secret_input: String,
+    pub(crate) collaboration_status: String,
+    collaboration_rx: Option<CollaborationReceiver>,
     /// Nodes currently lit by the impact ripple: node_id -> hop distance from changed node.
     /// Distance 0 = the edited function itself; 1 = direct callers; 2 = their callers; etc.
     pub(crate) impact_nodes: HashMap<NodeId, u32>,
@@ -139,6 +148,13 @@ impl AetherApp {
             extension_action_output: String::new(),
             extension_remove_confirmation: None,
             right_panel: RightPanel::Agents,
+            collaboration_bundle_input: ".bitcode/collaboration.aetherc".into(),
+            collaboration_actor_input: String::new(),
+            collaboration_address_input: "127.0.0.1:7331".into(),
+            collaboration_secret_input: ".bitcode/collaboration.secret".into(),
+            collaboration_status:
+                "Initialize a graph replica or inspect an existing collaboration bundle.".into(),
+            collaboration_rx: None,
             impact_nodes: HashMap::new(),
             ripple_start: None,
             editor_jump: None,
@@ -553,6 +569,167 @@ impl AetherApp {
             || self.extension_command_rx.is_some()
     }
 
+    pub(crate) fn collaboration_busy(&self) -> bool {
+        self.collaboration_rx.is_some()
+    }
+
+    fn collaboration_snapshot_ready(&self) -> std::io::Result<()> {
+        if self.workspace.is_dirty() || self.workspace.has_pending_agent_changes() {
+            return Err(std::io::Error::other(
+                "save or resolve pending workspace changes before snapshot synchronization",
+            ));
+        }
+        Ok(())
+    }
+
+    pub(crate) fn initialize_collaboration(&mut self) {
+        let result = (|| -> std::io::Result<String> {
+            self.collaboration_snapshot_ready()?;
+            let bundle = self.collaboration_path(&self.collaboration_bundle_input)?;
+            if bundle.exists() {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::AlreadyExists,
+                    format!("refusing to overwrite {}", bundle.display()),
+                ));
+            }
+            let actor = ActorId::new(self.collaboration_actor_input.trim())
+                .map_err(std::io::Error::other)?;
+            let graph = self
+                .workspace
+                .graph()
+                .lock()
+                .map_err(|_| std::io::Error::other("semantic graph lock is poisoned"))?
+                .clone();
+            if let Some(parent) = bundle.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            let replica = GraphReplica::from_graph(actor, &graph);
+            replica.save(&bundle).map_err(std::io::Error::other)?;
+            Ok(format!(
+                "Initialized {}: {} nodes, {} edges, {} operations",
+                bundle.display(),
+                graph.node_count(),
+                graph.edge_count(),
+                replica.operation_count()
+            ))
+        })();
+        self.collaboration_status = result.unwrap_or_else(|error| format!("Error: {error}"));
+    }
+
+    pub(crate) fn sync_collaboration(&mut self) {
+        let result = (|| -> std::io::Result<String> {
+            self.collaboration_snapshot_ready()?;
+            let bundle = self.collaboration_path(&self.collaboration_bundle_input)?;
+            let graph = self
+                .workspace
+                .graph()
+                .lock()
+                .map_err(|_| std::io::Error::other("semantic graph lock is poisoned"))?
+                .clone();
+            let mut replica = GraphReplica::load(&bundle).map_err(std::io::Error::other)?;
+            let report = replica.sync_graph(&graph).map_err(std::io::Error::other)?;
+            replica.save(&bundle).map_err(std::io::Error::other)?;
+            Ok(format!(
+                "Synchronized {} as {}: {} operation(s) (+{} / -{} nodes, +{} / -{} edges)",
+                bundle.display(),
+                replica.actor(),
+                report.operation_count(),
+                report.nodes_upserted,
+                report.nodes_removed,
+                report.edges_upserted,
+                report.edges_removed
+            ))
+        })();
+        self.collaboration_status = result.unwrap_or_else(|error| format!("Error: {error}"));
+    }
+
+    pub(crate) fn inspect_collaboration(&mut self) {
+        let result = (|| -> std::io::Result<String> {
+            let bundle = self.collaboration_path(&self.collaboration_bundle_input)?;
+            let replica = GraphReplica::load(&bundle).map_err(std::io::Error::other)?;
+            let graph = replica.materialize().map_err(std::io::Error::other)?;
+            let version = replica
+                .version()
+                .actors()
+                .map(|(actor, counter)| format!("{actor}:{counter}"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            Ok(format!(
+                "{}\nactor: {}\nversion: {}\noperations: {}\ngraph: {} nodes / {} edges",
+                bundle.display(),
+                replica.actor(),
+                version,
+                replica.operation_count(),
+                graph.node_count(),
+                graph.edge_count()
+            ))
+        })();
+        self.collaboration_status = result.unwrap_or_else(|error| format!("Error: {error}"));
+    }
+
+    pub(crate) fn start_collaboration_join(&mut self) {
+        if self.collaboration_busy() {
+            self.collaboration_status = "A live collaboration session is already running.".into();
+            return;
+        }
+        let bundle = match self.collaboration_path(&self.collaboration_bundle_input) {
+            Ok(path) => path,
+            Err(error) => {
+                self.collaboration_status = format!("Error: {error}");
+                return;
+            }
+        };
+        let secret = match self.collaboration_path(&self.collaboration_secret_input) {
+            Ok(path) => path,
+            Err(error) => {
+                self.collaboration_status = format!("Error: {error}");
+                return;
+            }
+        };
+        let address = self.collaboration_address_input.trim().to_string();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        std::thread::spawn(move || {
+            let result = join_collaboration(&bundle, &address, &secret, None);
+            let _ = tx.send(result);
+        });
+        self.collaboration_rx = Some(rx);
+        self.collaboration_status = format!(
+            "Joining {} with mutual authentication...",
+            self.collaboration_address_input.trim()
+        );
+    }
+
+    pub(crate) fn generate_collaboration_secret(&mut self) {
+        let result = (|| -> std::io::Result<String> {
+            let path = self.collaboration_path(&self.collaboration_secret_input)?;
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            generate_collaboration_secret(&path)?;
+            Ok(format!(
+                "Created private collaboration secret {} (contents hidden).",
+                path.display()
+            ))
+        })();
+        self.collaboration_status = result.unwrap_or_else(|error| format!("Error: {error}"));
+    }
+
+    fn collaboration_path(&self, input: &str) -> std::io::Result<PathBuf> {
+        let input = input.trim();
+        if input.is_empty() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "collaboration path is empty",
+            ));
+        }
+        let path = PathBuf::from(input);
+        Ok(if path.is_absolute() {
+            path
+        } else {
+            self.workspace.root().join(path)
+        })
+    }
+
     fn start_extension_mutation(&mut self, mutation: ExtensionMutation) {
         if self.extension_busy() {
             self.set_workspace_error("An extension operation is already running.");
@@ -730,6 +907,34 @@ impl eframe::App for AetherApp {
             } else {
                 self.ripple_start = None;
                 self.impact_nodes.clear();
+            }
+        }
+
+        if let Some(rx) = self.collaboration_rx.as_mut() {
+            match rx.try_recv() {
+                Ok(Ok(report)) => {
+                    self.collaboration_rx = None;
+                    self.collaboration_status = format!(
+                        "Live synchronization with {} completed: sent {}, received {}, inserted {}; converged graph {} nodes / {} edges",
+                        report.peer,
+                        report.sent_operations,
+                        report.received_operations,
+                        report.inserted_operations,
+                        report.node_count,
+                        report.edge_count
+                    );
+                }
+                Ok(Err(error)) => {
+                    self.collaboration_rx = None;
+                    self.collaboration_status = format!("Live synchronization failed: {error}");
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                    ctx.request_repaint_after(std::time::Duration::from_millis(100));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                    self.collaboration_rx = None;
+                    self.collaboration_status = "Live synchronization stopped unexpectedly.".into();
+                }
             }
         }
 

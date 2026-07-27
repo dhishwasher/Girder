@@ -17,11 +17,14 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
+use std::io::Write;
 use std::path::Path;
+use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 
 const COLLAB_MAGIC: &str = "BITCODE_COLLAB";
 const COLLAB_VERSION: u32 = 1;
 const BOOTSTRAP_ACTOR: &str = "bitcode.bootstrap";
+static NEXT_TEMP_FILE: AtomicUsize = AtomicUsize::new(0);
 
 /// Stable identity for one human, agent, or automation replica.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -532,11 +535,13 @@ impl GraphReplica {
     /// every other extension uses reviewable RON.
     pub fn save(&self, path: impl AsRef<Path>) -> Result<(), GraphError> {
         let path = path.as_ref();
-        if path.extension().and_then(|extension| extension.to_str()) == Some("aethercb") {
-            std::fs::write(path, self.to_bytes()?)?;
+        let bytes = if path.extension().and_then(|extension| extension.to_str()) == Some("aethercb")
+        {
+            self.to_bytes()?
         } else {
-            std::fs::write(path, self.to_ron()?)?;
-        }
+            self.to_ron()?.into_bytes()
+        };
+        atomic_write(path, &bytes)?;
         Ok(())
     }
 
@@ -589,6 +594,44 @@ impl GraphReplica {
         }
         Ok(())
     }
+}
+
+fn atomic_write(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    let file_name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("collaboration");
+    let temporary = parent.join(format!(
+        ".{file_name}.bitcode-collab-{}-{}.tmp",
+        std::process::id(),
+        NEXT_TEMP_FILE.fetch_add(1, AtomicOrdering::Relaxed)
+    ));
+    let permissions = std::fs::metadata(path)
+        .ok()
+        .map(|metadata| metadata.permissions());
+    let result: std::io::Result<()> = (|| {
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary)?;
+        file.write_all(bytes)?;
+        if let Some(permissions) = permissions {
+            file.set_permissions(permissions)?;
+        }
+        file.sync_all()?;
+        std::fs::rename(&temporary, path)?;
+        #[cfg(unix)]
+        std::fs::File::open(parent)?.sync_all()?;
+        Ok(())
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&temporary);
+    }
+    result
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

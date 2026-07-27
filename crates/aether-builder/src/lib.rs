@@ -266,7 +266,8 @@ fn inspect_delta(delta: &CapabilityDelta) -> bool {
 
 fn inspect_replica() {
     let replica = GraphReplica::from_graph();
-    replica.materialize();
+    let staged = replica.clone();
+    staged.materialize();
 }
 
 struct GraphReplica;

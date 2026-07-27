@@ -585,28 +585,46 @@ fn rust_function_type_hints(function: TsNode, source: &str) -> HashMap<String, S
         .child_by_field_name("body")
         .into_iter()
         .collect::<Vec<_>>();
+    let mut declarations = Vec::new();
     while let Some(node) = stack.pop() {
         if node.kind() == "let_declaration" {
-            if let Some(pattern) = node.child_by_field_name("pattern") {
-                if let Some(type_node) = node.child_by_field_name("type") {
-                    record_type_hint(&mut hints, pattern, type_node, source);
-                } else if let Some(value) = node.child_by_field_name("value") {
-                    let value = unwrap_rust_expression(value);
-                    if value.kind() == "call_expression" {
-                        if let Some((_, Some(qualifier))) = callee_target(value, source) {
-                            let type_name = qualifier_binding(&qualifier);
-                            if type_name.starts_with(char::is_uppercase) {
-                                record_named_hint(&mut hints, pattern, type_name, source);
-                            }
-                        }
-                    }
-                }
-            }
+            declarations.push(node);
         } else if node != function && is_function_kind(Lang::Rust, node.kind()) {
             continue;
         }
         let mut children = node.walk();
         stack.extend(node.named_children(&mut children));
+    }
+    declarations.sort_by_key(|node| node.start_byte());
+    for declaration in declarations {
+        let Some(pattern) = declaration.child_by_field_name("pattern") else {
+            continue;
+        };
+        if let Some(type_node) = declaration.child_by_field_name("type") {
+            record_type_hint(&mut hints, pattern, type_node, source);
+            continue;
+        }
+        let Some(value) = declaration.child_by_field_name("value") else {
+            continue;
+        };
+        let value = unwrap_rust_expression(value);
+        if value.kind() != "call_expression" {
+            continue;
+        }
+        let Some((callee, Some(qualifier))) = callee_target(value, source) else {
+            continue;
+        };
+        let binding = qualifier_binding(&qualifier);
+        let inferred = if binding.starts_with(char::is_uppercase) {
+            Some(binding.to_string())
+        } else if callee == "clone" {
+            hints.get(binding).cloned()
+        } else {
+            None
+        };
+        if let Some(type_name) = inferred {
+            record_named_hint(&mut hints, pattern, &type_name, source);
+        }
     }
     hints
 }

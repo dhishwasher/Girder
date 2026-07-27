@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
 
@@ -457,6 +457,13 @@ rust = ["false", "{test}"]
 fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
     let repo = TempRepo::new("collaboration");
     repo.write("src/lib.rs", "pub fn run() -> i64 { 1 }\n");
+    let mut durable = aether_graph::SemanticGraph::new();
+    durable.upsert_node(aether_graph::Node::new(
+        aether_graph::NodeKind::Extension,
+        "durable-tool",
+        "extension::dev.bitcode.durable-tool",
+    ));
+    durable.save(repo.path().join("project.aether")).unwrap();
     let root = repo.path().to_str().unwrap();
     let alice = repo.path().join("alice.aetherc");
     let bob = repo.path().join("bob.aetherc");
@@ -500,10 +507,95 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
         .unwrap()
         .source
         .contains("{ 2 }"));
+    assert!(
+        graph
+            .find_by_path("extension::dev.bitcode.durable-tool")
+            .is_some(),
+        "graph-owned durable nodes must survive collaboration init and sync"
+    );
     let status = run_bitcode(&["collab", "status", merged.to_str().unwrap()]);
     assert!(status.contains("actor: alice"), "{status}");
     assert!(status.contains("operations:"), "{status}");
     assert!(status.contains("nodes:"), "{status}");
+}
+
+#[test]
+fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
+    let repo = TempRepo::new("live-collaboration");
+    repo.write("src/lib.rs", "pub fn run() -> i64 { 1 }\n");
+    let root = repo.path().to_str().unwrap();
+    let alice = repo.path().join("alice.aetherc");
+    let bob = repo.path().join("bob.aetherc");
+    let secret = repo.path().join("collaboration.secret");
+    let ready = repo.path().join("host.ready");
+    let secret_output = run_bitcode(&["collab", "secret", secret.to_str().unwrap()]);
+    assert!(
+        secret_output.contains("contents not displayed"),
+        "{secret_output}"
+    );
+
+    run_bitcode(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
+    run_bitcode(&[
+        "collab",
+        "fork",
+        alice.to_str().unwrap(),
+        "bob",
+        bob.to_str().unwrap(),
+    ]);
+    repo.write("src/lib.rs", "pub fn run() -> i64 { 2 }\n");
+    run_bitcode(&["collab", "sync", root, bob.to_str().unwrap()]);
+
+    let mut host = Command::new(env!("CARGO_BIN_EXE_bitcode"))
+        .args([
+            "collab",
+            "host",
+            alice.to_str().unwrap(),
+            "127.0.0.1:0",
+            "--secret-file",
+            secret.to_str().unwrap(),
+            "--ready-file",
+            ready.to_str().unwrap(),
+            "--once",
+        ])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while !ready.exists() && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(25));
+    }
+    if !ready.exists() {
+        let _ = host.kill();
+        panic!("live collaboration host did not become ready");
+    }
+    let address = std::fs::read_to_string(&ready).unwrap();
+    let joined = run_bitcode(&[
+        "collab",
+        "join",
+        bob.to_str().unwrap(),
+        address.trim(),
+        "--secret-file",
+        secret.to_str().unwrap(),
+    ]);
+    assert!(
+        joined.contains("Live synchronization with alice complete"),
+        "{joined}"
+    );
+    let output = host.wait_with_output().unwrap();
+    assert!(
+        output.status.success(),
+        "host failed\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let alice_replica = aether_graph::GraphReplica::load(&alice).unwrap();
+    let bob_replica = aether_graph::GraphReplica::load(&bob).unwrap();
+    assert_eq!(
+        alice_replica.materialize().unwrap().to_ron().unwrap(),
+        bob_replica.materialize().unwrap().to_ron().unwrap()
+    );
 }
 
 #[test]

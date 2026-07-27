@@ -537,13 +537,95 @@ pub fn agents_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
         ui.selectable_value(&mut app.right_panel, RightPanel::Agents, "Agents");
         ui.selectable_value(&mut app.right_panel, RightPanel::Extensions, "Extensions");
+        ui.selectable_value(
+            &mut app.right_panel,
+            RightPanel::Collaboration,
+            "Collaboration",
+        );
     });
     ui.separator();
 
     match app.right_panel {
         RightPanel::Agents => agent_console(app, ui),
         RightPanel::Extensions => extensions_panel(app, ui),
+        RightPanel::Collaboration => collaboration_panel(app, ui),
     }
+}
+
+fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
+    ui.heading("Graph-native collaboration");
+    ui.label(
+        "Exchange causal semantic-node and edge operations. Source projection stays explicit so remote changes are never written into files without review.",
+    );
+    ui.add_space(6.0);
+    ui.label("Bundle");
+    ui.text_edit_singleline(&mut app.collaboration_bundle_input);
+    ui.label("Actor id (required only when initializing)");
+    ui.text_edit_singleline(&mut app.collaboration_actor_input);
+
+    let can_snapshot = !app.collaboration_busy()
+        && !app.workspace.is_dirty()
+        && !app.workspace.has_pending_agent_changes();
+    ui.horizontal(|ui| {
+        if ui
+            .add_enabled(can_snapshot, egui::Button::new("Initialize"))
+            .clicked()
+        {
+            app.initialize_collaboration();
+        }
+        if ui
+            .add_enabled(can_snapshot, egui::Button::new("Sync local graph"))
+            .clicked()
+        {
+            app.sync_collaboration();
+        }
+        if ui.button("Inspect").clicked() {
+            app.inspect_collaboration();
+        }
+    });
+    if !can_snapshot && !app.collaboration_busy() {
+        ui.small("Save or resolve pending agent changes before snapshotting the local graph.");
+    }
+
+    ui.separator();
+    ui.strong("Live peer");
+    ui.label("Loopback address");
+    ui.text_edit_singleline(&mut app.collaboration_address_input);
+    ui.label("Secret file (32+ bytes, mode 600)");
+    ui.text_edit_singleline(&mut app.collaboration_secret_input);
+    let joining = app.collaboration_busy();
+    ui.horizontal(|ui| {
+        if ui.button("Generate secret").clicked() {
+            app.generate_collaboration_secret();
+        }
+        if ui
+            .add_enabled(
+                !joining,
+                egui::Button::new(if joining {
+                    "Joining..."
+                } else {
+                    "Join and sync"
+                }),
+            )
+            .clicked()
+        {
+            app.start_collaboration_join();
+        }
+    });
+    ui.small(
+        "Sessions are mutually authenticated and integrity-protected. They are loopback-only because payloads are not encrypted; use an SSH tunnel for a remote peer.",
+    );
+    ui.small(
+        "Concurrent removals win; concurrent updates use a deterministic actor/counter tie-break. Joining updates the bundle, not project files.",
+    );
+
+    ui.separator();
+    ui.strong("Status");
+    egui::ScrollArea::vertical()
+        .max_height(180.0)
+        .show(ui, |ui| {
+            ui.monospace(&app.collaboration_status);
+        });
 }
 
 fn agent_console(app: &mut AetherApp, ui: &mut egui::Ui) {

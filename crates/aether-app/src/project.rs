@@ -1,5 +1,6 @@
 //! Real project loading, CLI subcommands, and `.aether` persistence.
 
+mod collaboration_transport;
 mod commands;
 mod config;
 mod git;
@@ -10,6 +11,10 @@ mod validation;
 #[cfg(any(feature = "gui", test))]
 mod workspace;
 
+#[cfg(feature = "gui")]
+pub(crate) use collaboration_transport::{
+    generate_secret as generate_collaboration_secret, join as join_collaboration, LiveSyncReport,
+};
 #[cfg(feature = "gui")]
 pub(crate) use commands::extensions::{
     ExtensionMutation, ExtensionMutationOutcome, ExtensionMutationRequest,

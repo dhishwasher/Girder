@@ -307,6 +307,30 @@ pub(crate) fn load_graph_snapshot(
     }
 }
 
+/// Rebuild source projections and merge them with the validated durable graph.
+///
+/// Commands that mutate graph-native state use this strict path so corrupt
+/// persistence cannot be silently replaced and agent/extension-owned nodes are
+/// not lost by a source-only rebuild.
+pub(crate) fn load_reconciled_graph(
+    root: &Path,
+    config: &ProjectConfig,
+) -> std::io::Result<(SemanticGraph, Option<Vec<u8>>, usize)> {
+    let (source, _, files) = build_from_dir_with_config(root, config)?;
+    let persisted = load_graph_snapshot(root, config)?;
+    if let Some(error) = persisted.error {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("persisted graph is invalid; refusing graph changes: {error}"),
+        ));
+    }
+    let graph = match persisted.graph {
+        Some(durable) => SemanticGraph::reconcile_persisted(source, &durable).0,
+        None => source,
+    };
+    Ok((graph, persisted.bytes, files))
+}
+
 fn encode_graph(path: &Path, graph: &SemanticGraph) -> std::io::Result<Vec<u8>> {
     if path.extension().and_then(|extension| extension.to_str()) == Some("aetherb") {
         graph

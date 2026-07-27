@@ -65,6 +65,14 @@ cargo run -p aether-app -- collab sync sample-project bob.aetherc
 cargo run -p aether-app -- collab merge alice.aetherc bob.aetherc merged.aethercb
 cargo run -p aether-app -- collab materialize merged.aethercb merged.aether
 
+# Or exchange deltas in a mutually authenticated live loopback session.
+# Secret contents are generated with private permissions and never printed:
+cargo run -p aether-app -- collab secret collaboration.secret
+cargo run -p aether-app -- collab host alice.aetherc 127.0.0.1:7331 \
+  --secret-file collaboration.secret
+cargo run -p aether-app -- collab join bob.aetherc 127.0.0.1:7331 \
+  --secret-file collaboration.secret
+
 # Real Python execution tracer — records every variable at every line/call/return:
 cargo run -p aether-app -- debug script.py
 cargo run -p aether-app -- debug script.py --what-if x=10 at 2
@@ -118,9 +126,18 @@ minimal idempotent deltas converge regardless of delivery order. Concurrent
 deletes win, concurrent updates have a deterministic tie-break, and deleting
 then recreating a node cannot resurrect edges from its old generation. RON
 `.aetherc` bundles are reviewable; `.aethercb` bundles use compact bincode.
-This is the durable offline CRDT foundation. Live transport, presence, identity
-authentication, history compaction, and source-conflict review UI remain future
-work.
+Init/sync reconciles source with the durable graph so graph-owned agent and
+extension metadata participates instead of being discarded. Bundle saves use a
+synced atomic replacement.
+
+Live host/join uses fresh random challenges, mutual HMAC-SHA256 authentication,
+direction- and sequence-bound message integrity, bounded frames checked before
+allocation, socket timeouts, and secrets read from non-symlink regular files
+owned by the current user with private permissions. It deliberately binds
+loopback only: graph payloads are authenticated but not encrypted, so remote
+peers must connect through an encrypted tunnel such as SSH. Peer discovery,
+presence, acknowledgement-based history compaction, and reviewed projection of
+remote graph changes into source remain future work.
 
 ### Project configuration
 
@@ -219,6 +236,13 @@ Reviewer identities are catalog metadata rather than cryptographic signatures;
 verify an external catalog's printed SHA-256 fingerprint through the channel
 that distributed it.
 
+The **Collaboration** view initializes, inspects, and synchronizes the full
+workspace graph, generates private secrets, and joins live peers on a background
+thread so rendering never blocks. It shows causal version/operation counts and
+the deterministic conflict policy. A live join updates the collaboration bundle
+only; remote graph-to-source projection remains explicit rather than silently
+writing peer changes into files. CLI `host` is the persistent serving surface.
+
 Installed records and their contribution nodes live in the semantic graph and
 survive source reconciliation. Enable/disable affects only contribution
 visibility. Removal conflict-checks every installed projection, restores
@@ -279,7 +303,7 @@ time-travel debug) are real, tested, and runnable. Implemented features:
 | Knowledge-graph queries | Natural-language → concept / impact / callers / callees / explain / neighbourhood |
 | Semantic review | Typed diff (added/modified/removed nodes + edges), impact radius, test gap report |
 | Minimal test selection | Call-graph reachability from changed functions, optional `--run` |
-| Graph collaboration | Deterministic operation-set CRDT, causal deltas, tombstones, RON/bincode bundles, and CLI fork/sync/merge/materialize workflows |
+| Graph collaboration | Deterministic operation-set CRDT, causal deltas, tombstones, atomic RON/bincode bundles, authenticated bounded loopback host/join, and native/CLI workflows |
 | Project contract | Validated `bitcode.toml` for source scope, graph path, test runners, and agent output |
 | Source projection | GUI/CLI agent output and graph rename commit validated source plus graph through recoverable journaled transactions |
 | Candidate validation | Disposable project copy, optional bubblewrap isolation, Cargo build/tests, configured checks, cancellation/timeouts, bounded diagnostics, snapshot-bound commit gate |
@@ -294,5 +318,6 @@ python3 -m pip install debugpy
 cargo test -p aether-dap --test debugpy -- --ignored --nocapture
 ```
 
-The production roadmap (live collaboration transport/presence, self-optimization,
-web/mobile projections, and deeper tracing) is in `BLUEPRINT.md §9`.
+The production roadmap (collaboration presence/compaction and reviewed source
+projection, self-optimization, web/mobile projections, and deeper tracing) is
+in `BLUEPRINT.md §9`.
