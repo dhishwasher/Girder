@@ -1,3 +1,4 @@
+use crate::project::collaboration_discovery;
 use crate::project::collaboration_projection::{
     load_collaboration_projection, CollaborationFileChangeKind, CollaborationProjectionPlan,
 };
@@ -23,8 +24,10 @@ usage:
   bitcode collab apply <dir> <bundle> --approve
   bitcode collab materialize <bundle> <graph.aether>
   bitcode collab secret <path>
-  bitcode collab host <bundle> <127.0.0.1:port> --secret-file <path> [--presence <status>] [--once] [--ready-file <path>]
-  bitcode collab join <bundle> <127.0.0.1:port> --secret-file <path> [--presence <status>] [out]";
+  bitcode collab host <bundle> <127.0.0.1:port> --secret-file <path> [--discovery-dir <path>] [--presence <status>] [--once] [--ready-file <path>]
+  bitcode collab discover <bundle> <directory> --secret-file <path>
+  bitcode collab join <bundle> <127.0.0.1:port> --secret-file <path> [--presence <status>] [out]
+  bitcode collab join-peer <bundle> <actor> <directory> --secret-file <path> [--presence <status>] [out]";
 
 pub fn collaboration(args: &[String]) -> std::io::Result<()> {
     match args.first().map(String::as_str) {
@@ -40,7 +43,9 @@ pub fn collaboration(args: &[String]) -> std::io::Result<()> {
         Some("materialize") => materialize(&args[1..]),
         Some("secret") => secret(&args[1..]),
         Some("host") => host(&args[1..]),
+        Some("discover") => discover(&args[1..]),
         Some("join") => join(&args[1..]),
+        Some("join-peer") => join_peer(&args[1..]),
         _ => {
             eprintln!("{USAGE}");
             Ok(())
@@ -72,17 +77,29 @@ fn host(args: &[String]) -> std::io::Result<()> {
     };
     let mut secret_file = None;
     let mut ready_file = None;
+    let mut discovery_directory = None;
     let mut presence = None;
     let mut once = false;
     let mut index = 2;
     while index < args.len() {
         match args[index].as_str() {
             "--secret-file" => {
-                secret_file = args.get(index + 1).map(PathBuf::from);
+                secret_file = Some(PathBuf::from(args.get(index + 1).ok_or_else(|| {
+                    invalid_input("collab host requires a value after --secret-file")
+                })?));
                 index += 2;
             }
             "--ready-file" => {
-                ready_file = args.get(index + 1).map(PathBuf::from);
+                ready_file = Some(PathBuf::from(args.get(index + 1).ok_or_else(|| {
+                    invalid_input("collab host requires a value after --ready-file")
+                })?));
+                index += 2;
+            }
+            "--discovery-dir" => {
+                discovery_directory =
+                    Some(PathBuf::from(args.get(index + 1).ok_or_else(|| {
+                        invalid_input("collab host requires a value after --discovery-dir")
+                    })?));
                 index += 2;
             }
             "--presence" => {
@@ -115,7 +132,58 @@ fn host(args: &[String]) -> std::io::Result<()> {
         once,
         ready_file.as_deref(),
         presence.as_deref(),
+        discovery_directory.as_deref(),
     )
+}
+
+fn discover(args: &[String]) -> std::io::Result<()> {
+    let [bundle, directory, rest @ ..] = args else {
+        eprintln!("{USAGE}");
+        return Ok(());
+    };
+    let mut secret_file = None;
+    let mut index = 0;
+    while index < rest.len() {
+        match rest[index].as_str() {
+            "--secret-file" => {
+                secret_file = Some(PathBuf::from(rest.get(index + 1).ok_or_else(|| {
+                    invalid_input("collab discover requires a value after --secret-file")
+                })?));
+                index += 2;
+            }
+            option => {
+                return Err(invalid_input(format!(
+                    "unknown collab discover option '{option}'"
+                )));
+            }
+        }
+    }
+    let secret_file = secret_file
+        .ok_or_else(|| invalid_input("collab discover requires --secret-file <path>"))?;
+    let scan =
+        collaboration_discovery::discover(Path::new(bundle), Path::new(directory), &secret_file)?;
+    println!(
+        "Discovered {} authenticated local collaboration peer(s):",
+        scan.peers.len()
+    );
+    for peer in scan.peers {
+        println!(
+            "  {} at {} (pid {})",
+            peer.actor, peer.address, peer.process_id
+        );
+    }
+    if scan.ignored_entries > 0 {
+        println!(
+            "  ignored {} invalid, stale, unrelated, or unauthorized entr{}",
+            scan.ignored_entries,
+            if scan.ignored_entries == 1 {
+                "y"
+            } else {
+                "ies"
+            }
+        );
+    }
+    Ok(())
 }
 
 fn join(args: &[String]) -> std::io::Result<()> {
@@ -134,7 +202,9 @@ fn join(args: &[String]) -> std::io::Result<()> {
     while index < args.len() {
         match args[index].as_str() {
             "--secret-file" => {
-                secret_file = args.get(index + 1).map(PathBuf::from);
+                secret_file = Some(PathBuf::from(args.get(index + 1).ok_or_else(|| {
+                    invalid_input("collab join requires a value after --secret-file")
+                })?));
                 index += 2;
             }
             "--presence" => {
@@ -172,6 +242,68 @@ fn join(args: &[String]) -> std::io::Result<()> {
         out.as_deref(),
         presence.as_deref(),
     )?;
+    print_live_sync_report(&report);
+    Ok(())
+}
+
+fn join_peer(args: &[String]) -> std::io::Result<()> {
+    let [bundle, actor, directory, rest @ ..] = args else {
+        eprintln!("{USAGE}");
+        return Ok(());
+    };
+    let mut secret_file = None;
+    let mut presence = None;
+    let mut out = None;
+    let mut index = 0;
+    while index < rest.len() {
+        match rest[index].as_str() {
+            "--secret-file" => {
+                secret_file = Some(PathBuf::from(rest.get(index + 1).ok_or_else(|| {
+                    invalid_input("collab join-peer requires a value after --secret-file")
+                })?));
+                index += 2;
+            }
+            "--presence" => {
+                presence = Some(
+                    rest.get(index + 1)
+                        .ok_or_else(|| {
+                            invalid_input("collab join-peer requires a value after --presence")
+                        })?
+                        .clone(),
+                );
+                index += 2;
+            }
+            option if option.starts_with('-') => {
+                return Err(invalid_input(format!(
+                    "unknown collab join-peer option '{option}'"
+                )));
+            }
+            path if out.is_none() => {
+                out = Some(PathBuf::from(path));
+                index += 1;
+            }
+            path => {
+                return Err(invalid_input(format!(
+                    "unexpected collab join-peer argument '{path}'"
+                )));
+            }
+        }
+    }
+    let secret_file = secret_file
+        .ok_or_else(|| invalid_input("collab join-peer requires --secret-file <path>"))?;
+    let report = collaboration_discovery::join_peer(
+        Path::new(bundle),
+        actor,
+        Path::new(directory),
+        &secret_file,
+        out.as_deref(),
+        presence.as_deref(),
+    )?;
+    print_live_sync_report(&report);
+    Ok(())
+}
+
+fn print_live_sync_report(report: &collaboration_transport::LiveSyncReport) {
     println!(
         "Live synchronization with {} complete: sent {}, received {}, inserted {}",
         report.peer, report.sent_operations, report.received_operations, report.inserted_operations
@@ -184,7 +316,6 @@ fn join(args: &[String]) -> std::io::Result<()> {
         Some(status) => println!("  peer presence: {status}"),
         None => println!("  peer presence: online (no status shared)"),
     }
-    Ok(())
 }
 
 fn init(args: &[String]) -> std::io::Result<()> {

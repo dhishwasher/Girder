@@ -1,5 +1,6 @@
 //! Real project loading, CLI subcommands, and `.aether` persistence.
 
+mod collaboration_discovery;
 mod collaboration_projection;
 mod collaboration_transport;
 mod commands;
@@ -12,6 +13,10 @@ mod validation;
 #[cfg(any(feature = "gui", test))]
 mod workspace;
 
+#[cfg(feature = "gui")]
+pub(crate) use collaboration_discovery::{
+    discover as discover_collaboration_peers, DiscoveredPeer,
+};
 #[cfg(feature = "gui")]
 pub(crate) use collaboration_projection::{
     apply_reviewed_collaboration_projection, review_collaboration_projection,

@@ -647,6 +647,35 @@ fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     ui.text_edit_singleline(&mut app.collaboration_address_input);
     ui.label("Secret file (32+ bytes, mode 600)");
     ui.text_edit_singleline(&mut app.collaboration_secret_input);
+    ui.label("Private local discovery directory");
+    ui.horizontal(|ui| {
+        ui.text_edit_singleline(&mut app.collaboration_discovery_input);
+        if ui
+            .add_enabled(!app.collaboration_busy(), egui::Button::new("Discover"))
+            .on_hover_text("Verify bounded loopback host tickets with the group secret")
+            .clicked()
+        {
+            app.scan_collaboration_peers();
+        }
+    });
+    for peer in app.collaboration_discovered_peers.clone() {
+        ui.horizontal(|ui| {
+            ui.monospace(format!(
+                "{} at {} (pid {})",
+                peer.actor, peer.address, peer.process_id
+            ));
+            if ui.button("Use").clicked() {
+                app.collaboration_address_input = peer.address.to_string();
+                app.collaboration_status = format!(
+                    "Selected discovered peer {} at {}.",
+                    peer.actor, peer.address
+                );
+            }
+        });
+    }
+    ui.small(
+        "Discovery tickets are authenticated loopback hints from active roster members. The full live handshake remains authoritative.",
+    );
     ui.label("Session presence (optional)");
     ui.text_edit_singleline(&mut app.collaboration_presence_input);
     ui.small(

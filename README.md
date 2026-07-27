@@ -72,9 +72,15 @@ cargo run -p aether-app -- collab member remove alice.aetherc carol --approve
 # Secret contents are generated with private permissions and never printed:
 cargo run -p aether-app -- collab secret collaboration.secret
 cargo run -p aether-app -- collab host alice.aetherc 127.0.0.1:7331 \
-  --secret-file collaboration.secret --presence "reviewing parser changes"
-cargo run -p aether-app -- collab join bob.aetherc 127.0.0.1:7331 \
+  --secret-file collaboration.secret --discovery-dir .bitcode/peers \
+  --presence "reviewing parser changes"
+cargo run -p aether-app -- collab discover bob.aetherc .bitcode/peers \
+  --secret-file collaboration.secret
+cargo run -p aether-app -- collab join-peer bob.aetherc alice .bitcode/peers \
   --secret-file collaboration.secret --presence "running transport tests"
+# An explicit address remains available when local discovery is not in use:
+cargo run -p aether-app -- collab join bob.aetherc 127.0.0.1:7331 \
+  --secret-file collaboration.secret
 # Successful sessions persist both peers' causal acknowledgements. Once every
 # active member has acknowledged superseded history, prune it conservatively:
 cargo run -p aether-app -- collab compact alice.aetherc
@@ -175,13 +181,27 @@ session claiming an unlisted actor is rejected even with a valid group-secret
 proof. Host and join may explicitly share a single-line status of at most 256
 UTF-8 bytes. Both statuses are bound into the authenticated handshake, reported
 to the peer, and discarded after that synchronization; they are never written
-to graph operations, acknowledgements, or collaboration bundles. `collab compact`
+to graph operations, acknowledgements, discovery tickets, or collaboration
+bundles.
+
+An optional `--discovery-dir` publishes an atomic, HMAC-authenticated,
+process-bound lease for the loopback host. The current-user directory and
+tickets must be private (new paths are mode 700 and 600 on Unix), symlinks are
+rejected, each scan is capped at 256 entries, dead process ids on Unix and
+actors outside the local bundle's active remote roster are ignored, and
+`join-peer` refuses ambiguous same-actor tickets. A normal host shutdown removes
+its unchanged ticket.
+Tickets are only endpoint hints: PID reuse or a stale ticket cannot authorize a
+session because the existing roster-bound mutual-authentication handshake still
+decides every join.
+
+`collab compact`
 requires an acknowledgement from every active remote member, then prunes only
 causally superseded operations while retaining concurrent winners, membership
 removal barriers, and node-generation tombstones. Peers older than the recorded
-history floor fail safely and need a current bundle. Peer discovery, continuous
-presence/subscriptions, encrypted remote transport, and per-member identity keys
-remain future work.
+history floor fail safely and need a current bundle. Network/continuous
+discovery, continuous presence/subscriptions, encrypted remote transport, and
+per-member identity keys remain future work.
 The current secret is a group credential: roster checks reject an unlisted
 claimed actor, but any secret holder can impersonate an active actor and must
 therefore be trusted at the collaboration-group boundary.
@@ -295,13 +315,15 @@ verify an external catalog's printed SHA-256 fingerprint through the channel
 that distributed it.
 
 The **Collaboration** view initializes, inspects, and synchronizes the full
-workspace graph, generates private secrets, and joins live peers on a background
-thread so rendering never blocks. It shows causal version/operation counts and
-the deterministic conflict policy, durable acknowledgements, and compacted
-history floor; it can conservatively compact acknowledged history. A live join
-updates the collaboration bundle only. Separate Review and Apply controls keep
-remote graph-to-source projection explicit, consistency-checked, digest-bound,
-validated, and atomic. CLI `host` is the persistent serving surface.
+workspace graph, generates private secrets, verifies bounded local discovery
+tickets, and lets the user select an authenticated active-roster endpoint
+before joining on a background thread so rendering never blocks. It shows
+causal version/operation counts and the deterministic conflict policy, durable
+acknowledgements, and compacted history floor; it can conservatively compact
+acknowledged history. A live join updates the collaboration bundle only.
+Separate Review and Apply controls keep remote graph-to-source projection
+explicit, consistency-checked, digest-bound, validated, and atomic. CLI `host`
+is the persistent serving surface.
 
 Installed records and their contribution nodes live in the semantic graph and
 survive source reconciliation. Enable/disable affects only contribution
@@ -363,7 +385,7 @@ time-travel debug) are real, tested, and runnable. Implemented features:
 | Knowledge-graph queries | Natural-language → concept / impact / callers / callees / explain / neighbourhood |
 | Semantic review | Typed diff (added/modified/removed nodes + edges), impact radius, test gap report |
 | Minimal test selection | Call-graph reachability from changed functions, optional `--run` |
-| Graph collaboration | Deterministic operation-set CRDT, causal membership/deltas/tombstones, atomic RON/bincode bundles, roster-gated authenticated loopback host/join, all-member acknowledgement compaction, and reviewed whole-file source projection |
+| Graph collaboration | Deterministic operation-set CRDT, causal membership/deltas/tombstones, atomic RON/bincode bundles, roster-gated authenticated loopback host/join, private authenticated local discovery leases, all-member acknowledgement compaction, and reviewed whole-file source projection |
 | Project contract | Validated `bitcode.toml` for source scope, graph path, test runners, and agent output |
 | Source projection | GUI/CLI agent output and graph rename commit validated source plus graph through recoverable journaled transactions |
 | Candidate validation | Disposable project copy, optional bubblewrap isolation, Cargo build/tests, configured checks, cancellation/timeouts, bounded diagnostics, snapshot-bound commit gate |
@@ -378,6 +400,6 @@ python3 -m pip install debugpy
 cargo test -p aether-dap --test debugpy -- --ignored --nocapture
 ```
 
-The production roadmap (collaboration discovery/continuous presence and
-encrypted remote transport, self-optimization, web/mobile projections, and
-deeper tracing) is in `BLUEPRINT.md §9`.
+The production roadmap (continuous/network collaboration discovery and
+presence, encrypted remote transport, self-optimization, web/mobile
+projections, and deeper tracing) is in `BLUEPRINT.md §9`.

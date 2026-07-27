@@ -538,6 +538,7 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
 fn collaboration_membership_requires_approval_and_rolls_back_failed_invites() {
     let help = run_bitcode(&["--help"]);
     assert!(help.contains("fork, member, sync"), "{help}");
+    assert!(help.contains("discover, join, join-peer"), "{help}");
 
     let repo = TempRepo::new("collaboration-membership");
     repo.write("src/lib.rs", "pub fn run() {}\n");
@@ -612,6 +613,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
     let bob = repo.path().join("bob.aetherc");
     let secret = repo.path().join("collaboration.secret");
     let ready = repo.path().join("host.ready");
+    let discovery_directory = repo.path().join("peers");
     let secret_output = run_bitcode(&["collab", "secret", secret.to_str().unwrap()]);
     assert!(
         secret_output.contains("contents not displayed"),
@@ -640,6 +642,8 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
             secret.to_str().unwrap(),
             "--ready-file",
             ready.to_str().unwrap(),
+            "--discovery-dir",
+            discovery_directory.to_str().unwrap(),
             "--presence",
             "Alice is reviewing",
             "--once",
@@ -657,11 +661,40 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         panic!("live collaboration host did not become ready");
     }
     let address = std::fs::read_to_string(&ready).unwrap();
+    assert!(address.starts_with("127.0.0.1:"), "{address}");
+    let tickets = std::fs::read_dir(&discovery_directory)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .collect::<Vec<_>>();
+    assert_eq!(tickets.len(), 1);
+    let ticket_bytes = std::fs::read(&tickets[0]).unwrap();
+    assert!(
+        !ticket_bytes
+            .windows("Alice is reviewing".len())
+            .any(|window| window == b"Alice is reviewing"),
+        "ephemeral presence leaked into a discovery ticket"
+    );
+
+    let discovered = run_bitcode(&[
+        "collab",
+        "discover",
+        bob.to_str().unwrap(),
+        discovery_directory.to_str().unwrap(),
+        "--secret-file",
+        secret.to_str().unwrap(),
+    ]);
+    assert!(
+        discovered.contains("Discovered 1 authenticated local collaboration peer(s)"),
+        "{discovered}"
+    );
+    assert!(discovered.contains("alice at 127.0.0.1:"), "{discovered}");
+
     let joined = run_bitcode(&[
         "collab",
-        "join",
+        "join-peer",
         bob.to_str().unwrap(),
-        address.trim(),
+        "alice",
+        discovery_directory.to_str().unwrap(),
         "--secret-file",
         secret.to_str().unwrap(),
         "--presence",
@@ -686,6 +719,25 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         String::from_utf8_lossy(&output.stdout).contains("peer presence: Bob is implementing"),
         "{}",
         String::from_utf8_lossy(&output.stdout)
+    );
+    assert!(
+        std::fs::read_dir(&discovery_directory)
+            .unwrap()
+            .next()
+            .is_none(),
+        "host discovery lease was not removed"
+    );
+    let after = run_bitcode(&[
+        "collab",
+        "discover",
+        bob.to_str().unwrap(),
+        discovery_directory.to_str().unwrap(),
+        "--secret-file",
+        secret.to_str().unwrap(),
+    ]);
+    assert!(
+        after.contains("Discovered 0 authenticated local collaboration peer(s)"),
+        "{after}"
     );
 
     let alice_replica = aether_graph::GraphReplica::load(&alice).unwrap();

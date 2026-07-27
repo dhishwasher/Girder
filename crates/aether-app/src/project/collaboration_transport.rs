@@ -6,6 +6,7 @@
 //! Authentication proves possession of the group secret; both sides also
 //! require the authenticated actor to be active in the causal membership roster.
 
+use super::collaboration_discovery::DiscoveryLease;
 use aether_graph::{ActorId, GraphDelta, GraphError, GraphReplica, MergeReport, VersionVector};
 use hmac::{Hmac, Mac};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -16,7 +17,7 @@ use std::path::Path;
 use std::time::Duration;
 
 const PROTOCOL_MAGIC: &str = "BITCODE_LIVE_COLLAB";
-const PROTOCOL_VERSION: u32 = 4;
+pub(super) const PROTOCOL_VERSION: u32 = 4;
 const NONCE_BYTES: usize = 32;
 const MAC_BYTES: usize = 32;
 const MIN_SECRET_BYTES: usize = 32;
@@ -285,11 +286,20 @@ pub(crate) fn serve(
     once: bool,
     ready_file: Option<&Path>,
     presence: Option<&str>,
+    discovery_directory: Option<&Path>,
 ) -> std::io::Result<()> {
     let presence = SessionPresence::new(presence)?;
     let address = loopback_address(bind)?;
     let listener = TcpListener::bind(address)?;
-    serve_listener(bundle, listener, secret_file, once, ready_file, presence)
+    serve_listener(
+        bundle,
+        listener,
+        secret_file,
+        once,
+        ready_file,
+        presence,
+        discovery_directory,
+    )
 }
 
 fn serve_listener(
@@ -299,6 +309,7 @@ fn serve_listener(
     once: bool,
     ready_file: Option<&Path>,
     presence: SessionPresence,
+    discovery_directory: Option<&Path>,
 ) -> std::io::Result<()> {
     let secret = read_secret(secret_file)?;
     let mut replica = collaboration_result(GraphReplica::load(bundle))?;
@@ -312,6 +323,11 @@ fn serve_listener(
     if !local_address.ip().is_loopback() {
         return Err(invalid_input("live collaboration must bind to loopback"));
     }
+    let discovery_lease = discovery_directory
+        .map(|directory| {
+            DiscoveryLease::publish(directory, replica.actor(), local_address, &secret)
+        })
+        .transpose()?;
     if let Some(ready_file) = ready_file {
         write_ready_file(ready_file, local_address)?;
     }
@@ -321,6 +337,9 @@ fn serve_listener(
     );
     println!("  transport: authenticated and integrity-protected; loopback only");
     println!("  session presence: {presence}");
+    if let Some(lease) = discovery_lease.as_ref() {
+        println!("  local discovery: {}", lease.path().display());
+    }
 
     loop {
         let (stream, peer_address) = listener.accept()?;
@@ -997,6 +1016,7 @@ mod tests {
                 true,
                 None,
                 SessionPresence::default(),
+                None,
             )
             .unwrap()
         });
@@ -1240,6 +1260,7 @@ mod tests {
                 true,
                 None,
                 SessionPresence::default(),
+                None,
             )
             .unwrap()
         });
@@ -1282,6 +1303,7 @@ mod tests {
                 true,
                 None,
                 SessionPresence::default(),
+                None,
             )
             .unwrap()
         });
@@ -1323,6 +1345,7 @@ mod tests {
                 true,
                 None,
                 SessionPresence::default(),
+                None,
             )
             .unwrap()
         });
@@ -1416,6 +1439,7 @@ mod tests {
                 true,
                 None,
                 SessionPresence::default(),
+                None,
             )
             .unwrap()
         });

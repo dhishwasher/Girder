@@ -3,10 +3,11 @@
 use crate::graph_view::GraphViewState;
 use crate::panels;
 use crate::project::{
-    apply_reviewed_collaboration_projection, generate_collaboration_secret, join_collaboration,
-    review_collaboration_projection, AgentValidationOutcome, CollaborationProjectionReview,
-    ExtensionCommandRequest, ExtensionMutation, ExtensionMutationOutcome, ExtensionMutationRequest,
-    LiveSyncReport, ProjectWorkspace, SyncImpact, ValidationReport,
+    apply_reviewed_collaboration_projection, discover_collaboration_peers,
+    generate_collaboration_secret, join_collaboration, review_collaboration_projection,
+    AgentValidationOutcome, CollaborationProjectionReview, DiscoveredPeer, ExtensionCommandRequest,
+    ExtensionMutation, ExtensionMutationOutcome, ExtensionMutationRequest, LiveSyncReport,
+    ProjectWorkspace, SyncImpact, ValidationReport,
 };
 use aether_agents::{MsgKind, Orchestrator, SwarmContext, SwarmMessage};
 use aether_debugger::{buggy_demo_program, python_tracer::PyTimeline, Timeline};
@@ -93,6 +94,8 @@ pub struct AetherApp {
     pub(crate) collaboration_address_input: String,
     pub(crate) collaboration_secret_input: String,
     pub(crate) collaboration_presence_input: String,
+    pub(crate) collaboration_discovery_input: String,
+    pub(crate) collaboration_discovered_peers: Vec<DiscoveredPeer>,
     pub(crate) collaboration_status: String,
     collaboration_rx: Option<CollaborationReceiver>,
     collaboration_projection_rx: Option<CollaborationProjectionReceiver>,
@@ -163,6 +166,8 @@ impl AetherApp {
             collaboration_address_input: "127.0.0.1:7331".into(),
             collaboration_secret_input: ".bitcode/collaboration.secret".into(),
             collaboration_presence_input: String::new(),
+            collaboration_discovery_input: ".bitcode/peers".into(),
+            collaboration_discovered_peers: Vec::new(),
             collaboration_status:
                 "Initialize a graph replica or inspect an existing collaboration bundle.".into(),
             collaboration_rx: None,
@@ -211,6 +216,7 @@ impl AetherApp {
                 self.extension_candidate_source = None;
                 self.extension_action_output.clear();
                 self.extension_remove_confirmation = None;
+                self.collaboration_discovered_peers.clear();
                 self.set_workspace_status(workspace_summary(&self.workspace));
             }
             Err(error) => self.set_workspace_error(format!("Open failed: {error}")),
@@ -255,6 +261,7 @@ impl AetherApp {
                 self.ripple_start = None;
                 self.graph_view.reset_for_project();
                 self.editor_jump = None;
+                self.collaboration_discovered_peers.clear();
                 self.set_workspace_status(workspace_summary(&self.workspace));
             }
             Err(error) => self.set_workspace_error(format!("Reload failed: {error}")),
@@ -803,6 +810,30 @@ impl AetherApp {
             "Joining {} with mutual authentication...",
             self.collaboration_address_input.trim()
         );
+    }
+
+    pub(crate) fn scan_collaboration_peers(&mut self) {
+        let result = (|| -> std::io::Result<Vec<DiscoveredPeer>> {
+            let bundle = self.collaboration_path(&self.collaboration_bundle_input)?;
+            let secret = self.collaboration_path(&self.collaboration_secret_input)?;
+            let directory = self.collaboration_path(&self.collaboration_discovery_input)?;
+            let scan = discover_collaboration_peers(&bundle, &directory, &secret)?;
+            let ignored = scan.ignored_entries;
+            self.collaboration_status = format!(
+                "Discovered {} authenticated active local peer(s); ignored {} invalid, stale, unrelated, or unauthorized entr{}.",
+                scan.peers.len(),
+                ignored,
+                if ignored == 1 { "y" } else { "ies" }
+            );
+            Ok(scan.peers)
+        })();
+        match result {
+            Ok(peers) => self.collaboration_discovered_peers = peers,
+            Err(error) => {
+                self.collaboration_discovered_peers.clear();
+                self.collaboration_status = format!("Local peer discovery failed: {error}");
+            }
+        }
     }
 
     pub(crate) fn generate_collaboration_secret(&mut self) {
