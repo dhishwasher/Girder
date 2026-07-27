@@ -32,8 +32,23 @@ pub struct CallTargetRef {
 
 #[derive(Debug, Clone)]
 enum ReceiverHint {
-    Type(String),
+    Type(RustTypeHint),
     ReturnOf(CallTargetRef),
+}
+
+#[derive(Debug, Clone)]
+struct RustTypeHint {
+    name: String,
+    generic_arguments: Vec<RustTypeHint>,
+}
+
+impl RustTypeHint {
+    fn named(name: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            generic_arguments: Vec::new(),
+        }
+    }
 }
 
 const MAX_RECEIVER_HINT_NODES: usize = 16;
@@ -642,7 +657,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             .map(qualifier_binding)
             .and_then(|binding| hints.get(binding))
         {
-            Some(ReceiverHint::Type(name)) => (Some(name.clone()), None),
+            Some(ReceiverHint::Type(hint)) => (Some(hint.name.clone()), None),
             Some(ReceiverHint::ReturnOf(factory)) => (None, Some(factory.bounded_clone())),
             None => (None, None),
         }
@@ -696,6 +711,18 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             }
         }
         let active_type_hints = function_type_hints.as_ref().unwrap_or(type_hints);
+        let scoped_type_hints = if matches!(lang, Lang::Rust)
+            && matches!(node.kind(), "if_expression" | "while_expression")
+        {
+            rust_condition_type_hints(node, active_type_hints, source)
+        } else {
+            None
+        };
+        let narrowed_scope = match node.kind() {
+            "if_expression" => node.child_by_field_name("consequence"),
+            "while_expression" => node.child_by_field_name("body"),
+            _ => None,
+        };
 
         let call_kind = match lang {
             Lang::Rust => "call_expression",
@@ -745,13 +772,22 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
+            let child_type_hints = match (&scoped_type_hints, narrowed_scope) {
+                (Some(hints), Some(scope))
+                    if child.start_byte() == scope.start_byte()
+                        && child.end_byte() == scope.end_byte() =>
+                {
+                    hints
+                }
+                _ => active_type_hints,
+            };
             walk(
                 child,
                 source,
                 lang,
                 module,
                 (enclosing_type, current),
-                active_type_hints,
+                child_type_hints,
                 out,
             );
         }
@@ -818,6 +854,88 @@ fn rust_function_type_hints(function: TsNode, source: &str) -> HashMap<String, R
     hints
 }
 
+fn rust_condition_type_hints(
+    expression: TsNode,
+    hints: &HashMap<String, ReceiverHint>,
+    source: &str,
+) -> Option<HashMap<String, ReceiverHint>> {
+    let condition = expression.child_by_field_name("condition")?;
+    if condition.kind() != "let_condition" {
+        return None;
+    }
+    let pattern = condition.child_by_field_name("pattern")?;
+    let value = condition.child_by_field_name("value")?;
+    let (binding, hint) = rust_narrowed_pattern_hint(pattern, value, hints, source)?;
+    let mut narrowed = hints.clone();
+    narrowed.insert(binding, hint);
+    Some(narrowed)
+}
+
+fn rust_narrowed_pattern_hint(
+    pattern: TsNode,
+    value: TsNode,
+    hints: &HashMap<String, ReceiverHint>,
+    source: &str,
+) -> Option<(String, ReceiverHint)> {
+    if pattern.kind() != "tuple_struct_pattern" {
+        return None;
+    }
+    let variant_node = pattern.child_by_field_name("type")?;
+    let variant = last_ident(node_text(variant_node, source));
+    let (wrapper, argument_index) = match variant {
+        "Some" => ("Option", 0),
+        "Ok" => ("Result", 0),
+        "Err" => ("Result", 1),
+        _ => return None,
+    };
+
+    let source_hint = rust_expression_receiver_hint(value, hints, source)?;
+    let ReceiverHint::Type(source_type) = source_hint else {
+        return None;
+    };
+    if source_type.name != wrapper {
+        return None;
+    }
+    let narrowed_type = source_type.generic_arguments.get(argument_index)?.clone();
+
+    let mut cursor = pattern.walk();
+    let mut bindings = pattern.named_children(&mut cursor).filter(|child| {
+        child.start_byte() != variant_node.start_byte()
+            || child.end_byte() != variant_node.end_byte()
+    });
+    let binding_node = bindings.next()?;
+    if bindings.next().is_some() {
+        return None;
+    }
+    let binding = node_text(binding_node, source)
+        .trim()
+        .trim_start_matches("mut ")
+        .trim_start_matches("ref ")
+        .to_string();
+    if binding.is_empty()
+        || !binding
+            .chars()
+            .all(|ch| ch == '_' || ch.is_ascii_alphanumeric())
+    {
+        return None;
+    }
+    Some((binding, ReceiverHint::Type(narrowed_type)))
+}
+
+fn rust_expression_receiver_hint(
+    value: TsNode,
+    hints: &HashMap<String, ReceiverHint>,
+    source: &str,
+) -> Option<ReceiverHint> {
+    let value = unwrap_rust_expression(value);
+    if matches!(value.kind(), "identifier" | "self") {
+        return hints
+            .get(node_text(value, source))
+            .map(ReceiverHint::bounded_clone);
+    }
+    infer_rust_receiver_hint(value, hints, source)
+}
+
 fn infer_rust_receiver_hint(
     value: TsNode,
     hints: &HashMap<String, ReceiverHint>,
@@ -851,7 +969,7 @@ fn infer_rust_receiver_hint(
     }
 
     if callee.starts_with(char::is_uppercase) {
-        return Some(ReceiverHint::Type(callee));
+        return Some(ReceiverHint::Type(RustTypeHint::named(callee)));
     }
 
     let (receiver_type, receiver_factory) = qualifier
@@ -862,7 +980,7 @@ fn infer_rust_receiver_hint(
                 (Some(binding.to_string()), None)
             } else {
                 match hints.get(binding) {
-                    Some(ReceiverHint::Type(name)) => (Some(name.clone()), None),
+                    Some(ReceiverHint::Type(hint)) => (Some(hint.name.clone()), None),
                     Some(ReceiverHint::ReturnOf(factory)) => {
                         (None, Some(Box::new(factory.bounded_clone())))
                     }
@@ -876,7 +994,7 @@ fn infer_rust_receiver_hint(
         .map(qualifier_binding)
         .filter(|binding| binding.starts_with(char::is_uppercase))
     {
-        return Some(ReceiverHint::Type(type_name.to_string()));
+        return Some(ReceiverHint::Type(RustTypeHint::named(type_name)));
     }
 
     let fallback = qualifier
@@ -884,7 +1002,7 @@ fn infer_rust_receiver_hint(
         .then(|| single_rust_argument_hint(value, hints, source))
         .flatten();
     let (fallback_type, fallback_factory) = match fallback {
-        Some(ReceiverHint::Type(name)) => (Some(name), None),
+        Some(ReceiverHint::Type(hint)) => (Some(hint.name), None),
         Some(ReceiverHint::ReturnOf(factory)) => (None, Some(Box::new(factory))),
         None => (None, None),
     };
@@ -919,18 +1037,45 @@ fn record_type_hint(
     type_node: TsNode,
     source: &str,
 ) {
-    let mut type_name = None;
-    let mut stack = vec![type_node];
-    while let Some(node) = stack.pop() {
-        if matches!(node.kind(), "type_identifier" | "primitive_type") {
-            type_name = Some(node_text(node, source).to_string());
+    if let Some(type_hint) = rust_type_hint(type_node, source) {
+        record_named_hint(hints, pattern, ReceiverHint::Type(type_hint), source);
+    }
+}
+
+fn rust_type_hint(type_node: TsNode, source: &str) -> Option<RustTypeHint> {
+    fn with_budget(type_node: TsNode, source: &str, budget: &mut usize) -> Option<RustTypeHint> {
+        if *budget == 0 {
+            return None;
         }
-        let mut children = node.walk();
-        stack.extend(node.named_children(&mut children));
+        *budget -= 1;
+        match type_node.kind() {
+            "reference_type" | "pointer_type" | "parenthesized_type" => {
+                let inner = type_node
+                    .child_by_field_name("type")
+                    .or_else(|| type_node.named_child(0))?;
+                with_budget(inner, source, budget)
+            }
+            "generic_type" => {
+                let name_node = type_node.child_by_field_name("type")?;
+                let arguments_node = type_node.child_by_field_name("type_arguments")?;
+                let mut cursor = arguments_node.walk();
+                let generic_arguments = arguments_node
+                    .named_children(&mut cursor)
+                    .filter_map(|argument| with_budget(argument, source, budget))
+                    .collect();
+                Some(RustTypeHint {
+                    name: last_ident(node_text(name_node, source)).to_string(),
+                    generic_arguments,
+                })
+            }
+            "type_identifier" | "primitive_type" | "scoped_type_identifier" => Some(
+                RustTypeHint::named(last_ident(node_text(type_node, source))),
+            ),
+            _ => None,
+        }
     }
-    if let Some(type_name) = type_name {
-        record_named_hint(hints, pattern, ReceiverHint::Type(type_name), source);
-    }
+    let mut budget = MAX_RECEIVER_HINT_NODES;
+    with_budget(type_node, source, &mut budget)
 }
 
 fn record_named_hint(
@@ -1087,6 +1232,14 @@ mod tests {
                 .unwrap_or(0)
     }
 
+    fn rust_type_nodes(hint: &RustTypeHint) -> usize {
+        1 + hint
+            .generic_arguments
+            .iter()
+            .map(rust_type_nodes)
+            .sum::<usize>()
+    }
+
     #[test]
     fn receiver_hint_clone_budget_bounds_adversarial_factory_chains() {
         let mut target: CallTargetRef = CallTargetRef {
@@ -1116,6 +1269,33 @@ mod tests {
             panic!("factory hint changed variant");
         };
         assert_eq!(receiver_nodes(&cloned), MAX_RECEIVER_HINT_NODES);
+    }
+
+    #[test]
+    fn rust_type_hint_budget_bounds_adversarial_generic_nesting() {
+        let depth = MAX_RECEIVER_HINT_NODES * 4;
+        let nested = format!(
+            "{}SessionIdentity{}",
+            "Option<".repeat(depth),
+            ">".repeat(depth)
+        );
+        let source = format!("fn inspect(value: {nested}) {{}}\n");
+        let mut parser = IncrementalParser::new(Lang::Rust);
+        let tree = parser.parse(&source);
+        let mut cursor = tree.root_node().walk();
+        let function = descendants(tree.root_node(), &mut cursor)
+            .into_iter()
+            .find(|node| node.kind() == "function_item")
+            .unwrap();
+        let parameters = function.child_by_field_name("parameters").unwrap();
+        let mut cursor = parameters.walk();
+        let parameter = parameters
+            .named_children(&mut cursor)
+            .find(|node| node.kind() == "parameter")
+            .unwrap();
+        let hint = rust_type_hint(parameter.child_by_field_name("type").unwrap(), &source).unwrap();
+
+        assert_eq!(rust_type_nodes(&hint), MAX_RECEIVER_HINT_NODES);
     }
 
     #[test]

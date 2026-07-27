@@ -689,6 +689,95 @@ def browse(catalog):
     }
 
     #[test]
+    fn resolves_rust_if_let_narrowed_receiver_types() {
+        let source = r#"
+struct SessionIdentity;
+impl SessionIdentity {
+    fn inspect(&self) {}
+    fn verify_delta_provenance(&self) {}
+}
+
+struct OtherIdentity;
+impl OtherIdentity {
+    fn inspect(&self) {}
+}
+
+fn apply(identity: Option<&SessionIdentity>) {
+    if let Some(identity) = identity {
+        identity.inspect();
+        identity.verify_delta_provenance();
+    }
+}
+
+fn inspect_ok(result: Result<&SessionIdentity, &OtherIdentity>) {
+    if let Ok(identity) = result {
+        identity.inspect();
+    }
+}
+
+fn inspect_err(result: Result<&SessionIdentity, &OtherIdentity>) {
+    if let Err(identity) = result {
+        identity.inspect();
+    }
+}
+
+#[test]
+fn provenance_test() {
+    apply(Some(&SessionIdentity));
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/session.rs", source);
+
+        let apply = NodeId::from_path("crate::session::apply");
+        let inspect_ok = NodeId::from_path("crate::session::inspect_ok");
+        let inspect_err = NodeId::from_path("crate::session::inspect_err");
+        let session_inspect = NodeId::from_path("crate::session::SessionIdentity::inspect");
+        let other_inspect = NodeId::from_path("crate::session::OtherIdentity::inspect");
+        let verify = NodeId::from_path("crate::session::SessionIdentity::verify_delta_provenance");
+        let provenance_test = NodeId::from_path("crate::session::provenance_test");
+
+        let calls = |graph: &SemanticGraph, caller| {
+            graph
+                .neighbors(caller, Some(EdgeKind::Calls))
+                .into_iter()
+                .map(|node| node.id)
+                .collect::<Vec<_>>()
+        };
+        let apply_calls = calls(&graph, apply);
+        assert!(
+            apply_calls.contains(&session_inspect),
+            "Some(binding) must narrow the consequence receiver to Option's inner type"
+        );
+        assert!(apply_calls.contains(&verify));
+        assert!(!apply_calls.contains(&other_inspect));
+        assert_eq!(calls(&graph, inspect_ok), vec![session_inspect]);
+        assert_eq!(calls(&graph, inspect_err), vec![other_inspect]);
+        assert_eq!(graph.tests_for(verify), vec![provenance_test]);
+
+        builder.update_file(
+            &mut graph,
+            "src/session.rs",
+            &source.replace(
+                r#"    if let Some(identity) = identity {
+        identity.inspect();
+        identity.verify_delta_provenance();
+    }
+"#,
+                "",
+            ),
+        );
+        let updated_calls = calls(&graph, apply);
+        assert!(!updated_calls.contains(&session_inspect));
+        assert!(!updated_calls.contains(&verify));
+        assert!(
+            graph.tests_for(verify).is_empty(),
+            "incremental refresh must remove the stale narrowed call edge"
+        );
+    }
+
+    #[test]
     fn rust_test_functions_marked_is_test() {
         let rs = r#"
 fn add(a: i64, b: i64) -> i64 { a + b }

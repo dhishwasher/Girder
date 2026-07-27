@@ -460,7 +460,7 @@ time-travel debug) are real, tested, and runnable. Implemented features:
 
 | Feature | What it does |
 |---|---|
-| Semantic graph | Nodes/edges, alias/return-aware cross-file call resolution, impact BFS, similarity edges, strict versioned `.aether` persistence and source reconciliation |
+| Semantic graph | Nodes/edges, alias/return/scoped-pattern-aware cross-file call resolution, impact BFS, similarity edges, strict versioned `.aether` persistence and source reconciliation |
 | Graph explorer | Retained force layout, pan/zoom, search and typed filters, neighborhood focus, LOD/culling, metadata inspection, source navigation |
 | Agent swarm | Planner + Coder + Tester + Documenter + Refactorer + Optimizer + SecurityAuditor + QueryAgent |
 | Intent-first planning | Planner reads the graph before planning; generates ordered `FeatureSpec` with Calls-edge wiring |
@@ -484,6 +484,9 @@ cargo test -p aether-dap --test debugpy -- --ignored --nocapture
 ```
 
 The production roadmap (continuous/network collaboration discovery and
-presence, encrypted remote transport, signed-operation provenance,
-self-optimization, web/mobile projections, and deeper tracing) is in
-`BLUEPRINT.md §9`.
+presence, encrypted remote transport, key transparency, self-optimization,
+web/mobile projections, and deeper tracing) is in `BLUEPRINT.md §9`.
+
+The measured table-stakes comparison, current correctness evidence, and
+prioritized open risks are maintained in
+[`docs/core-gap-analysis.md`](docs/core-gap-analysis.md).
