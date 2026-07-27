@@ -1267,6 +1267,111 @@ def test_provenance():
     }
 
     #[test]
+    fn resolves_python_constructor_assignment_receiver_types() {
+        let models = r#"
+class SessionIdentity:
+    def inspect(self):
+        return True
+
+    def verify_selected_operation(self):
+        return True
+
+class DecoyIdentity:
+    def inspect(self):
+        return False
+"#;
+        let service = r#"
+import models
+from models import DecoyIdentity, SessionIdentity
+
+def unknown():
+    return None
+
+def apply():
+    identity = SessionIdentity()
+    identity.inspect()
+    identity.verify_selected_operation()
+
+def inspect_dotted():
+    identity = models.DecoyIdentity()
+    identity.inspect()
+
+def ordered():
+    identity = DecoyIdentity()
+    identity.inspect()
+    identity = SessionIdentity()
+    identity.inspect()
+    identity.verify_selected_operation()
+
+def invalidated():
+    identity = SessionIdentity()
+    identity = unknown()
+    identity.inspect()
+
+def annotated_local():
+    identity: DecoyIdentity = unknown()
+    identity.inspect()
+
+def test_provenance():
+    apply()
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "models.py", models);
+        builder.load_file(&mut graph, "service.py", service);
+
+        let apply = NodeId::from_path("crate::service::apply");
+        let inspect_dotted = NodeId::from_path("crate::service::inspect_dotted");
+        let ordered = NodeId::from_path("crate::service::ordered");
+        let invalidated = NodeId::from_path("crate::service::invalidated");
+        let annotated_local = NodeId::from_path("crate::service::annotated_local");
+        let unknown = NodeId::from_path("crate::service::unknown");
+        let session_inspect = NodeId::from_path("crate::models::SessionIdentity::inspect");
+        let verify = NodeId::from_path("crate::models::SessionIdentity::verify_selected_operation");
+        let decoy_inspect = NodeId::from_path("crate::models::DecoyIdentity::inspect");
+        let provenance_test = NodeId::from_path("crate::service::test_provenance");
+
+        let calls = |graph: &SemanticGraph, caller| {
+            graph
+                .neighbors(caller, Some(EdgeKind::Calls))
+                .into_iter()
+                .map(|node| node.id)
+                .collect::<Vec<_>>()
+        };
+        let apply_calls = calls(&graph, apply);
+        assert!(apply_calls.contains(&session_inspect));
+        assert!(apply_calls.contains(&verify));
+        assert!(!apply_calls.contains(&decoy_inspect));
+        assert_eq!(calls(&graph, inspect_dotted), vec![decoy_inspect]);
+
+        let ordered_calls = calls(&graph, ordered);
+        assert!(ordered_calls.contains(&session_inspect));
+        assert!(ordered_calls.contains(&decoy_inspect));
+        assert!(ordered_calls.contains(&verify));
+
+        let invalidated_calls = calls(&graph, invalidated);
+        assert!(invalidated_calls.contains(&unknown));
+        assert!(!invalidated_calls.contains(&session_inspect));
+        assert!(!invalidated_calls.contains(&decoy_inspect));
+
+        let annotated_calls = calls(&graph, annotated_local);
+        assert!(annotated_calls.contains(&unknown));
+        assert!(annotated_calls.contains(&decoy_inspect));
+        assert_eq!(graph.tests_for(session_inspect), vec![provenance_test]);
+
+        builder.update_file(
+            &mut graph,
+            "service.py",
+            &service.replacen("    identity.inspect()\n", "", 1),
+        );
+        assert!(!calls(&graph, apply).contains(&session_inspect));
+        assert!(
+            graph.tests_for(session_inspect).is_empty(),
+            "incremental refresh must remove the stale constructor receiver edge"
+        );
+    }
+
+    #[test]
     fn test_impact_finds_minimal_test_set() {
         // add is called by test_add (marked) and by sum_list (not marked).
         // Only test_add should appear in the impact set.

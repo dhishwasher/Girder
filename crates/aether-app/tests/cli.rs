@@ -520,6 +520,53 @@ def test_provenance():
 }
 
 #[test]
+fn test_impact_follows_python_constructor_assignments() {
+    let repo = TempRepo::new("test-impact-python-constructor-assignment");
+    let models = |inspect_body: &str| {
+        format!(
+            r#"
+class SessionIdentity:
+    def inspect(self):
+        {inspect_body}
+
+class DecoyIdentity:
+    def inspect(self):
+        return False
+"#
+        )
+    };
+    repo.write("models.py", &models("return True"));
+    repo.write(
+        "service.py",
+        r#"
+from models import SessionIdentity
+
+def apply():
+    identity = SessionIdentity()
+    identity.inspect()
+
+def test_provenance():
+    apply()
+"#,
+    );
+    repo.commit_all("baseline");
+    repo.write("models.py", &models("return 'changed'"));
+
+    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+
+    assert!(
+        stdout.contains("crate::models::SessionIdentity::inspect"),
+        "{stdout}"
+    );
+    assert!(stdout.contains("Impacted tests (1)"), "{stdout}");
+    assert!(
+        stdout.contains("crate::service::test_provenance"),
+        "{stdout}"
+    );
+    assert!(stdout.contains("pytest -k test_provenance"), "{stdout}");
+}
+
+#[test]
 fn forge_projects_generated_functions_to_source_file() {
     let repo = TempRepo::new("forge-writeback");
     repo.write("src/lib.rs", "pub fn existing() -> i64 { 1 }\n");

@@ -167,11 +167,34 @@ Acceptance evidence:
 - The end-to-end Python repository selects exactly its one true test and emits
   `pytest -k test_provenance`: precision `1/1`, recall `1/1`.
 
+### Python constructor-assignment resolution
+
+Verified defect: receiver hints did not follow Python assignments such as
+`identity = SessionIdentity()`. Same-named methods were therefore unresolved,
+and only globally unique methods appeared in the graph.
+
+Acceptance evidence:
+
+- Before the fix, `apply` and an ordered reassignment fixture retained only
+  `SessionIdentity::verify_selected_operation`; the dotted Decoy constructor
+  had no callee.
+- Simple-name assignments from direct/dotted class constructors or direct local
+  annotations now update hints in statement order. Unsupported reassignment
+  explicitly clears an older hint instead of creating a stale false edge.
+- The same fixture now resolves both SessionIdentity methods from `apply`,
+  `DecoyIdentity::inspect` from the dotted case, and both true inspect owners
+  plus the verifier from ordered reassignment.
+- The graph regression also verifies stale-hint invalidation, local variable
+  annotations, affected-test propagation, and incremental edge removal.
+- The end-to-end Python repository selects exactly its one true test and emits
+  `pytest -k test_provenance`: precision `1/1`, recall `1/1`.
+
 ## Prioritized open gaps
 
 1. **P0 — call-edge precision and recall.** Model subprocess CLI entry routes
-   and implicit RAII/`Drop`; extend Python receiver inference to constructor
-   assignments, compound annotations, and aliased imports without guessing.
+   and implicit RAII/`Drop`; extend Python receiver inference across
+   control-flow joins, compound annotations, and aliased imports without
+   guessing.
 2. **P0 — affected-test oracle.** Add dynamic-coverage comparison fixtures so
    precision/recall claims are reproducible rather than inferred from static
    tests alone.

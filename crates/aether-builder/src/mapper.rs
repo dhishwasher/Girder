@@ -799,17 +799,21 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 child_type_hints,
                 out,
             );
-            if matches!(lang, Lang::Rust) {
-                let following = match node.kind() {
+            let following = match lang {
+                Lang::Rust => match node.kind() {
                     "block" => rust_let_else_type_hints(child, sequential_type_hints, source),
                     "let_chain" => {
                         rust_let_condition_type_hints(child, sequential_type_hints, source)
                     }
                     _ => None,
-                };
-                if let Some(hints) = following {
-                    following_type_hints = Some(hints);
+                },
+                Lang::Python if node.kind() == "block" => {
+                    python_assignment_type_hints(child, sequential_type_hints, source)
                 }
+                Lang::Python => None,
+            };
+            if let Some(hints) = following {
+                following_type_hints = Some(hints);
             }
         }
     }
@@ -893,6 +897,43 @@ fn python_direct_type_name(type_node: TsNode, source: &str) -> Option<String> {
         type_name = segment;
     }
     Some(type_name.to_string())
+}
+
+fn python_assignment_type_hints(
+    statement: TsNode,
+    hints: &HashMap<String, ReceiverHint>,
+    source: &str,
+) -> Option<HashMap<String, ReceiverHint>> {
+    let assignment = if statement.kind() == "assignment" {
+        statement
+    } else if statement.kind() == "expression_statement" {
+        let child = statement.named_child(0)?;
+        (child.kind() == "assignment").then_some(child)?
+    } else {
+        return None;
+    };
+    let left = assignment.child_by_field_name("left")?;
+    if left.kind() != "identifier" {
+        return None;
+    }
+    let binding = node_text(left, source).to_string();
+    let annotation = assignment
+        .child_by_field_name("type")
+        .and_then(|type_node| python_direct_type_name(type_node, source));
+    let constructor = assignment
+        .child_by_field_name("right")
+        .filter(|right| right.kind() == "call")
+        .and_then(|right| callee_target(right, source))
+        .map(|(callee, _)| callee)
+        .filter(|callee| callee.starts_with(char::is_uppercase));
+
+    let mut updated = hints.clone();
+    if let Some(type_name) = annotation.or(constructor) {
+        updated.insert(binding, ReceiverHint::Type(RustTypeHint::named(type_name)));
+    } else {
+        updated.remove(&binding);
+    }
+    Some(updated)
 }
 
 fn rust_function_type_hints(function: TsNode, source: &str) -> HashMap<String, ReceiverHint> {
