@@ -420,6 +420,115 @@ fn inspect_collected() -> Result<(), ()> {
     }
 
     #[test]
+    fn resolves_renamed_imports_and_transitive_reexports_exactly() {
+        let transport = r#"
+pub(crate) fn join() {}
+pub(crate) fn leave() {}
+"#;
+        let project = r#"
+pub(crate) use collaboration_transport::join as join_collaboration;
+"#;
+        let app = r#"
+use crate::project::join_collaboration;
+use crate::project::collaboration_transport::leave as connect_elsewhere;
+
+fn start() {
+    std::thread::spawn(move || join_collaboration());
+}
+
+fn direct() {
+    connect_elsewhere();
+}
+"#;
+        let decoys = r#"
+fn join() {}
+fn leave() {}
+fn join_collaboration() {}
+fn connect_elsewhere() {}
+"#;
+
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(
+            &mut graph,
+            "src/project/collaboration_transport.rs",
+            transport,
+        );
+        builder.load_file(&mut graph, "src/decoys.rs", decoys);
+        builder.load_file(&mut graph, "src/project.rs", project);
+        builder.load_file(&mut graph, "src/app.rs", app);
+
+        let transport_join = NodeId::from_path("crate::project::collaboration_transport::join");
+        let transport_leave = NodeId::from_path("crate::project::collaboration_transport::leave");
+        let decoy_join = NodeId::from_path("crate::decoys::join_collaboration");
+        let decoy_connect = NodeId::from_path("crate::decoys::connect_elsewhere");
+        let start = NodeId::from_path("crate::app::start");
+        let direct = NodeId::from_path("crate::app::direct");
+        let calls_from = |graph: &SemanticGraph, caller| {
+            graph
+                .neighbors(caller, Some(EdgeKind::Calls))
+                .into_iter()
+                .map(|node| node.id)
+                .collect::<Vec<_>>()
+        };
+
+        let start_calls = calls_from(&graph, start);
+        assert!(start_calls.contains(&transport_join));
+        assert!(!start_calls.contains(&decoy_join));
+        let direct_calls = calls_from(&graph, direct);
+        assert!(direct_calls.contains(&transport_leave));
+        assert!(!direct_calls.contains(&decoy_connect));
+
+        builder.update_file(
+            &mut graph,
+            "src/project.rs",
+            "pub(crate) use collaboration_transport::leave as join_collaboration;\n",
+        );
+        let updated = calls_from(&graph, start);
+        assert!(updated.contains(&transport_leave));
+        assert!(!updated.contains(&transport_join));
+        assert!(!updated.contains(&decoy_join));
+    }
+
+    #[test]
+    fn resolves_qualified_reexports_through_mod_and_crate_root_files() {
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(
+            &mut graph,
+            "src/project/commands/graph.rs",
+            "pub(crate) fn analyze() {}\n",
+        );
+        builder.load_file(
+            &mut graph,
+            "src/project/commands/mod.rs",
+            "pub(crate) use graph::analyze;\n",
+        );
+        builder.load_file(
+            &mut graph,
+            "src/project.rs",
+            "pub(crate) use commands::analyze;\n",
+        );
+        builder.load_file(&mut graph, "src/decoy.rs", "fn analyze() {}\n");
+        builder.load_file(
+            &mut graph,
+            "src/main.rs",
+            "fn dispatch() { project::analyze(); }\n",
+        );
+
+        let dispatch = NodeId::from_path("crate::main::dispatch");
+        let command = NodeId::from_path("crate::project::commands::graph::analyze");
+        let decoy = NodeId::from_path("crate::decoy::analyze");
+        let calls = graph
+            .neighbors(dispatch, Some(EdgeKind::Calls))
+            .into_iter()
+            .map(|node| node.id)
+            .collect::<Vec<_>>();
+        assert!(calls.contains(&command));
+        assert!(!calls.contains(&decoy));
+    }
+
+    #[test]
     fn resolves_receiver_qualified_methods_and_type_scoped_callers() {
         let rs = r#"
 struct MarketplaceCatalog;

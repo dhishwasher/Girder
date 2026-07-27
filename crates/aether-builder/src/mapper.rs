@@ -99,6 +99,16 @@ pub struct InheritRef {
     pub base: String,
 }
 
+/// A module-scope Rust name imported into a file, retained so project-wide call
+/// resolution can follow renamed imports and public re-export chains without
+/// guessing by trailing identifier alone.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RustImportRef {
+    pub local: String,
+    pub target: String,
+    pub is_reexport: bool,
+}
+
 /// Everything extracted from a single file: nodes to upsert, non-call edges to
 /// add (Contains), and unresolved call/inheritance references for the
 /// project-wide resolver.
@@ -108,6 +118,7 @@ pub struct BuildOutput {
     pub edges: Vec<(NodeId, NodeId, Edge)>,
     pub calls: Vec<CallRef>,
     pub inherits: Vec<InheritRef>,
+    pub rust_imports: Vec<RustImportRef>,
 }
 
 impl BuildOutput {
@@ -167,8 +178,10 @@ pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput
     // a concrete callee happens project-wide in `sync`, enabling cross-file links.
     collect_calls(root, source, lang, &module, &mut out);
 
-    // Pass 3: Rust `impl Trait for Type` blocks -> Type Inherits Trait.
+    // Pass 3: Rust imports/re-exports retain exact symbol identities for the
+    // project resolver, and `impl Trait for Type` blocks become Inherits refs.
     if matches!(lang, Lang::Rust) {
+        collect_rust_imports(root, source, &mut out);
         collect_impls(root, source, &module, &mut out);
     }
 
@@ -465,6 +478,96 @@ fn extract_supertypes(
 /// Trailing identifier of a possibly-qualified type path (`a::b::Trait` -> `Trait`).
 fn last_ident(text: &str) -> &str {
     text.rsplit("::").next().unwrap_or(text).trim()
+}
+
+fn collect_rust_imports(root: TsNode, source: &str, out: &mut BuildOutput) {
+    fn combine_path(prefix: &str, suffix: &str) -> String {
+        let suffix = suffix.trim();
+        if suffix == "self" {
+            return prefix.to_string();
+        }
+        if prefix.is_empty()
+            || suffix == "crate"
+            || suffix.starts_with("crate::")
+            || suffix == "super"
+            || suffix.starts_with("super::")
+        {
+            suffix.to_string()
+        } else {
+            format!("{prefix}::{suffix}")
+        }
+    }
+
+    fn collect_clause(
+        node: TsNode,
+        source: &str,
+        prefix: &str,
+        is_reexport: bool,
+        out: &mut BuildOutput,
+    ) {
+        match node.kind() {
+            "scoped_use_list" => {
+                let path = node
+                    .child_by_field_name("path")
+                    .map(|path| combine_path(prefix, node_text(path, source)))
+                    .unwrap_or_else(|| prefix.to_string());
+                if let Some(list) = node.child_by_field_name("list") {
+                    collect_clause(list, source, &path, is_reexport, out);
+                }
+            }
+            "use_list" => {
+                let mut cursor = node.walk();
+                for child in node.named_children(&mut cursor) {
+                    collect_clause(child, source, prefix, is_reexport, out);
+                }
+            }
+            "use_as_clause" => {
+                let (Some(path), Some(alias)) = (
+                    node.child_by_field_name("path"),
+                    node.child_by_field_name("alias"),
+                ) else {
+                    return;
+                };
+                let local = node_text(alias, source).trim();
+                if local == "_" {
+                    return;
+                }
+                let target = combine_path(prefix, node_text(path, source));
+                if !target.is_empty() {
+                    out.rust_imports.push(RustImportRef {
+                        local: local.to_string(),
+                        target,
+                        is_reexport,
+                    });
+                }
+            }
+            "use_wildcard" => {}
+            _ => {
+                let target = combine_path(prefix, node_text(node, source));
+                let local = last_ident(&target);
+                if !local.is_empty() && local != "*" {
+                    out.rust_imports.push(RustImportRef {
+                        local: local.to_string(),
+                        target,
+                        is_reexport,
+                    });
+                }
+            }
+        }
+    }
+
+    let mut cursor = root.walk();
+    for node in root.named_children(&mut cursor) {
+        if node.kind() == "use_declaration" {
+            let mut use_cursor = node.walk();
+            let is_reexport = node
+                .named_children(&mut use_cursor)
+                .any(|child| child.kind() == "visibility_modifier");
+            if let Some(argument) = node.child_by_field_name("argument") {
+                collect_clause(argument, source, "", is_reexport, out);
+            }
+        }
+    }
 }
 
 /// Walk Rust `impl Trait for Type` blocks, recording `Type Inherits Trait`.
@@ -969,6 +1072,7 @@ fn descendants<'a>(node: TsNode<'a>, cursor: &mut tree_sitter::TreeCursor<'a>) -
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::parser::IncrementalParser;
 
     fn receiver_nodes(target: &CallTargetRef) -> usize {
         1 + target
@@ -1012,5 +1116,57 @@ mod tests {
             panic!("factory hint changed variant");
         };
         assert_eq!(receiver_nodes(&cloned), MAX_RECEIVER_HINT_NODES);
+    }
+
+    #[test]
+    fn rust_imports_preserve_nested_aliases_and_reexport_visibility() {
+        let source = r#"
+pub(crate) use crate::alpha::{
+    beta as gamma,
+    nested::{delta, epsilon as zeta},
+    self,
+    *,
+};
+use super::theta;
+use crate::hidden as _;
+fn local_only() {
+    use crate::local as function_scoped;
+}
+"#;
+        let mut parser = IncrementalParser::new(Lang::Rust);
+        let tree = parser.parse(source);
+        let mut imports = extract(&tree, source, "src/imports.rs", Lang::Rust).rust_imports;
+        imports.sort_by(|left, right| left.local.cmp(&right.local));
+
+        assert_eq!(
+            imports,
+            vec![
+                RustImportRef {
+                    local: "alpha".into(),
+                    target: "crate::alpha".into(),
+                    is_reexport: true,
+                },
+                RustImportRef {
+                    local: "delta".into(),
+                    target: "crate::alpha::nested::delta".into(),
+                    is_reexport: true,
+                },
+                RustImportRef {
+                    local: "gamma".into(),
+                    target: "crate::alpha::beta".into(),
+                    is_reexport: true,
+                },
+                RustImportRef {
+                    local: "theta".into(),
+                    target: "super::theta".into(),
+                    is_reexport: false,
+                },
+                RustImportRef {
+                    local: "zeta".into(),
+                    target: "crate::alpha::nested::epsilon".into(),
+                    is_reexport: true,
+                },
+            ]
+        );
     }
 }

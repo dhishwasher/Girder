@@ -6,7 +6,9 @@
 //! nodes are upserted, vanished nodes are removed, and edges are rebuilt for the
 //! file. This is the machinery behind bidirectional editor⇄graph sync.
 
-use crate::mapper::{extract, module_path_for, BuildOutput, CallRef, CallTargetRef, InheritRef};
+use crate::mapper::{
+    extract, module_path_for, BuildOutput, CallRef, CallTargetRef, InheritRef, RustImportRef,
+};
 use crate::parser::{IncrementalParser, Lang};
 use aether_graph::{Edge, EdgeKind, NodeId, NodeKind, SemanticGraph};
 use std::collections::{HashMap, HashSet};
@@ -22,6 +24,8 @@ struct FileState {
     calls: Vec<CallRef>,
     /// Unresolved inheritance references found in this file.
     inherits: Vec<InheritRef>,
+    /// Rust imports and public re-exports used to preserve aliased identities.
+    rust_imports: Vec<RustImportRef>,
 }
 
 /// The module path that owns a node, derived from its full path:
@@ -35,6 +39,188 @@ fn module_of(path: &str) -> String {
 
 fn source_module(file: Option<&str>, path: &str) -> String {
     file.map(module_path_for).unwrap_or_else(|| module_of(path))
+}
+
+const MAX_REEXPORT_DEPTH: usize = 16;
+
+fn source_crate_root(file: &str) -> String {
+    let normalized = file.replace('\\', "/");
+    let segments = normalized
+        .split('/')
+        .filter(|segment| !segment.is_empty() && *segment != ".")
+        .collect::<Vec<_>>();
+    match segments.iter().rposition(|segment| *segment == "src") {
+        Some(0) | None => "crate".to_string(),
+        Some(index) => format!("crate::{}", segments[..=index].join("::")),
+    }
+}
+
+fn rust_module_path_for(file: &str) -> String {
+    let module = module_path_for(file);
+    let normalized = file.replace('\\', "/");
+    let mut segments = normalized
+        .split('/')
+        .filter(|segment| !segment.is_empty() && *segment != ".")
+        .collect::<Vec<_>>();
+    let file_name = segments.pop().unwrap_or_default();
+    let stem = file_name
+        .rsplit_once('.')
+        .map_or(file_name, |(stem, _)| stem);
+    let crate_root_file = matches!(stem, "lib" | "main") && matches!(segments.last(), Some(&"src"));
+    if stem == "mod" || crate_root_file {
+        module_of(&module)
+    } else {
+        module
+    }
+}
+
+fn normalize_rust_import_target(file: &str, module: &str, target: &str) -> Option<String> {
+    let mut target = target
+        .split("::")
+        .map(str::trim)
+        .filter(|segment| !segment.is_empty())
+        .peekable();
+    let first = target.peek().copied()?;
+    let crate_root = source_crate_root(file);
+    let crate_root_parts = crate_root.split("::").collect::<Vec<_>>();
+    let mut resolved = match first {
+        "crate" => {
+            target.next();
+            crate_root_parts.clone()
+        }
+        "self" => {
+            target.next();
+            module.split("::").collect()
+        }
+        "super" => {
+            let mut base = module.split("::").collect::<Vec<_>>();
+            while matches!(target.peek(), Some(&"super")) {
+                target.next();
+                if base.len() <= crate_root_parts.len() {
+                    return None;
+                }
+                base.pop();
+            }
+            base
+        }
+        _ => module.split("::").collect(),
+    };
+    resolved.extend(target);
+    Some(resolved.join("::"))
+}
+
+fn reexport_index(files: &HashMap<String, FileState>) -> HashMap<String, Vec<String>> {
+    let mut index: HashMap<String, Vec<String>> = HashMap::new();
+    for (file, state) in files {
+        let module = rust_module_path_for(file);
+        for import in state
+            .rust_imports
+            .iter()
+            .filter(|import| import.is_reexport)
+        {
+            let Some(target) = normalize_rust_import_target(file, &module, &import.target) else {
+                continue;
+            };
+            index
+                .entry(format!("{module}::{}", import.local))
+                .or_default()
+                .push(target);
+        }
+    }
+    for targets in index.values_mut() {
+        targets.sort();
+        targets.dedup();
+    }
+    index
+}
+
+fn follow_reexports(start: String, reexports: &HashMap<String, Vec<String>>) -> Option<String> {
+    let mut current = start;
+    let mut visited = HashSet::new();
+    for _ in 0..MAX_REEXPORT_DEPTH {
+        if !visited.insert(current.clone()) {
+            return None;
+        }
+        match reexports.get(&current) {
+            None => return Some(current),
+            Some(targets) if targets.len() == 1 => current.clone_from(&targets[0]),
+            Some(_) => return None,
+        }
+    }
+    None
+}
+
+enum AliasResolution {
+    NotAliased,
+    Resolved(String),
+    Ambiguous,
+}
+
+fn resolve_local_call_alias(
+    file: &str,
+    state: &FileState,
+    callee: &str,
+    reexports: &HashMap<String, Vec<String>>,
+) -> AliasResolution {
+    let module = rust_module_path_for(file);
+    let mut targets = state
+        .rust_imports
+        .iter()
+        .filter(|import| import.local == callee)
+        .filter_map(|import| {
+            normalize_rust_import_target(file, &module, &import.target)
+                .map(|target| (target, last_path_segment(&import.target) != callee))
+        })
+        .collect::<Vec<_>>();
+    targets.sort();
+    targets.dedup();
+    let [(initial, renamed)] = targets.as_slice() else {
+        return if targets.is_empty() {
+            AliasResolution::NotAliased
+        } else {
+            AliasResolution::Ambiguous
+        };
+    };
+    if !*renamed && !reexports.contains_key(initial) {
+        return AliasResolution::NotAliased;
+    }
+    follow_reexports(initial.clone(), reexports)
+        .map(AliasResolution::Resolved)
+        .unwrap_or(AliasResolution::Ambiguous)
+}
+
+fn resolve_qualified_reexport(
+    file: &str,
+    qualifier: &str,
+    callee: &str,
+    reexports: &HashMap<String, Vec<String>>,
+) -> AliasResolution {
+    if qualifier.contains('.')
+        || qualifier
+            .chars()
+            .any(|character| !(character == ':' || character == '_' || character.is_alphanumeric()))
+    {
+        return AliasResolution::NotAliased;
+    }
+    let module = rust_module_path_for(file);
+    let Some(initial) =
+        normalize_rust_import_target(file, &module, &format!("{qualifier}::{callee}"))
+    else {
+        return AliasResolution::Ambiguous;
+    };
+    if !reexports.contains_key(&initial) {
+        return AliasResolution::NotAliased;
+    }
+    follow_reexports(initial, reexports)
+        .map(AliasResolution::Resolved)
+        .unwrap_or(AliasResolution::Ambiguous)
+}
+
+fn last_path_segment(path: &str) -> &str {
+    path.rsplit("::")
+        .find(|segment| !segment.is_empty())
+        .unwrap_or(path)
+        .trim()
 }
 
 fn normalized_symbol(value: &str) -> String {
@@ -63,6 +249,7 @@ fn qualifier_matches_owner(qualifier: &str, owner: &str) -> bool {
 }
 
 struct FunctionCandidate {
+    path: String,
     source_module: String,
     owner: String,
     id: NodeId,
@@ -76,6 +263,18 @@ fn only_candidate<'a>(
 ) -> Option<&'a FunctionCandidate> {
     let first = candidates.next()?;
     candidates.next().is_none().then_some(first)
+}
+
+fn select_exact_path<'a>(
+    target: &str,
+    by_name: &'a HashMap<String, Vec<FunctionCandidate>>,
+) -> Option<&'a FunctionCandidate> {
+    let candidates = by_name.get(last_path_segment(target))?;
+    only_candidate(
+        candidates
+            .iter()
+            .filter(|candidate| candidate.path == target),
+    )
 }
 
 fn select_candidate<'a>(
@@ -312,6 +511,7 @@ impl GraphBuilder {
                 owned,
                 calls: out.calls.clone(),
                 inherits: out.inherits.clone(),
+                rust_imports: out.rust_imports.clone(),
             },
         );
         self.resolve_calls(graph);
@@ -339,6 +539,7 @@ impl GraphBuilder {
                 owned: HashSet::new(),
                 calls: Vec::new(),
                 inherits: Vec::new(),
+                rust_imports: Vec::new(),
             });
 
         // Inform tree-sitter where the edit happened so it reparses incrementally.
@@ -353,6 +554,7 @@ impl GraphBuilder {
             state.owned = new_owned;
             state.calls = out.calls.clone();
             state.inherits = out.inherits.clone();
+            state.rust_imports = out.rust_imports.clone();
         }
         self.resolve_calls(graph);
     }
@@ -361,7 +563,8 @@ impl GraphBuilder {
     /// accumulated unresolved references against a whole-graph symbol index, so a
     /// call links to its callee even when the callee lives in another file. When
     /// a name is ambiguous, a same-module definition wins; otherwise a unique
-    /// global match is used, and truly ambiguous names are left unlinked.
+    /// global match is used. Renamed Rust imports and public re-export chains
+    /// select exact paths; ambiguous or cyclic aliases are left unlinked.
     pub fn resolve_calls(&self, graph: &mut SemanticGraph) {
         let source_owned: HashSet<NodeId> = self
             .files
@@ -385,6 +588,7 @@ impl GraphBuilder {
                 .entry(n.name.clone())
                 .or_default()
                 .push(FunctionCandidate {
+                    path: n.path.clone(),
                     source_module: source_module(n.file.as_deref(), &n.path),
                     owner: module_of(&n.path),
                     id: n.id,
@@ -394,8 +598,9 @@ impl GraphBuilder {
                 });
         }
 
+        let reexports = reexport_index(&self.files);
         let mut added: HashSet<(NodeId, NodeId)> = HashSet::new();
-        for state in self.files.values() {
+        for (file, state) in &self.files {
             for call in &state.calls {
                 let (caller_source_module, caller_owner) = match graph.get(call.caller) {
                     Some(node) => (
@@ -404,25 +609,37 @@ impl GraphBuilder {
                     ),
                     None => continue,
                 };
-                let Some(candidates) = by_name.get(&call.callee) else {
-                    continue;
+                let alias = match call.qualifier.as_deref() {
+                    None => resolve_local_call_alias(file, state, &call.callee, &reexports),
+                    Some(qualifier) => {
+                        resolve_qualified_reexport(file, qualifier, &call.callee, &reexports)
+                    }
                 };
-                let chosen = if let Some(factory) = call.receiver_factory.as_ref() {
-                    resolve_factory_receiver(
-                        factory,
-                        candidates,
-                        &by_name,
-                        &caller_source_module,
-                        &caller_owner,
-                    )
-                } else {
-                    select_candidate(
-                        candidates,
-                        &caller_source_module,
-                        &caller_owner,
-                        call.qualifier.as_deref(),
-                        call.receiver_type.as_deref(),
-                    )
+                let chosen = match alias {
+                    AliasResolution::Resolved(target) => select_exact_path(&target, &by_name),
+                    AliasResolution::Ambiguous => None,
+                    AliasResolution::NotAliased => {
+                        let Some(candidates) = by_name.get(&call.callee) else {
+                            continue;
+                        };
+                        if let Some(factory) = call.receiver_factory.as_ref() {
+                            resolve_factory_receiver(
+                                factory,
+                                candidates,
+                                &by_name,
+                                &caller_source_module,
+                                &caller_owner,
+                            )
+                        } else {
+                            select_candidate(
+                                candidates,
+                                &caller_source_module,
+                                &caller_owner,
+                                call.qualifier.as_deref(),
+                                call.receiver_type.as_deref(),
+                            )
+                        }
+                    }
                 };
                 if let Some(candidate) = chosen {
                     if candidate.id != call.caller && added.insert((call.caller, candidate.id)) {
@@ -582,4 +799,65 @@ fn byte_to_point(text: &str, byte: usize) -> Point {
         }
     }
     Point::new(row, col)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reexport_resolution_is_bounded_and_rejects_ambiguity() {
+        let mut reexports = HashMap::new();
+        reexports.insert("crate::a".into(), vec!["crate::b".into()]);
+        reexports.insert("crate::b".into(), vec!["crate::a".into()]);
+        assert!(follow_reexports("crate::a".into(), &reexports).is_none());
+
+        reexports.clear();
+        reexports.insert(
+            "crate::ambiguous".into(),
+            vec!["crate::left".into(), "crate::right".into()],
+        );
+        assert!(follow_reexports("crate::ambiguous".into(), &reexports).is_none());
+
+        reexports.clear();
+        for index in 0..MAX_REEXPORT_DEPTH {
+            reexports.insert(
+                format!("crate::alias_{index}"),
+                vec![format!("crate::alias_{}", index + 1)],
+            );
+        }
+        assert!(follow_reexports("crate::alias_0".into(), &reexports).is_none());
+    }
+
+    #[test]
+    fn crate_relative_imports_follow_each_source_crate_root() {
+        let module = "crate::crates::aether-app::src::app";
+        assert_eq!(
+            normalize_rust_import_target(
+                "crates/aether-app/src/app.rs",
+                module,
+                "crate::project::join_collaboration",
+            )
+            .as_deref(),
+            Some("crate::crates::aether-app::src::project::join_collaboration")
+        );
+        assert_eq!(
+            normalize_rust_import_target(
+                "crates/aether-app/src/project.rs",
+                "crate::crates::aether-app::src::project",
+                "collaboration_transport::join",
+            )
+            .as_deref(),
+            Some("crate::crates::aether-app::src::project::collaboration_transport::join")
+        );
+        assert_eq!(rust_module_path_for("src/main.rs"), "crate");
+        assert_eq!(
+            rust_module_path_for("crates/aether-app/src/project/commands/mod.rs"),
+            "crate::crates::aether-app::src::project::commands"
+        );
+        assert_eq!(
+            rust_module_path_for("crates/aether-app/src/project.rs"),
+            "crate::crates::aether-app::src::project"
+        );
+    }
 }
