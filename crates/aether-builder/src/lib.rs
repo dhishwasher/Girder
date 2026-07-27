@@ -824,6 +824,96 @@ fn provenance_test() {
     }
 
     #[test]
+    fn resolves_rust_match_arm_narrowed_receiver_types() {
+        let source = r#"
+struct SessionIdentity;
+impl SessionIdentity {
+    fn inspect(&self) {}
+    fn is_valid(&self) -> bool { true }
+    fn verify_selected_operation(&self) {}
+}
+
+struct DecoyIdentity;
+impl DecoyIdentity {
+    fn inspect(&self) {}
+    fn is_valid(&self) -> bool { false }
+}
+
+struct Failure;
+impl Failure {
+    fn inspect(&self) {}
+}
+
+fn apply(identity: Option<&SessionIdentity>) {
+    match identity {
+        Some(identity) if identity.is_valid() => {
+            identity.inspect();
+            identity.verify_selected_operation();
+        }
+        _ => {}
+    }
+}
+
+fn inspect_result(result: Result<&SessionIdentity, &Failure>) {
+    match result {
+        Ok(identity) => identity.inspect(),
+        Err(failure) => failure.inspect(),
+    }
+}
+
+#[test]
+fn provenance_test() {
+    apply(Some(&SessionIdentity));
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/session.rs", source);
+
+        let apply = NodeId::from_path("crate::session::apply");
+        let inspect_result = NodeId::from_path("crate::session::inspect_result");
+        let session_inspect = NodeId::from_path("crate::session::SessionIdentity::inspect");
+        let session_is_valid = NodeId::from_path("crate::session::SessionIdentity::is_valid");
+        let verify =
+            NodeId::from_path("crate::session::SessionIdentity::verify_selected_operation");
+        let decoy_inspect = NodeId::from_path("crate::session::DecoyIdentity::inspect");
+        let decoy_is_valid = NodeId::from_path("crate::session::DecoyIdentity::is_valid");
+        let failure_inspect = NodeId::from_path("crate::session::Failure::inspect");
+        let provenance_test = NodeId::from_path("crate::session::provenance_test");
+
+        let calls = |graph: &SemanticGraph, caller| {
+            graph
+                .neighbors(caller, Some(EdgeKind::Calls))
+                .into_iter()
+                .map(|node| node.id)
+                .collect::<Vec<_>>()
+        };
+        let apply_calls = calls(&graph, apply);
+        assert!(apply_calls.contains(&session_inspect));
+        assert!(apply_calls.contains(&session_is_valid));
+        assert!(apply_calls.contains(&verify));
+        assert!(!apply_calls.contains(&decoy_inspect));
+        assert!(!apply_calls.contains(&decoy_is_valid));
+
+        let result_calls = calls(&graph, inspect_result);
+        assert!(result_calls.contains(&session_inspect));
+        assert!(result_calls.contains(&failure_inspect));
+        assert!(!result_calls.contains(&decoy_inspect));
+        assert_eq!(graph.tests_for(verify), vec![provenance_test]);
+
+        builder.update_file(
+            &mut graph,
+            "src/session.rs",
+            &source.replace("            identity.verify_selected_operation();\n", ""),
+        );
+        assert!(!calls(&graph, apply).contains(&verify));
+        assert!(
+            graph.tests_for(verify).is_empty(),
+            "incremental refresh must remove the stale match-arm call edge"
+        );
+    }
+
+    #[test]
     fn rust_test_functions_marked_is_test() {
         let rs = r#"
 fn add(a: i64, b: i64) -> i64 { a + b }

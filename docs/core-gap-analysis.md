@@ -75,11 +75,34 @@ Acceptance evidence:
 - On Bit Code itself, `GraphBuilder::apply` now has exactly its two real callers:
   `load_file` and `update_file`. The unrelated fixture caller is absent.
 
+### Match-arm receiver resolution
+
+Verified defect: `Some`/`Ok`/`Err` bindings in Rust `match` arms retained the
+outer wrapper's receiver hint. On a fixture with same-named methods on multiple
+types, Bit Code reported no callees for the `Option` arm and only one of the two
+required `Result` arm callees.
+
+Acceptance evidence:
+
+- Before the fix, the isolated fixture's `apply` function had zero recorded
+  callees and `inspect_result` recorded only `Failure::inspect`.
+- Arm-local hints now cover both the optional guard and arm value without
+  leaking to sibling arms or the enclosing scope.
+- The same fixture now resolves exactly
+  `SessionIdentity::{inspect, verify_selected_operation}` from `apply`, and
+  both `SessionIdentity::inspect` and `Failure::inspect` from `inspect_result`;
+  the same-named decoy methods are excluded.
+- The graph regression verifies guarded `Some`, `Ok`, and `Err` arms, exact
+  owner selection, affected-test propagation, and stale-edge removal after an
+  incremental update.
+- The end-to-end repository fixture selects exactly its one true provenance
+  test after the selected operation changes: precision `1/1`, recall `1/1`.
+
 ## Prioritized open gaps
 
 1. **P0 — call-edge precision and recall.** Model subprocess CLI entry routes
-   and implicit RAII/`Drop`; extend scoped type refinement to match arms,
-   `let-else`, and let-chains; build equivalent measured Python fixtures.
+   and implicit RAII/`Drop`; extend scoped type refinement to `let-else` and
+   let-chains; build equivalent measured Python fixtures.
 2. **P0 — affected-test oracle.** Add dynamic-coverage comparison fixtures so
    precision/recall claims are reproducible rather than inferred from static
    tests alone.
