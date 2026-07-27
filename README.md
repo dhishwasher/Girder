@@ -72,9 +72,9 @@ cargo run -p aether-app -- collab member remove alice.aetherc carol --approve
 # Secret contents are generated with private permissions and never printed:
 cargo run -p aether-app -- collab secret collaboration.secret
 cargo run -p aether-app -- collab host alice.aetherc 127.0.0.1:7331 \
-  --secret-file collaboration.secret
+  --secret-file collaboration.secret --presence "reviewing parser changes"
 cargo run -p aether-app -- collab join bob.aetherc 127.0.0.1:7331 \
-  --secret-file collaboration.secret
+  --secret-file collaboration.secret --presence "running transport tests"
 # Successful sessions persist both peers' causal acknowledgements. Once every
 # active member has acknowledged superseded history, prune it conservatively:
 cargo run -p aether-app -- collab compact alice.aetherc
@@ -169,12 +169,16 @@ verify that the other actor is active in the roster and durably persist a
 converged version, they persist monotonic peer acknowledgements. A delta that
 would remove either authenticated endpoint is rejected before persistence. A
 session claiming an unlisted actor is rejected even with a valid group-secret
-proof. `collab compact`
+proof. Host and join may explicitly share a single-line status of at most 256
+UTF-8 bytes. Both statuses are bound into the authenticated handshake, reported
+to the peer, and discarded after that synchronization; they are never written
+to graph operations, acknowledgements, or collaboration bundles. `collab compact`
 requires an acknowledgement from every active remote member, then prunes only
 causally superseded operations while retaining concurrent winners, membership
 removal barriers, and node-generation tombstones. Peers older than the recorded
-history floor fail safely and need a current bundle. Peer discovery, presence,
-encrypted remote transport, and per-member identity keys remain future work.
+history floor fail safely and need a current bundle. Peer discovery, continuous
+presence/subscriptions, encrypted remote transport, and per-member identity keys
+remain future work.
 The current secret is a group credential: roster checks reject an unlisted
 claimed actor, but any secret holder can impersonate an active actor and must
 therefore be trusted at the collaboration-group boundary.
@@ -371,6 +375,6 @@ python3 -m pip install debugpy
 cargo test -p aether-dap --test debugpy -- --ignored --nocapture
 ```
 
-The production roadmap (collaboration discovery/presence and encrypted remote
-transport, self-optimization, web/mobile projections, and deeper tracing) is
-in `BLUEPRINT.md §9`.
+The production roadmap (collaboration discovery/continuous presence and
+encrypted remote transport, self-optimization, web/mobile projections, and
+deeper tracing) is in `BLUEPRINT.md §9`.

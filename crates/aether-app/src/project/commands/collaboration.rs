@@ -23,8 +23,8 @@ usage:
   bitcode collab apply <dir> <bundle> --approve
   bitcode collab materialize <bundle> <graph.aether>
   bitcode collab secret <path>
-  bitcode collab host <bundle> <127.0.0.1:port> --secret-file <path> [--once] [--ready-file <path>]
-  bitcode collab join <bundle> <127.0.0.1:port> --secret-file <path> [out]";
+  bitcode collab host <bundle> <127.0.0.1:port> --secret-file <path> [--presence <status>] [--once] [--ready-file <path>]
+  bitcode collab join <bundle> <127.0.0.1:port> --secret-file <path> [--presence <status>] [out]";
 
 pub fn collaboration(args: &[String]) -> std::io::Result<()> {
     match args.first().map(String::as_str) {
@@ -72,6 +72,7 @@ fn host(args: &[String]) -> std::io::Result<()> {
     };
     let mut secret_file = None;
     let mut ready_file = None;
+    let mut presence = None;
     let mut once = false;
     let mut index = 2;
     while index < args.len() {
@@ -82,6 +83,16 @@ fn host(args: &[String]) -> std::io::Result<()> {
             }
             "--ready-file" => {
                 ready_file = args.get(index + 1).map(PathBuf::from);
+                index += 2;
+            }
+            "--presence" => {
+                presence = Some(
+                    args.get(index + 1)
+                        .ok_or_else(|| {
+                            invalid_input("collab host requires a value after --presence")
+                        })?
+                        .clone(),
+                );
                 index += 2;
             }
             "--once" => {
@@ -103,6 +114,7 @@ fn host(args: &[String]) -> std::io::Result<()> {
         &secret_file,
         once,
         ready_file.as_deref(),
+        presence.as_deref(),
     )
 }
 
@@ -116,12 +128,23 @@ fn join(args: &[String]) -> std::io::Result<()> {
         return Ok(());
     };
     let mut secret_file = None;
+    let mut presence = None;
     let mut out = None;
     let mut index = 2;
     while index < args.len() {
         match args[index].as_str() {
             "--secret-file" => {
                 secret_file = args.get(index + 1).map(PathBuf::from);
+                index += 2;
+            }
+            "--presence" => {
+                presence = Some(
+                    args.get(index + 1)
+                        .ok_or_else(|| {
+                            invalid_input("collab join requires a value after --presence")
+                        })?
+                        .clone(),
+                );
                 index += 2;
             }
             option if option.starts_with('-') => {
@@ -142,8 +165,13 @@ fn join(args: &[String]) -> std::io::Result<()> {
     }
     let secret_file =
         secret_file.ok_or_else(|| invalid_input("collab join requires --secret-file <path>"))?;
-    let report =
-        collaboration_transport::join(Path::new(bundle), address, &secret_file, out.as_deref())?;
+    let report = collaboration_transport::join(
+        Path::new(bundle),
+        address,
+        &secret_file,
+        out.as_deref(),
+        presence.as_deref(),
+    )?;
     println!(
         "Live synchronization with {} complete: sent {}, received {}, inserted {}",
         report.peer, report.sent_operations, report.received_operations, report.inserted_operations
@@ -152,6 +180,10 @@ fn join(args: &[String]) -> std::io::Result<()> {
         "  converged graph: {} nodes, {} edges",
         report.node_count, report.edge_count
     );
+    match report.peer_presence() {
+        Some(status) => println!("  peer presence: {status}"),
+        None => println!("  peer presence: online (no status shared)"),
+    }
     Ok(())
 }
 

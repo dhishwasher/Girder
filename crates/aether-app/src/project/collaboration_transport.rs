@@ -16,11 +16,12 @@ use std::path::Path;
 use std::time::Duration;
 
 const PROTOCOL_MAGIC: &str = "BITCODE_LIVE_COLLAB";
-const PROTOCOL_VERSION: u32 = 3;
+const PROTOCOL_VERSION: u32 = 4;
 const NONCE_BYTES: usize = 32;
 const MAC_BYTES: usize = 32;
 const MIN_SECRET_BYTES: usize = 32;
 const MAX_SECRET_BYTES: usize = 4096;
+const MAX_PRESENCE_BYTES: usize = 256;
 const MAX_HANDSHAKE_BYTES: usize = 64 * 1024;
 const MAX_SYNC_BYTES: usize = 16 * 1024 * 1024;
 const IO_TIMEOUT: Duration = Duration::from_secs(15);
@@ -35,14 +36,74 @@ pub(crate) struct LiveSyncReport {
     pub(crate) inserted_operations: usize,
     pub(crate) node_count: usize,
     pub(crate) edge_count: usize,
+    peer_presence: SessionPresence,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+impl LiveSyncReport {
+    pub(crate) fn peer_presence(&self) -> Option<&str> {
+        self.peer_presence.status()
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
+struct SessionPresence(Option<String>);
+
+impl SessionPresence {
+    fn new(status: Option<&str>) -> std::io::Result<Self> {
+        let status = status.map(str::trim).filter(|status| !status.is_empty());
+        let presence: SessionPresence = Self(status.map(str::to_owned));
+        presence
+            .validate()
+            .map_err(|error| invalid_input(error.to_string()))?;
+        Ok(presence)
+    }
+
+    fn validate(&self) -> std::io::Result<()> {
+        let Some(status) = self.status() else {
+            return Ok(());
+        };
+        if status.is_empty() || status.trim() != status {
+            return Err(invalid_data(
+                "session presence must use a non-empty canonical status",
+            ));
+        }
+        if status.len() > MAX_PRESENCE_BYTES {
+            return Err(invalid_data(format!(
+                "session presence exceeds {MAX_PRESENCE_BYTES} UTF-8 bytes"
+            )));
+        }
+        for character in status.chars() {
+            if is_unsafe_presence_character(character) {
+                return Err(invalid_data(
+                    "session presence must be single-line text without control or directional formatting characters",
+                ));
+            }
+        }
+        Ok(())
+    }
+
+    fn status(&self) -> Option<&str> {
+        self.0.as_deref()
+    }
+}
+
+impl std::fmt::Display for SessionPresence {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.status() {
+            Some(status) => formatter.write_str(status),
+            None => formatter.write_str("online (no status shared)"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct Challenge {
     magic: String,
     version: u32,
     server_actor: ActorId,
     server_nonce: [u8; NONCE_BYTES],
+    server_presence: SessionPresence,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -50,6 +111,7 @@ struct AuthRequest {
     client_actor: ActorId,
     client_nonce: [u8; NONCE_BYTES],
     client_version: VersionVector,
+    client_presence: SessionPresence,
     proof: [u8; MAC_BYTES],
 }
 
@@ -70,6 +132,8 @@ struct AuthTranscript<'a> {
     server_nonce: &'a [u8; NONCE_BYTES],
     client_nonce: &'a [u8; NONCE_BYTES],
     client_version: &'a VersionVector,
+    server_presence: &'a SessionPresence,
+    client_presence: &'a SessionPresence,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -220,10 +284,12 @@ pub(crate) fn serve(
     secret_file: &Path,
     once: bool,
     ready_file: Option<&Path>,
+    presence: Option<&str>,
 ) -> std::io::Result<()> {
+    let presence = SessionPresence::new(presence)?;
     let address = loopback_address(bind)?;
     let listener = TcpListener::bind(address)?;
-    serve_listener(bundle, listener, secret_file, once, ready_file)
+    serve_listener(bundle, listener, secret_file, once, ready_file, presence)
 }
 
 fn serve_listener(
@@ -232,6 +298,7 @@ fn serve_listener(
     secret_file: &Path,
     once: bool,
     ready_file: Option<&Path>,
+    presence: SessionPresence,
 ) -> std::io::Result<()> {
     let secret = read_secret(secret_file)?;
     let mut replica = collaboration_result(GraphReplica::load(bundle))?;
@@ -253,10 +320,11 @@ fn serve_listener(
         replica.actor()
     );
     println!("  transport: authenticated and integrity-protected; loopback only");
+    println!("  session presence: {presence}");
 
     loop {
         let (stream, peer_address) = listener.accept()?;
-        match handle_peer(&mut replica, stream, &secret, bundle) {
+        match handle_peer(&mut replica, stream, &secret, bundle, &presence) {
             Ok(report) => {
                 println!(
                     "  synchronized {} from {peer_address}: received {}, inserted {}, graph {} nodes / {} edges",
@@ -266,6 +334,7 @@ fn serve_listener(
                     report.node_count,
                     report.edge_count
                 );
+                println!("    peer presence: {}", report.peer_presence);
             }
             Err(error) => eprintln!("  rejected peer {peer_address}: {error}"),
         }
@@ -280,7 +349,9 @@ pub(crate) fn join(
     address: &str,
     secret_file: &Path,
     out: Option<&Path>,
+    presence: Option<&str>,
 ) -> std::io::Result<LiveSyncReport> {
+    let presence = SessionPresence::new(presence)?;
     let address = loopback_address(address)?;
     let secret = read_secret(secret_file)?;
     let mut replica = collaboration_result(GraphReplica::load(bundle))?;
@@ -317,6 +388,7 @@ pub(crate) fn join(
         replica.actor(),
         &client_nonce,
         replica.version(),
+        &presence,
     )?;
     let proof = compute_mac(&secret, b"client-auth", &transcript)?;
     write_frame(
@@ -325,6 +397,7 @@ pub(crate) fn join(
             client_actor: replica.actor().clone(),
             client_nonce,
             client_version: replica.version().clone(),
+            client_presence: presence,
             proof,
         },
         MAX_HANDSHAKE_BYTES,
@@ -394,6 +467,7 @@ pub(crate) fn join(
         inserted_operations,
         node_count: graph.node_count(),
         edge_count: graph.edge_count(),
+        peer_presence: challenge.server_presence,
     })
 }
 
@@ -402,6 +476,7 @@ fn handle_peer(
     mut stream: TcpStream,
     secret: &[u8],
     bundle: &Path,
+    presence: &SessionPresence,
 ) -> std::io::Result<LiveSyncReport> {
     configure_stream(&stream)?;
     let challenge = Challenge {
@@ -409,12 +484,14 @@ fn handle_peer(
         version: PROTOCOL_VERSION,
         server_actor: replica.actor().clone(),
         server_nonce: random_nonce()?,
+        server_presence: presence.clone(),
     };
     write_frame(&mut stream, &challenge, MAX_HANDSHAKE_BYTES)?;
     let request: AuthRequest = read_frame(&mut stream, MAX_HANDSHAKE_BYTES)?;
 
     let validated_actor = ActorId::new(request.client_actor.as_str())
         .map_err(|error| invalid_data(error.to_string()))?;
+    request.client_presence.validate()?;
     if validated_actor == *replica.actor() {
         write_frame(
             &mut stream,
@@ -433,6 +510,7 @@ fn handle_peer(
         &validated_actor,
         &request.client_nonce,
         &request.client_version,
+        &request.client_presence,
     )?;
     if verify_mac(secret, b"client-auth", &transcript, &request.proof).is_err() {
         write_frame(
@@ -586,6 +664,7 @@ fn handle_peer(
         inserted_operations: merge.inserted,
         node_count: graph.node_count(),
         edge_count: graph.edge_count(),
+        peer_presence: request.client_presence,
     })
 }
 
@@ -640,7 +719,8 @@ fn validate_challenge(challenge: &Challenge) -> std::io::Result<()> {
     }
     ActorId::new(challenge.server_actor.as_str())
         .map(|_| ())
-        .map_err(|error| invalid_data(error.to_string()))
+        .map_err(|error| invalid_data(error.to_string()))?;
+    challenge.server_presence.validate()
 }
 
 fn transcript_bytes(
@@ -648,6 +728,7 @@ fn transcript_bytes(
     client_actor: &ActorId,
     client_nonce: &[u8; NONCE_BYTES],
     client_version: &VersionVector,
+    client_presence: &SessionPresence,
 ) -> std::io::Result<Vec<u8>> {
     serde_json::to_vec(&AuthTranscript {
         magic: PROTOCOL_MAGIC,
@@ -657,8 +738,22 @@ fn transcript_bytes(
         server_nonce: &challenge.server_nonce,
         client_nonce,
         client_version,
+        server_presence: &challenge.server_presence,
+        client_presence,
     })
     .map_err(|error| invalid_data(error.to_string()))
+}
+
+fn is_unsafe_presence_character(character: char) -> bool {
+    character.is_control()
+        || matches!(
+            character,
+            '\u{061c}'
+                | '\u{200e}'
+                | '\u{200f}'
+                | '\u{2028}'..='\u{202e}'
+                | '\u{2066}'..='\u{2069}'
+        )
 }
 
 fn compute_mac(secret: &[u8], tag: &[u8], message: &[u8]) -> std::io::Result<[u8; MAC_BYTES]> {
@@ -895,13 +990,22 @@ mod tests {
         let server_bundle = server_path.clone();
         let server_secret = secret.clone();
         let host = thread::spawn(move || {
-            serve_listener(&server_bundle, listener, &server_secret, true, None).unwrap()
+            serve_listener(
+                &server_bundle,
+                listener,
+                &server_secret,
+                true,
+                None,
+                SessionPresence::default(),
+            )
+            .unwrap()
         });
         let report = join(
             &client_path,
             &address.to_string(),
             &secret,
             Some(&client_path),
+            None,
         )
         .unwrap();
         host.join().unwrap();
@@ -935,6 +1039,182 @@ mod tests {
     }
 
     #[test]
+    fn authenticated_session_presence_is_bidirectional_and_ephemeral() {
+        const ALICE_STATUS: &str = "alice-presence-sentinel: reviewing parser changes";
+        const BOB_STATUS: &str = "bob-presence-sentinel: running transport tests";
+        let temp = TempDir::new();
+        let secret_path = temp.file("secret");
+        let secret = b"0123456789abcdef0123456789abcdef";
+        write_secret(&secret_path, secret);
+        let server_path = temp.file("alice.aetherc");
+        let client_path = temp.file("bob.aetherc");
+        let base = graph("fn run() {}");
+        let mut alice = GraphReplica::from_graph(actor("alice"), &base);
+        let bob = alice.fork(actor("bob")).unwrap();
+        alice.save(&server_path).unwrap();
+        bob.save(&client_path).unwrap();
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server_bundle = server_path.clone();
+        let server_presence = SessionPresence::new(Some(ALICE_STATUS)).unwrap();
+        let host = thread::spawn(move || {
+            let mut replica = GraphReplica::load(&server_bundle).unwrap();
+            let (stream, _) = listener.accept().unwrap();
+            handle_peer(
+                &mut replica,
+                stream,
+                secret,
+                &server_bundle,
+                &server_presence,
+            )
+        });
+        let client_report = join(
+            &client_path,
+            &address.to_string(),
+            &secret_path,
+            Some(&client_path),
+            Some(BOB_STATUS),
+        )
+        .unwrap();
+        let server_report = host.join().unwrap().unwrap();
+
+        assert_eq!(client_report.peer_presence(), Some(ALICE_STATUS));
+        assert_eq!(server_report.peer_presence(), Some(BOB_STATUS));
+        for bundle in [&server_path, &client_path] {
+            let bytes = std::fs::read(bundle).unwrap();
+            for status in [ALICE_STATUS, BOB_STATUS] {
+                assert!(
+                    !bytes
+                        .windows(status.len())
+                        .any(|window| window == status.as_bytes()),
+                    "{} persisted ephemeral presence {status:?}",
+                    bundle.display()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn session_presence_is_canonical_bounded_and_display_safe() {
+        let canonical = SessionPresence::new(Some("  reviewing 🦀 changes  ")).unwrap();
+        assert_eq!(canonical.status(), Some("reviewing 🦀 changes"));
+        assert_eq!(canonical.to_string(), "reviewing 🦀 changes");
+        assert_eq!(
+            SessionPresence::default().to_string(),
+            "online (no status shared)"
+        );
+        assert_eq!(
+            SessionPresence::new(Some(" \t ")).unwrap(),
+            SessionPresence::default()
+        );
+        assert!(SessionPresence::new(Some(&"x".repeat(MAX_PRESENCE_BYTES))).is_ok());
+        assert!(SessionPresence::new(Some(&"x".repeat(MAX_PRESENCE_BYTES + 1))).is_err());
+
+        for unsafe_status in [
+            "line one\nline two",
+            "tab\tseparated",
+            "escape\u{001b}[31m",
+            "spoof\u{202e}txt",
+            "line\u{2028}separator",
+        ] {
+            assert!(
+                SessionPresence::new(Some(unsafe_status)).is_err(),
+                "accepted unsafe presence {unsafe_status:?}"
+            );
+        }
+
+        let malformed_challenge = Challenge {
+            magic: PROTOCOL_MAGIC.into(),
+            version: PROTOCOL_VERSION,
+            server_actor: actor("alice"),
+            server_nonce: [0; NONCE_BYTES],
+            server_presence: SessionPresence(Some(" not canonical".into())),
+        };
+        assert!(validate_challenge(&malformed_challenge).is_err());
+    }
+
+    #[test]
+    fn both_session_presence_values_are_bound_to_authentication_transcript() {
+        let temp = TempDir::new();
+        let secret_path = temp.file("secret");
+        let secret = b"0123456789abcdef0123456789abcdef";
+        write_secret(&secret_path, secret);
+        let server_path = temp.file("alice.aetherc");
+        let base = graph("fn run() {}");
+        let mut alice = GraphReplica::from_graph(actor("alice"), &base);
+        let bob = alice.fork(actor("bob")).unwrap();
+        alice.save(&server_path).unwrap();
+        let before = std::fs::read(&server_path).unwrap();
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server_bundle = server_path.clone();
+        let host = thread::spawn(move || {
+            let mut replica = GraphReplica::load(&server_bundle).unwrap();
+            let (stream, _) = listener.accept().unwrap();
+            handle_peer(
+                &mut replica,
+                stream,
+                secret,
+                &server_bundle,
+                &SessionPresence::default(),
+            )
+        });
+
+        let mut stream = TcpStream::connect(address).unwrap();
+        configure_stream(&stream).unwrap();
+        let challenge: Challenge = read_frame(&mut stream, MAX_HANDSHAKE_BYTES).unwrap();
+        let client_nonce = random_nonce().unwrap();
+        let signed_presence = SessionPresence::new(Some("reviewing")).unwrap();
+        let altered_presence = SessionPresence::new(Some("approved")).unwrap();
+        let transcript = transcript_bytes(
+            &challenge,
+            bob.actor(),
+            &client_nonce,
+            bob.version(),
+            &signed_presence,
+        )
+        .unwrap();
+        let altered_server_challenge = Challenge {
+            server_presence: SessionPresence::new(Some("server is away")).unwrap(),
+            ..challenge.clone()
+        };
+        assert_ne!(
+            transcript,
+            transcript_bytes(
+                &altered_server_challenge,
+                bob.actor(),
+                &client_nonce,
+                bob.version(),
+                &signed_presence,
+            )
+            .unwrap()
+        );
+        let proof = compute_mac(secret, b"client-auth", &transcript).unwrap();
+        write_frame(
+            &mut stream,
+            &AuthRequest {
+                client_actor: bob.actor().clone(),
+                client_nonce,
+                client_version: bob.version().clone(),
+                client_presence: altered_presence,
+                proof,
+            },
+            MAX_HANDSHAKE_BYTES,
+        )
+        .unwrap();
+        let response: AuthResponse = read_frame(&mut stream, MAX_HANDSHAKE_BYTES).unwrap();
+        assert!(!response.accepted);
+        assert_eq!(response.error.as_deref(), Some("authentication failed"));
+        assert_eq!(
+            host.join().unwrap().unwrap_err().kind(),
+            std::io::ErrorKind::PermissionDenied
+        );
+        assert_eq!(std::fs::read(&server_path).unwrap(), before);
+    }
+
+    #[test]
     fn wrong_secret_is_rejected_without_mutating_the_host() {
         let temp = TempDir::new();
         let server_secret = temp.file("server-secret");
@@ -953,9 +1233,24 @@ mod tests {
         let address = listener.local_addr().unwrap();
         let server_bundle = server_path.clone();
         let host = thread::spawn(move || {
-            serve_listener(&server_bundle, listener, &server_secret, true, None).unwrap()
+            serve_listener(
+                &server_bundle,
+                listener,
+                &server_secret,
+                true,
+                None,
+                SessionPresence::default(),
+            )
+            .unwrap()
         });
-        assert!(join(&client_path, &address.to_string(), &client_secret, None).is_err());
+        assert!(join(
+            &client_path,
+            &address.to_string(),
+            &client_secret,
+            None,
+            None
+        )
+        .is_err());
         host.join().unwrap();
         assert_eq!(std::fs::read(&server_path).unwrap(), before);
     }
@@ -980,9 +1275,17 @@ mod tests {
         let server_bundle = server_path.clone();
         let server_secret = secret.clone();
         let host = thread::spawn(move || {
-            serve_listener(&server_bundle, listener, &server_secret, true, None).unwrap()
+            serve_listener(
+                &server_bundle,
+                listener,
+                &server_secret,
+                true,
+                None,
+                SessionPresence::default(),
+            )
+            .unwrap()
         });
-        let error = join(&client_path, &address.to_string(), &secret, None).unwrap_err();
+        let error = join(&client_path, &address.to_string(), &secret, None, None).unwrap_err();
         assert!(
             error
                 .to_string()
@@ -1013,15 +1316,30 @@ mod tests {
         let server_bundle = server_path.clone();
         let server_secret = secret_path.clone();
         let host = thread::spawn(move || {
-            serve_listener(&server_bundle, listener, &server_secret, true, None).unwrap()
+            serve_listener(
+                &server_bundle,
+                listener,
+                &server_secret,
+                true,
+                None,
+                SessionPresence::default(),
+            )
+            .unwrap()
         });
 
         let mut stream = TcpStream::connect(address).unwrap();
         configure_stream(&stream).unwrap();
         let challenge: Challenge = read_frame(&mut stream, MAX_HANDSHAKE_BYTES).unwrap();
         let client_nonce = random_nonce().unwrap();
-        let transcript =
-            transcript_bytes(&challenge, bob.actor(), &client_nonce, bob.version()).unwrap();
+        let client_presence = SessionPresence::default();
+        let transcript = transcript_bytes(
+            &challenge,
+            bob.actor(),
+            &client_nonce,
+            bob.version(),
+            &client_presence,
+        )
+        .unwrap();
         let proof = compute_mac(secret, b"client-auth", &transcript).unwrap();
         write_frame(
             &mut stream,
@@ -1029,6 +1347,7 @@ mod tests {
                 client_actor: bob.actor().clone(),
                 client_nonce,
                 client_version: bob.version().clone(),
+                client_presence,
                 proof,
             },
             MAX_HANDSHAKE_BYTES,
@@ -1090,13 +1409,22 @@ mod tests {
         let server_bundle = server_path.clone();
         let server_secret = secret.clone();
         let host = thread::spawn(move || {
-            serve_listener(&server_bundle, listener, &server_secret, true, None).unwrap()
+            serve_listener(
+                &server_bundle,
+                listener,
+                &server_secret,
+                true,
+                None,
+                SessionPresence::default(),
+            )
+            .unwrap()
         });
         let error = join(
             &stale_path,
             &address.to_string(),
             &secret,
             Some(&stale_path),
+            None,
         )
         .unwrap_err();
         assert!(error.to_string().contains("predates compacted"));

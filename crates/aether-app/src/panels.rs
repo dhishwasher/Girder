@@ -647,6 +647,11 @@ fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     ui.text_edit_singleline(&mut app.collaboration_address_input);
     ui.label("Secret file (32+ bytes, mode 600)");
     ui.text_edit_singleline(&mut app.collaboration_secret_input);
+    ui.label("Session presence (optional)");
+    ui.text_edit_singleline(&mut app.collaboration_presence_input);
+    ui.small(
+        "Presence is explicit single-line status (up to 256 UTF-8 bytes), authenticated for this sync only, and never saved in the collaboration bundle.",
+    );
     let joining = app.collaboration_busy();
     ui.horizontal(|ui| {
         if ui.button("Generate secret").clicked() {

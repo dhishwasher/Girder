@@ -640,6 +640,8 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
             secret.to_str().unwrap(),
             "--ready-file",
             ready.to_str().unwrap(),
+            "--presence",
+            "Alice is reviewing",
             "--once",
         ])
         .stdout(std::process::Stdio::piped())
@@ -662,9 +664,15 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         address.trim(),
         "--secret-file",
         secret.to_str().unwrap(),
+        "--presence",
+        "Bob is implementing",
     ]);
     assert!(
         joined.contains("Live synchronization with alice complete"),
+        "{joined}"
+    );
+    assert!(
+        joined.contains("peer presence: Alice is reviewing"),
         "{joined}"
     );
     let output = host.wait_with_output().unwrap();
@@ -673,6 +681,11 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         "host failed\nstdout:\n{}\nstderr:\n{}",
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        String::from_utf8_lossy(&output.stdout).contains("peer presence: Bob is implementing"),
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
     );
 
     let alice_replica = aether_graph::GraphReplica::load(&alice).unwrap();

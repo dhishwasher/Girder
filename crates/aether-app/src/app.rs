@@ -92,6 +92,7 @@ pub struct AetherApp {
     pub(crate) collaboration_actor_input: String,
     pub(crate) collaboration_address_input: String,
     pub(crate) collaboration_secret_input: String,
+    pub(crate) collaboration_presence_input: String,
     pub(crate) collaboration_status: String,
     collaboration_rx: Option<CollaborationReceiver>,
     collaboration_projection_rx: Option<CollaborationProjectionReceiver>,
@@ -161,6 +162,7 @@ impl AetherApp {
             collaboration_actor_input: String::new(),
             collaboration_address_input: "127.0.0.1:7331".into(),
             collaboration_secret_input: ".bitcode/collaboration.secret".into(),
+            collaboration_presence_input: String::new(),
             collaboration_status:
                 "Initialize a graph replica or inspect an existing collaboration bundle.".into(),
             collaboration_rx: None,
@@ -790,9 +792,10 @@ impl AetherApp {
             }
         };
         let address = self.collaboration_address_input.trim().to_string();
+        let presence = self.collaboration_presence_input.clone();
         let (tx, rx) = tokio::sync::oneshot::channel();
         std::thread::spawn(move || {
-            let result = join_collaboration(&bundle, &address, &secret, None);
+            let result = join_collaboration(&bundle, &address, &secret, None, Some(&presence));
             let _ = tx.send(result);
         });
         self.collaboration_rx = Some(rx);
@@ -1083,8 +1086,12 @@ impl eframe::App for AetherApp {
             match rx.try_recv() {
                 Ok(Ok(report)) => {
                     self.collaboration_rx = None;
+                    let peer_presence = report
+                        .peer_presence()
+                        .map(|status| format!("status {status:?}"))
+                        .unwrap_or_else(|| "no status shared".into());
                     self.collaboration_status = format!(
-                        "Live synchronization with {} completed: sent {}, received {}, inserted {}; converged graph {} nodes / {} edges",
+                        "Live synchronization with {} completed ({peer_presence}): sent {}, received {}, inserted {}; converged graph {} nodes / {} edges",
                         report.peer,
                         report.sent_operations,
                         report.received_operations,
