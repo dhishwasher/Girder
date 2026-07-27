@@ -798,9 +798,15 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 child_type_hints,
                 out,
             );
-            if matches!(lang, Lang::Rust) && node.kind() == "block" {
-                if let Some(hints) = rust_let_else_type_hints(child, sequential_type_hints, source)
-                {
+            if matches!(lang, Lang::Rust) {
+                let following = match node.kind() {
+                    "block" => rust_let_else_type_hints(child, sequential_type_hints, source),
+                    "let_chain" => {
+                        rust_let_condition_type_hints(child, sequential_type_hints, source)
+                    }
+                    _ => None,
+                };
+                if let Some(hints) = following {
                     following_type_hints = Some(hints);
                 }
             }
@@ -874,6 +880,29 @@ fn rust_condition_type_hints(
     source: &str,
 ) -> Option<HashMap<String, ReceiverHint>> {
     let condition = expression.child_by_field_name("condition")?;
+    match condition.kind() {
+        "let_condition" => rust_let_condition_type_hints(condition, hints, source),
+        "let_chain" => {
+            let mut narrowed = hints.clone();
+            let mut found = false;
+            let mut cursor = condition.walk();
+            for operand in condition.named_children(&mut cursor) {
+                if let Some(next) = rust_let_condition_type_hints(operand, &narrowed, source) {
+                    narrowed = next;
+                    found = true;
+                }
+            }
+            found.then_some(narrowed)
+        }
+        _ => None,
+    }
+}
+
+fn rust_let_condition_type_hints(
+    condition: TsNode,
+    hints: &HashMap<String, ReceiverHint>,
+    source: &str,
+) -> Option<HashMap<String, ReceiverHint>> {
     if condition.kind() != "let_condition" {
         return None;
     }

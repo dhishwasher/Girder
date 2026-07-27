@@ -121,11 +121,33 @@ Acceptance evidence:
 - The end-to-end repository fixture selects exactly its one true provenance
   test after the selected operation changes: precision `1/1`, recall `1/1`.
 
+### Let-chain receiver resolution
+
+Verified defect: bindings introduced by Rust let-chains did not affect either
+later condition operands or the `if`/`while` body. The isolated fixture retained
+only a free call before the binding and omitted every receiver-qualified call.
+
+Acceptance evidence:
+
+- Before the fix, `apply` recorded only `ready`; `inspect_ok` had zero callees.
+- Let-chain operands now update hints left to right after each supported
+  `let_condition`. Calls before a binding retain the prior hints, later
+  operands see the new binding, and the final hint set is restricted to the
+  consequence/body.
+- The same fixture now resolves `ready` plus
+  `SessionIdentity::{is_valid, inspect, verify_selected_operation}` from
+  `apply`, and `SessionIdentity::{is_valid, inspect}` from `inspect_ok`; decoy
+  methods are excluded.
+- The graph regression covers ordered pre/post-binding operands, both `if` and
+  `while`, exact owner selection, affected-test propagation, and incremental
+  stale-edge removal.
+- The end-to-end repository fixture selects exactly its one true provenance
+  test after the selected operation changes: precision `1/1`, recall `1/1`.
+
 ## Prioritized open gaps
 
 1. **P0 — call-edge precision and recall.** Model subprocess CLI entry routes
-   and implicit RAII/`Drop`; extend scoped type refinement to let-chains; build
-   equivalent measured Python fixtures.
+   and implicit RAII/`Drop`; build equivalent measured Python fixtures.
 2. **P0 — affected-test oracle.** Add dynamic-coverage comparison fixtures so
    precision/recall claims are reproducible rather than inferred from static
    tests alone.

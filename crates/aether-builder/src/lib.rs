@@ -1016,6 +1016,121 @@ fn provenance_test() {
     }
 
     #[test]
+    fn resolves_rust_let_chain_narrowed_receiver_types() {
+        let source = r#"
+struct SessionIdentity;
+impl SessionIdentity {
+    fn inspect(&self) {}
+    fn is_valid(&self) -> bool { true }
+    fn verify_selected_operation(&self) {}
+}
+
+struct DecoyIdentity;
+impl DecoyIdentity {
+    fn inspect(&self) {}
+    fn is_valid(&self) -> bool { false }
+}
+
+struct Failure;
+impl Failure {
+    fn inspect(&self) {}
+}
+
+fn ready() -> bool { true }
+
+fn apply(identity: Option<&SessionIdentity>) {
+    if ready() && let Some(identity) = identity && identity.is_valid() {
+        identity.inspect();
+        identity.verify_selected_operation();
+    }
+}
+
+fn inspect_ok(result: Result<&SessionIdentity, &Failure>) {
+    if let Ok(identity) = result && identity.is_valid() {
+        identity.inspect();
+    }
+}
+
+fn ordered(identity: Option<&SessionIdentity>, decoy: &DecoyIdentity) {
+    if decoy.is_valid() && let Some(identity) = identity && identity.is_valid() {
+        identity.inspect();
+    }
+}
+
+fn poll(identity: Option<&SessionIdentity>) {
+    while let Some(identity) = identity && identity.is_valid() {
+        identity.inspect();
+        break;
+    }
+}
+
+#[test]
+fn provenance_test() {
+    apply(Some(&SessionIdentity));
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/session.rs", source);
+
+        let apply = NodeId::from_path("crate::session::apply");
+        let inspect_ok = NodeId::from_path("crate::session::inspect_ok");
+        let ordered = NodeId::from_path("crate::session::ordered");
+        let poll = NodeId::from_path("crate::session::poll");
+        let ready = NodeId::from_path("crate::session::ready");
+        let session_inspect = NodeId::from_path("crate::session::SessionIdentity::inspect");
+        let session_is_valid = NodeId::from_path("crate::session::SessionIdentity::is_valid");
+        let verify =
+            NodeId::from_path("crate::session::SessionIdentity::verify_selected_operation");
+        let decoy_inspect = NodeId::from_path("crate::session::DecoyIdentity::inspect");
+        let decoy_is_valid = NodeId::from_path("crate::session::DecoyIdentity::is_valid");
+        let provenance_test = NodeId::from_path("crate::session::provenance_test");
+
+        let calls = |graph: &SemanticGraph, caller| {
+            graph
+                .neighbors(caller, Some(EdgeKind::Calls))
+                .into_iter()
+                .map(|node| node.id)
+                .collect::<Vec<_>>()
+        };
+        let apply_calls = calls(&graph, apply);
+        assert!(apply_calls.contains(&ready));
+        assert!(apply_calls.contains(&session_is_valid));
+        assert!(apply_calls.contains(&session_inspect));
+        assert!(apply_calls.contains(&verify));
+        assert!(!apply_calls.contains(&decoy_is_valid));
+        assert!(!apply_calls.contains(&decoy_inspect));
+
+        let ok_calls = calls(&graph, inspect_ok);
+        assert!(ok_calls.contains(&session_is_valid));
+        assert!(ok_calls.contains(&session_inspect));
+        assert!(!ok_calls.contains(&decoy_is_valid));
+        assert!(!ok_calls.contains(&decoy_inspect));
+
+        let ordered_calls = calls(&graph, ordered);
+        assert!(ordered_calls.contains(&decoy_is_valid));
+        assert!(ordered_calls.contains(&session_is_valid));
+        assert!(ordered_calls.contains(&session_inspect));
+        assert!(!ordered_calls.contains(&decoy_inspect));
+
+        let poll_calls = calls(&graph, poll);
+        assert!(poll_calls.contains(&session_is_valid));
+        assert!(poll_calls.contains(&session_inspect));
+        assert_eq!(graph.tests_for(verify), vec![provenance_test]);
+
+        builder.update_file(
+            &mut graph,
+            "src/session.rs",
+            &source.replace("        identity.verify_selected_operation();\n", ""),
+        );
+        assert!(!calls(&graph, apply).contains(&verify));
+        assert!(
+            graph.tests_for(verify).is_empty(),
+            "incremental refresh must remove the stale let-chain call edge"
+        );
+    }
+
+    #[test]
     fn rust_test_functions_marked_is_test() {
         let rs = r#"
 fn add(a: i64, b: i64) -> i64 { a + b }
