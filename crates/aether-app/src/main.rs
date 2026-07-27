@@ -50,10 +50,10 @@ COMMANDS:
                               functions (auto-detected via git diff, or explicit
                               node paths). Pass --run to execute them immediately.
     collab <operation>        Exchange deterministic semantic-graph CRDT bundles.
-                              Operations: init, status, fork, sync, merge, compact,
-                              review, apply, materialize, secret, host, join. Live peers use mutually
-                              authenticated loopback sessions; run without an
-                              operation for details.
+                              Operations: init, status, fork, member, sync, merge,
+                              compact, review, apply, materialize, secret, host,
+                              join. Live peers use mutually authenticated loopback
+                              sessions; run without an operation for details.
     dap <program> [--adapter python|rust|<path>] [--break-at <node::path>] [--dry-run]
                               Launch a Debug Adapter Protocol session. Spawns
                               the adapter subprocess, negotiates capabilities,

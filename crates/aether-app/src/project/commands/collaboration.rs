@@ -14,7 +14,8 @@ const USAGE: &str = "\
 usage:
   bitcode collab init <dir> <actor> <bundle>
   bitcode collab status <bundle>
-  bitcode collab fork <bundle> <actor> <out>
+  bitcode collab fork <bundle> <actor> <out> --approve
+  bitcode collab member add|remove <bundle> <actor> --approve
   bitcode collab sync <dir> <bundle> [out]
   bitcode collab merge <bundle> <peer> <out>
   bitcode collab compact <bundle> [out]
@@ -30,6 +31,7 @@ pub fn collaboration(args: &[String]) -> std::io::Result<()> {
         Some("init") => init(&args[1..]),
         Some("status") => status(&args[1..]),
         Some("fork") => fork(&args[1..]),
+        Some("member") => member(&args[1..]),
         Some("sync") => sync(&args[1..]),
         Some("merge") => merge(&args[1..]),
         Some("compact") => compact(&args[1..]),
@@ -196,6 +198,16 @@ fn status(args: &[String]) -> std::io::Result<()> {
         "  compacted through: {}",
         if floor.is_empty() { "none" } else { &floor }
     );
+    println!("  active members:");
+    for member in collaboration_result(replica.members())? {
+        if &member == replica.actor() {
+            println!("    {member} (local)");
+        } else if replica.acknowledgements().any(|(peer, _)| peer == &member) {
+            println!("    {member} (durably acknowledged)");
+        } else {
+            println!("    {member} (awaiting durable acknowledgement)");
+        }
+    }
     println!("  durable peer acknowledgements:");
     if replica.acknowledgements().count() == 0 {
         println!("    none");
@@ -218,17 +230,84 @@ fn status(args: &[String]) -> std::io::Result<()> {
 }
 
 fn fork(args: &[String]) -> std::io::Result<()> {
-    let [bundle, actor, out] = args else {
-        eprintln!("{USAGE}");
-        return Ok(());
+    let [bundle, actor, out, approval] = args else {
+        return Err(invalid_input(
+            "collab fork registers a durable member and requires the exact --approve flag",
+        ));
     };
-    let replica = collaboration_result(GraphReplica::load(bundle))?;
+    if approval != "--approve" {
+        return Err(invalid_input(
+            "collab fork registers a durable member and requires the exact --approve flag",
+        ));
+    }
+    let bundle_path = Path::new(bundle);
+    let out_path = Path::new(out);
+    if paths_alias(bundle_path, out_path) {
+        return Err(invalid_input(
+            "collab fork output must differ from the source bundle",
+        ));
+    }
+    let mut replica = collaboration_result(GraphReplica::load(bundle))?;
+    let original = replica.clone();
     let forked = collaboration_result(replica.fork(collaboration_result(ActorId::new(actor))?))?;
-    collaboration_result(forked.save(out))?;
+    collaboration_result(replica.save(bundle))?;
+    if let Err(error) = forked.save(out) {
+        return match original.save(bundle) {
+            Ok(()) => Err(std::io::Error::other(format!(
+                "failed to save forked bundle; source membership was rolled back: {error}"
+            ))),
+            Err(rollback) => Err(std::io::Error::other(format!(
+                "failed to save forked bundle ({error}) and failed to roll back source membership ({rollback}); actor '{actor}' may remain registered"
+            ))),
+        };
+    }
     println!(
-        "Forked {bundle} -> {out} for actor {} ({} operations)",
+        "Registered member {} in {bundle} and forked -> {out} ({} operations)",
         forked.actor(),
         forked.operation_count()
+    );
+    Ok(())
+}
+
+fn member(args: &[String]) -> std::io::Result<()> {
+    let [operation, bundle, actor, approval] = args else {
+        return Err(invalid_input(
+            "collab member add/remove requires the exact --approve flag",
+        ));
+    };
+    if approval != "--approve" {
+        return Err(invalid_input(
+            "collab member add/remove requires the exact --approve flag",
+        ));
+    }
+    let actor = collaboration_result(ActorId::new(actor))?;
+    let mut replica = collaboration_result(GraphReplica::load(bundle))?;
+    match operation.as_str() {
+        "add" => {
+            collaboration_result(replica.add_member(actor.clone()))?;
+        }
+        "remove" => {
+            collaboration_result(replica.remove_member(&actor))?;
+        }
+        _ => {
+            return Err(invalid_input(
+                "collab member operation must be 'add' or 'remove'",
+            ));
+        }
+    }
+    collaboration_result(replica.save(bundle))?;
+    let members = collaboration_result(replica.members())?
+        .into_iter()
+        .map(|member| member.to_string())
+        .collect::<Vec<_>>()
+        .join(", ");
+    println!(
+        "{} member {actor} in {bundle}; active roster: {members}",
+        if operation == "add" {
+            "Added"
+        } else {
+            "Removed"
+        }
     );
     Ok(())
 }
@@ -433,6 +512,14 @@ fn materialize(args: &[String]) -> std::io::Result<()> {
         graph.edge_count()
     );
     Ok(())
+}
+
+fn paths_alias(left: &Path, right: &Path) -> bool {
+    left == right
+        || match (std::fs::canonicalize(left), std::fs::canonicalize(right)) {
+            (Ok(left), Ok(right)) => left == right,
+            _ => false,
+        }
 }
 
 fn collaboration_result<T>(result: Result<T, GraphError>) -> std::io::Result<T> {

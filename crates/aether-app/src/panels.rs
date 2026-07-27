@@ -560,7 +560,7 @@ fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     ui.add_space(6.0);
     ui.label("Bundle");
     ui.text_edit_singleline(&mut app.collaboration_bundle_input);
-    ui.label("Actor id (required only when initializing)");
+    ui.label("Actor id (initialize or manage membership)");
     ui.text_edit_singleline(&mut app.collaboration_actor_input);
 
     let can_snapshot = !app.collaboration_busy()
@@ -585,16 +585,35 @@ fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         if ui
             .add_enabled(can_snapshot, egui::Button::new("Compact history"))
             .on_hover_text(
-                "Prune only causally superseded operations acknowledged durably by every known peer",
+                "Prune only causally superseded operations acknowledged durably by every active member",
             )
             .clicked()
         {
             app.compact_collaboration();
         }
     });
+    ui.horizontal(|ui| {
+        if ui
+            .add_enabled(can_snapshot, egui::Button::new("Add member"))
+            .on_hover_text("Record a causal membership operation for the actor id above")
+            .clicked()
+        {
+            app.modify_collaboration_member(true);
+        }
+        if ui
+            .add_enabled(can_snapshot, egui::Button::new("Remove member"))
+            .on_hover_text("Revoke the actor id above; the local actor cannot remove itself")
+            .clicked()
+        {
+            app.modify_collaboration_member(false);
+        }
+    });
     if !can_snapshot && !app.collaboration_busy() {
         ui.small("Save or resolve pending agent changes before snapshotting the local graph.");
     }
+    ui.small(
+        "Membership is causal and convergent. Adding a member blocks compaction until that actor durably acknowledges; removing one retains a tombstone barrier.",
+    );
 
     ui.separator();
     ui.strong("Reviewed source projection");
@@ -654,7 +673,7 @@ fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         "Concurrent removals win; concurrent updates use a deterministic actor/counter tie-break. Joining updates the bundle, not project files.",
     );
     ui.small(
-        "Successful live sessions record durable peer acknowledgements. Compaction is conservative and rejects stale peers that need discarded history; transfer them a current bundle before reconnecting.",
+        "Successful live sessions require both actors in the active roster and record durable peer acknowledgements. Compaction is conservative and rejects missing member acknowledgements or stale peers that need discarded history.",
     );
 
     ui.separator();

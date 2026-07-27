@@ -472,12 +472,24 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
 
     let initialized = run_bitcode(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
     assert!(initialized.contains("actor alice"), "{initialized}");
+    let before_invite = std::fs::read(&alice).unwrap();
+    let denied = run_bitcode_output(&[
+        "collab",
+        "fork",
+        alice.to_str().unwrap(),
+        "bob",
+        bob.to_str().unwrap(),
+    ]);
+    assert!(!denied.status.success());
+    assert_eq!(std::fs::read(&alice).unwrap(), before_invite);
+    assert!(!bob.exists());
     run_bitcode(&[
         "collab",
         "fork",
         alice.to_str().unwrap(),
         "bob",
         bob.to_str().unwrap(),
+        "--approve",
     ]);
 
     repo.write("src/lib.rs", "pub fn run() -> i64 { 2 }\n");
@@ -517,6 +529,78 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
     assert!(status.contains("actor: alice"), "{status}");
     assert!(status.contains("operations:"), "{status}");
     assert!(status.contains("nodes:"), "{status}");
+    assert!(status.contains("active members:"), "{status}");
+    assert!(status.contains("alice (local)"), "{status}");
+    assert!(status.contains("bob"), "{status}");
+}
+
+#[test]
+fn collaboration_membership_requires_approval_and_rolls_back_failed_invites() {
+    let help = run_bitcode(&["--help"]);
+    assert!(help.contains("fork, member, sync"), "{help}");
+
+    let repo = TempRepo::new("collaboration-membership");
+    repo.write("src/lib.rs", "pub fn run() {}\n");
+    let root = repo.path().to_str().unwrap();
+    let alice = repo.path().join("alice.aetherc");
+    let failed_fork = repo.path().join("missing").join("bob.aetherc");
+    run_bitcode(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
+
+    let failed = run_bitcode_output(&[
+        "collab",
+        "fork",
+        alice.to_str().unwrap(),
+        "bob",
+        failed_fork.to_str().unwrap(),
+        "--approve",
+    ]);
+    assert!(!failed.status.success());
+    let replica = aether_graph::GraphReplica::load(&alice).unwrap();
+    assert!(!replica
+        .is_member(&aether_graph::ActorId::new("bob").unwrap())
+        .unwrap());
+
+    let before_alias = std::fs::read(&alice).unwrap();
+    let alias = run_bitcode_output(&[
+        "collab",
+        "fork",
+        alice.to_str().unwrap(),
+        "bob",
+        alice.to_str().unwrap(),
+        "--approve",
+    ]);
+    assert!(!alias.status.success());
+    assert_eq!(std::fs::read(&alice).unwrap(), before_alias);
+
+    let denied = run_bitcode_output(&["collab", "member", "add", alice.to_str().unwrap(), "bob"]);
+    assert!(!denied.status.success());
+    run_bitcode(&[
+        "collab",
+        "member",
+        "add",
+        alice.to_str().unwrap(),
+        "bob",
+        "--approve",
+    ]);
+    let mut replica = aether_graph::GraphReplica::load(&alice).unwrap();
+    assert!(replica
+        .is_member(&aether_graph::ActorId::new("bob").unwrap())
+        .unwrap());
+    assert!(replica.compact_acknowledged().is_err());
+
+    run_bitcode(&[
+        "collab",
+        "member",
+        "remove",
+        alice.to_str().unwrap(),
+        "bob",
+        "--approve",
+    ]);
+    let replica = aether_graph::GraphReplica::load(&alice).unwrap();
+    assert_eq!(
+        replica.members().unwrap(),
+        vec![aether_graph::ActorId::new("alice").unwrap()]
+    );
 }
 
 #[test]
@@ -541,6 +625,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         alice.to_str().unwrap(),
         "bob",
         bob.to_str().unwrap(),
+        "--approve",
     ]);
     repo.write("src/lib.rs", "pub fn run() -> i64 { 2 }\n");
     run_bitcode(&["collab", "sync", root, bob.to_str().unwrap()]);
@@ -626,6 +711,7 @@ fn collaboration_cli_reviews_and_applies_whole_file_projection() {
         alice.to_str().unwrap(),
         "bob",
         bob.to_str().unwrap(),
+        "--approve",
     ]);
 
     repo.write("src/lib.rs", "pub fn value() -> i64 { 2 }\n");

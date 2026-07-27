@@ -60,10 +60,13 @@ cargo run -p aether-app -- query sample-project  # interactive REPL (reads stdin
 # Start a graph-native collaboration history, give another replica its own actor,
 # record that replica's current source graph, and deterministically merge it:
 cargo run -p aether-app -- collab init sample-project alice alice.aetherc
-cargo run -p aether-app -- collab fork alice.aetherc bob bob.aetherc
+cargo run -p aether-app -- collab fork alice.aetherc bob bob.aetherc --approve
 cargo run -p aether-app -- collab sync sample-project bob.aetherc
 cargo run -p aether-app -- collab merge alice.aetherc bob.aetherc merged.aethercb
 cargo run -p aether-app -- collab materialize merged.aethercb merged.aether
+# Membership changes are causal operations and require explicit approval:
+cargo run -p aether-app -- collab member add alice.aetherc carol --approve
+cargo run -p aether-app -- collab member remove alice.aetherc carol --approve
 
 # Or exchange deltas in a mutually authenticated live loopback session.
 # Secret contents are generated with private permissions and never printed:
@@ -73,7 +76,7 @@ cargo run -p aether-app -- collab host alice.aetherc 127.0.0.1:7331 \
 cargo run -p aether-app -- collab join bob.aetherc 127.0.0.1:7331 \
   --secret-file collaboration.secret
 # Successful sessions persist both peers' causal acknowledgements. Once every
-# known peer has acknowledged superseded history, prune it conservatively:
+# active member has acknowledged superseded history, prune it conservatively:
 cargo run -p aether-app -- collab compact alice.aetherc
 # Rebuild remote whole-file projections, show semantic/file changes and
 # conflicts, then explicitly validate and journal-commit the reviewed bytes:
@@ -139,20 +142,38 @@ Init/sync reconciles source with the durable graph so graph-owned agent and
 extension metadata participates instead of being discarded. Bundle saves use a
 synced atomic replacement.
 
+Membership is part of the causal operation history rather than a local address
+book. An approved `collab fork` registers the invited actor in both the source
+and forked bundles; if writing the fork fails, the source roster is rolled back.
+`collab member add|remove ... --approve` records convergent add/remove
+operations, concurrent removal wins, normal replica APIs reject new operations
+after the local actor is removed, and membership changes invalidate stale
+acknowledgements. Version
+1 and 2 bundles migrate conservatively by retaining the local actor, previously
+acknowledged peers, and non-bootstrap actors already present in the causal
+clock. Use `fork` to allocate a new actor replica; direct `member add` is for
+re-authorizing an already allocated unique actor, since it does not create that
+actor's bundle.
+
 Live host/join uses fresh random challenges, mutual HMAC-SHA256 authentication,
 direction- and sequence-bound message integrity, bounded frames checked before
 allocation, socket timeouts, and secrets read from non-symlink regular files
 owned by the current user with private permissions. It deliberately binds
 loopback only: graph payloads are authenticated but not encrypted, so remote
 peers must connect through an encrypted tunnel such as SSH. After both sides
-durably persist a converged version, they persist monotonic peer
-acknowledgements. `collab compact` prunes only acknowledged, causally superseded
-operations while retaining concurrent winners and node-generation tombstones.
-Peers older than the recorded history floor fail safely and need a current
-bundle. Until discovery/membership exists, "every known peer" is the explicit
-set of actors that have completed authenticated sessions; operators must not
-compact if an unrecorded offline replica still needs deltas. Peer discovery,
-presence, and encrypted remote transport remain future work.
+verify that the other actor is active in the roster and durably persist a
+converged version, they persist monotonic peer acknowledgements. A delta that
+would remove either authenticated endpoint is rejected before persistence. A
+session claiming an unlisted actor is rejected even with a valid group-secret
+proof. `collab compact`
+requires an acknowledgement from every active remote member, then prunes only
+causally superseded operations while retaining concurrent winners, membership
+removal barriers, and node-generation tombstones. Peers older than the recorded
+history floor fail safely and need a current bundle. Peer discovery, presence,
+encrypted remote transport, and per-member identity keys remain future work.
+The current secret is a group credential: roster checks reject an unlisted
+claimed actor, but any secret holder can impersonate an active actor and must
+therefore be trusted at the collaboration-group boundary.
 
 Every parsed module carries a bounded `file-v1` whole-file projection in the
 semantic graph. `collab review` compares the remote and freshly reconciled local
@@ -331,7 +352,7 @@ time-travel debug) are real, tested, and runnable. Implemented features:
 | Knowledge-graph queries | Natural-language → concept / impact / callers / callees / explain / neighbourhood |
 | Semantic review | Typed diff (added/modified/removed nodes + edges), impact radius, test gap report |
 | Minimal test selection | Call-graph reachability from changed functions, optional `--run` |
-| Graph collaboration | Deterministic operation-set CRDT, causal deltas, tombstones, atomic RON/bincode bundles, authenticated bounded loopback host/join, durable peer acknowledgements, conservative history compaction, and reviewed whole-file source projection |
+| Graph collaboration | Deterministic operation-set CRDT, causal membership/deltas/tombstones, atomic RON/bincode bundles, roster-gated authenticated loopback host/join, all-member acknowledgement compaction, and reviewed whole-file source projection |
 | Project contract | Validated `bitcode.toml` for source scope, graph path, test runners, and agent output |
 | Source projection | GUI/CLI agent output and graph rename commit validated source plus graph through recoverable journaled transactions |
 | Candidate validation | Disposable project copy, optional bubblewrap isolation, Cargo build/tests, configured checks, cancellation/timeouts, bounded diagnostics, snapshot-bound commit gate |

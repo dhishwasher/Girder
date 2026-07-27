@@ -683,10 +683,26 @@ impl AetherApp {
                 })
                 .collect::<Vec<_>>()
                 .join("; ");
+            let members = replica
+                .members()
+                .map_err(std::io::Error::other)?
+                .into_iter()
+                .map(|member| {
+                    if &member == replica.actor() {
+                        format!("{member} (local)")
+                    } else if replica.acknowledgements().any(|(peer, _)| peer == &member) {
+                        format!("{member} (acknowledged)")
+                    } else {
+                        format!("{member} (awaiting acknowledgement)")
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join(", ");
             Ok(format!(
-                "{}\nactor: {}\nversion: {}\ncompacted through: {}\ndurable acknowledgements: {}\noperations: {}\ngraph: {} nodes / {} edges",
+                "{}\nactor: {}\nactive members: {}\nversion: {}\ncompacted through: {}\ndurable acknowledgements: {}\noperations: {}\ngraph: {} nodes / {} edges",
                 bundle.display(),
                 replica.actor(),
+                members,
                 version,
                 if floor.is_empty() { "none" } else { &floor },
                 if acknowledgements.is_empty() {
@@ -697,6 +713,38 @@ impl AetherApp {
                 replica.operation_count(),
                 graph.node_count(),
                 graph.edge_count()
+            ))
+        })();
+        self.collaboration_status = result.unwrap_or_else(|error| format!("Error: {error}"));
+    }
+
+    pub(crate) fn modify_collaboration_member(&mut self, add: bool) {
+        let result = (|| -> std::io::Result<String> {
+            self.collaboration_snapshot_ready()?;
+            let bundle = self.collaboration_path(&self.collaboration_bundle_input)?;
+            let actor = ActorId::new(self.collaboration_actor_input.trim())
+                .map_err(std::io::Error::other)?;
+            let mut replica = GraphReplica::load(&bundle).map_err(std::io::Error::other)?;
+            if add {
+                replica
+                    .add_member(actor.clone())
+                    .map_err(std::io::Error::other)?;
+            } else {
+                replica
+                    .remove_member(&actor)
+                    .map_err(std::io::Error::other)?;
+            }
+            replica.save(&bundle).map_err(std::io::Error::other)?;
+            let members = replica
+                .members()
+                .map_err(std::io::Error::other)?
+                .into_iter()
+                .map(|member| member.to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+            Ok(format!(
+                "{} member {actor}; active roster: {members}",
+                if add { "Added" } else { "Removed" }
             ))
         })();
         self.collaboration_status = result.unwrap_or_else(|error| format!("Error: {error}"));

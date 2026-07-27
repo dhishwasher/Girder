@@ -3,6 +3,8 @@
 //! The protocol deliberately binds only loopback sockets. Remote peers should
 //! use an authenticated encrypted tunnel (for example SSH) because the session
 //! provides mutual authentication and integrity, but not confidentiality.
+//! Authentication proves possession of the group secret; both sides also
+//! require the authenticated actor to be active in the causal membership roster.
 
 use aether_graph::{ActorId, GraphDelta, GraphError, GraphReplica, MergeReport, VersionVector};
 use hmac::{Hmac, Mac};
@@ -14,7 +16,7 @@ use std::path::Path;
 use std::time::Duration;
 
 const PROTOCOL_MAGIC: &str = "BITCODE_LIVE_COLLAB";
-const PROTOCOL_VERSION: u32 = 2;
+const PROTOCOL_VERSION: u32 = 3;
 const NONCE_BYTES: usize = 32;
 const MAC_BYTES: usize = 32;
 const MIN_SECRET_BYTES: usize = 32;
@@ -233,6 +235,12 @@ fn serve_listener(
 ) -> std::io::Result<()> {
     let secret = read_secret(secret_file)?;
     let mut replica = collaboration_result(GraphReplica::load(bundle))?;
+    if !collaboration_result(replica.is_member(replica.actor()))? {
+        return Err(invalid_input(format!(
+            "host actor '{}' is not an active collaboration member",
+            replica.actor()
+        )));
+    }
     let local_address = listener.local_addr()?;
     if !local_address.ip().is_loopback() {
         return Err(invalid_input("live collaboration must bind to loopback"));
@@ -276,6 +284,12 @@ pub(crate) fn join(
     let address = loopback_address(address)?;
     let secret = read_secret(secret_file)?;
     let mut replica = collaboration_result(GraphReplica::load(bundle))?;
+    if !collaboration_result(replica.is_member(replica.actor()))? {
+        return Err(invalid_input(format!(
+            "local actor '{}' is not an active collaboration member",
+            replica.actor()
+        )));
+    }
     let mut stream = TcpStream::connect_timeout(&address, IO_TIMEOUT)?;
     configure_stream(&stream)?;
 
@@ -286,6 +300,15 @@ pub(crate) fn join(
             "peer uses the same actor id '{}'; fork the bundle with a unique actor",
             replica.actor()
         )));
+    }
+    if !collaboration_result(replica.is_member(&challenge.server_actor))? {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            format!(
+                "peer '{}' is not an active collaboration member",
+                challenge.server_actor
+            ),
+        ));
     }
 
     let client_nonce = random_nonce()?;
@@ -329,6 +352,7 @@ pub(crate) fn join(
     };
     let received_operations = server_delta.len();
     let inserted_operations = collaboration_result(replica.apply_delta(&server_delta))?.inserted;
+    ensure_session_members_active(&replica, &challenge.server_actor)?;
     let client_delta = collaboration_result(replica.delta_since(&server_version))?;
     let sent_operations = client_delta.len();
     write_signed(
@@ -426,6 +450,24 @@ fn handle_peer(
             "authentication failed",
         ));
     }
+    if !collaboration_result(replica.is_member(&validated_actor))? {
+        write_frame(
+            &mut stream,
+            &AuthResponse {
+                accepted: false,
+                server_actor: replica.actor().clone(),
+                proof: [0; MAC_BYTES],
+                error: Some(format!(
+                    "actor '{validated_actor}' is not an active collaboration member"
+                )),
+            },
+            MAX_HANDSHAKE_BYTES,
+        )?;
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            format!("actor '{validated_actor}' is not an active collaboration member"),
+        ));
+    }
     let server_proof = compute_mac(secret, b"server-auth", &transcript)?;
     write_frame(
         &mut stream,
@@ -488,6 +530,18 @@ fn handle_peer(
             return Err(invalid_data(error.to_string()));
         }
     };
+    if let Err(error) = ensure_session_members_active(&staged, &validated_actor) {
+        let _ = write_signed(
+            &mut stream,
+            &session_key,
+            b"server",
+            2,
+            SyncPayload::Error {
+                message: error.to_string(),
+            },
+        );
+        return Err(error);
+    }
     let graph = collaboration_result(staged.materialize())?;
     if let Err(error) = staged.save(bundle) {
         let _ = write_signed(
@@ -727,6 +781,21 @@ fn loopback_address(value: &str) -> std::io::Result<SocketAddr> {
     Ok(address)
 }
 
+fn ensure_session_members_active(replica: &GraphReplica, peer: &ActorId) -> std::io::Result<()> {
+    let local = replica.actor();
+    if !collaboration_result(replica.is_member(local))?
+        || !collaboration_result(replica.is_member(peer))?
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            format!(
+                "live synchronization cannot remove authenticated session actors '{local}' or '{peer}'"
+            ),
+        ));
+    }
+    Ok(())
+}
+
 fn collaboration_result<T>(result: Result<T, GraphError>) -> std::io::Result<T> {
     result.map_err(std::io::Error::other)
 }
@@ -874,7 +943,7 @@ mod tests {
         write_secret(&client_secret, b"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
         let server_path = temp.file("alice.aetherc");
         let client_path = temp.file("bob.aetherc");
-        let alice = GraphReplica::from_graph(actor("alice"), &graph("fn run() {}"));
+        let mut alice = GraphReplica::from_graph(actor("alice"), &graph("fn run() {}"));
         let bob = alice.fork(actor("bob")).unwrap();
         alice.save(&server_path).unwrap();
         bob.save(&client_path).unwrap();
@@ -892,26 +961,128 @@ mod tests {
     }
 
     #[test]
+    fn uninvited_actor_with_group_secret_is_rejected_without_host_mutation() {
+        let temp = TempDir::new();
+        let secret = temp.file("secret");
+        write_secret(&secret, b"0123456789abcdef0123456789abcdef");
+        let server_path = temp.file("alice.aetherc");
+        let client_path = temp.file("mallory.aetherc");
+        let base = graph("fn run() {}");
+        let alice = GraphReplica::from_graph(actor("alice"), &base);
+        let mut mallory = GraphReplica::from_graph(actor("mallory"), &base);
+        mallory.add_member(actor("alice")).unwrap();
+        alice.save(&server_path).unwrap();
+        mallory.save(&client_path).unwrap();
+        let before = std::fs::read(&server_path).unwrap();
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server_bundle = server_path.clone();
+        let server_secret = secret.clone();
+        let host = thread::spawn(move || {
+            serve_listener(&server_bundle, listener, &server_secret, true, None).unwrap()
+        });
+        let error = join(&client_path, &address.to_string(), &secret, None).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("not an active collaboration member"),
+            "{error}"
+        );
+        host.join().unwrap();
+        assert_eq!(std::fs::read(&server_path).unwrap(), before);
+    }
+
+    #[test]
+    fn authenticated_peer_cannot_remove_session_actor_during_sync() {
+        let temp = TempDir::new();
+        let secret_path = temp.file("secret");
+        let secret = b"0123456789abcdef0123456789abcdef";
+        write_secret(&secret_path, secret);
+        let server_path = temp.file("alice.aetherc");
+        let base = graph("fn run() {}");
+        let mut alice = GraphReplica::from_graph(actor("alice"), &base);
+        let mut bob = alice.fork(actor("bob")).unwrap();
+        alice.save(&server_path).unwrap();
+        bob.remove_member(&actor("alice")).unwrap();
+        let malicious_delta = bob.delta_since(alice.version()).unwrap();
+        let before = std::fs::read(&server_path).unwrap();
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server_bundle = server_path.clone();
+        let server_secret = secret_path.clone();
+        let host = thread::spawn(move || {
+            serve_listener(&server_bundle, listener, &server_secret, true, None).unwrap()
+        });
+
+        let mut stream = TcpStream::connect(address).unwrap();
+        configure_stream(&stream).unwrap();
+        let challenge: Challenge = read_frame(&mut stream, MAX_HANDSHAKE_BYTES).unwrap();
+        let client_nonce = random_nonce().unwrap();
+        let transcript =
+            transcript_bytes(&challenge, bob.actor(), &client_nonce, bob.version()).unwrap();
+        let proof = compute_mac(secret, b"client-auth", &transcript).unwrap();
+        write_frame(
+            &mut stream,
+            &AuthRequest {
+                client_actor: bob.actor().clone(),
+                client_nonce,
+                client_version: bob.version().clone(),
+                proof,
+            },
+            MAX_HANDSHAKE_BYTES,
+        )
+        .unwrap();
+        let response: AuthResponse = read_frame(&mut stream, MAX_HANDSHAKE_BYTES).unwrap();
+        assert!(response.accepted);
+        verify_mac(secret, b"server-auth", &transcript, &response.proof).unwrap();
+        let session_key = compute_mac(secret, b"session-key", &transcript).unwrap();
+        let server_payload = read_signed(&mut stream, &session_key, b"server", 1).unwrap();
+        assert!(matches!(server_payload, SyncPayload::ServerDelta { .. }));
+        write_signed(
+            &mut stream,
+            &session_key,
+            b"client",
+            1,
+            SyncPayload::ClientDelta {
+                delta: malicious_delta,
+            },
+        )
+        .unwrap();
+        let rejection = read_signed(&mut stream, &session_key, b"server", 2).unwrap();
+        let SyncPayload::Error { message } = rejection else {
+            panic!("expected session-membership rejection");
+        };
+        assert!(message.contains("cannot remove authenticated session actors"));
+
+        host.join().unwrap();
+        assert_eq!(std::fs::read(&server_path).unwrap(), before);
+    }
+
+    #[test]
     fn peers_older_than_compacted_history_are_rejected_without_host_mutation() {
         let temp = TempDir::new();
         let secret = temp.file("secret");
         write_secret(&secret, b"0123456789abcdef0123456789abcdef");
         let server_path = temp.file("alice.aetherc");
         let stale_path = temp.file("charlie.aetherc");
+        let current_path = temp.file("charlie-current.aetherc");
         let base = graph("fn run() {}");
         let mut alice = GraphReplica::from_graph(actor("alice"), &base);
-        let charlie = alice.fork(actor("charlie")).unwrap();
-        let mut bob = alice.fork(actor("bob")).unwrap();
+        let mut charlie = alice.fork(actor("charlie")).unwrap();
+        charlie.save(&stale_path).unwrap();
         alice.sync_graph(&graph("fn run() { first(); }")).unwrap();
         alice.sync_graph(&graph("fn run() { second(); }")).unwrap();
-        bob.apply_delta(&alice.delta_since(bob.version()).unwrap())
+        charlie
+            .apply_delta(&alice.delta_since(charlie.version()).unwrap())
             .unwrap();
+        charlie.save(&current_path).unwrap();
         alice
-            .acknowledge(actor("bob"), bob.version().clone())
+            .acknowledge(actor("charlie"), charlie.version().clone())
             .unwrap();
         assert!(alice.compact_acknowledged().unwrap().removed_operations > 0);
         alice.save(&server_path).unwrap();
-        charlie.save(&stale_path).unwrap();
         let before = std::fs::read(&server_path).unwrap();
 
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
