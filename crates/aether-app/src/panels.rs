@@ -582,6 +582,15 @@ fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         if ui.button("Inspect").clicked() {
             app.inspect_collaboration();
         }
+        if ui
+            .add_enabled(can_snapshot, egui::Button::new("Compact history"))
+            .on_hover_text(
+                "Prune only causally superseded operations acknowledged durably by every known peer",
+            )
+            .clicked()
+        {
+            app.compact_collaboration();
+        }
     });
     if !can_snapshot && !app.collaboration_busy() {
         ui.small("Save or resolve pending agent changes before snapshotting the local graph.");
@@ -617,6 +626,9 @@ fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     );
     ui.small(
         "Concurrent removals win; concurrent updates use a deterministic actor/counter tie-break. Joining updates the bundle, not project files.",
+    );
+    ui.small(
+        "Successful live sessions record durable peer acknowledgements. Compaction is conservative and rejects stale peers that need discarded history; transfer them a current bundle before reconnecting.",
     );
 
     ui.separator();

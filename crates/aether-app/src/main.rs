@@ -50,7 +50,7 @@ COMMANDS:
                               functions (auto-detected via git diff, or explicit
                               node paths). Pass --run to execute them immediately.
     collab <operation>        Exchange deterministic semantic-graph CRDT bundles.
-                              Operations: init, status, fork, sync, merge,
+                              Operations: init, status, fork, sync, merge, compact,
                               materialize, secret, host, join. Live peers use mutually
                               authenticated loopback sessions; run without an
                               operation for details.

@@ -654,14 +654,58 @@ impl AetherApp {
                 .map(|(actor, counter)| format!("{actor}:{counter}"))
                 .collect::<Vec<_>>()
                 .join(", ");
+            let floor = replica
+                .history_floor()
+                .actors()
+                .map(|(actor, counter)| format!("{actor}:{counter}"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            let acknowledgements = replica
+                .acknowledgements()
+                .map(|(peer, version)| {
+                    let version = version
+                        .actors()
+                        .map(|(actor, counter)| format!("{actor}:{counter}"))
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    format!("{peer}=[{version}]")
+                })
+                .collect::<Vec<_>>()
+                .join("; ");
             Ok(format!(
-                "{}\nactor: {}\nversion: {}\noperations: {}\ngraph: {} nodes / {} edges",
+                "{}\nactor: {}\nversion: {}\ncompacted through: {}\ndurable acknowledgements: {}\noperations: {}\ngraph: {} nodes / {} edges",
                 bundle.display(),
                 replica.actor(),
                 version,
+                if floor.is_empty() { "none" } else { &floor },
+                if acknowledgements.is_empty() {
+                    "none"
+                } else {
+                    &acknowledgements
+                },
                 replica.operation_count(),
                 graph.node_count(),
                 graph.edge_count()
+            ))
+        })();
+        self.collaboration_status = result.unwrap_or_else(|error| format!("Error: {error}"));
+    }
+
+    pub(crate) fn compact_collaboration(&mut self) {
+        let result = (|| -> std::io::Result<String> {
+            self.collaboration_snapshot_ready()?;
+            let bundle = self.collaboration_path(&self.collaboration_bundle_input)?;
+            let mut replica = GraphReplica::load(&bundle).map_err(std::io::Error::other)?;
+            let report = replica
+                .compact_acknowledged()
+                .map_err(std::io::Error::other)?;
+            replica.save(&bundle).map_err(std::io::Error::other)?;
+            Ok(format!(
+                "Compacted {}: removed {} superseded operation(s), {} -> {} retained. Peers older than the history floor require a current bundle.",
+                bundle.display(),
+                report.removed_operations,
+                report.operations_before,
+                report.operations_after
             ))
         })();
         self.collaboration_status = result.unwrap_or_else(|error| format!("Error: {error}"));

@@ -14,7 +14,7 @@ use std::path::Path;
 use std::time::Duration;
 
 const PROTOCOL_MAGIC: &str = "BITCODE_LIVE_COLLAB";
-const PROTOCOL_VERSION: u32 = 1;
+const PROTOCOL_VERSION: u32 = 2;
 const NONCE_BYTES: usize = 32;
 const MAC_BYTES: usize = 32;
 const MIN_SECRET_BYTES: usize = 32;
@@ -82,6 +82,9 @@ enum SyncPayload {
     Ack {
         version: VersionVector,
         report: WireMergeReport,
+    },
+    Persisted {
+        version: VersionVector,
     },
     Error {
         message: String,
@@ -326,7 +329,7 @@ pub(crate) fn join(
     };
     let received_operations = server_delta.len();
     let inserted_operations = collaboration_result(replica.apply_delta(&server_delta))?.inserted;
-    let client_delta = replica.delta_since(&server_version);
+    let client_delta = collaboration_result(replica.delta_since(&server_version))?;
     let sent_operations = client_delta.len();
     write_signed(
         &mut stream,
@@ -351,7 +354,15 @@ pub(crate) fn join(
         ));
     }
     let graph = collaboration_result(replica.materialize())?;
+    collaboration_result(replica.acknowledge(challenge.server_actor.clone(), version.clone()))?;
     collaboration_result(replica.save(out.unwrap_or(bundle)))?;
+    write_signed(
+        &mut stream,
+        &session_key,
+        b"client",
+        2,
+        SyncPayload::Persisted { version },
+    )?;
     Ok(LiveSyncReport {
         peer: challenge.server_actor,
         sent_operations,
@@ -428,7 +439,21 @@ fn handle_peer(
     )?;
     let session_key = compute_mac(secret, b"session-key", &transcript)?;
 
-    let server_delta = replica.delta_since(&request.client_version);
+    let server_delta = match replica.delta_since(&request.client_version) {
+        Ok(delta) => delta,
+        Err(error) => {
+            let _ = write_signed(
+                &mut stream,
+                &session_key,
+                b"server",
+                1,
+                SyncPayload::Error {
+                    message: error.to_string(),
+                },
+            );
+            return Err(std::io::Error::other(error));
+        }
+    };
     let sent_operations = server_delta.len();
     write_signed(
         &mut stream,
@@ -487,6 +512,19 @@ fn handle_peer(
             report: merge.into(),
         },
     )?;
+    let persisted = read_signed(&mut stream, &session_key, b"client", 2)?;
+    let SyncPayload::Persisted { version } = persisted else {
+        return Err(invalid_data("expected durable peer acknowledgement"));
+    };
+    if &version != replica.version() {
+        return Err(invalid_data(
+            "peer durable acknowledgement does not match the converged version",
+        ));
+    }
+    let mut acknowledged = replica.clone();
+    collaboration_result(acknowledged.acknowledge(validated_actor.clone(), version))?;
+    collaboration_result(acknowledged.save(bundle))?;
+    *replica = acknowledged;
     Ok(LiveSyncReport {
         peer: validated_actor,
         sent_operations,
@@ -802,12 +840,29 @@ mod tests {
         assert_eq!(report.peer, actor("alice"));
         assert_eq!(report.sent_operations, 1);
         assert_eq!(report.received_operations, 1);
-        let server = GraphReplica::load(&server_path).unwrap();
+        let mut server = GraphReplica::load(&server_path).unwrap();
         let client = GraphReplica::load(&client_path).unwrap();
+        assert_eq!(
+            server
+                .acknowledgements()
+                .find(|(peer, _)| peer.as_str() == "bob")
+                .map(|(_, version)| version),
+            Some(server.version())
+        );
+        assert_eq!(
+            client
+                .acknowledgements()
+                .find(|(peer, _)| peer.as_str() == "alice")
+                .map(|(_, version)| version),
+            Some(client.version())
+        );
         assert_eq!(
             server.materialize().unwrap().to_ron().unwrap(),
             client.materialize().unwrap().to_ron().unwrap()
         );
+        let expected = server.materialize().unwrap().to_ron().unwrap();
+        assert!(server.compact_acknowledged().unwrap().removed_operations > 0);
+        assert_eq!(server.materialize().unwrap().to_ron().unwrap(), expected);
     }
 
     #[test]
@@ -832,6 +887,48 @@ mod tests {
             serve_listener(&server_bundle, listener, &server_secret, true, None).unwrap()
         });
         assert!(join(&client_path, &address.to_string(), &client_secret, None).is_err());
+        host.join().unwrap();
+        assert_eq!(std::fs::read(&server_path).unwrap(), before);
+    }
+
+    #[test]
+    fn peers_older_than_compacted_history_are_rejected_without_host_mutation() {
+        let temp = TempDir::new();
+        let secret = temp.file("secret");
+        write_secret(&secret, b"0123456789abcdef0123456789abcdef");
+        let server_path = temp.file("alice.aetherc");
+        let stale_path = temp.file("charlie.aetherc");
+        let base = graph("fn run() {}");
+        let mut alice = GraphReplica::from_graph(actor("alice"), &base);
+        let charlie = alice.fork(actor("charlie")).unwrap();
+        let mut bob = alice.fork(actor("bob")).unwrap();
+        alice.sync_graph(&graph("fn run() { first(); }")).unwrap();
+        alice.sync_graph(&graph("fn run() { second(); }")).unwrap();
+        bob.apply_delta(&alice.delta_since(bob.version()).unwrap())
+            .unwrap();
+        alice
+            .acknowledge(actor("bob"), bob.version().clone())
+            .unwrap();
+        assert!(alice.compact_acknowledged().unwrap().removed_operations > 0);
+        alice.save(&server_path).unwrap();
+        charlie.save(&stale_path).unwrap();
+        let before = std::fs::read(&server_path).unwrap();
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server_bundle = server_path.clone();
+        let server_secret = secret.clone();
+        let host = thread::spawn(move || {
+            serve_listener(&server_bundle, listener, &server_secret, true, None).unwrap()
+        });
+        let error = join(
+            &stale_path,
+            &address.to_string(),
+            &secret,
+            Some(&stale_path),
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("predates compacted"));
         host.join().unwrap();
         assert_eq!(std::fs::read(&server_path).unwrap(), before);
     }

@@ -592,10 +592,24 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
 
     let alice_replica = aether_graph::GraphReplica::load(&alice).unwrap();
     let bob_replica = aether_graph::GraphReplica::load(&bob).unwrap();
+    assert_eq!(alice_replica.acknowledgements().count(), 1);
+    assert_eq!(bob_replica.acknowledgements().count(), 1);
     assert_eq!(
         alice_replica.materialize().unwrap().to_ron().unwrap(),
         bob_replica.materialize().unwrap().to_ron().unwrap()
     );
+    let before = alice_replica.operation_count();
+    let compacted = run_bitcode(&["collab", "compact", alice.to_str().unwrap()]);
+    assert!(compacted.contains("superseded operation"), "{compacted}");
+    let alice_replica = aether_graph::GraphReplica::load(&alice).unwrap();
+    assert!(alice_replica.operation_count() < before);
+    assert_eq!(
+        alice_replica.materialize().unwrap().to_ron().unwrap(),
+        bob_replica.materialize().unwrap().to_ron().unwrap()
+    );
+    let status = run_bitcode(&["collab", "status", alice.to_str().unwrap()]);
+    assert!(status.contains("compacted through:"), "{status}");
+    assert!(status.contains("bob:"), "{status}");
 }
 
 #[test]

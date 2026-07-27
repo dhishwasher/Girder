@@ -15,14 +15,15 @@
 use crate::{Edge, EdgeKind, GraphError, Node, NodeId, SemanticGraph};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::fmt;
 use std::io::Write;
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 
 const COLLAB_MAGIC: &str = "BITCODE_COLLAB";
-const COLLAB_VERSION: u32 = 1;
+const COLLAB_VERSION: u32 = 2;
+const LEGACY_COLLAB_VERSION: u32 = 1;
 const BOOTSTRAP_ACTOR: &str = "bitcode.bootstrap";
 static NEXT_TEMP_FILE: AtomicUsize = AtomicUsize::new(0);
 
@@ -122,6 +123,18 @@ impl VersionVector {
         let counter = self.entries.entry(dot.actor.clone()).or_default();
         *counter = (*counter).max(dot.counter);
     }
+
+    fn meet(&self, other: &Self) -> Self {
+        let entries = self
+            .entries
+            .iter()
+            .filter_map(|(actor, counter)| {
+                let shared = (*counter).min(other.counter(actor));
+                (shared != 0).then(|| (actor.clone(), shared))
+            })
+            .collect();
+        Self { entries }
+    }
 }
 
 /// A replicated semantic-graph mutation.
@@ -187,11 +200,24 @@ impl SyncReport {
     }
 }
 
+/// Outcome of conservatively pruning causally superseded acknowledged history.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CompactionReport {
+    pub operations_before: usize,
+    pub operations_after: usize,
+    pub removed_operations: usize,
+    pub history_floor: VersionVector,
+}
+
 /// Operation-set CRDT for a semantic graph.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphReplica {
     actor: ActorId,
     clock: VersionVector,
+    #[serde(default)]
+    history_floor: VersionVector,
+    #[serde(default)]
+    acknowledgements: BTreeMap<ActorId, VersionVector>,
     operations: BTreeMap<Dot, GraphOperation>,
 }
 
@@ -200,6 +226,8 @@ impl GraphReplica {
         Self {
             actor,
             clock: VersionVector::default(),
+            history_floor: VersionVector::default(),
+            acknowledgements: BTreeMap::new(),
             operations: BTreeMap::new(),
         }
     }
@@ -247,9 +275,17 @@ impl GraphReplica {
         self.operations.len()
     }
 
+    pub fn history_floor(&self) -> &VersionVector {
+        &self.history_floor
+    }
+
+    pub fn acknowledgements(&self) -> impl Iterator<Item = (&ActorId, &VersionVector)> {
+        self.acknowledgements.iter()
+    }
+
     /// Copy this history for a new unique actor.
     pub fn fork(&self, actor: ActorId) -> Result<Self, GraphError> {
-        if self.clock.counter(&actor) != 0 {
+        if self.clock.counter(&actor) != 0 || self.acknowledgements.contains_key(&actor) {
             return Err(GraphError::Collaboration(format!(
                 "actor '{actor}' already exists in this history"
             )));
@@ -287,19 +323,24 @@ impl GraphReplica {
         self.record(GraphAction::RemoveEdge { from, to, kind })
     }
 
-    pub fn delta_since(&self, known: &VersionVector) -> GraphDelta {
-        GraphDelta {
+    pub fn delta_since(&self, known: &VersionVector) -> Result<GraphDelta, GraphError> {
+        if !known.dominates(&self.history_floor) {
+            return Err(GraphError::Collaboration(
+                "peer version predates compacted collaboration history; transfer a current bundle before exchanging deltas".into(),
+            ));
+        }
+        Ok(GraphDelta {
             operations: self
                 .operations
                 .values()
                 .filter(|operation| !known.observes(&operation.dot))
                 .cloned()
                 .collect(),
-        }
+        })
     }
 
     pub fn merge(&mut self, other: &Self) -> Result<MergeReport, GraphError> {
-        self.apply_delta(&other.delta_since(&self.clock))
+        self.apply_delta(&other.delta_since(&self.clock)?)
     }
 
     pub fn apply_delta(&mut self, delta: &GraphDelta) -> Result<MergeReport, GraphError> {
@@ -328,16 +369,33 @@ impl GraphReplica {
                     )));
                 }
                 report.already_present += 1;
+            } else if self.clock.observes(&operation.dot) {
+                report.already_present += 1;
             }
         }
 
-        let available: BTreeSet<_> = self
-            .operations
-            .keys()
-            .chain(staged.keys())
-            .cloned()
-            .collect();
-        let available_clock = contiguous_clock(&available)?;
+        let mut available_clock = self.clock.clone();
+        for operation in staged.values() {
+            if available_clock.observes(&operation.dot) {
+                continue;
+            }
+            let expected = available_clock
+                .counter(&operation.dot.actor)
+                .checked_add(1)
+                .ok_or_else(|| {
+                    GraphError::Collaboration(format!(
+                        "actor '{}' counter overflow",
+                        operation.dot.actor
+                    ))
+                })?;
+            if operation.dot.counter != expected {
+                return Err(GraphError::Collaboration(format!(
+                    "delta has a gap for '{}': expected counter {expected}, received {}",
+                    operation.dot.actor, operation.dot.counter
+                )));
+            }
+            available_clock.observe(&operation.dot);
+        }
         for operation in staged.values() {
             for (actor, counter) in operation.context.actors() {
                 if available_clock.counter(actor) < counter {
@@ -350,7 +408,7 @@ impl GraphReplica {
         }
 
         for (dot, operation) in staged {
-            if self.operations.contains_key(&dot) {
+            if self.clock.observes(&dot) {
                 continue;
             }
             self.operations.insert(dot.clone(), operation);
@@ -358,6 +416,85 @@ impl GraphReplica {
             report.inserted += 1;
         }
         Ok(report)
+    }
+
+    /// Record a peer's durable causal acknowledgement.
+    ///
+    /// Acknowledgements are monotonic and cannot claim history this replica has
+    /// not observed. Live transport records them only after the peer persists.
+    pub fn acknowledge(&mut self, peer: ActorId, version: VersionVector) -> Result<(), GraphError> {
+        if peer == self.actor {
+            return Err(GraphError::Collaboration(
+                "a replica cannot acknowledge itself as a peer".into(),
+            ));
+        }
+        if !self.clock.dominates(&version) {
+            return Err(GraphError::Collaboration(format!(
+                "peer '{peer}' acknowledges history not present in this replica"
+            )));
+        }
+        if let Some(previous) = self.acknowledgements.get(&peer) {
+            if !version.dominates(previous) {
+                return Err(GraphError::Collaboration(format!(
+                    "peer '{peer}' acknowledgement would move backwards"
+                )));
+            }
+        }
+        self.acknowledgements.insert(peer, version);
+        Ok(())
+    }
+
+    /// Prune only acknowledged operations that are causally superseded.
+    ///
+    /// Maximal concurrent operations and node-removal generation barriers are
+    /// retained. Peers older than the resulting history floor must receive a
+    /// current bundle because their missing operations no longer exist.
+    pub fn compact_acknowledged(&mut self) -> Result<CompactionReport, GraphError> {
+        self.validate()?;
+        if self.acknowledgements.is_empty() {
+            return Err(GraphError::Collaboration(
+                "history compaction requires at least one durable peer acknowledgement".into(),
+            ));
+        }
+        let stable = self
+            .acknowledgements
+            .values()
+            .fold(self.clock.clone(), |frontier, version| {
+                frontier.meet(version)
+            });
+        let operations_before = self.operations.len();
+        let mut by_key: BTreeMap<OperationKey, Vec<&GraphOperation>> = BTreeMap::new();
+        for operation in self.operations.values() {
+            by_key
+                .entry(OperationKey::from_action(&operation.action))
+                .or_default()
+                .push(operation);
+        }
+        let removable: Vec<_> = self
+            .operations
+            .values()
+            .filter(|candidate| {
+                stable.observes(&candidate.dot)
+                    && !matches!(candidate.action, GraphAction::RemoveNode(_))
+                    && by_key[&OperationKey::from_action(&candidate.action)]
+                        .iter()
+                        .copied()
+                        .any(|later| later.dot != candidate.dot && happens_before(candidate, later))
+            })
+            .map(|operation| operation.dot.clone())
+            .collect();
+
+        for dot in &removable {
+            self.operations.remove(dot);
+            self.history_floor.observe(dot);
+        }
+        self.validate()?;
+        Ok(CompactionReport {
+            operations_before,
+            operations_after: self.operations.len(),
+            removed_operations: removable.len(),
+            history_floor: self.history_floor.clone(),
+        })
     }
 
     /// Record the minimal semantic mutations needed to match a graph snapshot.
@@ -524,11 +661,27 @@ impl GraphReplica {
     }
 
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, GraphError> {
-        let file: CollaborationFile = bincode::deserialize(bytes)
+        if let Ok(file) = bincode::deserialize::<CollaborationFile>(bytes) {
+            validate_file(&file)?;
+            file.replica.validate()?;
+            return Ok(file.replica);
+        }
+        let legacy: LegacyCollaborationFile = bincode::deserialize(bytes)
             .map_err(|error| GraphError::Deserialize(error.to_string()))?;
-        validate_file(&file)?;
-        file.replica.validate()?;
-        Ok(file.replica)
+        if legacy.magic != COLLAB_MAGIC || legacy.version != LEGACY_COLLAB_VERSION {
+            return Err(GraphError::Deserialize(
+                "unsupported collaboration bundle format".into(),
+            ));
+        }
+        let replica = GraphReplica {
+            actor: legacy.replica.actor,
+            clock: legacy.replica.clock,
+            history_floor: VersionVector::default(),
+            acknowledgements: BTreeMap::new(),
+            operations: legacy.replica.operations,
+        };
+        replica.validate()?;
+        Ok(replica)
     }
 
     /// Save a collaboration bundle. `.aethercb` selects compact bincode;
@@ -576,7 +729,13 @@ impl GraphReplica {
 
     fn validate(&self) -> Result<(), GraphError> {
         validate_actor(self.actor.as_str(), false)?;
-        let mut derived = VersionVector::default();
+        validate_version(&self.clock)?;
+        validate_version(&self.history_floor)?;
+        if !self.clock.dominates(&self.history_floor) {
+            return Err(GraphError::Collaboration(
+                "history floor exceeds the replica clock".into(),
+            ));
+        }
         for (dot, operation) in &self.operations {
             if dot != &operation.dot {
                 return Err(GraphError::Collaboration(
@@ -584,13 +743,49 @@ impl GraphReplica {
                 ));
             }
             validate_operation(operation)?;
-            derived.observe(dot);
+            if !self.clock.observes(dot) {
+                return Err(GraphError::Collaboration(format!(
+                    "operation {}:{} exceeds the replica clock",
+                    dot.actor, dot.counter
+                )));
+            }
+            if !self.clock.dominates(&operation.context) {
+                return Err(GraphError::Collaboration(format!(
+                    "operation {}:{} references unseen causal history",
+                    dot.actor, dot.counter
+                )));
+            }
         }
-        contiguous_clock(&self.operations.keys().cloned().collect())?;
-        if self.clock != derived {
-            return Err(GraphError::Collaboration(
-                "replica clock does not match operation history".into(),
-            ));
+        for (actor, maximum) in self.clock.actors() {
+            let floor = self.history_floor.counter(actor);
+            if floor == maximum {
+                continue;
+            }
+            for counter in (floor + 1)..=maximum {
+                let dot = Dot {
+                    actor: actor.clone(),
+                    counter,
+                };
+                if !self.operations.contains_key(&dot) {
+                    return Err(GraphError::Collaboration(format!(
+                        "operation history for '{actor}' has a gap above compacted counter {floor}: missing {counter}"
+                    )));
+                }
+            }
+        }
+        for (peer, version) in &self.acknowledgements {
+            validate_actor(peer.as_str(), false)?;
+            if peer == &self.actor {
+                return Err(GraphError::Collaboration(
+                    "replica acknowledgement table contains its own actor".into(),
+                ));
+            }
+            validate_version(version)?;
+            if !self.clock.dominates(version) {
+                return Err(GraphError::Collaboration(format!(
+                    "peer '{peer}' acknowledgement exceeds the replica clock"
+                )));
+            }
         }
         Ok(())
     }
@@ -641,6 +836,27 @@ struct EdgeKey {
     kind: EdgeKind,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum OperationKey {
+    Node(NodeId),
+    Edge(EdgeKey),
+}
+
+impl OperationKey {
+    fn from_action(action: &GraphAction) -> Self {
+        match action {
+            GraphAction::UpsertNode(node) => Self::Node(node.id),
+            GraphAction::RemoveNode(id) => Self::Node(*id),
+            GraphAction::UpsertEdge { from, to, edge } => {
+                Self::Edge(EdgeKey::new(*from, *to, edge.kind))
+            }
+            GraphAction::RemoveEdge { from, to, kind } => {
+                Self::Edge(EdgeKey::new(*from, *to, *kind))
+            }
+        }
+    }
+}
+
 impl EdgeKey {
     fn new(from: NodeId, to: NodeId, kind: EdgeKind) -> Self {
         Self { from, to, kind }
@@ -654,17 +870,43 @@ struct CollaborationFile {
     replica: GraphReplica,
 }
 
+#[derive(Serialize, Deserialize)]
+struct LegacyCollaborationFile {
+    magic: String,
+    version: u32,
+    replica: LegacyGraphReplica,
+}
+
+#[derive(Serialize, Deserialize)]
+struct LegacyGraphReplica {
+    actor: ActorId,
+    clock: VersionVector,
+    operations: BTreeMap<Dot, GraphOperation>,
+}
+
 fn validate_file(file: &CollaborationFile) -> Result<(), GraphError> {
     if file.magic != COLLAB_MAGIC {
         return Err(GraphError::Deserialize(
             "bad collaboration bundle magic".into(),
         ));
     }
-    if file.version != COLLAB_VERSION {
+    if !matches!(file.version, LEGACY_COLLAB_VERSION | COLLAB_VERSION) {
         return Err(GraphError::Deserialize(format!(
-            "unsupported collaboration version {}; expected {COLLAB_VERSION}",
+            "unsupported collaboration version {}; expected {LEGACY_COLLAB_VERSION} or {COLLAB_VERSION}",
             file.version
         )));
+    }
+    Ok(())
+}
+
+fn validate_version(version: &VersionVector) -> Result<(), GraphError> {
+    for (actor, counter) in version.actors() {
+        validate_actor(actor.as_str(), true)?;
+        if counter == 0 {
+            return Err(GraphError::Collaboration(format!(
+                "version vector contains zero counter for '{actor}'"
+            )));
+        }
     }
     Ok(())
 }
@@ -693,14 +935,7 @@ fn validate_operation(operation: &GraphOperation) -> Result<(), GraphError> {
             operation.dot.actor, operation.dot.counter
         )));
     }
-    for (actor, counter) in operation.context.actors() {
-        validate_actor(actor.as_str(), true)?;
-        if counter == 0 {
-            return Err(GraphError::Collaboration(format!(
-                "version vector contains zero counter for '{actor}'"
-            )));
-        }
-    }
+    validate_version(&operation.context)?;
     if let GraphAction::UpsertNode(node) = &operation.action {
         if node.id != NodeId::from_path(&node.path) {
             return Err(GraphError::Collaboration(format!(
@@ -717,24 +952,6 @@ fn validate_operation(operation: &GraphOperation) -> Result<(), GraphError> {
         }
     }
     Ok(())
-}
-
-fn contiguous_clock(dots: &BTreeSet<Dot>) -> Result<VersionVector, GraphError> {
-    let mut maximums = VersionVector::default();
-    let mut counts: BTreeMap<&ActorId, u64> = BTreeMap::new();
-    for dot in dots {
-        maximums.observe(dot);
-        *counts.entry(&dot.actor).or_default() += 1;
-    }
-    for (actor, count) in counts {
-        let maximum = maximums.counter(actor);
-        if count != maximum {
-            return Err(GraphError::Collaboration(format!(
-                "operation history for '{actor}' has gaps: {count} event(s), maximum counter {maximum}"
-            )));
-        }
-    }
-    Ok(maximums)
 }
 
 fn happens_before(left: &GraphOperation, right: &GraphOperation) -> bool {
@@ -899,11 +1116,11 @@ mod tests {
             .upsert_node(edited_run("fn run() { synced(); }"))
             .unwrap();
 
-        let delta = alice.delta_since(bob.version());
+        let delta = alice.delta_since(bob.version()).unwrap();
         assert_eq!(delta.len(), 1);
         assert_eq!(bob.apply_delta(&delta).unwrap().inserted, 1);
         assert_eq!(bob.apply_delta(&delta).unwrap().already_present, 1);
-        assert!(alice.delta_since(bob.version()).is_empty());
+        assert!(alice.delta_since(bob.version()).unwrap().is_empty());
         assert_eq!(
             alice.materialize().unwrap().to_ron().unwrap(),
             bob.materialize().unwrap().to_ron().unwrap()
@@ -937,6 +1154,117 @@ mod tests {
     }
 
     #[test]
+    fn acknowledged_compaction_preserves_state_and_rejects_stale_peers() {
+        let (graph, _, run) = fixture();
+        let mut alice = GraphReplica::from_graph(actor("alice"), &graph);
+        let mut bob = alice.fork(actor("bob")).unwrap();
+        alice
+            .upsert_node(edited_run("fn run() { first(); }"))
+            .unwrap();
+        alice
+            .upsert_node(edited_run("fn run() { second(); }"))
+            .unwrap();
+        bob.apply_delta(&alice.delta_since(bob.version()).unwrap())
+            .unwrap();
+        let expected = alice.materialize().unwrap().to_ron().unwrap();
+        alice
+            .acknowledge(actor("bob"), bob.version().clone())
+            .unwrap();
+
+        let report = alice.compact_acknowledged().unwrap();
+        assert!(report.removed_operations >= 2);
+        assert_eq!(alice.materialize().unwrap().to_ron().unwrap(), expected);
+        assert_eq!(
+            alice.materialize().unwrap().get(run).unwrap().source,
+            "fn run() { second(); }"
+        );
+        assert!(alice.delta_since(&VersionVector::default()).is_err());
+        assert!(alice.delta_since(bob.version()).unwrap().is_empty());
+
+        let decoded = GraphReplica::from_ron(&alice.to_ron().unwrap()).unwrap();
+        assert_eq!(decoded.history_floor(), alice.history_floor());
+        assert_eq!(decoded.materialize().unwrap().to_ron().unwrap(), expected);
+    }
+
+    #[test]
+    fn compaction_requires_monotonic_known_peer_acknowledgements() {
+        let (graph, _, _) = fixture();
+        let mut replica = GraphReplica::from_graph(actor("alice"), &graph);
+        assert!(replica.compact_acknowledged().is_err());
+
+        let empty = VersionVector::default();
+        replica.acknowledge(actor("bob"), empty.clone()).unwrap();
+        let future = VersionVector {
+            entries: BTreeMap::from([(actor("mallory"), 1)]),
+        };
+        assert!(replica.acknowledge(actor("mallory"), future).is_err());
+
+        let current = replica.version().clone();
+        replica.acknowledge(actor("bob"), current).unwrap();
+        assert!(replica.acknowledge(actor("bob"), empty).is_err());
+        assert!(replica
+            .acknowledge(actor("alice"), replica.version().clone())
+            .is_err());
+    }
+
+    #[test]
+    fn compaction_retains_node_generation_barriers() {
+        let (graph, module, run) = fixture();
+        let mut alice = GraphReplica::from_graph(actor("alice"), &graph);
+        let mut bob = alice.fork(actor("bob")).unwrap();
+        alice.remove_node(run).unwrap();
+        alice
+            .upsert_node(edited_run("fn run() { recreated(); }"))
+            .unwrap();
+        bob.apply_delta(&alice.delta_since(bob.version()).unwrap())
+            .unwrap();
+        alice
+            .acknowledge(actor("bob"), bob.version().clone())
+            .unwrap();
+
+        alice.compact_acknowledged().unwrap();
+        let materialized = alice.materialize().unwrap();
+        assert!(materialized.contains(run));
+        assert!(
+            materialized
+                .neighbors(module, Some(EdgeKind::Contains))
+                .is_empty(),
+            "an edge from the deleted node generation must not reappear"
+        );
+        assert!(alice.operations.values().any(|operation| {
+            matches!(operation.action, GraphAction::RemoveNode(id) if id == run)
+        }));
+    }
+
+    #[test]
+    fn legacy_binary_collaboration_bundles_migrate_to_current_state() {
+        let (graph, _, _) = fixture();
+        let replica = GraphReplica::from_graph(actor("alice"), &graph);
+        let legacy = LegacyCollaborationFile {
+            magic: COLLAB_MAGIC.into(),
+            version: LEGACY_COLLAB_VERSION,
+            replica: LegacyGraphReplica {
+                actor: replica.actor.clone(),
+                clock: replica.clock.clone(),
+                operations: replica.operations.clone(),
+            },
+        };
+        let bytes = bincode::serialize(&legacy).unwrap();
+        let migrated = GraphReplica::from_bytes(&bytes).unwrap();
+        let materialized = migrated.materialize().unwrap();
+        assert_eq!(materialized.node_count(), graph.node_count());
+        assert_eq!(materialized.edge_count(), graph.edge_count());
+        for node in graph.nodes() {
+            assert_eq!(materialized.get(node.id), Some(node));
+        }
+        for (from, to, edge) in graph.edge_records() {
+            assert!(materialized.edge_records().contains(&(from, to, edge)));
+        }
+        assert_eq!(migrated.history_floor(), &VersionVector::default());
+        assert_eq!(migrated.acknowledgements().count(), 0);
+    }
+
+    #[test]
     fn sync_graph_records_changes_and_reversed_deltas_apply_atomically() {
         let (graph, module, run) = fixture();
         let mut alice = GraphReplica::from_graph(actor("alice"), &graph);
@@ -961,7 +1289,7 @@ mod tests {
         );
 
         let mut bob = GraphReplica::from_graph(actor("bob"), &graph);
-        let mut delta = alice.delta_since(bob.version());
+        let mut delta = alice.delta_since(bob.version()).unwrap();
         delta.operations.reverse();
         assert_eq!(bob.apply_delta(&delta).unwrap().inserted, 3);
         assert_eq!(
@@ -994,12 +1322,12 @@ mod tests {
         let dot = other
             .upsert_node(edited_run("fn run() { first(); }"))
             .unwrap();
-        let mut delta = other.delta_since(replica.version());
+        let mut delta = other.delta_since(replica.version()).unwrap();
         delta.operations[0].action = GraphAction::RemoveNode(run);
         assert_eq!(delta.operations[0].dot, dot);
         replica.apply_delta(&delta).unwrap();
 
-        let original = other.delta_since(&VersionVector::default());
+        let original = other.delta_since(&VersionVector::default()).unwrap();
         let conflicting = GraphDelta {
             operations: original
                 .operations

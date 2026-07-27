@@ -72,6 +72,9 @@ cargo run -p aether-app -- collab host alice.aetherc 127.0.0.1:7331 \
   --secret-file collaboration.secret
 cargo run -p aether-app -- collab join bob.aetherc 127.0.0.1:7331 \
   --secret-file collaboration.secret
+# Successful sessions persist both peers' causal acknowledgements. Once every
+# known peer has acknowledged superseded history, prune it conservatively:
+cargo run -p aether-app -- collab compact alice.aetherc
 
 # Real Python execution tracer — records every variable at every line/call/return:
 cargo run -p aether-app -- debug script.py
@@ -135,9 +138,16 @@ direction- and sequence-bound message integrity, bounded frames checked before
 allocation, socket timeouts, and secrets read from non-symlink regular files
 owned by the current user with private permissions. It deliberately binds
 loopback only: graph payloads are authenticated but not encrypted, so remote
-peers must connect through an encrypted tunnel such as SSH. Peer discovery,
-presence, acknowledgement-based history compaction, and reviewed projection of
-remote graph changes into source remain future work.
+peers must connect through an encrypted tunnel such as SSH. After both sides
+durably persist a converged version, they persist monotonic peer
+acknowledgements. `collab compact` prunes only acknowledged, causally superseded
+operations while retaining concurrent winners and node-generation tombstones.
+Peers older than the recorded history floor fail safely and need a current
+bundle. Until discovery/membership exists, "every known peer" is the explicit
+set of actors that have completed authenticated sessions; operators must not
+compact if an unrecorded offline replica still needs deltas. Peer discovery,
+presence, encrypted remote transport, and reviewed projection of remote graph
+changes into source remain future work.
 
 ### Project configuration
 
@@ -239,9 +249,11 @@ that distributed it.
 The **Collaboration** view initializes, inspects, and synchronizes the full
 workspace graph, generates private secrets, and joins live peers on a background
 thread so rendering never blocks. It shows causal version/operation counts and
-the deterministic conflict policy. A live join updates the collaboration bundle
-only; remote graph-to-source projection remains explicit rather than silently
-writing peer changes into files. CLI `host` is the persistent serving surface.
+the deterministic conflict policy, durable acknowledgements, and compacted
+history floor; it can conservatively compact acknowledged history. A live join
+updates the collaboration bundle only; remote graph-to-source projection remains
+explicit rather than silently writing peer changes into files. CLI `host` is the
+persistent serving surface.
 
 Installed records and their contribution nodes live in the semantic graph and
 survive source reconciliation. Enable/disable affects only contribution
@@ -303,7 +315,7 @@ time-travel debug) are real, tested, and runnable. Implemented features:
 | Knowledge-graph queries | Natural-language → concept / impact / callers / callees / explain / neighbourhood |
 | Semantic review | Typed diff (added/modified/removed nodes + edges), impact radius, test gap report |
 | Minimal test selection | Call-graph reachability from changed functions, optional `--run` |
-| Graph collaboration | Deterministic operation-set CRDT, causal deltas, tombstones, atomic RON/bincode bundles, authenticated bounded loopback host/join, and native/CLI workflows |
+| Graph collaboration | Deterministic operation-set CRDT, causal deltas, tombstones, atomic RON/bincode bundles, authenticated bounded loopback host/join, durable peer acknowledgements, conservative history compaction, and native/CLI workflows |
 | Project contract | Validated `bitcode.toml` for source scope, graph path, test runners, and agent output |
 | Source projection | GUI/CLI agent output and graph rename commit validated source plus graph through recoverable journaled transactions |
 | Candidate validation | Disposable project copy, optional bubblewrap isolation, Cargo build/tests, configured checks, cancellation/timeouts, bounded diagnostics, snapshot-bound commit gate |
@@ -318,6 +330,6 @@ python3 -m pip install debugpy
 cargo test -p aether-dap --test debugpy -- --ignored --nocapture
 ```
 
-The production roadmap (collaboration presence/compaction and reviewed source
+The production roadmap (collaboration discovery/presence and reviewed source
 projection, self-optimization, web/mobile projections, and deeper tracing) is
 in `BLUEPRINT.md §9`.

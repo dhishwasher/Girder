@@ -11,6 +11,7 @@ usage:
   bitcode collab fork <bundle> <actor> <out>
   bitcode collab sync <dir> <bundle> [out]
   bitcode collab merge <bundle> <peer> <out>
+  bitcode collab compact <bundle> [out]
   bitcode collab materialize <bundle> <graph.aether>
   bitcode collab secret <path>
   bitcode collab host <bundle> <127.0.0.1:port> --secret-file <path> [--once] [--ready-file <path>]
@@ -23,6 +24,7 @@ pub fn collaboration(args: &[String]) -> std::io::Result<()> {
         Some("fork") => fork(&args[1..]),
         Some("sync") => sync(&args[1..]),
         Some("merge") => merge(&args[1..]),
+        Some("compact") => compact(&args[1..]),
         Some("materialize") => materialize(&args[1..]),
         Some("secret") => secret(&args[1..]),
         Some("host") => host(&args[1..]),
@@ -175,10 +177,31 @@ fn status(args: &[String]) -> std::io::Result<()> {
         .map(|(actor, counter)| format!("{actor}:{counter}"))
         .collect::<Vec<_>>()
         .join(", ");
+    let floor = version_string(replica.history_floor());
     println!("Collaboration bundle: {bundle}");
     println!("  actor: {}", replica.actor());
     println!("  operations: {}", replica.operation_count());
     println!("  version: {versions}");
+    println!(
+        "  compacted through: {}",
+        if floor.is_empty() { "none" } else { &floor }
+    );
+    println!("  durable peer acknowledgements:");
+    if replica.acknowledgements().count() == 0 {
+        println!("    none");
+    } else {
+        for (peer, version) in replica.acknowledgements() {
+            let version = version_string(version);
+            println!(
+                "    {peer}: {}",
+                if version.is_empty() {
+                    "empty"
+                } else {
+                    &version
+                }
+            );
+        }
+    }
     println!("  nodes: {}", graph.node_count());
     println!("  edges: {}", graph.edge_count());
     Ok(())
@@ -245,6 +268,28 @@ fn merge(args: &[String]) -> std::io::Result<()> {
     Ok(())
 }
 
+fn compact(args: &[String]) -> std::io::Result<()> {
+    let ([bundle] | [bundle, _]) = args else {
+        eprintln!("{USAGE}");
+        return Ok(());
+    };
+    let out = args.get(1).map(String::as_str).unwrap_or(bundle);
+    let mut replica = collaboration_result(GraphReplica::load(bundle))?;
+    let report = collaboration_result(replica.compact_acknowledged())?;
+    collaboration_result(replica.save(out))?;
+    println!(
+        "Compacted {bundle} -> {out}: removed {} superseded operation(s), {} -> {} retained",
+        report.removed_operations, report.operations_before, report.operations_after
+    );
+    let floor = version_string(&report.history_floor);
+    println!(
+        "  history floor: {}",
+        if floor.is_empty() { "none" } else { &floor }
+    );
+    println!("  stale peers older than this floor require a current bundle");
+    Ok(())
+}
+
 fn materialize(args: &[String]) -> std::io::Result<()> {
     let [bundle, out] = args else {
         eprintln!("{USAGE}");
@@ -263,6 +308,14 @@ fn materialize(args: &[String]) -> std::io::Result<()> {
 
 fn collaboration_result<T>(result: Result<T, GraphError>) -> std::io::Result<T> {
     result.map_err(std::io::Error::other)
+}
+
+fn version_string(version: &aether_graph::VersionVector) -> String {
+    version
+        .actors()
+        .map(|(actor, counter)| format!("{actor}:{counter}"))
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn invalid_input(message: impl Into<String>) -> std::io::Error {
