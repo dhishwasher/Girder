@@ -51,7 +51,7 @@ COMMANDS:
                               node paths). Pass --run to execute them immediately.
     collab <operation>        Exchange deterministic semantic-graph CRDT bundles.
                               Operations: init, status, fork, sync, merge, compact,
-                              materialize, secret, host, join. Live peers use mutually
+                              review, apply, materialize, secret, host, join. Live peers use mutually
                               authenticated loopback sessions; run without an
                               operation for details.
     dap <program> [--adapter python|rust|<path>] [--break-at <node::path>] [--dry-run]

@@ -1,5 +1,6 @@
 //! Real project loading, CLI subcommands, and `.aether` persistence.
 
+mod collaboration_projection;
 mod collaboration_transport;
 mod commands;
 mod config;
@@ -11,6 +12,11 @@ mod validation;
 #[cfg(any(feature = "gui", test))]
 mod workspace;
 
+#[cfg(feature = "gui")]
+pub(crate) use collaboration_projection::{
+    apply_reviewed_collaboration_projection, review_collaboration_projection,
+    CollaborationProjectionReview,
+};
 #[cfg(feature = "gui")]
 pub(crate) use collaboration_transport::{
     generate_secret as generate_collaboration_secret, join as join_collaboration, LiveSyncReport,

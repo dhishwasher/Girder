@@ -3,7 +3,8 @@
 use crate::graph_view::GraphViewState;
 use crate::panels;
 use crate::project::{
-    generate_collaboration_secret, join_collaboration, AgentValidationOutcome,
+    apply_reviewed_collaboration_projection, generate_collaboration_secret, join_collaboration,
+    review_collaboration_projection, AgentValidationOutcome, CollaborationProjectionReview,
     ExtensionCommandRequest, ExtensionMutation, ExtensionMutationOutcome, ExtensionMutationRequest,
     LiveSyncReport, ProjectWorkspace, SyncImpact, ValidationReport,
 };
@@ -33,6 +34,12 @@ type ExtensionMutationReceiver = tokio::sync::oneshot::Receiver<ExtensionMutatio
 type ExtensionCommandResult = std::io::Result<ValidationReport>;
 type ExtensionCommandReceiver = tokio::sync::oneshot::Receiver<ExtensionCommandResult>;
 type CollaborationReceiver = tokio::sync::oneshot::Receiver<std::io::Result<LiveSyncReport>>;
+enum CollaborationProjectionOutcome {
+    Reviewed(CollaborationProjectionReview),
+    Applied(String),
+}
+type CollaborationProjectionReceiver =
+    tokio::sync::oneshot::Receiver<std::io::Result<CollaborationProjectionOutcome>>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RightPanel {
@@ -87,6 +94,8 @@ pub struct AetherApp {
     pub(crate) collaboration_secret_input: String,
     pub(crate) collaboration_status: String,
     collaboration_rx: Option<CollaborationReceiver>,
+    collaboration_projection_rx: Option<CollaborationProjectionReceiver>,
+    collaboration_projection_approval: Option<String>,
     /// Nodes currently lit by the impact ripple: node_id -> hop distance from changed node.
     /// Distance 0 = the edited function itself; 1 = direct callers; 2 = their callers; etc.
     pub(crate) impact_nodes: HashMap<NodeId, u32>,
@@ -155,6 +164,8 @@ impl AetherApp {
             collaboration_status:
                 "Initialize a graph replica or inspect an existing collaboration bundle.".into(),
             collaboration_rx: None,
+            collaboration_projection_rx: None,
+            collaboration_projection_approval: None,
             impact_nodes: HashMap::new(),
             ripple_start: None,
             editor_jump: None,
@@ -570,7 +581,7 @@ impl AetherApp {
     }
 
     pub(crate) fn collaboration_busy(&self) -> bool {
-        self.collaboration_rx.is_some()
+        self.collaboration_rx.is_some() || self.collaboration_projection_rx.is_some()
     }
 
     fn collaboration_snapshot_ready(&self) -> std::io::Result<()> {
@@ -756,6 +767,72 @@ impl AetherApp {
             ))
         })();
         self.collaboration_status = result.unwrap_or_else(|error| format!("Error: {error}"));
+    }
+
+    pub(crate) fn start_collaboration_projection_review(&mut self) {
+        if self.collaboration_busy() {
+            self.collaboration_status = "A collaboration operation is already running.".into();
+            return;
+        }
+        if let Err(error) = self.collaboration_snapshot_ready() {
+            self.collaboration_status = format!("Error: {error}");
+            return;
+        }
+        let bundle = match self.collaboration_path(&self.collaboration_bundle_input) {
+            Ok(path) => path,
+            Err(error) => {
+                self.collaboration_status = format!("Error: {error}");
+                return;
+            }
+        };
+        let root = self.workspace.root().to_path_buf();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        std::thread::spawn(move || {
+            let result = review_collaboration_projection(&root, &bundle)
+                .map(CollaborationProjectionOutcome::Reviewed);
+            let _ = tx.send(result);
+        });
+        self.collaboration_projection_approval = None;
+        self.collaboration_projection_rx = Some(rx);
+        self.collaboration_status =
+            "Rebuilding and checking the remote whole-file projection...".into();
+    }
+
+    pub(crate) fn start_collaboration_projection_apply(&mut self) {
+        if self.collaboration_busy() {
+            self.collaboration_status = "A collaboration operation is already running.".into();
+            return;
+        }
+        if let Err(error) = self.collaboration_snapshot_ready() {
+            self.collaboration_status = format!("Error: {error}");
+            return;
+        }
+        let Some(approval) = self.collaboration_projection_approval.take() else {
+            self.collaboration_status =
+                "Review a conflict-free projection before applying it.".into();
+            return;
+        };
+        let bundle = match self.collaboration_path(&self.collaboration_bundle_input) {
+            Ok(path) => path,
+            Err(error) => {
+                self.collaboration_status = format!("Error: {error}");
+                return;
+            }
+        };
+        let root = self.workspace.root().to_path_buf();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        std::thread::spawn(move || {
+            let result = apply_reviewed_collaboration_projection(&root, &bundle, &approval)
+                .map(CollaborationProjectionOutcome::Applied);
+            let _ = tx.send(result);
+        });
+        self.collaboration_projection_rx = Some(rx);
+        self.collaboration_status =
+            "Validating the reviewed projection in an isolated workspace...".into();
+    }
+
+    pub(crate) fn collaboration_projection_approved(&self) -> bool {
+        self.collaboration_projection_approval.is_some()
     }
 
     fn collaboration_path(&self, input: &str) -> std::io::Result<PathBuf> {
@@ -978,6 +1055,47 @@ impl eframe::App for AetherApp {
                 Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
                     self.collaboration_rx = None;
                     self.collaboration_status = "Live synchronization stopped unexpectedly.".into();
+                }
+            }
+        }
+
+        if let Some(rx) = self.collaboration_projection_rx.as_mut() {
+            match rx.try_recv() {
+                Ok(Ok(CollaborationProjectionOutcome::Reviewed(review))) => {
+                    self.collaboration_projection_rx = None;
+                    self.collaboration_projection_approval = review.approval_digest;
+                    self.collaboration_status = review.text;
+                }
+                Ok(Ok(CollaborationProjectionOutcome::Applied(summary))) => {
+                    self.collaboration_projection_rx = None;
+                    self.collaboration_projection_approval = None;
+                    let root = self.workspace.root().to_path_buf();
+                    match ProjectWorkspace::open(root) {
+                        Ok(workspace) => {
+                            self.workspace = workspace;
+                            self.py_file = active_python_path(&self.workspace).unwrap_or_default();
+                            self.graph_view.reset_for_project();
+                            self.collaboration_status = summary;
+                            self.set_workspace_status(workspace_summary(&self.workspace));
+                        }
+                        Err(error) => {
+                            self.collaboration_status =
+                                format!("Projection committed, but reload failed: {error}");
+                        }
+                    }
+                }
+                Ok(Err(error)) => {
+                    self.collaboration_projection_rx = None;
+                    self.collaboration_projection_approval = None;
+                    self.collaboration_status = format!("Projection failed: {error}");
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                    ctx.request_repaint_after(std::time::Duration::from_millis(100));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                    self.collaboration_projection_rx = None;
+                    self.collaboration_projection_approval = None;
+                    self.collaboration_status = "Projection operation stopped unexpectedly.".into();
                 }
             }
         }

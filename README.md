@@ -75,6 +75,10 @@ cargo run -p aether-app -- collab join bob.aetherc 127.0.0.1:7331 \
 # Successful sessions persist both peers' causal acknowledgements. Once every
 # known peer has acknowledged superseded history, prune it conservatively:
 cargo run -p aether-app -- collab compact alice.aetherc
+# Rebuild remote whole-file projections, show semantic/file changes and
+# conflicts, then explicitly validate and journal-commit the reviewed bytes:
+cargo run -p aether-app -- collab review sample-project alice.aetherc
+cargo run -p aether-app -- collab apply sample-project alice.aetherc --approve
 
 # Real Python execution tracer — records every variable at every line/call/return:
 cargo run -p aether-app -- debug script.py
@@ -146,8 +150,18 @@ Peers older than the recorded history floor fail safely and need a current
 bundle. Until discovery/membership exists, "every known peer" is the explicit
 set of actors that have completed authenticated sessions; operators must not
 compact if an unrecorded offline replica still needs deltas. Peer discovery,
-presence, encrypted remote transport, and reviewed projection of remote graph
-changes into source remain future work.
+presence, and encrypted remote transport remain future work.
+
+Every parsed module carries a bounded `file-v1` whole-file projection in the
+semantic graph. `collab review` compares the remote and freshly reconciled local
+graphs, lists file and semantic changes, and reparses every remote file to prove
+its nodes and projection-derived edges agree with the claimed graph. Missing
+modules, path escapes, oversized files, inconsistent concurrent winners, and
+stale local baselines are conflicts. `collab apply --approve` reruns the plan,
+executes configured validation in an isolated candidate, then journal-commits
+added/modified/deleted files and the reconciled graph together. Native approval
+is SHA-256-bound to every candidate and expected baseline byte, so any project
+or bundle change forces another review.
 
 ### Project configuration
 
@@ -251,9 +265,9 @@ workspace graph, generates private secrets, and joins live peers on a background
 thread so rendering never blocks. It shows causal version/operation counts and
 the deterministic conflict policy, durable acknowledgements, and compacted
 history floor; it can conservatively compact acknowledged history. A live join
-updates the collaboration bundle only; remote graph-to-source projection remains
-explicit rather than silently writing peer changes into files. CLI `host` is the
-persistent serving surface.
+updates the collaboration bundle only. Separate Review and Apply controls keep
+remote graph-to-source projection explicit, consistency-checked, digest-bound,
+validated, and atomic. CLI `host` is the persistent serving surface.
 
 Installed records and their contribution nodes live in the semantic graph and
 survive source reconciliation. Enable/disable affects only contribution
@@ -315,7 +329,7 @@ time-travel debug) are real, tested, and runnable. Implemented features:
 | Knowledge-graph queries | Natural-language → concept / impact / callers / callees / explain / neighbourhood |
 | Semantic review | Typed diff (added/modified/removed nodes + edges), impact radius, test gap report |
 | Minimal test selection | Call-graph reachability from changed functions, optional `--run` |
-| Graph collaboration | Deterministic operation-set CRDT, causal deltas, tombstones, atomic RON/bincode bundles, authenticated bounded loopback host/join, durable peer acknowledgements, conservative history compaction, and native/CLI workflows |
+| Graph collaboration | Deterministic operation-set CRDT, causal deltas, tombstones, atomic RON/bincode bundles, authenticated bounded loopback host/join, durable peer acknowledgements, conservative history compaction, and reviewed whole-file source projection |
 | Project contract | Validated `bitcode.toml` for source scope, graph path, test runners, and agent output |
 | Source projection | GUI/CLI agent output and graph rename commit validated source plus graph through recoverable journaled transactions |
 | Candidate validation | Disposable project copy, optional bubblewrap isolation, Cargo build/tests, configured checks, cancellation/timeouts, bounded diagnostics, snapshot-bound commit gate |
@@ -330,6 +344,6 @@ python3 -m pip install debugpy
 cargo test -p aether-dap --test debugpy -- --ignored --nocapture
 ```
 
-The production roadmap (collaboration discovery/presence and reviewed source
-projection, self-optimization, web/mobile projections, and deeper tracing) is
+The production roadmap (collaboration discovery/presence and encrypted remote
+transport, self-optimization, web/mobile projections, and deeper tracing) is
 in `BLUEPRINT.md §9`.

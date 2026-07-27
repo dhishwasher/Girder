@@ -51,7 +51,9 @@ fn main() {
         builder.load_file(&mut graph, "src/math.rs", SAMPLE_RS);
 
         // Module + 3 functions + 1 struct + 2 fields.
-        assert!(graph.find_by_path("crate::math").is_some());
+        let module = graph.find_by_path("crate::math").unwrap();
+        assert_eq!(module.source, SAMPLE_RS);
+        assert_eq!(module.attr("source_projection"), Some("file-v1"));
         assert!(graph.find_by_path("crate::math::add").is_some());
         assert!(graph.find_by_path("crate::math::sum_list").is_some());
         assert!(graph.find_by_path("crate::math::main").is_some());
@@ -96,6 +98,7 @@ fn main() {
         );
         // Surviving nodes remain.
         assert!(graph.find_by_path("crate::math::add").is_some());
+        assert_eq!(graph.find_by_path("crate::math").unwrap().source, edited);
     }
 
     #[test]

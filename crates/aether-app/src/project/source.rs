@@ -56,6 +56,10 @@ impl ProjectWrite {
         self.contents.as_deref()
     }
 
+    pub(crate) fn expected(&self) -> Option<&[u8]> {
+        self.expected.as_deref()
+    }
+
     pub(crate) fn delete(relative: impl Into<PathBuf>, expected: Vec<u8>) -> Self {
         Self {
             relative: relative.into(),

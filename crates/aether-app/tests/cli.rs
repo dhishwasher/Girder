@@ -483,7 +483,7 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
     repo.write("src/lib.rs", "pub fn run() -> i64 { 2 }\n");
     let synchronized = run_bitcode(&["collab", "sync", root, bob.to_str().unwrap()]);
     assert!(
-        synchronized.contains("nodes: +1 -0; edges: +0 -0"),
+        synchronized.contains("nodes: +2 -0; edges: +0 -0"),
         "{synchronized}"
     );
     let merged_output = run_bitcode(&[
@@ -493,7 +493,7 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
         bob.to_str().unwrap(),
         merged.to_str().unwrap(),
     ]);
-    assert!(merged_output.contains("1 inserted"), "{merged_output}");
+    assert!(merged_output.contains("2 inserted"), "{merged_output}");
     run_bitcode(&[
         "collab",
         "materialize",
@@ -610,6 +610,105 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
     let status = run_bitcode(&["collab", "status", alice.to_str().unwrap()]);
     assert!(status.contains("compacted through:"), "{status}");
     assert!(status.contains("bob:"), "{status}");
+}
+
+#[test]
+fn collaboration_cli_reviews_and_applies_whole_file_projection() {
+    let repo = TempRepo::new("collaboration-projection");
+    repo.write("src/lib.rs", "pub fn value() -> i64 { 1 }\n");
+    let root = repo.path().to_str().unwrap();
+    let alice = repo.path().join("alice.aetherc");
+    let bob = repo.path().join("bob.aetherc");
+    run_bitcode(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
+    run_bitcode(&[
+        "collab",
+        "fork",
+        alice.to_str().unwrap(),
+        "bob",
+        bob.to_str().unwrap(),
+    ]);
+
+    repo.write("src/lib.rs", "pub fn value() -> i64 { 2 }\n");
+    repo.write("src/new.rs", "pub fn added() {}\n");
+    run_bitcode(&["collab", "sync", root, bob.to_str().unwrap()]);
+    repo.write("src/lib.rs", "pub fn value() -> i64 { 1 }\n");
+    repo.remove("src/new.rs");
+
+    let review = run_bitcode(&["collab", "review", root, bob.to_str().unwrap()]);
+    assert!(
+        review.contains("Collaboration source-projection review"),
+        "{review}"
+    );
+    assert!(review.contains("~ src/lib.rs"), "{review}");
+    assert!(review.contains("+ src/new.rs"), "{review}");
+    assert!(review.contains("conflicts: none"), "{review}");
+
+    let denied = run_bitcode_output(&["collab", "apply", root, bob.to_str().unwrap()]);
+    assert!(!denied.status.success());
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "pub fn value() -> i64 { 1 }\n"
+    );
+    assert!(!repo.path().join("src/new.rs").exists());
+
+    let applied = run_bitcode(&["collab", "apply", root, bob.to_str().unwrap(), "--approve"]);
+    assert!(
+        applied.contains("Committed 2 reviewed source projection"),
+        "{applied}"
+    );
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "pub fn value() -> i64 { 2 }\n"
+    );
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/new.rs")).unwrap(),
+        "pub fn added() {}\n"
+    );
+    let graph = aether_graph::SemanticGraph::load(repo.path().join("project.aether")).unwrap();
+    assert!(graph.find_by_path("crate::new::added").is_some());
+}
+
+#[test]
+fn collaboration_apply_validation_failure_leaves_project_unchanged() {
+    let repo = TempRepo::new("collaboration-projection-validation");
+    repo.write("src/lib.rs", "pub fn value() -> i64 { 1 }\n");
+    let root = repo.path().to_str().unwrap();
+    let bundle = repo.path().join("remote.aetherc");
+    run_bitcode(&["collab", "init", root, "remote", bundle.to_str().unwrap()]);
+    repo.write("src/lib.rs", "pub fn value() -> i64 { 2 }\n");
+    run_bitcode(&["collab", "sync", root, bundle.to_str().unwrap()]);
+    repo.write("src/lib.rs", "pub fn value() -> i64 { 1 }\n");
+    repo.write(
+        "bitcode.toml",
+        r#"
+version = 1
+
+[validation]
+commands = [["sh", "-c", "printf collaboration-validation-broke >&2; exit 9"]]
+"#,
+    );
+
+    let output = run_bitcode_output(&[
+        "collab",
+        "apply",
+        root,
+        bundle.to_str().unwrap(),
+        "--approve",
+    ]);
+    assert!(!output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stdout.contains("[failed] Configured check 1"), "{stdout}");
+    assert!(
+        stdout.contains("collaboration-validation-broke"),
+        "{stdout}"
+    );
+    assert!(stderr.contains("project was not modified"), "{stderr}");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "pub fn value() -> i64 { 1 }\n"
+    );
+    assert!(!repo.path().join("project.aether").exists());
 }
 
 #[test]

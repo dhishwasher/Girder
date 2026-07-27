@@ -597,6 +597,32 @@ fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     }
 
     ui.separator();
+    ui.strong("Reviewed source projection");
+    ui.horizontal(|ui| {
+        if ui
+            .add_enabled(can_snapshot, egui::Button::new("Review remote source"))
+            .clicked()
+        {
+            app.start_collaboration_projection_review();
+        }
+        if ui
+            .add_enabled(
+                can_snapshot && app.collaboration_projection_approved(),
+                egui::Button::new("Apply reviewed projection"),
+            )
+            .on_hover_text(
+                "Re-check the approved bundle and local baselines, validate in isolation, then journal-commit files and graph",
+            )
+            .clicked()
+        {
+            app.start_collaboration_projection_apply();
+        }
+    });
+    ui.small(
+        "Review rebuilds whole-file bytes back into a semantic graph and blocks inconsistent CRDT winners. Approval is digest-bound and invalidated by any bundle or project change.",
+    );
+
+    ui.separator();
     ui.strong("Live peer");
     ui.label("Loopback address");
     ui.text_edit_singleline(&mut app.collaboration_address_input);

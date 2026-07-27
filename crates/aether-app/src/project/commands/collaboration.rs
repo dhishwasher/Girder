@@ -1,8 +1,14 @@
+use crate::project::collaboration_projection::{
+    load_collaboration_projection, CollaborationFileChangeKind, CollaborationProjectionPlan,
+};
 use crate::project::collaboration_transport;
 use crate::project::config::ProjectConfig;
 use crate::project::source::load_reconciled_graph;
+use crate::project::validation::validate_candidate;
 use aether_graph::{ActorId, GraphError, GraphReplica};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 
 const USAGE: &str = "\
 usage:
@@ -12,6 +18,8 @@ usage:
   bitcode collab sync <dir> <bundle> [out]
   bitcode collab merge <bundle> <peer> <out>
   bitcode collab compact <bundle> [out]
+  bitcode collab review <dir> <bundle>
+  bitcode collab apply <dir> <bundle> --approve
   bitcode collab materialize <bundle> <graph.aether>
   bitcode collab secret <path>
   bitcode collab host <bundle> <127.0.0.1:port> --secret-file <path> [--once] [--ready-file <path>]
@@ -25,6 +33,8 @@ pub fn collaboration(args: &[String]) -> std::io::Result<()> {
         Some("sync") => sync(&args[1..]),
         Some("merge") => merge(&args[1..]),
         Some("compact") => compact(&args[1..]),
+        Some("review") => review_projection(&args[1..]),
+        Some("apply") => apply_projection(&args[1..]),
         Some("materialize") => materialize(&args[1..]),
         Some("secret") => secret(&args[1..]),
         Some("host") => host(&args[1..]),
@@ -288,6 +298,125 @@ fn compact(args: &[String]) -> std::io::Result<()> {
     );
     println!("  stale peers older than this floor require a current bundle");
     Ok(())
+}
+
+fn review_projection(args: &[String]) -> std::io::Result<()> {
+    let [root, bundle] = args else {
+        eprintln!("{USAGE}");
+        return Ok(());
+    };
+    let root = Path::new(root);
+    let plan = collaboration_projection_plan(root, Path::new(bundle))?;
+    print_projection_review(&plan);
+    Ok(())
+}
+
+fn apply_projection(args: &[String]) -> std::io::Result<()> {
+    let Some(root) = args.first() else {
+        eprintln!("{USAGE}");
+        return Ok(());
+    };
+    let Some(bundle) = args.get(1) else {
+        eprintln!("{USAGE}");
+        return Ok(());
+    };
+    if args.get(2).map(String::as_str) != Some("--approve") || args.len() != 3 {
+        return Err(invalid_input(
+            "collab apply is write-capable and requires the exact --approve flag",
+        ));
+    }
+    let root = Path::new(root);
+    let plan = collaboration_projection_plan(root, Path::new(bundle))?;
+    print_projection_review(&plan);
+    if !plan.can_apply() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "collaboration projection has unresolved conflicts; project was not modified",
+        ));
+    }
+
+    println!("Validating isolated collaboration candidate...");
+    let validation = validate_candidate(
+        root,
+        &ProjectConfig::load(root)?,
+        plan.writes(),
+        &Arc::new(AtomicBool::new(false)),
+    )?;
+    for step in &validation.steps {
+        let command = step
+            .command
+            .as_deref()
+            .map(|command| format!(": {command}"))
+            .unwrap_or_default();
+        println!(
+            "  [{}] {}{} ({:.2}s)",
+            step.status.label(),
+            step.label,
+            command,
+            step.duration.as_secs_f32()
+        );
+        if step.status != crate::project::validation::ValidationStatus::Passed
+            && !step.output.trim().is_empty()
+        {
+            for line in step.output.lines() {
+                println!("    {line}");
+            }
+        }
+    }
+    if !validation.passed() {
+        return Err(std::io::Error::other(format!(
+            "{}; project was not modified",
+            validation.summary()
+        )));
+    }
+    let projected = plan.commit(root)?;
+    println!(
+        "Committed {} reviewed source projection(s) and the semantic graph",
+        projected.len()
+    );
+    Ok(())
+}
+
+fn collaboration_projection_plan(
+    root: &Path,
+    bundle: &Path,
+) -> std::io::Result<CollaborationProjectionPlan> {
+    load_collaboration_projection(root, bundle)
+}
+
+fn print_projection_review(plan: &CollaborationProjectionPlan) {
+    println!("Collaboration source-projection review");
+    println!(
+        "  semantic nodes: +{} ~{} -{}; edges: +{} -{}",
+        plan.semantic.added.len(),
+        plan.semantic.modified.len(),
+        plan.semantic.removed.len(),
+        plan.semantic.added_edges.len(),
+        plan.semantic.removed_edges.len()
+    );
+    println!("  source files ({}):", plan.files.len());
+    for change in &plan.files {
+        let marker = match change.kind {
+            CollaborationFileChangeKind::Added => "+",
+            CollaborationFileChangeKind::Modified => "~",
+            CollaborationFileChangeKind::Removed => "-",
+        };
+        println!("    {marker} {}", change.path);
+    }
+    if plan.files.is_empty() {
+        println!("    none");
+    }
+    if plan.conflicts.is_empty() {
+        println!("  conflicts: none");
+        if let Some(digest) = plan.approval_digest() {
+            println!("  approval SHA-256: {digest}");
+        }
+    } else {
+        println!("  conflicts ({}):", plan.conflicts.len());
+        for conflict in &plan.conflicts {
+            println!("    ! {conflict}");
+        }
+    }
 }
 
 fn materialize(args: &[String]) -> std::io::Result<()> {

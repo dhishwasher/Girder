@@ -78,13 +78,14 @@ pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput
     let mut out = BuildOutput::default();
 
     // The module node itself.
-    let module_node = Node::new(NodeKind::Module, last_segment(&module), module.clone())
-        .with_language(lang.name());
+    let mut module_node = Node::new(NodeKind::Module, last_segment(&module), module.clone())
+        .with_language(lang.name())
+        .with_source(source);
+    module_node.file = Some(file.to_string());
+    module_node.span = span_of(tree.root_node());
+    module_node.set_attr("source_projection", "file-v1");
     let module_id = module_node.id;
-    out.nodes.push(Node {
-        file: Some(file.to_string()),
-        ..module_node
-    });
+    out.nodes.push(module_node);
 
     // Pass 1: collect definitions (functions, types, fields) + Contains edges.
     let root = tree.root_node();
