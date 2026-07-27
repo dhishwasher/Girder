@@ -3,12 +3,17 @@
 //! The protocol deliberately binds only loopback sockets. Remote peers should
 //! use an authenticated encrypted tunnel (for example SSH) because the session
 //! provides mutual authentication and integrity, but not confidentiality.
-//! Authentication proves possession of the group secret; both sides also
+//! Authentication proves possession of the group secret; optional pinned
+//! Ed25519 identities authenticate ephemeral X25519 key agreement so a different
+//! group member cannot derive that session's integrity key. Both sides also
 //! require the authenticated actor to be active in the causal membership roster.
 
 use super::collaboration_discovery::DiscoveryLease;
+use super::collaboration_identity::{SessionIdentity, PUBLIC_KEY_BYTES};
 use aether_graph::{ActorId, GraphDelta, GraphError, GraphReplica, MergeReport, VersionVector};
 use hmac::{Hmac, Mac};
+use ring::agreement;
+use ring::rand::SystemRandom;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use sha2::Sha256;
 use std::io::{Read, Write};
@@ -17,9 +22,10 @@ use std::path::Path;
 use std::time::Duration;
 
 const PROTOCOL_MAGIC: &str = "BITCODE_LIVE_COLLAB";
-pub(super) const PROTOCOL_VERSION: u32 = 4;
+pub(super) const PROTOCOL_VERSION: u32 = 5;
 const NONCE_BYTES: usize = 32;
 const MAC_BYTES: usize = 32;
+const KEY_AGREEMENT_BYTES: usize = 32;
 const MIN_SECRET_BYTES: usize = 32;
 const MAX_SECRET_BYTES: usize = 4096;
 const MAX_PRESENCE_BYTES: usize = 256;
@@ -38,12 +44,36 @@ pub(crate) struct LiveSyncReport {
     pub(crate) node_count: usize,
     pub(crate) edge_count: usize,
     peer_presence: SessionPresence,
+    peer_identity_fingerprint: Option<String>,
 }
 
 impl LiveSyncReport {
     pub(crate) fn peer_presence(&self) -> Option<&str> {
         self.peer_presence.status()
     }
+
+    pub(crate) fn peer_identity_fingerprint(&self) -> Option<&str> {
+        self.peer_identity_fingerprint.as_deref()
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub(crate) struct ServeOptions<'a> {
+    pub(crate) once: bool,
+    pub(crate) ready_file: Option<&'a Path>,
+    pub(crate) presence: Option<&'a str>,
+    pub(crate) discovery_directory: Option<&'a Path>,
+    pub(crate) identity_file: Option<&'a Path>,
+    pub(crate) trust_store: Option<&'a Path>,
+}
+
+struct ServeListenerOptions<'a> {
+    once: bool,
+    ready_file: Option<&'a Path>,
+    presence: SessionPresence,
+    discovery_directory: Option<&'a Path>,
+    identity_file: Option<&'a Path>,
+    trust_store: Option<&'a Path>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -99,28 +129,37 @@ impl std::fmt::Display for SessionPresence {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Challenge {
     magic: String,
     version: u32,
     server_actor: ActorId,
     server_nonce: [u8; NONCE_BYTES],
     server_presence: SessionPresence,
+    server_identity: Option<[u8; PUBLIC_KEY_BYTES]>,
+    server_key_agreement: Option<[u8; KEY_AGREEMENT_BYTES]>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct AuthRequest {
     client_actor: ActorId,
     client_nonce: [u8; NONCE_BYTES],
     client_version: VersionVector,
     client_presence: SessionPresence,
+    client_identity: Option<[u8; PUBLIC_KEY_BYTES]>,
+    client_key_agreement: Option<[u8; KEY_AGREEMENT_BYTES]>,
+    identity_proof: Option<Vec<u8>>,
     proof: [u8; MAC_BYTES],
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct AuthResponse {
     accepted: bool,
     server_actor: ActorId,
     proof: [u8; MAC_BYTES],
+    identity_proof: Option<Vec<u8>>,
     error: Option<String>,
 }
 
@@ -135,6 +174,15 @@ struct AuthTranscript<'a> {
     client_version: &'a VersionVector,
     server_presence: &'a SessionPresence,
     client_presence: &'a SessionPresence,
+    server_identity: &'a Option<[u8; PUBLIC_KEY_BYTES]>,
+    client_identity: &'a Option<[u8; PUBLIC_KEY_BYTES]>,
+    server_key_agreement: &'a Option<[u8; KEY_AGREEMENT_BYTES]>,
+    client_key_agreement: &'a Option<[u8; KEY_AGREEMENT_BYTES]>,
+}
+
+struct EphemeralKeyAgreement {
+    private_key: agreement::EphemeralPrivateKey,
+    public_key: [u8; KEY_AGREEMENT_BYTES],
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -279,26 +327,83 @@ pub(crate) fn generate_secret(path: &Path) -> std::io::Result<()> {
     result
 }
 
+fn load_session_identity(
+    identity_file: Option<&Path>,
+    trust_store: Option<&Path>,
+    actor: &ActorId,
+) -> std::io::Result<Option<SessionIdentity>> {
+    match (identity_file, trust_store) {
+        (Some(identity_file), Some(trust_store)) => {
+            let identity = SessionIdentity::load(identity_file, trust_store, actor)?;
+            if identity.actor() != actor {
+                return Err(invalid_data("loaded actor identity changed unexpectedly"));
+            }
+            Ok(Some(identity))
+        }
+        (None, None) => Ok(None),
+        _ => Err(invalid_input(
+            "--identity-file and --trust-store must be provided together",
+        )),
+    }
+}
+
+fn generate_key_agreement() -> std::io::Result<EphemeralKeyAgreement> {
+    let private_key =
+        agreement::EphemeralPrivateKey::generate(&agreement::X25519, &SystemRandom::new())
+            .map_err(|_| std::io::Error::other("failed to generate ephemeral X25519 key"))?;
+    let public_key: [u8; KEY_AGREEMENT_BYTES] = private_key
+        .compute_public_key()
+        .map_err(|_| std::io::Error::other("failed to derive ephemeral X25519 public key"))?
+        .as_ref()
+        .try_into()
+        .map_err(|_| invalid_data("unexpected X25519 public-key length"))?;
+    Ok(EphemeralKeyAgreement {
+        private_key,
+        public_key,
+    })
+}
+
+fn identity_session_key(
+    secret: &[u8],
+    transcript: &[u8],
+    private_key: agreement::EphemeralPrivateKey,
+    peer_public_key: &[u8; KEY_AGREEMENT_BYTES],
+) -> std::io::Result<[u8; MAC_BYTES]> {
+    let peer_public_key =
+        agreement::UnparsedPublicKey::new(&agreement::X25519, peer_public_key.as_slice());
+    agreement::agree_ephemeral(private_key, &peer_public_key, |shared_secret| {
+        let mut key_material =
+            Vec::with_capacity(transcript.len() + shared_secret.len() + 2 * size_of::<u64>());
+        key_material.extend_from_slice(&(transcript.len() as u64).to_be_bytes());
+        key_material.extend_from_slice(transcript);
+        key_material.extend_from_slice(&(shared_secret.len() as u64).to_be_bytes());
+        key_material.extend_from_slice(shared_secret);
+        compute_mac(secret, b"identity-session-key-v1", &key_material)
+    })
+    .map_err(|_| permission_denied("invalid peer X25519 key agreement"))?
+}
+
 pub(crate) fn serve(
     bundle: &Path,
     bind: &str,
     secret_file: &Path,
-    once: bool,
-    ready_file: Option<&Path>,
-    presence: Option<&str>,
-    discovery_directory: Option<&Path>,
+    options: ServeOptions<'_>,
 ) -> std::io::Result<()> {
-    let presence = SessionPresence::new(presence)?;
+    let presence = SessionPresence::new(options.presence)?;
     let address = loopback_address(bind)?;
     let listener = TcpListener::bind(address)?;
     serve_listener(
         bundle,
         listener,
         secret_file,
-        once,
-        ready_file,
-        presence,
-        discovery_directory,
+        ServeListenerOptions {
+            once: options.once,
+            ready_file: options.ready_file,
+            presence,
+            discovery_directory: options.discovery_directory,
+            identity_file: options.identity_file,
+            trust_store: options.trust_store,
+        },
     )
 }
 
@@ -306,10 +411,7 @@ fn serve_listener(
     bundle: &Path,
     listener: TcpListener,
     secret_file: &Path,
-    once: bool,
-    ready_file: Option<&Path>,
-    presence: SessionPresence,
-    discovery_directory: Option<&Path>,
+    options: ServeListenerOptions<'_>,
 ) -> std::io::Result<()> {
     let secret = read_secret(secret_file)?;
     let mut replica = collaboration_result(GraphReplica::load(bundle))?;
@@ -319,16 +421,19 @@ fn serve_listener(
             replica.actor()
         )));
     }
+    let identity =
+        load_session_identity(options.identity_file, options.trust_store, replica.actor())?;
     let local_address = listener.local_addr()?;
     if !local_address.ip().is_loopback() {
         return Err(invalid_input("live collaboration must bind to loopback"));
     }
-    let discovery_lease = discovery_directory
+    let discovery_lease = options
+        .discovery_directory
         .map(|directory| {
             DiscoveryLease::publish(directory, replica.actor(), local_address, &secret)
         })
         .transpose()?;
-    if let Some(ready_file) = ready_file {
+    if let Some(ready_file) = options.ready_file {
         write_ready_file(ready_file, local_address)?;
     }
     println!(
@@ -336,14 +441,28 @@ fn serve_listener(
         replica.actor()
     );
     println!("  transport: authenticated and integrity-protected; loopback only");
-    println!("  session presence: {presence}");
+    println!("  session presence: {}", options.presence);
+    match identity.as_ref() {
+        Some(identity) => println!(
+            "  actor identity: Ed25519 SHA-256 {}",
+            identity.fingerprint()
+        ),
+        None => println!("  actor identity: group-secret only (legacy mode)"),
+    }
     if let Some(lease) = discovery_lease.as_ref() {
         println!("  local discovery: {}", lease.path().display());
     }
 
     loop {
         let (stream, peer_address) = listener.accept()?;
-        match handle_peer(&mut replica, stream, &secret, bundle, &presence) {
+        match handle_peer(
+            &mut replica,
+            stream,
+            &secret,
+            bundle,
+            &options.presence,
+            identity.as_ref(),
+        ) {
             Ok(report) => {
                 println!(
                     "  synchronized {} from {peer_address}: received {}, inserted {}, graph {} nodes / {} edges",
@@ -354,10 +473,16 @@ fn serve_listener(
                     report.edge_count
                 );
                 println!("    peer presence: {}", report.peer_presence);
+                match report.peer_identity_fingerprint() {
+                    Some(fingerprint) => {
+                        println!("    peer identity: Ed25519 SHA-256 {fingerprint}")
+                    }
+                    None => println!("    peer identity: group-secret only (legacy mode)"),
+                }
             }
             Err(error) => eprintln!("  rejected peer {peer_address}: {error}"),
         }
-        if once {
+        if options.once {
             return Ok(());
         }
     }
@@ -369,6 +494,8 @@ pub(crate) fn join(
     secret_file: &Path,
     out: Option<&Path>,
     presence: Option<&str>,
+    identity_file: Option<&Path>,
+    trust_store: Option<&Path>,
 ) -> std::io::Result<LiveSyncReport> {
     let presence = SessionPresence::new(presence)?;
     let address = loopback_address(address)?;
@@ -380,6 +507,7 @@ pub(crate) fn join(
             replica.actor()
         )));
     }
+    let identity = load_session_identity(identity_file, trust_store, replica.actor())?;
     let mut stream = TcpStream::connect_timeout(&address, IO_TIMEOUT)?;
     configure_stream(&stream)?;
 
@@ -400,16 +528,51 @@ pub(crate) fn join(
             ),
         ));
     }
+    match (
+        identity.as_ref(),
+        challenge.server_identity.as_ref(),
+        challenge.server_key_agreement.as_ref(),
+    ) {
+        (Some(_), Some(_), Some(_)) | (None, None, None) => {}
+        (Some(_), None, None) => {
+            return Err(permission_denied(
+                "peer does not offer a pinned actor identity; refusing downgrade to group-secret-only authentication",
+            ))
+        }
+        (Some(_), _, _) => {
+            return Err(invalid_data(
+                "peer offered an incomplete actor identity handshake",
+            ))
+        }
+        (None, _, _) => {
+            return Err(permission_denied(
+                "peer requires actor identity authentication; provide --identity-file and --trust-store",
+            ))
+        }
+    }
 
     let client_nonce = random_nonce()?;
+    let client_identity = identity.as_ref().map(|identity| *identity.public_key());
+    let key_agreement = identity
+        .as_ref()
+        .map(|_| generate_key_agreement())
+        .transpose()?;
+    let client_key_agreement = key_agreement
+        .as_ref()
+        .map(|key_agreement| key_agreement.public_key);
     let transcript = transcript_bytes(
         &challenge,
         replica.actor(),
         &client_nonce,
         replica.version(),
         &presence,
+        &client_identity,
+        &client_key_agreement,
     )?;
     let proof = compute_mac(&secret, b"client-auth", &transcript)?;
+    let identity_proof = identity
+        .as_ref()
+        .map(|identity| identity.sign(b"client", &transcript));
     write_frame(
         &mut stream,
         &AuthRequest {
@@ -417,6 +580,9 @@ pub(crate) fn join(
             client_nonce,
             client_version: replica.version().clone(),
             client_presence: presence,
+            client_identity,
+            client_key_agreement,
+            identity_proof,
             proof,
         },
         MAX_HANDSHAKE_BYTES,
@@ -434,7 +600,43 @@ pub(crate) fn join(
         return Err(invalid_data("server actor changed during authentication"));
     }
     verify_mac(&secret, b"server-auth", &transcript, &response.proof)?;
-    let session_key = compute_mac(&secret, b"session-key", &transcript)?;
+    let peer_identity_fingerprint = match identity.as_ref() {
+        Some(identity) => {
+            let server_identity = challenge
+                .server_identity
+                .as_ref()
+                .ok_or_else(|| invalid_data("server identity disappeared from challenge"))?;
+            let signature = response
+                .identity_proof
+                .as_deref()
+                .ok_or_else(|| permission_denied("server omitted its actor identity proof"))?;
+            Some(identity.verify_peer(
+                &challenge.server_actor,
+                server_identity,
+                b"server",
+                &transcript,
+                signature,
+            )?)
+        }
+        None => {
+            if response.identity_proof.is_some() {
+                return Err(invalid_data(
+                    "legacy authentication response unexpectedly included an identity proof",
+                ));
+            }
+            None
+        }
+    };
+    let session_key = match (key_agreement, challenge.server_key_agreement.as_ref()) {
+        (Some(key_agreement), Some(peer_public_key)) => identity_session_key(
+            &secret,
+            &transcript,
+            key_agreement.private_key,
+            peer_public_key,
+        )?,
+        (None, None) => compute_mac(&secret, b"session-key", &transcript)?,
+        _ => return Err(invalid_data("actor identity key agreement changed mode")),
+    };
 
     let server_payload = read_signed(&mut stream, &session_key, b"server", 1)?;
     let (server_delta, server_version) = match server_payload {
@@ -487,6 +689,7 @@ pub(crate) fn join(
         node_count: graph.node_count(),
         edge_count: graph.edge_count(),
         peer_presence: challenge.server_presence,
+        peer_identity_fingerprint,
     })
 }
 
@@ -496,14 +699,20 @@ fn handle_peer(
     secret: &[u8],
     bundle: &Path,
     presence: &SessionPresence,
+    identity: Option<&SessionIdentity>,
 ) -> std::io::Result<LiveSyncReport> {
     configure_stream(&stream)?;
+    let key_agreement = identity.map(|_| generate_key_agreement()).transpose()?;
     let challenge = Challenge {
         magic: PROTOCOL_MAGIC.into(),
         version: PROTOCOL_VERSION,
         server_actor: replica.actor().clone(),
         server_nonce: random_nonce()?,
         server_presence: presence.clone(),
+        server_identity: identity.map(|identity| *identity.public_key()),
+        server_key_agreement: key_agreement
+            .as_ref()
+            .map(|key_agreement| key_agreement.public_key),
     };
     write_frame(&mut stream, &challenge, MAX_HANDSHAKE_BYTES)?;
     let request: AuthRequest = read_frame(&mut stream, MAX_HANDSHAKE_BYTES)?;
@@ -518,6 +727,7 @@ fn handle_peer(
                 accepted: false,
                 server_actor: replica.actor().clone(),
                 proof: [0; MAC_BYTES],
+                identity_proof: None,
                 error: Some("peer actor id must be unique".into()),
             },
             MAX_HANDSHAKE_BYTES,
@@ -530,6 +740,8 @@ fn handle_peer(
         &request.client_nonce,
         &request.client_version,
         &request.client_presence,
+        &request.client_identity,
+        &request.client_key_agreement,
     )?;
     if verify_mac(secret, b"client-auth", &transcript, &request.proof).is_err() {
         write_frame(
@@ -538,6 +750,7 @@ fn handle_peer(
                 accepted: false,
                 server_actor: replica.actor().clone(),
                 proof: [0; MAC_BYTES],
+                identity_proof: None,
                 error: Some("authentication failed".into()),
             },
             MAX_HANDSHAKE_BYTES,
@@ -554,6 +767,7 @@ fn handle_peer(
                 accepted: false,
                 server_actor: replica.actor().clone(),
                 proof: [0; MAC_BYTES],
+                identity_proof: None,
                 error: Some(format!(
                     "actor '{validated_actor}' is not an active collaboration member"
                 )),
@@ -565,18 +779,76 @@ fn handle_peer(
             format!("actor '{validated_actor}' is not an active collaboration member"),
         ));
     }
+    let peer_identity_fingerprint = match (
+        identity,
+        request.client_identity.as_ref(),
+        request.client_key_agreement.as_ref(),
+        request.identity_proof.as_deref(),
+    ) {
+        (Some(identity), Some(public_key), Some(_), Some(signature)) => {
+            match identity.verify_peer(
+                &validated_actor,
+                public_key,
+                b"client",
+                &transcript,
+                signature,
+            ) {
+                Ok(fingerprint) => Some(fingerprint),
+                Err(error) => {
+                    let message = error.to_string();
+                    send_auth_rejection(&mut stream, replica.actor(), &message)?;
+                    return Err(error);
+                }
+            }
+        }
+        (Some(_), _, _, _) => {
+            let message =
+                "host requires a complete actor identity proof and ephemeral key agreement";
+            send_auth_rejection(&mut stream, replica.actor(), message)?;
+            return Err(permission_denied(message));
+        }
+        (None, None, None, None) => None,
+        (None, _, _, _) => {
+            let message =
+                "host is in group-secret-only mode and cannot authenticate a client identity";
+            send_auth_rejection(&mut stream, replica.actor(), message)?;
+            return Err(permission_denied(message));
+        }
+    };
+    let session_key = match (key_agreement, request.client_key_agreement.as_ref()) {
+        (Some(key_agreement), Some(peer_public_key)) => match identity_session_key(
+            secret,
+            &transcript,
+            key_agreement.private_key,
+            peer_public_key,
+        ) {
+            Ok(session_key) => session_key,
+            Err(error) => {
+                let message = error.to_string();
+                send_auth_rejection(&mut stream, replica.actor(), &message)?;
+                return Err(error);
+            }
+        },
+        (None, None) => compute_mac(secret, b"session-key", &transcript)?,
+        _ => {
+            let message = "actor identity key agreement changed mode";
+            send_auth_rejection(&mut stream, replica.actor(), message)?;
+            return Err(invalid_data(message));
+        }
+    };
     let server_proof = compute_mac(secret, b"server-auth", &transcript)?;
+    let identity_proof = identity.map(|identity| identity.sign(b"server", &transcript));
     write_frame(
         &mut stream,
         &AuthResponse {
             accepted: true,
             server_actor: replica.actor().clone(),
             proof: server_proof,
+            identity_proof,
             error: None,
         },
         MAX_HANDSHAKE_BYTES,
     )?;
-    let session_key = compute_mac(secret, b"session-key", &transcript)?;
 
     let server_delta = match replica.delta_since(&request.client_version) {
         Ok(delta) => delta,
@@ -684,7 +956,26 @@ fn handle_peer(
         node_count: graph.node_count(),
         edge_count: graph.edge_count(),
         peer_presence: request.client_presence,
+        peer_identity_fingerprint,
     })
+}
+
+fn send_auth_rejection(
+    stream: &mut TcpStream,
+    server_actor: &ActorId,
+    message: &str,
+) -> std::io::Result<()> {
+    write_frame(
+        stream,
+        &AuthResponse {
+            accepted: false,
+            server_actor: server_actor.clone(),
+            proof: [0; MAC_BYTES],
+            identity_proof: None,
+            error: Some(message.into()),
+        },
+        MAX_HANDSHAKE_BYTES,
+    )
 }
 
 fn write_ready_file(path: &Path, address: SocketAddr) -> std::io::Result<()> {
@@ -739,6 +1030,11 @@ fn validate_challenge(challenge: &Challenge) -> std::io::Result<()> {
     ActorId::new(challenge.server_actor.as_str())
         .map(|_| ())
         .map_err(|error| invalid_data(error.to_string()))?;
+    if challenge.server_identity.is_some() != challenge.server_key_agreement.is_some() {
+        return Err(invalid_data(
+            "server identity and X25519 key agreement must be offered together",
+        ));
+    }
     challenge.server_presence.validate()
 }
 
@@ -748,6 +1044,8 @@ fn transcript_bytes(
     client_nonce: &[u8; NONCE_BYTES],
     client_version: &VersionVector,
     client_presence: &SessionPresence,
+    client_identity: &Option<[u8; PUBLIC_KEY_BYTES]>,
+    client_key_agreement: &Option<[u8; KEY_AGREEMENT_BYTES]>,
 ) -> std::io::Result<Vec<u8>> {
     serde_json::to_vec(&AuthTranscript {
         magic: PROTOCOL_MAGIC,
@@ -759,6 +1057,10 @@ fn transcript_bytes(
         client_version,
         server_presence: &challenge.server_presence,
         client_presence,
+        server_identity: &challenge.server_identity,
+        client_identity,
+        server_key_agreement: &challenge.server_key_agreement,
+        client_key_agreement,
     })
     .map_err(|error| invalid_data(error.to_string()))
 }
@@ -922,9 +1224,16 @@ fn invalid_data(message: impl Into<String>) -> std::io::Error {
     std::io::Error::new(std::io::ErrorKind::InvalidData, message.into())
 }
 
+fn permission_denied(message: impl Into<String>) -> std::io::Error {
+    std::io::Error::new(std::io::ErrorKind::PermissionDenied, message.into())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::project::collaboration_identity::{
+        generate_identity, trust_identity, IdentitySummary,
+    };
     use aether_graph::{Edge, EdgeKind, Node, NodeKind, SemanticGraph};
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicUsize, Ordering};
@@ -989,6 +1298,32 @@ mod tests {
         }
     }
 
+    fn generate_identity_files(
+        temp: &TempDir,
+        bundle: &Path,
+        name: &str,
+    ) -> (PathBuf, PathBuf, IdentitySummary) {
+        let private = temp.file(&format!("{name}.identity"));
+        let public = temp.file(&format!("{name}.identity.pub"));
+        let summary = generate_identity(bundle, &private, &public).unwrap();
+        (private, public, summary)
+    }
+
+    fn pin_identity(trust_store: &Path, public: &Path, identity: &IdentitySummary) {
+        trust_identity(trust_store, public, &identity.fingerprint).unwrap();
+    }
+
+    fn once_listener_options() -> ServeListenerOptions<'static> {
+        ServeListenerOptions {
+            once: true,
+            ready_file: None,
+            presence: SessionPresence::default(),
+            discovery_directory: None,
+            identity_file: None,
+            trust_store: None,
+        }
+    }
+
     #[test]
     fn authenticated_peers_exchange_concurrent_graph_deltas() {
         let temp = TempDir::new();
@@ -1013,10 +1348,7 @@ mod tests {
                 &server_bundle,
                 listener,
                 &server_secret,
-                true,
-                None,
-                SessionPresence::default(),
-                None,
+                once_listener_options(),
             )
             .unwrap()
         });
@@ -1025,6 +1357,8 @@ mod tests {
             &address.to_string(),
             &secret,
             Some(&client_path),
+            None,
+            None,
             None,
         )
         .unwrap();
@@ -1087,6 +1421,7 @@ mod tests {
                 secret,
                 &server_bundle,
                 &server_presence,
+                None,
             )
         });
         let client_report = join(
@@ -1095,6 +1430,8 @@ mod tests {
             &secret_path,
             Some(&client_path),
             Some(BOB_STATUS),
+            None,
+            None,
         )
         .unwrap();
         let server_report = host.join().unwrap().unwrap();
@@ -1113,6 +1450,240 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn pinned_identity_session_key_requires_ephemeral_private_keys() {
+        let secret = b"0123456789abcdef0123456789abcdef";
+        let transcript = b"signed identity handshake transcript";
+        let server = generate_key_agreement().unwrap();
+        let client = generate_key_agreement().unwrap();
+        let server_public = server.public_key;
+        let client_public = client.public_key;
+
+        let server_key =
+            identity_session_key(secret, transcript, server.private_key, &client_public).unwrap();
+        let client_key =
+            identity_session_key(secret, transcript, client.private_key, &server_public).unwrap();
+        assert_eq!(server_key, client_key);
+        assert_ne!(
+            server_key,
+            compute_mac(secret, b"session-key", transcript).unwrap()
+        );
+
+        let invalid = generate_key_agreement().unwrap();
+        assert!(identity_session_key(
+            secret,
+            transcript,
+            invalid.private_key,
+            &[0; KEY_AGREEMENT_BYTES]
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn pinned_actor_identities_mutually_authenticate_the_live_session() {
+        let temp = TempDir::new();
+        let secret = temp.file("secret");
+        write_secret(&secret, b"0123456789abcdef0123456789abcdef");
+        let server_path = temp.file("alice.aetherc");
+        let client_path = temp.file("bob.aetherc");
+        let mut alice = GraphReplica::from_graph(actor("alice"), &graph("fn run() {}"));
+        let mut bob = alice.fork(actor("bob")).unwrap();
+        bob.sync_graph(&graph("fn run() { signed(); }")).unwrap();
+        alice.save(&server_path).unwrap();
+        bob.save(&client_path).unwrap();
+        let (alice_private, alice_public, alice_identity) =
+            generate_identity_files(&temp, &server_path, "alice");
+        let (bob_private, bob_public, bob_identity) =
+            generate_identity_files(&temp, &client_path, "bob");
+        let alice_trust = temp.file("alice.trust");
+        let bob_trust = temp.file("bob.trust");
+        pin_identity(&alice_trust, &bob_public, &bob_identity);
+        pin_identity(&bob_trust, &alice_public, &alice_identity);
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server_bundle = server_path.clone();
+        let server_secret = secret.clone();
+        let host = thread::spawn(move || {
+            serve_listener(
+                &server_bundle,
+                listener,
+                &server_secret,
+                ServeListenerOptions {
+                    identity_file: Some(&alice_private),
+                    trust_store: Some(&alice_trust),
+                    ..once_listener_options()
+                },
+            )
+            .unwrap()
+        });
+        let report = join(
+            &client_path,
+            &address.to_string(),
+            &secret,
+            Some(&client_path),
+            None,
+            Some(&bob_private),
+            Some(&bob_trust),
+        )
+        .unwrap();
+        host.join().unwrap();
+
+        assert_eq!(
+            report.peer_identity_fingerprint(),
+            Some(alice_identity.fingerprint.as_str())
+        );
+        let server = GraphReplica::load(&server_path).unwrap();
+        let client = GraphReplica::load(&client_path).unwrap();
+        assert_eq!(
+            server.materialize().unwrap().to_ron().unwrap(),
+            client.materialize().unwrap().to_ron().unwrap()
+        );
+    }
+
+    #[test]
+    fn group_secret_holder_cannot_impersonate_a_pinned_client_actor() {
+        let temp = TempDir::new();
+        let secret_path = temp.file("secret");
+        let secret = b"0123456789abcdef0123456789abcdef";
+        write_secret(&secret_path, secret);
+        let server_path = temp.file("alice.aetherc");
+        let client_path = temp.file("bob.aetherc");
+        let mut alice = GraphReplica::from_graph(actor("alice"), &graph("fn run() {}"));
+        let bob = alice.fork(actor("bob")).unwrap();
+        alice.save(&server_path).unwrap();
+        bob.save(&client_path).unwrap();
+        let before_server = std::fs::read(&server_path).unwrap();
+        let before_client = std::fs::read(&client_path).unwrap();
+        let (alice_private, alice_public, alice_identity) =
+            generate_identity_files(&temp, &server_path, "alice");
+        let (_bob_private, bob_public, bob_identity) =
+            generate_identity_files(&temp, &client_path, "bob-genuine");
+        let (attacker_private, _attacker_public, _attacker_identity) =
+            generate_identity_files(&temp, &client_path, "bob-attacker");
+        let alice_trust = temp.file("alice.trust");
+        let bob_trust = temp.file("bob.trust");
+        pin_identity(&alice_trust, &bob_public, &bob_identity);
+        pin_identity(&bob_trust, &alice_public, &alice_identity);
+        let alice_session =
+            SessionIdentity::load(&alice_private, &alice_trust, &actor("alice")).unwrap();
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server_bundle = server_path.clone();
+        let host = thread::spawn(move || {
+            let mut replica = GraphReplica::load(&server_bundle).unwrap();
+            let (stream, _) = listener.accept().unwrap();
+            handle_peer(
+                &mut replica,
+                stream,
+                secret,
+                &server_bundle,
+                &SessionPresence::default(),
+                Some(&alice_session),
+            )
+        });
+        let error = join(
+            &client_path,
+            &address.to_string(),
+            &secret_path,
+            None,
+            None,
+            Some(&attacker_private),
+            Some(&bob_trust),
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("does not match"), "{error}");
+        assert_eq!(
+            host.join().unwrap().unwrap_err().kind(),
+            std::io::ErrorKind::PermissionDenied
+        );
+        assert_eq!(std::fs::read(&server_path).unwrap(), before_server);
+        assert_eq!(std::fs::read(&client_path).unwrap(), before_client);
+    }
+
+    #[test]
+    fn identity_mode_refuses_downgrade_in_either_direction() {
+        let temp = TempDir::new();
+        let secret = temp.file("secret");
+        write_secret(&secret, b"0123456789abcdef0123456789abcdef");
+        let server_path = temp.file("alice.aetherc");
+        let client_path = temp.file("bob.aetherc");
+        let mut alice = GraphReplica::from_graph(actor("alice"), &graph("fn run() {}"));
+        let bob = alice.fork(actor("bob")).unwrap();
+        alice.save(&server_path).unwrap();
+        bob.save(&client_path).unwrap();
+        let (alice_private, alice_public, alice_identity) =
+            generate_identity_files(&temp, &server_path, "alice");
+        let (bob_private, bob_public, bob_identity) =
+            generate_identity_files(&temp, &client_path, "bob");
+        let alice_trust = temp.file("alice.trust");
+        let bob_trust = temp.file("bob.trust");
+        pin_identity(&alice_trust, &bob_public, &bob_identity);
+        pin_identity(&bob_trust, &alice_public, &alice_identity);
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server_bundle = server_path.clone();
+        let server_secret = secret.clone();
+        let alice_private_for_host = alice_private.clone();
+        let alice_trust_for_host = alice_trust.clone();
+        let identity_host = thread::spawn(move || {
+            serve_listener(
+                &server_bundle,
+                listener,
+                &server_secret,
+                ServeListenerOptions {
+                    identity_file: Some(&alice_private_for_host),
+                    trust_store: Some(&alice_trust_for_host),
+                    ..once_listener_options()
+                },
+            )
+            .unwrap()
+        });
+        let error = join(
+            &client_path,
+            &address.to_string(),
+            &secret,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap_err();
+        assert!(
+            error.to_string().contains("requires actor identity"),
+            "{error}"
+        );
+        identity_host.join().unwrap();
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server_bundle = server_path.clone();
+        let server_secret = secret.clone();
+        let legacy_host = thread::spawn(move || {
+            serve_listener(
+                &server_bundle,
+                listener,
+                &server_secret,
+                once_listener_options(),
+            )
+            .unwrap()
+        });
+        let error = join(
+            &client_path,
+            &address.to_string(),
+            &secret,
+            None,
+            None,
+            Some(&bob_private),
+            Some(&bob_trust),
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("refusing downgrade"), "{error}");
+        legacy_host.join().unwrap();
     }
 
     #[test]
@@ -1150,8 +1721,29 @@ mod tests {
             server_actor: actor("alice"),
             server_nonce: [0; NONCE_BYTES],
             server_presence: SessionPresence(Some(" not canonical".into())),
+            server_identity: None,
+            server_key_agreement: None,
         };
         assert!(validate_challenge(&malformed_challenge).is_err());
+    }
+
+    #[test]
+    fn handshake_frames_reject_unknown_fields() {
+        let challenge = Challenge {
+            magic: PROTOCOL_MAGIC.into(),
+            version: PROTOCOL_VERSION,
+            server_actor: actor("alice"),
+            server_nonce: [0; NONCE_BYTES],
+            server_presence: SessionPresence::default(),
+            server_identity: None,
+            server_key_agreement: None,
+        };
+        let mut encoded = serde_json::to_value(challenge).unwrap();
+        encoded
+            .as_object_mut()
+            .unwrap()
+            .insert("unexpected".into(), serde_json::Value::Bool(true));
+        assert!(serde_json::from_value::<Challenge>(encoded).is_err());
     }
 
     #[test]
@@ -1179,6 +1771,7 @@ mod tests {
                 secret,
                 &server_bundle,
                 &SessionPresence::default(),
+                None,
             )
         });
 
@@ -1194,6 +1787,8 @@ mod tests {
             &client_nonce,
             bob.version(),
             &signed_presence,
+            &None,
+            &None,
         )
         .unwrap();
         let altered_server_challenge = Challenge {
@@ -1208,6 +1803,8 @@ mod tests {
                 &client_nonce,
                 bob.version(),
                 &signed_presence,
+                &None,
+                &None,
             )
             .unwrap()
         );
@@ -1219,6 +1816,9 @@ mod tests {
                 client_nonce,
                 client_version: bob.version().clone(),
                 client_presence: altered_presence,
+                client_identity: None,
+                client_key_agreement: None,
+                identity_proof: None,
                 proof,
             },
             MAX_HANDSHAKE_BYTES,
@@ -1232,6 +1832,92 @@ mod tests {
             std::io::ErrorKind::PermissionDenied
         );
         assert_eq!(std::fs::read(&server_path).unwrap(), before);
+    }
+
+    #[test]
+    fn identity_and_key_agreement_are_bound_to_authentication_transcript() {
+        let challenge = Challenge {
+            magic: PROTOCOL_MAGIC.into(),
+            version: PROTOCOL_VERSION,
+            server_actor: actor("alice"),
+            server_nonce: [1; NONCE_BYTES],
+            server_presence: SessionPresence::default(),
+            server_identity: Some([2; PUBLIC_KEY_BYTES]),
+            server_key_agreement: Some([3; KEY_AGREEMENT_BYTES]),
+        };
+        let client_actor = actor("bob");
+        let client_nonce = [4; NONCE_BYTES];
+        let version = VersionVector::default();
+        let presence = SessionPresence::default();
+        let client_identity = Some([5; PUBLIC_KEY_BYTES]);
+        let client_key_agreement = Some([6; KEY_AGREEMENT_BYTES]);
+        let transcript = transcript_bytes(
+            &challenge,
+            &client_actor,
+            &client_nonce,
+            &version,
+            &presence,
+            &client_identity,
+            &client_key_agreement,
+        )
+        .unwrap();
+
+        let mut altered_challenge = challenge.clone();
+        altered_challenge.server_identity = Some([7; PUBLIC_KEY_BYTES]);
+        assert_ne!(
+            transcript,
+            transcript_bytes(
+                &altered_challenge,
+                &client_actor,
+                &client_nonce,
+                &version,
+                &presence,
+                &client_identity,
+                &client_key_agreement,
+            )
+            .unwrap()
+        );
+        let mut altered_challenge = challenge.clone();
+        altered_challenge.server_key_agreement = Some([8; KEY_AGREEMENT_BYTES]);
+        assert_ne!(
+            transcript,
+            transcript_bytes(
+                &altered_challenge,
+                &client_actor,
+                &client_nonce,
+                &version,
+                &presence,
+                &client_identity,
+                &client_key_agreement,
+            )
+            .unwrap()
+        );
+        assert_ne!(
+            transcript,
+            transcript_bytes(
+                &challenge,
+                &client_actor,
+                &client_nonce,
+                &version,
+                &presence,
+                &Some([9; PUBLIC_KEY_BYTES]),
+                &client_key_agreement,
+            )
+            .unwrap()
+        );
+        assert_ne!(
+            transcript,
+            transcript_bytes(
+                &challenge,
+                &client_actor,
+                &client_nonce,
+                &version,
+                &presence,
+                &client_identity,
+                &Some([10; KEY_AGREEMENT_BYTES]),
+            )
+            .unwrap()
+        );
     }
 
     #[test]
@@ -1257,10 +1943,7 @@ mod tests {
                 &server_bundle,
                 listener,
                 &server_secret,
-                true,
-                None,
-                SessionPresence::default(),
-                None,
+                once_listener_options(),
             )
             .unwrap()
         });
@@ -1268,6 +1951,8 @@ mod tests {
             &client_path,
             &address.to_string(),
             &client_secret,
+            None,
+            None,
             None,
             None
         )
@@ -1300,14 +1985,20 @@ mod tests {
                 &server_bundle,
                 listener,
                 &server_secret,
-                true,
-                None,
-                SessionPresence::default(),
-                None,
+                once_listener_options(),
             )
             .unwrap()
         });
-        let error = join(&client_path, &address.to_string(), &secret, None, None).unwrap_err();
+        let error = join(
+            &client_path,
+            &address.to_string(),
+            &secret,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap_err();
         assert!(
             error
                 .to_string()
@@ -1342,10 +2033,7 @@ mod tests {
                 &server_bundle,
                 listener,
                 &server_secret,
-                true,
-                None,
-                SessionPresence::default(),
-                None,
+                once_listener_options(),
             )
             .unwrap()
         });
@@ -1361,6 +2049,8 @@ mod tests {
             &client_nonce,
             bob.version(),
             &client_presence,
+            &None,
+            &None,
         )
         .unwrap();
         let proof = compute_mac(secret, b"client-auth", &transcript).unwrap();
@@ -1371,6 +2061,9 @@ mod tests {
                 client_nonce,
                 client_version: bob.version().clone(),
                 client_presence,
+                client_identity: None,
+                client_key_agreement: None,
+                identity_proof: None,
                 proof,
             },
             MAX_HANDSHAKE_BYTES,
@@ -1436,10 +2129,7 @@ mod tests {
                 &server_bundle,
                 listener,
                 &server_secret,
-                true,
-                None,
-                SessionPresence::default(),
-                None,
+                once_listener_options(),
             )
             .unwrap()
         });
@@ -1448,6 +2138,8 @@ mod tests {
             &address.to_string(),
             &secret,
             Some(&stale_path),
+            None,
+            None,
             None,
         )
         .unwrap_err();

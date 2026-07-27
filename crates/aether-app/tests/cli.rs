@@ -92,6 +92,14 @@ fn run_bitcode(args: &[&str]) -> String {
     String::from_utf8_lossy(&output.stdout).into_owned()
 }
 
+fn generated_identity_fingerprint(output: &str) -> String {
+    output
+        .lines()
+        .find_map(|line| line.trim().strip_prefix("SHA-256 fingerprint: "))
+        .map(str::to_owned)
+        .unwrap_or_else(|| panic!("identity output omitted its fingerprint:\n{output}"))
+}
+
 #[test]
 fn review_reports_added_modified_removed_functions() {
     let repo = TempRepo::new("review-node-kinds");
@@ -614,6 +622,12 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
     let secret = repo.path().join("collaboration.secret");
     let ready = repo.path().join("host.ready");
     let discovery_directory = repo.path().join("peers");
+    let alice_identity = repo.path().join("alice.identity");
+    let alice_public = repo.path().join("alice.identity.pub");
+    let alice_trust = repo.path().join("alice.trust");
+    let bob_identity = repo.path().join("bob.identity");
+    let bob_public = repo.path().join("bob.identity.pub");
+    let bob_trust = repo.path().join("bob.trust");
     let secret_output = run_bitcode(&["collab", "secret", secret.to_str().unwrap()]);
     assert!(
         secret_output.contains("contents not displayed"),
@@ -631,6 +645,55 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
     ]);
     repo.write("src/lib.rs", "pub fn run() -> i64 { 2 }\n");
     run_bitcode(&["collab", "sync", root, bob.to_str().unwrap()]);
+    let alice_identity_output = run_bitcode(&[
+        "collab",
+        "identity",
+        "generate",
+        alice.to_str().unwrap(),
+        alice_identity.to_str().unwrap(),
+        alice_public.to_str().unwrap(),
+    ]);
+    let alice_fingerprint = generated_identity_fingerprint(&alice_identity_output);
+    let bob_identity_output = run_bitcode(&[
+        "collab",
+        "identity",
+        "generate",
+        bob.to_str().unwrap(),
+        bob_identity.to_str().unwrap(),
+        bob_public.to_str().unwrap(),
+    ]);
+    let bob_fingerprint = generated_identity_fingerprint(&bob_identity_output);
+    let shown = run_bitcode(&["collab", "identity", "show", alice_public.to_str().unwrap()]);
+    assert!(shown.contains(&alice_fingerprint), "{shown}");
+    let denied = run_bitcode_output(&[
+        "collab",
+        "identity",
+        "trust",
+        alice_trust.to_str().unwrap(),
+        bob_public.to_str().unwrap(),
+        "--approve",
+        "wrong-fingerprint",
+    ]);
+    assert!(!denied.status.success());
+    assert!(!alice_trust.exists());
+    run_bitcode(&[
+        "collab",
+        "identity",
+        "trust",
+        alice_trust.to_str().unwrap(),
+        bob_public.to_str().unwrap(),
+        "--approve",
+        &bob_fingerprint,
+    ]);
+    run_bitcode(&[
+        "collab",
+        "identity",
+        "trust",
+        bob_trust.to_str().unwrap(),
+        alice_public.to_str().unwrap(),
+        "--approve",
+        &alice_fingerprint,
+    ]);
 
     let mut host = Command::new(env!("CARGO_BIN_EXE_bitcode"))
         .args([
@@ -644,6 +707,10 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
             ready.to_str().unwrap(),
             "--discovery-dir",
             discovery_directory.to_str().unwrap(),
+            "--identity-file",
+            alice_identity.to_str().unwrap(),
+            "--trust-store",
+            alice_trust.to_str().unwrap(),
             "--presence",
             "Alice is reviewing",
             "--once",
@@ -674,6 +741,14 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
             .any(|window| window == b"Alice is reviewing"),
         "ephemeral presence leaked into a discovery ticket"
     );
+    for fingerprint in [&alice_fingerprint, &bob_fingerprint] {
+        assert!(
+            !ticket_bytes
+                .windows(fingerprint.len())
+                .any(|window| window == fingerprint.as_bytes()),
+            "actor identity leaked into a discovery ticket"
+        );
+    }
 
     let discovered = run_bitcode(&[
         "collab",
@@ -697,6 +772,10 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         discovery_directory.to_str().unwrap(),
         "--secret-file",
         secret.to_str().unwrap(),
+        "--identity-file",
+        bob_identity.to_str().unwrap(),
+        "--trust-store",
+        bob_trust.to_str().unwrap(),
         "--presence",
         "Bob is implementing",
     ]);
@@ -708,6 +787,12 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         joined.contains("peer presence: Alice is reviewing"),
         "{joined}"
     );
+    assert!(
+        joined.contains(&format!(
+            "peer identity: Ed25519 SHA-256 {alice_fingerprint}"
+        )),
+        "{joined}"
+    );
     let output = host.wait_with_output().unwrap();
     assert!(
         output.status.success(),
@@ -717,6 +802,12 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
     );
     assert!(
         String::from_utf8_lossy(&output.stdout).contains("peer presence: Bob is implementing"),
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+    assert!(
+        String::from_utf8_lossy(&output.stdout)
+            .contains(&format!("peer identity: Ed25519 SHA-256 {bob_fingerprint}")),
         "{}",
         String::from_utf8_lossy(&output.stdout)
     );
@@ -739,6 +830,45 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         after.contains("Discovered 0 authenticated local collaboration peer(s)"),
         "{after}"
     );
+
+    let bob_rotated_identity = repo.path().join("bob-rotated.identity");
+    let bob_rotated_public = repo.path().join("bob-rotated.identity.pub");
+    let rotated = run_bitcode(&[
+        "collab",
+        "identity",
+        "generate",
+        bob.to_str().unwrap(),
+        bob_rotated_identity.to_str().unwrap(),
+        bob_rotated_public.to_str().unwrap(),
+    ]);
+    let rotated_fingerprint = generated_identity_fingerprint(&rotated);
+    let rotation = run_bitcode(&[
+        "collab",
+        "identity",
+        "rotate",
+        alice_trust.to_str().unwrap(),
+        bob_rotated_public.to_str().unwrap(),
+        "--from",
+        &bob_fingerprint,
+        "--approve",
+        &rotated_fingerprint,
+    ]);
+    assert!(rotation.contains("Rotated bob"), "{rotation}");
+    let trusted = run_bitcode(&["collab", "identity", "list", alice_trust.to_str().unwrap()]);
+    assert!(trusted.contains(&rotated_fingerprint), "{trusted}");
+    assert!(!trusted.contains(&bob_fingerprint), "{trusted}");
+    let removed = run_bitcode(&[
+        "collab",
+        "identity",
+        "remove",
+        alice_trust.to_str().unwrap(),
+        "bob",
+        "--approve",
+        &rotated_fingerprint,
+    ]);
+    assert!(removed.contains("Removed local trust for bob"), "{removed}");
+    let trusted = run_bitcode(&["collab", "identity", "list", alice_trust.to_str().unwrap()]);
+    assert!(trusted.contains("  none"), "{trusted}");
 
     let alice_replica = aether_graph::GraphReplica::load(&alice).unwrap();
     let bob_replica = aether_graph::GraphReplica::load(&bob).unwrap();

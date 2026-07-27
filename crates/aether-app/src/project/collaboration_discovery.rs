@@ -38,6 +38,14 @@ pub(crate) struct DiscoveryScan {
     pub(crate) ignored_entries: usize,
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+pub(crate) struct JoinPeerOptions<'a> {
+    pub(crate) out: Option<&'a Path>,
+    pub(crate) presence: Option<&'a str>,
+    pub(crate) identity_file: Option<&'a Path>,
+    pub(crate) trust_store: Option<&'a Path>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct DiscoveryPayload {
@@ -182,8 +190,7 @@ pub(crate) fn join_peer(
     actor: &str,
     directory: &Path,
     secret_file: &Path,
-    out: Option<&Path>,
-    presence: Option<&str>,
+    options: JoinPeerOptions<'_>,
 ) -> std::io::Result<LiveSyncReport> {
     let actor = collaboration_result(ActorId::new(actor))?;
     let scan = discover(bundle, directory, secret_file)?;
@@ -208,8 +215,10 @@ pub(crate) fn join_peer(
         bundle,
         &peer.address.to_string(),
         secret_file,
-        out,
-        presence,
+        options.out,
+        options.presence,
+        options.identity_file,
+        options.trust_store,
     )
 }
 
@@ -723,7 +732,14 @@ mod tests {
             );
         }
 
-        let error = join_peer(&bundle, "alice", &directory, &secret_file, None, None).unwrap_err();
+        let error = join_peer(
+            &bundle,
+            "alice",
+            &directory,
+            &secret_file,
+            JoinPeerOptions::default(),
+        )
+        .unwrap_err();
         assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
         assert!(error.to_string().contains("multiple active"));
     }

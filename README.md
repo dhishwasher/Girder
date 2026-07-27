@@ -69,18 +69,41 @@ cargo run -p aether-app -- collab member add alice.aetherc carol --approve
 cargo run -p aether-app -- collab member remove alice.aetherc carol --approve
 
 # Or exchange deltas in a mutually authenticated live loopback session.
-# Secret contents are generated with private permissions and never printed:
+# Secret contents are generated with private permissions and never printed.
+# Group-secret-only operation remains available as a migration mode:
 cargo run -p aether-app -- collab secret collaboration.secret
+
+# Strict identity mode additionally pins each roster actor to an Ed25519 key.
+# Generate each actor's private/shareable-public pair, compare the printed
+# SHA-256 fingerprints out of band, and approve the exact peer fingerprint:
+cargo run -p aether-app -- collab identity generate alice.aetherc \
+  alice.identity alice.identity.pub
+cargo run -p aether-app -- collab identity generate bob.aetherc \
+  bob.identity bob.identity.pub
+cargo run -p aether-app -- collab identity show bob.identity.pub
+cargo run -p aether-app -- collab identity trust alice.trust \
+  bob.identity.pub --approve <bob-fingerprint>
+cargo run -p aether-app -- collab identity trust bob.trust \
+  alice.identity.pub --approve <alice-fingerprint>
+
 cargo run -p aether-app -- collab host alice.aetherc 127.0.0.1:7331 \
+  --identity-file alice.identity --trust-store alice.trust \
   --secret-file collaboration.secret --discovery-dir .bitcode/peers \
   --presence "reviewing parser changes"
 cargo run -p aether-app -- collab discover bob.aetherc .bitcode/peers \
   --secret-file collaboration.secret
 cargo run -p aether-app -- collab join-peer bob.aetherc alice .bitcode/peers \
+  --identity-file bob.identity --trust-store bob.trust \
   --secret-file collaboration.secret --presence "running transport tests"
 # An explicit address remains available when local discovery is not in use:
 cargo run -p aether-app -- collab join bob.aetherc 127.0.0.1:7331 \
-  --secret-file collaboration.secret
+  --secret-file collaboration.secret \
+  --identity-file bob.identity --trust-store bob.trust
+# Rotation/removal also requires the exact currently reviewed fingerprints:
+cargo run -p aether-app -- collab identity rotate alice.trust \
+  bob-new.identity.pub --from <old-bob-fingerprint> --approve <new-bob-fingerprint>
+cargo run -p aether-app -- collab identity remove alice.trust bob \
+  --approve <new-bob-fingerprint>
 # Successful sessions persist both peers' causal acknowledgements. Once every
 # active member has acknowledged superseded history, prune it conservatively:
 cargo run -p aether-app -- collab compact alice.aetherc
@@ -168,21 +191,31 @@ clock. Use `fork` to allocate a new actor replica; direct `member add` is for
 re-authorizing an already allocated unique actor, since it does not create that
 actor's bundle.
 
-Live host/join uses fresh random challenges, mutual HMAC-SHA256 authentication,
-direction- and sequence-bound message integrity, bounded frames checked before
-allocation, socket timeouts, and secrets read from non-symlink regular files
-owned by the current user with private permissions. It deliberately binds
-loopback only: graph payloads are authenticated but not encrypted, so remote
-peers must connect through an encrypted tunnel such as SSH. After both sides
-verify that the other actor is active in the roster and durably persist a
-converged version, they persist monotonic peer acknowledgements. A delta that
-would remove either authenticated endpoint is rejected before persistence. A
-session claiming an unlisted actor is rejected even with a valid group-secret
-proof. Host and join may explicitly share a single-line status of at most 256
-UTF-8 bytes. Both statuses are bound into the authenticated handshake, reported
-to the peer, and discarded after that synchronization; they are never written
-to graph operations, acknowledgements, discovery tickets, or collaboration
-bundles.
+Live host/join uses fresh random challenges, mutual HMAC-SHA256 group
+authentication, direction- and sequence-bound message integrity, bounded frames
+checked before allocation, and socket timeouts. Secrets are read from
+non-symlink regular files owned by the current user with private permissions.
+Optional identity mode adds transcript-bound Ed25519 proofs and a local
+actor-to-key trust store: both endpoints must configure it, each public key must
+match the peer actor's exact pinned fingerprint, and either attempted downgrade
+to group-secret-only mode is refused. The signed transcript also authenticates
+fresh X25519 keys, deriving a session-integrity key that another group-secret
+holder cannot calculate from captured traffic. Private identity files receive
+the same ownership, symlink, and permission checks. New trust, rotation, and
+removal are explicit fingerprint-approved operations, and identity files are
+actor-bound to their collaboration bundle.
+
+The transport deliberately binds loopback only: graph payloads are authenticated
+but not encrypted, so remote peers must connect through an encrypted tunnel such
+as SSH. After both sides verify that the other actor is active in the roster and
+durably persist a converged version, they persist monotonic peer
+acknowledgements. A delta that would remove either authenticated endpoint is
+rejected before persistence. A session claiming an unlisted actor is rejected
+even with a valid group-secret proof. Host and join may explicitly share a
+single-line status of at most 256 UTF-8 bytes. Both statuses and optional public
+keys are bound into the authenticated handshake. Status is reported to the peer
+and discarded after that synchronization; it is never written to graph
+operations, acknowledgements, discovery tickets, or collaboration bundles.
 
 An optional `--discovery-dir` publishes an atomic, HMAC-authenticated,
 process-bound lease for the loopback host. The current-user directory and
@@ -201,10 +234,14 @@ causally superseded operations while retaining concurrent winners, membership
 removal barriers, and node-generation tombstones. Peers older than the recorded
 history floor fail safely and need a current bundle. Network/continuous
 discovery, continuous presence/subscriptions, encrypted remote transport, and
-per-member identity keys remain future work.
-The current secret is a group credential: roster checks reject an unlisted
-claimed actor, but any secret holder can impersonate an active actor and must
-therefore be trusted at the collaboration-group boundary.
+operation-level signatures/key transparency remain future work.
+Group-secret-only migration mode remains a group credential: roster checks
+reject an unlisted claimed actor, but any secret holder can impersonate an
+active actor. Pinned identity mode prevents that endpoint impersonation after
+fingerprints have been verified. It does not retroactively prove the author of
+every historical CRDT operation: authenticated peers can relay the existing
+multi-actor operation set, so provenance of stored history remains trusted at
+the collaboration-group boundary until operations themselves are signed.
 
 Every parsed module carries a bounded `file-v1` whole-file projection in the
 semantic graph. `collab review` compares the remote and freshly reconciled local
@@ -321,6 +358,10 @@ before joining on a background thread so rendering never blocks. It shows
 causal version/operation counts and the deterministic conflict policy, durable
 acknowledgements, and compacted history floor; it can conservatively compact
 acknowledged history. A live join updates the collaboration bundle only.
+Optional identity controls generate an actor-bound key, display a peer's exact
+fingerprint for out-of-band review, pin the unchanged public file, list trusted
+actors, and make strict identity mode visibly distinct from legacy group-secret
+mode. Explicit rotation/removal remains available in the CLI.
 Separate Review and Apply controls keep remote graph-to-source projection
 explicit, consistency-checked, digest-bound, validated, and atomic. CLI `host`
 is the persistent serving surface.
@@ -385,7 +426,7 @@ time-travel debug) are real, tested, and runnable. Implemented features:
 | Knowledge-graph queries | Natural-language → concept / impact / callers / callees / explain / neighbourhood |
 | Semantic review | Typed diff (added/modified/removed nodes + edges), impact radius, test gap report |
 | Minimal test selection | Call-graph reachability from changed functions, optional `--run` |
-| Graph collaboration | Deterministic operation-set CRDT, causal membership/deltas/tombstones, atomic RON/bincode bundles, roster-gated authenticated loopback host/join, private authenticated local discovery leases, all-member acknowledgement compaction, and reviewed whole-file source projection |
+| Graph collaboration | Deterministic operation-set CRDT, causal membership/deltas/tombstones, atomic RON/bincode bundles, roster-gated authenticated loopback host/join with optional downgrade-resistant pinned Ed25519 actor identities, private authenticated local discovery leases, all-member acknowledgement compaction, and reviewed whole-file source projection |
 | Project contract | Validated `bitcode.toml` for source scope, graph path, test runners, and agent output |
 | Source projection | GUI/CLI agent output and graph rename commit validated source plus graph through recoverable journaled transactions |
 | Candidate validation | Disposable project copy, optional bubblewrap isolation, Cargo build/tests, configured checks, cancellation/timeouts, bounded diagnostics, snapshot-bound commit gate |
@@ -401,5 +442,6 @@ cargo test -p aether-dap --test debugpy -- --ignored --nocapture
 ```
 
 The production roadmap (continuous/network collaboration discovery and
-presence, encrypted remote transport, self-optimization, web/mobile
-projections, and deeper tracing) is in `BLUEPRINT.md §9`.
+presence, encrypted remote transport, signed-operation provenance,
+self-optimization, web/mobile projections, and deeper tracing) is in
+`BLUEPRINT.md §9`.

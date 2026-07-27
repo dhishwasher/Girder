@@ -37,6 +37,7 @@ libc = { workspace = true }
 hmac = { workspace = true }
 sha2 = { workspace = true }
 getrandom = { workspace = true }
+ring = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 

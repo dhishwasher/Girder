@@ -676,6 +676,84 @@ fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     ui.small(
         "Discovery tickets are authenticated loopback hints from active roster members. The full live handshake remains authoritative.",
     );
+    ui.add_space(4.0);
+    ui.checkbox(
+        &mut app.collaboration_identity_enabled,
+        "Require pinned per-member identities",
+    )
+    .on_hover_text(
+        "Authenticate the active roster actor with Ed25519 in addition to the group secret",
+    );
+    if app.collaboration_identity_enabled {
+        ui.label("Private actor identity");
+        ui.text_edit_singleline(&mut app.collaboration_identity_input);
+        ui.label("Shareable public identity");
+        ui.text_edit_singleline(&mut app.collaboration_identity_public_input);
+        ui.horizontal(|ui| {
+            if ui
+                .add_enabled(!app.collaboration_busy(), egui::Button::new("Generate identity"))
+                .on_hover_text(
+                    "Create a new actor-bound private key and shareable public identity; existing files are never overwritten",
+                )
+                .clicked()
+            {
+                app.generate_actor_identity();
+            }
+        });
+
+        ui.label("Pinned identity trust store");
+        ui.text_edit_singleline(&mut app.collaboration_trust_input);
+        ui.label("Peer public identity to review");
+        ui.text_edit_singleline(&mut app.collaboration_peer_identity_input);
+        ui.horizontal(|ui| {
+            if ui
+                .add_enabled(
+                    !app.collaboration_busy(),
+                    egui::Button::new("Review peer identity"),
+                )
+                .clicked()
+            {
+                app.review_peer_identity();
+            }
+            if ui
+                .add_enabled(
+                    !app.collaboration_busy() && app.collaboration_identity_review.is_some(),
+                    egui::Button::new("Trust reviewed identity"),
+                )
+                .on_hover_text(
+                    "Re-read the public file and pin only the exact reviewed fingerprint",
+                )
+                .clicked()
+            {
+                app.trust_reviewed_identity();
+            }
+            if ui
+                .add_enabled(!app.collaboration_busy(), egui::Button::new("Refresh pins"))
+                .clicked()
+            {
+                app.refresh_trusted_identities();
+            }
+        });
+        if let Some(identity) = &app.collaboration_identity_review {
+            ui.monospace(format!(
+                "Reviewed {} · SHA-256 {}",
+                identity.actor, identity.fingerprint
+            ));
+        }
+        for identity in &app.collaboration_trusted_identities {
+            ui.monospace(format!(
+                "Pinned {} · SHA-256 {}",
+                identity.actor, identity.fingerprint
+            ));
+        }
+        ui.small(
+            "Verify fingerprints out of band. Both endpoints must enable identity mode; downgrade to group-secret-only authentication is refused. Use the CLI for explicit key rotation or removal.",
+        );
+    } else {
+        ui.small(
+            "Legacy mode authenticates only group membership: any secret holder can claim any active actor. Enable pinned identities to bind each endpoint to an approved Ed25519 key.",
+        );
+    }
     ui.label("Session presence (optional)");
     ui.text_edit_singleline(&mut app.collaboration_presence_input);
     ui.small(
@@ -701,7 +779,7 @@ fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         }
     });
     ui.small(
-        "Sessions are mutually authenticated and integrity-protected. They are loopback-only because payloads are not encrypted; use an SSH tunnel for a remote peer.",
+        "Sessions are mutually authenticated and integrity-protected at the selected identity level. They are loopback-only because payloads are not encrypted; use an SSH tunnel for a remote peer.",
     );
     ui.small(
         "Concurrent removals win; concurrent updates use a deterministic actor/counter tie-break. Joining updates the bundle, not project files.",

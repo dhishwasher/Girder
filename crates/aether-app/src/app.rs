@@ -4,10 +4,12 @@ use crate::graph_view::GraphViewState;
 use crate::panels;
 use crate::project::{
     apply_reviewed_collaboration_projection, discover_collaboration_peers,
-    generate_collaboration_secret, join_collaboration, review_collaboration_projection,
-    AgentValidationOutcome, CollaborationProjectionReview, DiscoveredPeer, ExtensionCommandRequest,
-    ExtensionMutation, ExtensionMutationOutcome, ExtensionMutationRequest, LiveSyncReport,
-    ProjectWorkspace, SyncImpact, ValidationReport,
+    generate_collaboration_identity, generate_collaboration_secret,
+    inspect_collaboration_public_identity, join_collaboration, review_collaboration_projection,
+    trust_collaboration_identity, trusted_collaboration_identities, AgentValidationOutcome,
+    CollaborationProjectionReview, DiscoveredPeer, ExtensionCommandRequest, ExtensionMutation,
+    ExtensionMutationOutcome, ExtensionMutationRequest, IdentitySummary, LiveSyncReport,
+    ProjectWorkspace, SyncImpact, TrustChange, ValidationReport,
 };
 use aether_agents::{MsgKind, Orchestrator, SwarmContext, SwarmMessage};
 use aether_debugger::{buggy_demo_program, python_tracer::PyTimeline, Timeline};
@@ -96,6 +98,13 @@ pub struct AetherApp {
     pub(crate) collaboration_presence_input: String,
     pub(crate) collaboration_discovery_input: String,
     pub(crate) collaboration_discovered_peers: Vec<DiscoveredPeer>,
+    pub(crate) collaboration_identity_enabled: bool,
+    pub(crate) collaboration_identity_input: String,
+    pub(crate) collaboration_identity_public_input: String,
+    pub(crate) collaboration_trust_input: String,
+    pub(crate) collaboration_peer_identity_input: String,
+    pub(crate) collaboration_identity_review: Option<IdentitySummary>,
+    pub(crate) collaboration_trusted_identities: Vec<IdentitySummary>,
     pub(crate) collaboration_status: String,
     collaboration_rx: Option<CollaborationReceiver>,
     collaboration_projection_rx: Option<CollaborationProjectionReceiver>,
@@ -168,6 +177,13 @@ impl AetherApp {
             collaboration_presence_input: String::new(),
             collaboration_discovery_input: ".bitcode/peers".into(),
             collaboration_discovered_peers: Vec::new(),
+            collaboration_identity_enabled: false,
+            collaboration_identity_input: ".bitcode/collaboration.identity".into(),
+            collaboration_identity_public_input: ".bitcode/collaboration.identity.pub".into(),
+            collaboration_trust_input: ".bitcode/collaboration.trust".into(),
+            collaboration_peer_identity_input: ".bitcode/peer.identity.pub".into(),
+            collaboration_identity_review: None,
+            collaboration_trusted_identities: Vec::new(),
             collaboration_status:
                 "Initialize a graph replica or inspect an existing collaboration bundle.".into(),
             collaboration_rx: None,
@@ -217,6 +233,8 @@ impl AetherApp {
                 self.extension_action_output.clear();
                 self.extension_remove_confirmation = None;
                 self.collaboration_discovered_peers.clear();
+                self.collaboration_identity_review = None;
+                self.collaboration_trusted_identities.clear();
                 self.set_workspace_status(workspace_summary(&self.workspace));
             }
             Err(error) => self.set_workspace_error(format!("Open failed: {error}")),
@@ -262,6 +280,8 @@ impl AetherApp {
                 self.graph_view.reset_for_project();
                 self.editor_jump = None;
                 self.collaboration_discovered_peers.clear();
+                self.collaboration_identity_review = None;
+                self.collaboration_trusted_identities.clear();
                 self.set_workspace_status(workspace_summary(&self.workspace));
             }
             Err(error) => self.set_workspace_error(format!("Reload failed: {error}")),
@@ -800,15 +820,51 @@ impl AetherApp {
         };
         let address = self.collaboration_address_input.trim().to_string();
         let presence = self.collaboration_presence_input.clone();
+        let identity = if self.collaboration_identity_enabled {
+            let identity = match self.collaboration_path(&self.collaboration_identity_input) {
+                Ok(path) => path,
+                Err(error) => {
+                    self.collaboration_status = format!("Error: {error}");
+                    return;
+                }
+            };
+            let trust = match self.collaboration_path(&self.collaboration_trust_input) {
+                Ok(path) => path,
+                Err(error) => {
+                    self.collaboration_status = format!("Error: {error}");
+                    return;
+                }
+            };
+            Some((identity, trust))
+        } else {
+            None
+        };
         let (tx, rx) = tokio::sync::oneshot::channel();
         std::thread::spawn(move || {
-            let result = join_collaboration(&bundle, &address, &secret, None, Some(&presence));
+            let (identity_file, trust_store) = identity
+                .as_ref()
+                .map(|(identity, trust)| (Some(identity.as_path()), Some(trust.as_path())))
+                .unwrap_or((None, None));
+            let result = join_collaboration(
+                &bundle,
+                &address,
+                &secret,
+                None,
+                Some(&presence),
+                identity_file,
+                trust_store,
+            );
             let _ = tx.send(result);
         });
         self.collaboration_rx = Some(rx);
         self.collaboration_status = format!(
-            "Joining {} with mutual authentication...",
-            self.collaboration_address_input.trim()
+            "Joining {} with {}...",
+            self.collaboration_address_input.trim(),
+            if self.collaboration_identity_enabled {
+                "group-secret and pinned Ed25519 authentication"
+            } else {
+                "group-secret authentication (legacy mode)"
+            }
         );
     }
 
@@ -832,6 +888,117 @@ impl AetherApp {
             Err(error) => {
                 self.collaboration_discovered_peers.clear();
                 self.collaboration_status = format!("Local peer discovery failed: {error}");
+            }
+        }
+    }
+
+    pub(crate) fn generate_actor_identity(&mut self) {
+        let result = (|| -> std::io::Result<String> {
+            let bundle = self.collaboration_path(&self.collaboration_bundle_input)?;
+            let private = self.collaboration_path(&self.collaboration_identity_input)?;
+            let public = self.collaboration_path(&self.collaboration_identity_public_input)?;
+            for path in [&private, &public] {
+                if let Some(parent) = path.parent() {
+                    std::fs::create_dir_all(parent)?;
+                }
+            }
+            let identity = generate_collaboration_identity(&bundle, &private, &public)?;
+            Ok(format!(
+                "Generated Ed25519 identity for {}.\nPrivate: {}\nPublic: {}\nSHA-256 fingerprint: {}\nDistribute only the public file and verify this fingerprint out of band.",
+                identity.actor,
+                private.display(),
+                public.display(),
+                identity.fingerprint
+            ))
+        })();
+        self.collaboration_status = result.unwrap_or_else(|error| format!("Error: {error}"));
+    }
+
+    pub(crate) fn review_peer_identity(&mut self) {
+        let result = (|| -> std::io::Result<IdentitySummary> {
+            let public = self.collaboration_path(&self.collaboration_peer_identity_input)?;
+            inspect_collaboration_public_identity(&public)
+        })();
+        match result {
+            Ok(identity) => {
+                self.collaboration_status = format!(
+                    "Review public identity for {}.\nEd25519 SHA-256: {}\nVerify this fingerprint out of band, then choose Trust reviewed identity.",
+                    identity.actor, identity.fingerprint
+                );
+                self.collaboration_identity_review = Some(identity);
+            }
+            Err(error) => {
+                self.collaboration_identity_review = None;
+                self.collaboration_status = format!("Identity review failed: {error}");
+            }
+        }
+    }
+
+    pub(crate) fn trust_reviewed_identity(&mut self) {
+        let Some(approved) = self.collaboration_identity_review.clone() else {
+            self.collaboration_status =
+                "Review a peer public identity and verify its fingerprint first.".into();
+            return;
+        };
+        let result = (|| -> std::io::Result<(String, Vec<IdentitySummary>)> {
+            let public = self.collaboration_path(&self.collaboration_peer_identity_input)?;
+            let trust_store = self.collaboration_path(&self.collaboration_trust_input)?;
+            if let Some(parent) = trust_store.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            let current = inspect_collaboration_public_identity(&public)?;
+            if current != approved {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::WouldBlock,
+                    "public identity changed after review; review its new fingerprint",
+                ));
+            }
+            let change =
+                trust_collaboration_identity(&trust_store, &public, &approved.fingerprint)?;
+            let message = match change {
+                TrustChange::Added(identity) => format!(
+                    "Pinned {} to Ed25519 SHA-256 {}.",
+                    identity.actor, identity.fingerprint
+                ),
+                TrustChange::AlreadyTrusted(identity) => format!(
+                    "{} is already pinned to Ed25519 SHA-256 {}.",
+                    identity.actor, identity.fingerprint
+                ),
+                TrustChange::Rotated { .. } | TrustChange::Removed(_) => {
+                    return Err(std::io::Error::other(
+                        "unexpected trust mutation while adding an identity",
+                    ))
+                }
+            };
+            Ok((message, trusted_collaboration_identities(&trust_store)?))
+        })();
+        match result {
+            Ok((message, identities)) => {
+                self.collaboration_identity_review = None;
+                self.collaboration_trusted_identities = identities;
+                self.collaboration_status = message;
+            }
+            Err(error) => {
+                self.collaboration_identity_review = None;
+                self.collaboration_status = format!("Identity trust failed: {error}");
+            }
+        }
+    }
+
+    pub(crate) fn refresh_trusted_identities(&mut self) {
+        let result = (|| -> std::io::Result<Vec<IdentitySummary>> {
+            let trust_store = self.collaboration_path(&self.collaboration_trust_input)?;
+            trusted_collaboration_identities(&trust_store)
+        })();
+        match result {
+            Ok(identities) => {
+                self.collaboration_status =
+                    format!("Loaded {} pinned actor identity(s).", identities.len());
+                self.collaboration_trusted_identities = identities;
+            }
+            Err(error) => {
+                self.collaboration_trusted_identities.clear();
+                self.collaboration_status = format!("Identity trust-store load failed: {error}");
             }
         }
     }
@@ -1121,8 +1288,12 @@ impl eframe::App for AetherApp {
                         .peer_presence()
                         .map(|status| format!("status {status:?}"))
                         .unwrap_or_else(|| "no status shared".into());
+                    let peer_identity = report
+                        .peer_identity_fingerprint()
+                        .map(|fingerprint| format!("pinned Ed25519 {fingerprint}"))
+                        .unwrap_or_else(|| "legacy group-secret identity".into());
                     self.collaboration_status = format!(
-                        "Live synchronization with {} completed ({peer_presence}): sent {}, received {}, inserted {}; converged graph {} nodes / {} edges",
+                        "Live synchronization with {} completed ({peer_presence}; {peer_identity}): sent {}, received {}, inserted {}; converged graph {} nodes / {} edges",
                         report.peer,
                         report.sent_operations,
                         report.received_operations,

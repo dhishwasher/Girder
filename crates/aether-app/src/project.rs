@@ -1,6 +1,7 @@
 //! Real project loading, CLI subcommands, and `.aether` persistence.
 
 mod collaboration_discovery;
+mod collaboration_identity;
 mod collaboration_projection;
 mod collaboration_transport;
 mod commands;
@@ -16,6 +17,13 @@ mod workspace;
 #[cfg(feature = "gui")]
 pub(crate) use collaboration_discovery::{
     discover as discover_collaboration_peers, DiscoveredPeer,
+};
+#[cfg(feature = "gui")]
+pub(crate) use collaboration_identity::{
+    generate_identity as generate_collaboration_identity,
+    inspect_public_identity as inspect_collaboration_public_identity,
+    trust_identity as trust_collaboration_identity,
+    trusted_identities as trusted_collaboration_identities, IdentitySummary, TrustChange,
 };
 #[cfg(feature = "gui")]
 pub(crate) use collaboration_projection::{

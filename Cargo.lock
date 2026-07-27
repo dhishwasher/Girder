@@ -66,6 +66,7 @@ dependencies = [
  "globset",
  "hmac",
  "libc",
+ "ring",
  "serde",
  "serde_json",
  "sha2",

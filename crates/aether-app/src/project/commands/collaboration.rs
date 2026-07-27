@@ -1,4 +1,5 @@
 use crate::project::collaboration_discovery;
+use crate::project::collaboration_identity::{self, TrustChange};
 use crate::project::collaboration_projection::{
     load_collaboration_projection, CollaborationFileChangeKind, CollaborationProjectionPlan,
 };
@@ -24,10 +25,16 @@ usage:
   bitcode collab apply <dir> <bundle> --approve
   bitcode collab materialize <bundle> <graph.aether>
   bitcode collab secret <path>
-  bitcode collab host <bundle> <127.0.0.1:port> --secret-file <path> [--discovery-dir <path>] [--presence <status>] [--once] [--ready-file <path>]
+  bitcode collab identity generate <bundle> <private-key> <public-key>
+  bitcode collab identity show <public-key>
+  bitcode collab identity list <trust-store>
+  bitcode collab identity trust <trust-store> <public-key> --approve <fingerprint>
+  bitcode collab identity rotate <trust-store> <public-key> --from <old-fingerprint> --approve <new-fingerprint>
+  bitcode collab identity remove <trust-store> <actor> --approve <fingerprint>
+  bitcode collab host <bundle> <127.0.0.1:port> --secret-file <path> [--identity-file <path> --trust-store <path>] [--discovery-dir <path>] [--presence <status>] [--once] [--ready-file <path>]
   bitcode collab discover <bundle> <directory> --secret-file <path>
-  bitcode collab join <bundle> <127.0.0.1:port> --secret-file <path> [--presence <status>] [out]
-  bitcode collab join-peer <bundle> <actor> <directory> --secret-file <path> [--presence <status>] [out]";
+  bitcode collab join <bundle> <127.0.0.1:port> --secret-file <path> [--identity-file <path> --trust-store <path>] [--presence <status>] [out]
+  bitcode collab join-peer <bundle> <actor> <directory> --secret-file <path> [--identity-file <path> --trust-store <path>] [--presence <status>] [out]";
 
 pub fn collaboration(args: &[String]) -> std::io::Result<()> {
     match args.first().map(String::as_str) {
@@ -42,6 +49,7 @@ pub fn collaboration(args: &[String]) -> std::io::Result<()> {
         Some("apply") => apply_projection(&args[1..]),
         Some("materialize") => materialize(&args[1..]),
         Some("secret") => secret(&args[1..]),
+        Some("identity") => identity(&args[1..]),
         Some("host") => host(&args[1..]),
         Some("discover") => discover(&args[1..]),
         Some("join") => join(&args[1..]),
@@ -66,6 +74,141 @@ fn secret(args: &[String]) -> std::io::Result<()> {
     Ok(())
 }
 
+fn identity(args: &[String]) -> std::io::Result<()> {
+    match args.first().map(String::as_str) {
+        Some("generate") => {
+            let [_, bundle, private_key, public_key] = args else {
+                return Err(invalid_input(
+                    "identity generate requires <bundle> <private-key> <public-key>",
+                ));
+            };
+            let summary = collaboration_identity::generate_identity(
+                Path::new(bundle),
+                Path::new(private_key),
+                Path::new(public_key),
+            )?;
+            println!(
+                "Generated Ed25519 identity for {}:\n  private: {}\n  public: {}\n  SHA-256 fingerprint: {}",
+                summary.actor, private_key, public_key, summary.fingerprint
+            );
+            println!("Verify this fingerprint out of band before a peer trusts the public file.");
+            Ok(())
+        }
+        Some("show") => {
+            let [_, public_key] = args else {
+                return Err(invalid_input("identity show requires <public-key>"));
+            };
+            let summary = collaboration_identity::inspect_public_identity(Path::new(public_key))?;
+            println!(
+                "Public identity {}: Ed25519 SHA-256 {}",
+                summary.actor, summary.fingerprint
+            );
+            Ok(())
+        }
+        Some("list") => {
+            let [_, trust_store] = args else {
+                return Err(invalid_input("identity list requires <trust-store>"));
+            };
+            let identities = collaboration_identity::trusted_identities(Path::new(trust_store))?;
+            println!("Pinned actor identities in {trust_store}:");
+            if identities.is_empty() {
+                println!("  none");
+            } else {
+                for identity in identities {
+                    println!(
+                        "  {}: Ed25519 SHA-256 {}",
+                        identity.actor, identity.fingerprint
+                    );
+                }
+            }
+            Ok(())
+        }
+        Some("trust") => {
+            let [_, trust_store, public_key, approval, fingerprint] = args else {
+                return Err(invalid_input(
+                    "identity trust requires <trust-store> <public-key> --approve <fingerprint>",
+                ));
+            };
+            if approval != "--approve" {
+                return Err(invalid_input(
+                    "identity trust requires --approve followed by the exact reviewed fingerprint",
+                ));
+            }
+            print_trust_change(collaboration_identity::trust_identity(
+                Path::new(trust_store),
+                Path::new(public_key),
+                fingerprint,
+            )?);
+            Ok(())
+        }
+        Some("rotate") => {
+            let [_, trust_store, public_key, from, old, approval, new] = args else {
+                return Err(invalid_input(
+                    "identity rotate requires <trust-store> <public-key> --from <old-fingerprint> --approve <new-fingerprint>",
+                ));
+            };
+            if from != "--from" || approval != "--approve" {
+                return Err(invalid_input(
+                    "identity rotate requires --from <old-fingerprint> --approve <new-fingerprint>",
+                ));
+            }
+            print_trust_change(collaboration_identity::rotate_identity(
+                Path::new(trust_store),
+                Path::new(public_key),
+                old,
+                new,
+            )?);
+            Ok(())
+        }
+        Some("remove") => {
+            let [_, trust_store, actor, approval, fingerprint] = args else {
+                return Err(invalid_input(
+                    "identity remove requires <trust-store> <actor> --approve <fingerprint>",
+                ));
+            };
+            if approval != "--approve" {
+                return Err(invalid_input(
+                    "identity remove requires --approve followed by the exact current fingerprint",
+                ));
+            }
+            print_trust_change(collaboration_identity::remove_trusted_identity(
+                Path::new(trust_store),
+                actor,
+                fingerprint,
+            )?);
+            Ok(())
+        }
+        _ => {
+            eprintln!("{USAGE}");
+            Ok(())
+        }
+    }
+}
+
+fn print_trust_change(change: TrustChange) {
+    match change {
+        TrustChange::Added(identity) => println!(
+            "Pinned {} to Ed25519 SHA-256 {}",
+            identity.actor, identity.fingerprint
+        ),
+        TrustChange::AlreadyTrusted(identity) => println!(
+            "{} is already pinned to Ed25519 SHA-256 {}",
+            identity.actor, identity.fingerprint
+        ),
+        TrustChange::Rotated {
+            actor,
+            previous_fingerprint,
+            fingerprint,
+        } => {
+            println!("Rotated {actor} from Ed25519 SHA-256 {previous_fingerprint} to {fingerprint}")
+        }
+        TrustChange::Removed(identity) => println!(
+            "Removed local trust for {} at Ed25519 SHA-256 {}",
+            identity.actor, identity.fingerprint
+        ),
+    }
+}
+
 fn host(args: &[String]) -> std::io::Result<()> {
     let Some(bundle) = args.first() else {
         eprintln!("{USAGE}");
@@ -78,6 +221,8 @@ fn host(args: &[String]) -> std::io::Result<()> {
     let mut secret_file = None;
     let mut ready_file = None;
     let mut discovery_directory = None;
+    let mut identity_file = None;
+    let mut trust_store = None;
     let mut presence = None;
     let mut once = false;
     let mut index = 2;
@@ -100,6 +245,18 @@ fn host(args: &[String]) -> std::io::Result<()> {
                     Some(PathBuf::from(args.get(index + 1).ok_or_else(|| {
                         invalid_input("collab host requires a value after --discovery-dir")
                     })?));
+                index += 2;
+            }
+            "--identity-file" => {
+                identity_file = Some(PathBuf::from(args.get(index + 1).ok_or_else(|| {
+                    invalid_input("collab host requires a value after --identity-file")
+                })?));
+                index += 2;
+            }
+            "--trust-store" => {
+                trust_store = Some(PathBuf::from(args.get(index + 1).ok_or_else(|| {
+                    invalid_input("collab host requires a value after --trust-store")
+                })?));
                 index += 2;
             }
             "--presence" => {
@@ -129,10 +286,14 @@ fn host(args: &[String]) -> std::io::Result<()> {
         Path::new(bundle),
         bind,
         &secret_file,
-        once,
-        ready_file.as_deref(),
-        presence.as_deref(),
-        discovery_directory.as_deref(),
+        collaboration_transport::ServeOptions {
+            once,
+            ready_file: ready_file.as_deref(),
+            presence: presence.as_deref(),
+            discovery_directory: discovery_directory.as_deref(),
+            identity_file: identity_file.as_deref(),
+            trust_store: trust_store.as_deref(),
+        },
     )
 }
 
@@ -197,6 +358,8 @@ fn join(args: &[String]) -> std::io::Result<()> {
     };
     let mut secret_file = None;
     let mut presence = None;
+    let mut identity_file = None;
+    let mut trust_store = None;
     let mut out = None;
     let mut index = 2;
     while index < args.len() {
@@ -215,6 +378,18 @@ fn join(args: &[String]) -> std::io::Result<()> {
                         })?
                         .clone(),
                 );
+                index += 2;
+            }
+            "--identity-file" => {
+                identity_file = Some(PathBuf::from(args.get(index + 1).ok_or_else(|| {
+                    invalid_input("collab join requires a value after --identity-file")
+                })?));
+                index += 2;
+            }
+            "--trust-store" => {
+                trust_store = Some(PathBuf::from(args.get(index + 1).ok_or_else(|| {
+                    invalid_input("collab join requires a value after --trust-store")
+                })?));
                 index += 2;
             }
             option if option.starts_with('-') => {
@@ -241,6 +416,8 @@ fn join(args: &[String]) -> std::io::Result<()> {
         &secret_file,
         out.as_deref(),
         presence.as_deref(),
+        identity_file.as_deref(),
+        trust_store.as_deref(),
     )?;
     print_live_sync_report(&report);
     Ok(())
@@ -253,6 +430,8 @@ fn join_peer(args: &[String]) -> std::io::Result<()> {
     };
     let mut secret_file = None;
     let mut presence = None;
+    let mut identity_file = None;
+    let mut trust_store = None;
     let mut out = None;
     let mut index = 0;
     while index < rest.len() {
@@ -271,6 +450,18 @@ fn join_peer(args: &[String]) -> std::io::Result<()> {
                         })?
                         .clone(),
                 );
+                index += 2;
+            }
+            "--identity-file" => {
+                identity_file = Some(PathBuf::from(rest.get(index + 1).ok_or_else(|| {
+                    invalid_input("collab join-peer requires a value after --identity-file")
+                })?));
+                index += 2;
+            }
+            "--trust-store" => {
+                trust_store = Some(PathBuf::from(rest.get(index + 1).ok_or_else(|| {
+                    invalid_input("collab join-peer requires a value after --trust-store")
+                })?));
                 index += 2;
             }
             option if option.starts_with('-') => {
@@ -296,8 +487,12 @@ fn join_peer(args: &[String]) -> std::io::Result<()> {
         actor,
         Path::new(directory),
         &secret_file,
-        out.as_deref(),
-        presence.as_deref(),
+        collaboration_discovery::JoinPeerOptions {
+            out: out.as_deref(),
+            presence: presence.as_deref(),
+            identity_file: identity_file.as_deref(),
+            trust_store: trust_store.as_deref(),
+        },
     )?;
     print_live_sync_report(&report);
     Ok(())
@@ -315,6 +510,10 @@ fn print_live_sync_report(report: &collaboration_transport::LiveSyncReport) {
     match report.peer_presence() {
         Some(status) => println!("  peer presence: {status}"),
         None => println!("  peer presence: online (no status shared)"),
+    }
+    match report.peer_identity_fingerprint() {
+        Some(fingerprint) => println!("  peer identity: Ed25519 SHA-256 {fingerprint}"),
+        None => println!("  peer identity: group-secret only (legacy mode)"),
     }
 }
 
