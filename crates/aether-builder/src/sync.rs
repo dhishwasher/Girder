@@ -188,21 +188,21 @@ impl GraphBuilder {
                 let Some(candidates) = by_name.get(&call.callee) else {
                     continue;
                 };
-                let qualified = call.qualifier.as_deref().and_then(|qualifier| {
-                    if matches!(qualifier_tail(qualifier), "self" | "Self" | "cls") {
-                        only_candidate(
-                            candidates
-                                .iter()
-                                .filter(|(_, owner, _)| owner == &caller_owner),
-                        )
-                    } else {
-                        only_candidate(
-                            candidates
-                                .iter()
-                                .filter(|(_, owner, _)| qualifier_matches_owner(qualifier, owner)),
-                        )
-                    }
-                });
+                let qualified =
+                    call.qualifier.as_deref().and_then(|qualifier| {
+                        if matches!(qualifier_tail(qualifier), "self" | "Self" | "cls") {
+                            only_candidate(
+                                candidates
+                                    .iter()
+                                    .filter(|(_, owner, _)| owner == &caller_owner),
+                            )
+                        } else {
+                            let receiver_hint = call.receiver_type.as_deref().unwrap_or(qualifier);
+                            only_candidate(candidates.iter().filter(|(_, owner, _)| {
+                                qualifier_matches_owner(receiver_hint, owner)
+                            }))
+                        }
+                    });
                 let local_free = call.qualifier.is_none().then(|| {
                     only_candidate(candidates.iter().filter(|(source, owner, _)| {
                         source == &caller_source_module && owner == source

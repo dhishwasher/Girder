@@ -49,6 +49,9 @@ COMMANDS:
                               Find the minimal set of tests that cover changed
                               functions (auto-detected via git diff, or explicit
                               node paths). Pass --run to execute them immediately.
+    collab <operation>        Exchange deterministic semantic-graph CRDT bundles.
+                              Operations: init, status, fork, sync, merge,
+                              materialize. Run without an operation for details.
     dap <program> [--adapter python|rust|<path>] [--break-at <node::path>] [--dry-run]
                               Launch a Debug Adapter Protocol session. Spawns
                               the adapter subprocess, negotiates capabilities,
@@ -108,6 +111,7 @@ fn main() {
         Some("inspect") => report(project::inspect(&args[1..])),
         Some("review") => report(project::review(&args[1..])),
         Some("test-impact") => report(project::test_impact(&args[1..])),
+        Some("collab") => report(project::collaboration(&args[1..])),
         Some("dap") => {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             report(rt.block_on(project::dap(&args[1..])));

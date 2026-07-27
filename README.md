@@ -57,6 +57,14 @@ cargo run -p aether-app -- query sample-project "what would break if I change ad
 cargo run -p aether-app -- query sample-project "what calls sum_list?"
 cargo run -p aether-app -- query sample-project  # interactive REPL (reads stdin)
 
+# Start a graph-native collaboration history, give another replica its own actor,
+# record that replica's current source graph, and deterministically merge it:
+cargo run -p aether-app -- collab init sample-project alice alice.aetherc
+cargo run -p aether-app -- collab fork alice.aetherc bob bob.aetherc
+cargo run -p aether-app -- collab sync sample-project bob.aetherc
+cargo run -p aether-app -- collab merge alice.aetherc bob.aetherc merged.aethercb
+cargo run -p aether-app -- collab materialize merged.aethercb merged.aether
+
 # Real Python execution tracer — records every variable at every line/call/return:
 cargo run -p aether-app -- debug script.py
 cargo run -p aether-app -- debug script.py --what-if x=10 at 2
@@ -96,11 +104,23 @@ cargo run -p aether-app -- --help
 `analyze`/`forge` walk every `.rs`/`.py` file (skipping `target`, `.git`, …),
 build the graph with directory-aware module paths, resolve free and
 receiver-qualified method calls across files, and persist the `.aether` graph.
-Unknown receiver types remain unresolved rather than being linked to an
-unrelated same-named method. `forge` plans every candidate byte, checks conflict
+Rust parameter annotations and direct type-qualified local constructors provide
+bounded receiver types, including inside macro token trees. Unknown receiver
+types remain unresolved rather than being linked to an unrelated same-named
+method. `forge` plans every candidate byte, checks conflict
 baselines, validates the candidate in a copied workspace, runs Cargo build/tests
 when a manifest is present plus configured validation commands, and only then
 journal-commits the source projection and graph together.
+
+`collab` exchanges semantic graph operations rather than text ranges. Each
+human or agent replica has a validated actor id and causal version vector;
+minimal idempotent deltas converge regardless of delivery order. Concurrent
+deletes win, concurrent updates have a deterministic tie-break, and deleting
+then recreating a node cannot resurrect edges from its old generation. RON
+`.aetherc` bundles are reviewable; `.aethercb` bundles use compact bincode.
+This is the durable offline CRDT foundation. Live transport, presence, identity
+authentication, history compaction, and source-conflict review UI remain future
+work.
 
 ### Project configuration
 
@@ -142,7 +162,7 @@ versions fail before project analysis starts.
 
 | Crate | Role |
 |---|---|
-| `aether-graph` | The living semantic graph: nodes/edges, impact analysis, `.aether` serialization. **Source of truth.** |
+| `aether-graph` | The living semantic graph: nodes/edges, impact analysis, `.aether` serialization, and convergent collaboration replicas. **Source of truth.** |
 | `aether-builder` | tree-sitter → graph mapping, incremental edit sync, syntax-highlight spans. |
 | `aether-ai` | `AiProvider` trait, offline `MockProvider`, OpenAI/Anthropic live providers, multi-provider `Router`, provider extension points. |
 | `aether-agents` | The parallel swarm: message bus, orchestrator, 8 specialized agents. |
@@ -259,6 +279,7 @@ time-travel debug) are real, tested, and runnable. Implemented features:
 | Knowledge-graph queries | Natural-language → concept / impact / callers / callees / explain / neighbourhood |
 | Semantic review | Typed diff (added/modified/removed nodes + edges), impact radius, test gap report |
 | Minimal test selection | Call-graph reachability from changed functions, optional `--run` |
+| Graph collaboration | Deterministic operation-set CRDT, causal deltas, tombstones, RON/bincode bundles, and CLI fork/sync/merge/materialize workflows |
 | Project contract | Validated `bitcode.toml` for source scope, graph path, test runners, and agent output |
 | Source projection | GUI/CLI agent output and graph rename commit validated source plus graph through recoverable journaled transactions |
 | Candidate validation | Disposable project copy, optional bubblewrap isolation, Cargo build/tests, configured checks, cancellation/timeouts, bounded diagnostics, snapshot-bound commit gate |
@@ -273,5 +294,5 @@ python3 -m pip install debugpy
 cargo test -p aether-dap --test debugpy -- --ignored --nocapture
 ```
 
-The production roadmap (CRDT collaboration, self-optimization, web/mobile
-projections, and deeper tracing) is in `BLUEPRINT.md §9`.
+The production roadmap (live collaboration transport/presence, self-optimization,
+web/mobile projections, and deeper tracing) is in `BLUEPRINT.md §9`.

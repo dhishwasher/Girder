@@ -454,6 +454,59 @@ rust = ["false", "{test}"]
 }
 
 #[test]
+fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
+    let repo = TempRepo::new("collaboration");
+    repo.write("src/lib.rs", "pub fn run() -> i64 { 1 }\n");
+    let root = repo.path().to_str().unwrap();
+    let alice = repo.path().join("alice.aetherc");
+    let bob = repo.path().join("bob.aetherc");
+    let merged = repo.path().join("merged.aethercb");
+    let graph_path = repo.path().join("merged.aether");
+
+    let initialized = run_bitcode(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
+    assert!(initialized.contains("actor alice"), "{initialized}");
+    run_bitcode(&[
+        "collab",
+        "fork",
+        alice.to_str().unwrap(),
+        "bob",
+        bob.to_str().unwrap(),
+    ]);
+
+    repo.write("src/lib.rs", "pub fn run() -> i64 { 2 }\n");
+    let synchronized = run_bitcode(&["collab", "sync", root, bob.to_str().unwrap()]);
+    assert!(
+        synchronized.contains("nodes: +1 -0; edges: +0 -0"),
+        "{synchronized}"
+    );
+    let merged_output = run_bitcode(&[
+        "collab",
+        "merge",
+        alice.to_str().unwrap(),
+        bob.to_str().unwrap(),
+        merged.to_str().unwrap(),
+    ]);
+    assert!(merged_output.contains("1 inserted"), "{merged_output}");
+    run_bitcode(&[
+        "collab",
+        "materialize",
+        merged.to_str().unwrap(),
+        graph_path.to_str().unwrap(),
+    ]);
+
+    let graph = aether_graph::SemanticGraph::load(&graph_path).unwrap();
+    assert!(graph
+        .find_by_path("crate::lib::run")
+        .unwrap()
+        .source
+        .contains("{ 2 }"));
+    let status = run_bitcode(&["collab", "status", merged.to_str().unwrap()]);
+    assert!(status.contains("actor: alice"), "{status}");
+    assert!(status.contains("operations:"), "{status}");
+    assert!(status.contains("nodes:"), "{status}");
+}
+
+#[test]
 fn generated_extension_requires_approval_and_supports_lifecycle() {
     let repo = TempRepo::new("extension-generate");
     repo.write("src/lib.rs", "pub fn existing() {}\n");

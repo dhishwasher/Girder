@@ -15,8 +15,8 @@ pub(crate) use commands::extensions::{
     ExtensionMutation, ExtensionMutationOutcome, ExtensionMutationRequest,
 };
 pub(crate) use commands::{
-    analyze, config, dap, debug, extensions, forge, inspect, plan, query, refactor, review, search,
-    test_impact,
+    analyze, collaboration, config, dap, debug, extensions, forge, inspect, plan, query, refactor,
+    review, search, test_impact,
 };
 #[cfg(feature = "gui")]
 pub(crate) use validation::{ValidationReport, ValidationStatus};

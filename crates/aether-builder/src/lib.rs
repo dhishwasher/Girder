@@ -236,6 +236,17 @@ impl MarketplaceCatalog {
 struct SemanticGraph;
 impl SemanticGraph {
     fn search(&self, _query: &str) {}
+    fn contains(&self, _query: &str) -> bool { true }
+}
+
+struct CapabilityDelta;
+impl CapabilityDelta {
+    fn is_empty(&self) -> bool { true }
+}
+
+struct GraphDelta;
+impl GraphDelta {
+    fn is_empty(&self) -> bool { true }
 }
 
 fn spawn() {}
@@ -243,6 +254,25 @@ fn spawn() {}
 fn browse(catalog: &MarketplaceCatalog) {
     catalog.search("graph");
     std::thread::spawn(|| {});
+}
+
+fn macro_browse(catalog: &MarketplaceCatalog, text: &str) {
+    assert!({ catalog.search("graph"); text.contains("graph") });
+}
+
+fn inspect_delta(delta: &CapabilityDelta) -> bool {
+    delta.is_empty()
+}
+
+fn inspect_replica() {
+    let replica = GraphReplica::from_graph();
+    replica.materialize();
+}
+
+struct GraphReplica;
+impl GraphReplica {
+    fn from_graph() -> Self { Self }
+    fn materialize(&self) {}
 }
 "#;
         let mut graph = SemanticGraph::new();
@@ -253,6 +283,9 @@ fn browse(catalog: &MarketplaceCatalog) {
         let semantic_search = NodeId::from_path("crate::catalog::SemanticGraph::search");
         let refresh = NodeId::from_path("crate::catalog::MarketplaceCatalog::refresh");
         let browse = NodeId::from_path("crate::catalog::browse");
+        let macro_browse = NodeId::from_path("crate::catalog::macro_browse");
+        let inspect_delta = NodeId::from_path("crate::catalog::inspect_delta");
+        let inspect_replica = NodeId::from_path("crate::catalog::inspect_replica");
 
         let refresh_calls: Vec<_> = graph
             .neighbors(refresh, Some(EdgeKind::Calls))
@@ -282,9 +315,47 @@ fn browse(catalog: &MarketplaceCatalog) {
             "an unknown qualified receiver must not fall back to a same-named function"
         );
 
+        let macro_calls: Vec<_> = graph
+            .neighbors(macro_browse, Some(EdgeKind::Calls))
+            .into_iter()
+            .map(|node| node.id)
+            .collect();
+        assert!(
+            macro_calls.contains(&marketplace_search),
+            "macro token-tree calls should retain a usable receiver hint"
+        );
+        assert!(
+            !macro_calls.contains(&NodeId::from_path(
+                "crate::catalog::SemanticGraph::contains"
+            )),
+            "qualified macro calls must not use the unqualified unique-name fallback"
+        );
+        let delta_calls: Vec<_> = graph
+            .neighbors(inspect_delta, Some(EdgeKind::Calls))
+            .into_iter()
+            .map(|node| node.id)
+            .collect();
+        assert_eq!(
+            delta_calls,
+            vec![NodeId::from_path(
+                "crate::catalog::CapabilityDelta::is_empty"
+            )],
+            "Rust parameter annotations should disambiguate same-suffix receiver names"
+        );
+        assert!(
+            graph
+                .neighbors(inspect_replica, Some(EdgeKind::Calls))
+                .iter()
+                .any(|node| {
+                    node.id == NodeId::from_path("crate::catalog::GraphReplica::materialize")
+                }),
+            "constructor-initialized locals should retain their receiver type"
+        );
+
         let impact = graph.impact_of(marketplace_search);
         assert!(impact.affected.contains_key(&refresh));
         assert!(impact.affected.contains_key(&browse));
+        assert!(impact.affected.contains_key(&macro_browse));
 
         let py = r#"
 class MarketplaceCatalog:

@@ -1,4 +1,5 @@
 mod agents;
+mod collaboration;
 mod config;
 mod dap;
 mod debug;
@@ -9,6 +10,7 @@ mod review;
 mod test_impact;
 
 pub(crate) use agents::{forge, plan};
+pub(crate) use collaboration::collaboration;
 pub(crate) use config::config;
 pub(crate) use dap::dap;
 pub(crate) use debug::debug;

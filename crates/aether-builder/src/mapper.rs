@@ -8,6 +8,7 @@
 
 use crate::parser::Lang;
 use aether_graph::{Edge, EdgeKind, Node, NodeId, NodeKind, Span};
+use std::collections::HashMap;
 use tree_sitter::{Node as TsNode, Tree};
 
 /// An unresolved call site. `callee` is the trailing identifier of the call
@@ -19,6 +20,7 @@ pub struct CallRef {
     pub caller: NodeId,
     pub callee: String,
     pub qualifier: Option<String>,
+    pub receiver_type: Option<String>,
 }
 
 /// An unresolved inheritance: type `sub` inherits/implements something named
@@ -448,12 +450,14 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         source: &'src str,
         lang: Lang,
         module: &'src str,
-        current_type: Option<&'src str>,
-        current_fn: Option<NodeId>,
+        scope: (Option<&'src str>, Option<NodeId>),
+        type_hints: &HashMap<String, String>,
         out: &mut BuildOutput,
     ) {
+        let (current_type, current_fn) = scope;
         let mut current = current_fn;
         let mut enclosing_type = current_type;
+        let mut function_type_hints = None;
 
         if matches!(lang, Lang::Python) && node.kind() == "class_definition" {
             if let Some(name_node) = node.child_by_field_name("name") {
@@ -480,8 +484,12 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 };
                 let caller = NodeId::from_path(&path);
                 current = Some(caller);
+                if matches!(lang, Lang::Rust) {
+                    function_type_hints = Some(rust_function_type_hints(node, source));
+                }
             }
         }
+        let active_type_hints = function_type_hints.as_ref().unwrap_or(type_hints);
 
         let call_kind = match lang {
             Lang::Rust => "call_expression",
@@ -491,11 +499,16 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             if let (Some(caller), Some((callee, qualifier))) =
                 (current, callee_target(node, source))
             {
+                let receiver_type = qualifier
+                    .as_deref()
+                    .and_then(|value| active_type_hints.get(qualifier_binding(value)))
+                    .cloned();
                 // Emit unresolved; the project resolver picks the concrete callee.
                 out.calls.push(CallRef {
                     caller,
                     callee,
                     qualifier,
+                    receiver_type,
                 });
             }
         }
@@ -510,11 +523,16 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 let tokens = children.find(|child| child.kind() == "token_tree");
                 drop(children);
                 if let Some(tokens) = tokens {
-                    for callee in textual_call_names(node_text(tokens, source)) {
+                    for (callee, qualifier) in textual_call_refs(node_text(tokens, source)) {
+                        let receiver_type = qualifier
+                            .as_deref()
+                            .and_then(|value| active_type_hints.get(qualifier_binding(value)))
+                            .cloned();
                         out.calls.push(CallRef {
                             caller,
                             callee,
-                            qualifier: None,
+                            qualifier,
+                            receiver_type,
                         });
                     }
                 }
@@ -523,11 +541,130 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            walk(child, source, lang, module, enclosing_type, current, out);
+            walk(
+                child,
+                source,
+                lang,
+                module,
+                (enclosing_type, current),
+                active_type_hints,
+                out,
+            );
         }
     }
 
-    walk(node, source, lang, module, None, None, out);
+    walk(
+        node,
+        source,
+        lang,
+        module,
+        (None, None),
+        &HashMap::new(),
+        out,
+    );
+}
+
+fn rust_function_type_hints(function: TsNode, source: &str) -> HashMap<String, String> {
+    let mut hints = HashMap::new();
+    if let Some(parameters) = function.child_by_field_name("parameters") {
+        let mut cursor = parameters.walk();
+        for parameter in parameters.named_children(&mut cursor) {
+            if parameter.kind() != "parameter" {
+                continue;
+            }
+            if let (Some(pattern), Some(type_node)) = (
+                parameter.child_by_field_name("pattern"),
+                parameter.child_by_field_name("type"),
+            ) {
+                record_type_hint(&mut hints, pattern, type_node, source);
+            }
+        }
+    }
+
+    let mut stack = function
+        .child_by_field_name("body")
+        .into_iter()
+        .collect::<Vec<_>>();
+    while let Some(node) = stack.pop() {
+        if node.kind() == "let_declaration" {
+            if let Some(pattern) = node.child_by_field_name("pattern") {
+                if let Some(type_node) = node.child_by_field_name("type") {
+                    record_type_hint(&mut hints, pattern, type_node, source);
+                } else if let Some(value) = node.child_by_field_name("value") {
+                    let value = unwrap_rust_expression(value);
+                    if value.kind() == "call_expression" {
+                        if let Some((_, Some(qualifier))) = callee_target(value, source) {
+                            let type_name = qualifier_binding(&qualifier);
+                            if type_name.starts_with(char::is_uppercase) {
+                                record_named_hint(&mut hints, pattern, type_name, source);
+                            }
+                        }
+                    }
+                }
+            }
+        } else if node != function && is_function_kind(Lang::Rust, node.kind()) {
+            continue;
+        }
+        let mut children = node.walk();
+        stack.extend(node.named_children(&mut children));
+    }
+    hints
+}
+
+fn record_type_hint(
+    hints: &mut HashMap<String, String>,
+    pattern: TsNode,
+    type_node: TsNode,
+    source: &str,
+) {
+    let mut type_name = None;
+    let mut stack = vec![type_node];
+    while let Some(node) = stack.pop() {
+        if matches!(node.kind(), "type_identifier" | "primitive_type") {
+            type_name = Some(node_text(node, source).to_string());
+        }
+        let mut children = node.walk();
+        stack.extend(node.named_children(&mut children));
+    }
+    if let Some(type_name) = type_name {
+        record_named_hint(hints, pattern, &type_name, source);
+    }
+}
+
+fn record_named_hint(
+    hints: &mut HashMap<String, String>,
+    pattern: TsNode,
+    type_name: &str,
+    source: &str,
+) {
+    let binding = node_text(pattern, source).trim().trim_start_matches("mut ");
+    if binding
+        .chars()
+        .all(|ch| ch == '_' || ch.is_ascii_alphanumeric())
+    {
+        hints.insert(binding.to_string(), type_name.to_string());
+    }
+}
+
+fn unwrap_rust_expression(mut node: TsNode) -> TsNode {
+    while matches!(
+        node.kind(),
+        "try_expression" | "reference_expression" | "parenthesized_expression"
+    ) {
+        let Some(inner) = node.named_child(0) else {
+            break;
+        };
+        node = inner;
+    }
+    node
+}
+
+fn qualifier_binding(qualifier: &str) -> &str {
+    qualifier
+        .rsplit(['.', ':'])
+        .find(|part| !part.is_empty())
+        .unwrap_or(qualifier)
+        .trim()
 }
 
 /// Best-effort call target: trailing identifier plus its receiver/path.
@@ -559,8 +696,8 @@ fn callee_target(call: TsNode, source: &str) -> Option<(String, Option<String>)>
 /// Conservative fallback for call-like identifiers inside syntax tree regions
 /// that tree-sitter does not expose as normal call expressions, notably Rust
 /// macro token trees such as `assert_eq!(add(1, 2), 3)`.
-fn textual_call_names(text: &str) -> Vec<String> {
-    let mut names = Vec::new();
+fn textual_call_refs(text: &str) -> Vec<(String, Option<String>)> {
+    let mut calls = Vec::new();
     let mut chars = text.char_indices().peekable();
     while let Some((start, ch)) = chars.next() {
         if !(ch == '_' || ch.is_ascii_alphabetic()) {
@@ -578,10 +715,36 @@ fn textual_call_names(text: &str) -> Vec<String> {
         let name = &text[start..end];
         let rest = text[end..].trim_start();
         if rest.starts_with('(') && !is_call_noise(name) {
-            names.push(name.to_string());
+            calls.push((name.to_string(), textual_qualifier(text, start)));
         }
     }
-    names
+    calls
+}
+
+fn textual_qualifier(text: &str, callee_start: usize) -> Option<String> {
+    let before = text[..callee_start].trim_end();
+    let stem = if let Some(stem) = before.strip_suffix('.') {
+        stem.trim_end()
+    } else {
+        let stem = before.strip_suffix("::")?;
+        stem.trim_end()
+    };
+    let end = stem.len();
+    let start = stem
+        .char_indices()
+        .rev()
+        .take_while(|(_, ch)| *ch == '_' || ch.is_ascii_alphanumeric())
+        .map(|(index, _)| index)
+        .last()
+        .unwrap_or(end);
+    let identifier = &stem[start..end];
+    Some(if identifier.is_empty() {
+        // Retain the fact that this was a qualified expression so the resolver
+        // never applies its unqualified unique-name fallback.
+        "<expression>".to_string()
+    } else {
+        identifier.to_string()
+    })
 }
 
 fn is_call_noise(name: &str) -> bool {

@@ -10,6 +10,7 @@
 //! app renders projections of it. Everything else in the workspace depends on
 //! this crate.
 
+mod collaboration;
 mod diff;
 mod edge;
 mod impact;
@@ -21,6 +22,10 @@ mod refactor;
 mod serialize;
 mod similarity;
 
+pub use collaboration::{
+    ActorId, Dot, GraphAction, GraphDelta, GraphOperation, GraphReplica, MergeReport, SyncReport,
+    VersionVector,
+};
 pub use diff::{GraphDiff, NodeChange};
 pub use knowledge::{parse_query, KnowledgeQuery, QueryResult};
 pub use reconcile::ReconcileReport;
@@ -47,6 +52,8 @@ pub enum GraphError {
     Io(#[from] std::io::Error),
     #[error("rename target already exists: {0:?}")]
     RenameConflict(NodeId),
+    #[error("collaboration error: {0}")]
+    Collaboration(String),
 }
 
 /// The semantic graph.
