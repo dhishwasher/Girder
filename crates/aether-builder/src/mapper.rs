@@ -1144,6 +1144,8 @@ fn callee_target(call: TsNode, source: &str) -> Option<(String, Option<String>)>
 /// that tree-sitter does not expose as normal call expressions, notably Rust
 /// macro token trees such as `assert_eq!(add(1, 2), 3)`.
 fn textual_call_refs(text: &str) -> Vec<(String, Option<String>)> {
+    let code = mask_rust_macro_non_code(text);
+    let text = code.as_str();
     let mut calls = Vec::new();
     let mut chars = text.char_indices().peekable();
     while let Some((start, ch)) = chars.next() {
@@ -1166,6 +1168,152 @@ fn textual_call_refs(text: &str) -> Vec<(String, Option<String>)> {
         }
     }
     calls
+}
+
+fn mask_rust_macro_non_code(text: &str) -> String {
+    fn token_boundary(bytes: &[u8], start: usize) -> bool {
+        start == 0
+            || !matches!(
+                bytes[start - 1],
+                b'_' | b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9'
+            )
+    }
+
+    fn raw_string_end(bytes: &[u8], start: usize) -> Option<usize> {
+        if !token_boundary(bytes, start) {
+            return None;
+        }
+        let mut cursor = start;
+        match bytes.get(cursor..) {
+            Some([b'b' | b'c', b'r', ..]) => cursor += 2,
+            Some([b'r', ..]) => cursor += 1,
+            _ => return None,
+        }
+        let hashes_start = cursor;
+        while bytes.get(cursor) == Some(&b'#') {
+            cursor += 1;
+        }
+        if bytes.get(cursor) != Some(&b'"') {
+            return None;
+        }
+        let hash_count = cursor - hashes_start;
+        cursor += 1;
+        while cursor < bytes.len() {
+            if bytes[cursor] == b'"'
+                && bytes
+                    .get(cursor + 1..cursor + 1 + hash_count)
+                    .is_some_and(|suffix| suffix.iter().all(|byte| *byte == b'#'))
+            {
+                return Some(cursor + 1 + hash_count);
+            }
+            cursor += 1;
+        }
+        Some(bytes.len())
+    }
+
+    fn quoted_string_end(bytes: &[u8], start: usize) -> usize {
+        let mut cursor = start + 1;
+        while cursor < bytes.len() {
+            match bytes[cursor] {
+                b'\\' => cursor = (cursor + 2).min(bytes.len()),
+                b'"' => return cursor + 1,
+                _ => cursor += 1,
+            }
+        }
+        bytes.len()
+    }
+
+    fn char_literal_end(text: &str, start: usize) -> Option<usize> {
+        let tail = text.get(start + 1..)?;
+        let mut chars = tail.char_indices();
+        let (offset, first) = chars.next()?;
+        debug_assert_eq!(offset, 0);
+        if matches!(first, '\n' | '\r' | '\'') {
+            return None;
+        }
+        if first != '\\' {
+            let closing = start + 1 + first.len_utf8();
+            return (text.as_bytes().get(closing) == Some(&b'\'')).then_some(closing + 1);
+        }
+
+        let (escape_offset, escape) = chars.next()?;
+        let mut closing = start + 1 + escape_offset + escape.len_utf8();
+        match escape {
+            'x' => {
+                closing = closing.checked_add(2)?;
+            }
+            'u' if text.as_bytes().get(closing) == Some(&b'{') => {
+                closing += 1;
+                let end = text.get(closing..)?.find('}')?;
+                closing += end + 1;
+            }
+            '\n' | '\r' => return None,
+            _ => {}
+        }
+        (text.as_bytes().get(closing) == Some(&b'\'')).then_some(closing + 1)
+    }
+
+    fn mask_range(masked: &mut [u8], start: usize, end: usize) {
+        for byte in &mut masked[start..end] {
+            if !matches!(*byte, b'\n' | b'\r') {
+                *byte = b' ';
+            }
+        }
+    }
+
+    let bytes = text.as_bytes();
+    let mut masked = bytes.to_vec();
+    let mut cursor = 0;
+    while cursor < bytes.len() {
+        if bytes.get(cursor..cursor + 2) == Some(b"//") {
+            let end = bytes[cursor + 2..]
+                .iter()
+                .position(|byte| *byte == b'\n')
+                .map(|offset| cursor + 2 + offset)
+                .unwrap_or(bytes.len());
+            mask_range(&mut masked, cursor, end);
+            cursor = end;
+            continue;
+        }
+        if bytes.get(cursor..cursor + 2) == Some(b"/*") {
+            let mut end = cursor + 2;
+            let mut depth = 1_u32;
+            while end < bytes.len() && depth > 0 {
+                if bytes.get(end..end + 2) == Some(b"/*") {
+                    depth += 1;
+                    end += 2;
+                } else if bytes.get(end..end + 2) == Some(b"*/") {
+                    depth -= 1;
+                    end += 2;
+                } else {
+                    end += 1;
+                }
+            }
+            mask_range(&mut masked, cursor, end);
+            cursor = end;
+            continue;
+        }
+        if let Some(end) = raw_string_end(bytes, cursor) {
+            mask_range(&mut masked, cursor, end);
+            cursor = end;
+            continue;
+        }
+        if bytes[cursor] == b'"' {
+            let end = quoted_string_end(bytes, cursor);
+            mask_range(&mut masked, cursor, end);
+            cursor = end;
+            continue;
+        }
+        if bytes[cursor] == b'\'' {
+            if let Some(end) = char_literal_end(text, cursor) {
+                mask_range(&mut masked, cursor, end);
+                cursor = end;
+                continue;
+            }
+        }
+        cursor += 1;
+    }
+    String::from_utf8(masked).expect("masking valid UTF-8 with ASCII spaces preserves UTF-8")
 }
 
 fn textual_qualifier(text: &str, callee_start: usize) -> Option<String> {
@@ -1296,6 +1444,38 @@ mod tests {
         let hint = rust_type_hint(parameter.child_by_field_name("type").unwrap(), &source).unwrap();
 
         assert_eq!(rust_type_nodes(&hint), MAX_RECEIVER_HINT_NODES);
+    }
+
+    #[test]
+    fn macro_call_scan_ignores_literals_comments_and_lifetimes() {
+        let token_tree = r####"{
+            actual();
+            receiver.real();
+            let normal = "hidden_normal()";
+            let bytes = b"hidden_bytes()";
+            let raw = r#"hidden_raw()"#;
+            let raw_hashes = r##"hidden_raw_hashes()"##;
+            let raw_bytes = br##"hidden_raw_bytes()"##;
+            let c_string = c"hidden_c_string()";
+            let raw_c_string = cr#"hidden_raw_c_string()"#;
+            let character = 'x';
+            let escaped = '\n';
+            let unicode = '🦀';
+            let byte_character = b'y';
+            let lifetime: &'static str = "";
+            // hidden_line_comment()
+            /* hidden_block_comment() /* hidden_nested_comment() */ */
+            another(/* hidden_argument_comment() */);
+        }"####;
+
+        assert_eq!(
+            textual_call_refs(token_tree),
+            vec![
+                ("actual".to_string(), None),
+                ("real".to_string(), Some("receiver".to_string())),
+                ("another".to_string(), None),
+            ]
+        );
     }
 
     #[test]

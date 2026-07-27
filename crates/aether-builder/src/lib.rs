@@ -689,6 +689,52 @@ def browse(catalog):
     }
 
     #[test]
+    fn macro_literal_text_does_not_create_call_edges() {
+        let source = r##"
+fn embedded_only_as_text() {}
+fn actual_macro_call() -> bool { true }
+
+#[test]
+fn macro_fixture() {
+    let _source = format!(r#"fn generated() { embedded_only_as_text(); }"#);
+    assert!(actual_macro_call());
+}
+"##;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/macro_fixture.rs", source);
+
+        let fixture = NodeId::from_path("crate::macro_fixture::macro_fixture");
+        let embedded = NodeId::from_path("crate::macro_fixture::embedded_only_as_text");
+        let actual = NodeId::from_path("crate::macro_fixture::actual_macro_call");
+        let calls = |graph: &SemanticGraph| {
+            graph
+                .neighbors(fixture, Some(EdgeKind::Calls))
+                .into_iter()
+                .map(|node| node.id)
+                .collect::<Vec<_>>()
+        };
+
+        assert!(!calls(&graph).contains(&embedded));
+        assert!(calls(&graph).contains(&actual));
+        assert_eq!(graph.tests_for(actual), vec![fixture]);
+
+        builder.update_file(
+            &mut graph,
+            "src/macro_fixture.rs",
+            &source.replace(
+                "    assert!(actual_macro_call());",
+                "    assert!(\"actual_macro_call()\".len() > 0);",
+            ),
+        );
+        assert!(!calls(&graph).contains(&actual));
+        assert!(
+            graph.tests_for(actual).is_empty(),
+            "incremental refresh must remove the stale real macro call edge"
+        );
+    }
+
+    #[test]
     fn resolves_rust_if_let_narrowed_receiver_types() {
         let source = r#"
 struct SessionIdentity;

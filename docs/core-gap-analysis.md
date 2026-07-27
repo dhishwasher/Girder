@@ -52,12 +52,34 @@ Acceptance evidence:
   25 tests for that method, demonstrating that real-repository precision still
   needs work even though this false negative is fixed.
 
+### Macro token-tree precision
+
+Verified defect: the fallback scanner that recovers calls from Rust macro token
+trees also scanned string and comment contents. A source fixture embedded in
+`format!(r#"..."#)` therefore made its enclosing test appear to call
+`GraphBuilder::apply`, even though the function was only text destined for a
+temporary repository.
+
+Acceptance evidence:
+
+- Before the fix, Bit Code reported three callers of `GraphBuilder::apply`,
+  including the unrelated
+  `test_impact_follows_if_let_narrowed_receivers` fixture.
+- The scanner now masks normal, byte, raw, raw-byte, C-string, raw-C-string,
+  character, byte-character, line-comment, and nested block-comment regions
+  while preserving byte offsets used for receiver qualification.
+- A focused lexical fixture finds all three real calls and zero calls from the
+  literal/comment cases. A graph fixture retains its genuine macro-contained
+  call, creates no edge for embedded Rust text, and removes the genuine edge
+  after an incremental update.
+- On Bit Code itself, `GraphBuilder::apply` now has exactly its two real callers:
+  `load_file` and `update_file`. The unrelated fixture caller is absent.
+
 ## Prioritized open gaps
 
-1. **P0 — call-edge precision and recall.** Exclude Rust-looking text inside
-   macro string literals; model subprocess CLI entry routes and implicit
-   RAII/`Drop`; extend scoped type refinement to match arms, `let-else`, and
-   let-chains; build equivalent measured Python fixtures.
+1. **P0 — call-edge precision and recall.** Model subprocess CLI entry routes
+   and implicit RAII/`Drop`; extend scoped type refinement to match arms,
+   `let-else`, and let-chains; build equivalent measured Python fixtures.
 2. **P0 — affected-test oracle.** Add dynamic-coverage comparison fixtures so
    precision/recall claims are reproducible rather than inferred from static
    tests alone.
