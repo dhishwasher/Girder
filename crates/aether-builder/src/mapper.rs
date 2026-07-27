@@ -705,9 +705,10 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 };
                 let caller = NodeId::from_path(&path);
                 current = Some(caller);
-                if matches!(lang, Lang::Rust) {
-                    function_type_hints = Some(rust_function_type_hints(node, source));
-                }
+                function_type_hints = match lang {
+                    Lang::Rust => Some(rust_function_type_hints(node, source)),
+                    Lang::Python => Some(python_function_type_hints(node, source)),
+                };
             }
         }
         let active_type_hints = function_type_hints.as_ref().unwrap_or(type_hints);
@@ -822,6 +823,76 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         &HashMap::new(),
         out,
     );
+}
+
+fn python_function_type_hints(function: TsNode, source: &str) -> HashMap<String, ReceiverHint> {
+    let mut hints = HashMap::new();
+    let Some(parameters) = function.child_by_field_name("parameters") else {
+        return hints;
+    };
+    let mut cursor = parameters.walk();
+    for parameter in parameters.named_children(&mut cursor) {
+        if !matches!(
+            parameter.kind(),
+            "typed_parameter" | "typed_default_parameter"
+        ) {
+            continue;
+        }
+        let Some(type_node) = parameter.child_by_field_name("type") else {
+            continue;
+        };
+        let name_node = parameter.child_by_field_name("name").or_else(|| {
+            let mut children = parameter.walk();
+            let name = parameter
+                .named_children(&mut children)
+                .find(|child| child.kind() == "identifier");
+            name
+        });
+        let (Some(name_node), Some(type_name)) =
+            (name_node, python_direct_type_name(type_node, source))
+        else {
+            continue;
+        };
+        hints.insert(
+            node_text(name_node, source).to_string(),
+            ReceiverHint::Type(RustTypeHint::named(type_name)),
+        );
+    }
+    hints
+}
+
+fn python_direct_type_name(type_node: TsNode, source: &str) -> Option<String> {
+    let annotation = node_text(type_node, source).trim();
+    let unquoted = annotation
+        .strip_prefix('"')
+        .and_then(|value| value.strip_suffix('"'))
+        .or_else(|| {
+            annotation
+                .strip_prefix('\'')
+                .and_then(|value| value.strip_suffix('\''))
+        })
+        .unwrap_or(annotation);
+    let mut segments = unquoted.split('.');
+    let first = segments.next()?;
+    if first.is_empty()
+        || !first
+            .chars()
+            .all(|character| character == '_' || character.is_ascii_alphanumeric())
+    {
+        return None;
+    }
+    let mut type_name = first;
+    for segment in segments {
+        if segment.is_empty()
+            || !segment
+                .chars()
+                .all(|character| character == '_' || character.is_ascii_alphanumeric())
+        {
+            return None;
+        }
+        type_name = segment;
+    }
+    Some(type_name.to_string())
 }
 
 fn rust_function_type_hints(function: TsNode, source: &str) -> HashMap<String, ReceiverHint> {

@@ -1191,6 +1191,82 @@ fn helper() {}
     }
 
     #[test]
+    fn resolves_python_annotated_receiver_types_across_files() {
+        let models = r#"
+class SessionIdentity:
+    def inspect(self):
+        return True
+
+    def verify_selected_operation(self):
+        return True
+
+class DecoyIdentity:
+    def inspect(self):
+        return False
+"#;
+        let service = r#"
+import models
+from models import DecoyIdentity, SessionIdentity
+
+def apply(identity: SessionIdentity):
+    identity.inspect()
+    identity.verify_selected_operation()
+
+def inspect_dotted(identity: models.DecoyIdentity):
+    identity.inspect()
+
+def inspect_forward(identity: "SessionIdentity"):
+    identity.inspect()
+
+def inspect_default(identity: DecoyIdentity = DecoyIdentity()):
+    identity.inspect()
+
+def test_provenance():
+    apply(SessionIdentity())
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "models.py", models);
+        builder.load_file(&mut graph, "service.py", service);
+
+        let apply = NodeId::from_path("crate::service::apply");
+        let inspect_dotted = NodeId::from_path("crate::service::inspect_dotted");
+        let inspect_forward = NodeId::from_path("crate::service::inspect_forward");
+        let inspect_default = NodeId::from_path("crate::service::inspect_default");
+        let session_inspect = NodeId::from_path("crate::models::SessionIdentity::inspect");
+        let verify = NodeId::from_path("crate::models::SessionIdentity::verify_selected_operation");
+        let decoy_inspect = NodeId::from_path("crate::models::DecoyIdentity::inspect");
+        let provenance_test = NodeId::from_path("crate::service::test_provenance");
+
+        let calls = |graph: &SemanticGraph, caller| {
+            graph
+                .neighbors(caller, Some(EdgeKind::Calls))
+                .into_iter()
+                .map(|node| node.id)
+                .collect::<Vec<_>>()
+        };
+        let apply_calls = calls(&graph, apply);
+        assert!(apply_calls.contains(&session_inspect));
+        assert!(apply_calls.contains(&verify));
+        assert!(!apply_calls.contains(&decoy_inspect));
+        assert_eq!(calls(&graph, inspect_dotted), vec![decoy_inspect]);
+        assert_eq!(calls(&graph, inspect_forward), vec![session_inspect]);
+        assert_eq!(calls(&graph, inspect_default), vec![decoy_inspect]);
+        assert_eq!(graph.tests_for(session_inspect), vec![provenance_test]);
+
+        builder.update_file(
+            &mut graph,
+            "service.py",
+            &service.replacen("    identity.inspect()\n", "", 1),
+        );
+        assert!(!calls(&graph, apply).contains(&session_inspect));
+        assert!(
+            graph.tests_for(session_inspect).is_empty(),
+            "incremental refresh must remove the stale annotated receiver edge"
+        );
+    }
+
+    #[test]
     fn test_impact_finds_minimal_test_set() {
         // add is called by test_add (marked) and by sum_list (not marked).
         // Only test_add should appear in the impact set.

@@ -144,10 +144,34 @@ Acceptance evidence:
 - The end-to-end repository fixture selects exactly its one true provenance
   test after the selected operation changes: precision `1/1`, recall `1/1`.
 
+### Python annotated receiver resolution
+
+Verified defect: Python parameter annotations were ignored when resolving
+receiver-qualified calls. In a two-file fixture with `inspect` on two classes,
+`apply(identity: SessionIdentity)` omitted `SessionIdentity::inspect`, while
+`inspect_decoy(identity: DecoyIdentity)` had no callee. A uniquely named method
+resolved only because there was no competing candidate.
+
+Acceptance evidence:
+
+- Before the fix, `apply` recorded only the unique
+  `SessionIdentity::verify_selected_operation` method and `inspect_decoy`
+  recorded no callees.
+- Direct, dotted, quoted-forward, and typed-default class annotations now
+  provide exact receiver owners. Compound unions/generics and import aliases
+  deliberately remain unresolved rather than guessing.
+- The same fixture now resolves exactly both SessionIdentity methods from
+  `apply` and `DecoyIdentity::inspect` from `inspect_decoy`.
+- The graph regression verifies cross-file exact-owner selection, decoy
+  exclusion, affected-test propagation, and incremental stale-edge removal.
+- The end-to-end Python repository selects exactly its one true test and emits
+  `pytest -k test_provenance`: precision `1/1`, recall `1/1`.
+
 ## Prioritized open gaps
 
 1. **P0 — call-edge precision and recall.** Model subprocess CLI entry routes
-   and implicit RAII/`Drop`; build equivalent measured Python fixtures.
+   and implicit RAII/`Drop`; extend Python receiver inference to constructor
+   assignments, compound annotations, and aliased imports without guessing.
 2. **P0 — affected-test oracle.** Add dynamic-coverage comparison fixtures so
    precision/recall claims are reproducible rather than inferred from static
    tests alone.
