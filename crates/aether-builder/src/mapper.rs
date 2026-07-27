@@ -649,6 +649,13 @@ fn extract_fields(
 }
 
 fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut BuildOutput) {
+    struct WalkContext<'src, 'aliases> {
+        source: &'src str,
+        lang: Lang,
+        module: &'src str,
+        python_aliases: &'aliases HashMap<String, String>,
+    }
+
     fn resolved_receiver_hint(
         qualifier: Option<&str>,
         hints: &HashMap<String, ReceiverHint>,
@@ -668,13 +675,18 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
     // match the type-scoped ids emitted by `collect_defs`.
     fn walk<'src>(
         node: TsNode,
-        source: &'src str,
-        lang: Lang,
-        module: &'src str,
+        context: &WalkContext<'src, '_>,
         scope: (Option<&'src str>, Option<NodeId>),
         type_hints: &HashMap<String, ReceiverHint>,
         out: &mut BuildOutput,
     ) {
+        let WalkContext {
+            source,
+            lang,
+            module,
+            python_aliases,
+        } = context;
+        let lang = *lang;
         let (current_type, current_fn) = scope;
         let mut current = current_fn;
         let mut enclosing_type = current_type;
@@ -707,7 +719,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 current = Some(caller);
                 function_type_hints = match lang {
                     Lang::Rust => Some(rust_function_type_hints(node, source)),
-                    Lang::Python => Some(python_function_type_hints(node, source)),
+                    Lang::Python => Some(python_function_type_hints(node, source, python_aliases)),
                 };
             }
         }
@@ -792,9 +804,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             };
             walk(
                 child,
-                source,
-                lang,
-                module,
+                context,
                 (enclosing_type, current),
                 child_type_hints,
                 out,
@@ -807,9 +817,12 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                     }
                     _ => None,
                 },
-                Lang::Python if node.kind() == "block" => {
-                    python_assignment_type_hints(child, sequential_type_hints, source)
-                }
+                Lang::Python if node.kind() == "block" => python_assignment_type_hints(
+                    child,
+                    sequential_type_hints,
+                    python_aliases,
+                    source,
+                ),
                 Lang::Python => None,
             };
             if let Some(hints) = following {
@@ -818,18 +831,57 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         }
     }
 
-    walk(
-        node,
+    let python_aliases = if matches!(lang, Lang::Python) {
+        python_import_aliases(node, source)
+    } else {
+        HashMap::new()
+    };
+    let context = WalkContext {
         source,
         lang,
         module,
-        (None, None),
-        &HashMap::new(),
-        out,
-    );
+        python_aliases: &python_aliases,
+    };
+    walk(node, &context, (None, None), &HashMap::new(), out);
 }
 
-fn python_function_type_hints(function: TsNode, source: &str) -> HashMap<String, ReceiverHint> {
+fn python_import_aliases(root: TsNode, source: &str) -> HashMap<String, String> {
+    let mut aliases = HashMap::new();
+    let mut cursor = root.walk();
+    for statement in root.named_children(&mut cursor).filter(|statement| {
+        matches!(
+            statement.kind(),
+            "import_statement" | "import_from_statement"
+        )
+    }) {
+        let mut children = statement.walk();
+        for import in statement
+            .named_children(&mut children)
+            .filter(|child| child.kind() == "aliased_import")
+        {
+            let (Some(name), Some(alias)) = (
+                import.child_by_field_name("name"),
+                import.child_by_field_name("alias"),
+            ) else {
+                continue;
+            };
+            let target = node_text(name, source)
+                .rsplit('.')
+                .next()
+                .unwrap_or_default();
+            if !target.is_empty() {
+                aliases.insert(node_text(alias, source).to_string(), target.to_string());
+            }
+        }
+    }
+    aliases
+}
+
+fn python_function_type_hints(
+    function: TsNode,
+    source: &str,
+    aliases: &HashMap<String, String>,
+) -> HashMap<String, ReceiverHint> {
     let mut hints = HashMap::new();
     let Some(parameters) = function.child_by_field_name("parameters") else {
         return hints;
@@ -857,6 +909,7 @@ fn python_function_type_hints(function: TsNode, source: &str) -> HashMap<String,
         else {
             continue;
         };
+        let type_name = aliases.get(&type_name).unwrap_or(&type_name);
         hints.insert(
             node_text(name_node, source).to_string(),
             ReceiverHint::Type(RustTypeHint::named(type_name)),
@@ -902,6 +955,7 @@ fn python_direct_type_name(type_node: TsNode, source: &str) -> Option<String> {
 fn python_assignment_type_hints(
     statement: TsNode,
     hints: &HashMap<String, ReceiverHint>,
+    aliases: &HashMap<String, String>,
     source: &str,
 ) -> Option<HashMap<String, ReceiverHint>> {
     let assignment = if statement.kind() == "assignment" {
@@ -929,6 +983,7 @@ fn python_assignment_type_hints(
 
     let mut updated = hints.clone();
     if let Some(type_name) = annotation.or(constructor) {
+        let type_name = aliases.get(&type_name).unwrap_or(&type_name);
         updated.insert(binding, ReceiverHint::Type(RustTypeHint::named(type_name)));
     } else {
         updated.remove(&binding);

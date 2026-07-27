@@ -189,12 +189,33 @@ Acceptance evidence:
 - The end-to-end Python repository selects exactly its one true test and emits
   `pytest -k test_provenance`: precision `1/1`, recall `1/1`.
 
+### Python import-alias receiver resolution
+
+Verified defect: aliases from
+`from models import SessionIdentity as Session` were retained as receiver type
+names. Because `Session` does not match the defining `SessionIdentity` owner,
+both annotated parameters and constructor assignments became unresolved.
+
+Acceptance evidence:
+
+- Before the fix, the annotated, assigned, and decoy functions in the two-file
+  fixture each had zero callees.
+- Top-level `import`/`from ... import ...` aliases are now normalized from exact
+  tree-sitter `name` and `alias` fields, scoped to their source file.
+- The same fixture now resolves both SessionIdentity methods from the annotated
+  and assigned functions and exactly `DecoyIdentity::inspect` from the decoy
+  function. Dotted module aliases remain exact.
+- The graph regression verifies annotation and constructor aliases, module
+  aliases, decoy exclusion, affected-test propagation, and incremental stale
+  edge removal.
+- The end-to-end Python repository selects exactly its one true test and emits
+  `pytest -k test_provenance`: precision `1/1`, recall `1/1`.
+
 ## Prioritized open gaps
 
 1. **P0 — call-edge precision and recall.** Model subprocess CLI entry routes
    and implicit RAII/`Drop`; extend Python receiver inference across
-   control-flow joins, compound annotations, and aliased imports without
-   guessing.
+   control-flow joins and compound annotations without guessing.
 2. **P0 — affected-test oracle.** Add dynamic-coverage comparison fixtures so
    precision/recall claims are reproducible rather than inferred from static
    tests alone.
