@@ -1,0 +1,15 @@
+from models import DecoyIdentity, SessionIdentity
+
+
+def direct(identity: SessionIdentity):
+    return identity.selected_operation()
+
+
+def optional(identity: SessionIdentity | None):
+    if identity is None:
+        return "none"
+    return identity.selected_operation()
+
+
+def decoy(identity: DecoyIdentity):
+    return identity.selected_operation()

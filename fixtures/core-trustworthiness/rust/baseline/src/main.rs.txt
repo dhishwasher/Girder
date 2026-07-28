@@ -1,0 +1,10 @@
+use std::env;
+use trust_rust::operations::{selected_operation, unrelated_operation};
+
+fn main() {
+    match env::args().nth(1).as_deref() {
+        Some("selected") => println!("{}", selected_operation()),
+        Some("unrelated") => println!("{}", unrelated_operation()),
+        _ => {}
+    }
+}

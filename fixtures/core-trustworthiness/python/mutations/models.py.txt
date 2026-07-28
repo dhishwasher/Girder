@@ -1,0 +1,19 @@
+import os
+from pathlib import Path
+
+
+def _mark_probe():
+    path = os.environ.get("BITCODE_ORACLE_PROBE")
+    if path:
+        Path(path).write_text("selected_operation\n", encoding="utf-8")
+
+
+class SessionIdentity:
+    def selected_operation(self):
+        _mark_probe()
+        return "changed"
+
+
+class DecoyIdentity:
+    def selected_operation(self):
+        return "decoy"

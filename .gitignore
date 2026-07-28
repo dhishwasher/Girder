@@ -1,5 +1,7 @@
 /target
 **/*.rs.bk
+__pycache__/
+*.pyc
 .DS_Store
 # Generated project graphs (the .aether format is real output, not source)
 project.aether

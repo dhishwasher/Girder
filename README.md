@@ -456,7 +456,16 @@ deliberately do not enter routing until their HTTP bodies are implemented.
 ## Status
 
 A focused, honest prototype: the three pillars (graph-as-truth, agent swarm,
-time-travel debug) are real, tested, and runnable. Implemented features:
+time-travel debug) are real, tested, and runnable.
+
+The checked
+[Core Trustworthiness Measurement](docs/core-trustworthiness-measurement.md)
+compares affected-test selection with isolated runtime execution. Its bounded
+baseline currently measures Rust precision/recall at `0.667/1.000` and Python
+at `1.000/0.500`; these fixture results expose real gaps and are not a
+representative-repository superiority claim.
+
+Implemented features:
 
 | Feature | What it does |
 |---|---|

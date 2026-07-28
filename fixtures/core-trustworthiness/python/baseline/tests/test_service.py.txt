@@ -1,0 +1,15 @@
+import unittest
+
+from models import DecoyIdentity, SessionIdentity
+from service import decoy, direct, optional
+
+
+class OracleTests(unittest.TestCase):
+    def test_python_direct_selected(self):
+        self.assertNotEqual(direct(SessionIdentity()), "")
+
+    def test_python_optional_selected(self):
+        self.assertNotEqual(optional(SessionIdentity()), "")
+
+    def test_python_decoy(self):
+        self.assertEqual(decoy(DecoyIdentity()), "decoy")

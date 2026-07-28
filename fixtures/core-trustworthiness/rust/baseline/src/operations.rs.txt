@@ -1,0 +1,24 @@
+use std::env;
+use std::fs::OpenOptions;
+use std::io::Write;
+
+fn mark_probe() {
+    let Some(path) = env::var_os("BITCODE_ORACLE_PROBE") else {
+        return;
+    };
+    let mut probe = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .expect("open oracle probe");
+    writeln!(probe, "selected_operation").expect("write oracle probe");
+}
+
+pub fn selected_operation() -> &'static str {
+    mark_probe();
+    "baseline"
+}
+
+pub fn unrelated_operation() -> &'static str {
+    "unrelated"
+}

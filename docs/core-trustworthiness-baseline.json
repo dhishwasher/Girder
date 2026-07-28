@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "results": {
+    "rust": {
+      "universe": [
+        "rust_cli_selected",
+        "rust_cli_unrelated",
+        "rust_direct_selected",
+        "rust_unrelated"
+      ],
+      "selected": [
+        "rust_cli_selected",
+        "rust_cli_unrelated",
+        "rust_direct_selected"
+      ],
+      "executed": [
+        "rust_cli_selected",
+        "rust_direct_selected"
+      ],
+      "true_positives": [
+        "rust_cli_selected",
+        "rust_direct_selected"
+      ],
+      "false_positives": [
+        "rust_cli_unrelated"
+      ],
+      "false_negatives": [],
+      "true_negatives": [
+        "rust_unrelated"
+      ],
+      "precision": 0.666667,
+      "recall": 1.0,
+      "bitcode_reported_impacted": 3,
+      "bitcode_reported_skipped": 1
+    },
+    "python": {
+      "universe": [
+        "test_python_decoy",
+        "test_python_direct_selected",
+        "test_python_optional_selected"
+      ],
+      "selected": [
+        "test_python_direct_selected"
+      ],
+      "executed": [
+        "test_python_direct_selected",
+        "test_python_optional_selected"
+      ],
+      "true_positives": [
+        "test_python_direct_selected"
+      ],
+      "false_positives": [],
+      "false_negatives": [
+        "test_python_optional_selected"
+      ],
+      "true_negatives": [
+        "test_python_decoy"
+      ],
+      "precision": 1.0,
+      "recall": 0.5,
+      "bitcode_reported_impacted": 1,
+      "bitcode_reported_skipped": 2
+    }
+  },
+  "aggregate": {
+    "true_positives": 3,
+    "false_positives": 1,
+    "false_negatives": 1,
+    "true_negatives": 2,
+    "precision": 0.75,
+    "recall": 0.75
+  }
+}

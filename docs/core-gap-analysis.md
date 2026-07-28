@@ -14,7 +14,7 @@ reproducible repository fixture or benchmark proves otherwise.
 |---|---|---|---|
 | Indexing and code intelligence | JetBrains project analysis builds an index for navigation, refactoring, inspections, and completion. Cursor uses Merkle-tree change detection and cached semantic chunks for incremental codebase indexing. | Rust/Python tree-sitter projections, cross-file call resolution, and incremental `update_file` reconciliation are implemented. No representative-repository indexing latency or memory benchmark is recorded yet. | **P0 evidence gap:** benchmark cold indexing, one-file updates, peak memory, and stale-edge removal on increasingly large repositories. |
 | Navigation and refactoring | VS Code exposes language-service navigation, cross-file rename, and refactor preview; JetBrains provides project-wide dependency analysis and language-aware refactoring. | Stable graph ids, typed callers/callees, impact traversal, and validated rename projection work for the supported Rust/Python subset. | **P0 correctness:** measure resolved/unresolved call edges and false edges. Close common language-semantic gaps before adding refactor kinds. |
-| Test discovery and coverage | VS Code's testing API supports framework discovery, execution, debugging, and dynamic coverage when supplied by an extension. | Bit Code selects graph-reachable tests and can run configured Rust/Python commands. Focused fixtures cover direct, macro-contained, untracked, removed-function, narrowed-receiver, and exact Cargo-binary subprocess cases. | **P0 correctness:** CLI argument-route precision and implicit RAII/`Drop` execution remain gaps; shared infrastructure can over-select tests. Measure precision and recall against dynamic coverage. |
+| Test discovery and coverage | VS Code's testing API supports framework discovery, execution, debugging, and dynamic coverage when supplied by an extension. | Bit Code selects graph-reachable tests and can run configured Rust/Python commands. The checked function-execution oracle measures Rust precision/recall at `0.667/1.000` and Python at `1.000/0.500` on bounded fixtures. | **P0 correctness:** restore Python compound-annotation recall and improve CLI argument-route precision. Expand the oracle to representative repositories and implicit RAII/`Drop`. |
 | Diagnostics and validation | JetBrains performs continuous file/project analysis; VS Code language services and tasks surface diagnostics while editing. | Candidate changes are conflict-checked and validated in a disposable project before a journaled commit. | **P1 responsiveness:** validation is strong at commit time, but edit-to-diagnostic latency and cancellation behavior are not benchmarked. |
 | Recovery | VS Code provides local file history and refactor preview. Mature IDEs preserve undo/local history across routine editing. | Bit Code uses baseline checks, durable backups, a transaction journal, startup recovery, and graph/source snapshot binding. | **Graph-native opportunity, still P0 to prove:** run a fault-injection matrix at every journal transition and verify all-old/all-new recovery. |
 | Agent autonomy | Cursor combines semantic codebase retrieval with agent editing. JetBrains and VS Code expose broad language tooling to AI integrations. | Bit Code agents plan from the graph and generated changes pass the same candidate validator and transaction boundary as manual graph edits. | **P1 evidence gap:** record patch acceptance, validation-failure detection, rollback success, and human rejection rates on real tasks. |
@@ -239,23 +239,61 @@ Acceptance evidence:
 - Custom `[[bin]] path` locations and dynamically constructed executable paths
   remain unresolved because Cargo manifest target metadata is not indexed.
 
+## Core Trustworthiness Measurement milestone
+
+The checked oracle in
+[`core-trustworthiness-measurement.md`](core-trustworthiness-measurement.md)
+materializes one multi-file Rust fixture and one multi-file Python fixture into
+disposable Git repositories, applies a mutation, records Bit Code's selected
+tests, and runs every test alone. A probe written only by the changed function
+provides the dynamic execution set.
+
+After building the exact binary with the required Cargo environment, reproduce
+and check the baseline with:
+
+```sh
+python3 -m unittest -v tools.test_core_trustworthiness_oracle
+python3 tools/core_trustworthiness_oracle.py \
+  --bitcode /mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/bitcode
+```
+
+Baseline:
+
+| Fixture | TP | FP | FN | TN | Precision | Recall |
+|---|---:|---:|---:|---:|---:|---:|
+| Rust | 2 | 1 | 0 | 1 | 0.667 | 1.000 |
+| Python | 1 | 0 | 1 | 1 | 1.000 | 0.500 |
+| Combined | 3 | 1 | 1 | 2 | 0.750 | 0.750 |
+
+The Rust false positive is `rust_cli_unrelated`: it launches the same Cargo
+binary as the true CLI test, but its concrete argument cannot reach the changed
+branch. The Python false negative is `test_python_optional_selected`: runtime
+coverage proves it calls the changed method, while the
+`SessionIdentity | None` annotation plus guard remains unresolved. The exact
+sets and counts are machine-checked against
+[`core-trustworthiness-baseline.json`](core-trustworthiness-baseline.json).
+
 ## Prioritized open gaps
 
-1. **P0 — call-edge precision and recall.** Model argument-specific subprocess
-   CLI routes, custom Cargo binary paths, and implicit RAII/`Drop`; extend
-   Python receiver inference across control-flow joins and compound annotations
-   without guessing.
-2. **P0 — affected-test oracle.** Add dynamic-coverage comparison fixtures so
-   precision/recall claims are reproducible rather than inferred from static
-   tests alone.
-3. **P0 — recoverability proof.** Inject interruption at every durable
+1. **P0 — measured Python recall defect.** Resolve compound annotations and
+   guarded control flow without guessing across multiple possible owners. The
+   current bounded fixture has one false negative and recall `0.500`.
+2. **P0 — measured CLI precision defect.** Model argument-specific subprocess
+   routes without losing Cargo-entrypoint recall. The current bounded fixture
+   has one false positive and precision `0.667`.
+3. **P0 — unmeasured call semantics.** Measure and then model custom Cargo
+   binary paths and implicit RAII/`Drop` execution.
+4. **P0 — oracle breadth.** Extend dynamic comparison to broader mutations and
+   representative real repositories; the checked synthetic fixtures establish
+   a baseline, not product-level accuracy.
+5. **P0 — recoverability proof.** Inject interruption at every durable
    transaction transition and verify both source and graph state after restart.
-4. **P0 — representative repositories.** Record cold/incremental indexing,
+6. **P0 — representative repositories.** Record cold/incremental indexing,
    call-edge accuracy, impact latency, test-selection accuracy, and memory on at
    least three real Rust/Python repositories without manual repair.
-5. **P1 — interactive latency.** Measure edit-to-graph, edit-to-diagnostic, and
+7. **P1 — interactive latency.** Measure edit-to-graph, edit-to-diagnostic, and
    navigation latency under sustained edits.
-6. **P1 — agent outcome metrics.** Track accepted patches, validation catches,
+8. **P1 — agent outcome metrics.** Track accepted patches, validation catches,
    rejected patches, rollback success, and time-to-safe-commit.
 
 Bit Code's potential advantage is not generic semantic search. It is one local,
