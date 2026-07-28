@@ -250,12 +250,52 @@ fn qualifier_matches_owner(qualifier: &str, owner: &str) -> bool {
 
 struct FunctionCandidate {
     path: String,
+    file: Option<String>,
     source_module: String,
     owner: String,
     id: NodeId,
     return_type: Option<String>,
     type_parameters: Option<String>,
     first_parameter_type: Option<String>,
+}
+
+/// Infer a Cargo target name from conventional binary locations. An empty
+/// string means `src/main.rs`, whose target name comes from package metadata
+/// that the source-only graph does not currently index.
+fn conventional_rust_binary_target(file: Option<&str>) -> Option<String> {
+    let file = file?;
+    let normalized = file.replace('\\', "/");
+    if normalized == "src/main.rs" || normalized.ends_with("/src/main.rs") {
+        return Some(String::new());
+    }
+    let (_, bin_path) = normalized.rsplit_once("/src/bin/").or_else(|| {
+        normalized
+            .strip_prefix("src/bin/")
+            .map(|bin_path| ("", bin_path))
+    })?;
+    if !bin_path.contains('/') {
+        return bin_path.strip_suffix(".rs").map(str::to_string);
+    }
+    let (target, file_name) = bin_path.split_once('/')?;
+    (file_name == "main.rs" && !target.is_empty()).then(|| target.to_string())
+}
+
+fn select_process_entrypoint<'a>(
+    candidates: &'a [FunctionCandidate],
+    target: &str,
+) -> Option<&'a FunctionCandidate> {
+    let entrypoints = || {
+        candidates.iter().filter(|candidate| {
+            candidate.owner == candidate.source_module
+                && candidate.path.ends_with("::main")
+                && conventional_rust_binary_target(candidate.file.as_deref()).is_some()
+        })
+    };
+    only_candidate(entrypoints().filter(|candidate| {
+        conventional_rust_binary_target(candidate.file.as_deref())
+            .is_some_and(|candidate_target| candidate_target == target)
+    }))
+    .or_else(|| only_candidate(entrypoints()))
 }
 
 fn only_candidate<'a>(
@@ -589,6 +629,7 @@ impl GraphBuilder {
                 .or_default()
                 .push(FunctionCandidate {
                     path: n.path.clone(),
+                    file: n.file.clone(),
                     source_module: source_module(n.file.as_deref(), &n.path),
                     owner: module_of(&n.path),
                     id: n.id,
@@ -609,6 +650,22 @@ impl GraphBuilder {
                     ),
                     None => continue,
                 };
+                if let Some(target) = call.process_entrypoint.as_deref() {
+                    let chosen = by_name
+                        .get(&call.callee)
+                        .and_then(|candidates| select_process_entrypoint(candidates, target));
+                    if let Some(candidate) = chosen {
+                        if candidate.id != call.caller && added.insert((call.caller, candidate.id))
+                        {
+                            let _ = graph.add_edge(
+                                call.caller,
+                                candidate.id,
+                                Edge::new(EdgeKind::Calls),
+                            );
+                        }
+                    }
+                    continue;
+                }
                 let alias = match call.qualifier.as_deref() {
                     None => resolve_local_call_alias(file, state, &call.callee, &reexports),
                     Some(qualifier) => {

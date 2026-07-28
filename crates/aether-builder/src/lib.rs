@@ -1457,6 +1457,154 @@ def test_provenance():
     }
 
     #[test]
+    fn resolves_cargo_binary_subprocess_entrypoints_without_guessing() {
+        let binary = r#"
+fn main() {
+    dispatch();
+}
+
+fn dispatch() {}
+"#;
+        let cli_tests = r#"
+use std::process::Command;
+
+fn run_binary() {
+    Command::new(env!("CARGO_BIN_EXE_demo")).output().unwrap();
+}
+
+fn run_qualified_binary() {
+    std::process::Command::new(env!("CARGO_BIN_EXE_demo"))
+        .output()
+        .unwrap();
+}
+
+fn run_git() {
+    Command::new("git").output().unwrap();
+}
+
+fn run_other_env() {
+    Command::new(env!("HOME")).output().unwrap();
+}
+
+#[test]
+fn cli_route() {
+    run_binary();
+}
+
+#[test]
+fn qualified_cli_route() {
+    run_qualified_binary();
+}
+
+#[test]
+fn git_helper() {
+    run_git();
+    run_other_env();
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/main.rs", binary);
+        builder.load_file(&mut graph, "tests/cli.rs", cli_tests);
+
+        let main = NodeId::from_path("crate::main::main");
+        let run_binary = NodeId::from_path("crate::tests::cli::run_binary");
+        let run_qualified_binary = NodeId::from_path("crate::tests::cli::run_qualified_binary");
+        let cli_route = NodeId::from_path("crate::tests::cli::cli_route");
+        let qualified_cli_route = NodeId::from_path("crate::tests::cli::qualified_cli_route");
+        let git_helper = NodeId::from_path("crate::tests::cli::git_helper");
+
+        for launcher in [run_binary, run_qualified_binary] {
+            assert!(
+                graph
+                    .neighbors(launcher, Some(EdgeKind::Calls))
+                    .iter()
+                    .any(|node| node.id == main),
+                "exact Cargo binary launch must call the unique Rust entrypoint"
+            );
+        }
+        let entrypoint_tests = graph.tests_for(main);
+        assert_eq!(
+            entrypoint_tests.len(),
+            2,
+            "only tests that execute the Cargo binary should cover main"
+        );
+        assert!(entrypoint_tests.contains(&cli_route));
+        assert!(entrypoint_tests.contains(&qualified_cli_route));
+        assert!(!entrypoint_tests.contains(&git_helper));
+
+        builder.update_file(
+            &mut graph,
+            "tests/cli.rs",
+            &cli_tests.replace("CARGO_BIN_EXE_demo", "NOT_A_CARGO_BINARY"),
+        );
+        assert!(
+            graph.tests_for(main).is_empty(),
+            "incremental refresh must remove stale subprocess entrypoint edges"
+        );
+
+        let mut ambiguous_graph = SemanticGraph::new();
+        let mut ambiguous_builder = GraphBuilder::new();
+        ambiguous_builder.load_file(&mut ambiguous_graph, "src/main.rs", "fn main() {}\n");
+        ambiguous_builder.load_file(&mut ambiguous_graph, "src/bin/other.rs", "fn main() {}\n");
+        ambiguous_builder.load_file(&mut ambiguous_graph, "tests/cli.rs", cli_tests);
+        for entrypoint in [
+            NodeId::from_path("crate::main::main"),
+            NodeId::from_path("crate::bin::other::main"),
+        ] {
+            assert!(
+                ambiguous_graph.tests_for(entrypoint).is_empty(),
+                "multiple Rust entrypoints must remain unresolved"
+            );
+        }
+        ambiguous_builder.update_file(
+            &mut ambiguous_graph,
+            "tests/cli.rs",
+            &cli_tests.replace("CARGO_BIN_EXE_demo", "CARGO_BIN_EXE_other"),
+        );
+        assert!(ambiguous_graph
+            .tests_for(NodeId::from_path("crate::main::main"))
+            .is_empty());
+        assert_eq!(
+            ambiguous_graph
+                .tests_for(NodeId::from_path("crate::bin::other::main"))
+                .len(),
+            2,
+            "an exact src/bin Cargo target must disambiguate multiple entrypoints"
+        );
+
+        let mut directory_graph = SemanticGraph::new();
+        let mut directory_builder = GraphBuilder::new();
+        directory_builder.load_file(
+            &mut directory_graph,
+            "src/bin/nested/main.rs",
+            "fn main() {}\n",
+        );
+        directory_builder.load_file(
+            &mut directory_graph,
+            "tests/cli.rs",
+            &cli_tests.replace("CARGO_BIN_EXE_demo", "CARGO_BIN_EXE_nested"),
+        );
+        assert_eq!(
+            directory_graph
+                .tests_for(NodeId::from_path("crate::bin::nested::main::main"))
+                .len(),
+            2
+        );
+
+        let mut custom_graph = SemanticGraph::new();
+        let mut custom_builder = GraphBuilder::new();
+        custom_builder.load_file(&mut custom_graph, "tools/cli.rs", "fn main() {}\n");
+        custom_builder.load_file(&mut custom_graph, "tests/cli.rs", cli_tests);
+        assert!(
+            custom_graph
+                .tests_for(NodeId::from_path("crate::tools::cli::main"))
+                .is_empty(),
+            "custom binary paths require manifest metadata and must remain unresolved"
+        );
+    }
+
+    #[test]
     fn test_impact_finds_minimal_test_set() {
         // add is called by test_add (marked) and by sum_list (not marked).
         // Only test_add should appear in the impact set.

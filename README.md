@@ -460,7 +460,7 @@ time-travel debug) are real, tested, and runnable. Implemented features:
 
 | Feature | What it does |
 |---|---|
-| Semantic graph | Nodes/edges, Rust alias/return/scoped-pattern-aware and Python alias/annotation/constructor-aware cross-file call resolution, literal-aware macro calls, impact BFS, similarity edges, strict versioned `.aether` persistence and source reconciliation |
+| Semantic graph | Nodes/edges, Rust alias/return/scoped-pattern/Cargo-entrypoint-aware and Python alias/annotation/constructor-aware cross-file call resolution, literal-aware macro calls, impact BFS, similarity edges, strict versioned `.aether` persistence and source reconciliation |
 | Graph explorer | Retained force layout, pan/zoom, search and typed filters, neighborhood focus, LOD/culling, metadata inspection, source navigation |
 | Agent swarm | Planner + Coder + Tester + Documenter + Refactorer + Optimizer + SecurityAuditor + QueryAgent |
 | Intent-first planning | Planner reads the graph before planning; generates ordered `FeatureSpec` with Calls-edge wiring |

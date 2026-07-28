@@ -103,6 +103,10 @@ pub struct CallRef {
     pub qualifier: Option<String>,
     pub receiver_type: Option<String>,
     pub receiver_factory: Option<CallTargetRef>,
+    /// Cargo target from an exact subprocess launch via
+    /// `env!("CARGO_BIN_EXE_<target>")`. Its callee is the binary's top-level
+    /// Rust `main`, not an ordinary same-module function call.
+    pub process_entrypoint: Option<String>,
 }
 
 /// An unresolved inheritance: type `sub` inherits/implements something named
@@ -759,7 +763,21 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                     qualifier,
                     receiver_type,
                     receiver_factory,
+                    process_entrypoint: None,
                 });
+                if let Some(target) = matches!(lang, Lang::Rust)
+                    .then(|| rust_cargo_binary_target(node, source))
+                    .flatten()
+                {
+                    out.calls.push(CallRef {
+                        caller,
+                        callee: "main".to_string(),
+                        qualifier: None,
+                        receiver_type: None,
+                        receiver_factory: None,
+                        process_entrypoint: Some(target),
+                    });
+                }
             }
         }
 
@@ -782,6 +800,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                             qualifier,
                             receiver_type,
                             receiver_factory,
+                            process_entrypoint: None,
                         });
                     }
                 }
@@ -1365,6 +1384,57 @@ fn qualifier_binding(qualifier: &str) -> &str {
         .find(|part| !part.is_empty())
         .unwrap_or(qualifier)
         .trim()
+}
+
+/// Recognize an exact Cargo integration-test launch:
+/// `Command::new(env!("CARGO_BIN_EXE_<target>"))`.
+///
+/// The Cargo-provided environment variable is a compile-time, executable path,
+/// so this is stronger evidence than an arbitrary command string. Resolution
+/// requires either an exact conventional `src/bin` target or one unambiguous
+/// conventional Rust entrypoint in the project.
+fn rust_cargo_binary_target(call: TsNode, source: &str) -> Option<String> {
+    let (callee, qualifier) = callee_target(call, source)?;
+    if callee != "new"
+        || qualifier
+            .as_deref()
+            .map(qualifier_binding)
+            .is_none_or(|tail| tail != "Command")
+    {
+        return None;
+    }
+    let arguments = call.child_by_field_name("arguments")?;
+    let mut argument_cursor = arguments.walk();
+    let mut arguments = arguments.named_children(&mut argument_cursor);
+    let argument = arguments.next()?;
+    if arguments.next().is_some() || argument.kind() != "macro_invocation" {
+        return None;
+    }
+    let macro_name = argument.child_by_field_name("macro")?;
+    if last_ident(node_text(macro_name, source)) != "env" {
+        return None;
+    }
+    let mut macro_cursor = argument.walk();
+    let tokens = argument
+        .named_children(&mut macro_cursor)
+        .find(|child| child.kind() == "token_tree")?;
+    let mut token_cursor = tokens.walk();
+    let mut token_arguments = tokens.named_children(&mut token_cursor);
+    let variable = token_arguments.next()?;
+    if token_arguments.next().is_some() || variable.kind() != "string_literal" {
+        return None;
+    }
+    node_text(variable, source)
+        .strip_prefix('"')
+        .and_then(|value| value.strip_suffix('"'))
+        .and_then(|value| value.strip_prefix("CARGO_BIN_EXE_"))
+        .filter(|target| {
+            !target.is_empty()
+                && target.chars().all(|character| {
+                    character == '_' || character == '-' || character.is_ascii_alphanumeric()
+                })
+        })
+        .map(str::to_string)
 }
 
 /// Best-effort call target: trailing identifier plus its receiver/path.

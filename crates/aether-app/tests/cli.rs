@@ -613,6 +613,64 @@ def test_provenance():
 }
 
 #[test]
+fn test_impact_follows_cargo_binary_subprocess_entrypoint() {
+    let repo = TempRepo::new("test-impact-cargo-binary-entrypoint");
+    let main = |dispatch_body: &str| {
+        format!(
+            r#"
+fn main() {{
+    dispatch();
+}}
+
+fn dispatch() {{
+    {dispatch_body}
+}}
+"#
+        )
+    };
+    repo.write("src/main.rs", &main("println!(\"ready\");"));
+    repo.write(
+        "tests/cli.rs",
+        r#"
+use std::process::Command;
+
+fn run_binary() {
+    Command::new(env!("CARGO_BIN_EXE_demo")).output().unwrap();
+}
+
+#[test]
+fn cli_dispatch() {
+    run_binary();
+}
+
+#[test]
+fn unrelated_test() {
+    assert_eq!(2 + 2, 4);
+}
+"#,
+    );
+    repo.commit_all("baseline");
+    repo.write("src/main.rs", &main("println!(\"changed\");"));
+
+    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+
+    assert!(stdout.contains("crate::main::dispatch"), "{stdout}");
+    assert!(stdout.contains("Impacted tests (1)"), "{stdout}");
+    assert!(
+        stdout.contains("crate::tests::cli::cli_dispatch"),
+        "{stdout}"
+    );
+    assert!(
+        !stdout.contains("crate::tests::cli::unrelated_test"),
+        "{stdout}"
+    );
+    assert!(
+        stdout.contains("cargo test --workspace cli_dispatch"),
+        "{stdout}"
+    );
+}
+
+#[test]
 fn forge_projects_generated_functions_to_source_file() {
     let repo = TempRepo::new("forge-writeback");
     repo.write("src/lib.rs", "pub fn existing() -> i64 { 1 }\n");

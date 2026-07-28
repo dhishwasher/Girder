@@ -14,7 +14,7 @@ reproducible repository fixture or benchmark proves otherwise.
 |---|---|---|---|
 | Indexing and code intelligence | JetBrains project analysis builds an index for navigation, refactoring, inspections, and completion. Cursor uses Merkle-tree change detection and cached semantic chunks for incremental codebase indexing. | Rust/Python tree-sitter projections, cross-file call resolution, and incremental `update_file` reconciliation are implemented. No representative-repository indexing latency or memory benchmark is recorded yet. | **P0 evidence gap:** benchmark cold indexing, one-file updates, peak memory, and stale-edge removal on increasingly large repositories. |
 | Navigation and refactoring | VS Code exposes language-service navigation, cross-file rename, and refactor preview; JetBrains provides project-wide dependency analysis and language-aware refactoring. | Stable graph ids, typed callers/callees, impact traversal, and validated rename projection work for the supported Rust/Python subset. | **P0 correctness:** measure resolved/unresolved call edges and false edges. Close common language-semantic gaps before adding refactor kinds. |
-| Test discovery and coverage | VS Code's testing API supports framework discovery, execution, debugging, and dynamic coverage when supplied by an extension. | Bit Code selects graph-reachable tests and can run configured Rust/Python commands. Focused fixtures cover direct, macro-contained, untracked, removed-function, and narrowed-receiver cases. | **P0 correctness:** subprocess CLI routes and implicit RAII/`Drop` execution remain false negatives; shared infrastructure can over-select tests. Measure precision and recall against dynamic coverage. |
+| Test discovery and coverage | VS Code's testing API supports framework discovery, execution, debugging, and dynamic coverage when supplied by an extension. | Bit Code selects graph-reachable tests and can run configured Rust/Python commands. Focused fixtures cover direct, macro-contained, untracked, removed-function, narrowed-receiver, and exact Cargo-binary subprocess cases. | **P0 correctness:** CLI argument-route precision and implicit RAII/`Drop` execution remain gaps; shared infrastructure can over-select tests. Measure precision and recall against dynamic coverage. |
 | Diagnostics and validation | JetBrains performs continuous file/project analysis; VS Code language services and tasks surface diagnostics while editing. | Candidate changes are conflict-checked and validated in a disposable project before a journaled commit. | **P1 responsiveness:** validation is strong at commit time, but edit-to-diagnostic latency and cancellation behavior are not benchmarked. |
 | Recovery | VS Code provides local file history and refactor preview. Mature IDEs preserve undo/local history across routine editing. | Bit Code uses baseline checks, durable backups, a transaction journal, startup recovery, and graph/source snapshot binding. | **Graph-native opportunity, still P0 to prove:** run a fault-injection matrix at every journal transition and verify all-old/all-new recovery. |
 | Agent autonomy | Cursor combines semantic codebase retrieval with agent editing. JetBrains and VS Code expose broad language tooling to AI integrations. | Bit Code agents plan from the graph and generated changes pass the same candidate validator and transaction boundary as manual graph edits. | **P1 evidence gap:** record patch acceptance, validation-failure detection, rollback success, and human rejection rates on real tasks. |
@@ -211,11 +211,40 @@ Acceptance evidence:
 - The end-to-end Python repository selects exactly its one true test and emits
   `pytest -k test_provenance`: precision `1/1`, recall `1/1`.
 
+### Cargo binary subprocess entrypoints
+
+Verified defect: Rust integration tests execute the compiled CLI through
+`Command::new(env!("CARGO_BIN_EXE_bitcode"))`, but the process boundary had no
+call edge to the binary's `main`. On Bit Code itself, `main` therefore had zero
+recorded callers and zero reachable tests despite its subprocess CLI suite.
+
+Acceptance evidence:
+
+- Exact `Command::new(env!("CARGO_BIN_EXE_<target>"))` calls now emit a
+  process-entrypoint reference. Arbitrary command strings, unrelated
+  environment variables, and non-`env!` macros do not.
+- Resolution accepts Cargo's conventional `src/main.rs`, direct
+  `src/bin/<target>.rs`, and `src/bin/<target>/main.rs` locations. An exact
+  `src/bin` target disambiguates multiple binaries; otherwise multiple
+  entrypoints remain unresolved rather than guessed.
+- The graph regression covers imported and fully qualified `Command`, false
+  positive exclusions, target disambiguation, ambiguous refusal, affected-test
+  propagation, and incremental stale-edge removal.
+- The end-to-end two-file fixture changes the binary's dispatch function and
+  selects exactly its one subprocess test: precision `1/1`, recall `1/1`.
+- On Bit Code itself, `main` now has the two real launch callers
+  (`run_bitcode_output` and the direct live-collaboration test), and all 27 CLI
+  tests are reachable. This closes the entrypoint false negative but remains
+  deliberately broad: argument-specific dispatch routes are not yet modeled.
+- Custom `[[bin]] path` locations and dynamically constructed executable paths
+  remain unresolved because Cargo manifest target metadata is not indexed.
+
 ## Prioritized open gaps
 
-1. **P0 — call-edge precision and recall.** Model subprocess CLI entry routes
-   and implicit RAII/`Drop`; extend Python receiver inference across
-   control-flow joins and compound annotations without guessing.
+1. **P0 — call-edge precision and recall.** Model argument-specific subprocess
+   CLI routes, custom Cargo binary paths, and implicit RAII/`Drop`; extend
+   Python receiver inference across control-flow joins and compound annotations
+   without guessing.
 2. **P0 — affected-test oracle.** Add dynamic-coverage comparison fixtures so
    precision/recall claims are reproducible rather than inferred from static
    tests alone.
