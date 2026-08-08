@@ -323,6 +323,7 @@ fn select_candidate<'a>(
     caller_owner: &str,
     qualifier: Option<&str>,
     receiver_type: Option<&str>,
+    qualifier_owner_fallback: bool,
 ) -> Option<&'a FunctionCandidate> {
     if let Some(qualifier) = qualifier {
         if matches!(qualifier_tail(qualifier), "self" | "Self" | "cls") {
@@ -332,6 +333,9 @@ fn select_candidate<'a>(
                     .filter(|candidate| candidate.owner == caller_owner),
             )
         } else {
+            if receiver_type.is_none() && !qualifier_owner_fallback {
+                return None;
+            }
             let receiver_hint = receiver_type.unwrap_or(qualifier);
             only_candidate(
                 candidates
@@ -377,6 +381,7 @@ fn factory_candidate<'a>(
             caller_owner,
             factory.qualifier.as_deref(),
             factory.receiver_type.as_deref(),
+            true,
         )
     }
 }
@@ -694,6 +699,7 @@ impl GraphBuilder {
                                 &caller_owner,
                                 call.qualifier.as_deref(),
                                 call.receiver_type.as_deref(),
+                                call.qualifier_owner_fallback,
                             )
                         }
                     }

@@ -1267,6 +1267,312 @@ def test_provenance():
     }
 
     #[test]
+    fn resolves_unambiguous_python_nullable_receiver_types() {
+        let models = r#"
+class SessionIdentity:
+    def inspect(self):
+        return True
+
+    def verify_selected_operation(self):
+        return True
+
+class DecoyIdentity:
+    def inspect(self):
+        return False
+"#;
+        let service = r#"
+import custom as typing
+import typing as typed
+from custom import Optional as CustomOptional, Union as CustomUnion
+from typing import TYPE_CHECKING, Optional, Optional as Maybe, Union, Union as Choice
+from models import DecoyIdentity, SessionIdentity, SessionIdentity as Session
+from custom import Optional as LateOptional
+from typing import Optional as EarlyOptional
+from models import SessionIdentity as OrderedIdentity
+
+def alias_before_shadow(ordered_identity: OrderedIdentity | None):
+    ordered_identity.inspect()
+
+from models import DecoyIdentity as OrderedIdentity
+
+def alias_after_shadow(ordered_identity: OrderedIdentity | None):
+    ordered_identity.inspect()
+
+def alias_before_import(future_identity: FutureIdentity | None):
+    future_identity.verify_selected_operation()
+
+from models import SessionIdentity as FutureIdentity
+
+def before_late_import(session_identity: LateOptional[SessionIdentity]):
+    session_identity.verify_selected_operation()
+
+def before_later_shadow(early_identity: EarlyOptional[SessionIdentity]):
+    early_identity.inspect()
+
+from typing import Optional as LateOptional
+from custom import Optional as EarlyOptional
+
+def after_late_import(late_identity: LateOptional[SessionIdentity]):
+    late_identity.inspect()
+
+if runtime_flag:
+    from custom import Optional as BranchOptional
+    import models as branch_models
+else:
+    from typing import Optional as BranchOptional
+    import custom as branch_models
+
+def branch_ambiguous(session_identity: BranchOptional[SessionIdentity]):
+    session_identity.verify_selected_operation()
+
+def branch_dotted():
+    branch_models.SessionIdentity.verify_selected_operation()
+
+if TYPE_CHECKING:
+    from typing import Optional as CheckedOptional
+
+from custom import TYPE_CHECKING as UntrustedChecking
+
+if UntrustedChecking:
+    from typing import Optional as UntrustedGuardOptional
+
+if runtime_flag:
+    from custom import Optional as ElifOptional
+elif other_flag:
+    from typing import Optional as ElifOptional
+else:
+    from typing import Optional as ElifOptional
+
+if runtime_flag:
+    from typing import Optional as NoElseOptional
+elif other_flag:
+    from typing import Optional as NoElseOptional
+
+def pep604(identity: SessionIdentity | None):
+    if identity is None:
+        return False
+    identity.inspect()
+    return identity.verify_selected_operation()
+
+def optional(identity: Optional[SessionIdentity]):
+    if identity is not None:
+        identity.inspect()
+
+def union(identity: Union[None, SessionIdentity]):
+    if identity is None:
+        return
+    identity.inspect()
+
+def forward(identity: "(SessionIdentity | None)"):
+    if identity is not None:
+        identity.inspect()
+
+def aliased_optional(identity: Maybe[SessionIdentity]):
+    if identity is not None:
+        identity.inspect()
+
+def aliased_union(identity: Choice[Session | SessionIdentity | "None"]):
+    if identity is not None:
+        identity.inspect()
+
+def qualified(identity: typed.Optional[SessionIdentity]):
+    if identity is not None:
+        identity.inspect()
+
+def type_checking_import(identity: CheckedOptional[SessionIdentity]):
+    if identity is not None:
+        identity.inspect()
+
+def untrusted_type_checking(session_identity: UntrustedGuardOptional[SessionIdentity]):
+    session_identity.verify_selected_operation()
+
+def elif_wrapper(session_identity: ElifOptional[SessionIdentity]):
+    session_identity.verify_selected_operation()
+
+def no_else_wrapper(session_identity: NoElseOptional[SessionIdentity]):
+    session_identity.verify_selected_operation()
+
+def function_local_import(identity: SessionIdentity):
+    from typing import Optional as LocalOptional
+    selected: LocalOptional[SessionIdentity] = identity
+    selected.inspect()
+
+def function_local_order(identity):
+    from custom import Optional as OrderedOptional
+    session_identity: OrderedOptional[SessionIdentity] = identity
+    session_identity.verify_selected_operation()
+    from typing import Optional as OrderedOptional
+    selected: OrderedOptional[SessionIdentity] = identity
+    selected.inspect()
+    OrderedOptional = CustomOptional
+    session_identity: OrderedOptional[SessionIdentity] = identity
+    session_identity.verify_selected_operation()
+
+def parameter_annotation_shadow(Optional, identity: Optional[SessionIdentity]):
+    identity.inspect()
+
+def parameter_body_shadow(Optional, identity):
+    session_identity: Optional[SessionIdentity] = identity
+    session_identity.verify_selected_operation()
+
+def shadowed_type_checking(TYPE_CHECKING, identity):
+    if TYPE_CHECKING:
+        from typing import Optional as ShadowedGuardOptional
+    session_identity: ShadowedGuardOptional[SessionIdentity] = identity
+    session_identity.verify_selected_operation()
+
+def ambiguous(identity: SessionIdentity | DecoyIdentity):
+    identity.inspect()
+
+def ambiguous_union(identity: Union[SessionIdentity, DecoyIdentity, None]):
+    identity.inspect()
+
+def ambiguous_named(session_identity: SessionIdentity | DecoyIdentity):
+    session_identity.inspect()
+
+def custom_optional(identity: CustomOptional[SessionIdentity]):
+    identity.inspect()
+
+def custom_named(session_identity: CustomOptional[SessionIdentity]):
+    session_identity.verify_selected_operation()
+
+def custom_union(identity: CustomUnion[SessionIdentity, None]):
+    identity.inspect()
+
+def shadowed_qualified(identity: typing.Optional[SessionIdentity]):
+    identity.inspect()
+
+def dotted_suffix(identity: SessionIdentity | None, box):
+    box.identity.inspect()
+
+def shadowed_import_root(typed):
+    typed.identity.verify_selected_operation()
+
+def test_provenance():
+    pep604(SessionIdentity())
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "models.py", models);
+        builder.load_file(&mut graph, "service.py", service);
+
+        let pep604 = NodeId::from_path("crate::service::pep604");
+        let optional = NodeId::from_path("crate::service::optional");
+        let union = NodeId::from_path("crate::service::union");
+        let forward = NodeId::from_path("crate::service::forward");
+        let aliased_optional = NodeId::from_path("crate::service::aliased_optional");
+        let aliased_union = NodeId::from_path("crate::service::aliased_union");
+        let qualified = NodeId::from_path("crate::service::qualified");
+        let type_checking_import = NodeId::from_path("crate::service::type_checking_import");
+        let untrusted_type_checking = NodeId::from_path("crate::service::untrusted_type_checking");
+        let elif_wrapper = NodeId::from_path("crate::service::elif_wrapper");
+        let no_else_wrapper = NodeId::from_path("crate::service::no_else_wrapper");
+        let shadowed_type_checking = NodeId::from_path("crate::service::shadowed_type_checking");
+        let function_local_import = NodeId::from_path("crate::service::function_local_import");
+        let function_local_order = NodeId::from_path("crate::service::function_local_order");
+        let before_late_import = NodeId::from_path("crate::service::before_late_import");
+        let before_later_shadow = NodeId::from_path("crate::service::before_later_shadow");
+        let after_late_import = NodeId::from_path("crate::service::after_late_import");
+        let alias_before_shadow = NodeId::from_path("crate::service::alias_before_shadow");
+        let alias_after_shadow = NodeId::from_path("crate::service::alias_after_shadow");
+        let alias_before_import = NodeId::from_path("crate::service::alias_before_import");
+        let branch_ambiguous = NodeId::from_path("crate::service::branch_ambiguous");
+        let branch_dotted = NodeId::from_path("crate::service::branch_dotted");
+        let parameter_annotation_shadow =
+            NodeId::from_path("crate::service::parameter_annotation_shadow");
+        let parameter_body_shadow = NodeId::from_path("crate::service::parameter_body_shadow");
+        let ambiguous = NodeId::from_path("crate::service::ambiguous");
+        let ambiguous_union = NodeId::from_path("crate::service::ambiguous_union");
+        let ambiguous_named = NodeId::from_path("crate::service::ambiguous_named");
+        let custom_optional = NodeId::from_path("crate::service::custom_optional");
+        let custom_named = NodeId::from_path("crate::service::custom_named");
+        let custom_union = NodeId::from_path("crate::service::custom_union");
+        let shadowed_qualified = NodeId::from_path("crate::service::shadowed_qualified");
+        let dotted_suffix = NodeId::from_path("crate::service::dotted_suffix");
+        let shadowed_import_root = NodeId::from_path("crate::service::shadowed_import_root");
+        let session_inspect = NodeId::from_path("crate::models::SessionIdentity::inspect");
+        let verify = NodeId::from_path("crate::models::SessionIdentity::verify_selected_operation");
+        let decoy_inspect = NodeId::from_path("crate::models::DecoyIdentity::inspect");
+        let provenance_test = NodeId::from_path("crate::service::test_provenance");
+
+        let calls = |graph: &SemanticGraph, caller| {
+            graph
+                .neighbors(caller, Some(EdgeKind::Calls))
+                .into_iter()
+                .map(|node| node.id)
+                .collect::<Vec<_>>()
+        };
+        let pep604_calls = calls(&graph, pep604);
+        assert!(pep604_calls.contains(&session_inspect));
+        assert!(pep604_calls.contains(&verify));
+        assert!(!pep604_calls.contains(&decoy_inspect));
+        assert!(calls(&graph, before_late_import).is_empty());
+        assert_eq!(calls(&graph, before_later_shadow), vec![session_inspect]);
+        assert_eq!(calls(&graph, after_late_import), vec![session_inspect]);
+        assert_eq!(calls(&graph, function_local_order), vec![session_inspect]);
+        assert_eq!(calls(&graph, alias_before_shadow), vec![session_inspect]);
+        assert_eq!(calls(&graph, alias_after_shadow), vec![decoy_inspect]);
+        assert!(calls(&graph, alias_before_import).is_empty());
+        for caller in [
+            optional,
+            union,
+            forward,
+            aliased_optional,
+            aliased_union,
+            qualified,
+            type_checking_import,
+            function_local_import,
+            parameter_annotation_shadow,
+        ] {
+            assert_eq!(calls(&graph, caller), vec![session_inspect]);
+        }
+        for (name, caller) in [
+            ("ambiguous", ambiguous),
+            ("ambiguous_union", ambiguous_union),
+            ("ambiguous_named", ambiguous_named),
+            ("custom_optional", custom_optional),
+            ("custom_named", custom_named),
+            ("custom_union", custom_union),
+            ("shadowed_qualified", shadowed_qualified),
+            ("dotted_suffix", dotted_suffix),
+            ("shadowed_import_root", shadowed_import_root),
+            ("parameter_body_shadow", parameter_body_shadow),
+            ("branch_ambiguous", branch_ambiguous),
+            ("branch_dotted", branch_dotted),
+            ("untrusted_type_checking", untrusted_type_checking),
+            ("elif_wrapper", elif_wrapper),
+            ("no_else_wrapper", no_else_wrapper),
+            ("shadowed_type_checking", shadowed_type_checking),
+        ] {
+            let unexpected = calls(&graph, caller);
+            assert!(
+                unexpected.is_empty(),
+                "ambiguous or untrusted receiver in {name} must remain unresolved: {unexpected:?}"
+            );
+        }
+        assert_eq!(graph.tests_for(session_inspect), vec![provenance_test]);
+
+        let without_pep604_call = service.replacen("    identity.inspect()\n", "", 1);
+        builder.update_file(&mut graph, "service.py", &without_pep604_call);
+        assert!(!calls(&graph, pep604).contains(&session_inspect));
+        assert!(
+            graph.tests_for(session_inspect).is_empty(),
+            "incremental refresh must remove the stale nullable receiver edge"
+        );
+
+        let untrusted_late = without_pep604_call.replacen(
+            "from typing import Optional as LateOptional",
+            "from custom import Optional as LateOptional",
+            1,
+        );
+        builder.update_file(&mut graph, "service.py", &untrusted_late);
+        assert!(
+            calls(&graph, after_late_import).is_empty(),
+            "incremental refresh must remove an edge when wrapper provenance becomes untrusted"
+        );
+    }
+
+    #[test]
     fn resolves_python_constructor_assignment_receiver_types() {
         let models = r#"
 class SessionIdentity:

@@ -34,6 +34,10 @@ pub struct CallTargetRef {
 enum ReceiverHint {
     Type(RustTypeHint),
     ReturnOf(CallTargetRef),
+    /// An explicit annotation exists but does not identify one safe owner.
+    /// Preserve that refusal so later name-based fallback cannot invent an
+    /// edge from the binding's spelling.
+    Unresolved,
 }
 
 #[derive(Debug, Clone)]
@@ -88,6 +92,7 @@ impl ReceiverHint {
         match self {
             Self::Type(name) => Self::Type(name.clone()),
             Self::ReturnOf(factory) => Self::ReturnOf(factory.bounded_clone()),
+            Self::Unresolved => Self::Unresolved,
         }
     }
 }
@@ -103,6 +108,11 @@ pub struct CallRef {
     pub qualifier: Option<String>,
     pub receiver_type: Option<String>,
     pub receiver_factory: Option<CallTargetRef>,
+    /// Whether an unresolved qualifier may be matched to an owner by name.
+    /// Python attribute chains rooted in an ordinary local disable this: the
+    /// tail of `box.identity` is not evidence that the receiver is an
+    /// `Identity` type.
+    pub qualifier_owner_fallback: bool,
     /// Cargo target from an exact subprocess launch via
     /// `env!("CARGO_BIN_EXE_<target>")`. Its callee is the binary's top-level
     /// Rust `main`, not an ordinary same-module function call.
@@ -653,24 +663,31 @@ fn extract_fields(
 }
 
 fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut BuildOutput) {
-    struct WalkContext<'src, 'aliases> {
+    struct WalkContext<'src> {
         source: &'src str,
         lang: Lang,
         module: &'src str,
-        python_aliases: &'aliases HashMap<String, String>,
+    }
+
+    #[derive(Clone, Copy)]
+    struct PythonResolutionScope<'scope> {
+        type_aliases: &'scope HashMap<String, String>,
+        nullable_wrappers: &'scope HashMap<String, PythonNullableWrapper>,
+        import_bindings: &'scope HashMap<String, String>,
     }
 
     fn resolved_receiver_hint(
         qualifier: Option<&str>,
         hints: &HashMap<String, ReceiverHint>,
-    ) -> (Option<String>, Option<CallTargetRef>) {
+    ) -> (Option<String>, Option<CallTargetRef>, bool) {
         match qualifier
-            .map(qualifier_binding)
+            .and_then(direct_qualifier_binding)
             .and_then(|binding| hints.get(binding))
         {
-            Some(ReceiverHint::Type(hint)) => (Some(hint.name.clone()), None),
-            Some(ReceiverHint::ReturnOf(factory)) => (None, Some(factory.bounded_clone())),
-            None => (None, None),
+            Some(ReceiverHint::Type(hint)) => (Some(hint.name.clone()), None, true),
+            Some(ReceiverHint::ReturnOf(factory)) => (None, Some(factory.bounded_clone()), true),
+            Some(ReceiverHint::Unresolved) => (None, None, false),
+            None => (None, None, true),
         }
     }
 
@@ -679,22 +696,30 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
     // match the type-scoped ids emitted by `collect_defs`.
     fn walk<'src>(
         node: TsNode,
-        context: &WalkContext<'src, '_>,
+        context: &WalkContext<'src>,
         scope: (Option<&'src str>, Option<NodeId>),
         type_hints: &HashMap<String, ReceiverHint>,
+        python_scope: PythonResolutionScope<'_>,
         out: &mut BuildOutput,
     ) {
         let WalkContext {
             source,
             lang,
             module,
-            python_aliases,
         } = context;
+        let PythonResolutionScope {
+            type_aliases,
+            nullable_wrappers,
+            import_bindings,
+        } = python_scope;
         let lang = *lang;
         let (current_type, current_fn) = scope;
         let mut current = current_fn;
         let mut enclosing_type = current_type;
         let mut function_type_hints = None;
+        let mut function_type_aliases = None;
+        let mut function_nullable_wrappers = None;
+        let mut function_import_bindings = None;
 
         if matches!(lang, Lang::Python) && node.kind() == "class_definition" {
             if let Some(name_node) = node.child_by_field_name("name") {
@@ -721,13 +746,34 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 };
                 let caller = NodeId::from_path(&path);
                 current = Some(caller);
-                function_type_hints = match lang {
-                    Lang::Rust => Some(rust_function_type_hints(node, source)),
-                    Lang::Python => Some(python_function_type_hints(node, source, python_aliases)),
-                };
+                match lang {
+                    Lang::Rust => {
+                        function_type_hints = Some(rust_function_type_hints(node, source));
+                    }
+                    Lang::Python => {
+                        let aliases = python_scoped_type_aliases(node, type_aliases, source);
+                        let wrappers =
+                            python_scoped_nullable_wrapper_aliases(node, nullable_wrappers, source);
+                        let imports = python_scoped_import_bindings(node, import_bindings, source);
+                        function_type_hints = Some(python_function_type_hints(
+                            node,
+                            source,
+                            type_aliases,
+                            nullable_wrappers,
+                        ));
+                        function_type_aliases = Some(aliases);
+                        function_nullable_wrappers = Some(wrappers);
+                        function_import_bindings = Some(imports);
+                    }
+                }
             }
         }
         let active_type_hints = function_type_hints.as_ref().unwrap_or(type_hints);
+        let active_type_aliases = function_type_aliases.as_ref().unwrap_or(type_aliases);
+        let active_nullable_wrappers = function_nullable_wrappers
+            .as_ref()
+            .unwrap_or(nullable_wrappers);
+        let active_import_bindings = function_import_bindings.as_ref().unwrap_or(import_bindings);
         let scoped_type_hints = if matches!(lang, Lang::Rust) {
             match node.kind() {
                 "if_expression" | "while_expression" => {
@@ -754,8 +800,12 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             if let (Some(caller), Some((callee, qualifier))) =
                 (current, callee_target(node, source))
             {
-                let (receiver_type, receiver_factory) =
+                let (receiver_type, receiver_factory, hint_allows_fallback) =
                     resolved_receiver_hint(qualifier.as_deref(), active_type_hints);
+                let qualifier_owner_fallback = hint_allows_fallback
+                    && qualifier.as_deref().is_none_or(|qualifier| {
+                        python_qualifier_owner_fallback(lang, qualifier, active_import_bindings)
+                    });
                 // Emit unresolved; the project resolver picks the concrete callee.
                 out.calls.push(CallRef {
                     caller,
@@ -763,6 +813,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                     qualifier,
                     receiver_type,
                     receiver_factory,
+                    qualifier_owner_fallback,
                     process_entrypoint: None,
                 });
                 if let Some(target) = matches!(lang, Lang::Rust)
@@ -775,6 +826,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                         qualifier: None,
                         receiver_type: None,
                         receiver_factory: None,
+                        qualifier_owner_fallback: true,
                         process_entrypoint: Some(target),
                     });
                 }
@@ -792,7 +844,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 drop(children);
                 if let Some(tokens) = tokens {
                     for (callee, qualifier) in textual_call_refs(node_text(tokens, source)) {
-                        let (receiver_type, receiver_factory) =
+                        let (receiver_type, receiver_factory, hint_allows_fallback) =
                             resolved_receiver_hint(qualifier.as_deref(), active_type_hints);
                         out.calls.push(CallRef {
                             caller,
@@ -800,6 +852,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                             qualifier,
                             receiver_type,
                             receiver_factory,
+                            qualifier_owner_fallback: hint_allows_fallback,
                             process_entrypoint: None,
                         });
                     }
@@ -808,9 +861,35 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         }
 
         let mut following_type_hints = None;
+        let mut following_type_aliases = None;
+        let mut following_nullable_wrappers = None;
+        let mut following_import_bindings = None;
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             let sequential_type_hints = following_type_hints.as_ref().unwrap_or(active_type_hints);
+            let alternative_branch =
+                matches!(lang, Lang::Python) && python_is_alternative_branch(node, child);
+            let sequential_type_aliases = if alternative_branch {
+                active_type_aliases
+            } else {
+                following_type_aliases
+                    .as_ref()
+                    .unwrap_or(active_type_aliases)
+            };
+            let sequential_nullable_wrappers = if alternative_branch {
+                active_nullable_wrappers
+            } else {
+                following_nullable_wrappers
+                    .as_ref()
+                    .unwrap_or(active_nullable_wrappers)
+            };
+            let sequential_import_bindings = if alternative_branch {
+                active_import_bindings
+            } else {
+                following_import_bindings
+                    .as_ref()
+                    .unwrap_or(active_import_bindings)
+            };
             let child_type_hints = match (&scoped_type_hints, narrowed_scope) {
                 (Some(hints), _) if narrows_all_children => hints,
                 (Some(hints), Some(scope))
@@ -826,6 +905,11 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 context,
                 (enclosing_type, current),
                 child_type_hints,
+                PythonResolutionScope {
+                    type_aliases: sequential_type_aliases,
+                    nullable_wrappers: sequential_nullable_wrappers,
+                    import_bindings: sequential_import_bindings,
+                },
                 out,
             );
             let following = match lang {
@@ -839,7 +923,8 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 Lang::Python if node.kind() == "block" => python_assignment_type_hints(
                     child,
                     sequential_type_hints,
-                    python_aliases,
+                    sequential_type_aliases,
+                    sequential_nullable_wrappers,
                     source,
                 ),
                 Lang::Python => None,
@@ -847,59 +932,473 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             if let Some(hints) = following {
                 following_type_hints = Some(hints);
             }
+            if matches!(lang, Lang::Python) {
+                let mut aliases = sequential_type_aliases.clone();
+                update_python_type_aliases(child, source, &mut aliases);
+                following_type_aliases = Some(aliases);
+
+                let mut wrappers = sequential_nullable_wrappers.clone();
+                update_python_nullable_wrappers(child, source, &mut wrappers);
+                following_nullable_wrappers = Some(wrappers);
+
+                let mut imports = sequential_import_bindings.clone();
+                update_python_import_bindings(child, source, &mut imports);
+                following_import_bindings = Some(imports);
+            }
         }
     }
 
-    let python_aliases = if matches!(lang, Lang::Python) {
-        python_import_aliases(node, source)
-    } else {
-        HashMap::new()
-    };
+    let python_aliases = HashMap::new();
+    let python_nullable_wrappers = HashMap::new();
+    let python_import_bindings = HashMap::new();
     let context = WalkContext {
         source,
         lang,
         module,
-        python_aliases: &python_aliases,
     };
-    walk(node, &context, (None, None), &HashMap::new(), out);
+    walk(
+        node,
+        &context,
+        (None, None),
+        &HashMap::new(),
+        PythonResolutionScope {
+            type_aliases: &python_aliases,
+            nullable_wrappers: &python_nullable_wrappers,
+            import_bindings: &python_import_bindings,
+        },
+        out,
+    );
 }
 
-fn python_import_aliases(root: TsNode, source: &str) -> HashMap<String, String> {
-    let mut aliases = HashMap::new();
+fn python_if_branches(root: TsNode) -> Option<(Vec<TsNode>, bool)> {
+    if root.kind() != "if_statement" {
+        return None;
+    }
+    let consequence = root.child_by_field_name("consequence")?;
+    let mut branches = vec![consequence];
     let mut cursor = root.walk();
-    for statement in root.named_children(&mut cursor).filter(|statement| {
-        matches!(
-            statement.kind(),
-            "import_statement" | "import_from_statement"
-        )
-    }) {
-        let mut children = statement.walk();
-        for import in statement
-            .named_children(&mut children)
-            .filter(|child| child.kind() == "aliased_import")
-        {
-            let (Some(name), Some(alias)) = (
-                import.child_by_field_name("name"),
-                import.child_by_field_name("alias"),
-            ) else {
-                continue;
-            };
-            let target = node_text(name, source)
-                .rsplit('.')
-                .next()
-                .unwrap_or_default();
-            if !target.is_empty() {
-                aliases.insert(node_text(alias, source).to_string(), target.to_string());
+    branches.extend(root.children_by_field_name("alternative", &mut cursor));
+    let has_else = branches
+        .iter()
+        .skip(1)
+        .any(|branch| branch.kind() == "else_clause");
+    Some((branches, has_else))
+}
+
+fn python_is_alternative_branch(parent: TsNode, child: TsNode) -> bool {
+    if parent.kind() != "if_statement" {
+        return false;
+    }
+    let mut cursor = parent.walk();
+    let is_alternative = parent
+        .children_by_field_name("alternative", &mut cursor)
+        .any(|alternative| {
+            child.start_byte() == alternative.start_byte()
+                && child.end_byte() == alternative.end_byte()
+        });
+    is_alternative
+}
+
+fn python_is_type_checking_guard(
+    statement: TsNode,
+    source: &str,
+    wrappers: &HashMap<String, PythonNullableWrapper>,
+) -> bool {
+    statement
+        .child_by_field_name("condition")
+        .map(|condition| node_text(condition, source).trim())
+        .is_some_and(|binding| wrappers.get(binding) == Some(&PythonNullableWrapper::TypeChecking))
+}
+
+fn python_scoped_type_aliases(
+    function: TsNode,
+    inherited: &HashMap<String, String>,
+    source: &str,
+) -> HashMap<String, String> {
+    let mut aliases = inherited.clone();
+    if let Some(parameters) = function.child_by_field_name("parameters") {
+        let mut cursor = parameters.walk();
+        for parameter in parameters.named_children(&mut cursor) {
+            if let Some(name) = python_parameter_name(parameter) {
+                aliases.remove(node_text(name, source));
             }
         }
     }
     aliases
 }
 
+fn update_python_type_aliases(root: TsNode, source: &str, aliases: &mut HashMap<String, String>) {
+    if let Some((branches, has_else)) = python_if_branches(root) {
+        let mut branch_aliases = branches
+            .into_iter()
+            .map(|branch| {
+                let mut branch_aliases = aliases.clone();
+                update_python_type_aliases(branch, source, &mut branch_aliases);
+                branch_aliases
+            })
+            .collect::<Vec<_>>();
+        if !has_else {
+            branch_aliases.push(aliases.clone());
+        }
+        let mut joined = branch_aliases.remove(0);
+        joined.retain(|name, target| {
+            branch_aliases
+                .iter()
+                .all(|branch| branch.get(name) == Some(target))
+        });
+        *aliases = joined;
+        return;
+    }
+    match root.kind() {
+        "import_statement" | "import_from_statement" => {
+            let mut children = root.walk();
+            for import in root
+                .named_children(&mut children)
+                .filter(|child| child.kind() == "aliased_import")
+            {
+                let (Some(name), Some(alias)) = (
+                    import.child_by_field_name("name"),
+                    import.child_by_field_name("alias"),
+                ) else {
+                    continue;
+                };
+                let target = node_text(name, source)
+                    .rsplit('.')
+                    .next()
+                    .unwrap_or_default();
+                if !target.is_empty() {
+                    aliases.insert(node_text(alias, source).to_string(), target.to_string());
+                }
+            }
+        }
+        "class_definition" | "function_definition" => {
+            if let Some(name) = root.child_by_field_name("name") {
+                aliases.remove(node_text(name, source));
+            }
+        }
+        "expression_statement" => {
+            if let Some(left) = root
+                .named_child(0)
+                .filter(|child| child.kind() == "assignment")
+                .and_then(|assignment| assignment.child_by_field_name("left"))
+                .filter(|left| left.kind() == "identifier")
+            {
+                aliases.remove(node_text(left, source));
+            }
+        }
+        _ => {
+            let mut cursor = root.walk();
+            for child in root.named_children(&mut cursor) {
+                update_python_type_aliases(child, source, aliases);
+            }
+        }
+    }
+}
+
+fn python_scoped_import_bindings(
+    function: TsNode,
+    inherited: &HashMap<String, String>,
+    source: &str,
+) -> HashMap<String, String> {
+    let mut bindings = inherited.clone();
+    if let Some(parameters) = function.child_by_field_name("parameters") {
+        let mut cursor = parameters.walk();
+        for parameter in parameters.named_children(&mut cursor) {
+            if let Some(name) = python_parameter_name(parameter) {
+                bindings.remove(node_text(name, source));
+            }
+        }
+    }
+    bindings
+}
+
+fn update_python_import_bindings(
+    root: TsNode,
+    source: &str,
+    bindings: &mut HashMap<String, String>,
+) {
+    if let Some((branches, has_else)) = python_if_branches(root) {
+        let mut branch_bindings = branches
+            .into_iter()
+            .map(|branch| {
+                let mut branch_bindings = bindings.clone();
+                update_python_import_bindings(branch, source, &mut branch_bindings);
+                branch_bindings
+            })
+            .collect::<Vec<_>>();
+        if !has_else {
+            branch_bindings.push(bindings.clone());
+        }
+        let mut joined = branch_bindings.remove(0);
+        joined.retain(|name, target| {
+            branch_bindings
+                .iter()
+                .all(|branch| branch.get(name) == Some(target))
+        });
+        *bindings = joined;
+        return;
+    }
+    match root.kind() {
+        "import_statement" | "import_from_statement" => {
+            let module = root.child_by_field_name("module_name");
+            let mut imports = root.walk();
+            for import in root.named_children(&mut imports) {
+                if module.is_some_and(|module| {
+                    import.start_byte() == module.start_byte()
+                        && import.end_byte() == module.end_byte()
+                }) {
+                    continue;
+                }
+                let imported = if import.kind() == "aliased_import" {
+                    import
+                        .child_by_field_name("name")
+                        .map(|name| node_text(name, source))
+                } else if import.kind() == "dotted_name" {
+                    Some(node_text(import, source))
+                } else {
+                    None
+                };
+                let binding = if import.kind() == "aliased_import" {
+                    import
+                        .child_by_field_name("alias")
+                        .map(|alias| node_text(alias, source))
+                } else {
+                    imported.map(|imported| {
+                        if root.kind() == "import_statement" {
+                            imported.split('.').next().unwrap_or(imported)
+                        } else {
+                            imported.rsplit('.').next().unwrap_or(imported)
+                        }
+                    })
+                };
+                if let (Some(imported), Some(binding)) = (imported, binding) {
+                    let module_prefix = module.map(|module| node_text(module, source));
+                    let target = module_prefix
+                        .map(|module| format!("{module}.{imported}"))
+                        .unwrap_or_else(|| imported.to_string());
+                    bindings.insert(binding.to_string(), target);
+                }
+            }
+        }
+        "class_definition" | "function_definition" => {
+            if let Some(name) = root.child_by_field_name("name") {
+                bindings.remove(node_text(name, source));
+            }
+        }
+        "expression_statement" => {
+            if let Some(left) = root
+                .named_child(0)
+                .filter(|child| child.kind() == "assignment")
+                .and_then(|assignment| assignment.child_by_field_name("left"))
+                .filter(|left| left.kind() == "identifier")
+            {
+                bindings.remove(node_text(left, source));
+            }
+        }
+        _ => {
+            let mut cursor = root.walk();
+            for child in root.named_children(&mut cursor) {
+                update_python_import_bindings(child, source, bindings);
+            }
+        }
+    }
+}
+
+fn python_qualifier_owner_fallback(
+    lang: Lang,
+    qualifier: &str,
+    import_bindings: &HashMap<String, String>,
+) -> bool {
+    if !matches!(lang, Lang::Python) || !qualifier.contains('.') {
+        return true;
+    }
+    let qualifier = qualifier.trim();
+    let root = qualifier.split('.').next().unwrap_or(qualifier);
+    let tail = qualifier.rsplit('.').next().unwrap_or(qualifier);
+    import_bindings.contains_key(root)
+        && (qualifier == root || tail.starts_with(char::is_uppercase))
+}
+
+fn python_scoped_nullable_wrapper_aliases(
+    function: TsNode,
+    inherited: &HashMap<String, PythonNullableWrapper>,
+    source: &str,
+) -> HashMap<String, PythonNullableWrapper> {
+    let mut wrappers = inherited.clone();
+    if let Some(parameters) = function.child_by_field_name("parameters") {
+        let mut cursor = parameters.walk();
+        for parameter in parameters.named_children(&mut cursor) {
+            if let Some(name) = python_parameter_name(parameter) {
+                remove_python_wrapper_binding(&mut wrappers, node_text(name, source));
+            }
+        }
+    }
+    wrappers
+}
+
+fn python_parameter_name(parameter: TsNode) -> Option<TsNode> {
+    if parameter.kind() == "identifier" {
+        return Some(parameter);
+    }
+    parameter.child_by_field_name("name").or_else(|| {
+        let mut children = parameter.walk();
+        let name = parameter
+            .named_children(&mut children)
+            .find(|child| child.kind() == "identifier");
+        name
+    })
+}
+
+fn update_python_nullable_wrappers(
+    root: TsNode,
+    source: &str,
+    wrappers: &mut HashMap<String, PythonNullableWrapper>,
+) {
+    if let Some((branches, has_else)) = python_if_branches(root) {
+        if python_is_type_checking_guard(root, source, wrappers) {
+            update_python_nullable_wrappers(branches[0], source, wrappers);
+            return;
+        }
+        let mut branch_wrappers = branches
+            .into_iter()
+            .map(|branch| {
+                let mut branch_wrappers = wrappers.clone();
+                update_python_nullable_wrappers(branch, source, &mut branch_wrappers);
+                branch_wrappers
+            })
+            .collect::<Vec<_>>();
+        if !has_else {
+            branch_wrappers.push(wrappers.clone());
+        }
+        let mut joined = branch_wrappers.remove(0);
+        joined.retain(|name, wrapper| {
+            branch_wrappers
+                .iter()
+                .all(|branch| branch.get(name) == Some(wrapper))
+        });
+        *wrappers = joined;
+        return;
+    }
+    match root.kind() {
+        "import_from_statement" => {
+            let Some(module) = root.child_by_field_name("module_name") else {
+                return;
+            };
+            let trusted_module =
+                matches!(node_text(module, source), "typing" | "typing_extensions");
+            let mut imports = root.walk();
+            for import in root.named_children(&mut imports) {
+                if import.start_byte() == module.start_byte()
+                    && import.end_byte() == module.end_byte()
+                {
+                    continue;
+                }
+                let (imported, binding) = if import.kind() == "aliased_import" {
+                    let (Some(name), Some(alias)) = (
+                        import.child_by_field_name("name"),
+                        import.child_by_field_name("alias"),
+                    ) else {
+                        continue;
+                    };
+                    (node_text(name, source), node_text(alias, source))
+                } else if import.kind() == "dotted_name" {
+                    let imported = node_text(import, source);
+                    (imported, imported.rsplit('.').next().unwrap_or(imported))
+                } else {
+                    continue;
+                };
+                remove_python_wrapper_binding(wrappers, binding);
+                if trusted_module {
+                    insert_python_nullable_wrapper(wrappers, binding, imported);
+                }
+            }
+        }
+        "import_statement" => {
+            let mut imports = root.walk();
+            for import in root.named_children(&mut imports) {
+                let (imported, binding) = if import.kind() == "aliased_import" {
+                    let (Some(name), Some(alias)) = (
+                        import.child_by_field_name("name"),
+                        import.child_by_field_name("alias"),
+                    ) else {
+                        continue;
+                    };
+                    (node_text(name, source), node_text(alias, source))
+                } else if import.kind() == "dotted_name" {
+                    let imported = node_text(import, source);
+                    (imported, imported.split('.').next().unwrap_or(imported))
+                } else {
+                    continue;
+                };
+                remove_python_wrapper_binding(wrappers, binding);
+                if matches!(imported, "typing" | "typing_extensions") {
+                    wrappers.insert(
+                        format!("{binding}.Optional"),
+                        PythonNullableWrapper::Optional,
+                    );
+                    wrappers.insert(format!("{binding}.Union"), PythonNullableWrapper::Union);
+                    wrappers.insert(
+                        format!("{binding}.TYPE_CHECKING"),
+                        PythonNullableWrapper::TypeChecking,
+                    );
+                }
+            }
+        }
+        "class_definition" | "function_definition" => {
+            if let Some(name) = root.child_by_field_name("name") {
+                remove_python_wrapper_binding(wrappers, node_text(name, source));
+            }
+        }
+        "expression_statement" => {
+            if let Some(left) = root
+                .named_child(0)
+                .filter(|child| child.kind() == "assignment")
+                .and_then(|assignment| assignment.child_by_field_name("left"))
+                .filter(|left| left.kind() == "identifier")
+            {
+                remove_python_wrapper_binding(wrappers, node_text(left, source));
+            }
+        }
+        _ => {
+            let mut cursor = root.walk();
+            for child in root.named_children(&mut cursor) {
+                update_python_nullable_wrappers(child, source, wrappers);
+            }
+        }
+    }
+}
+
+fn insert_python_nullable_wrapper(
+    wrappers: &mut HashMap<String, PythonNullableWrapper>,
+    binding: &str,
+    imported: &str,
+) {
+    let wrapper = match imported.rsplit('.').next().unwrap_or(imported) {
+        "Optional" => PythonNullableWrapper::Optional,
+        "Union" => PythonNullableWrapper::Union,
+        "TYPE_CHECKING" => PythonNullableWrapper::TypeChecking,
+        _ => return,
+    };
+    wrappers.insert(binding.to_string(), wrapper);
+}
+
+fn remove_python_wrapper_binding(
+    wrappers: &mut HashMap<String, PythonNullableWrapper>,
+    binding: &str,
+) {
+    wrappers.retain(|name, _| {
+        name != binding
+            && name
+                .strip_prefix(binding)
+                .is_none_or(|suffix| !suffix.starts_with('.'))
+    });
+}
+
 fn python_function_type_hints(
     function: TsNode,
     source: &str,
     aliases: &HashMap<String, String>,
+    nullable_wrappers: &HashMap<String, PythonNullableWrapper>,
 ) -> HashMap<String, ReceiverHint> {
     let mut hints = HashMap::new();
     let Some(parameters) = function.child_by_field_name("parameters") else {
@@ -916,29 +1415,40 @@ fn python_function_type_hints(
         let Some(type_node) = parameter.child_by_field_name("type") else {
             continue;
         };
-        let name_node = parameter.child_by_field_name("name").or_else(|| {
-            let mut children = parameter.walk();
-            let name = parameter
-                .named_children(&mut children)
-                .find(|child| child.kind() == "identifier");
-            name
-        });
-        let (Some(name_node), Some(type_name)) =
-            (name_node, python_direct_type_name(type_node, source))
-        else {
+        let name_node = python_parameter_name(parameter);
+        let Some(name_node) = name_node else {
             continue;
         };
-        let type_name = aliases.get(&type_name).unwrap_or(&type_name);
-        hints.insert(
-            node_text(name_node, source).to_string(),
-            ReceiverHint::Type(RustTypeHint::named(type_name)),
-        );
+        let hint = python_direct_type_name(type_node, source, aliases, nullable_wrappers)
+            .map(|type_name| ReceiverHint::Type(RustTypeHint::named(type_name)))
+            .unwrap_or(ReceiverHint::Unresolved);
+        hints.insert(node_text(name_node, source).to_string(), hint);
     }
     hints
 }
 
-fn python_direct_type_name(type_node: TsNode, source: &str) -> Option<String> {
-    let annotation = node_text(type_node, source).trim();
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PythonNullableWrapper {
+    Optional,
+    Union,
+    TypeChecking,
+}
+
+fn python_direct_type_name(
+    type_node: TsNode,
+    source: &str,
+    aliases: &HashMap<String, String>,
+    nullable_wrappers: &HashMap<String, PythonNullableWrapper>,
+) -> Option<String> {
+    python_unambiguous_type_name(node_text(type_node, source), aliases, nullable_wrappers)
+}
+
+fn python_unambiguous_type_name(
+    annotation: &str,
+    aliases: &HashMap<String, String>,
+    nullable_wrappers: &HashMap<String, PythonNullableWrapper>,
+) -> Option<String> {
+    let annotation = annotation.trim();
     let unquoted = annotation
         .strip_prefix('"')
         .and_then(|value| value.strip_suffix('"'))
@@ -948,7 +1458,77 @@ fn python_direct_type_name(type_node: TsNode, source: &str) -> Option<String> {
                 .and_then(|value| value.strip_suffix('\''))
         })
         .unwrap_or(annotation);
-    let mut segments = unquoted.split('.');
+    if unquoted != annotation {
+        return python_unambiguous_type_name(unquoted, aliases, nullable_wrappers);
+    }
+
+    let annotation = strip_python_outer_parentheses(unquoted);
+    let union_parts = python_top_level_parts(annotation, '|');
+    if union_parts.len() > 1 {
+        return python_union_type_name(&union_parts, aliases, nullable_wrappers);
+    }
+
+    if let Some(open) = python_top_level_subscript(annotation) {
+        let wrapper = annotation[..open].trim();
+        python_qualified_type_name(wrapper)?;
+        let arguments = annotation[open + 1..annotation.len() - 1].trim();
+        return match nullable_wrappers.get(wrapper) {
+            Some(PythonNullableWrapper::Optional) => {
+                python_unambiguous_type_name(arguments, aliases, nullable_wrappers)
+            }
+            Some(PythonNullableWrapper::Union) => python_union_type_name(
+                &python_top_level_parts(arguments, ','),
+                aliases,
+                nullable_wrappers,
+            ),
+            _ => None,
+        };
+    }
+
+    if python_annotation_is_none(annotation) {
+        return None;
+    }
+    let type_name = python_qualified_type_name(annotation)?;
+    Some(aliases.get(&type_name).cloned().unwrap_or(type_name))
+}
+
+fn python_union_type_name(
+    parts: &[&str],
+    aliases: &HashMap<String, String>,
+    nullable_wrappers: &HashMap<String, PythonNullableWrapper>,
+) -> Option<String> {
+    let mut selected = None;
+    for part in parts {
+        let part = strip_python_outer_parentheses(part.trim());
+        if python_annotation_is_none(part) {
+            continue;
+        }
+        let candidate = python_unambiguous_type_name(part, aliases, nullable_wrappers)?;
+        match selected.as_deref() {
+            None => selected = Some(candidate),
+            Some(existing) if existing == candidate => {}
+            Some(_) => return None,
+        }
+    }
+    selected
+}
+
+fn python_annotation_is_none(annotation: &str) -> bool {
+    let annotation = strip_python_outer_parentheses(annotation.trim());
+    let unquoted = annotation
+        .strip_prefix('"')
+        .and_then(|value| value.strip_suffix('"'))
+        .or_else(|| {
+            annotation
+                .strip_prefix('\'')
+                .and_then(|value| value.strip_suffix('\''))
+        })
+        .unwrap_or(annotation);
+    strip_python_outer_parentheses(unquoted.trim()) == "None"
+}
+
+fn python_qualified_type_name(annotation: &str) -> Option<String> {
+    let mut segments = annotation.split('.');
     let first = segments.next()?;
     if first.is_empty()
         || !first
@@ -971,10 +1551,106 @@ fn python_direct_type_name(type_node: TsNode, source: &str) -> Option<String> {
     Some(type_name.to_string())
 }
 
+fn python_top_level_parts(value: &str, delimiter: char) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let mut start = 0;
+    let mut depth = 0_u32;
+    let mut quote = None;
+    let mut escaped = false;
+    for (index, ch) in value.char_indices() {
+        if let Some(active_quote) = quote {
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == active_quote {
+                quote = None;
+            }
+            continue;
+        }
+        match ch {
+            '\'' | '"' => quote = Some(ch),
+            '(' | '[' | '{' => depth += 1,
+            ')' | ']' | '}' => depth = depth.saturating_sub(1),
+            _ if ch == delimiter && depth == 0 => {
+                parts.push(value[start..index].trim());
+                start = index + ch.len_utf8();
+            }
+            _ => {}
+        }
+    }
+    parts.push(value[start..].trim());
+    parts
+}
+
+fn python_top_level_subscript(value: &str) -> Option<usize> {
+    let mut quote = None;
+    let mut escaped = false;
+    for (index, ch) in value.char_indices() {
+        if let Some(active_quote) = quote {
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == active_quote {
+                quote = None;
+            }
+            continue;
+        }
+        match ch {
+            '\'' | '"' => quote = Some(ch),
+            '[' if value.ends_with(']') => return Some(index),
+            _ => {}
+        }
+    }
+    None
+}
+
+fn strip_python_outer_parentheses(mut value: &str) -> &str {
+    loop {
+        if !value.starts_with('(') || !value.ends_with(')') {
+            return value;
+        }
+        let mut depth = 0_u32;
+        let mut quote = None;
+        let mut escaped = false;
+        let mut closes_before_end = false;
+        for (index, ch) in value.char_indices() {
+            if let Some(active_quote) = quote {
+                if escaped {
+                    escaped = false;
+                } else if ch == '\\' {
+                    escaped = true;
+                } else if ch == active_quote {
+                    quote = None;
+                }
+                continue;
+            }
+            match ch {
+                '\'' | '"' => quote = Some(ch),
+                '(' => depth += 1,
+                ')' => {
+                    depth = depth.saturating_sub(1);
+                    if depth == 0 && index + ch.len_utf8() < value.len() {
+                        closes_before_end = true;
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+        if closes_before_end || depth != 0 {
+            return value;
+        }
+        value = value[1..value.len() - 1].trim();
+    }
+}
+
 fn python_assignment_type_hints(
     statement: TsNode,
     hints: &HashMap<String, ReceiverHint>,
     aliases: &HashMap<String, String>,
+    nullable_wrappers: &HashMap<String, PythonNullableWrapper>,
     source: &str,
 ) -> Option<HashMap<String, ReceiverHint>> {
     let assignment = if statement.kind() == "assignment" {
@@ -990,9 +1666,10 @@ fn python_assignment_type_hints(
         return None;
     }
     let binding = node_text(left, source).to_string();
-    let annotation = assignment
-        .child_by_field_name("type")
-        .and_then(|type_node| python_direct_type_name(type_node, source));
+    let annotation_node = assignment.child_by_field_name("type");
+    let annotation = annotation_node.and_then(|type_node| {
+        python_direct_type_name(type_node, source, aliases, nullable_wrappers)
+    });
     let constructor = assignment
         .child_by_field_name("right")
         .filter(|right| right.kind() == "call")
@@ -1001,7 +1678,9 @@ fn python_assignment_type_hints(
         .filter(|callee| callee.starts_with(char::is_uppercase));
 
     let mut updated = hints.clone();
-    if let Some(type_name) = annotation.or(constructor) {
+    if annotation_node.is_some() && annotation.is_none() {
+        updated.insert(binding, ReceiverHint::Unresolved);
+    } else if let Some(type_name) = annotation.or(constructor) {
         let type_name = aliases.get(&type_name).unwrap_or(&type_name);
         updated.insert(binding, ReceiverHint::Type(RustTypeHint::named(type_name)));
     } else {
@@ -1256,6 +1935,7 @@ fn infer_rust_receiver_hint(
                     Some(ReceiverHint::ReturnOf(factory)) => {
                         (None, Some(Box::new(factory.bounded_clone())))
                     }
+                    Some(ReceiverHint::Unresolved) => (None, None),
                     None => (None, None),
                 }
             }
@@ -1276,6 +1956,7 @@ fn infer_rust_receiver_hint(
     let (fallback_type, fallback_factory) = match fallback {
         Some(ReceiverHint::Type(hint)) => (Some(hint.name), None),
         Some(ReceiverHint::ReturnOf(factory)) => (None, Some(Box::new(factory))),
+        Some(ReceiverHint::Unresolved) => (None, None),
         None => (None, None),
     };
     Some(ReceiverHint::ReturnOf(CallTargetRef {
@@ -1384,6 +2065,15 @@ fn qualifier_binding(qualifier: &str) -> &str {
         .find(|part| !part.is_empty())
         .unwrap_or(qualifier)
         .trim()
+}
+
+fn direct_qualifier_binding(qualifier: &str) -> Option<&str> {
+    let qualifier = qualifier.trim();
+    (!qualifier.is_empty()
+        && qualifier
+            .chars()
+            .all(|character| character == '_' || character.is_ascii_alphanumeric()))
+    .then_some(qualifier)
 }
 
 /// Recognize an exact Cargo integration-test launch:

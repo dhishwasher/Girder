@@ -462,14 +462,14 @@ The checked
 [Core Trustworthiness Measurement](docs/core-trustworthiness-measurement.md)
 compares affected-test selection with isolated runtime execution. Its bounded
 baseline currently measures Rust precision/recall at `0.667/1.000` and Python
-at `1.000/0.500`; these fixture results expose real gaps and are not a
+at `1.000/1.000`; these fixture results expose real gaps and are not a
 representative-repository superiority claim.
 
 Implemented features:
 
 | Feature | What it does |
 |---|---|
-| Semantic graph | Nodes/edges, Rust alias/return/scoped-pattern/Cargo-entrypoint-aware and Python alias/annotation/constructor-aware cross-file call resolution, literal-aware macro calls, impact BFS, similarity edges, strict versioned `.aether` persistence and source reconciliation |
+| Semantic graph | Nodes/edges, Rust alias/return/scoped-pattern/Cargo-entrypoint-aware and Python alias/nullable-annotation/constructor-aware cross-file call resolution, literal-aware macro calls, impact BFS, similarity edges, strict versioned `.aether` persistence and source reconciliation |
 | Graph explorer | Retained force layout, pan/zoom, search and typed filters, neighborhood focus, LOD/culling, metadata inspection, source navigation |
 | Agent swarm | Planner + Coder + Tester + Documenter + Refactorer + Optimizer + SecurityAuditor + QueryAgent |
 | Intent-first planning | Planner reads the graph before planning; generates ordered `FeatureSpec` with Calls-edge wiring |

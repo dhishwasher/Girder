@@ -64,8 +64,8 @@ expected and actual data.
 | Fixture | TP | FP | FN | TN | Precision | Recall |
 |---|---:|---:|---:|---:|---:|---:|
 | Rust | 2 | 1 | 0 | 1 | 0.667 | 1.000 |
-| Python | 1 | 0 | 1 | 1 | 1.000 | 0.500 |
-| Combined | 3 | 1 | 1 | 2 | 0.750 | 0.750 |
+| Python | 2 | 0 | 0 | 1 | 1.000 | 1.000 |
+| Combined | 4 | 1 | 0 | 2 | 0.800 | 1.000 |
 
 Rust:
 
@@ -80,10 +80,15 @@ Python:
 
 - Runtime-executed changed code:
   `test_python_direct_selected`, `test_python_optional_selected`.
-- Bit Code selected only `test_python_direct_selected`.
-- The false negative is the documented compound-annotation limitation:
-  `SessionIdentity | None` does not currently provide a safe receiver owner,
-  even after the `None` guard.
+- Bit Code selected both runtime-proven tests and excluded the same-method
+  `DecoyIdentity` test.
+- Nullable annotations now provide a receiver owner only when exactly one
+  non-null type remains. PEP 604, parenthesized, and forward-string forms are
+  supported directly. `Optional[T]` and `Union[T, None]` are supported only
+  when the wrapper resolves through an import from `typing` or
+  `typing_extensions`, including aliases and imports nested under
+  `TYPE_CHECKING` or inside the function. Multi-owner and untrusted custom
+  unions deliberately remain unresolved rather than creating false edges.
 
 ## Bit Code dogfood assessment
 
@@ -93,6 +98,8 @@ Useful output:
   repository.
 - It preserved the direct Rust/Python receiver path and the conventional Cargo
   binary subprocess path.
+- It restored the dynamically proven nullable Python receiver path without
+  selecting the same-method decoy owner.
 - Its listed tests were machine-parseable and its impacted/skipped header counts
   were internally consistent on these fixtures.
 - On the milestone tree, query correctly reports `main` as the sole caller of
@@ -102,8 +109,6 @@ Useful output:
 Incorrect or incomplete output:
 
 - Rust subprocess reachability over-selected an argument-incompatible CLI test.
-- Python compound receiver inference omitted a test proven to execute the
-  changed method.
 - The suggested commands are selection output, not dynamic proof. The Python
   fixture is deliberately executed with standard-library `unittest`; the oracle
   does not assume the emitted `pytest -k` command establishes coverage.
@@ -111,10 +116,11 @@ Incorrect or incomplete output:
   checked oracle command executes `main`, fixture initialization, Bit Code
   invocation, dynamic test execution, metric calculation, rendering, and
   baseline comparison.
-- Self-impact reports 283 tests (`4` impacted plus `279` skipped). The
-  authoritative suites contain 264 Cargo cases, including the intentional
-  debugpy ignore, plus four oracle unit tests: 268 total. Bit Code therefore
-  overcounts this tree's runnable test inventory by 15.
+- Self-impact reports 285 tests (`80` impacted plus `205` skipped). The
+  authoritative suites contain 269 Cargo cases, including the intentional
+  debugpy ignore, plus four oracle unit tests: 273 total. Bit Code therefore
+  overcounts this tree's declared test inventory by 12 and substantially
+  over-selects through broad builder/application reachability.
 
 ## Limits and next defects
 
@@ -123,11 +129,9 @@ instrumentation, not a general coverage backend; it measures one mutation per
 language and does not establish behavior on real repositories. The measured
 defect order is:
 
-1. Restore Python compound-annotation/control-flow recall (observed recall
-   `0.500`) without introducing decoy-owner false edges.
-2. Improve CLI argument-route precision (observed Rust precision `0.667`)
+1. Improve CLI argument-route precision (observed Rust precision `0.667`)
    without losing subprocess-entrypoint recall.
-3. Extend the oracle to representative repositories and broader mutations,
+2. Extend the oracle to representative repositories and broader mutations,
    then measure implicit RAII/`Drop`, custom Cargo target paths, and shared
    infrastructure over-selection.
 

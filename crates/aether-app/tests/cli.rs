@@ -520,6 +520,112 @@ def test_provenance():
 }
 
 #[test]
+fn test_impact_follows_unambiguous_python_nullable_receivers() {
+    let repo = TempRepo::new("test-impact-python-nullable-receiver");
+    let models = |inspect_body: &str| {
+        format!(
+            r#"
+class SessionIdentity:
+    def inspect(self):
+        {inspect_body}
+
+class DecoyIdentity:
+    def inspect(self):
+        return False
+"#
+        )
+    };
+    repo.write("models.py", &models("return True"));
+    repo.write(
+        "service.py",
+        r#"
+from models import DecoyIdentity, SessionIdentity
+
+class Optional:
+    def __class_getitem__(cls, item):
+        return cls
+
+    def inspect(self):
+        return False
+
+class Box:
+    def __init__(self):
+        self.identity = DecoyIdentity()
+
+def apply(identity: SessionIdentity | None):
+    if identity is None:
+        return False
+    return identity.inspect()
+
+def ambiguous(identity: SessionIdentity | DecoyIdentity):
+    return identity.inspect()
+
+def ambiguous_named(session_identity: SessionIdentity | DecoyIdentity):
+    return session_identity.inspect()
+
+def custom(identity: Optional[SessionIdentity]):
+    return identity.inspect()
+
+def custom_named(session_identity: Optional[SessionIdentity]):
+    return session_identity.inspect()
+
+def dotted_suffix(identity: SessionIdentity | None, box):
+    return box.identity.inspect()
+
+def test_provenance():
+    apply(SessionIdentity())
+
+def test_decoy():
+    ambiguous(DecoyIdentity())
+
+def test_ambiguous_named():
+    ambiguous_named(DecoyIdentity())
+
+def test_custom_wrapper():
+    custom(Optional())
+
+def test_custom_named_wrapper():
+    custom_named(Optional())
+
+def test_dotted_suffix():
+    dotted_suffix(SessionIdentity(), Box())
+"#,
+    );
+    repo.commit_all("baseline");
+    repo.write("models.py", &models("return 'changed'"));
+
+    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+
+    assert!(
+        stdout.contains("crate::models::SessionIdentity::inspect"),
+        "{stdout}"
+    );
+    assert!(stdout.contains("Impacted tests (1)"), "{stdout}");
+    assert!(
+        stdout.contains("crate::service::test_provenance"),
+        "{stdout}"
+    );
+    assert!(!stdout.contains("crate::service::test_decoy"), "{stdout}");
+    assert!(
+        !stdout.contains("crate::service::test_ambiguous_named"),
+        "{stdout}"
+    );
+    assert!(
+        !stdout.contains("crate::service::test_custom_wrapper"),
+        "{stdout}"
+    );
+    assert!(
+        !stdout.contains("crate::service::test_custom_named_wrapper"),
+        "{stdout}"
+    );
+    assert!(
+        !stdout.contains("crate::service::test_dotted_suffix"),
+        "{stdout}"
+    );
+    assert!(stdout.contains("pytest -k test_provenance"), "{stdout}");
+}
+
+#[test]
 fn test_impact_follows_python_constructor_assignments() {
     let repo = TempRepo::new("test-impact-python-constructor-assignment");
     let models = |inspect_body: &str| {

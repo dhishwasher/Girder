@@ -14,7 +14,7 @@ reproducible repository fixture or benchmark proves otherwise.
 |---|---|---|---|
 | Indexing and code intelligence | JetBrains project analysis builds an index for navigation, refactoring, inspections, and completion. Cursor uses Merkle-tree change detection and cached semantic chunks for incremental codebase indexing. | Rust/Python tree-sitter projections, cross-file call resolution, and incremental `update_file` reconciliation are implemented. No representative-repository indexing latency or memory benchmark is recorded yet. | **P0 evidence gap:** benchmark cold indexing, one-file updates, peak memory, and stale-edge removal on increasingly large repositories. |
 | Navigation and refactoring | VS Code exposes language-service navigation, cross-file rename, and refactor preview; JetBrains provides project-wide dependency analysis and language-aware refactoring. | Stable graph ids, typed callers/callees, impact traversal, and validated rename projection work for the supported Rust/Python subset. | **P0 correctness:** measure resolved/unresolved call edges and false edges. Close common language-semantic gaps before adding refactor kinds. |
-| Test discovery and coverage | VS Code's testing API supports framework discovery, execution, debugging, and dynamic coverage when supplied by an extension. | Bit Code selects graph-reachable tests and can run configured Rust/Python commands. The checked function-execution oracle measures Rust precision/recall at `0.667/1.000` and Python at `1.000/0.500` on bounded fixtures. | **P0 correctness:** restore Python compound-annotation recall and improve CLI argument-route precision. Expand the oracle to representative repositories and implicit RAII/`Drop`. |
+| Test discovery and coverage | VS Code's testing API supports framework discovery, execution, debugging, and dynamic coverage when supplied by an extension. | Bit Code selects graph-reachable tests and can run configured Rust/Python commands. The checked function-execution oracle measures Rust precision/recall at `0.667/1.000` and Python at `1.000/1.000` on bounded fixtures. | **P0 correctness:** improve CLI argument-route precision. Expand the oracle to representative repositories and implicit RAII/`Drop`. |
 | Diagnostics and validation | JetBrains performs continuous file/project analysis; VS Code language services and tasks surface diagnostics while editing. | Candidate changes are conflict-checked and validated in a disposable project before a journaled commit. | **P1 responsiveness:** validation is strong at commit time, but edit-to-diagnostic latency and cancellation behavior are not benchmarked. |
 | Recovery | VS Code provides local file history and refactor preview. Mature IDEs preserve undo/local history across routine editing. | Bit Code uses baseline checks, durable backups, a transaction journal, startup recovery, and graph/source snapshot binding. | **Graph-native opportunity, still P0 to prove:** run a fault-injection matrix at every journal transition and verify all-old/all-new recovery. |
 | Agent autonomy | Cursor combines semantic codebase retrieval with agent editing. JetBrains and VS Code expose broad language tooling to AI integrations. | Bit Code agents plan from the graph and generated changes pass the same candidate validator and transaction boundary as manual graph edits. | **P1 evidence gap:** record patch acceptance, validation-failure detection, rollback success, and human rejection rates on real tasks. |
@@ -239,6 +239,31 @@ Acceptance evidence:
 - Custom `[[bin]] path` locations and dynamically constructed executable paths
   remain unresolved because Cargo manifest target metadata is not indexed.
 
+### Python nullable receiver resolution
+
+Verified defect: a Python parameter annotated `SessionIdentity | None` did not
+provide a receiver hint, so the checked oracle omitted a test dynamically proven
+to execute `SessionIdentity::selected_operation`.
+
+Acceptance evidence:
+
+- PEP 604, parenthesized, and forward-string annotations resolve only when
+  exactly one non-null receiver owner remains. `Optional[T]` and
+  `Union[T, None]` additionally require import provenance from `typing` or
+  `typing_extensions`; module, aliased, `TYPE_CHECKING`, and function-local
+  imports are covered.
+- Unions containing two different owners remain unresolved, preventing a
+  same-method `DecoyIdentity` edge. Custom wrappers named `Optional`/`Union`
+  and unrelated dotted receivers remain unresolved rather than borrowing a
+  local variable's type hint.
+- The focused graph regression covers exact owner selection, affected-test
+  propagation, and incremental stale-edge removal.
+- The end-to-end CLI regression selects exactly the true nullable test and
+  excludes the ambiguous-union decoy test.
+- The dynamic oracle improves Python precision/recall from `1.000/0.500` to
+  `1.000/1.000`; aggregate precision/recall improves from `0.750/0.750` to
+  `0.800/1.000` while Rust results remain unchanged.
+
 ## Core Trustworthiness Measurement milestone
 
 The checked oracle in
@@ -262,25 +287,34 @@ Baseline:
 | Fixture | TP | FP | FN | TN | Precision | Recall |
 |---|---:|---:|---:|---:|---:|---:|
 | Rust | 2 | 1 | 0 | 1 | 0.667 | 1.000 |
-| Python | 1 | 0 | 1 | 1 | 1.000 | 0.500 |
-| Combined | 3 | 1 | 1 | 2 | 0.750 | 0.750 |
+| Python | 2 | 0 | 0 | 1 | 1.000 | 1.000 |
+| Combined | 4 | 1 | 0 | 2 | 0.800 | 1.000 |
 
 The Rust false positive is `rust_cli_unrelated`: it launches the same Cargo
 binary as the true CLI test, but its concrete argument cannot reach the changed
-branch. The Python false negative is `test_python_optional_selected`: runtime
-coverage proves it calls the changed method, while the
-`SessionIdentity | None` annotation plus guard remains unresolved. The exact
-sets and counts are machine-checked against
+branch. The previous Python false negative, `test_python_optional_selected`, is
+now selected without selecting the same-method decoy test. The exact sets and
+counts are machine-checked against
 [`core-trustworthiness-baseline.json`](core-trustworthiness-baseline.json).
+
+### Concurrent analysis workflow correctness
+
+Observed defect: launching `bitcode review .` and `bitcode test-impact .`
+concurrently against the same working tree produced incomplete output from
+both commands after their graph-building preambles. Running the same commands
+sequentially completed normally. This indicates unsafe shared temporary-state
+coordination between read-only analysis workflows. Sequential execution is the
+current workaround, not a fix; concurrent isolation remains a **P0 correctness
+item** and must gain a deterministic regression before beta completion.
 
 ## Prioritized open gaps
 
-1. **P0 — measured Python recall defect.** Resolve compound annotations and
-   guarded control flow without guessing across multiple possible owners. The
-   current bounded fixture has one false negative and recall `0.500`.
-2. **P0 — measured CLI precision defect.** Model argument-specific subprocess
+1. **P0 — measured CLI precision defect.** Model argument-specific subprocess
    routes without losing Cargo-entrypoint recall. The current bounded fixture
    has one false positive and precision `0.667`.
+2. **P0 — concurrent analysis isolation.** Make simultaneous `review` and
+   `test-impact` runs complete independently without shared temporary-state
+   interference or truncated output.
 3. **P0 — unmeasured call semantics.** Measure and then model custom Cargo
    binary paths and implicit RAII/`Drop` execution.
 4. **P0 — oracle breadth.** Extend dynamic comparison to broader mutations and
