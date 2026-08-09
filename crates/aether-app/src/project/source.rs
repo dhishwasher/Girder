@@ -242,10 +242,13 @@ pub(crate) fn build_from_dir_with_config(
     let mut builder = GraphBuilder::new();
     let sources = collect_sources_with_config(root, config)?;
     for (absolute, relative) in &sources {
-        match std::fs::read_to_string(absolute) {
-            Ok(text) => builder.load_file(&mut graph, relative, &text),
-            Err(error) => eprintln!("  ! skipped {relative}: {error}"),
-        }
+        let text = std::fs::read_to_string(absolute).map_err(|error| {
+            std::io::Error::new(
+                error.kind(),
+                format!("failed to read source {relative}: {error}"),
+            )
+        })?;
+        builder.load_file(&mut graph, relative, &text);
     }
     Ok((graph, builder, sources.len()))
 }
@@ -927,6 +930,27 @@ mod tests {
             .map(|node| node.id)
             .collect();
         assert!(calls.contains(&double));
+    }
+
+    #[test]
+    fn directory_build_rejects_invalid_utf8_instead_of_returning_a_partial_graph() {
+        let dir = TempDir::new("invalid-utf8");
+        std::fs::create_dir_all(dir.0.join("src")).unwrap();
+        std::fs::write(dir.0.join("src/lib.rs"), "fn readable() {}\n").unwrap();
+        std::fs::write(dir.0.join("src/invalid.rs"), b"fn invalid() {}\n\xff\n").unwrap();
+
+        let error = match build_from_dir(&dir.0) {
+            Ok(_) => panic!("invalid UTF-8 source unexpectedly produced a graph"),
+            Err(error) => error,
+        };
+
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+        assert!(
+            error
+                .to_string()
+                .contains("failed to read source src/invalid.rs"),
+            "{error}"
+        );
     }
 
     #[cfg(unix)]

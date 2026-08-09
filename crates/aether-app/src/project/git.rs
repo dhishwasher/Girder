@@ -1,38 +1,79 @@
 use crate::project::config::ProjectConfig;
-use crate::project::source::{collect_sources_with_config, is_configured_source_path};
+use crate::project::source::is_configured_source_path;
 use aether_builder::GraphBuilder;
 use aether_graph::{NodeId, NodeKind, SemanticGraph};
 use std::collections::{BTreeSet, HashSet};
+use std::io::{Error, ErrorKind};
 use std::path::Path;
+use std::process::Output;
 
-pub(crate) fn git_is_repo(root: &Path) -> bool {
-    std::process::Command::new("git")
+fn root_argument(root: &Path) -> std::io::Result<&str> {
+    root.to_str().ok_or_else(|| {
+        Error::new(
+            ErrorKind::InvalidInput,
+            format!("project path is not valid UTF-8: {}", root.display()),
+        )
+    })
+}
+
+fn git_output(root: &Path, args: &[&str]) -> std::io::Result<Output> {
+    let output = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root_argument(root)?)
+        .args(args)
+        .output()
+        .map_err(|error| Error::new(error.kind(), format!("failed to run git: {error}")))?;
+    if output.status.success() {
+        return Ok(output);
+    }
+    let rendered = args.join(" ");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    Err(Error::other(format!(
+        "git {rendered} failed with {}: {}",
+        output
+            .status
+            .code()
+            .map(|code| code.to_string())
+            .unwrap_or_else(|| "a signal".into()),
+        stderr.trim()
+    )))
+}
+
+fn git_text(root: &Path, args: &[&str]) -> std::io::Result<String> {
+    String::from_utf8(git_output(root, args)?.stdout).map_err(|error| {
+        Error::new(
+            ErrorKind::InvalidData,
+            format!("git {} returned non-UTF-8 output: {error}", args.join(" ")),
+        )
+    })
+}
+
+pub(crate) fn git_is_repo(root: &Path) -> std::io::Result<bool> {
+    let output = std::process::Command::new("git")
         .args([
             "-C",
-            root.to_str().unwrap_or("."),
+            root_argument(root)?,
             "rev-parse",
             "--is-inside-work-tree",
         ])
         .output()
-        .ok()
-        .filter(|o| o.status.success())
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim() == "true")
-        .unwrap_or(false)
+        .map_err(|error| Error::new(error.kind(), format!("failed to run git: {error}")))?;
+    if !output.status.success() {
+        return Ok(false);
+    }
+    let stdout = String::from_utf8(output.stdout).map_err(|error| {
+        Error::new(
+            ErrorKind::InvalidData,
+            format!("git rev-parse returned non-UTF-8 output: {error}"),
+        )
+    })?;
+    Ok(stdout.trim() == "true")
 }
 
-fn git_prefix(root: &Path) -> String {
-    std::process::Command::new("git")
-        .args([
-            "-C",
-            root.to_str().unwrap_or("."),
-            "rev-parse",
-            "--show-prefix",
-        ])
-        .output()
-        .ok()
-        .filter(|o| o.status.success())
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        .unwrap_or_default()
+fn git_prefix(root: &Path) -> std::io::Result<String> {
+    let output = git_text(root, &["rev-parse", "--show-prefix"])?;
+    let output = output.strip_suffix('\n').unwrap_or(&output);
+    Ok(output.strip_suffix('\r').unwrap_or(output).to_string())
 }
 
 fn strip_git_prefix(path: &str, prefix: &str) -> Option<String> {
@@ -43,67 +84,95 @@ fn strip_git_prefix(path: &str, prefix: &str) -> Option<String> {
     }
 }
 
-fn git_object_path(root: &Path, rel: &str) -> String {
-    format!("{}{}", git_prefix(root), rel)
+fn git_object_path(prefix: &str, rel: &str) -> String {
+    format!("{prefix}{rel}")
+}
+
+fn nul_delimited_paths(bytes: &[u8], command: &str) -> std::io::Result<Vec<String>> {
+    bytes
+        .split(|byte| *byte == 0)
+        .filter(|path| !path.is_empty())
+        .map(|path| {
+            std::str::from_utf8(path)
+                .map(str::to_owned)
+                .map_err(|error| {
+                    Error::new(
+                        ErrorKind::InvalidData,
+                        format!("{command} returned a non-UTF-8 path: {error}"),
+                    )
+                })
+        })
+        .collect()
+}
+
+fn resolve_git_commit(root: &Path, git_ref: &str) -> std::io::Result<String> {
+    let revision = format!("{git_ref}^{{commit}}");
+    let oid = git_text(
+        root,
+        &["rev-parse", "--verify", "--end-of-options", &revision],
+    )?;
+    let oid = oid.trim();
+    if oid.is_empty() {
+        return Err(Error::new(
+            ErrorKind::InvalidData,
+            format!("git resolved {git_ref:?} to an empty object id"),
+        ));
+    }
+    Ok(oid.to_string())
 }
 
 pub(crate) fn git_tracked_sources_at(
     root: &Path,
-    git_ref: &str,
+    commit_oid: &str,
     config: &ProjectConfig,
-) -> Vec<String> {
-    let prefix = git_prefix(root);
-    std::process::Command::new("git")
-        .args([
-            "-C",
-            root.to_str().unwrap_or("."),
+) -> std::io::Result<Vec<String>> {
+    let prefix = git_prefix(root)?;
+    let output = git_output(
+        root,
+        &[
             "ls-tree",
+            "--full-tree",
             "-r",
+            "-z",
             "--name-only",
-            git_ref,
-        ])
-        .output()
-        .ok()
-        .filter(|o| o.status.success())
-        .map(|o| {
-            String::from_utf8_lossy(&o.stdout)
-                .lines()
-                .filter_map(|line| strip_git_prefix(line, &prefix))
-                .filter(|rel| is_configured_source_path(config, rel).unwrap_or(false))
-                .collect()
-        })
-        .unwrap_or_default()
+            commit_oid,
+            "--",
+        ],
+    )?;
+    let mut sources = Vec::new();
+    for path in nul_delimited_paths(&output.stdout, "git ls-tree")? {
+        let Some(relative) = strip_git_prefix(&path, &prefix) else {
+            continue;
+        };
+        if is_configured_source_path(config, &relative)? {
+            sources.push(relative);
+        }
+    }
+    Ok(sources)
 }
+
 pub(crate) fn build_baseline_graph(root: &Path, git_ref: &str) -> std::io::Result<SemanticGraph> {
     let config = ProjectConfig::load(root)?;
-    let mut sources: BTreeSet<String> = collect_sources_with_config(root, &config)?
+    let commit_oid = resolve_git_commit(root, git_ref)?;
+    let sources: BTreeSet<String> = git_tracked_sources_at(root, &commit_oid, &config)?
         .into_iter()
-        .map(|(_, rel)| rel)
         .collect();
-    sources.extend(git_tracked_sources_at(root, git_ref, &config));
+    let prefix = git_prefix(root)?;
 
     let mut graph = SemanticGraph::new();
     let mut builder = GraphBuilder::new();
 
     for rel in &sources {
-        let object_path = git_object_path(root, rel);
-        let output = std::process::Command::new("git")
-            .args([
-                "-C",
-                root.to_str().unwrap_or("."),
-                "show",
-                &format!("{git_ref}:{object_path}"),
-            ])
-            .output();
-        match output {
-            Ok(o) if o.status.success() => {
-                if let Ok(text) = String::from_utf8(o.stdout) {
-                    builder.load_file(&mut graph, rel, &text);
-                }
-            }
-            // File didn't exist at that ref (new file) — skip silently.
-            _ => {}
-        }
+        let object_path = git_object_path(&prefix, rel);
+        let object = format!("{commit_oid}:{object_path}");
+        let output = git_output(root, &["show", &object])?;
+        let text = String::from_utf8(output.stdout).map_err(|error| {
+            Error::new(
+                ErrorKind::InvalidData,
+                format!("baseline source {rel} is not valid UTF-8: {error}"),
+            )
+        })?;
+        builder.load_file(&mut graph, rel, &text);
     }
     Ok(graph)
 }
@@ -115,30 +184,24 @@ pub(crate) fn build_baseline_graph(root: &Path, git_ref: &str) -> std::io::Resul
 ///
 pub(crate) fn git_changed_files(root: &Path) -> std::io::Result<Vec<String>> {
     let config = ProjectConfig::load(root)?;
-    let prefix = git_prefix(root);
-    let run = |extra_args: &[&str]| -> Vec<String> {
-        let mut cmd_args = vec!["-C", root.to_str().unwrap_or("."), "diff", "--name-only"];
+    let run = |extra_args: &[&str]| -> std::io::Result<Vec<String>> {
+        let mut cmd_args = vec!["diff", "--relative", "--name-only", "-z"];
         cmd_args.extend_from_slice(extra_args);
-        std::process::Command::new("git")
-            .args(&cmd_args)
-            .output()
-            .ok()
-            .filter(|o| o.status.success())
-            .map(|o| {
-                String::from_utf8_lossy(&o.stdout)
-                    .lines()
-                    .filter_map(|l| strip_git_prefix(l, &prefix))
-                    .filter(|l| is_configured_source_path(&config, l).unwrap_or(false))
-                    .collect()
-            })
-            .unwrap_or_default()
+        let output = git_output(root, &cmd_args)?;
+        let mut paths = Vec::new();
+        for relative in nul_delimited_paths(&output.stdout, "git diff")? {
+            if is_configured_source_path(&config, &relative)? {
+                paths.push(relative);
+            }
+        }
+        Ok(paths)
     };
     let mut seen = std::collections::HashSet::new();
     let mut out = Vec::new();
-    for f in run(&["--cached"])
+    for f in run(&["--cached"])?
         .into_iter()
-        .chain(run(&[]))
-        .chain(git_untracked_sources(root, &config))
+        .chain(run(&[])?)
+        .chain(git_untracked_sources(root, &config)?)
     {
         if seen.insert(f.clone()) {
             out.push(f);
@@ -147,27 +210,15 @@ pub(crate) fn git_changed_files(root: &Path) -> std::io::Result<Vec<String>> {
     Ok(out)
 }
 
-fn git_untracked_sources(root: &Path, config: &ProjectConfig) -> Vec<String> {
-    let prefix = git_prefix(root);
-    std::process::Command::new("git")
-        .args([
-            "-C",
-            root.to_str().unwrap_or("."),
-            "ls-files",
-            "--others",
-            "--exclude-standard",
-        ])
-        .output()
-        .ok()
-        .filter(|o| o.status.success())
-        .map(|o| {
-            String::from_utf8_lossy(&o.stdout)
-                .lines()
-                .filter_map(|l| strip_git_prefix(l, &prefix))
-                .filter(|l| is_configured_source_path(config, l).unwrap_or(false))
-                .collect()
-        })
-        .unwrap_or_default()
+fn git_untracked_sources(root: &Path, config: &ProjectConfig) -> std::io::Result<Vec<String>> {
+    let output = git_output(root, &["ls-files", "-z", "--others", "--exclude-standard"])?;
+    let mut sources = Vec::new();
+    for relative in nul_delimited_paths(&output.stdout, "git ls-files")? {
+        if is_configured_source_path(config, &relative)? {
+            sources.push(relative);
+        }
+    }
+    Ok(sources)
 }
 
 pub(crate) struct ChangedImpact {
@@ -180,7 +231,7 @@ pub(crate) fn semantic_changed_impact(
     root: &Path,
     current: &SemanticGraph,
 ) -> std::io::Result<Option<ChangedImpact>> {
-    if !git_is_repo(root) {
+    if !git_is_repo(root)? {
         return Ok(None);
     }
 

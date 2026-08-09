@@ -297,6 +297,46 @@ now selected without selecting the same-method decoy test. The exact sets and
 counts are machine-checked against
 [`core-trustworthiness-baseline.json`](core-trustworthiness-baseline.json).
 
+### Failure-safe analysis and oracle inputs
+
+Verified defects closed in the failure-safe benchmark foundation:
+
+- `review --since DOES_NOT_EXIST` previously succeeded against an empty
+  baseline and reported the whole current graph as added. Baseline refs now
+  resolve once to an immutable commit OID; `rev-parse`, NUL-delimited
+  `ls-tree`, and every baseline `show` failure propagate. The baseline graph is
+  built only from that commit's tracked sources, so a moving symbolic ref
+  cannot mix revisions and current-only files are not silently probed at the
+  old revision.
+- Nested repository roots previously corrupted Git paths: path-valued prefix
+  output was whitespace-trimmed, and commands whose output was already relative
+  to the project root had that prefix removed a second time. Baseline listing
+  now requests full-tree paths before one exact prefix removal, while diff and
+  untracked outputs remain project-relative. A leading-space nested-root
+  regression prevents silent empty baselines.
+- An explicit misspelled `test-impact` node previously printed a warning and
+  exited successfully, including when mixed with a valid node. Explicit mode
+  now rejects the entire request if any path is unknown.
+- Automatic `test-impact` outside Git previously blurred “not a repository”
+  with “no changes.” It now exits with an intentional diagnostic requiring
+  explicit node paths, which remain supported without Git.
+- Source decoding/read errors previously produced a successful partial graph,
+  and `analyze` could replace a complete durable graph with it. All graph-build
+  callers now receive the read error. The CLI regression proves `analyze`,
+  `review`, and `test-impact` fail and preserve the existing graph after a
+  source becomes invalid UTF-8.
+- The dynamic oracle previously reduced full test paths to leaf names, reused
+  one mutated checkout for every test, accepted a Cargo filter that ran zero
+  tests, and allowed unbounded child runtime and output. It now independently
+  enumerates exact framework ids, explicitly maps full graph ids, checks the
+  complete inventory and one-test execution, uses a fresh checkout per dynamic
+  test, kills POSIX process groups on timeout/output overflow, and executes a
+  private hash-verified Bit Code binary copy.
+
+These changes fail closed but do not yet bound Git subprocess runtime/output or
+the product's configured `test-impact --run` child. Those remain required
+failure-corpus gates before beta.
+
 ### Concurrent analysis workflow correctness
 
 Observed defect: launching `bitcode review .` and `bitcode test-impact .`
@@ -325,9 +365,12 @@ item** and must gain a deterministic regression before beta completion.
 6. **P0 — representative repositories.** Record cold/incremental indexing,
    call-edge accuracy, impact latency, test-selection accuracy, and memory on at
    least three real Rust/Python repositories without manual repair.
-7. **P1 — interactive latency.** Measure edit-to-graph, edit-to-diagnostic, and
+7. **P0 — subprocess bounds.** Apply process-tree timeout and output limits to
+   Git operations and configured `test-impact --run` commands, with explicit
+   timeout classification and no surviving descendants.
+8. **P1 — interactive latency.** Measure edit-to-graph, edit-to-diagnostic, and
    navigation latency under sustained edits.
-8. **P1 — agent outcome metrics.** Track accepted patches, validation catches,
+9. **P1 — agent outcome metrics.** Track accepted patches, validation catches,
    rejected patches, rollback success, and time-to-safe-commit.
 
 Bit Code's potential advantage is not generic semantic search. It is one local,

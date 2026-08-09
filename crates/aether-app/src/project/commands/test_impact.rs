@@ -1,7 +1,7 @@
 use crate::project::config::{ConfiguredCommand, ProjectConfig};
-use crate::project::git::{git_changed_files, semantic_changed_impact};
+use crate::project::git::semantic_changed_impact;
 use crate::project::source::build_from_dir_with_config;
-use aether_graph::{NodeId, NodeKind};
+use aether_graph::NodeId;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
@@ -43,41 +43,27 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
             baseline_test_paths = impact.baseline_test_paths;
             impact.origin_ids
         } else {
-            let changed = git_changed_files(&root)?;
-            if changed.is_empty() {
-                println!(
-                    "  no changed files detected (not a git repo, or nothing changed vs HEAD)"
-                );
-                return Ok(());
-            }
-            println!("  changed files: {}", changed.join(", "));
-            graph
-                .nodes()
-                .filter(|n| {
-                    n.kind == NodeKind::Function
-                        && n.file
-                            .as_deref()
-                            .map(|f| {
-                                changed
-                                    .iter()
-                                    .any(|c| f == c.as_str() || f.ends_with(c.as_str()))
-                            })
-                            .unwrap_or(false)
-                })
-                .map(|n| n.id)
-                .collect()
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "automatic test-impact requires a Git repository; pass explicit node paths instead",
+            ));
         }
     } else {
-        explicit
-            .iter()
-            .filter_map(|p| match graph.find_by_path(p) {
-                Some(n) => Some(n.id),
-                None => {
-                    eprintln!("  ! node not found: {p}");
-                    None
-                }
-            })
-            .collect()
+        let mut resolved = Vec::new();
+        let mut missing = Vec::new();
+        for path in explicit {
+            match graph.find_by_path(path) {
+                Some(node) => resolved.push(node.id),
+                None => missing.push(path),
+            }
+        }
+        if !missing.is_empty() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("unknown explicit node path(s): {}", missing.join(", ")),
+            ));
+        }
+        resolved
     };
 
     if origin_ids.is_empty() && baseline_test_paths.is_empty() {

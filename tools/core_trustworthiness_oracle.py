@@ -4,13 +4,16 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
@@ -22,12 +25,17 @@ DEFAULT_BASELINE = REPO_ROOT / "docs" / "core-trustworthiness-baseline.json"
 IMPACTED_HEADER = re.compile(r"^Impacted tests \((\d+)\):$")
 IMPACTED_TEST = re.compile(r"^\s*✓\s+(.+?)\s+\((rust|python)\)\s*$")
 SKIPPED_TESTS = re.compile(r"^\s*\((\d+) other test\(s\) not in impact set")
+DEFAULT_COMMAND_TIMEOUT_SECONDS = 120.0
+DEFAULT_MAX_OUTPUT_BYTES = 1024 * 1024
 
 
 @dataclass(frozen=True)
 class Fixture:
     name: str
     tests: tuple[str, ...]
+    graph_paths: Mapping[str, str]
+    framework_ids: Mapping[str, str]
+    discovery_command: tuple[str, ...]
     dynamic_commands: Mapping[str, tuple[str, ...]]
 
 
@@ -39,6 +47,35 @@ FIXTURES = (
             "rust_cli_selected",
             "rust_cli_unrelated",
             "rust_unrelated",
+        ),
+        graph_paths={
+            test: f"crate::tests::impact::{test}"
+            for test in (
+                "rust_direct_selected",
+                "rust_cli_selected",
+                "rust_cli_unrelated",
+                "rust_unrelated",
+            )
+        },
+        framework_ids={
+            test: test
+            for test in (
+                "rust_direct_selected",
+                "rust_cli_selected",
+                "rust_cli_unrelated",
+                "rust_unrelated",
+            )
+        },
+        discovery_command=(
+            "cargo",
+            "test",
+            "--quiet",
+            "--test",
+            "impact",
+            "--",
+            "--list",
+            "--format",
+            "terse",
         ),
         dynamic_commands={
             test: (
@@ -67,6 +104,36 @@ FIXTURES = (
             "test_python_optional_selected",
             "test_python_decoy",
         ),
+        graph_paths={
+            test: f"crate::tests::test_service::OracleTests::{test}"
+            for test in (
+                "test_python_direct_selected",
+                "test_python_optional_selected",
+                "test_python_decoy",
+            )
+        },
+        framework_ids={
+            test: f"tests.test_service.OracleTests.{test}"
+            for test in (
+                "test_python_direct_selected",
+                "test_python_optional_selected",
+                "test_python_decoy",
+            )
+        },
+        discovery_command=(
+            sys.executable,
+            "-c",
+            """import unittest
+def flatten(suite):
+    for item in suite:
+        if isinstance(item, unittest.TestSuite):
+            yield from flatten(item)
+        else:
+            yield item
+suite = unittest.defaultTestLoader.discover("tests", top_level_dir=".")
+print("\\n".join(test.id() for test in flatten(suite)))
+""",
+        ),
         dynamic_commands={
             test: (
                 sys.executable,
@@ -90,18 +157,59 @@ def run(
     *,
     cwd: Path,
     env: Mapping[str, str] | None = None,
+    timeout_seconds: float = DEFAULT_COMMAND_TIMEOUT_SECONDS,
+    max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES,
 ) -> subprocess.CompletedProcess[str]:
-    completed = subprocess.run(
-        command,
-        cwd=cwd,
-        env=env,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
+    if timeout_seconds <= 0:
+        raise ValueError("timeout_seconds must be positive")
+    if max_output_bytes <= 0:
+        raise ValueError("max_output_bytes must be positive")
+    rendered = " ".join(command)
+    with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
+        process = subprocess.Popen(
+            command,
+            cwd=cwd,
+            env=env,
+            stdout=stdout_file,
+            stderr=stderr_file,
+            start_new_session=(os.name == "posix"),
+        )
+        deadline = time.monotonic() + timeout_seconds
+        failure: str | None = None
+        while process.poll() is None:
+            output_bytes = (
+                os.fstat(stdout_file.fileno()).st_size
+                + os.fstat(stderr_file.fileno()).st_size
+            )
+            if output_bytes > max_output_bytes:
+                failure = (
+                    f"command output exceeded {max_output_bytes} bytes: {rendered}"
+                )
+                break
+            if time.monotonic() >= deadline:
+                failure = f"command timed out after {timeout_seconds:g}s: {rendered}"
+                break
+            time.sleep(0.02)
+
+        if failure is not None:
+            terminate_process_tree(process)
+        else:
+            process.wait()
+            terminate_descendants(process.pid)
+
+        stdout_file.seek(0)
+        stderr_file.seek(0)
+        stdout_bytes = stdout_file.read(max_output_bytes + 1)
+        stderr_bytes = stderr_file.read(max_output_bytes + 1)
+        if len(stdout_bytes) + len(stderr_bytes) > max_output_bytes:
+            failure = f"command output exceeded {max_output_bytes} bytes: {rendered}"
+        stdout = stdout_bytes.decode("utf-8", errors="replace")
+        stderr = stderr_bytes.decode("utf-8", errors="replace")
+
+    if failure is not None:
+        raise RuntimeError(f"{failure}\nstdout:\n{stdout}\nstderr:\n{stderr}")
+    completed = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
     if completed.returncode != 0:
-        rendered = " ".join(command)
         raise RuntimeError(
             f"command failed ({completed.returncode}): {rendered}\n"
             f"stdout:\n{completed.stdout}\n"
@@ -110,18 +218,65 @@ def run(
     return completed
 
 
-def initialize_fixture(fixture: Fixture, work_root: Path) -> Path:
+def terminate_descendants(process_group: int) -> None:
+    if os.name != "posix":
+        return
+    try:
+        os.killpg(process_group, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+
+
+def terminate_process_tree(process: subprocess.Popen[bytes]) -> None:
+    if os.name == "posix":
+        terminate_descendants(process.pid)
+    elif process.poll() is None:
+        process.kill()
+    process.wait()
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def initialize_fixture(
+    fixture: Fixture,
+    project: Path,
+    *,
+    timeout_seconds: float,
+    max_output_bytes: int,
+) -> Path:
     source = FIXTURE_ROOT / fixture.name / "baseline"
     mutations = FIXTURE_ROOT / fixture.name / "mutations"
-    project = work_root / fixture.name
+    project.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(source, project)
     for template in sorted(project.rglob("*.txt")):
         template.rename(template.with_suffix(""))
-    run(("git", "init", "--quiet"), cwd=project)
-    run(("git", "config", "user.email", "oracle@bitcode.invalid"), cwd=project)
-    run(("git", "config", "user.name", "Bit Code Oracle"), cwd=project)
-    run(("git", "add", "."), cwd=project)
-    run(("git", "commit", "--quiet", "-m", "baseline"), cwd=project)
+    command_options = {
+        "timeout_seconds": timeout_seconds,
+        "max_output_bytes": max_output_bytes,
+    }
+    run(("git", "init", "--quiet"), cwd=project, **command_options)
+    run(
+        ("git", "config", "user.email", "oracle@bitcode.invalid"),
+        cwd=project,
+        **command_options,
+    )
+    run(
+        ("git", "config", "user.name", "Bit Code Oracle"),
+        cwd=project,
+        **command_options,
+    )
+    run(("git", "add", "."), cwd=project, **command_options)
+    run(
+        ("git", "commit", "--quiet", "-m", "baseline"),
+        cwd=project,
+        **command_options,
+    )
     for mutation in sorted(path for path in mutations.rglob("*") if path.is_file()):
         relative = mutation.relative_to(mutations)
         destination = project / (
@@ -140,7 +295,7 @@ def parse_bitcode_selection(output: str) -> tuple[set[str], int, int]:
         if match := IMPACTED_HEADER.match(line):
             reported_impacted = int(match.group(1))
         elif match := IMPACTED_TEST.match(line):
-            selected.add(match.group(1).rsplit("::", 1)[-1])
+            selected.add(match.group(1))
         elif match := SKIPPED_TESTS.match(line):
             reported_skipped = int(match.group(1))
     if reported_impacted != len(selected):
@@ -149,6 +304,38 @@ def parse_bitcode_selection(output: str) -> tuple[set[str], int, int]:
             f"header={reported_impacted}, listed={len(selected)}"
         )
     return selected, reported_impacted, reported_skipped
+
+
+def parse_framework_inventory(fixture_name: str, output: str) -> set[str]:
+    if fixture_name == "rust":
+        suffix = ": test"
+        return {
+            line[: -len(suffix)]
+            for line in output.splitlines()
+            if line.endswith(suffix)
+        }
+    if fixture_name == "python":
+        return {line.strip() for line in output.splitlines() if line.strip()}
+    raise ValueError(f"unsupported fixture language: {fixture_name}")
+
+
+def assert_isolated_test_executed(
+    fixture_name: str,
+    test: str,
+    completed: subprocess.CompletedProcess[str],
+) -> None:
+    combined = f"{completed.stdout}\n{completed.stderr}"
+    if fixture_name == "rust":
+        observed = re.search(r"(?m)^test result: ok\. 1 passed; 0 failed;", combined)
+    elif fixture_name == "python":
+        observed = re.search(r"(?m)^Ran 1 test(?:s)? in ", combined)
+    else:
+        raise ValueError(f"unsupported fixture language: {fixture_name}")
+    if observed is None:
+        raise RuntimeError(
+            f"isolated {fixture_name} command did not execute exactly one test: {test}\n"
+            f"stdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
+        )
 
 
 def metrics(
@@ -162,6 +349,12 @@ def metrics(
     unknown = (selected | executed) - universe
     if unknown:
         raise RuntimeError(f"measurement contains unknown tests: {sorted(unknown)}")
+    if reported_impacted + reported_skipped != len(universe):
+        raise RuntimeError(
+            "Bit Code's impacted and skipped counts disagree with the test universe: "
+            f"impacted={reported_impacted}, skipped={reported_skipped}, "
+            f"universe={len(universe)}"
+        )
     true_positives = selected & executed
     false_positives = selected - executed
     false_negatives = executed - selected
@@ -224,30 +417,74 @@ def aggregate_metrics(
 
 def measure_fixture(
     fixture: Fixture,
-    project: Path,
+    work_root: Path,
     bitcode: Path,
     *,
     verbose: bool,
+    timeout_seconds: float,
+    max_output_bytes: int,
 ) -> dict[str, object]:
-    static = run((str(bitcode), "test-impact", str(project)), cwd=REPO_ROOT)
+    command_options = {
+        "timeout_seconds": timeout_seconds,
+        "max_output_bytes": max_output_bytes,
+    }
+    static_project = initialize_fixture(
+        fixture,
+        work_root / "static",
+        **command_options,
+    )
+    inventory = run(
+        fixture.discovery_command,
+        cwd=static_project,
+        **command_options,
+    )
+    observed_framework_ids = parse_framework_inventory(fixture.name, inventory.stdout)
+    expected_framework_ids = set(fixture.framework_ids.values())
+    if observed_framework_ids != expected_framework_ids:
+        raise RuntimeError(
+            f"{fixture.name} framework inventory differs from the declared universe: "
+            f"expected={sorted(expected_framework_ids)}, "
+            f"observed={sorted(observed_framework_ids)}"
+        )
+    static = run(
+        (str(bitcode), "test-impact", str(static_project)),
+        cwd=REPO_ROOT,
+        **command_options,
+    )
     if verbose:
         print(f"\n--- Bit Code {fixture.name} output ---\n{static.stdout.rstrip()}")
-    selected, reported_impacted, reported_skipped = parse_bitcode_selection(
+    selected_paths, reported_impacted, reported_skipped = parse_bitcode_selection(
         static.stdout
     )
+    path_to_test = {path: test for test, path in fixture.graph_paths.items()}
+    unknown_paths = selected_paths - path_to_test.keys()
+    if unknown_paths:
+        raise RuntimeError(
+            f"Bit Code selected unknown graph test paths: {sorted(unknown_paths)}"
+        )
+    selected = {path_to_test[path] for path in selected_paths}
 
     executed: set[str] = set()
-    probe = project / ".bitcode-oracle-probe"
-    for test in fixture.tests:
-        probe.unlink(missing_ok=True)
+    for index, test in enumerate(fixture.tests):
+        project = initialize_fixture(
+            fixture,
+            work_root / f"dynamic-{index}",
+            **command_options,
+        )
+        probe = project / ".bitcode-oracle-probe"
         environment = os.environ.copy()
         environment["BITCODE_ORACLE_PROBE"] = str(probe)
-        run(fixture.dynamic_commands[test], cwd=project, env=environment)
+        completed = run(
+            fixture.dynamic_commands[test],
+            cwd=project,
+            env=environment,
+            **command_options,
+        )
+        assert_isolated_test_executed(fixture.name, test, completed)
         if probe.exists() and "selected_operation" in probe.read_text(
             encoding="utf-8"
         ).splitlines():
             executed.add(test)
-    probe.unlink(missing_ok=True)
 
     return metrics(
         set(fixture.tests),
@@ -326,22 +563,50 @@ def main() -> int:
         action="store_true",
         help="include Bit Code's raw test-impact output",
     )
+    parser.add_argument(
+        "--command-timeout-seconds",
+        type=float,
+        default=DEFAULT_COMMAND_TIMEOUT_SECONDS,
+        help="per-command timeout, including each isolated test",
+    )
+    parser.add_argument(
+        "--max-command-output-bytes",
+        type=int,
+        default=DEFAULT_MAX_OUTPUT_BYTES,
+        help="combined stdout/stderr limit for each child process",
+    )
     args = parser.parse_args()
     bitcode = args.bitcode.resolve()
     if not bitcode.is_file():
         parser.error(f"Bit Code binary does not exist: {bitcode}")
+    if args.command_timeout_seconds <= 0:
+        parser.error("--command-timeout-seconds must be positive")
+    if args.max_command_output_bytes <= 0:
+        parser.error("--max-command-output-bytes must be positive")
 
+    binary_sha256 = file_sha256(bitcode)
     with tempfile.TemporaryDirectory(prefix="bitcode-core-trust-") as temporary:
         work_root = Path(temporary)
+        measured_bitcode = work_root / "bitcode-under-test"
+        shutil.copy2(bitcode, measured_bitcode)
+        measured_bitcode.chmod(0o500)
+        if file_sha256(measured_bitcode) != binary_sha256:
+            raise RuntimeError("the private Bit Code copy differs from the supplied binary")
         results = {
             fixture.name: measure_fixture(
                 fixture,
-                initialize_fixture(fixture, work_root),
-                bitcode,
+                work_root / fixture.name,
+                measured_bitcode,
                 verbose=args.verbose,
+                timeout_seconds=args.command_timeout_seconds,
+                max_output_bytes=args.max_command_output_bytes,
             )
             for fixture in FIXTURES
         }
+        if file_sha256(measured_bitcode) != binary_sha256:
+            raise RuntimeError("the private Bit Code copy changed during the oracle run")
+    if file_sha256(bitcode) != binary_sha256:
+        raise RuntimeError("the measured Bit Code binary changed during the oracle run")
     document = {
         "schema_version": 1,
         "results": results,

@@ -34,11 +34,15 @@ impl TempRepo {
     }
 
     fn write(&self, rel: &str, text: &str) {
+        self.write_bytes(rel, text.as_bytes());
+    }
+
+    fn write_bytes(&self, rel: &str, bytes: &[u8]) {
         let path = self.root.join(rel);
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent).unwrap();
         }
-        std::fs::write(path, text).unwrap();
+        std::fs::write(path, bytes).unwrap();
     }
 
     fn remove(&self, rel: &str) {
@@ -171,6 +175,80 @@ fn test_obsolete() {
     assert!(stdout.contains("Removed ["), "{stdout}");
     assert!(stdout.contains("crate::obsolete::obsolete"), "{stdout}");
     assert!(stdout.contains("baseline tests: test_obsolete"), "{stdout}");
+}
+
+#[test]
+fn review_rejects_an_invalid_baseline_reference() {
+    let repo = TempRepo::new("review-invalid-ref");
+    repo.write("src/lib.rs", "pub fn stable() -> i64 { 1 }\n");
+    repo.commit_all("baseline");
+
+    let output = run_bitcode_output(&[
+        "review",
+        repo.path().to_str().unwrap(),
+        "--since",
+        "DOES_NOT_EXIST",
+    ]);
+
+    assert!(!output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stdout.contains("Building baseline graph"), "{stdout}");
+    assert!(stderr.contains("rev-parse --verify"), "{stderr}");
+    assert!(stderr.contains("DOES_NOT_EXIST"), "{stderr}");
+}
+
+#[test]
+fn review_preserves_leading_whitespace_in_a_nested_repository_root() {
+    let repo = TempRepo::new("review-leading-space-root");
+    repo.write(" pkg/src/lib.rs", "pub fn value() -> i64 { 1 }\n");
+    repo.commit_all("baseline");
+    repo.write(" pkg/src/lib.rs", "pub fn value() -> i64 { 2 }\n");
+    let nested = repo.path().join(" pkg");
+
+    let stdout = run_bitcode(&["review", nested.to_str().unwrap(), "--since", "HEAD"]);
+
+    assert!(stdout.contains("Modified ["), "{stdout}");
+    assert!(stdout.contains("crate::lib::value"), "{stdout}");
+    assert!(!stdout.contains("Added ["), "{stdout}");
+}
+
+#[test]
+fn automatic_test_impact_scopes_nested_repository_changes_to_the_project_root() {
+    let repo = TempRepo::new("impact-nested-root");
+    repo.write(
+        "project/src/lib.rs",
+        r#"
+pub fn value() -> i64 { 1 }
+
+#[test]
+fn test_value() {
+    assert_eq!(value(), 1);
+}
+"#,
+    );
+    repo.write("outside.rs", "pub fn outside() -> i64 { 1 }\n");
+    repo.commit_all("baseline");
+    repo.write(
+        "project/src/lib.rs",
+        r#"
+pub fn value() -> i64 { 2 }
+
+#[test]
+fn test_value() {
+    assert_eq!(value(), 2);
+}
+"#,
+    );
+    repo.write("outside.rs", "pub fn outside() -> i64 { 2 }\n");
+    let nested = repo.path().join("project");
+
+    let stdout = run_bitcode(&["test-impact", nested.to_str().unwrap()]);
+
+    assert!(stdout.contains("changed files: src/lib.rs"), "{stdout}");
+    assert!(!stdout.contains("outside.rs"), "{stdout}");
+    assert!(stdout.contains("crate::lib::value"), "{stdout}");
+    assert!(stdout.contains("crate::lib::test_value"), "{stdout}");
 }
 
 #[test]
@@ -918,6 +996,86 @@ exclude = ["src/generated.rs"]
 
     assert!(stdout.contains("loaded 1 source file(s)"), "{stdout}");
     assert!(stdout.contains("1 functions"), "{stdout}");
+}
+
+#[test]
+fn source_read_failures_abort_analysis_without_replacing_the_durable_graph() {
+    let repo = TempRepo::new("source-read-failure");
+    repo.write("src/lib.rs", "pub fn stable() -> i64 { 1 }\n");
+    repo.write("src/other.rs", "pub fn readable() -> i64 { 2 }\n");
+    repo.commit_all("baseline");
+
+    run_bitcode(&["analyze", repo.path().to_str().unwrap()]);
+    let graph_path = repo.path().join("project.aether");
+    let durable_before = std::fs::read(&graph_path).unwrap();
+    repo.write_bytes("src/other.rs", b"pub fn unreadable() {}\n\xff\n");
+
+    for args in [
+        vec!["analyze", repo.path().to_str().unwrap()],
+        vec!["review", repo.path().to_str().unwrap(), "--since", "HEAD"],
+        vec![
+            "test-impact",
+            repo.path().to_str().unwrap(),
+            "crate::lib::stable",
+        ],
+    ] {
+        let output = run_bitcode_output(&args);
+        assert!(
+            !output.status.success(),
+            "bitcode {args:?} unexpectedly passed"
+        );
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("failed to read source src/other.rs"),
+            "{stderr}"
+        );
+        assert_eq!(std::fs::read(&graph_path).unwrap(), durable_before);
+    }
+}
+
+#[test]
+fn test_impact_rejects_every_unknown_explicit_node() {
+    let repo = TempRepo::new("test-impact-unknown-node");
+    repo.write(
+        "src/lib.rs",
+        r#"
+pub fn known() -> i64 { 1 }
+
+#[test]
+fn test_known() {
+    assert_eq!(known(), 1);
+}
+"#,
+    );
+
+    let output = run_bitcode_output(&[
+        "test-impact",
+        repo.path().to_str().unwrap(),
+        "crate::lib::known",
+        "crate::lib::typo",
+    ]);
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("unknown explicit node path(s)"), "{stderr}");
+    assert!(stderr.contains("crate::lib::typo"), "{stderr}");
+}
+
+#[test]
+fn automatic_test_impact_rejects_a_non_git_project_explicitly() {
+    let project = TempRepo::new("test-impact-non-git");
+    std::fs::remove_dir_all(project.path().join(".git")).unwrap();
+    project.write("src/lib.rs", "pub fn changed() -> i64 { 1 }\n");
+
+    let output = run_bitcode_output(&["test-impact", project.path().to_str().unwrap()]);
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("automatic test-impact requires a Git repository"),
+        "{stderr}"
+    );
+    assert!(stderr.contains("pass explicit node paths"), "{stderr}");
 }
 
 #[test]

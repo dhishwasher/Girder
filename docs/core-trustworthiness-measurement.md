@@ -10,10 +10,23 @@ The committed Rust and Python templates are materialized into disposable Git
 repositories. The runner commits each baseline, applies one source mutation,
 and asks the exact supplied Bit Code binary for `test-impact`.
 
-Every test is then executed alone with `BITCODE_ORACLE_PROBE` pointing at a
-fresh file. Only the changed function/method writes that probe, so the resulting
-set is direct runtime evidence that a test executed changed code. This is a
-function-level dynamic coverage oracle, not line or branch coverage.
+Every test is then executed alone in a fresh materialized checkout with
+`BITCODE_ORACLE_PROBE` pointing at a checkout-local fresh file. Only the changed
+function/method writes that probe, so the resulting set is direct runtime
+evidence that a test executed changed code. This is a function-level dynamic
+coverage oracle, not line or branch coverage.
+
+The runner preserves Bit Code's full graph test paths and maps them explicitly
+to framework test ids, so equal leaf names in different modules/classes cannot
+collapse. Cargo and `unittest` independently enumerate the runnable tests; that
+inventory must exactly equal the declared universe and Bit Code's impacted plus
+skipped counts. Each isolated command must report that exactly one requested
+test ran. Every child command has a timeout and a combined stdout/stderr limit;
+on POSIX, members of its newly spawned process group are killed, and tests prove
+that inherited-group descendants do not survive either failure path. The
+supplied Bit Code executable is copied privately, made read/execute-only, and
+SHA-256 checked before and after the measurement so a build cannot replace the
+program under test mid-run.
 
 Artifacts:
 
@@ -57,7 +70,9 @@ python3 tools/core_trustworthiness_oracle.py \
 
 Add `--verbose` to include Bit Code's raw `test-impact` output. A result that
 differs from the checked JSON baseline exits unsuccessfully and prints both
-expected and actual data.
+expected and actual data. Per-command limits default to 120 seconds and 1 MiB;
+use `--command-timeout-seconds` and `--max-command-output-bytes` to lower them
+for failure probes or raise them for a documented representative corpus.
 
 ## Baseline results
 
@@ -100,11 +115,12 @@ Useful output:
   binary subprocess path.
 - It restored the dynamically proven nullable Python receiver path without
   selecting the same-method decoy owner.
-- Its listed tests were machine-parseable and its impacted/skipped header counts
-  were internally consistent on these fixtures.
+- Its full-path listed tests were machine-parseable, and its impacted plus
+  skipped counts exactly matched each independently declared fixture universe.
 - On the milestone tree, query correctly reports `main` as the sole caller of
-  `measure_fixture`, test-impact selects all four oracle unit tests, and review
-  reconstructs the runner's internal helper chain.
+  `measure_fixture`; test-impact selects the seven of nine oracle unit tests
+  directly coupled to changed helpers; and review reconstructs the runner's
+  internal helper chain.
 
 Incorrect or incomplete output:
 
@@ -116,18 +132,20 @@ Incorrect or incomplete output:
   checked oracle command executes `main`, fixture initialization, Bit Code
   invocation, dynamic test execution, metric calculation, rendering, and
   baseline comparison.
-- Self-impact reports 285 tests (`80` impacted plus `205` skipped). The
-  authoritative suites contain 269 Cargo cases, including the intentional
-  debugpy ignore, plus four oracle unit tests: 273 total. Bit Code therefore
-  overcounts this tree's declared test inventory by 12 and substantially
-  over-selects through broad builder/application reachability.
+- Self-impact reports 297 tests (`44` impacted plus `253` skipped). The
+  authoritative default-feature suites contain 276 Cargo cases, including the
+  intentional debugpy ignore, plus nine oracle unit tests: 285 total. Bit Code
+  therefore overcounts this tree's declared test inventory by 12 and
+  substantially over-selects through broad builder/application reachability.
 
 ## Limits and next defects
 
 The oracle is deliberately small and deterministic. Its probes are fixture
 instrumentation, not a general coverage backend; it measures one mutation per
-language and does not establish behavior on real repositories. The measured
-defect order is:
+language and does not establish behavior on real repositories. Duplicate test
+ids, hanging/noisy children, cross-test checkout contamination, incomplete test
+inventories, and mid-run binary replacement now fail the measurement instead of
+silently changing its truth set. The measured defect order is:
 
 1. Improve CLI argument-route precision (observed Rust precision `0.667`)
    without losing subprocess-entrypoint recall.
