@@ -2259,3 +2259,75 @@ fn analysis_classifies_a_hung_git_subprocess() {
         "analysis must not wait out the hung git"
     );
 }
+
+#[cfg(unix)]
+fn crash_forge_at(point: &str) -> TempRepo {
+    let repo = TempRepo::new(&format!("fault-{point}"));
+    repo.write("src/lib.rs", "pub fn existing() -> i64 { 1 }\n");
+    repo.commit_all("baseline");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_bitcode"))
+        .args([
+            "forge",
+            repo.path().to_str().unwrap(),
+            "add user authentication",
+        ])
+        .env("BITCODE_FAULT_EXIT", point)
+        .output()
+        .unwrap();
+    assert_eq!(
+        output.status.code(),
+        Some(87),
+        "forge must crash at the {point} fault point\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        repo.path().join(".bitcode/transactions").exists(),
+        "the crash must leave a journal behind"
+    );
+
+    // Any later analysis command triggers recovery of the dead journal.
+    run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    assert!(
+        !repo.path().join(".bitcode").exists(),
+        "recovery must clean the {point} journal"
+    );
+    repo
+}
+
+#[cfg(unix)]
+#[test]
+fn crash_after_staging_recovers_to_all_old_state() {
+    let repo = crash_forge_at("after-staging");
+    assert!(!repo.path().join("src/forge.rs").exists());
+    assert!(!repo.path().join("project.aether").exists());
+}
+
+#[cfg(unix)]
+#[test]
+fn crash_after_manifest_recovers_to_all_old_state() {
+    let repo = crash_forge_at("after-manifest");
+    assert!(!repo.path().join("src/forge.rs").exists());
+    assert!(!repo.path().join("project.aether").exists());
+}
+
+#[cfg(unix)]
+#[test]
+fn crash_mid_apply_recovers_to_all_old_state() {
+    let repo = crash_forge_at("mid-apply");
+    assert!(!repo.path().join("src/forge.rs").exists());
+    assert!(!repo.path().join("project.aether").exists());
+}
+
+#[cfg(unix)]
+#[test]
+fn crash_after_committed_marker_keeps_all_new_state() {
+    let repo = crash_forge_at("pre-cleanup");
+    // The durable marker is the commit point: interruption after it must
+    // preserve every committed write.
+    let generated = std::fs::read_to_string(repo.path().join("src/forge.rs")).unwrap();
+    assert!(generated.contains("fn authenticate"), "{generated}");
+    let graph = aether_graph::SemanticGraph::load(repo.path().join("project.aether")).unwrap();
+    assert!(graph.node_count() > 0);
+}

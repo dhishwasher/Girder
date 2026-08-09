@@ -650,6 +650,7 @@ fn commit_project_writes_locked(
         });
     }
 
+    maybe_fault_exit("after-staging");
     let manifest = TransactionManifest {
         version: 1,
         entries,
@@ -658,9 +659,10 @@ fn commit_project_writes_locked(
         .map_err(|error| std::io::Error::other(error.to_string()))?;
     atomic_write(&manifest_path, &manifest_bytes)?;
     sync_dir(&transaction_dir)?;
+    maybe_fault_exit("after-manifest");
 
     let commit_result: std::io::Result<()> = (|| {
-        for entry in &manifest.entries {
+        for (index, entry) in manifest.entries.iter().enumerate() {
             let target = safe_project_output_path(root, &entry.relative)?;
             if let Some(staged) = &entry.staged {
                 std::fs::rename(transaction_member(&transaction_dir, staged)?, &target)?;
@@ -669,6 +671,9 @@ fn commit_project_writes_locked(
             }
             if let Some(parent) = target.parent() {
                 sync_dir(parent)?;
+            }
+            if index == 0 {
+                maybe_fault_exit("mid-apply");
             }
         }
         write_synced_file(
@@ -689,6 +694,7 @@ fn commit_project_writes_locked(
         return Err(commit_error);
     }
 
+    maybe_fault_exit("pre-cleanup");
     let written = prepared
         .iter()
         .map(|(write, _, _)| write.relative.clone())
@@ -697,6 +703,15 @@ fn commit_project_writes_locked(
     // startup removes any committed journal left behind by interruption.
     let _ = cleanup_transaction(root, &transaction_dir);
     Ok(written)
+}
+
+/// Crash injection for recovery testing: aborts the process at a named
+/// transaction transition when `BITCODE_FAULT_EXIT` names it. Inert unless
+/// that variable is set, so production behavior is unchanged.
+fn maybe_fault_exit(point: &str) {
+    if std::env::var("BITCODE_FAULT_EXIT").is_ok_and(|value| value == point) {
+        std::process::exit(87);
+    }
 }
 
 /// Check every transaction baseline without writing anything.
@@ -1439,6 +1454,130 @@ mod tests {
             serde_json::to_vec(&manifest).unwrap(),
         )
         .unwrap();
+    }
+
+    #[test]
+    fn recovery_removes_an_empty_journal_directory() {
+        let dir = TempDir::new("empty-journal");
+        std::fs::create_dir_all(dir.0.join(TRANSACTION_ROOT).join("interrupted")).unwrap();
+
+        assert_eq!(recover_project_transactions(&dir.0).unwrap(), 1);
+        assert!(!dir.0.join(".bitcode").exists());
+        // A second pass finds nothing: recovery is idempotent.
+        assert_eq!(recover_project_transactions(&dir.0).unwrap(), 0);
+    }
+
+    #[test]
+    fn recovery_fails_closed_on_a_torn_manifest() {
+        let dir = TempDir::new("torn-manifest");
+        let transaction_dir = dir.0.join(TRANSACTION_ROOT).join("interrupted");
+        std::fs::create_dir_all(&transaction_dir).unwrap();
+        std::fs::write(dir.0.join("existing.rs"), b"partially committed\n").unwrap();
+        std::fs::write(transaction_dir.join("0.backup"), b"original\n").unwrap();
+        std::fs::write(transaction_dir.join(TRANSACTION_MANIFEST), b"{ torn").unwrap();
+
+        let error = recover_project_transactions(&dir.0).unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+        // Nothing was modified and the evidence is preserved for inspection.
+        assert_eq!(
+            std::fs::read(dir.0.join("existing.rs")).unwrap(),
+            b"partially committed\n"
+        );
+        assert!(transaction_dir.join("0.backup").exists());
+        // The failure is stable, not destructive, on retry.
+        let retry = recover_project_transactions(&dir.0).unwrap_err();
+        assert_eq!(retry.kind(), std::io::ErrorKind::InvalidData);
+    }
+
+    #[test]
+    fn recovery_rolls_back_a_partially_applied_transaction() {
+        let dir = TempDir::new("partial-apply");
+        let transaction_dir = dir.0.join(TRANSACTION_ROOT).join("interrupted");
+        std::fs::create_dir_all(&transaction_dir).unwrap();
+        // Entry 0 was already renamed into place (its staged file is gone);
+        // entry 1 never applied and still has its staged candidate.
+        std::fs::write(dir.0.join("first.rs"), b"candidate one\n").unwrap();
+        std::fs::write(dir.0.join("second.rs"), b"original two\n").unwrap();
+        std::fs::write(transaction_dir.join("0.backup"), b"original one\n").unwrap();
+        std::fs::write(transaction_dir.join("1.backup"), b"original two\n").unwrap();
+        std::fs::write(transaction_dir.join("1.staged"), b"candidate two\n").unwrap();
+        let manifest = TransactionManifest {
+            version: 1,
+            entries: vec![
+                TransactionEntry {
+                    relative: "first.rs".into(),
+                    had_original: true,
+                    staged: Some("0.staged".into()),
+                    backup: "0.backup".into(),
+                },
+                TransactionEntry {
+                    relative: "second.rs".into(),
+                    had_original: true,
+                    staged: Some("1.staged".into()),
+                    backup: "1.backup".into(),
+                },
+            ],
+        };
+        std::fs::write(
+            transaction_dir.join(TRANSACTION_MANIFEST),
+            serde_json::to_vec(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        assert_eq!(recover_project_transactions(&dir.0).unwrap(), 1);
+        assert_eq!(
+            std::fs::read(dir.0.join("first.rs")).unwrap(),
+            b"original one\n"
+        );
+        assert_eq!(
+            std::fs::read(dir.0.join("second.rs")).unwrap(),
+            b"original two\n"
+        );
+        assert!(!dir.0.join(".bitcode").exists());
+        assert_eq!(recover_project_transactions(&dir.0).unwrap(), 0);
+    }
+
+    #[test]
+    fn recovery_rolls_back_a_fully_applied_uncommitted_transaction() {
+        let dir = TempDir::new("applied-uncommitted");
+        let transaction_dir = dir.0.join(TRANSACTION_ROOT).join("interrupted");
+        std::fs::create_dir_all(&transaction_dir).unwrap();
+        // Every rename landed but the COMMITTED marker never synced: the
+        // marker is the commit point, so this must still become all-old.
+        std::fs::write(dir.0.join("replaced.rs"), b"candidate\n").unwrap();
+        std::fs::write(dir.0.join("created.rs"), b"created\n").unwrap();
+        std::fs::write(transaction_dir.join("0.backup"), b"original\n").unwrap();
+        let manifest = TransactionManifest {
+            version: 1,
+            entries: vec![
+                TransactionEntry {
+                    relative: "replaced.rs".into(),
+                    had_original: true,
+                    staged: Some("0.staged".into()),
+                    backup: "0.backup".into(),
+                },
+                TransactionEntry {
+                    relative: "created.rs".into(),
+                    had_original: false,
+                    staged: Some("1.staged".into()),
+                    backup: "1.backup".into(),
+                },
+            ],
+        };
+        std::fs::write(
+            transaction_dir.join(TRANSACTION_MANIFEST),
+            serde_json::to_vec(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        assert_eq!(recover_project_transactions(&dir.0).unwrap(), 1);
+        assert_eq!(
+            std::fs::read(dir.0.join("replaced.rs")).unwrap(),
+            b"original\n"
+        );
+        assert!(!dir.0.join("created.rs").exists());
+        assert!(!dir.0.join(".bitcode").exists());
+        assert_eq!(recover_project_transactions(&dir.0).unwrap(), 0);
     }
 
     #[test]

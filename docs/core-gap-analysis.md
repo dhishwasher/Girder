@@ -1,6 +1,6 @@
 # Core workflow gap analysis
 
-Last updated: 2026-08-08
+Last updated: 2026-08-09
 
 This is the prioritized, evidence-based comparison for Bit Code's core
 `analyze → navigate/search → edit/refactor → review impact → select tests →
@@ -367,13 +367,83 @@ failure-corpus gates before beta.
 
 ### Concurrent analysis workflow correctness
 
-Observed defect: launching `bitcode review .` and `bitcode test-impact .`
+Verified defect: launching `bitcode review .` and `bitcode test-impact .`
 concurrently against the same working tree produced incomplete output from
-both commands after their graph-building preambles. Running the same commands
-sequentially completed normally. This indicates unsafe shared temporary-state
-coordination between read-only analysis workflows. Sequential execution is the
-current workaround, not a fix; concurrent isolation remains a **P0 correctness
-item** and must gain a deterministic regression before beta completion.
+both commands after their graph-building preambles. Two mechanisms were
+identified: every graph build ran destructive journal recovery over the
+shared `.bitcode/transactions` directory with no locking (one process could
+roll back another's in-flight commit or remove `.bitcode` mid-transaction),
+and concurrent `git diff` invocations contended on `.git/index.lock` with
+fail-closed error handling.
+
+Acceptance evidence:
+
+- Writers hold an exclusive `flock` on the `.bitcode` directory file
+  descriptor for the entire commit critical section. Read-only analysis
+  recovers non-blocking and never touches a journal whose owning process is
+  alive; only dead-owner and abandoned journals are reclaimed. Directory-fd
+  locking preserves the invariant that a completed commit removes `.bitcode`
+  entirely, and acquisition re-checks inode identity so a lock on an
+  unlinked directory is never trusted.
+- All Git subprocesses set `GIT_OPTIONAL_LOCKS=0`, eliminating opportunistic
+  index-refresh writes from read-only analysis.
+- Unit regressions cover live-owner preservation, dead-owner reclamation,
+  and lock-held skip (`read_only_recovery_preserves_a_live_writers_journal`,
+  `read_only_recovery_reclaims_a_dead_owners_journal`,
+  `read_only_recovery_skips_while_the_journal_lock_is_held`). The
+  deterministic CLI regression
+  `concurrent_review_and_test_impact_produce_complete_output` runs five
+  rounds of two simultaneous analysis processes against one working tree and
+  requires byte-identical complete output from every run.
+- The seven pre-existing recovery regressions pass unmodified.
+
+## Transaction recoverability proof
+
+Verified gap: journal recovery had no fault-injection evidence. Interruption
+at each durable transition now has a deterministic regression.
+
+Acceptance evidence:
+
+- Disk-state matrix in `project::source` unit tests: empty journal directory
+  removal, staging without a manifest, a torn manifest (fail-closed error
+  that modifies nothing and is stable on retry), partial application with
+  k-of-n renames, full application without the committed marker (all-old),
+  and a committed journal with interrupted cleanup (all-new). Each
+  destructive row also asserts a second recovery pass is an idempotent
+  no-op.
+- Real-crash proof through the actual binary: `BITCODE_FAULT_EXIT` aborts
+  `forge` at `after-staging`, `after-manifest`, `mid-apply`, and
+  `pre-cleanup`; the four `crash_*` CLI regressions assert the process died
+  at the injection point, a later analysis command recovers the journal, and
+  the project lands all-old before the COMMITTED marker and all-new after
+  it, including a loadable committed graph.
+
+## Bounded product subprocesses
+
+Verified defect: Git subprocesses and configured `test-impact --run`
+children ran with no timeout, output cap, or process-group handling.
+
+Acceptance evidence:
+
+- One shared engine (`project::process`) runs every child in its own process
+  group with a 25 ms supervision loop and SIGKILLs the whole tree on
+  timeout, cancellation, or overflow. The candidate validator's regressions
+  (`timed_out_command_is_terminated` and the bounded-diagnostics suite) now
+  guard this shared engine.
+- Git commands are bounded at 120 s and 16 MiB with
+  `GIT_OPTIONAL_LOCKS=0`; captured output is treated as data — overflow
+  kills and errors rather than ever returning truncated bytes. Timeouts
+  produce an explicit classification
+  (`analysis_classifies_a_hung_git_subprocess`).
+- `--run` children stream live to the terminal with inherited stdin, under
+  configurable `tests.run_timeout_seconds` (default 1800) and
+  `tests.run_max_output_bytes` (default 8 MiB). Regressions prove a
+  timed-out runner's background grandchild is killed
+  (`test_impact_run_kills_a_timed_out_process_tree`) and an overflowing
+  runner is killed with a classified error while bitcode's own output stays
+  bounded (`test_impact_run_kills_a_child_exceeding_the_output_budget`).
+- Remaining unbounded spawns are named residuals: the toy debugger's
+  `python_tracer` and the DAP adapter launch (per-request timeout only).
 
 ## Prioritized open gaps
 
@@ -384,22 +454,26 @@ item** and must gain a deterministic regression before beta completion.
    Cargo and Python framework discovery, including nested/non-collectable
    Python functions and macro-expanded or conditional Rust cases. The current
    repository overcount is 10.
-3. **P0 — concurrent analysis isolation.** Make simultaneous `review` and
-   `test-impact` runs complete independently without shared temporary-state
-   interference or truncated output.
+3. **Closed — concurrent analysis isolation.** See "Concurrent analysis
+   workflow correctness" above: journal locking with dead-owner-only
+   read-only recovery, `GIT_OPTIONAL_LOCKS=0`, and a five-round dual-process
+   CLI regression requiring complete byte-identical output.
 4. **P0 — unmeasured call semantics.** Measure and then model custom Cargo
    binary paths and implicit RAII/`Drop` execution.
 5. **P0 — oracle breadth.** Extend dynamic comparison to broader mutations and
    representative real repositories; the checked synthetic fixtures establish
    a baseline, not product-level accuracy.
-6. **P0 — recoverability proof.** Inject interruption at every durable
-   transaction transition and verify both source and graph state after restart.
+6. **Closed — recoverability proof.** See "Transaction recoverability proof"
+   above: a deterministic disk-state matrix over every journal transition
+   plus real `BITCODE_FAULT_EXIT` crash injection through the binary, with
+   all-old/all-new verification and idempotent re-recovery.
 7. **P0 — representative repositories.** Record cold/incremental indexing,
    call-edge accuracy, impact latency, test-selection accuracy, and memory on at
    least three real Rust/Python repositories without manual repair.
-8. **P0 — subprocess bounds.** Apply process-tree timeout and output limits to
-   Git operations and configured `test-impact --run` commands, with explicit
-   timeout classification and no surviving descendants.
+8. **Closed — subprocess bounds.** See "Bounded product subprocesses" above:
+   shared process-group engine with timeout/output classification for Git
+   and configured `--run` children; debugger/DAP spawns remain named
+   residuals.
 9. **P1 — interactive latency.** Measure edit-to-graph, edit-to-diagnostic, and
    navigation latency under sustained edits.
 10. **P1 — agent outcome metrics.** Track accepted patches, validation catches,
