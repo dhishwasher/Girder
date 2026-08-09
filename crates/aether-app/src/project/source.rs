@@ -13,6 +13,155 @@ const TRANSACTION_ROOT: &str = ".bitcode/transactions";
 const TRANSACTION_MANIFEST: &str = "manifest.json";
 const TRANSACTION_COMMITTED: &str = "COMMITTED";
 
+/// Which interrupted journals a recovery pass may reclaim.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum RecoveryScope {
+    /// Roll back every uncommitted journal. Requires the exclusive journal
+    /// lock, under which any remaining uncommitted journal is orphaned.
+    All,
+    /// Roll back only journals whose owning process is no longer alive.
+    /// Used by read-only analysis so it never destroys a live writer's
+    /// in-flight transaction.
+    DeadOwnersOnly,
+}
+
+enum LockWait {
+    Block,
+    NonBlock,
+}
+
+/// Advisory exclusive lock on the `.bitcode` directory file descriptor.
+///
+/// Locking the directory itself, rather than a file inside it, preserves the
+/// invariant that a completed commit removes `.bitcode` entirely. The held fd
+/// stays valid after unlink, so cleanup under the lock is safe; acquisition
+/// re-checks directory identity and retries because a lock on an unlinked
+/// inode excludes nobody.
+struct JournalLock {
+    _dir: std::fs::File,
+}
+
+impl JournalLock {
+    /// Lock an existing `.bitcode` directory. `Ok(None)` when the directory
+    /// does not exist (nothing to recover) or, in `NonBlock` mode, when a
+    /// writer currently holds the lock.
+    fn acquire(root: &Path, wait: LockWait) -> std::io::Result<Option<Self>> {
+        Self::acquire_inner(root, wait, false)
+    }
+
+    /// Create `.bitcode/transactions` and take the exclusive lock, waiting
+    /// for any active writer. Keeping `transactions` present makes
+    /// `.bitcode` non-empty, so unlocked best-effort pruners cannot remove
+    /// it during the commit critical section.
+    fn create_and_acquire(root: &Path) -> std::io::Result<Self> {
+        match Self::acquire_inner(root, LockWait::Block, true)? {
+            Some(lock) => {
+                std::fs::create_dir_all(root.join(TRANSACTION_ROOT))?;
+                Ok(lock)
+            }
+            None => Err(std::io::Error::other(
+                "could not lock the project journal directory",
+            )),
+        }
+    }
+
+    fn acquire_inner(root: &Path, wait: LockWait, create: bool) -> std::io::Result<Option<Self>> {
+        let path = root.join(".bitcode");
+        for _ in 0..5 {
+            if create {
+                std::fs::create_dir_all(&path)?;
+            }
+            let dir = match std::fs::File::open(&path) {
+                Ok(dir) => dir,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                    if create {
+                        continue;
+                    }
+                    return Ok(None);
+                }
+                Err(error) => return Err(error),
+            };
+            #[cfg(unix)]
+            {
+                use std::os::unix::io::AsRawFd;
+                let flags = match wait {
+                    LockWait::Block => libc::LOCK_EX,
+                    LockWait::NonBlock => libc::LOCK_EX | libc::LOCK_NB,
+                };
+                if unsafe { libc::flock(dir.as_raw_fd(), flags) } != 0 {
+                    let error = std::io::Error::last_os_error();
+                    if error.raw_os_error() == Some(libc::EWOULDBLOCK) {
+                        return Ok(None);
+                    }
+                    return Err(error);
+                }
+                use std::os::unix::fs::MetadataExt;
+                match std::fs::metadata(&path) {
+                    Ok(current) => {
+                        let held = dir.metadata()?;
+                        if current.dev() == held.dev() && current.ino() == held.ino() {
+                            return Ok(Some(JournalLock { _dir: dir }));
+                        }
+                    }
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                        if !create {
+                            return Ok(None);
+                        }
+                    }
+                    Err(error) => return Err(error),
+                }
+                // The directory was removed or replaced while we waited for
+                // the lock; retry against the current inode.
+            }
+            #[cfg(not(unix))]
+            {
+                // No advisory directory locking on this platform; preserve
+                // the previous unlocked behavior.
+                return Ok(Some(JournalLock { _dir: dir }));
+            }
+        }
+        Err(std::io::Error::other(
+            "could not lock the project journal directory",
+        ))
+    }
+}
+
+/// Whether the process that owns a `{pid}-{counter}` journal directory is
+/// still alive. Unparseable names and our own pid are treated as abandoned:
+/// no *other* live writer can be mid-commit while the journal lock is held.
+fn journal_owner_is_alive(name: &std::ffi::OsStr) -> bool {
+    let Some(name) = name.to_str() else {
+        return false;
+    };
+    let Some(pid) = name
+        .split('-')
+        .next()
+        .and_then(|pid| pid.parse::<u32>().ok())
+    else {
+        return false;
+    };
+    if pid == 0 || pid == std::process::id() {
+        return false;
+    }
+    let Ok(pid) = libc::pid_t::try_from(pid) else {
+        return false;
+    };
+    #[cfg(unix)]
+    {
+        // Signal 0 probes existence: EPERM still means the process exists.
+        if unsafe { libc::kill(pid, 0) } == 0 {
+            return true;
+        }
+        std::io::Error::last_os_error().raw_os_error() != Some(libc::ESRCH)
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = pid;
+        // Cannot probe liveness: leave the journal for exclusive recovery.
+        true
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct GraphSnapshot {
     pub(crate) graph: Option<SemanticGraph>,
@@ -237,7 +386,7 @@ pub(crate) fn build_from_dir_with_config(
     root: &Path,
     config: &ProjectConfig,
 ) -> std::io::Result<(SemanticGraph, GraphBuilder, usize)> {
-    recover_project_transactions(root)?;
+    recover_project_transactions_read_only(root)?;
     let mut graph = SemanticGraph::new();
     let mut builder = GraphBuilder::new();
     let sources = collect_sources_with_config(root, config)?;
@@ -408,11 +557,26 @@ pub(crate) fn commit_project_writes(
     root: &Path,
     writes: Vec<ProjectWrite>,
 ) -> std::io::Result<Vec<PathBuf>> {
-    recover_project_transactions(root)?;
     if writes.is_empty() {
         return Ok(Vec::new());
     }
+    // Hold the exclusive journal lock for the entire critical section:
+    // recovery, baseline checks, staging, renames, marker, and cleanup.
+    // Concurrent writers serialize here and read-only analysis skips
+    // recovery instead of rolling back this in-flight journal.
+    let _journal_lock = JournalLock::create_and_acquire(root)?;
+    let result = recover_transactions_locked(root, RecoveryScope::All)
+        .and_then(|_| commit_project_writes_locked(root, writes));
+    if result.is_err() {
+        let _ = cleanup_empty_transaction_roots(root);
+    }
+    result
+}
 
+fn commit_project_writes_locked(
+    root: &Path,
+    writes: Vec<ProjectWrite>,
+) -> std::io::Result<Vec<PathBuf>> {
     let mut targets = BTreeSet::new();
     let mut prepared = Vec::new();
     for write in writes {
@@ -442,6 +606,7 @@ pub(crate) fn commit_project_writes(
         prepared.push((write, target, current));
     }
     if prepared.is_empty() {
+        cleanup_empty_transaction_roots(root)?;
         return Ok(Vec::new());
     }
 
@@ -565,7 +730,32 @@ pub(crate) fn verify_project_writes(root: &Path, writes: &[ProjectWrite]) -> std
 }
 
 /// Recover transactions interrupted before their committed marker was synced.
+///
+/// Takes the exclusive journal lock, waiting for any active writer; every
+/// uncommitted journal found under the lock is orphaned and rolled back.
+/// Headless CLI writers recover through `commit_project_writes`, which locks
+/// internally; this entry point serves workspace open and tests.
+#[cfg(any(feature = "gui", test))]
 pub(crate) fn recover_project_transactions(root: &Path) -> std::io::Result<usize> {
+    let Some(_lock) = JournalLock::acquire(root, LockWait::Block)? else {
+        return Ok(0);
+    };
+    recover_transactions_locked(root, RecoveryScope::All)
+}
+
+/// Recovery for read-only analysis commands.
+///
+/// Never blocks behind a writer (contention means the journal is live) and
+/// never rolls back a journal whose owning process is still running, so a
+/// concurrent `review`/`test-impact` cannot destroy an in-flight commit.
+pub(crate) fn recover_project_transactions_read_only(root: &Path) -> std::io::Result<usize> {
+    let Some(_lock) = JournalLock::acquire(root, LockWait::NonBlock)? else {
+        return Ok(0);
+    };
+    recover_transactions_locked(root, RecoveryScope::DeadOwnersOnly)
+}
+
+fn recover_transactions_locked(root: &Path, scope: RecoveryScope) -> std::io::Result<usize> {
     let transaction_root = safe_project_input_path(root, TRANSACTION_ROOT)?;
     let mut dirs = match std::fs::read_dir(&transaction_root) {
         Ok(entries) => entries.collect::<Result<Vec<_>, _>>()?,
@@ -575,6 +765,7 @@ pub(crate) fn recover_project_transactions(root: &Path) -> std::io::Result<usize
     dirs.sort_by_key(|entry| entry.file_name());
 
     let mut recovered = 0;
+    let mut skipped_live = false;
     for entry in dirs {
         let file_type = entry.file_type()?;
         if file_type.is_symlink() || !file_type.is_dir() {
@@ -591,6 +782,12 @@ pub(crate) fn recover_project_transactions(root: &Path) -> std::io::Result<usize
         let manifest_bytes = match std::fs::read(&manifest_path) {
             Ok(bytes) => bytes,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                if scope == RecoveryScope::DeadOwnersOnly
+                    && journal_owner_is_alive(&entry.file_name())
+                {
+                    skipped_live = true;
+                    continue;
+                }
                 std::fs::remove_dir_all(&transaction_dir)?;
                 recovered += 1;
                 continue;
@@ -611,12 +808,19 @@ pub(crate) fn recover_project_transactions(root: &Path) -> std::io::Result<usize
             ));
         }
         if !transaction_dir.join(TRANSACTION_COMMITTED).exists() {
+            if scope == RecoveryScope::DeadOwnersOnly && journal_owner_is_alive(&entry.file_name())
+            {
+                skipped_live = true;
+                continue;
+            }
             rollback_transaction(root, &transaction_dir, &manifest)?;
             recovered += 1;
         }
         cleanup_transaction(root, &transaction_dir)?;
     }
-    cleanup_empty_transaction_roots(root)?;
+    if !skipped_live {
+        cleanup_empty_transaction_roots(root)?;
+    }
     Ok(recovered)
 }
 
@@ -1211,6 +1415,95 @@ mod tests {
         assert_eq!(
             std::fs::read(dir.0.join("file.rs")).unwrap(),
             b"committed\n"
+        );
+        assert!(!dir.0.join(".bitcode").exists());
+    }
+
+    fn write_interrupted_journal(root: &Path, name: &str) {
+        let transaction_dir = root.join(TRANSACTION_ROOT).join(name);
+        std::fs::create_dir_all(&transaction_dir).unwrap();
+        std::fs::write(root.join("existing.rs"), b"partially committed\n").unwrap();
+        std::fs::write(transaction_dir.join("0.backup"), b"original\n").unwrap();
+        std::fs::write(transaction_dir.join("0.staged"), b"candidate\n").unwrap();
+        let manifest = TransactionManifest {
+            version: 1,
+            entries: vec![TransactionEntry {
+                relative: "existing.rs".into(),
+                had_original: true,
+                staged: Some("0.staged".into()),
+                backup: "0.backup".into(),
+            }],
+        };
+        std::fs::write(
+            transaction_dir.join(TRANSACTION_MANIFEST),
+            serde_json::to_vec(&manifest).unwrap(),
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn read_only_recovery_preserves_a_live_writers_journal() {
+        let dir = TempDir::new("live-journal");
+        let mut writer = std::process::Command::new("sleep")
+            .arg("30")
+            .spawn()
+            .unwrap();
+        let journal = format!("{}-0", writer.id());
+        write_interrupted_journal(&dir.0, &journal);
+
+        assert_eq!(recover_project_transactions_read_only(&dir.0).unwrap(), 0);
+        assert!(dir.0.join(TRANSACTION_ROOT).join(&journal).exists());
+        assert_eq!(
+            std::fs::read(dir.0.join("existing.rs")).unwrap(),
+            b"partially committed\n"
+        );
+
+        // Exclusive recovery reclaims the journal regardless of liveness:
+        // under the lock no writer can be mid-commit.
+        assert_eq!(recover_project_transactions(&dir.0).unwrap(), 1);
+        assert_eq!(
+            std::fs::read(dir.0.join("existing.rs")).unwrap(),
+            b"original\n"
+        );
+        assert!(!dir.0.join(".bitcode").exists());
+
+        let _ = writer.kill();
+        let _ = writer.wait();
+    }
+
+    #[test]
+    fn read_only_recovery_reclaims_a_dead_owners_journal() {
+        let dir = TempDir::new("dead-journal");
+        let mut exited = std::process::Command::new("true").spawn().unwrap();
+        let dead_pid = exited.id();
+        exited.wait().unwrap();
+        write_interrupted_journal(&dir.0, &format!("{dead_pid}-0"));
+
+        assert_eq!(recover_project_transactions_read_only(&dir.0).unwrap(), 1);
+        assert_eq!(
+            std::fs::read(dir.0.join("existing.rs")).unwrap(),
+            b"original\n"
+        );
+        assert!(!dir.0.join(".bitcode").exists());
+    }
+
+    #[test]
+    fn read_only_recovery_skips_while_the_journal_lock_is_held() {
+        let dir = TempDir::new("locked-journal");
+        write_interrupted_journal(&dir.0, "interrupted");
+
+        let lock = JournalLock::acquire(&dir.0, LockWait::Block)
+            .unwrap()
+            .expect("journal directory exists");
+        assert_eq!(recover_project_transactions_read_only(&dir.0).unwrap(), 0);
+        assert!(dir.0.join(TRANSACTION_ROOT).join("interrupted").exists());
+        drop(lock);
+
+        // Unparseable journal names are treated as abandoned once unlocked.
+        assert_eq!(recover_project_transactions_read_only(&dir.0).unwrap(), 1);
+        assert_eq!(
+            std::fs::read(dir.0.join("existing.rs")).unwrap(),
+            b"original\n"
         );
         assert!(!dir.0.join(".bitcode").exists());
     }
