@@ -7,7 +7,8 @@
 //! file. This is the machinery behind bidirectional editor⇄graph sync.
 
 use crate::mapper::{
-    extract, module_path_for, BuildOutput, CallRef, CallTargetRef, InheritRef, RustImportRef,
+    extract, module_path_for, BuildOutput, CallRef, CallTargetRef, InheritRef, RouteEvidence,
+    RustImportRef,
 };
 use crate::parser::{IncrementalParser, Lang};
 use aether_graph::{Edge, EdgeKind, NodeId, NodeKind, SemanticGraph};
@@ -660,8 +661,36 @@ impl GraphBuilder {
                 });
         }
 
+        // Route evidence is re-derived on every resolve; stale keys from a
+        // previous parse must not survive a removed launch or dispatch arm.
+        let route_owned: Vec<NodeId> = graph
+            .nodes()
+            .filter(|node| {
+                node.attributes
+                    .iter()
+                    .any(|(key, _)| aether_graph::is_route_attribute(key))
+            })
+            .map(|node| node.id)
+            .collect();
+        for id in route_owned {
+            if let Some(node) = graph.get_mut(id) {
+                node.attributes
+                    .retain(|(key, _)| !aether_graph::is_route_attribute(key));
+            }
+        }
+
         let reexports = reexport_index(&self.files);
         let mut added: HashSet<(NodeId, NodeId)> = HashSet::new();
+        // callee id -> every resolved (caller, provable first string literal).
+        let mut literal_callers: HashMap<NodeId, Vec<(NodeId, Option<String>)>> = HashMap::new();
+        // (dispatch fn, guarded callee path) -> literal; conflicting
+        // literals for one callee make the guard unprovable.
+        let mut dispatch_guards: HashMap<(NodeId, String), Option<String>> = HashMap::new();
+        // Launcher entry routes: (launcher, entry path, literal).
+        let mut entry_routes: Vec<(NodeId, String, String)> = Vec::new();
+        // Launch helpers whose route is their first parameter:
+        // (helper, entry id, entry path).
+        let mut parameter_entries: Vec<(NodeId, NodeId, String)> = Vec::new();
         for (file, state) in &self.files {
             for call in &state.calls {
                 let (caller_source_module, caller_owner) = match graph.get(call.caller) {
@@ -683,6 +712,21 @@ impl GraphBuilder {
                                 candidate.id,
                                 Edge::new(EdgeKind::Calls),
                             );
+                        }
+                        match &call.route {
+                            Some(RouteEvidence::Literal(literal)) => entry_routes.push((
+                                call.caller,
+                                candidate.path.clone(),
+                                literal.clone(),
+                            )),
+                            // Only a first-parameter route can be matched to
+                            // callers' first-argument literals.
+                            Some(RouteEvidence::Param(0)) => parameter_entries.push((
+                                call.caller,
+                                candidate.id,
+                                candidate.path.clone(),
+                            )),
+                            Some(RouteEvidence::Param(_)) | None => {}
                         }
                     }
                     continue;
@@ -725,9 +769,70 @@ impl GraphBuilder {
                         let _ =
                             graph.add_edge(call.caller, candidate.id, Edge::new(EdgeKind::Calls));
                     }
+                    literal_callers
+                        .entry(candidate.id)
+                        .or_default()
+                        .push((call.caller, call.first_string_argument.clone()));
+                    if let Some(guard) = call.route_guard.as_deref() {
+                        dispatch_guards
+                            .entry((call.caller, candidate.path.clone()))
+                            .and_modify(|existing| {
+                                if existing.as_deref() != Some(guard) {
+                                    *existing = None;
+                                }
+                            })
+                            .or_insert_with(|| Some(guard.to_string()));
+                    }
                 }
             }
         }
+
+        // One provable literal→parameter substitution: when every resolved
+        // caller of a launch helper passes a first-argument literal, each
+        // caller gets its own entry edge and recorded route, and the
+        // helper's entry is marked parameter-carried. Any non-literal caller
+        // makes the whole substitution unprovable and nothing is recorded.
+        for (helper, entry_id, entry_path) in parameter_entries {
+            let Some(callers) = literal_callers.get(&helper) else {
+                continue;
+            };
+            let provable: Option<Vec<(NodeId, String)>> = callers
+                .iter()
+                .map(|(caller, literal)| literal.as_ref().map(|literal| (*caller, literal.clone())))
+                .collect();
+            let Some(provable) = provable else {
+                continue;
+            };
+            if provable.is_empty() {
+                continue;
+            }
+            for (caller, literal) in provable {
+                if caller != entry_id && added.insert((caller, entry_id)) {
+                    let _ = graph.add_edge(caller, entry_id, Edge::new(EdgeKind::Calls));
+                }
+                entry_routes.push((caller, entry_path.clone(), literal));
+            }
+            if let Some(node) = graph.get_mut(helper) {
+                node.set_attr(
+                    aether_graph::entry_route_params_key(&entry_path),
+                    "via-params",
+                );
+            }
+        }
+        for (launcher, entry_path, literal) in entry_routes {
+            if let Some(node) = graph.get_mut(launcher) {
+                node.set_attr(aether_graph::entry_route_key(&entry_path), literal);
+            }
+        }
+        for ((dispatcher, callee_path), literal) in dispatch_guards {
+            let Some(literal) = literal else {
+                continue;
+            };
+            if let Some(node) = graph.get_mut(dispatcher) {
+                node.set_attr(aether_graph::route_guard_key(&callee_path), literal);
+            }
+        }
+
         for (from, to, edge) in graph_owned_calls {
             if graph.contains(from) && graph.contains(to) {
                 let _ = graph.add_edge(from, to, edge);

@@ -40,7 +40,38 @@ use petgraph::stable_graph::{NodeIndex, StableDiGraph};
 use std::collections::HashMap;
 
 pub(crate) fn is_parser_owned_attribute(key: &str) -> bool {
-    matches!(key, "is_test" | "return_type" | "source_projection")
+    matches!(key, "is_test" | "return_type" | "source_projection") || is_route_attribute(key)
+}
+
+/// Subprocess-route metadata keys, set by project-wide call resolution and
+/// consumed by impact analysis to keep argument-specific CLI routes from
+/// over-selecting tests. Parser-owned: refreshed on every resolve, never
+/// carried stale across reparses.
+///
+/// * `route_guard_key(callee)` on a dispatch function: its call into
+///   `callee` only executes when the process was launched with the stored
+///   argument literal.
+/// * `entry_route_key(entry)` on a launcher: it starts the binary whose
+///   top-level function is `entry` with the stored first-argument literal.
+/// * `entry_route_params_key(entry)` on a launch helper whose argument comes
+///   from its own parameters; per-caller entry routes carry the exact flow,
+///   so the helper's own entry edge is pruned under an active route context.
+pub fn route_guard_key(callee_path: &str) -> String {
+    format!("route_guard::{callee_path}")
+}
+
+pub fn entry_route_key(entry_path: &str) -> String {
+    format!("entry_route::{entry_path}")
+}
+
+pub fn entry_route_params_key(entry_path: &str) -> String {
+    format!("entry_route_params::{entry_path}")
+}
+
+pub fn is_route_attribute(key: &str) -> bool {
+    key.starts_with("route_guard::")
+        || key.starts_with("entry_route::")
+        || key.starts_with("entry_route_params::")
 }
 
 /// Errors surfaced by graph operations.

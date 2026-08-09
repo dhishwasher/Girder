@@ -117,6 +117,26 @@ pub struct CallRef {
     /// `env!("CARGO_BIN_EXE_<target>")`. Its callee is the binary's top-level
     /// Rust `main`, not an ordinary same-module function call.
     pub process_entrypoint: Option<String>,
+    /// Provable first-argument route of a `process_entrypoint` launch,
+    /// recovered from the builder chain's first `.arg(...)`/`.args([...])`.
+    /// `None` means unprovable — resolution then behaves exactly as before.
+    pub route: Option<RouteEvidence>,
+    /// The argv literal guarding this call site: the call sits in a
+    /// `match std::env::args().nth(1)…` arm matching exactly `Some("lit")`.
+    pub route_guard: Option<String>,
+    /// First argument when it is a plain string literal; lets resolution
+    /// substitute one provable literal→parameter level for launch helpers.
+    pub first_string_argument: Option<String>,
+}
+
+/// How a subprocess launch selects its argv route.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RouteEvidence {
+    /// The launch passes this exact first-argument literal.
+    Literal(String),
+    /// The launch passes the enclosing function's parameter at this index;
+    /// provable only when every resolved caller passes a literal there.
+    Param(usize),
 }
 
 /// An unresolved inheritance: type `sub` inherits/implements something named
@@ -1003,6 +1023,13 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                     receiver_factory,
                     qualifier_owner_fallback,
                     process_entrypoint: None,
+                    route: None,
+                    route_guard: matches!(lang, Lang::Rust)
+                        .then(|| rust_dispatch_guard(node, source))
+                        .flatten(),
+                    first_string_argument: matches!(lang, Lang::Rust)
+                        .then(|| call_first_string_argument(node, source))
+                        .flatten(),
                 });
                 if let Some(target) = matches!(lang, Lang::Rust)
                     .then(|| rust_cargo_binary_target(node, source))
@@ -1016,6 +1043,9 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                         receiver_factory: None,
                         qualifier_owner_fallback: true,
                         process_entrypoint: Some(target),
+                        route: rust_launch_route(node, source),
+                        route_guard: None,
+                        first_string_argument: None,
                     });
                 }
             }
@@ -1031,7 +1061,9 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 let tokens = children.find(|child| child.kind() == "token_tree");
                 drop(children);
                 if let Some(tokens) = tokens {
-                    for (callee, qualifier) in textual_call_refs(node_text(tokens, source)) {
+                    for (callee, qualifier, first_string_argument) in
+                        textual_call_refs(node_text(tokens, source))
+                    {
                         let (receiver_type, receiver_factory, hint_allows_fallback) =
                             resolved_receiver_hint(qualifier.as_deref(), active_type_hints);
                         out.calls.push(CallRef {
@@ -1042,6 +1074,11 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                             receiver_factory,
                             qualifier_owner_fallback: hint_allows_fallback,
                             process_entrypoint: None,
+                            route: None,
+                            route_guard: matches!(lang, Lang::Rust)
+                                .then(|| rust_dispatch_guard(node, source))
+                                .flatten(),
+                            first_string_argument,
                         });
                     }
                 }
@@ -2675,6 +2712,132 @@ fn rust_cargo_binary_target(call: TsNode, source: &str) -> Option<String> {
         .map(str::to_string)
 }
 
+/// Provable argv route of a `Command::new(env!("CARGO_BIN_EXE_…"))` launch:
+/// walk the builder chain upward past route-neutral methods to the first
+/// `.arg(x)`/`.args([x, …])`. A string literal is exact; an identifier that
+/// names a parameter of the enclosing function defers to that parameter's
+/// call-site literals. Anything else is unprovable and yields `None`.
+fn rust_launch_route(call: TsNode, source: &str) -> Option<RouteEvidence> {
+    let mut current = call;
+    loop {
+        let field = current.parent()?;
+        if field.kind() != "field_expression" {
+            return None;
+        }
+        let outer = field.parent()?;
+        if outer.kind() != "call_expression" {
+            return None;
+        }
+        let method = field.child_by_field_name("field")?;
+        match node_text(method, source) {
+            "arg" => return rust_route_argument(outer, source, false),
+            "args" => return rust_route_argument(outer, source, true),
+            // These builder methods cannot change the argv route.
+            "env" | "envs" | "env_remove" | "env_clear" | "current_dir" | "stdin" | "stdout"
+            | "stderr" => current = outer,
+            _ => return None,
+        }
+    }
+}
+
+fn rust_route_argument(call: TsNode, source: &str, from_array: bool) -> Option<RouteEvidence> {
+    let arguments = call.child_by_field_name("arguments")?;
+    let mut cursor = arguments.walk();
+    let mut named = arguments.named_children(&mut cursor);
+    let argument = named.next()?;
+    if !from_array && named.next().is_some() {
+        return None;
+    }
+    let mut array_cursor = argument.walk();
+    let argument = if from_array {
+        if argument.kind() != "array_expression" {
+            return None;
+        }
+        argument.named_children(&mut array_cursor).next()?
+    } else {
+        argument
+    };
+    match argument.kind() {
+        "string_literal" => plain_string_literal(argument, source).map(RouteEvidence::Literal),
+        "identifier" => enclosing_parameter_index(call, source, node_text(argument, source))
+            .map(RouteEvidence::Param),
+        _ => None,
+    }
+}
+
+/// The exact value of a plain `"…"` literal; raw/escaped strings are
+/// unprovable here and yield `None`.
+fn plain_string_literal(node: TsNode, source: &str) -> Option<String> {
+    let text = node_text(node, source);
+    let inner = text.strip_prefix('"')?.strip_suffix('"')?;
+    (!inner.contains('\\')).then(|| inner.to_string())
+}
+
+/// Index of `ident` among the enclosing function's plain named parameters.
+fn enclosing_parameter_index(node: TsNode, source: &str, ident: &str) -> Option<usize> {
+    let mut current = node;
+    while let Some(parent) = current.parent() {
+        if parent.kind() == "function_item" {
+            let parameters = parent.child_by_field_name("parameters")?;
+            let mut cursor = parameters.walk();
+            return parameters
+                .named_children(&mut cursor)
+                .filter(|parameter| parameter.kind() == "parameter")
+                .position(|parameter| {
+                    parameter
+                        .child_by_field_name("pattern")
+                        .is_some_and(|pattern| {
+                            pattern.kind() == "identifier" && node_text(pattern, source) == ident
+                        })
+                });
+        }
+        current = parent;
+    }
+    None
+}
+
+/// The argv literal guarding a call site: the nearest enclosing `match` arm
+/// whose scrutinee reads `args()…nth(1)` and whose pattern is exactly
+/// `Some("lit")`. Non-literal arms and other match shapes are not guards.
+fn rust_dispatch_guard(node: TsNode, source: &str) -> Option<String> {
+    let mut current = node;
+    while let Some(parent) = current.parent() {
+        if parent.kind() == "match_arm" {
+            if let Some(guard) = dispatch_arm_literal(parent, source) {
+                return Some(guard);
+            }
+        }
+        current = parent;
+    }
+    None
+}
+
+fn dispatch_arm_literal(arm: TsNode, source: &str) -> Option<String> {
+    let match_expression = arm.parent().and_then(|block| block.parent())?;
+    if match_expression.kind() != "match_expression" {
+        return None;
+    }
+    let scrutinee = match_expression.child_by_field_name("value")?;
+    let scrutinee_text = node_text(scrutinee, source);
+    if !(scrutinee_text.contains("args()") && scrutinee_text.contains("nth(1)")) {
+        return None;
+    }
+    let pattern = node_text(arm.child_by_field_name("pattern")?, source);
+    let inner = pattern.trim().strip_prefix("Some(")?.strip_suffix(')')?;
+    let literal = inner.trim().strip_prefix('"')?.strip_suffix('"')?;
+    (!literal.contains('\\') && !literal.contains('"')).then(|| literal.to_string())
+}
+
+/// First argument of a call when it is a plain string literal.
+fn call_first_string_argument(call: TsNode, source: &str) -> Option<String> {
+    let arguments = call.child_by_field_name("arguments")?;
+    let mut cursor = arguments.walk();
+    let argument = arguments.named_children(&mut cursor).next()?;
+    (argument.kind() == "string_literal")
+        .then(|| plain_string_literal(argument, source))
+        .flatten()
+}
+
 /// Best-effort call target: trailing identifier plus its receiver/path.
 fn callee_target(call: TsNode, source: &str) -> Option<(String, Option<String>)> {
     let func = call.child_by_field_name("function")?;
@@ -2704,7 +2867,8 @@ fn callee_target(call: TsNode, source: &str) -> Option<(String, Option<String>)>
 /// Conservative fallback for call-like identifiers inside syntax tree regions
 /// that tree-sitter does not expose as normal call expressions, notably Rust
 /// macro token trees such as `assert_eq!(add(1, 2), 3)`.
-fn textual_call_refs(text: &str) -> Vec<(String, Option<String>)> {
+fn textual_call_refs(text: &str) -> Vec<(String, Option<String>, Option<String>)> {
+    let original = text;
     let code = mask_rust_macro_non_code(text);
     let text = code.as_str();
     let mut calls = Vec::new();
@@ -2725,10 +2889,30 @@ fn textual_call_refs(text: &str) -> Vec<(String, Option<String>)> {
         let name = &text[start..end];
         let rest = text[end..].trim_start();
         if rest.starts_with('(') && !is_call_noise(name) {
-            calls.push((name.to_string(), textual_qualifier(text, start)));
+            // Masking is length-preserving, so the argument text can be read
+            // from the unmasked original at the same byte offset.
+            let open = end + (text[end..].len() - rest.len());
+            calls.push((
+                name.to_string(),
+                textual_qualifier(text, start),
+                textual_first_string_argument(original, open),
+            ));
         }
     }
     calls
+}
+
+/// First argument of a textual call when it is one plain `"…"` literal.
+fn textual_first_string_argument(text: &str, open_paren: usize) -> Option<String> {
+    let rest = text.get(open_paren..)?.strip_prefix('(')?.trim_start();
+    let inner = rest.strip_prefix('"')?;
+    let close = inner.find('"')?;
+    let literal = &inner[..close];
+    if literal.contains('\\') {
+        return None;
+    }
+    let after = inner[close + 1..].trim_start();
+    (after.starts_with(',') || after.starts_with(')')).then(|| literal.to_string())
 }
 
 fn mask_rust_macro_non_code(text: &str) -> String {
@@ -3032,9 +3216,9 @@ mod tests {
         assert_eq!(
             textual_call_refs(token_tree),
             vec![
-                ("actual".to_string(), None),
-                ("real".to_string(), Some("receiver".to_string())),
-                ("another".to_string(), None),
+                ("actual".to_string(), None, None),
+                ("real".to_string(), Some("receiver".to_string()), None),
+                ("another".to_string(), None, None),
             ]
         );
     }

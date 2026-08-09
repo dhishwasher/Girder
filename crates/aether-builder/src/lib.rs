@@ -2220,6 +2220,129 @@ def test_provenance():
     }
 
     #[test]
+    fn argument_routes_prune_provably_unreachable_cli_tests() {
+        let binary = r#"
+use std::env;
+
+fn main() {
+    match env::args().nth(1).as_deref() {
+        Some("selected") => route_selected(),
+        Some("unrelated") => route_unrelated(),
+        _ => {}
+    }
+}
+
+fn route_selected() {
+    shared_helper();
+}
+
+fn route_unrelated() {}
+
+fn shared_helper() {}
+"#;
+        let cli_tests = r#"
+use std::process::Command;
+
+fn run_cli(route: &str) -> String {
+    let output = Command::new(env!("CARGO_BIN_EXE_demo"))
+        .arg(route)
+        .output()
+        .unwrap();
+    String::from_utf8(output.stdout).unwrap()
+}
+
+#[test]
+fn test_selected() {
+    assert!(!run_cli("selected").is_empty());
+}
+
+#[test]
+fn test_unrelated() {
+    run_cli("unrelated");
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/main.rs", binary);
+        builder.load_file(&mut graph, "tests/cli.rs", cli_tests);
+
+        let main = NodeId::from_path("crate::main::main");
+        let shared_helper = NodeId::from_path("crate::main::shared_helper");
+        let run_cli = NodeId::from_path("crate::tests::cli::run_cli");
+        let test_selected = NodeId::from_path("crate::tests::cli::test_selected");
+        let test_unrelated = NodeId::from_path("crate::tests::cli::test_unrelated");
+
+        // Resolution records the provable route metadata.
+        let main_node = graph.get(main).unwrap();
+        assert_eq!(
+            main_node.attr(&aether_graph::route_guard_key(
+                "crate::main::route_selected"
+            )),
+            Some("selected"),
+            "the dispatch arm guards its callee"
+        );
+        assert_eq!(
+            main_node.attr(&aether_graph::route_guard_key(
+                "crate::main::route_unrelated"
+            )),
+            Some("unrelated"),
+        );
+        assert_eq!(
+            graph
+                .get(test_selected)
+                .unwrap()
+                .attr(&aether_graph::entry_route_key("crate::main::main")),
+            Some("selected"),
+            "the literal caller of the launch helper records its route"
+        );
+        assert!(
+            graph
+                .get(run_cli)
+                .unwrap()
+                .attr(&aether_graph::entry_route_params_key("crate::main::main"))
+                .is_some(),
+            "the parameterized helper is marked route-carried"
+        );
+
+        // The measured consequence: a change reachable only through the
+        // "selected" dispatch arm selects exactly its own launcher test.
+        let selected_tests = graph.tests_for(shared_helper);
+        assert!(selected_tests.contains(&test_selected));
+        assert!(
+            !selected_tests.contains(&test_unrelated),
+            "a launcher with a provably different argv route must be pruned"
+        );
+
+        // Recall stays intact for main itself: both tests execute it.
+        let entry_tests = graph.tests_for(main);
+        assert!(entry_tests.contains(&test_selected));
+        assert!(entry_tests.contains(&test_unrelated));
+
+        // Removing the launch route re-derives the metadata: with a
+        // non-literal caller the substitution becomes unprovable and every
+        // launcher stays selected (fail open).
+        let unproved_tests = cli_tests.replace(
+            "run_cli(\"unrelated\")",
+            "run_cli(std::env::var(\"ROUTE\").unwrap().as_str())",
+        );
+        builder.update_file(&mut graph, "tests/cli.rs", &unproved_tests);
+        assert!(
+            graph
+                .get(test_selected)
+                .unwrap()
+                .attr(&aether_graph::entry_route_key("crate::main::main"))
+                .is_none(),
+            "one unprovable caller withdraws every synthesized route"
+        );
+        let fail_open = graph.tests_for(shared_helper);
+        assert!(fail_open.contains(&test_selected));
+        assert!(
+            fail_open.contains(&test_unrelated),
+            "unprovable routes must not prune anything"
+        );
+    }
+
+    #[test]
     fn resolves_cargo_binary_subprocess_entrypoints_without_guessing() {
         let binary = r#"
 fn main() {
