@@ -292,6 +292,49 @@ fn test_add() {
 }
 
 #[test]
+fn test_impact_does_not_count_cfg_test_helpers_as_tests() {
+    let repo = TempRepo::new("test-impact-cfg-test-helper");
+    let source = |value: i64| {
+        format!(
+            r#"
+pub fn selected() -> i64 {{ {value} }}
+
+#[cfg(test)]
+fn test_support_only() {{
+    let _ = selected();
+}}
+
+#[test]
+fn selected_test() {{
+    assert!(selected() > 0);
+}}
+
+#[test]
+fn unrelated_test() {{
+    assert_eq!(2 + 2, 4);
+}}
+"#
+        )
+    };
+    repo.write("src/lib.rs", &source(1));
+    repo.commit_all("baseline");
+    repo.write("src/lib.rs", &source(2));
+
+    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+
+    assert!(stdout.contains("Impacted tests (1)"), "{stdout}");
+    assert!(stdout.contains("crate::lib::selected_test"), "{stdout}");
+    assert!(
+        !stdout.contains("crate::lib::test_support_only"),
+        "{stdout}"
+    );
+    assert!(
+        stdout.contains("(1 other test(s) not in impact set"),
+        "{stdout}"
+    );
+}
+
+#[test]
 fn test_impact_includes_untracked_source_files() {
     let repo = TempRepo::new("test-impact-untracked");
     repo.write("src/lib.rs", "pub fn keep() -> i64 { 1 }\n");

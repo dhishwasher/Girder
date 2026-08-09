@@ -1,1 +1,6 @@
 pub mod operations;
+
+#[cfg(test)]
+fn test_support_only() {
+    let _ = operations::selected_operation();
+}

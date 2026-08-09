@@ -1,6 +1,6 @@
 # Core workflow gap analysis
 
-Last updated: 2026-07-27
+Last updated: 2026-08-08
 
 This is the prioritized, evidence-based comparison for Bit Code's core
 `analyze → navigate/search → edit/refactor → review impact → select tests →
@@ -14,7 +14,7 @@ reproducible repository fixture or benchmark proves otherwise.
 |---|---|---|---|
 | Indexing and code intelligence | JetBrains project analysis builds an index for navigation, refactoring, inspections, and completion. Cursor uses Merkle-tree change detection and cached semantic chunks for incremental codebase indexing. | Rust/Python tree-sitter projections, cross-file call resolution, and incremental `update_file` reconciliation are implemented. No representative-repository indexing latency or memory benchmark is recorded yet. | **P0 evidence gap:** benchmark cold indexing, one-file updates, peak memory, and stale-edge removal on increasingly large repositories. |
 | Navigation and refactoring | VS Code exposes language-service navigation, cross-file rename, and refactor preview; JetBrains provides project-wide dependency analysis and language-aware refactoring. | Stable graph ids, typed callers/callees, impact traversal, and validated rename projection work for the supported Rust/Python subset. | **P0 correctness:** measure resolved/unresolved call edges and false edges. Close common language-semantic gaps before adding refactor kinds. |
-| Test discovery and coverage | VS Code's testing API supports framework discovery, execution, debugging, and dynamic coverage when supplied by an extension. | Bit Code selects graph-reachable tests and can run configured Rust/Python commands. The checked function-execution oracle measures Rust precision/recall at `0.667/1.000` and Python at `1.000/1.000` on bounded fixtures. | **P0 correctness:** improve CLI argument-route precision. Expand the oracle to representative repositories and implicit RAII/`Drop`. |
+| Test discovery and coverage | VS Code's testing API supports framework discovery, execution, debugging, and dynamic coverage when supplied by an extension. | Bit Code selects graph-reachable tests and can run configured Rust/Python commands. Direct Rust test attributes are distinguished from `cfg(test)` wrappers; the checked function-execution oracle measures Rust precision/recall at `0.667/1.000` and Python at `1.000/1.000` on bounded fixtures. | **P0 correctness:** reconcile the remaining framework-inventory mismatch, improve CLI argument-route precision, and expand the oracle to representative repositories and implicit RAII/`Drop`. |
 | Diagnostics and validation | JetBrains performs continuous file/project analysis; VS Code language services and tasks surface diagnostics while editing. | Candidate changes are conflict-checked and validated in a disposable project before a journaled commit. | **P1 responsiveness:** validation is strong at commit time, but edit-to-diagnostic latency and cancellation behavior are not benchmarked. |
 | Recovery | VS Code provides local file history and refactor preview. Mature IDEs preserve undo/local history across routine editing. | Bit Code uses baseline checks, durable backups, a transaction journal, startup recovery, and graph/source snapshot binding. | **Graph-native opportunity, still P0 to prove:** run a fault-injection matrix at every journal transition and verify all-old/all-new recovery. |
 | Agent autonomy | Cursor combines semantic codebase retrieval with agent editing. JetBrains and VS Code expose broad language tooling to AI integrations. | Bit Code agents plan from the graph and generated changes pass the same candidate validator and transaction boundary as manual graph edits. | **P1 evidence gap:** record patch acceptance, validation-failure detection, rollback success, and human rejection rates on real tasks. |
@@ -297,6 +297,34 @@ now selected without selecting the same-method decoy test. The exact sets and
 counts are machine-checked against
 [`core-trustworthiness-baseline.json`](core-trustworthiness-baseline.json).
 
+### Rust test-attribute discovery precision
+
+Verified defect: Rust test discovery previously marked a function as a test
+when any directly preceding attribute's complete text contained `test`.
+Consequently, helpers compiled by `#[cfg(test)]`, conditional attributes such
+as `#[cfg_attr(...)]`, and unrelated attributes containing that substring
+inflated Bit Code's test universe even though Cargo did not list them as tests.
+
+Acceptance evidence:
+
+- Attribute classification now reads the parsed attribute path and recognizes
+  only direct `test`, namespaced `::test`, and `rstest` attributes. Attribute
+  arguments are not treated as attributes applied to the function.
+- The builder regression retains `#[test]`, `#[tokio::test]`, and `#[rstest]`
+  while rejecting `#[cfg(test)]`, `#[cfg_attr(...)]`, `#[contest]`, and a doc
+  string containing `test`.
+- A disposable-Git CLI regression proves a `cfg(test)` helper that calls the
+  changed function is absent from both the selected set and skipped count.
+- The strict Rust oracle fixture now includes such a helper. Cargo and Bit Code
+  still agree on its exact four-test universe, and the checked metrics remain
+  `0.667/1.000` for Rust, `1.000/1.000` for Python, and `0.800/1.000` combined.
+- On this repository, self-impact now reports 296 tests (`88` impacted plus
+  `208` skipped). Cargo lists 277 default-feature tests, including the ignored
+  debugpy case, and the oracle adds nine tests, for 286 authoritative cases.
+  The overcount fell from 12 to 10; nested/non-collectable Python functions and
+  macro-expanded/conditional framework identities remain unproved rather than
+  being hidden by the improvement.
+
 ### Failure-safe analysis and oracle inputs
 
 Verified defects closed in the failure-safe benchmark foundation:
@@ -352,25 +380,29 @@ item** and must gain a deterministic regression before beta completion.
 1. **P0 — measured CLI precision defect.** Model argument-specific subprocess
    routes without losing Cargo-entrypoint recall. The current bounded fixture
    has one false positive and precision `0.667`.
-2. **P0 — concurrent analysis isolation.** Make simultaneous `review` and
+2. **P0 — framework test identity.** Reconcile graph test identities with
+   Cargo and Python framework discovery, including nested/non-collectable
+   Python functions and macro-expanded or conditional Rust cases. The current
+   repository overcount is 10.
+3. **P0 — concurrent analysis isolation.** Make simultaneous `review` and
    `test-impact` runs complete independently without shared temporary-state
    interference or truncated output.
-3. **P0 — unmeasured call semantics.** Measure and then model custom Cargo
+4. **P0 — unmeasured call semantics.** Measure and then model custom Cargo
    binary paths and implicit RAII/`Drop` execution.
-4. **P0 — oracle breadth.** Extend dynamic comparison to broader mutations and
+5. **P0 — oracle breadth.** Extend dynamic comparison to broader mutations and
    representative real repositories; the checked synthetic fixtures establish
    a baseline, not product-level accuracy.
-5. **P0 — recoverability proof.** Inject interruption at every durable
+6. **P0 — recoverability proof.** Inject interruption at every durable
    transaction transition and verify both source and graph state after restart.
-6. **P0 — representative repositories.** Record cold/incremental indexing,
+7. **P0 — representative repositories.** Record cold/incremental indexing,
    call-edge accuracy, impact latency, test-selection accuracy, and memory on at
    least three real Rust/Python repositories without manual repair.
-7. **P0 — subprocess bounds.** Apply process-tree timeout and output limits to
+8. **P0 — subprocess bounds.** Apply process-tree timeout and output limits to
    Git operations and configured `test-impact --run` commands, with explicit
    timeout classification and no surviving descendants.
-8. **P1 — interactive latency.** Measure edit-to-graph, edit-to-diagnostic, and
+9. **P1 — interactive latency.** Measure edit-to-graph, edit-to-diagnostic, and
    navigation latency under sustained edits.
-9. **P1 — agent outcome metrics.** Track accepted patches, validation catches,
+10. **P1 — agent outcome metrics.** Track accepted patches, validation catches,
    rejected patches, rollback success, and time-to-safe-commit.
 
 Bit Code's potential advantage is not generic semantic search. It is one local,

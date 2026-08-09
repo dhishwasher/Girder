@@ -245,27 +245,39 @@ fn is_function_kind(lang: Lang, kind: &str) -> bool {
 
 /// Returns true if this function node is a test.
 ///
-/// Rust: any preceding `attribute_item` sibling whose text contains "test"
-/// (covers `#[test]`, `#[tokio::test]`, `#[rstest]`, etc.).
+/// Rust: a preceding direct test attribute (`#[test]`, a namespaced `::test`,
+/// or `#[rstest]`). Attribute arguments are deliberately ignored, so wrappers
+/// such as `#[cfg(test)]` and `#[cfg_attr(...)]` do not become test functions.
 /// Python: pytest convention — name starts with `test_`.
 fn is_test_fn(lang: Lang, node: TsNode, name: &str, source: &str) -> bool {
     match lang {
         Lang::Rust => {
             let mut sib = node.prev_named_sibling();
             while let Some(s) = sib {
-                if s.kind() == "attribute_item" {
-                    if node_text(s, source).contains("test") {
-                        return true;
+                match s.kind() {
+                    "attribute_item" => {
+                        if rust_attribute_terminal_name(s, source)
+                            .is_some_and(|name| matches!(name, "test" | "rstest"))
+                        {
+                            return true;
+                        }
                     }
-                    sib = s.prev_named_sibling();
-                } else {
-                    break;
+                    "line_comment" | "block_comment" => {}
+                    _ => break,
                 }
+                sib = s.prev_named_sibling();
             }
             false
         }
         Lang::Python => name.starts_with("test_") || name == "test",
     }
+}
+
+fn rust_attribute_terminal_name<'a>(item: TsNode, source: &'a str) -> Option<&'a str> {
+    let attribute = item.named_child(0)?;
+    let path = attribute.named_child(0)?;
+    let name = path.child_by_field_name("name").unwrap_or(path);
+    Some(node_text(name, source))
 }
 
 /// tree-sitter node kinds that define a type, per language.

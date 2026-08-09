@@ -132,11 +132,13 @@ Incorrect or incomplete output:
   checked oracle command executes `main`, fixture initialization, Bit Code
   invocation, dynamic test execution, metric calculation, rendering, and
   baseline comparison.
-- Self-impact reports 297 tests (`44` impacted plus `253` skipped). The
-  authoritative default-feature suites contain 276 Cargo cases, including the
-  intentional debugpy ignore, plus nine oracle unit tests: 285 total. Bit Code
-  therefore overcounts this tree's declared test inventory by 12 and
-  substantially over-selects through broad builder/application reachability.
+- On the Rust discovery checkpoint, self-impact reports 296 tests (`88`
+  impacted plus `208` skipped). The authoritative default-feature suites
+  contain 277 Cargo cases, including the intentional debugpy ignore, plus nine
+  oracle unit tests: 286 total. Structured Rust attribute-path discovery
+  reduced the prior overcount by two, but Bit Code still overcounts this tree's
+  declared test inventory by 10 and substantially over-selects through broad
+  builder/application reachability.
 
 ## Limits and next defects
 
@@ -147,9 +149,12 @@ ids, hanging/noisy children, cross-test checkout contamination, incomplete test
 inventories, and mid-run binary replacement now fail the measurement instead of
 silently changing its truth set. The measured defect order is:
 
-1. Improve CLI argument-route precision (observed Rust precision `0.667`)
+1. Reconcile the remaining graph/framework test-inventory mismatch; direct
+   Rust attributes no longer confuse `cfg(test)` helpers with tests, but Python
+   collection context and macro-expanded identities remain incomplete.
+2. Improve CLI argument-route precision (observed Rust precision `0.667`)
    without losing subprocess-entrypoint recall.
-2. Extend the oracle to representative repositories and broader mutations,
+3. Extend the oracle to representative repositories and broader mutations,
    then measure implicit RAII/`Drop`, custom Cargo target paths, and shared
    infrastructure over-selection.
 

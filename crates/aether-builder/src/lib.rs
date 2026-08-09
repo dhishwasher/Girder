@@ -1141,7 +1141,38 @@ fn test_add() { assert_eq!(add(1, 2), 3); }
 #[tokio::test]
 async fn test_add_async() { assert_eq!(add(1, 2), 3); }
 
-fn helper() {}
+#[tokio :: test]
+async fn test_add_spaced_path() { assert_eq!(add(1, 2), 3); }
+
+#[tokio /* path comment */ :: test]
+async fn test_add_commented_path() { assert_eq!(add(1, 2), 3); }
+
+#[rstest]
+fn test_add_parameterized() { assert_eq!(add(1, 2), 3); }
+
+#[test]
+// The outer attribute still applies across a regular comment.
+fn test_add_after_line_comment() { assert_eq!(add(1, 2), 3); }
+
+#[test]
+/* The outer attribute still applies across a block comment. */
+fn test_add_after_block_comment() { assert_eq!(add(1, 2), 3); }
+
+#[test]
+/// The outer attribute still applies across a doc comment.
+fn test_add_after_doc_comment() { assert_eq!(add(1, 2), 3); }
+
+#[cfg(test)]
+fn cfg_test_helper() {}
+
+#[cfg_attr(feature = "integration", test)]
+fn conditional_test_helper() {}
+
+#[contest]
+fn contest_helper() {}
+
+#[doc = "test helper"]
+fn documented_helper() {}
 "#;
         let mut graph = SemanticGraph::new();
         let mut builder = GraphBuilder::new();
@@ -1161,15 +1192,48 @@ fn helper() {}
             "#[tokio::test] should be marked"
         );
 
+        for test in [
+            "test_add_spaced_path",
+            "test_add_commented_path",
+            "test_add_after_line_comment",
+            "test_add_after_block_comment",
+            "test_add_after_doc_comment",
+        ] {
+            let node = graph.find_by_path(&format!("crate::math::{test}")).unwrap();
+            assert_eq!(
+                node.attr("is_test"),
+                Some("true"),
+                "valid test attribute spelling should mark {test}"
+            );
+        }
+
+        let parameterized = graph
+            .find_by_path("crate::math::test_add_parameterized")
+            .unwrap();
+        assert_eq!(
+            parameterized.attr("is_test"),
+            Some("true"),
+            "#[rstest] should be marked"
+        );
+
         let add = graph.find_by_path("crate::math::add").unwrap();
         assert_eq!(add.attr("is_test"), None, "regular fn should not be marked");
 
-        let helper = graph.find_by_path("crate::math::helper").unwrap();
-        assert_eq!(
-            helper.attr("is_test"),
-            None,
-            "helper fn should not be marked"
-        );
+        for helper in [
+            "cfg_test_helper",
+            "conditional_test_helper",
+            "contest_helper",
+            "documented_helper",
+        ] {
+            let node = graph
+                .find_by_path(&format!("crate::math::{helper}"))
+                .unwrap();
+            assert_eq!(
+                node.attr("is_test"),
+                None,
+                "attribute text must not make {helper} a test"
+            );
+        }
     }
 
     #[test]
