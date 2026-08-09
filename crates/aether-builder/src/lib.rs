@@ -1214,6 +1214,35 @@ fn contest_helper() {}
 
 #[doc = "test helper"]
 fn documented_helper() {}
+
+#[cfg(not(unix))]
+#[test]
+fn test_not_unix_only() {}
+
+#[cfg(unix)]
+#[test]
+fn test_unix_only() {}
+
+#[cfg(all(unix, not(windows)))]
+#[test]
+fn test_composed_cfg() {}
+
+#[cfg(any(windows, target_os = "fuchsia"))]
+#[test]
+fn test_foreign_os_only() {}
+
+#[cfg(feature = "extra")]
+#[test]
+fn test_unknown_feature() {}
+
+#[cfg(test)]
+#[test]
+fn test_under_cfg_test() {}
+
+fn outer() {
+    #[test]
+    fn test_nested() {}
+}
 "#;
         let mut graph = SemanticGraph::new();
         let mut builder = GraphBuilder::new();
@@ -1275,24 +1304,126 @@ fn documented_helper() {}
                 "attribute text must not make {helper} a test"
             );
         }
+
+        // Host-conditional compilation: a cfg that is provably false here
+        // withholds test identity because Cargo never compiles the function;
+        // unknown predicates stay fail-open.
+        if cfg!(unix) {
+            for absent in ["test_not_unix_only", "test_foreign_os_only"] {
+                let node = graph
+                    .find_by_path(&format!("crate::math::{absent}"))
+                    .unwrap();
+                assert_eq!(
+                    node.attr("is_test"),
+                    None,
+                    "{absent} is not compiled on this host and must not be a test"
+                );
+            }
+            for present in ["test_unix_only", "test_composed_cfg"] {
+                let node = graph
+                    .find_by_path(&format!("crate::math::{present}"))
+                    .unwrap();
+                assert_eq!(
+                    node.attr("is_test"),
+                    Some("true"),
+                    "{present} is compiled on this host and must stay a test"
+                );
+            }
+        }
+        for fail_open in ["test_unknown_feature", "test_under_cfg_test"] {
+            let node = graph
+                .find_by_path(&format!("crate::math::{fail_open}"))
+                .unwrap();
+            assert_eq!(
+                node.attr("is_test"),
+                Some("true"),
+                "{fail_open} must stay a test (unknown or test-profile cfg)"
+            );
+        }
+
+        // libtest never collects a fn nested inside another fn; the nested
+        // definition is scoped to its enclosing function, not the module.
+        let nested = graph
+            .find_by_path("crate::math::outer::test_nested")
+            .unwrap();
+        assert_eq!(
+            nested.attr("is_test"),
+            None,
+            "a nested #[test] fn is never collected"
+        );
+        assert!(graph.find_by_path("crate::math::test_nested").is_none());
     }
 
     #[test]
-    fn python_test_functions_marked_is_test() {
-        let py = "def test_add():\n    assert add(1,2)==3\n\ndef add(a,b):\n    return a+b\n\ndef helper():\n    pass\n";
+    fn python_test_identity_follows_framework_collection() {
+        let py = "def test_add():\n    assert add(1,2)==3\n\ndef testfoo():\n    pass\n\ndef add(a,b):\n    return a+b\n\ndef helper():\n    pass\n\ndef outer():\n    def test_nested():\n        pass\n\nclass TestSuite:\n    def test_method(self):\n        pass\n";
+
+        // In a collectable test file, module-level `test*` defs and class
+        // methods are tests; nested defs and non-test names are not.
         let mut graph = SemanticGraph::new();
         let mut builder = GraphBuilder::new();
-        builder.load_file(&mut graph, "src/math.py", py);
+        builder.load_file(&mut graph, "test_math.py", py);
 
-        let test_add = graph.find_by_path("crate::math::test_add").unwrap();
+        for test in ["test_add", "testfoo"] {
+            let node = graph
+                .find_by_path(&format!("crate::test_math::{test}"))
+                .unwrap();
+            assert_eq!(
+                node.attr("is_test"),
+                Some("true"),
+                "collectable {test} should be marked"
+            );
+        }
+        let method = graph
+            .find_by_path("crate::test_math::TestSuite::test_method")
+            .unwrap();
         assert_eq!(
-            test_add.attr("is_test"),
+            method.attr("is_test"),
             Some("true"),
-            "test_ fn should be marked"
+            "class test methods are collected"
         );
+        for plain in ["add", "helper", "outer"] {
+            let node = graph
+                .find_by_path(&format!("crate::test_math::{plain}"))
+                .unwrap();
+            assert_eq!(node.attr("is_test"), None, "{plain} is not a test");
+        }
+        let nested = graph
+            .find_by_path("crate::test_math::outer::test_nested")
+            .unwrap();
+        assert_eq!(
+            nested.attr("is_test"),
+            None,
+            "pytest never collects a def nested inside a function"
+        );
+        assert!(graph
+            .find_by_path("crate::test_math::test_nested")
+            .is_none());
 
-        let add = graph.find_by_path("crate::math::add").unwrap();
-        assert_eq!(add.attr("is_test"), None, "regular fn should not be marked");
+        // pytest's second default pattern also collects.
+        let mut suffix_graph = SemanticGraph::new();
+        let mut suffix_builder = GraphBuilder::new();
+        suffix_builder.load_file(
+            &mut suffix_graph,
+            "math_test.py",
+            "def test_add():\n    pass\n",
+        );
+        let suffix_test = suffix_graph
+            .find_by_path("crate::math_test::test_add")
+            .unwrap();
+        assert_eq!(suffix_test.attr("is_test"), Some("true"));
+
+        // The same defs in a non-test file are never collected by pytest or
+        // unittest and must not enter the test universe.
+        let mut plain_graph = SemanticGraph::new();
+        let mut plain_builder = GraphBuilder::new();
+        plain_builder.load_file(&mut plain_graph, "src/math.py", py);
+        let uncollectable = plain_graph.find_by_path("crate::math::test_add").unwrap();
+        assert_eq!(
+            uncollectable.attr("is_test"),
+            None,
+            "a test-shaped def outside test files is not collectable"
+        );
     }
 
     #[test]
@@ -1326,6 +1457,11 @@ def inspect_forward(identity: "SessionIdentity"):
 def inspect_default(identity: DecoyIdentity = DecoyIdentity()):
     identity.inspect()
 
+"#;
+        let tests = r#"
+from models import SessionIdentity
+from service import apply
+
 def test_provenance():
     apply(SessionIdentity())
 "#;
@@ -1333,6 +1469,7 @@ def test_provenance():
         let mut builder = GraphBuilder::new();
         builder.load_file(&mut graph, "models.py", models);
         builder.load_file(&mut graph, "service.py", service);
+        builder.load_file(&mut graph, "test_service.py", tests);
 
         let apply = NodeId::from_path("crate::service::apply");
         let inspect_dotted = NodeId::from_path("crate::service::inspect_dotted");
@@ -1341,7 +1478,7 @@ def test_provenance():
         let session_inspect = NodeId::from_path("crate::models::SessionIdentity::inspect");
         let verify = NodeId::from_path("crate::models::SessionIdentity::verify_selected_operation");
         let decoy_inspect = NodeId::from_path("crate::models::DecoyIdentity::inspect");
-        let provenance_test = NodeId::from_path("crate::service::test_provenance");
+        let provenance_test = NodeId::from_path("crate::test_service::test_provenance");
 
         let calls = |graph: &SemanticGraph, caller| {
             graph
@@ -1553,6 +1690,11 @@ def dotted_suffix(identity: SessionIdentity | None, box):
 def shadowed_import_root(typed):
     typed.identity.verify_selected_operation()
 
+"#;
+        let tests = r#"
+from models import SessionIdentity
+from service import pep604
+
 def test_provenance():
     pep604(SessionIdentity())
 "#;
@@ -1560,6 +1702,7 @@ def test_provenance():
         let mut builder = GraphBuilder::new();
         builder.load_file(&mut graph, "models.py", models);
         builder.load_file(&mut graph, "service.py", service);
+        builder.load_file(&mut graph, "test_service.py", tests);
 
         let pep604 = NodeId::from_path("crate::service::pep604");
         let optional = NodeId::from_path("crate::service::optional");
@@ -1598,7 +1741,7 @@ def test_provenance():
         let session_inspect = NodeId::from_path("crate::models::SessionIdentity::inspect");
         let verify = NodeId::from_path("crate::models::SessionIdentity::verify_selected_operation");
         let decoy_inspect = NodeId::from_path("crate::models::DecoyIdentity::inspect");
-        let provenance_test = NodeId::from_path("crate::service::test_provenance");
+        let provenance_test = NodeId::from_path("crate::test_service::test_provenance");
 
         let calls = |graph: &SemanticGraph, caller| {
             graph
@@ -1921,6 +2064,10 @@ def annotated_local():
     identity: DecoyIdentity = unknown()
     identity.inspect()
 
+"#;
+        let tests = r#"
+from service import apply
+
 def test_provenance():
     apply()
 "#;
@@ -1928,6 +2075,7 @@ def test_provenance():
         let mut builder = GraphBuilder::new();
         builder.load_file(&mut graph, "models.py", models);
         builder.load_file(&mut graph, "service.py", service);
+        builder.load_file(&mut graph, "test_service.py", tests);
 
         let apply = NodeId::from_path("crate::service::apply");
         let inspect_dotted = NodeId::from_path("crate::service::inspect_dotted");
@@ -1938,7 +2086,7 @@ def test_provenance():
         let session_inspect = NodeId::from_path("crate::models::SessionIdentity::inspect");
         let verify = NodeId::from_path("crate::models::SessionIdentity::verify_selected_operation");
         let decoy_inspect = NodeId::from_path("crate::models::DecoyIdentity::inspect");
-        let provenance_test = NodeId::from_path("crate::service::test_provenance");
+        let provenance_test = NodeId::from_path("crate::test_service::test_provenance");
 
         let calls = |graph: &SemanticGraph, caller| {
             graph
@@ -2017,6 +2165,11 @@ def assigned_decoy():
 def dotted(identity: domain.DecoyIdentity):
     identity.inspect()
 
+"#;
+        let tests = r#"
+from models import SessionIdentity as Session
+from service import apply
+
 def test_provenance():
     apply(Session())
 "#;
@@ -2024,6 +2177,7 @@ def test_provenance():
         let mut builder = GraphBuilder::new();
         builder.load_file(&mut graph, "models.py", models);
         builder.load_file(&mut graph, "service.py", service);
+        builder.load_file(&mut graph, "test_service.py", tests);
 
         let apply = NodeId::from_path("crate::service::apply");
         let assigned = NodeId::from_path("crate::service::assigned");
@@ -2033,7 +2187,7 @@ def test_provenance():
         let session_inspect = NodeId::from_path("crate::models::SessionIdentity::inspect");
         let verify = NodeId::from_path("crate::models::SessionIdentity::verify_selected_operation");
         let decoy_inspect = NodeId::from_path("crate::models::DecoyIdentity::inspect");
-        let provenance_test = NodeId::from_path("crate::service::test_provenance");
+        let provenance_test = NodeId::from_path("crate::test_service::test_provenance");
 
         let calls = |graph: &SemanticGraph, caller| {
             graph

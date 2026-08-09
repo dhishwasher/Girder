@@ -200,6 +200,7 @@ pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput
         path: &module,
         id: module_id,
         ty: None,
+        kind: ScopeKind::Module,
     };
     collect_defs(root, source, file, lang, &scope, &mut out);
 
@@ -243,34 +244,161 @@ fn is_function_kind(lang: Lang, kind: &str) -> bool {
     }
 }
 
-/// Returns true if this function node is a test.
+/// Returns true if this function node is a test the framework would run.
 ///
 /// Rust: a preceding direct test attribute (`#[test]`, a namespaced `::test`,
 /// or `#[rstest]`). Attribute arguments are deliberately ignored, so wrappers
-/// such as `#[cfg(test)]` and `#[cfg_attr(...)]` do not become test functions.
-/// Python: pytest convention — name starts with `test_`.
-fn is_test_fn(lang: Lang, node: TsNode, name: &str, source: &str) -> bool {
+/// such as `#[cfg(test)]` and `#[cfg_attr(...)]` do not become test functions
+/// — but a `#[cfg(...)]` that is provably false for the analysis host (e.g.
+/// `#[cfg(not(unix))]` on Linux) withholds test identity because Cargo never
+/// compiles the function here. Unknown predicates such as features stay
+/// fail-open.
+///
+/// Python: pytest/unittest collection — the file must match `test*.py` or
+/// `*_test.py`, the name must start with `test`, and the def must be at
+/// module level or a class method. Neither framework collects a def nested
+/// inside another function, and libtest has no nested tests either.
+fn is_test_fn(
+    lang: Lang,
+    node: TsNode,
+    name: &str,
+    source: &str,
+    file: &str,
+    scope: &Scope,
+) -> bool {
+    if scope.kind == ScopeKind::Function {
+        return false;
+    }
     match lang {
         Lang::Rust => {
+            let mut has_test_attribute = false;
             let mut sib = node.prev_named_sibling();
             while let Some(s) = sib {
                 match s.kind() {
-                    "attribute_item" => {
-                        if rust_attribute_terminal_name(s, source)
-                            .is_some_and(|name| matches!(name, "test" | "rstest"))
-                        {
-                            return true;
+                    "attribute_item" => match rust_attribute_terminal_name(s, source) {
+                        Some("cfg") => {
+                            if rust_cfg_attribute_is_false(s, source) {
+                                return false;
+                            }
                         }
-                    }
+                        Some("test" | "rstest") => has_test_attribute = true,
+                        _ => {}
+                    },
                     "line_comment" | "block_comment" => {}
                     _ => break,
                 }
                 sib = s.prev_named_sibling();
             }
-            false
+            has_test_attribute
         }
-        Lang::Python => name.starts_with("test_") || name == "test",
+        Lang::Python => python_test_file(file) && name.starts_with("test"),
     }
+}
+
+/// Whether a Python file participates in pytest/unittest default discovery
+/// (`test*.py` for both, plus pytest's `*_test.py`).
+fn python_test_file(file: &str) -> bool {
+    let base = file.rsplit(['/', '\\']).next().unwrap_or(file);
+    let Some(stem) = base.strip_suffix(".py") else {
+        return false;
+    };
+    stem.starts_with("test") || stem.ends_with("_test")
+}
+
+/// Evaluate a `#[cfg(...)]` attribute for the analysis host. Returns true
+/// only when the predicate is provably false here; unknown predicates return
+/// false so unproven identities stay fail-open.
+fn rust_cfg_attribute_is_false(item: TsNode, source: &str) -> bool {
+    let Some(attribute) = item.named_child(0) else {
+        return false;
+    };
+    let Some(arguments) = attribute.child_by_field_name("arguments") else {
+        return false;
+    };
+    let text = node_text(arguments, source);
+    let inner = text
+        .strip_prefix('(')
+        .and_then(|text| text.strip_suffix(')'))
+        .unwrap_or(text);
+    cfg_predicate_value(inner) == Some(false)
+}
+
+/// Tri-state `cfg` predicate evaluation against the analysis host:
+/// `Some(true)`/`Some(false)` when provable, `None` when unknown.
+fn cfg_predicate_value(predicate: &str) -> Option<bool> {
+    let predicate = predicate.trim();
+    if let Some(inner) = strip_call(predicate, "not") {
+        return cfg_predicate_value(inner).map(|value| !value);
+    }
+    if let Some(inner) = strip_call(predicate, "all") {
+        return fold_cfg_operands(inner, true);
+    }
+    if let Some(inner) = strip_call(predicate, "any") {
+        return fold_cfg_operands(inner, false);
+    }
+    if let Some((key, value)) = predicate.split_once('=') {
+        let key = key.trim();
+        let value = value.trim().trim_matches('"');
+        return match key {
+            "target_os" => Some(value == std::env::consts::OS),
+            "target_family" => Some(value == std::env::consts::FAMILY),
+            "target_arch" => Some(value == std::env::consts::ARCH),
+            _ => None,
+        };
+    }
+    match predicate {
+        "unix" => Some(cfg!(unix)),
+        "windows" => Some(cfg!(windows)),
+        // Test discovery evaluates in the test profile, where `cfg(test)`
+        // and coverage/debug assertions hold.
+        "test" | "debug_assertions" => Some(true),
+        _ => None,
+    }
+}
+
+/// `all`/`any` composition with three-valued logic: a decisive operand
+/// (false for `all`, true for `any`) is conclusive even when siblings are
+/// unknown; otherwise any unknown operand makes the whole predicate unknown.
+fn fold_cfg_operands(operands: &str, is_all: bool) -> Option<bool> {
+    let mut unknown = false;
+    for operand in split_cfg_operands(operands) {
+        match cfg_predicate_value(operand) {
+            Some(value) if value != is_all => return Some(!is_all),
+            Some(_) => {}
+            None => unknown = true,
+        }
+    }
+    if unknown {
+        None
+    } else {
+        Some(is_all)
+    }
+}
+
+fn strip_call<'a>(predicate: &'a str, name: &str) -> Option<&'a str> {
+    let rest = predicate.strip_prefix(name)?.trim_start();
+    let rest = rest.strip_prefix('(')?;
+    rest.strip_suffix(')')
+}
+
+/// Split on top-level commas only, respecting nested parentheses.
+fn split_cfg_operands(operands: &str) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let mut depth = 0_usize;
+    let mut start = 0;
+    for (index, byte) in operands.bytes().enumerate() {
+        match byte {
+            b'(' => depth += 1,
+            b')' => depth = depth.saturating_sub(1),
+            b',' if depth == 0 => {
+                parts.push(&operands[start..index]);
+                start = index + 1;
+            }
+            _ => {}
+        }
+    }
+    parts.push(&operands[start..]);
+    parts
 }
 
 fn rust_attribute_terminal_name<'a>(item: TsNode, source: &'a str) -> Option<&'a str> {
@@ -288,6 +416,16 @@ fn is_type_kind(lang: Lang, kind: &str) -> bool {
     }
 }
 
+/// What kind of container the current [`Scope`] is. Test frameworks only
+/// collect module-level functions and type/class methods, so a definition
+/// nested inside another function is never a runnable test.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ScopeKind {
+    Module,
+    Type,
+    Function,
+}
+
 /// The enclosing container while walking definitions. `path`/`id` name the
 /// container a new def is attached to (a module at top level, a type inside a
 /// class body or Rust `impl`). `ty` is the enclosing *type* path when we're
@@ -297,6 +435,7 @@ struct Scope<'a> {
     path: &'a str,
     id: NodeId,
     ty: Option<&'a str>,
+    kind: ScopeKind,
 }
 
 /// Recursively map definitions, carrying the [`Scope`] so methods belong to
@@ -322,7 +461,7 @@ fn collect_defs(
                 .with_source(node_text(node, source));
             n.file = Some(file.to_string());
             n.span = span_of(node);
-            if is_test_fn(lang, node, &name, source) {
+            if is_test_fn(lang, node, &name, source, file, scope) {
                 n.set_attr("is_test", "true");
             }
             if let Some(return_type) = node.child_by_field_name("return_type") {
@@ -353,7 +492,16 @@ fn collect_defs(
             if let Some(type_path) = scope.ty {
                 extract_field_flows(node, source, lang, id, type_path, out);
             }
-            recurse_children(node, source, file, lang, scope, out);
+            // Definitions nested inside a function body are scoped to the
+            // function, so a nested `def test_x` neither collides with a
+            // sibling of the same name nor masquerades as a runnable test.
+            let inner = Scope {
+                path: &path,
+                id,
+                ty: scope.ty,
+                kind: ScopeKind::Function,
+            };
+            recurse_children(node, source, file, lang, &inner, out);
         }
         return;
     }
@@ -378,6 +526,7 @@ fn collect_defs(
                 path: &path,
                 id,
                 ty: Some(&path),
+                kind: ScopeKind::Type,
             };
             recurse_children(node, source, file, lang, &inner, out);
         }
@@ -395,6 +544,7 @@ fn collect_defs(
                 path: &type_path,
                 id: type_id,
                 ty: Some(&type_path),
+                kind: ScopeKind::Type,
             };
             recurse_children(node, source, file, lang, &inner, out);
             return;

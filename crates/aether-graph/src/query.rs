@@ -69,9 +69,11 @@ impl SemanticGraph {
     /// All test-marked nodes in the impact set of `origin` — i.e. every test
     /// that can be reached by a change to `origin` via the call graph. This is
     /// the minimal set of tests that must re-run when that function changes.
+    /// Ordered by node path so output and generated commands are
+    /// deterministic across runs.
     pub fn tests_for(&self, origin: NodeId) -> Vec<NodeId> {
         let impact = self.impact_of(origin);
-        impact
+        let mut tests: Vec<NodeId> = impact
             .affected
             .keys()
             .copied()
@@ -81,19 +83,31 @@ impl SemanticGraph {
                     .map(|n| n.attr("is_test").is_some())
                     .unwrap_or(false)
             })
-            .collect()
+            .collect();
+        self.sort_by_path(&mut tests);
+        tests
     }
 
     /// Union of test nodes reachable from any of the given origin nodes.
-    /// Deduplicates so each test appears at most once.
+    /// Deduplicates so each test appears at most once; path-ordered.
     pub fn tests_for_nodes(&self, origins: &[NodeId]) -> Vec<NodeId> {
         use std::collections::HashSet;
         let mut seen = HashSet::new();
-        origins
+        let mut tests: Vec<NodeId> = origins
             .iter()
             .flat_map(|&id| self.tests_for(id))
             .filter(|id| seen.insert(*id))
-            .collect()
+            .collect();
+        self.sort_by_path(&mut tests);
+        tests
+    }
+
+    fn sort_by_path(&self, ids: &mut [NodeId]) {
+        ids.sort_by(|a, b| {
+            let left = self.get(*a).map(|n| n.path.as_str()).unwrap_or_default();
+            let right = self.get(*b).map(|n| n.path.as_str()).unwrap_or_default();
+            left.cmp(right).then_with(|| a.cmp(b))
+        });
     }
 
     fn directional_neighbors(

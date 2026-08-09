@@ -134,11 +134,13 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
         println!("  (test commands are disabled in bitcode.toml)");
     }
 
+    // A real set difference, not count arithmetic: selected ids that are not
+    // graph test nodes (e.g. baseline-only paths) must not distort the count.
+    let selected: HashSet<NodeId> = test_ids.iter().copied().collect();
     let skipped = graph
         .nodes()
-        .filter(|n| n.attr("is_test").is_some())
-        .count()
-        .saturating_sub(test_ids.len());
+        .filter(|n| n.attr("is_test").is_some() && !selected.contains(&n.id))
+        .count();
     if skipped > 0 {
         println!("\n  ({skipped} other test(s) not in impact set — skipped)");
     }

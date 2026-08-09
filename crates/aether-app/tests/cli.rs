@@ -712,6 +712,13 @@ from models import SessionIdentity
 
 def apply(identity: SessionIdentity):
     identity.inspect()
+"#,
+    );
+    repo.write(
+        "test_service.py",
+        r#"
+from models import SessionIdentity
+from service import apply
 
 def test_provenance():
     apply(SessionIdentity())
@@ -728,7 +735,7 @@ def test_provenance():
     );
     assert!(stdout.contains("Impacted tests (1)"), "{stdout}");
     assert!(
-        stdout.contains("crate::service::test_provenance"),
+        stdout.contains("crate::test_service::test_provenance"),
         "{stdout}"
     );
     assert!(stdout.contains("pytest -k test_provenance"), "{stdout}");
@@ -786,6 +793,13 @@ def custom_named(session_identity: Optional[SessionIdentity]):
 
 def dotted_suffix(identity: SessionIdentity | None, box):
     return box.identity.inspect()
+"#,
+    );
+    repo.write(
+        "test_service.py",
+        r#"
+from models import DecoyIdentity, SessionIdentity
+from service import Box, Optional, ambiguous, ambiguous_named, apply, custom, custom_named, dotted_suffix
 
 def test_provenance():
     apply(SessionIdentity())
@@ -817,24 +831,27 @@ def test_dotted_suffix():
     );
     assert!(stdout.contains("Impacted tests (1)"), "{stdout}");
     assert!(
-        stdout.contains("crate::service::test_provenance"),
-        "{stdout}"
-    );
-    assert!(!stdout.contains("crate::service::test_decoy"), "{stdout}");
-    assert!(
-        !stdout.contains("crate::service::test_ambiguous_named"),
+        stdout.contains("crate::test_service::test_provenance"),
         "{stdout}"
     );
     assert!(
-        !stdout.contains("crate::service::test_custom_wrapper"),
+        !stdout.contains("crate::test_service::test_decoy"),
         "{stdout}"
     );
     assert!(
-        !stdout.contains("crate::service::test_custom_named_wrapper"),
+        !stdout.contains("crate::test_service::test_ambiguous_named"),
         "{stdout}"
     );
     assert!(
-        !stdout.contains("crate::service::test_dotted_suffix"),
+        !stdout.contains("crate::test_service::test_custom_wrapper"),
+        "{stdout}"
+    );
+    assert!(
+        !stdout.contains("crate::test_service::test_custom_named_wrapper"),
+        "{stdout}"
+    );
+    assert!(
+        !stdout.contains("crate::test_service::test_dotted_suffix"),
         "{stdout}"
     );
     assert!(stdout.contains("pytest -k test_provenance"), "{stdout}");
@@ -865,6 +882,12 @@ from models import SessionIdentity
 def apply():
     identity = SessionIdentity()
     identity.inspect()
+"#,
+    );
+    repo.write(
+        "test_service.py",
+        r#"
+from service import apply
 
 def test_provenance():
     apply()
@@ -881,7 +904,7 @@ def test_provenance():
     );
     assert!(stdout.contains("Impacted tests (1)"), "{stdout}");
     assert!(
-        stdout.contains("crate::service::test_provenance"),
+        stdout.contains("crate::test_service::test_provenance"),
         "{stdout}"
     );
     assert!(stdout.contains("pytest -k test_provenance"), "{stdout}");
@@ -911,6 +934,13 @@ from models import SessionIdentity as Session
 
 def apply(identity: Session):
     identity.inspect()
+"#,
+    );
+    repo.write(
+        "test_service.py",
+        r#"
+from models import SessionIdentity as Session
+from service import apply
 
 def test_provenance():
     apply(Session())
@@ -927,7 +957,7 @@ def test_provenance():
     );
     assert!(stdout.contains("Impacted tests (1)"), "{stdout}");
     assert!(
-        stdout.contains("crate::service::test_provenance"),
+        stdout.contains("crate::test_service::test_provenance"),
         "{stdout}"
     );
     assert!(stdout.contains("pytest -k test_provenance"), "{stdout}");
