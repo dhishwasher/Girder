@@ -1,5 +1,6 @@
 use crate::project::config::{ConfiguredCommand, ProjectConfig};
 use crate::project::git::semantic_changed_impact;
+use crate::project::process::{run_streamed, BoundedStatus};
 use crate::project::source::build_from_dir_with_config;
 use aether_graph::NodeId;
 use std::collections::HashSet;
@@ -151,7 +152,7 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
         println!("\nRunning ...");
         let mut failures = Vec::new();
         for (language, command) in &commands {
-            let status = run_command(command, &root)?;
+            let status = run_command(command, &root, &config)?;
             if !status.success() {
                 failures.push(format!(
                     "{language} command exited with {}: {}",
@@ -171,12 +172,45 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Execute one configured test command with hard time and output bounds.
+///
+/// Output streams live to the terminal and stdin stays inherited, but the
+/// child runs in its own process group: exceeding the configured timeout or
+/// output budget kills the entire tree and fails with an explicit
+/// classification instead of leaving descendants running.
 fn run_command(
     command: &ConfiguredCommand,
     root: &std::path::Path,
+    config: &ProjectConfig,
 ) -> std::io::Result<std::process::ExitStatus> {
-    std::process::Command::new(&command.program)
-        .args(&command.args)
-        .current_dir(root)
-        .status()
+    let mut child = std::process::Command::new(&command.program);
+    child.args(&command.args).current_dir(root);
+    let timeout = std::time::Duration::from_secs(config.tests.run_timeout_seconds);
+    let run = run_streamed(child, timeout, config.tests.run_max_output_bytes).map_err(|error| {
+        std::io::Error::new(
+            error.kind(),
+            format!("could not start {}: {error}", command.display()),
+        )
+    })?;
+    match run.status {
+        BoundedStatus::Completed(status) => Ok(status),
+        BoundedStatus::TimedOut => Err(std::io::Error::new(
+            std::io::ErrorKind::TimedOut,
+            format!(
+                "test command `{}` timed out after {}s; its process tree was killed",
+                command.display(),
+                timeout.as_secs()
+            ),
+        )),
+        BoundedStatus::OutputLimited => Err(std::io::Error::other(format!(
+            "test command `{}` produced more than {} bytes of output; \
+             its process tree was killed",
+            command.display(),
+            config.tests.run_max_output_bytes
+        ))),
+        BoundedStatus::Cancelled => Err(std::io::Error::new(
+            std::io::ErrorKind::Interrupted,
+            format!("test command `{}` was cancelled", command.display()),
+        )),
+    }
 }

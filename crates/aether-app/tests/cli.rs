@@ -2055,3 +2055,207 @@ fn extension_project_projections_are_restored_on_remove() {
         .query_by_kind(aether_graph::NodeKind::Extension)
         .is_empty());
 }
+
+#[test]
+fn concurrent_review_and_test_impact_produce_complete_output() {
+    let repo = TempRepo::new("concurrent-analysis");
+    repo.write(
+        "src/lib.rs",
+        "pub fn helper() -> i64 { 1 }\n\n#[test]\nfn test_helper() { assert!(helper() >= 1); }\n",
+    );
+    repo.commit_all("baseline");
+    repo.write(
+        "src/lib.rs",
+        "pub fn helper() -> i64 { 2 }\n\n#[test]\nfn test_helper() { assert!(helper() >= 1); }\n",
+    );
+
+    let root = repo.path().to_str().unwrap().to_owned();
+    // Uncontended runs define the complete expected output; the graph build
+    // is deterministic and neither command mutates project state.
+    let expected_review = run_bitcode(&["review", &root]);
+    let expected_impact = run_bitcode(&["test-impact", &root]);
+
+    let spawn = |command: &'static str, root: String| {
+        std::thread::spawn(move || {
+            Command::new(env!("CARGO_BIN_EXE_bitcode"))
+                .args([command, &root])
+                .output()
+                .unwrap()
+        })
+    };
+
+    for round in 0..5 {
+        // Alternate the sharpest pairings: mixed commands and two index
+        // readers of the same kind.
+        let (first, second) = if round % 2 == 0 {
+            ("review", "test-impact")
+        } else {
+            ("test-impact", "test-impact")
+        };
+        let a = spawn(first, root.clone());
+        let b = spawn(second, root.clone());
+        for (command, handle) in [(first, a), (second, b)] {
+            let output = handle.join().unwrap();
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            assert!(
+                output.status.success(),
+                "round {round}: concurrent {command} failed\nstdout:\n{stdout}\nstderr:\n{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            let expected = if command == "review" {
+                &expected_review
+            } else {
+                &expected_impact
+            };
+            assert_eq!(
+                stdout.as_ref(),
+                expected.as_str(),
+                "round {round}: concurrent {command} output was incomplete or reordered"
+            );
+        }
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn test_impact_run_kills_a_timed_out_process_tree() {
+    let repo = TempRepo::new("run-timeout");
+    repo.write(
+        "src/lib.rs",
+        "pub fn add(a: i64, b: i64) -> i64 { a + b }\n\n#[test]\nfn test_add() { assert_eq!(add(2, 3), 5); }\n",
+    );
+    repo.write(
+        "bitcode.toml",
+        r#"
+version = 1
+
+[tests]
+rust = ["sh", "-c", "sleep 60 & echo $! > grandchild.pid; wait", "{test}"]
+run_timeout_seconds = 1
+"#,
+    );
+
+    let started = Instant::now();
+    let output = run_bitcode_output(&[
+        "test-impact",
+        repo.path().to_str().unwrap(),
+        "--run",
+        "crate::lib::add",
+    ]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    assert!(!output.status.success(), "timed-out run must fail");
+    assert!(
+        stderr.contains("timed out after 1s"),
+        "stderr must classify the timeout:\n{stderr}"
+    );
+    assert!(
+        started.elapsed() < Duration::from_secs(30),
+        "the runner must not wait out the child"
+    );
+
+    // The configured command's own background child (a grandchild of
+    // bitcode) must not survive the process-group kill.
+    let grandchild = std::fs::read_to_string(repo.path().join("grandchild.pid"))
+        .expect("runner wrote its grandchild pid before the kill");
+    let grandchild = grandchild.trim().to_owned();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    loop {
+        let alive = Command::new("kill")
+            .args(["-0", &grandchild])
+            .status()
+            .unwrap()
+            .success();
+        if !alive {
+            break;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "grandchild {grandchild} survived the process-tree kill"
+        );
+        std::thread::sleep(Duration::from_millis(100));
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn test_impact_run_kills_a_child_exceeding_the_output_budget() {
+    let repo = TempRepo::new("run-output-cap");
+    repo.write(
+        "src/lib.rs",
+        "pub fn add(a: i64, b: i64) -> i64 { a + b }\n\n#[test]\nfn test_add() { assert_eq!(add(2, 3), 5); }\n",
+    );
+    repo.write(
+        "bitcode.toml",
+        r#"
+version = 1
+
+[tests]
+rust = ["sh", "-c", "yes overflowing-test-output", "{test}"]
+run_max_output_bytes = 4096
+"#,
+    );
+
+    let started = Instant::now();
+    let output = run_bitcode_output(&[
+        "test-impact",
+        repo.path().to_str().unwrap(),
+        "--run",
+        "crate::lib::add",
+    ]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    assert!(!output.status.success(), "overflowing run must fail");
+    assert!(
+        stderr.contains("produced more than 4096 bytes"),
+        "stderr must classify the overflow:\n{stderr}"
+    );
+    assert!(started.elapsed() < Duration::from_secs(30));
+    // The tee stops retaining once the cap is hit, so bitcode's own stdout
+    // stays bounded instead of relaying the flood.
+    assert!(output.stdout.len() < 64 * 1024);
+}
+
+#[cfg(unix)]
+#[test]
+fn analysis_classifies_a_hung_git_subprocess() {
+    let repo = TempRepo::new("git-timeout");
+    repo.write(
+        "src/lib.rs",
+        "pub fn add(a: i64, b: i64) -> i64 { a + b }\n",
+    );
+    repo.commit_all("baseline");
+
+    let shims = repo.path().join("shims");
+    std::fs::create_dir_all(&shims).unwrap();
+    let shim = shims.join("git");
+    std::fs::write(&shim, "#!/bin/sh\nsleep 60\n").unwrap();
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&shim, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    let path = format!(
+        "{}:{}",
+        shims.display(),
+        std::env::var("PATH").unwrap_or_default()
+    );
+
+    let started = Instant::now();
+    let output = Command::new(env!("CARGO_BIN_EXE_bitcode"))
+        .args(["test-impact", repo.path().to_str().unwrap()])
+        .env("PATH", path)
+        .env("BITCODE_GIT_TIMEOUT_SECONDS", "1")
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    assert!(!output.status.success(), "hung git must fail the command");
+    assert!(
+        stderr.contains("timed out after 1s"),
+        "stderr must classify the git timeout:\n{stderr}"
+    );
+    assert!(
+        started.elapsed() < Duration::from_secs(30),
+        "analysis must not wait out the hung git"
+    );
+}

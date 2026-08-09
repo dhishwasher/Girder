@@ -1,9 +1,10 @@
 use crate::project::config::{ConfiguredCommand, ProjectConfig};
+use crate::project::process::{run_diagnostic, BoundedOutput, BoundedStatus};
 use crate::project::source::{verify_project_writes, ProjectWrite};
-use std::collections::{BTreeMap, HashSet, VecDeque};
-use std::io::{Read, Write};
+use std::collections::{BTreeMap, HashSet};
+use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, ExitStatus, Stdio};
+use std::process::{Command, ExitStatus};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -303,65 +304,30 @@ fn run_validation_command(
     command
         .current_dir(candidate)
         .env("BITCODE_VALIDATION", "1")
-        .env("PYTHONDONTWRITEBYTECODE", "1")
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+        .env("PYTHONDONTWRITEBYTECODE", "1");
     if let Some(target) = &target_dir {
         command.env("CARGO_TARGET_DIR", target);
     }
-    #[cfg(unix)]
-    {
-        use std::os::unix::process::CommandExt;
-        command.process_group(0);
-    }
 
-    let mut child = command.spawn().map_err(|error| {
+    let run = run_diagnostic(
+        command,
+        Duration::from_secs(project_config.validation.timeout_seconds),
+        project_config.validation.max_output_bytes,
+        cancel,
+    )
+    .map_err(|error| {
         std::io::Error::new(
             error.kind(),
             format!("could not start {}: {error}", configured.display()),
         )
     })?;
-    let stdout = child
-        .stdout
-        .take()
-        .ok_or_else(|| std::io::Error::other("validation stdout was not captured"))?;
-    let stderr = child
-        .stderr
-        .take()
-        .ok_or_else(|| std::io::Error::other("validation stderr was not captured"))?;
-    let stdout_reader = capture_output(stdout, project_config.validation.max_output_bytes / 2);
-    let stderr_reader = capture_output(stderr, project_config.validation.max_output_bytes / 2);
-    let timeout = Duration::from_secs(project_config.validation.timeout_seconds);
-
-    let (status, exit) = loop {
-        if cancel.load(Ordering::Relaxed) {
-            terminate_process_tree(&mut child);
-            break (ValidationStatus::Cancelled, child.wait().ok());
-        }
-        if let Some(exit) = child.try_wait()? {
-            break (
-                if exit.success() {
-                    ValidationStatus::Passed
-                } else {
-                    ValidationStatus::Failed
-                },
-                Some(exit),
-            );
-        }
-        if started.elapsed() >= timeout {
-            terminate_process_tree(&mut child);
-            break (ValidationStatus::TimedOut, child.wait().ok());
-        }
-        std::thread::sleep(Duration::from_millis(25));
+    let status = match run.status {
+        BoundedStatus::Completed(exit) if exit.success() => ValidationStatus::Passed,
+        BoundedStatus::Completed(_) | BoundedStatus::OutputLimited => ValidationStatus::Failed,
+        BoundedStatus::TimedOut => ValidationStatus::TimedOut,
+        BoundedStatus::Cancelled => ValidationStatus::Cancelled,
     };
-
-    let stdout = stdout_reader
-        .join()
-        .map_err(|_| std::io::Error::other("validation stdout reader panicked"))??;
-    let stderr = stderr_reader
-        .join()
-        .map_err(|_| std::io::Error::other("validation stderr reader panicked"))??;
-    let output = render_output(exit, stdout, stderr);
+    let output = render_output(run.exit, run.stdout, run.stderr);
     Ok(ValidationStep {
         label: label.to_string(),
         command: Some(configured.display()),
@@ -535,23 +501,6 @@ fn bubblewrap_path() -> Option<PathBuf> {
         .find(|candidate| candidate.is_file())
 }
 
-fn capture_output(
-    mut reader: impl Read + Send + 'static,
-    limit: usize,
-) -> std::thread::JoinHandle<std::io::Result<BoundedOutput>> {
-    std::thread::spawn(move || {
-        let mut output = BoundedOutput::new(limit);
-        let mut buffer = [0_u8; 8192];
-        loop {
-            let read = reader.read(&mut buffer)?;
-            if read == 0 {
-                return Ok(output);
-            }
-            output.push(&buffer[..read]);
-        }
-    })
-}
-
 fn render_output(exit: Option<ExitStatus>, stdout: BoundedOutput, stderr: BoundedOutput) -> String {
     let mut sections = Vec::new();
     if let Some(exit) = exit {
@@ -568,17 +517,6 @@ fn render_output(exit: Option<ExitStatus>, stdout: BoundedOutput, stderr: Bounde
     sections.join("\n")
 }
 
-fn terminate_process_tree(child: &mut std::process::Child) {
-    #[cfg(unix)]
-    unsafe {
-        let _ = libc::kill(-(child.id() as i32), libc::SIGKILL);
-    }
-    #[cfg(not(unix))]
-    {
-        let _ = child.kill();
-    }
-}
-
 fn check_cancelled(cancel: &Arc<AtomicBool>) -> std::io::Result<()> {
     if cancel.load(Ordering::Relaxed) {
         Err(std::io::Error::new(
@@ -587,52 +525,6 @@ fn check_cancelled(cancel: &Arc<AtomicBool>) -> std::io::Result<()> {
         ))
     } else {
         Ok(())
-    }
-}
-
-struct BoundedOutput {
-    prefix: Vec<u8>,
-    suffix: VecDeque<u8>,
-    prefix_limit: usize,
-    suffix_limit: usize,
-    truncated: bool,
-}
-
-impl BoundedOutput {
-    fn new(limit: usize) -> Self {
-        let prefix_limit = limit / 2;
-        Self {
-            prefix: Vec::with_capacity(prefix_limit),
-            suffix: VecDeque::with_capacity(limit - prefix_limit),
-            prefix_limit,
-            suffix_limit: limit - prefix_limit,
-            truncated: false,
-        }
-    }
-
-    fn push(&mut self, bytes: &[u8]) {
-        let prefix_room = self.prefix_limit.saturating_sub(self.prefix.len());
-        let prefix_bytes = prefix_room.min(bytes.len());
-        self.prefix.extend_from_slice(&bytes[..prefix_bytes]);
-        for byte in &bytes[prefix_bytes..] {
-            if self.suffix.len() == self.suffix_limit {
-                self.suffix.pop_front();
-                self.truncated = true;
-            }
-            if self.suffix_limit > 0 {
-                self.suffix.push_back(*byte);
-            }
-        }
-        self.truncated |= prefix_bytes < bytes.len() && self.suffix_limit == 0;
-    }
-
-    fn render(self) -> String {
-        let mut bytes = self.prefix;
-        if self.truncated {
-            bytes.extend_from_slice(b"\n... output truncated ...\n");
-        }
-        bytes.extend(self.suffix);
-        String::from_utf8_lossy(&bytes).into_owned()
     }
 }
 
@@ -649,15 +541,28 @@ impl CandidateWorkspace {
     ) -> std::io::Result<Self> {
         let canonical_root = std::fs::canonicalize(root)?;
         let validation_root = canonical_root.join(VALIDATION_ROOT);
-        std::fs::create_dir_all(&validation_root)?;
         let allocation = validation_root.join(format!(
             "{}-{}",
             std::process::id(),
             NEXT_VALIDATION.fetch_add(1, Ordering::Relaxed)
         ));
-        std::fs::create_dir(&allocation)?;
         let workspace = allocation.join("workspace");
-        std::fs::create_dir(&workspace)?;
+        // A concurrent transaction cleanup or workspace drop may prune an
+        // empty `.bitcode` between these creations; retry once on ENOENT.
+        let mut attempts = 0;
+        loop {
+            attempts += 1;
+            let created = std::fs::create_dir_all(&validation_root)
+                .and_then(|()| std::fs::create_dir(&allocation))
+                .and_then(|()| std::fs::create_dir(&workspace));
+            match created {
+                Ok(()) => break,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound && attempts < 3 => {
+                    continue;
+                }
+                Err(error) => return Err(error),
+            }
+        }
         let mut copied = 0_u64;
         let mut visited = HashSet::new();
         let candidate = Self {
@@ -1035,18 +940,6 @@ mod tests {
 
         assert_eq!(error.kind(), std::io::ErrorKind::StorageFull);
         assert!(!project.0.join(".bitcode").exists());
-    }
-
-    #[test]
-    fn output_capture_keeps_prefix_and_suffix() {
-        let mut output = BoundedOutput::new(20);
-        output.push(b"0123456789abcdefghijABCDEFGHIJ");
-
-        let rendered = output.render();
-
-        assert!(rendered.starts_with("0123456789"));
-        assert!(rendered.contains("output truncated"));
-        assert!(rendered.ends_with("ABCDEFGHIJ"));
     }
 
     #[test]

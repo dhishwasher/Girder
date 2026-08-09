@@ -1,11 +1,27 @@
 use crate::project::config::ProjectConfig;
+use crate::project::process::{run_captured, BoundedStatus, CapturedRun};
 use crate::project::source::is_configured_source_path;
 use aether_builder::GraphBuilder;
 use aether_graph::{NodeId, NodeKind, SemanticGraph};
 use std::collections::{BTreeSet, HashSet};
 use std::io::{Error, ErrorKind};
 use std::path::Path;
-use std::process::Output;
+use std::time::Duration;
+
+/// Hard bounds for every Git subprocess. Timeout and overflow kill the whole
+/// process group and fail the command with an explicit classification —
+/// captured output is either complete or an error, never truncated data.
+const GIT_TIMEOUT: Duration = Duration::from_secs(120);
+const GIT_MAX_OUTPUT_BYTES: usize = 16 * 1024 * 1024;
+
+fn git_timeout() -> Duration {
+    std::env::var("BITCODE_GIT_TIMEOUT_SECONDS")
+        .ok()
+        .and_then(|value| value.parse::<u64>().ok())
+        .filter(|seconds| *seconds > 0)
+        .map(Duration::from_secs)
+        .unwrap_or(GIT_TIMEOUT)
+}
 
 fn root_argument(root: &Path) -> std::io::Result<&str> {
     root.to_str().ok_or_else(|| {
@@ -16,31 +32,56 @@ fn root_argument(root: &Path) -> std::io::Result<&str> {
     })
 }
 
-fn git_output(root: &Path, args: &[&str]) -> std::io::Result<Output> {
-    let output = std::process::Command::new("git")
+fn git_captured(root: &Path, args: &[&str]) -> std::io::Result<CapturedRun> {
+    let mut command = std::process::Command::new("git");
+    command
         .arg("-C")
         .arg(root_argument(root)?)
         .args(args)
-        .output()
-        .map_err(|error| Error::new(error.kind(), format!("failed to run git: {error}")))?;
-    if output.status.success() {
-        return Ok(output);
-    }
+        // Analysis commands only read repository state; skipping optional
+        // index refreshes keeps concurrent invocations from contending on
+        // `.git/index.lock`.
+        .env("GIT_OPTIONAL_LOCKS", "0");
+    run_captured(command, git_timeout(), GIT_MAX_OUTPUT_BYTES)
+        .map_err(|error| Error::new(error.kind(), format!("failed to run git: {error}")))
+}
+
+fn git_output(root: &Path, args: &[&str]) -> std::io::Result<Vec<u8>> {
+    let run = git_captured(root, args)?;
     let rendered = args.join(" ");
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    Err(Error::other(format!(
-        "git {rendered} failed with {}: {}",
-        output
-            .status
-            .code()
-            .map(|code| code.to_string())
-            .unwrap_or_else(|| "a signal".into()),
-        stderr.trim()
-    )))
+    match run.status {
+        BoundedStatus::Completed(status) if status.success() => Ok(run.stdout),
+        BoundedStatus::Completed(status) => {
+            let stderr = String::from_utf8_lossy(&run.stderr);
+            Err(Error::other(format!(
+                "git {rendered} failed with {}: {}",
+                status
+                    .code()
+                    .map(|code| code.to_string())
+                    .unwrap_or_else(|| "a signal".into()),
+                stderr.trim()
+            )))
+        }
+        BoundedStatus::TimedOut => Err(Error::new(
+            ErrorKind::TimedOut,
+            format!(
+                "git {rendered} timed out after {}s; its process tree was killed",
+                git_timeout().as_secs()
+            ),
+        )),
+        BoundedStatus::OutputLimited => Err(Error::other(format!(
+            "git {rendered} produced more than {GIT_MAX_OUTPUT_BYTES} bytes of output; \
+             its process tree was killed"
+        ))),
+        BoundedStatus::Cancelled => Err(Error::new(
+            ErrorKind::Interrupted,
+            format!("git {rendered} was cancelled"),
+        )),
+    }
 }
 
 fn git_text(root: &Path, args: &[&str]) -> std::io::Result<String> {
-    String::from_utf8(git_output(root, args)?.stdout).map_err(|error| {
+    String::from_utf8(git_output(root, args)?).map_err(|error| {
         Error::new(
             ErrorKind::InvalidData,
             format!("git {} returned non-UTF-8 output: {error}", args.join(" ")),
@@ -49,19 +90,24 @@ fn git_text(root: &Path, args: &[&str]) -> std::io::Result<String> {
 }
 
 pub(crate) fn git_is_repo(root: &Path) -> std::io::Result<bool> {
-    let output = std::process::Command::new("git")
-        .args([
-            "-C",
-            root_argument(root)?,
-            "rev-parse",
-            "--is-inside-work-tree",
-        ])
-        .output()
-        .map_err(|error| Error::new(error.kind(), format!("failed to run git: {error}")))?;
-    if !output.status.success() {
-        return Ok(false);
-    }
-    let stdout = String::from_utf8(output.stdout).map_err(|error| {
+    let run = git_captured(root, &["rev-parse", "--is-inside-work-tree"])?;
+    let stdout = match run.status {
+        BoundedStatus::Completed(status) if status.success() => run.stdout,
+        BoundedStatus::Completed(_) => return Ok(false),
+        BoundedStatus::TimedOut => {
+            return Err(Error::new(
+                ErrorKind::TimedOut,
+                format!(
+                    "git rev-parse timed out after {}s; its process tree was killed",
+                    git_timeout().as_secs()
+                ),
+            ))
+        }
+        BoundedStatus::OutputLimited | BoundedStatus::Cancelled => {
+            return Err(Error::other("git rev-parse exceeded its output bounds"))
+        }
+    };
+    let stdout = String::from_utf8(stdout).map_err(|error| {
         Error::new(
             ErrorKind::InvalidData,
             format!("git rev-parse returned non-UTF-8 output: {error}"),
@@ -140,7 +186,7 @@ pub(crate) fn git_tracked_sources_at(
         ],
     )?;
     let mut sources = Vec::new();
-    for path in nul_delimited_paths(&output.stdout, "git ls-tree")? {
+    for path in nul_delimited_paths(&output, "git ls-tree")? {
         let Some(relative) = strip_git_prefix(&path, &prefix) else {
             continue;
         };
@@ -167,7 +213,7 @@ pub(crate) fn build_baseline_graph(root: &Path, git_ref: &str) -> std::io::Resul
         let object_path = git_object_path(&prefix, rel);
         let object = format!("{commit_oid}:{object_path}");
         let output = git_output(root, &["show", &object])?;
-        let text = String::from_utf8(output.stdout).map_err(|error| {
+        let text = String::from_utf8(output).map_err(|error| {
             Error::new(
                 ErrorKind::InvalidData,
                 format!("baseline source {rel} is not valid UTF-8: {error}"),
@@ -196,7 +242,7 @@ pub(crate) fn git_changed_files(root: &Path) -> std::io::Result<Vec<String>> {
         cmd_args.extend_from_slice(extra_args);
         let output = git_output(root, &cmd_args)?;
         let mut paths = Vec::new();
-        for relative in nul_delimited_paths(&output.stdout, "git diff")? {
+        for relative in nul_delimited_paths(&output, "git diff")? {
             if is_configured_source_path(&config, &relative)? {
                 paths.push(relative);
             }
@@ -220,7 +266,7 @@ pub(crate) fn git_changed_files(root: &Path) -> std::io::Result<Vec<String>> {
 fn git_untracked_sources(root: &Path, config: &ProjectConfig) -> std::io::Result<Vec<String>> {
     let output = git_output(root, &["ls-files", "-z", "--others", "--exclude-standard"])?;
     let mut sources = Vec::new();
-    for relative in nul_delimited_paths(&output.stdout, "git ls-files")? {
+    for relative in nul_delimited_paths(&output, "git ls-files")? {
         if is_configured_source_path(config, &relative)? {
             sources.push(relative);
         }

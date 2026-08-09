@@ -37,6 +37,10 @@ pub(crate) struct GraphConfig {
 pub(crate) struct TestConfig {
     pub(crate) rust: Option<Vec<String>>,
     pub(crate) python: Option<Vec<String>>,
+    /// Hard wall-clock budget for each `test-impact --run` child.
+    pub(crate) run_timeout_seconds: u64,
+    /// Hard cap on bytes a `--run` child may stream before it is killed.
+    pub(crate) run_max_output_bytes: usize,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -130,6 +134,8 @@ impl Default for TestConfig {
                     .map(str::to_string)
                     .collect(),
             ),
+            run_timeout_seconds: 1800,
+            run_max_output_bytes: 8 * 1024 * 1024,
         }
     }
 }
@@ -267,6 +273,16 @@ impl ProjectConfig {
         }
         validate_command("tests.rust", self.tests.rust.as_deref(), "{test}")?;
         validate_command("tests.python", self.tests.python.as_deref(), "{filter}")?;
+        if !(1..=86_400).contains(&self.tests.run_timeout_seconds) {
+            return Err(invalid_config(
+                "tests.run_timeout_seconds must be between 1 and 86400",
+            ));
+        }
+        if !(4 * 1024..=1024 * 1024 * 1024).contains(&self.tests.run_max_output_bytes) {
+            return Err(invalid_config(
+                "tests.run_max_output_bytes must be between 4096 and 1073741824",
+            ));
+        }
         if self.agents.output_module.trim().is_empty() {
             return Err(invalid_config("agents.output_module must not be empty"));
         }
