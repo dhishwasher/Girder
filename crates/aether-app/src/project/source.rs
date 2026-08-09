@@ -241,6 +241,7 @@ pub(crate) fn build_from_dir_with_config(
     let mut graph = SemanticGraph::new();
     let mut builder = GraphBuilder::new();
     let sources = collect_sources_with_config(root, config)?;
+    let mut contents = Vec::with_capacity(sources.len());
     for (absolute, relative) in &sources {
         let text = std::fs::read_to_string(absolute).map_err(|error| {
             std::io::Error::new(
@@ -248,8 +249,14 @@ pub(crate) fn build_from_dir_with_config(
                 format!("failed to read source {relative}: {error}"),
             )
         })?;
-        builder.load_file(&mut graph, relative, &text);
+        contents.push((relative.clone(), text));
     }
+    builder.load_files(
+        &mut graph,
+        contents
+            .iter()
+            .map(|(relative, text)| (relative.as_str(), text.as_str())),
+    );
     Ok((graph, builder, sources.len()))
 }
 

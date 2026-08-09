@@ -26,8 +26,9 @@ COMMANDS:
     demo                      Run the headless end-to-end pipeline demo (default)
     config <dir> [--init]     Show the validated effective project configuration.
                               --init creates bitcode.toml without overwriting.
-    analyze <dir>             Build the semantic graph from a project directory,
-                              report likely duplicates, save the configured graph
+    analyze <dir> [--json]    Build the semantic graph from a project directory,
+                              report likely duplicates, save the configured graph.
+                              --json emits one bounded machine-readable summary.
     search <dir> <query...>   Concept search: rank functions by relevance to a
                               natural-language query
     plan <dir> <intent...>    Preview what the swarm would build: runs the
@@ -38,9 +39,9 @@ COMMANDS:
     refactor <dir> rename <node::path> <new_name>
                               Semantic rename across the graph (follows Calls
                               edges, not text search), then save
-    inspect <file.aether> [path]
+    inspect <file.aether> [path|--json]
                               Load a saved graph; with a node path, show its
-                              impact set
+                              impact set. --json exports sorted exact graph records.
     review <dir> [--since <ref>]
                               Semantic code review vs a git ref (default: HEAD).
                               Shows added/modified/removed nodes + edges, impact

@@ -541,6 +541,23 @@ impl GraphBuilder {
 
     /// Initial load of a file. Full parse + extract + insert.
     pub fn load_file(&mut self, graph: &mut SemanticGraph, file: &str, source: &str) {
+        self.load_file_unresolved(graph, file, source);
+        self.resolve_calls(graph);
+    }
+
+    /// Initial load of a complete project snapshot, resolving project-wide
+    /// references once after every source projection has been inserted.
+    pub fn load_files<'file, 'source, I>(&mut self, graph: &mut SemanticGraph, files: I)
+    where
+        I: IntoIterator<Item = (&'file str, &'source str)>,
+    {
+        for (file, source) in files {
+            self.load_file_unresolved(graph, file, source);
+        }
+        self.resolve_calls(graph);
+    }
+
+    fn load_file_unresolved(&mut self, graph: &mut SemanticGraph, file: &str, source: &str) {
         let Some(lang) = Lang::from_path(file) else {
             return;
         };
@@ -559,7 +576,6 @@ impl GraphBuilder {
                 rust_imports: out.rust_imports.clone(),
             },
         );
-        self.resolve_calls(graph);
     }
 
     /// Re-sync a file after its full text changed (e.g. the editor buffer).

@@ -3,15 +3,35 @@ use crate::project::projection::project_rename;
 use crate::project::source::{build_from_dir, build_from_dir_with_config, save_graph};
 use crate::project::summary::print_summary;
 use aether_graph::SemanticGraph;
+use serde::Serialize;
+use sha2::{Digest, Sha256};
+use std::io::ErrorKind;
 use std::path::PathBuf;
+use std::time::Instant;
 
 pub fn analyze(args: &[String]) -> std::io::Result<()> {
-    let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
-    println!("Analyzing {} ...", root.display());
+    let Some(root) = args.first() else {
+        return Err(invalid_input("usage: bitcode analyze <dir> [--json]"));
+    };
+    let json = match args.get(1..) {
+        Some([]) => false,
+        Some([flag]) if flag == "--json" => true,
+        _ => {
+            return Err(invalid_input("usage: bitcode analyze <dir> [--json]"));
+        }
+    };
+    let root = PathBuf::from(root);
+    if !json {
+        println!("Analyzing {} ...", root.display());
+    }
     let config = ProjectConfig::load(&root)?;
-    let (mut graph, _builder, files) = build_from_dir_with_config(&root, &config)?;
-    println!("  loaded {files} source file(s)");
-    print_summary(&graph);
+    let build_started = Instant::now();
+    let (mut graph, _builder, source_files) = build_from_dir_with_config(&root, &config)?;
+    let build_ms = elapsed_millis(build_started);
+    if !json {
+        println!("  loaded {source_files} source file(s)");
+        print_summary(&graph);
+    }
 
     // Report inheritance relationships (Python class bases, Rust trait impls).
     let inherits: Vec<_> = graph
@@ -19,7 +39,7 @@ pub fn analyze(args: &[String]) -> std::io::Result<()> {
         .into_iter()
         .filter(|(_, _, k)| *k == aether_graph::EdgeKind::Inherits)
         .collect();
-    if !inherits.is_empty() {
+    if !json && !inherits.is_empty() {
         let mut inherits = inherits;
         inherits.sort_by_key(|(a, b, _)| {
             let left = graph.get(*a).map(|n| n.path.clone()).unwrap_or_default();
@@ -36,8 +56,10 @@ pub fn analyze(args: &[String]) -> std::io::Result<()> {
 
     // Derive semantic-similarity edges and report likely duplicate functions.
     // SemanticSimilar edges are stored both ways; print each unordered pair once.
+    let similarity_started = Instant::now();
     let linked = graph.compute_similarity_edges(0.6);
-    if linked > 0 {
+    let similarity_ms = elapsed_millis(similarity_started);
+    if !json && linked > 0 {
         println!("  similarity: {linked} likely-duplicate function pair(s):");
         let mut similar: Vec<_> = graph
             .edges()
@@ -56,9 +78,42 @@ pub fn analyze(args: &[String]) -> std::io::Result<()> {
         }
     }
 
+    let save_started = Instant::now();
     let out = save_graph(&root, &config, &graph)?;
-    println!("  saved semantic graph -> {}", out.display());
+    let save_ms = elapsed_millis(save_started);
+    if json {
+        print_json(&AnalyzeJson {
+            schema_version: 1,
+            source_files,
+            nodes: graph.node_count(),
+            edges: graph.edge_count(),
+            similarity_pairs: linked,
+            build_ms,
+            similarity_ms,
+            save_ms,
+            graph_path: out.to_string_lossy().into_owned(),
+        })?;
+    } else {
+        println!("  saved semantic graph -> {}", out.display());
+    }
     Ok(())
+}
+
+#[derive(Serialize)]
+struct AnalyzeJson {
+    schema_version: u32,
+    source_files: usize,
+    nodes: usize,
+    edges: usize,
+    similarity_pairs: usize,
+    build_ms: u64,
+    similarity_ms: u64,
+    save_ms: u64,
+    graph_path: String,
+}
+
+fn elapsed_millis(started: Instant) -> u64 {
+    started.elapsed().as_millis().try_into().unwrap_or(u64::MAX)
 }
 
 /// `bitcode search <dir> <query...>` — concept search over the codebase.
@@ -90,16 +145,20 @@ pub fn search(args: &[String]) -> std::io::Result<()> {
 /// the Planner used) — without running the Coder or touching the graph.
 pub fn inspect(args: &[String]) -> std::io::Result<()> {
     let Some(file) = args.first() else {
-        eprintln!("usage: bitcode inspect <file.aether> [node::path]");
-        return Ok(());
+        return Err(invalid_input(
+            "usage: bitcode inspect <file.aether> [node::path|--json]",
+        ));
     };
-    let graph = match SemanticGraph::load(file) {
-        Ok(g) => g,
-        Err(e) => {
-            eprintln!("could not load {file}: {e}");
-            return Ok(());
-        }
-    };
+    if args.len() > 2 {
+        return Err(invalid_input(
+            "usage: bitcode inspect <file.aether> [node::path|--json]",
+        ));
+    }
+    let graph = SemanticGraph::load(file)
+        .map_err(|error| std::io::Error::other(format!("could not load {file}: {error}")))?;
+    if args.get(1).is_some_and(|argument| argument == "--json") {
+        return print_graph_json(&graph);
+    }
     println!("Loaded {file}");
     print_summary(&graph);
 
@@ -115,10 +174,131 @@ pub fn inspect(args: &[String]) -> std::io::Result<()> {
                     }
                 }
             }
-            None => println!("  no node with path '{path}'"),
+            None => {
+                return Err(std::io::Error::new(
+                    ErrorKind::NotFound,
+                    format!("no node with path '{path}'"),
+                ));
+            }
         }
     }
     Ok(())
+}
+
+#[derive(Serialize)]
+struct GraphExport {
+    schema_version: u32,
+    nodes: Vec<GraphExportNode>,
+    edges: Vec<GraphExportEdge>,
+}
+
+#[derive(Serialize)]
+struct GraphExportNode {
+    id: String,
+    path: String,
+    kind: String,
+    name: String,
+    language: String,
+    file: Option<String>,
+    span: GraphExportSpan,
+    source_sha256: String,
+    attributes: Vec<(String, String)>,
+}
+
+#[derive(Serialize)]
+struct GraphExportSpan {
+    start_byte: usize,
+    end_byte: usize,
+    start_row: usize,
+    start_col: usize,
+}
+
+#[derive(Serialize)]
+struct GraphExportEdge {
+    source: String,
+    target: String,
+    kind: String,
+    weight_bits: u32,
+}
+
+fn print_graph_json(graph: &SemanticGraph) -> std::io::Result<()> {
+    let mut nodes = graph
+        .nodes()
+        .map(|node| {
+            let mut attributes = node.attributes.clone();
+            attributes.sort();
+            GraphExportNode {
+                id: format!("{:016x}", node.id.0),
+                path: node.path.clone(),
+                kind: format!("{:?}", node.kind),
+                name: node.name.clone(),
+                language: node.language.clone(),
+                file: node.file.clone(),
+                span: GraphExportSpan {
+                    start_byte: node.span.start_byte,
+                    end_byte: node.span.end_byte,
+                    start_row: node.span.start_row,
+                    start_col: node.span.start_col,
+                },
+                source_sha256: hex_digest(&Sha256::digest(node.source.as_bytes())),
+                attributes,
+            }
+        })
+        .collect::<Vec<_>>();
+    nodes.sort_by(|left, right| (&left.path, &left.id).cmp(&(&right.path, &right.id)));
+
+    let mut edges = graph
+        .edge_records()
+        .into_iter()
+        .map(|(source, target, edge)| GraphExportEdge {
+            source: graph
+                .get(source)
+                .expect("graph edge source must exist")
+                .path
+                .clone(),
+            target: graph
+                .get(target)
+                .expect("graph edge target must exist")
+                .path
+                .clone(),
+            kind: format!("{:?}", edge.kind),
+            weight_bits: edge.weight.to_bits(),
+        })
+        .collect::<Vec<_>>();
+    edges.sort_by(|left, right| {
+        (&left.source, &left.target, &left.kind, left.weight_bits).cmp(&(
+            &right.source,
+            &right.target,
+            &right.kind,
+            right.weight_bits,
+        ))
+    });
+
+    print_json(&GraphExport {
+        schema_version: 1,
+        nodes,
+        edges,
+    })
+}
+
+fn print_json(value: &impl Serialize) -> std::io::Result<()> {
+    let rendered = serde_json::to_string(value)
+        .map_err(|error| std::io::Error::other(format!("could not render JSON: {error}")))?;
+    println!("{rendered}");
+    Ok(())
+}
+
+fn hex_digest(bytes: &[u8]) -> String {
+    let mut out = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        use std::fmt::Write as _;
+        write!(&mut out, "{byte:02x}").expect("writing to String cannot fail");
+    }
+    out
+}
+
+fn invalid_input(message: &str) -> std::io::Error {
+    std::io::Error::new(ErrorKind::InvalidInput, message)
 }
 
 /// `bitcode refactor <dir> rename <node::path> <new_name>` — semantic rename

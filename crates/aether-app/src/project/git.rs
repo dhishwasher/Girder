@@ -161,6 +161,7 @@ pub(crate) fn build_baseline_graph(root: &Path, git_ref: &str) -> std::io::Resul
 
     let mut graph = SemanticGraph::new();
     let mut builder = GraphBuilder::new();
+    let mut contents = Vec::with_capacity(sources.len());
 
     for rel in &sources {
         let object_path = git_object_path(&prefix, rel);
@@ -172,8 +173,14 @@ pub(crate) fn build_baseline_graph(root: &Path, git_ref: &str) -> std::io::Resul
                 format!("baseline source {rel} is not valid UTF-8: {error}"),
             )
         })?;
-        builder.load_file(&mut graph, rel, &text);
+        contents.push((rel.clone(), text));
     }
+    builder.load_files(
+        &mut graph,
+        contents
+            .iter()
+            .map(|(relative, text)| (relative.as_str(), text.as_str())),
+    );
     Ok(graph)
 }
 

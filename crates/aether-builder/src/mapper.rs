@@ -8,7 +8,7 @@
 
 use crate::parser::Lang;
 use aether_graph::{Edge, EdgeKind, Node, NodeId, NodeKind, Span};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use tree_sitter::{Node as TsNode, Tree};
 
 /// A callable used to infer the type of a local binding from its return type.
@@ -686,6 +686,8 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         type_aliases: &'scope HashMap<String, String>,
         nullable_wrappers: &'scope HashMap<String, PythonNullableWrapper>,
         import_bindings: &'scope HashMap<String, String>,
+        local_types: &'scope HashSet<String>,
+        isinstance_narrowing: bool,
     }
 
     fn resolved_receiver_hint(
@@ -723,6 +725,8 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             type_aliases,
             nullable_wrappers,
             import_bindings,
+            local_types,
+            isinstance_narrowing,
         } = python_scope;
         let lang = *lang;
         let (current_type, current_fn) = scope;
@@ -732,6 +736,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         let mut function_type_aliases = None;
         let mut function_nullable_wrappers = None;
         let mut function_import_bindings = None;
+        let mut function_isinstance_narrowing = None;
 
         if matches!(lang, Lang::Python) && node.kind() == "class_definition" {
             if let Some(name_node) = node.child_by_field_name("name") {
@@ -763,10 +768,11 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                         function_type_hints = Some(rust_function_type_hints(node, source));
                     }
                     Lang::Python => {
-                        let aliases = python_scoped_type_aliases(node, type_aliases, source);
+                        let bound_names = python_function_bound_names(node, source);
+                        let aliases = python_scoped_type_aliases(&bound_names, type_aliases);
                         let wrappers =
-                            python_scoped_nullable_wrapper_aliases(node, nullable_wrappers, source);
-                        let imports = python_scoped_import_bindings(node, import_bindings, source);
+                            python_scoped_nullable_wrapper_aliases(&bound_names, nullable_wrappers);
+                        let imports = python_scoped_import_bindings(&bound_names, import_bindings);
                         function_type_hints = Some(python_function_type_hints(
                             node,
                             source,
@@ -776,30 +782,50 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                         function_type_aliases = Some(aliases);
                         function_nullable_wrappers = Some(wrappers);
                         function_import_bindings = Some(imports);
+                        function_isinstance_narrowing = Some(
+                            isinstance_narrowing
+                                && !bound_names.contains("isinstance")
+                                && bound_names.is_disjoint(local_types),
+                        );
                     }
                 }
             }
         }
         let active_type_hints = function_type_hints.as_ref().unwrap_or(type_hints);
+        let entry_type_hints = matches!(lang, Lang::Python)
+            .then(|| python_scope_entry_type_hints(node, active_type_hints, source))
+            .flatten();
+        let active_type_hints = entry_type_hints.as_ref().unwrap_or(active_type_hints);
         let active_type_aliases = function_type_aliases.as_ref().unwrap_or(type_aliases);
         let active_nullable_wrappers = function_nullable_wrappers
             .as_ref()
             .unwrap_or(nullable_wrappers);
         let active_import_bindings = function_import_bindings.as_ref().unwrap_or(import_bindings);
-        let scoped_type_hints = if matches!(lang, Lang::Rust) {
-            match node.kind() {
+        let active_isinstance_narrowing =
+            function_isinstance_narrowing.unwrap_or(isinstance_narrowing);
+        let scoped_type_hints = match lang {
+            Lang::Rust => match node.kind() {
                 "if_expression" | "while_expression" => {
                     rust_condition_type_hints(node, active_type_hints, source)
                 }
                 "match_arm" => rust_match_arm_type_hints(node, active_type_hints, source),
                 _ => None,
+            },
+            Lang::Python if matches!(node.kind(), "if_statement" | "while_statement") => {
+                python_isinstance_type_hints(
+                    node,
+                    active_type_hints,
+                    active_type_aliases,
+                    local_types,
+                    active_isinstance_narrowing,
+                    source,
+                )
             }
-        } else {
-            None
+            Lang::Python => None,
         };
         let narrowed_scope = match node.kind() {
-            "if_expression" => node.child_by_field_name("consequence"),
-            "while_expression" => node.child_by_field_name("body"),
+            "if_expression" | "if_statement" => node.child_by_field_name("consequence"),
+            "while_expression" | "while_statement" => node.child_by_field_name("body"),
             _ => None,
         };
         let narrows_all_children = node.kind() == "match_arm";
@@ -921,6 +947,8 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                     type_aliases: sequential_type_aliases,
                     nullable_wrappers: sequential_nullable_wrappers,
                     import_bindings: sequential_import_bindings,
+                    local_types,
+                    isinstance_narrowing: active_isinstance_narrowing,
                 },
                 out,
             );
@@ -932,7 +960,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                     }
                     _ => None,
                 },
-                Lang::Python if node.kind() == "block" => python_assignment_type_hints(
+                Lang::Python if node.kind() == "block" => python_following_type_hints(
                     child,
                     sequential_type_hints,
                     sequential_type_aliases,
@@ -963,6 +991,9 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
     let python_aliases = HashMap::new();
     let python_nullable_wrappers = HashMap::new();
     let python_import_bindings = HashMap::new();
+    let python_local_types = python_unambiguous_module_types(node, source, module, &out.nodes);
+    let python_isinstance_narrowing =
+        !python_statement_bound_names(node, source).contains("isinstance");
     let context = WalkContext {
         source,
         lang,
@@ -977,6 +1008,8 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             type_aliases: &python_aliases,
             nullable_wrappers: &python_nullable_wrappers,
             import_bindings: &python_import_bindings,
+            local_types: &python_local_types,
+            isinstance_narrowing: python_isinstance_narrowing,
         },
         out,
     );
@@ -1022,19 +1055,336 @@ fn python_is_type_checking_guard(
         .is_some_and(|binding| wrappers.get(binding) == Some(&PythonNullableWrapper::TypeChecking))
 }
 
-fn python_scoped_type_aliases(
-    function: TsNode,
-    inherited: &HashMap<String, String>,
-    source: &str,
-) -> HashMap<String, String> {
-    let mut aliases = inherited.clone();
+fn python_function_bound_names(function: TsNode, source: &str) -> HashSet<String> {
+    let mut names = HashSet::new();
     if let Some(parameters) = function.child_by_field_name("parameters") {
         let mut cursor = parameters.walk();
         for parameter in parameters.named_children(&mut cursor) {
             if let Some(name) = python_parameter_name(parameter) {
-                aliases.remove(node_text(name, source));
+                names.insert(node_text(name, source).to_string());
             }
         }
+    }
+    if let Some(body) = function.child_by_field_name("body") {
+        collect_python_statement_bound_names(body, source, &mut names);
+    }
+    names
+}
+
+fn python_statement_bound_names(root: TsNode, source: &str) -> HashSet<String> {
+    let mut names = HashSet::new();
+    collect_python_statement_bound_names(root, source, &mut names);
+    names
+}
+
+fn collect_python_statement_bound_names(root: TsNode, source: &str, names: &mut HashSet<String>) {
+    match root.kind() {
+        "function_definition" | "class_definition" => {
+            if let Some(name) = root.child_by_field_name("name") {
+                names.insert(node_text(name, source).to_string());
+            }
+            return;
+        }
+        "lambda" => return,
+        "import_statement" | "import_from_statement" => {
+            let mut bindings = HashMap::new();
+            update_python_import_bindings(root, source, &mut bindings);
+            names.extend(bindings.into_keys());
+            return;
+        }
+        "assignment" | "augmented_assignment" => {
+            if let Some(left) = root.child_by_field_name("left") {
+                collect_python_target_names(left, source, names);
+            }
+        }
+        "named_expression" => {
+            if let Some(name) = root
+                .child_by_field_name("name")
+                .or_else(|| root.child_by_field_name("left"))
+            {
+                collect_python_target_names(name, source, names);
+            }
+        }
+        "for_statement" | "for_in_clause" => {
+            if let Some(left) = root.child_by_field_name("left") {
+                collect_python_target_names(left, source, names);
+            }
+        }
+        "with_item" => {
+            if let Some(alias) = root.child_by_field_name("alias") {
+                collect_python_target_names(alias, source, names);
+            }
+        }
+        "except_clause" => {
+            if let Some(name) = root.child_by_field_name("name") {
+                collect_python_target_names(name, source, names);
+            }
+        }
+        "case_clause" => {
+            if let Some(pattern) = root.child_by_field_name("pattern") {
+                collect_python_target_names(pattern, source, names);
+            }
+        }
+        "delete_statement" => {
+            let mut cursor = root.walk();
+            for target in root.named_children(&mut cursor) {
+                collect_python_target_names(target, source, names);
+            }
+        }
+        _ => {}
+    }
+
+    let mut cursor = root.walk();
+    for child in root.named_children(&mut cursor) {
+        collect_python_statement_bound_names(child, source, names);
+    }
+}
+
+fn collect_python_target_names(root: TsNode, source: &str, names: &mut HashSet<String>) {
+    match root.kind() {
+        "identifier" => {
+            names.insert(node_text(root, source).to_string());
+        }
+        "as_pattern_target" => {
+            let binding = node_text(root, source);
+            if binding
+                .chars()
+                .all(|character| character == '_' || character.is_ascii_alphanumeric())
+            {
+                names.insert(binding.to_string());
+            }
+        }
+        "pattern_list"
+        | "tuple_pattern"
+        | "list_pattern"
+        | "list_splat_pattern"
+        | "dictionary_splat_pattern" => {
+            let mut cursor = root.walk();
+            for child in root.named_children(&mut cursor) {
+                collect_python_target_names(child, source, names);
+            }
+        }
+        "typed_parameter" | "typed_default_parameter" | "default_parameter" => {
+            if let Some(name) = python_parameter_name(root) {
+                names.insert(node_text(name, source).to_string());
+            }
+        }
+        "as_pattern" => {
+            if let Some(alias) = root.child_by_field_name("alias") {
+                collect_python_target_names(alias, source, names);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn python_scope_entry_type_hints(
+    root: TsNode,
+    hints: &HashMap<String, ReceiverHint>,
+    source: &str,
+) -> Option<HashMap<String, ReceiverHint>> {
+    if hints.is_empty() {
+        return None;
+    }
+    let mut bindings = HashSet::new();
+    collect_python_scope_entry_bound_names(root, source, &mut bindings);
+    let mut updated = hints.clone();
+    let mut changed = false;
+    for binding in bindings {
+        changed |= updated.remove(&binding).is_some();
+    }
+    changed.then_some(updated)
+}
+
+fn collect_python_scope_entry_bound_names(root: TsNode, source: &str, names: &mut HashSet<String>) {
+    match root.kind() {
+        "lambda" => {
+            if let Some(parameters) = root.child_by_field_name("parameters") {
+                let mut cursor = parameters.walk();
+                for parameter in parameters.named_children(&mut cursor) {
+                    collect_python_target_names(parameter, source, names);
+                }
+            }
+        }
+        "dictionary_comprehension"
+        | "generator_expression"
+        | "list_comprehension"
+        | "set_comprehension" => {
+            let mut cursor = root.walk();
+            for clause in root
+                .named_children(&mut cursor)
+                .filter(|child| child.kind() == "for_in_clause")
+            {
+                collect_python_scope_entry_bound_names(clause, source, names);
+            }
+        }
+        "for_statement" | "for_in_clause" => {
+            if let Some(left) = root.child_by_field_name("left") {
+                collect_python_target_names(left, source, names);
+            }
+        }
+        "with_statement" | "with_clause" => {
+            let mut cursor = root.walk();
+            for child in root.named_children(&mut cursor) {
+                if matches!(child.kind(), "with_clause" | "with_item") {
+                    collect_python_scope_entry_bound_names(child, source, names);
+                }
+            }
+        }
+        "with_item" => {
+            if let Some(alias) = root
+                .child_by_field_name("value")
+                .filter(|value| value.kind() == "as_pattern")
+                .and_then(|value| value.child_by_field_name("alias"))
+            {
+                collect_python_target_names(alias, source, names);
+            }
+        }
+        "except_clause" | "except_group_clause" => {
+            if let Some(alias_pattern) = (0..root.named_child_count())
+                .filter_map(|index| root.named_child(index))
+                .find(|child| child.kind() == "as_pattern")
+            {
+                collect_python_target_names(alias_pattern, source, names);
+            }
+        }
+        "case_clause" => {
+            let consequence = root.child_by_field_name("consequence");
+            let mut cursor = root.walk();
+            for pattern in root.named_children(&mut cursor) {
+                if consequence.is_some_and(|consequence| {
+                    pattern.start_byte() == consequence.start_byte()
+                        && pattern.end_byte() == consequence.end_byte()
+                }) || pattern.kind() == "if_clause"
+                {
+                    continue;
+                }
+                collect_python_pattern_names(pattern, source, names);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn collect_python_pattern_names(root: TsNode, source: &str, names: &mut HashSet<String>) {
+    if root.kind() == "identifier" {
+        names.insert(node_text(root, source).to_string());
+        return;
+    }
+    let mut cursor = root.walk();
+    for child in root.named_children(&mut cursor) {
+        collect_python_pattern_names(child, source, names);
+    }
+}
+
+fn python_unambiguous_module_types(
+    root: TsNode,
+    source: &str,
+    module: &str,
+    nodes: &[Node],
+) -> HashSet<String> {
+    let prefix = format!("{module}::");
+    let candidates = nodes
+        .iter()
+        .filter(|node| node.kind == NodeKind::Type)
+        .filter_map(|node| node.path.strip_prefix(&prefix))
+        .filter(|relative| !relative.contains("::"))
+        .map(str::to_string)
+        .collect::<HashSet<_>>();
+    let mut binding_counts = HashMap::new();
+    let mut class_definitions = HashSet::new();
+    let mut cursor = root.walk();
+    for statement in root.named_children(&mut cursor) {
+        for binding in python_statement_bound_names(statement, source) {
+            if candidates.contains(&binding) {
+                *binding_counts.entry(binding).or_insert(0_usize) += 1;
+            }
+        }
+        if let Some(class_name) = python_statement_class_name(statement, source) {
+            if candidates.contains(class_name) {
+                class_definitions.insert(class_name.to_string());
+            }
+        }
+    }
+    candidates
+        .into_iter()
+        .filter(|candidate| {
+            binding_counts.get(candidate) == Some(&1) && class_definitions.contains(candidate)
+        })
+        .collect()
+}
+
+fn python_statement_class_name<'a>(statement: TsNode, source: &'a str) -> Option<&'a str> {
+    if statement.kind() == "class_definition" {
+        return statement
+            .child_by_field_name("name")
+            .map(|node| node_text(node, source));
+    }
+    if statement.kind() != "decorated_definition" {
+        return None;
+    }
+    let mut cursor = statement.walk();
+    let class_name = statement
+        .named_children(&mut cursor)
+        .find_map(|child| python_statement_class_name(child, source));
+    class_name
+}
+
+fn python_isinstance_type_hints(
+    statement: TsNode,
+    hints: &HashMap<String, ReceiverHint>,
+    aliases: &HashMap<String, String>,
+    local_types: &HashSet<String>,
+    isinstance_narrowing: bool,
+    source: &str,
+) -> Option<HashMap<String, ReceiverHint>> {
+    if !isinstance_narrowing {
+        return None;
+    }
+    let mut condition = statement.child_by_field_name("condition")?;
+    while condition.kind() == "parenthesized_expression" {
+        condition = condition.named_child(0)?;
+    }
+    if condition.kind() != "call" {
+        return None;
+    }
+    let function = condition.child_by_field_name("function")?;
+    if function.kind() != "identifier" || node_text(function, source) != "isinstance" {
+        return None;
+    }
+    let arguments = condition.child_by_field_name("arguments")?;
+    let mut cursor = arguments.walk();
+    let mut arguments = arguments.named_children(&mut cursor);
+    let binding = arguments.next()?;
+    let type_node = arguments.next()?;
+    if arguments.next().is_some()
+        || binding.kind() != "identifier"
+        || type_node.kind() != "identifier"
+    {
+        return None;
+    }
+    let type_name = node_text(type_node, source);
+    if !local_types.contains(type_name)
+        || aliases.get(type_name).map(String::as_str) != Some(type_name)
+    {
+        return None;
+    }
+
+    let mut narrowed = hints.clone();
+    narrowed.insert(
+        node_text(binding, source).to_string(),
+        ReceiverHint::Type(RustTypeHint::named(type_name)),
+    );
+    Some(narrowed)
+}
+
+fn python_scoped_type_aliases(
+    bound_names: &HashSet<String>,
+    inherited: &HashMap<String, String>,
+) -> HashMap<String, String> {
+    let mut aliases = inherited.clone();
+    for name in bound_names {
+        aliases.remove(name);
     }
     aliases
 }
@@ -1063,27 +1413,51 @@ fn update_python_type_aliases(root: TsNode, source: &str, aliases: &mut HashMap<
     }
     match root.kind() {
         "import_statement" | "import_from_statement" => {
+            let module = root.child_by_field_name("module_name");
             let mut children = root.walk();
-            for import in root
-                .named_children(&mut children)
-                .filter(|child| child.kind() == "aliased_import")
-            {
-                let (Some(name), Some(alias)) = (
-                    import.child_by_field_name("name"),
-                    import.child_by_field_name("alias"),
-                ) else {
+            for import in root.named_children(&mut children) {
+                if module.is_some_and(|module| {
+                    import.start_byte() == module.start_byte()
+                        && import.end_byte() == module.end_byte()
+                }) {
+                    continue;
+                }
+                let (target, binding) = if import.kind() == "aliased_import" {
+                    let (Some(name), Some(alias)) = (
+                        import.child_by_field_name("name"),
+                        import.child_by_field_name("alias"),
+                    ) else {
+                        continue;
+                    };
+                    (
+                        node_text(name, source)
+                            .rsplit('.')
+                            .next()
+                            .unwrap_or_default(),
+                        node_text(alias, source),
+                    )
+                } else if root.kind() == "import_from_statement" && import.kind() == "dotted_name" {
+                    let imported = node_text(import, source);
+                    (
+                        imported.rsplit('.').next().unwrap_or(imported),
+                        imported.rsplit('.').next().unwrap_or(imported),
+                    )
+                } else {
                     continue;
                 };
-                let target = node_text(name, source)
-                    .rsplit('.')
-                    .next()
-                    .unwrap_or_default();
-                if !target.is_empty() {
-                    aliases.insert(node_text(alias, source).to_string(), target.to_string());
+                aliases.remove(binding);
+                if target.starts_with(char::is_uppercase) {
+                    aliases.insert(binding.to_string(), target.to_string());
                 }
             }
         }
-        "class_definition" | "function_definition" => {
+        "class_definition" => {
+            if let Some(name) = root.child_by_field_name("name") {
+                let name = node_text(name, source);
+                aliases.insert(name.to_string(), name.to_string());
+            }
+        }
+        "function_definition" => {
             if let Some(name) = root.child_by_field_name("name") {
                 aliases.remove(node_text(name, source));
             }
@@ -1108,18 +1482,12 @@ fn update_python_type_aliases(root: TsNode, source: &str, aliases: &mut HashMap<
 }
 
 fn python_scoped_import_bindings(
-    function: TsNode,
+    bound_names: &HashSet<String>,
     inherited: &HashMap<String, String>,
-    source: &str,
 ) -> HashMap<String, String> {
     let mut bindings = inherited.clone();
-    if let Some(parameters) = function.child_by_field_name("parameters") {
-        let mut cursor = parameters.walk();
-        for parameter in parameters.named_children(&mut cursor) {
-            if let Some(name) = python_parameter_name(parameter) {
-                bindings.remove(node_text(name, source));
-            }
-        }
+    for name in bound_names {
+        bindings.remove(name);
     }
     bindings
 }
@@ -1232,18 +1600,12 @@ fn python_qualifier_owner_fallback(
 }
 
 fn python_scoped_nullable_wrapper_aliases(
-    function: TsNode,
+    bound_names: &HashSet<String>,
     inherited: &HashMap<String, PythonNullableWrapper>,
-    source: &str,
 ) -> HashMap<String, PythonNullableWrapper> {
     let mut wrappers = inherited.clone();
-    if let Some(parameters) = function.child_by_field_name("parameters") {
-        let mut cursor = parameters.walk();
-        for parameter in parameters.named_children(&mut cursor) {
-            if let Some(name) = python_parameter_name(parameter) {
-                remove_python_wrapper_binding(&mut wrappers, node_text(name, source));
-            }
-        }
+    for name in bound_names {
+        remove_python_wrapper_binding(&mut wrappers, name);
     }
     wrappers
 }
@@ -1699,6 +2061,30 @@ fn python_assignment_type_hints(
         updated.remove(&binding);
     }
     Some(updated)
+}
+
+fn python_following_type_hints(
+    statement: TsNode,
+    hints: &HashMap<String, ReceiverHint>,
+    aliases: &HashMap<String, String>,
+    nullable_wrappers: &HashMap<String, PythonNullableWrapper>,
+    source: &str,
+) -> Option<HashMap<String, ReceiverHint>> {
+    if let Some(updated) =
+        python_assignment_type_hints(statement, hints, aliases, nullable_wrappers, source)
+    {
+        return Some(updated);
+    }
+    if hints.is_empty() {
+        return None;
+    }
+
+    let mut updated = hints.clone();
+    let mut changed = false;
+    for binding in python_statement_bound_names(statement, source) {
+        changed |= updated.remove(&binding).is_some();
+    }
+    changed.then_some(updated)
 }
 
 fn rust_function_type_hints(function: TsNode, source: &str) -> HashMap<String, ReceiverHint> {

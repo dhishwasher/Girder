@@ -9,14 +9,16 @@ import json
 import os
 import re
 import shutil
-import signal
-import subprocess
 import sys
 import tempfile
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
+
+try:
+    from tools.harness_support import BoundedProcessResult, run_bounded
+except ModuleNotFoundError:  # Direct execution via `python tools/<script>.py`.
+    from harness_support import BoundedProcessResult, run_bounded
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -159,80 +161,14 @@ def run(
     env: Mapping[str, str] | None = None,
     timeout_seconds: float = DEFAULT_COMMAND_TIMEOUT_SECONDS,
     max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES,
-) -> subprocess.CompletedProcess[str]:
-    if timeout_seconds <= 0:
-        raise ValueError("timeout_seconds must be positive")
-    if max_output_bytes <= 0:
-        raise ValueError("max_output_bytes must be positive")
-    rendered = " ".join(command)
-    with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
-        process = subprocess.Popen(
-            command,
-            cwd=cwd,
-            env=env,
-            stdout=stdout_file,
-            stderr=stderr_file,
-            start_new_session=(os.name == "posix"),
-        )
-        deadline = time.monotonic() + timeout_seconds
-        failure: str | None = None
-        while process.poll() is None:
-            output_bytes = (
-                os.fstat(stdout_file.fileno()).st_size
-                + os.fstat(stderr_file.fileno()).st_size
-            )
-            if output_bytes > max_output_bytes:
-                failure = (
-                    f"command output exceeded {max_output_bytes} bytes: {rendered}"
-                )
-                break
-            if time.monotonic() >= deadline:
-                failure = f"command timed out after {timeout_seconds:g}s: {rendered}"
-                break
-            time.sleep(0.02)
-
-        if failure is not None:
-            terminate_process_tree(process)
-        else:
-            process.wait()
-            terminate_descendants(process.pid)
-
-        stdout_file.seek(0)
-        stderr_file.seek(0)
-        stdout_bytes = stdout_file.read(max_output_bytes + 1)
-        stderr_bytes = stderr_file.read(max_output_bytes + 1)
-        if len(stdout_bytes) + len(stderr_bytes) > max_output_bytes:
-            failure = f"command output exceeded {max_output_bytes} bytes: {rendered}"
-        stdout = stdout_bytes.decode("utf-8", errors="replace")
-        stderr = stderr_bytes.decode("utf-8", errors="replace")
-
-    if failure is not None:
-        raise RuntimeError(f"{failure}\nstdout:\n{stdout}\nstderr:\n{stderr}")
-    completed = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
-    if completed.returncode != 0:
-        raise RuntimeError(
-            f"command failed ({completed.returncode}): {rendered}\n"
-            f"stdout:\n{completed.stdout}\n"
-            f"stderr:\n{completed.stderr}"
-        )
-    return completed
-
-
-def terminate_descendants(process_group: int) -> None:
-    if os.name != "posix":
-        return
-    try:
-        os.killpg(process_group, signal.SIGKILL)
-    except ProcessLookupError:
-        pass
-
-
-def terminate_process_tree(process: subprocess.Popen[bytes]) -> None:
-    if os.name == "posix":
-        terminate_descendants(process.pid)
-    elif process.poll() is None:
-        process.kill()
-    process.wait()
+) -> BoundedProcessResult:
+    return run_bounded(
+        command,
+        cwd=cwd,
+        env=env,
+        timeout_seconds=timeout_seconds,
+        max_output_bytes=max_output_bytes,
+    )
 
 
 def file_sha256(path: Path) -> str:
@@ -322,7 +258,7 @@ def parse_framework_inventory(fixture_name: str, output: str) -> set[str]:
 def assert_isolated_test_executed(
     fixture_name: str,
     test: str,
-    completed: subprocess.CompletedProcess[str],
+    completed: BoundedProcessResult,
 ) -> None:
     combined = f"{completed.stdout}\n{completed.stderr}"
     if fixture_name == "rust":

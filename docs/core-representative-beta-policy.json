@@ -1,0 +1,38 @@
+{
+  "determinism": {
+    "artifact_unique_digests_max": 1,
+    "semantic_unique_digests_max": 1,
+    "unique_node_edge_count_pairs_max": 1
+  },
+  "eligibility": {
+    "rayon_threads": 2,
+    "runs_per_repository": 5
+  },
+  "performance": {
+    "default": {
+      "analyze_max_ms": 30000,
+      "analyze_median_max_ms": 15000,
+      "rss_max_kib": 131072
+    },
+    "graph_artifact_max_bytes": 33554432,
+    "inspect_max_ms": 5000,
+    "repository_overrides": {
+      "pydantic-2.13.4": {
+        "analyze_max_ms": 180000,
+        "analyze_median_max_ms": 120000,
+        "rss_max_kib": 393216
+      }
+    },
+    "sum_of_repository_medians_max_ms": 180000
+  },
+  "policy_id": "core-representative-beta-v1",
+  "schema_version": 1,
+  "semantic": {
+    "false_negatives_max": 0,
+    "false_positives_max": 0,
+    "macro_precision_min": 1.0,
+    "macro_recall_min": 1.0,
+    "micro_precision_min": 1.0,
+    "micro_recall_min": 1.0
+  }
+}

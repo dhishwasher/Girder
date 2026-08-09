@@ -1,0 +1,543 @@
+{
+  "repositories": [
+    {
+      "artifact": {
+        "bytes": 710970,
+        "format": "tar.gz",
+        "root": "petgraph-0.6.5",
+        "sha256": "b4c5cc86750666a3ed20bdaf5ca2a0344f9c67674cae0515bec2da16fbaa47db",
+        "url": "https://static.crates.io/crates/petgraph/petgraph-0.6.5.crate"
+      },
+      "id": "petgraph-0.6.5",
+      "language": "rust",
+      "license": {
+        "files": [
+          "LICENSE-APACHE",
+          "LICENSE-MIT",
+          "assets/LICENSE.md"
+        ],
+        "spdx": "MIT OR Apache-2.0"
+      },
+      "semantic_cases": [
+        {
+          "expected_present": true,
+          "file": "tests/graph.rs",
+          "id": "dijkstra-cross-file-call",
+          "kind": "Calls",
+          "rationale": "The integration test directly invokes the imported dijkstra function.",
+          "source": "crate::tests::graph::dijk",
+          "target": "crate::algo::dijkstra::dijkstra"
+        },
+        {
+          "expected_present": true,
+          "file": "tests/graph.rs",
+          "id": "astar-cross-file-call",
+          "kind": "Calls",
+          "rationale": "The null-heuristic test directly invokes the imported astar function.",
+          "source": "crate::tests::graph::test_astar_null_heuristic",
+          "target": "crate::algo::astar::astar"
+        },
+        {
+          "expected_present": true,
+          "file": "tests/graph.rs",
+          "id": "astar-test-dijkstra-call",
+          "kind": "Calls",
+          "rationale": "The same test directly computes the comparison result with dijkstra.",
+          "source": "crate::tests::graph::test_astar_null_heuristic",
+          "target": "crate::algo::dijkstra::dijkstra"
+        }
+      ],
+      "sources": {
+        "bytes": 817654,
+        "extensions": [
+          ".rs"
+        ],
+        "files": 79,
+        "manifest_sha256": "74ad9b20cdfd3414fd26dbf9295f0894c3f2edfd908fe095205f1b164fd1dc4c",
+        "physical_lines": 27797
+      },
+      "upstream_commit": "c32a86b1b8c5c198079efc9149ea2fcf956b8f6c"
+    },
+    {
+      "artifact": {
+        "bytes": 155574,
+        "format": "tar.gz",
+        "root": "serde_json-1.0.150",
+        "sha256": "e8014e44b4736ed0538adeecded0fce2a272f22dc9578a7eb6b2d9993c74cfb9",
+        "url": "https://static.crates.io/crates/serde_json/serde_json-1.0.150.crate"
+      },
+      "id": "serde_json-1.0.150",
+      "language": "rust",
+      "license": {
+        "files": [
+          "LICENSE-APACHE",
+          "LICENSE-MIT"
+        ],
+        "spdx": "MIT OR Apache-2.0"
+      },
+      "semantic_cases": [
+        {
+          "expected_present": true,
+          "file": "src/de.rs",
+          "id": "from-slice-wrapper",
+          "kind": "Calls",
+          "rationale": "from_slice delegates directly to the shared from_trait implementation.",
+          "source": "crate::de::from_slice",
+          "target": "crate::de::from_trait"
+        },
+        {
+          "expected_present": true,
+          "file": "src/de.rs",
+          "id": "from-str-wrapper",
+          "kind": "Calls",
+          "rationale": "from_str delegates directly to the shared from_trait implementation.",
+          "source": "crate::de::from_str",
+          "target": "crate::de::from_trait"
+        },
+        {
+          "expected_present": true,
+          "file": "src/ser.rs",
+          "id": "to-string-macro-call",
+          "kind": "Calls",
+          "rationale": "to_string invokes to_vec inside the tri macro token tree.",
+          "source": "crate::ser::to_string",
+          "target": "crate::ser::to_vec"
+        },
+        {
+          "expected_present": true,
+          "file": "src/ser.rs",
+          "id": "to-string-pretty-macro-call",
+          "kind": "Calls",
+          "rationale": "to_string_pretty invokes to_vec_pretty inside the tri macro token tree.",
+          "source": "crate::ser::to_string_pretty",
+          "target": "crate::ser::to_vec_pretty"
+        }
+      ],
+      "sources": {
+        "bytes": 694275,
+        "extensions": [
+          ".rs"
+        ],
+        "files": 69,
+        "manifest_sha256": "f6eecfbcf0baa8180f9b3d9989f9b9b52c9729d501aea22952b6e185edcbd289",
+        "physical_lines": 23116
+      },
+      "upstream_commit": "a1ae73ac6a6940a4a57c673aebaa13ed4dfe3e8c"
+    },
+    {
+      "artifact": {
+        "bytes": 153468,
+        "format": "tar.gz",
+        "root": "regex-1.12.4",
+        "sha256": "f1292b7759ae1cb9ec195452d1390a074f0cd8541ab7a5a8c31cd6db45d4a6ba",
+        "url": "https://static.crates.io/crates/regex/regex-1.12.4.crate"
+      },
+      "id": "regex-1.12.4",
+      "language": "rust",
+      "license": {
+        "files": [
+          "LICENSE-APACHE",
+          "LICENSE-MIT"
+        ],
+        "spdx": "MIT OR Apache-2.0"
+      },
+      "semantic_cases": [
+        {
+          "expected_present": true,
+          "file": "src/regex/string.rs",
+          "id": "string-replace-owner",
+          "kind": "Calls",
+          "rationale": "String Regex::replace delegates to its own replacen method.",
+          "source": "crate::regex::string::Regex::replace",
+          "target": "crate::regex::string::Regex::replacen"
+        },
+        {
+          "expected_present": true,
+          "file": "src/regex/string.rs",
+          "id": "string-replace-all-owner",
+          "kind": "Calls",
+          "rationale": "String Regex::replace_all delegates to its own replacen method.",
+          "source": "crate::regex::string::Regex::replace_all",
+          "target": "crate::regex::string::Regex::replacen"
+        },
+        {
+          "expected_present": true,
+          "file": "src/regex/bytes.rs",
+          "id": "bytes-replace-owner",
+          "kind": "Calls",
+          "rationale": "Bytes Regex::replace delegates to its own replacen method.",
+          "source": "crate::regex::bytes::Regex::replace",
+          "target": "crate::regex::bytes::Regex::replacen"
+        },
+        {
+          "expected_present": true,
+          "file": "src/regex/bytes.rs",
+          "id": "bytes-replace-all-owner",
+          "kind": "Calls",
+          "rationale": "Bytes Regex::replace_all delegates to its own replacen method.",
+          "source": "crate::regex::bytes::Regex::replace_all",
+          "target": "crate::regex::bytes::Regex::replacen"
+        },
+        {
+          "expected_present": false,
+          "file": "src/regex/string.rs",
+          "id": "string-replace-not-bytes",
+          "kind": "Calls",
+          "rationale": "The same type name in the bytes module must not capture the string receiver.",
+          "source": "crate::regex::string::Regex::replace",
+          "target": "crate::regex::bytes::Regex::replacen"
+        },
+        {
+          "expected_present": false,
+          "file": "src/regex/string.rs",
+          "id": "string-replace-all-not-bytes",
+          "kind": "Calls",
+          "rationale": "The same type name in the bytes module must not capture the string receiver.",
+          "source": "crate::regex::string::Regex::replace_all",
+          "target": "crate::regex::bytes::Regex::replacen"
+        },
+        {
+          "expected_present": false,
+          "file": "src/regex/bytes.rs",
+          "id": "bytes-replace-not-string",
+          "kind": "Calls",
+          "rationale": "The same type name in the string module must not capture the bytes receiver.",
+          "source": "crate::regex::bytes::Regex::replace",
+          "target": "crate::regex::string::Regex::replacen"
+        },
+        {
+          "expected_present": false,
+          "file": "src/regex/bytes.rs",
+          "id": "bytes-replace-all-not-string",
+          "kind": "Calls",
+          "rationale": "The same type name in the string module must not capture the bytes receiver.",
+          "source": "crate::regex::bytes::Regex::replace_all",
+          "target": "crate::regex::string::Regex::replacen"
+        }
+      ],
+      "sources": {
+        "bytes": 450102,
+        "extensions": [
+          ".rs"
+        ],
+        "files": 22,
+        "manifest_sha256": "abed475d0db643753fdc8832787c498ff3c87b2d21e515cec3cd1a31a11052bf",
+        "physical_lines": 11973
+      },
+      "upstream_commit": "7b96fdc9d5fe6a0cb4efe30e6689b050493fc1e1"
+    },
+    {
+      "artifact": {
+        "bytes": 353007,
+        "format": "tar.gz",
+        "root": "click-8.4.1",
+        "sha256": "918b5633eddf6b41c32d4f454bf0de810065c74e3f7dbf8ee5452f8be88d3e96",
+        "url": "https://files.pythonhosted.org/packages/9b/98/518d8e5081007684232226f475082b30087d0f585e8457db087298259f49/click-8.4.1.tar.gz"
+      },
+      "id": "click-8.4.1",
+      "language": "python",
+      "license": {
+        "files": [
+          "LICENSE.txt",
+          "docs/license.md"
+        ],
+        "spdx": "BSD-3-Clause"
+      },
+      "semantic_cases": [
+        {
+          "expected_present": true,
+          "file": "src/click/core.py",
+          "id": "command-context-invoke",
+          "kind": "Calls",
+          "rationale": "The annotated Context receiver selects Context::invoke among same-named methods.",
+          "source": "crate::click::core::Command::invoke",
+          "target": "crate::click::core::Context::invoke"
+        },
+        {
+          "expected_present": true,
+          "file": "src/click/core.py",
+          "id": "command-parse-args",
+          "kind": "Calls",
+          "rationale": "Command::make_context calls its own parse_args method.",
+          "source": "crate::click::core::Command::make_context",
+          "target": "crate::click::core::Command::parse_args"
+        },
+        {
+          "expected_present": true,
+          "file": "src/click/parser.py",
+          "id": "parser-options-phase",
+          "kind": "Calls",
+          "rationale": "The parser dispatches to its option-processing phase.",
+          "source": "crate::click::parser::_OptionParser::parse_args",
+          "target": "crate::click::parser::_OptionParser::_process_args_for_options"
+        },
+        {
+          "expected_present": true,
+          "file": "src/click/parser.py",
+          "id": "parser-arguments-phase",
+          "kind": "Calls",
+          "rationale": "The parser dispatches to its positional-argument phase.",
+          "source": "crate::click::parser::_OptionParser::parse_args",
+          "target": "crate::click::parser::_OptionParser::_process_args_for_args"
+        },
+        {
+          "expected_present": false,
+          "file": "src/click/core.py",
+          "id": "command-invoke-not-self",
+          "kind": "Calls",
+          "rationale": "Command::invoke must not be inferred as a recursive self call.",
+          "source": "crate::click::core::Command::invoke",
+          "target": "crate::click::core::Command::invoke"
+        },
+        {
+          "expected_present": false,
+          "file": "src/click/core.py",
+          "id": "command-invoke-not-group",
+          "kind": "Calls",
+          "rationale": "The Context receiver must not resolve to Group::invoke.",
+          "source": "crate::click::core::Command::invoke",
+          "target": "crate::click::core::Group::invoke"
+        },
+        {
+          "expected_present": false,
+          "file": "src/click/core.py",
+          "id": "command-invoke-not-runner",
+          "kind": "Calls",
+          "rationale": "The Context receiver must not resolve to CliRunner::invoke.",
+          "source": "crate::click::core::Command::invoke",
+          "target": "crate::click::testing::CliRunner::invoke"
+        }
+      ],
+      "sources": {
+        "bytes": 823452,
+        "extensions": [
+          ".py"
+        ],
+        "files": 49,
+        "manifest_sha256": "fb79d60d40df77a448848d5938bb793746bbb30b10dfd96461ec0ba5bb09dc03",
+        "physical_lines": 24956
+      }
+    },
+    {
+      "artifact": {
+        "bytes": 844775,
+        "format": "tar.gz",
+        "root": "pydantic-2.13.4",
+        "sha256": "c40756b57adaa8b1efeeced5c196f3f3b7c435f90e84ea7f443901bec8099ef6",
+        "url": "https://files.pythonhosted.org/packages/18/a5/b60d21ac674192f8ab0ba4e9fd860690f9b4a6e51ca5df118733b487d8d6/pydantic-2.13.4.tar.gz"
+      },
+      "id": "pydantic-2.13.4",
+      "language": "python",
+      "license": {
+        "files": [
+          "LICENSE"
+        ],
+        "spdx": "MIT"
+      },
+      "semantic_cases": [
+        {
+          "expected_present": true,
+          "file": "pydantic/alias_generators.py",
+          "id": "camel-to-pascal",
+          "kind": "Calls",
+          "rationale": "to_camel directly delegates its first transformation to to_pascal.",
+          "source": "crate::pydantic::alias_generators::to_camel",
+          "target": "crate::pydantic::alias_generators::to_pascal"
+        },
+        {
+          "expected_present": true,
+          "file": "pydantic/aliases.py",
+          "id": "alias-generator-helper",
+          "kind": "Calls",
+          "rationale": "AliasGenerator::generate_aliases invokes its private helper.",
+          "source": "crate::pydantic::aliases::AliasGenerator::generate_aliases",
+          "target": "crate::pydantic::aliases::AliasGenerator::_generate_alias"
+        },
+        {
+          "expected_present": true,
+          "file": "pydantic/aliases.py",
+          "id": "isinstance-narrowed-alias-path",
+          "kind": "Calls",
+          "rationale": "The isinstance(c, AliasPath) branch invokes AliasPath::convert_to_aliases.",
+          "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
+          "target": "crate::pydantic::aliases::AliasPath::convert_to_aliases"
+        },
+        {
+          "expected_present": false,
+          "file": "pydantic/aliases.py",
+          "id": "alias-choices-not-recursive",
+          "kind": "Calls",
+          "rationale": "The AliasPath receiver must not resolve as recursive AliasChoices dispatch.",
+          "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
+          "target": "crate::pydantic::aliases::AliasChoices::convert_to_aliases"
+        }
+      ],
+      "sources": {
+        "bytes": 3872154,
+        "extensions": [
+          ".py"
+        ],
+        "files": 272,
+        "manifest_sha256": "f07f20f0bd7143e52915dcdba2455d11df5a415f9be8b8e9f908c59d4ff43c58",
+        "physical_lines": 114752
+      }
+    },
+    {
+      "artifact": {
+        "bytes": 142856,
+        "format": "tar.gz",
+        "root": "requests-2.34.2",
+        "sha256": "f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed",
+        "url": "https://files.pythonhosted.org/packages/ac/c3/e2a2b89f2d3e2179abd6d00ebd70bff6273f37fb3e0cc209f48b39d00cbf/requests-2.34.2.tar.gz"
+      },
+      "id": "requests-2.34.2",
+      "language": "python",
+      "license": {
+        "files": [
+          "LICENSE",
+          "NOTICE"
+        ],
+        "spdx": "Apache-2.0"
+      },
+      "semantic_cases": [
+        {
+          "expected_present": true,
+          "file": "src/requests/api.py",
+          "id": "get-wrapper",
+          "kind": "Calls",
+          "rationale": "get delegates directly to the shared request function.",
+          "source": "crate::requests::api::get",
+          "target": "crate::requests::api::request"
+        },
+        {
+          "expected_present": true,
+          "file": "src/requests/api.py",
+          "id": "options-wrapper",
+          "kind": "Calls",
+          "rationale": "options delegates directly to the shared request function.",
+          "source": "crate::requests::api::options",
+          "target": "crate::requests::api::request"
+        },
+        {
+          "expected_present": true,
+          "file": "src/requests/api.py",
+          "id": "head-wrapper",
+          "kind": "Calls",
+          "rationale": "head delegates directly to the shared request function.",
+          "source": "crate::requests::api::head",
+          "target": "crate::requests::api::request"
+        },
+        {
+          "expected_present": true,
+          "file": "src/requests/api.py",
+          "id": "post-wrapper",
+          "kind": "Calls",
+          "rationale": "post delegates directly to the shared request function.",
+          "source": "crate::requests::api::post",
+          "target": "crate::requests::api::request"
+        },
+        {
+          "expected_present": true,
+          "file": "src/requests/api.py",
+          "id": "put-wrapper",
+          "kind": "Calls",
+          "rationale": "put delegates directly to the shared request function.",
+          "source": "crate::requests::api::put",
+          "target": "crate::requests::api::request"
+        },
+        {
+          "expected_present": true,
+          "file": "src/requests/api.py",
+          "id": "patch-wrapper",
+          "kind": "Calls",
+          "rationale": "patch delegates directly to the shared request function.",
+          "source": "crate::requests::api::patch",
+          "target": "crate::requests::api::request"
+        },
+        {
+          "expected_present": true,
+          "file": "src/requests/api.py",
+          "id": "delete-wrapper",
+          "kind": "Calls",
+          "rationale": "delete delegates directly to the shared request function.",
+          "source": "crate::requests::api::delete",
+          "target": "crate::requests::api::request"
+        },
+        {
+          "expected_present": true,
+          "file": "src/requests/models.py",
+          "id": "prepared-request-owner",
+          "kind": "Calls",
+          "rationale": "Request::prepare constructs PreparedRequest and invokes its prepare method.",
+          "source": "crate::requests::models::Request::prepare",
+          "target": "crate::requests::models::PreparedRequest::prepare"
+        },
+        {
+          "expected_present": true,
+          "file": "src/requests/sessions.py",
+          "id": "session-prepared-request-owner",
+          "kind": "Calls",
+          "rationale": "Session::prepare_request invokes PreparedRequest::prepare on a constructor-assigned receiver.",
+          "source": "crate::requests::sessions::Session::prepare_request",
+          "target": "crate::requests::models::PreparedRequest::prepare"
+        },
+        {
+          "expected_present": true,
+          "file": "src/requests/sessions.py",
+          "id": "session-merge-setting",
+          "kind": "Calls",
+          "rationale": "Session::prepare_request directly invokes merge_setting.",
+          "source": "crate::requests::sessions::Session::prepare_request",
+          "target": "crate::requests::sessions::merge_setting"
+        },
+        {
+          "expected_present": true,
+          "file": "src/requests/sessions.py",
+          "id": "session-merge-hooks",
+          "kind": "Calls",
+          "rationale": "Session::prepare_request directly invokes merge_hooks.",
+          "source": "crate::requests::sessions::Session::prepare_request",
+          "target": "crate::requests::sessions::merge_hooks"
+        },
+        {
+          "expected_present": true,
+          "file": "src/requests/sessions.py",
+          "id": "session-merge-cookies",
+          "kind": "Calls",
+          "rationale": "Session::prepare_request invokes imported merge_cookies.",
+          "source": "crate::requests::sessions::Session::prepare_request",
+          "target": "crate::requests::cookies::merge_cookies"
+        },
+        {
+          "expected_present": true,
+          "file": "src/requests/sessions.py",
+          "id": "session-cookiejar-from-dict",
+          "kind": "Calls",
+          "rationale": "Session::prepare_request invokes imported cookiejar_from_dict.",
+          "source": "crate::requests::sessions::Session::prepare_request",
+          "target": "crate::requests::cookies::cookiejar_from_dict"
+        },
+        {
+          "expected_present": false,
+          "file": "src/requests/sessions.py",
+          "id": "session-not-request-prepare",
+          "kind": "Calls",
+          "rationale": "The constructor-assigned PreparedRequest receiver must not resolve to Request::prepare.",
+          "source": "crate::requests::sessions::Session::prepare_request",
+          "target": "crate::requests::models::Request::prepare"
+        }
+      ],
+      "sources": {
+        "bytes": 390397,
+        "extensions": [
+          ".py"
+        ],
+        "files": 35,
+        "manifest_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
+        "physical_lines": 11526
+      }
+    }
+  ],
+  "schema_version": 1,
+  "suite_id": "core-representative-v1"
+}

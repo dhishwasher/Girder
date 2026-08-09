@@ -420,6 +420,47 @@ fn inspect_collected() -> Result<(), ()> {
     }
 
     #[test]
+    fn batch_load_resolves_project_references_after_all_files() {
+        let app_rs = "fn compute() -> i64 { multiply(6, 7) }\n";
+        let math_rs = "fn multiply(a: i64, b: i64) -> i64 { a * b }\n";
+        let base_py = "class Base:\n    pass\n";
+        let derived_py = "class Derived(Base):\n    pass\n";
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+
+        builder.load_files(
+            &mut graph,
+            [
+                ("src/app.rs", app_rs),
+                ("src/math.rs", math_rs),
+                ("python/derived.py", derived_py),
+                ("python/base.py", base_py),
+            ],
+        );
+
+        let compute = NodeId::from_path("crate::app::compute");
+        let multiply = NodeId::from_path("crate::math::multiply");
+        assert_eq!(
+            graph
+                .neighbors(compute, Some(EdgeKind::Calls))
+                .into_iter()
+                .map(|node| node.id)
+                .collect::<Vec<_>>(),
+            vec![multiply]
+        );
+        let derived = NodeId::from_path("crate::python::derived::Derived");
+        let base = NodeId::from_path("crate::python::base::Base");
+        assert_eq!(
+            graph
+                .neighbors(derived, Some(EdgeKind::Inherits))
+                .into_iter()
+                .map(|node| node.id)
+                .collect::<Vec<_>>(),
+            vec![base]
+        );
+    }
+
+    #[test]
     fn resolves_renamed_imports_and_transitive_reexports_exactly() {
         let transport = r#"
 pub(crate) fn join() {}
@@ -1633,6 +1674,204 @@ def test_provenance():
         assert!(
             calls(&graph, after_late_import).is_empty(),
             "incremental refresh must remove an edge when wrapper provenance becomes untrusted"
+        );
+    }
+
+    #[test]
+    fn resolves_sound_python_isinstance_receiver_narrowing() {
+        let source = r#"
+class AliasPath:
+    def convert_to_aliases(self):
+        return []
+
+class AliasChoices:
+    def convert_to_aliases(self):
+        aliases = []
+        for c in self.choices:
+            if isinstance(c, AliasPath):
+                aliases.append(c.convert_to_aliases())
+        return aliases
+
+class DecoyPath:
+    def convert_to_aliases(self):
+        return []
+
+def parameter_shadow(isinstance, choices):
+    for c in choices:
+        if isinstance(c, AliasPath):
+            c.convert_to_aliases()
+
+def local_builtin_shadow(choices):
+    for c in choices:
+        if isinstance(c, AliasPath):
+            c.convert_to_aliases()
+    isinstance = lambda value, kind: True
+
+def local_type_shadow(AliasPath, choices):
+    for c in choices:
+        if isinstance(c, AliasPath):
+            c.convert_to_aliases()
+
+def tuple_guard(choices):
+    for c in choices:
+        if isinstance(c, (AliasPath, DecoyPath)):
+            c.convert_to_aliases()
+
+def boolean_guard(choices, ready):
+    for c in choices:
+        if isinstance(c, AliasPath) or ready:
+            c.convert_to_aliases()
+
+def negative_guard(choices):
+    for c in choices:
+        if not isinstance(c, AliasPath):
+            c.convert_to_aliases()
+
+def else_branch(choices):
+    for c in choices:
+        if isinstance(c, AliasPath):
+            pass
+        else:
+            c.convert_to_aliases()
+
+def after_guard(choices):
+    for c in choices:
+        if isinstance(c, AliasPath):
+            pass
+        c.convert_to_aliases()
+
+def for_target_rebinding(c, arbitrary_items):
+    if isinstance(c, AliasPath):
+        for c in arbitrary_items:
+            c.convert_to_aliases()
+
+def with_target_rebinding(c, manager):
+    if isinstance(c, AliasPath):
+        with manager as c:
+            c.convert_to_aliases()
+
+def except_target_rebinding(c):
+    if isinstance(c, AliasPath):
+        try:
+            pass
+        except Exception as c:
+            c.convert_to_aliases()
+
+def case_target_rebinding(c, value):
+    if isinstance(c, AliasPath):
+        match value:
+            case c:
+                c.convert_to_aliases()
+
+def comprehension_rebinding(c, arbitrary_items):
+    if isinstance(c, AliasPath):
+        [c.convert_to_aliases() for c in arbitrary_items]
+        {c.convert_to_aliases() for c in arbitrary_items}
+        {c: c.convert_to_aliases() for c in arbitrary_items}
+        tuple(c.convert_to_aliases() for c in arbitrary_items)
+
+def lambda_rebinding(c):
+    if isinstance(c, AliasPath):
+        callback = lambda c: c.convert_to_aliases()
+
+def direct_rebinding(choices):
+    for c in choices:
+        if isinstance(c, AliasPath):
+            c = DecoyPath()
+            c.convert_to_aliases()
+
+def compound_rebinding(choices, ready):
+    for c in choices:
+        if isinstance(c, AliasPath):
+            if ready:
+                c = DecoyPath()
+            c.convert_to_aliases()
+"#;
+        let shadowed_module = r#"
+class ModuleAliasPath:
+    def convert_to_aliases(self):
+        return []
+
+def isinstance(value, kind):
+    return True
+
+def module_shadow(choices):
+    for c in choices:
+        if isinstance(c, ModuleAliasPath):
+            c.convert_to_aliases()
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "aliases.py", source);
+
+        let calls = |graph: &SemanticGraph, caller| {
+            graph
+                .neighbors(caller, Some(EdgeKind::Calls))
+                .into_iter()
+                .map(|node| node.id)
+                .collect::<Vec<_>>()
+        };
+        let alias_path = NodeId::from_path("crate::aliases::AliasPath::convert_to_aliases");
+        let alias_choices = NodeId::from_path("crate::aliases::AliasChoices::convert_to_aliases");
+        let decoy_path = NodeId::from_path("crate::aliases::DecoyPath::convert_to_aliases");
+
+        assert_eq!(calls(&graph, alias_choices), vec![alias_path]);
+        for function in [
+            "parameter_shadow",
+            "local_builtin_shadow",
+            "local_type_shadow",
+            "tuple_guard",
+            "boolean_guard",
+            "negative_guard",
+            "else_branch",
+            "after_guard",
+            "for_target_rebinding",
+            "with_target_rebinding",
+            "except_target_rebinding",
+            "case_target_rebinding",
+            "comprehension_rebinding",
+            "lambda_rebinding",
+            "compound_rebinding",
+        ] {
+            let caller = NodeId::from_path(&format!("crate::aliases::{function}"));
+            assert!(
+                calls(&graph, caller).is_empty(),
+                "unproven narrowing in {function} must not emit a call edge"
+            );
+        }
+        assert_eq!(
+            calls(
+                &graph,
+                NodeId::from_path("crate::aliases::direct_rebinding")
+            ),
+            vec![decoy_path]
+        );
+        let mut shadowed_graph = SemanticGraph::new();
+        let mut shadowed_builder = GraphBuilder::new();
+        shadowed_builder.load_file(&mut shadowed_graph, "shadowed.py", shadowed_module);
+        let shadowed_calls = calls(
+            &shadowed_graph,
+            NodeId::from_path("crate::shadowed::module_shadow"),
+        );
+        assert!(
+            !shadowed_calls.contains(&NodeId::from_path(
+                "crate::shadowed::ModuleAliasPath::convert_to_aliases",
+            )),
+            "a module-level isinstance binding must disable receiver narrowing"
+        );
+
+        builder.update_file(
+            &mut graph,
+            "aliases.py",
+            &source.replacen(
+                "if isinstance(c, AliasPath):",
+                "if check_type(c, AliasPath):",
+                1,
+            ),
+        );
+        assert!(
+            calls(&graph, alias_choices).is_empty(),
+            "incremental refresh must remove the stale narrowed receiver edge"
         );
     }
 

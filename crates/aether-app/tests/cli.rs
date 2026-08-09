@@ -105,6 +105,100 @@ fn generated_identity_fingerprint(output: &str) -> String {
 }
 
 #[test]
+fn analyze_and_inspect_export_exact_bounded_json() {
+    let repo = TempRepo::new("graph-json");
+    repo.write(
+        "src/lib.rs",
+        r#"
+pub fn callee() -> i64 { 1 }
+pub fn caller() -> i64 { callee() }
+"#,
+    );
+
+    let analyze = run_bitcode(&["analyze", repo.path().to_str().unwrap(), "--json"]);
+    let summary: serde_json::Value = serde_json::from_str(&analyze).unwrap();
+    assert_eq!(summary["schema_version"], 1);
+    assert_eq!(summary["source_files"], 1);
+    assert!(summary["nodes"].as_u64().unwrap() >= 3);
+    assert!(summary["edges"].as_u64().unwrap() >= 3);
+    for field in ["build_ms", "similarity_ms", "save_ms"] {
+        assert!(
+            summary[field].is_u64(),
+            "analysis summary omitted numeric {field}: {summary}"
+        );
+    }
+    assert_eq!(
+        summary["graph_path"],
+        repo.path()
+            .join("project.aether")
+            .to_string_lossy()
+            .as_ref()
+    );
+
+    let graph_path = repo.path().join("project.aether");
+    let exported = run_bitcode(&["inspect", graph_path.to_str().unwrap(), "--json"]);
+    let graph: serde_json::Value = serde_json::from_str(&exported).unwrap();
+    assert_eq!(graph["schema_version"], 1);
+    let nodes = graph["nodes"].as_array().unwrap();
+    let paths = nodes
+        .iter()
+        .map(|node| node["path"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(paths.windows(2).all(|pair| pair[0] <= pair[1]));
+    let caller = nodes
+        .iter()
+        .find(|node| node["path"] == "crate::lib::caller")
+        .unwrap();
+    assert_eq!(caller["kind"], "Function");
+    assert_eq!(caller["language"], "rust");
+    assert_eq!(caller["source_sha256"].as_str().unwrap().len(), 64);
+    assert!(caller.get("source").is_none());
+
+    let edges = graph["edges"].as_array().unwrap();
+    assert!(edges.iter().any(|edge| {
+        edge["source"] == "crate::lib::caller"
+            && edge["target"] == "crate::lib::callee"
+            && edge["kind"] == "Calls"
+            && edge["weight_bits"] == 1.0_f32.to_bits()
+    }));
+    let edge_keys = edges
+        .iter()
+        .map(|edge| {
+            (
+                edge["source"].as_str().unwrap(),
+                edge["target"].as_str().unwrap(),
+                edge["kind"].as_str().unwrap(),
+                edge["weight_bits"].as_u64().unwrap(),
+            )
+        })
+        .collect::<Vec<_>>();
+    assert!(edge_keys.windows(2).all(|pair| pair[0] <= pair[1]));
+}
+
+#[test]
+fn inspect_json_fails_closed_for_missing_or_corrupt_graphs() {
+    let repo = TempRepo::new("graph-json-failure");
+    let missing = repo.path().join("missing.aether");
+    let missing_output = run_bitcode_output(&["inspect", missing.to_str().unwrap(), "--json"]);
+    assert!(!missing_output.status.success());
+    assert!(
+        String::from_utf8_lossy(&missing_output.stderr).contains("could not load"),
+        "{}",
+        String::from_utf8_lossy(&missing_output.stderr)
+    );
+
+    repo.write("corrupt.aether", "not a semantic graph\n");
+    let corrupt = repo.path().join("corrupt.aether");
+    let corrupt_output = run_bitcode_output(&["inspect", corrupt.to_str().unwrap(), "--json"]);
+    assert!(!corrupt_output.status.success());
+    assert!(
+        String::from_utf8_lossy(&corrupt_output.stderr).contains("could not load"),
+        "{}",
+        String::from_utf8_lossy(&corrupt_output.stderr)
+    );
+}
+
+#[test]
 fn review_reports_added_modified_removed_functions() {
     let repo = TempRepo::new("review-node-kinds");
     repo.write(
