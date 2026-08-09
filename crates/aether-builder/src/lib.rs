@@ -2491,6 +2491,116 @@ fn git_helper() {
     }
 
     #[test]
+    fn manifest_bin_target_resolves_a_custom_binary_path() {
+        let cli_tests = r#"
+use std::process::Command;
+
+#[test]
+fn cli_route() {
+    Command::new(env!("CARGO_BIN_EXE_trust-custom")).output().unwrap();
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.set_bin_targets(std::collections::HashMap::from([(
+            "tools/entry.rs".to_string(),
+            "trust-custom".to_string(),
+        )]));
+        builder.load_file(&mut graph, "tools/entry.rs", "fn main() {}\n");
+        builder.load_file(&mut graph, "tests/cli.rs", cli_tests);
+
+        let main = NodeId::from_path("crate::tools::entry::main");
+        assert_eq!(
+            graph.tests_for(main).len(),
+            1,
+            "an exact manifest path override must resolve the entrypoint"
+        );
+
+        // Without the manifest override, the same custom-path source stays
+        // unresolved exactly as the negative case above proves.
+        let mut unset_graph = SemanticGraph::new();
+        let mut unset_builder = GraphBuilder::new();
+        unset_builder.load_file(&mut unset_graph, "tools/entry.rs", "fn main() {}\n");
+        unset_builder.load_file(&mut unset_graph, "tests/cli.rs", cli_tests);
+        assert!(unset_graph.tests_for(main).is_empty());
+    }
+
+    #[test]
+    fn raii_drop_model_links_a_self_returning_constructor_to_its_drop() {
+        let source = r#"
+struct Guard {
+    active: bool,
+}
+
+impl Guard {
+    fn new() -> Self {
+        Guard { active: true }
+    }
+}
+
+impl Drop for Guard {
+    fn drop(&mut self) {
+        cleanup();
+    }
+}
+
+fn cleanup() {}
+
+#[test]
+fn test_guard() {
+    let _guard = Guard::new();
+}
+
+struct Plain;
+
+impl Plain {
+    fn new() -> Self {
+        Plain
+    }
+}
+
+#[test]
+fn test_plain() {
+    let _plain = Plain::new();
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/lib.rs", source);
+
+        let cleanup = NodeId::from_path("crate::lib::cleanup");
+        let test_guard = NodeId::from_path("crate::lib::test_guard");
+        let test_plain = NodeId::from_path("crate::lib::test_plain");
+
+        // The measured consequence: changing the code Drop::drop reaches
+        // (cleanup) now selects the constructing test, over-approximating
+        // in the recall-safe direction.
+        let cleanup_tests = graph.tests_for(cleanup);
+        assert!(
+            cleanup_tests.contains(&test_guard),
+            "a resolved Self-returning constructor for a Drop type must reach its drop"
+        );
+        assert!(
+            !cleanup_tests.contains(&test_plain),
+            "a type without a Drop impl must not gain a synthesized drop edge"
+        );
+
+        // A type with no Drop impl has no drop node to link to at all.
+        assert!(graph.find_by_path("crate::lib::Plain::drop").is_none());
+
+        // Incremental removal of the Drop impl removes the synthesized edge.
+        let without_drop = source.replace(
+            "impl Drop for Guard {\n    fn drop(&mut self) {\n        cleanup();\n    }\n}\n\n",
+            "",
+        );
+        builder.update_file(&mut graph, "src/lib.rs", &without_drop);
+        assert!(
+            graph.find_by_path("crate::lib::Guard::drop").is_none(),
+            "removing the impl must remove the drop node and its edge"
+        );
+    }
+
+    #[test]
     fn test_impact_finds_minimal_test_set() {
         // add is called by test_add (marked) and by sum_list (not marked).
         // Only test_add should appear in the impact set.

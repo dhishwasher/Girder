@@ -3,7 +3,7 @@ use aether_builder::GraphBuilder;
 use aether_graph::SemanticGraph;
 use globset::GlobSet;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeSet, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -376,6 +376,35 @@ fn is_excluded(excludes: &GlobSet, relative: &str) -> bool {
     excludes.is_match(relative)
 }
 
+/// Exact `[[bin]] path = "…"` overrides from the project's root Cargo.toml,
+/// as a normalized project-relative file path -> declared target name map.
+///
+/// Measured gap: Cargo target metadata is not otherwise indexed, so a binary
+/// at a custom path has no discoverable target name and its
+/// `CARGO_BIN_EXE_<target>` subprocess entrypoint stays unresolved. This
+/// reads only the declared `path`; a missing, unreadable, or unparseable
+/// manifest — or a `[[bin]]` entry without an explicit `path` — yields
+/// nothing here and convention remains the only source, exactly as before.
+fn cargo_bin_targets(root: &Path) -> HashMap<String, String> {
+    let Ok(text) = std::fs::read_to_string(root.join("Cargo.toml")) else {
+        return HashMap::new();
+    };
+    let Ok(manifest) = text.parse::<toml::Value>() else {
+        return HashMap::new();
+    };
+    let Some(bins) = manifest.get("bin").and_then(toml::Value::as_array) else {
+        return HashMap::new();
+    };
+    bins.iter()
+        .filter_map(|bin| {
+            let name = bin.get("name")?.as_str()?;
+            let path = bin.get("path")?.as_str()?;
+            (!name.is_empty() && !path.is_empty())
+                .then(|| (path.replace('\\', "/"), name.to_string()))
+        })
+        .collect()
+}
+
 /// Build a graph from the configured source files.
 pub(crate) fn build_from_dir(root: &Path) -> std::io::Result<(SemanticGraph, GraphBuilder, usize)> {
     let config = ProjectConfig::load(root)?;
@@ -389,6 +418,7 @@ pub(crate) fn build_from_dir_with_config(
     recover_project_transactions_read_only(root)?;
     let mut graph = SemanticGraph::new();
     let mut builder = GraphBuilder::new();
+    builder.set_bin_targets(cargo_bin_targets(root));
     let sources = collect_sources_with_config(root, config)?;
     let mut contents = Vec::with_capacity(sources.len());
     for (absolute, relative) in &sources {
@@ -1370,6 +1400,91 @@ mod tests {
             b"original\n"
         );
         assert!(!dir.0.join(".bitcode").exists());
+    }
+
+    #[test]
+    fn cargo_bin_targets_reads_exact_manifest_path_overrides() {
+        let dir = TempDir::new("bin-targets");
+        std::fs::write(
+            dir.0.join("Cargo.toml"),
+            br#"
+[package]
+name = "demo"
+version = "0.1.0"
+
+[[bin]]
+name = "trust-custom"
+path = "tools/entry.rs"
+
+[[bin]]
+name = "no-path-declared"
+
+[[bin]]
+path = "tools/anonymous.rs"
+"#,
+        )
+        .unwrap();
+
+        let targets = cargo_bin_targets(&dir.0);
+        assert_eq!(
+            targets.get("tools/entry.rs").map(String::as_str),
+            Some("trust-custom")
+        );
+        assert_eq!(
+            targets.len(),
+            1,
+            "entries missing name or path contribute nothing"
+        );
+    }
+
+    #[test]
+    fn cargo_bin_targets_is_empty_without_a_readable_manifest() {
+        let dir = TempDir::new("bin-targets-missing");
+        assert!(cargo_bin_targets(&dir.0).is_empty());
+
+        std::fs::write(dir.0.join("Cargo.toml"), b"not valid toml =").unwrap();
+        assert!(cargo_bin_targets(&dir.0).is_empty());
+    }
+
+    #[test]
+    fn directory_build_resolves_a_custom_binary_path_via_the_manifest() {
+        let dir = TempDir::new("build-custom-bin");
+        std::fs::write(
+            dir.0.join("Cargo.toml"),
+            br#"
+[package]
+name = "demo"
+version = "0.1.0"
+
+[[bin]]
+name = "trust-custom"
+path = "tools/entry.rs"
+"#,
+        )
+        .unwrap();
+        std::fs::create_dir_all(dir.0.join("tools")).unwrap();
+        std::fs::write(dir.0.join("tools/entry.rs"), b"fn main() {}\n").unwrap();
+        std::fs::create_dir_all(dir.0.join("tests")).unwrap();
+        std::fs::write(
+            dir.0.join("tests/cli.rs"),
+            br#"
+use std::process::Command;
+
+#[test]
+fn cli_route() {
+    Command::new(env!("CARGO_BIN_EXE_trust-custom")).output().unwrap();
+}
+"#,
+        )
+        .unwrap();
+
+        let (graph, _, _) = build_from_dir(&dir.0).unwrap();
+        let main = aether_graph::NodeId::from_path("crate::tools::entry::main");
+        assert_eq!(
+            graph.tests_for(main).len(),
+            1,
+            "the project loader must apply the manifest's exact bin path"
+        );
     }
 
     #[test]

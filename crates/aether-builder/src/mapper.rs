@@ -168,6 +168,10 @@ pub struct BuildOutput {
     pub calls: Vec<CallRef>,
     pub inherits: Vec<InheritRef>,
     pub rust_imports: Vec<RustImportRef>,
+    /// Type paths with a Rust `impl Drop for T` in this file, for the
+    /// project resolver's narrow RAII model: a resolved `Self`-returning
+    /// constructor call for one of these types also calls its `drop`.
+    pub drop_impls: Vec<String>,
 }
 
 impl BuildOutput {
@@ -793,12 +797,16 @@ fn collect_impls(root: TsNode, source: &str, module: &str, out: &mut BuildOutput
             ) {
                 let trait_name = last_ident(node_text(trait_node, source));
                 let type_name = last_ident(node_text(type_node, source));
+                let type_path = format!("{module}::{type_name}");
                 // The implementing type's node id is its in-module path.
-                let sub = NodeId::from_path(&format!("{module}::{type_name}"));
+                let sub = NodeId::from_path(&type_path);
                 out.inherits.push(InheritRef {
                     sub,
                     base: trait_name.to_string(),
                 });
+                if trait_name == "Drop" {
+                    out.drop_impls.push(type_path);
+                }
             }
         }
         let mut cursor = node.walk();

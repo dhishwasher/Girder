@@ -27,6 +27,8 @@ struct FileState {
     inherits: Vec<InheritRef>,
     /// Rust imports and public re-exports used to preserve aliased identities.
     rust_imports: Vec<RustImportRef>,
+    /// Type paths with `impl Drop for T` in this file.
+    drop_impls: Vec<String>,
 }
 
 /// The module path that owns a node, derived from its full path:
@@ -281,19 +283,33 @@ fn conventional_rust_binary_target(file: Option<&str>) -> Option<String> {
     (file_name == "main.rs" && !target.is_empty()).then(|| target.to_string())
 }
 
+/// A file's Cargo target name, from convention or an exact manifest
+/// `[[bin]] path` override. `bin_targets` maps a normalized project-relative
+/// file path to its declared target name; an unparseable or absent manifest
+/// simply yields an empty map, leaving convention as the only source.
+fn rust_binary_target(file: Option<&str>, bin_targets: &HashMap<String, String>) -> Option<String> {
+    let file = file?;
+    let normalized = file.replace('\\', "/");
+    bin_targets
+        .get(&normalized)
+        .cloned()
+        .or_else(|| conventional_rust_binary_target(Some(&normalized)))
+}
+
 fn select_process_entrypoint<'a>(
     candidates: &'a [FunctionCandidate],
     target: &str,
+    bin_targets: &HashMap<String, String>,
 ) -> Option<&'a FunctionCandidate> {
     let entrypoints = || {
         candidates.iter().filter(|candidate| {
             candidate.owner == candidate.source_module
                 && candidate.path.ends_with("::main")
-                && conventional_rust_binary_target(candidate.file.as_deref()).is_some()
+                && rust_binary_target(candidate.file.as_deref(), bin_targets).is_some()
         })
     };
     only_candidate(entrypoints().filter(|candidate| {
-        conventional_rust_binary_target(candidate.file.as_deref())
+        rust_binary_target(candidate.file.as_deref(), bin_targets)
             .is_some_and(|candidate_target| candidate_target == target)
     }))
     .or_else(|| only_candidate(entrypoints()))
@@ -533,11 +549,24 @@ fn resolve_factory_receiver<'a>(
 #[derive(Default)]
 pub struct GraphBuilder {
     files: HashMap<String, FileState>,
+    /// Cargo `[[bin]]` target overrides: normalized project-relative file
+    /// path -> declared target name. Consulted before convention when
+    /// resolving `CARGO_BIN_EXE_<target>` subprocess entrypoints, so a
+    /// custom `path` still links its exact `main` rather than staying
+    /// unresolved.
+    bin_targets: HashMap<String, String>,
 }
 
 impl GraphBuilder {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Declare exact Cargo binary target locations from manifest metadata
+    /// the source-only graph cannot otherwise see. Replaces any previously
+    /// set targets; call again after a manifest change.
+    pub fn set_bin_targets(&mut self, bin_targets: HashMap<String, String>) {
+        self.bin_targets = bin_targets;
     }
 
     /// Initial load of a file. Full parse + extract + insert.
@@ -575,6 +604,7 @@ impl GraphBuilder {
                 calls: out.calls.clone(),
                 inherits: out.inherits.clone(),
                 rust_imports: out.rust_imports.clone(),
+                drop_impls: out.drop_impls.clone(),
             },
         );
     }
@@ -602,6 +632,7 @@ impl GraphBuilder {
                 calls: Vec::new(),
                 inherits: Vec::new(),
                 rust_imports: Vec::new(),
+                drop_impls: Vec::new(),
             });
 
         // Inform tree-sitter where the edit happened so it reparses incrementally.
@@ -617,6 +648,7 @@ impl GraphBuilder {
             state.calls = out.calls.clone();
             state.inherits = out.inherits.clone();
             state.rust_imports = out.rust_imports.clone();
+            state.drop_impls = out.drop_impls.clone();
         }
         self.resolve_calls(graph);
     }
@@ -680,6 +712,15 @@ impl GraphBuilder {
         }
 
         let reexports = reexport_index(&self.files);
+        // Project-wide RAII model: a resolved call to a `Self`-returning
+        // associated function of one of these types also, over-approximately,
+        // calls that type's `drop`. Recall-safe (may over-select), never
+        // recall-losing.
+        let drop_types: HashSet<&str> = self
+            .files
+            .values()
+            .flat_map(|state| state.drop_impls.iter().map(String::as_str))
+            .collect();
         let mut added: HashSet<(NodeId, NodeId)> = HashSet::new();
         // callee id -> every resolved (caller, provable first string literal).
         let mut literal_callers: HashMap<NodeId, Vec<(NodeId, Option<String>)>> = HashMap::new();
@@ -701,9 +742,9 @@ impl GraphBuilder {
                     None => continue,
                 };
                 if let Some(target) = call.process_entrypoint.as_deref() {
-                    let chosen = by_name
-                        .get(&call.callee)
-                        .and_then(|candidates| select_process_entrypoint(candidates, target));
+                    let chosen = by_name.get(&call.callee).and_then(|candidates| {
+                        select_process_entrypoint(candidates, target, &self.bin_targets)
+                    });
                     if let Some(candidate) = chosen {
                         if candidate.id != call.caller && added.insert((call.caller, candidate.id))
                         {
@@ -768,6 +809,18 @@ impl GraphBuilder {
                     if candidate.id != call.caller && added.insert((call.caller, candidate.id)) {
                         let _ =
                             graph.add_edge(call.caller, candidate.id, Edge::new(EdgeKind::Calls));
+                    }
+                    if candidate.return_type.as_deref() == Some("Self")
+                        && drop_types.contains(candidate.owner.as_str())
+                    {
+                        let drop_id = NodeId::from_path(&format!("{}::drop", candidate.owner));
+                        if drop_id != call.caller
+                            && graph.contains(drop_id)
+                            && added.insert((call.caller, drop_id))
+                        {
+                            let _ =
+                                graph.add_edge(call.caller, drop_id, Edge::new(EdgeKind::Calls));
+                        }
                     }
                     literal_callers
                         .entry(candidate.id)
