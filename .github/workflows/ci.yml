@@ -39,6 +39,13 @@ jobs:
       - name: Tests
         run: cargo test --workspace
 
+      - name: Measurement harness unit tests
+        run: |
+          python3 -m unittest -v \
+            tools.test_core_trustworthiness_oracle \
+            tools.test_core_representative_benchmark \
+            tools.test_core_representative_mutations
+
       - name: Live provider feature compiles
         run: cargo check -p aether-ai --features live-providers
 
