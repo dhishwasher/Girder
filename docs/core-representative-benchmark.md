@@ -98,17 +98,41 @@ Omit `--offline` only when the checked cache is not yet populated. A policy
 failure still writes its complete observation when `--output` is supplied and
 then exits unsuccessfully with the failed check ids.
 
+## Result
+
+The first recorded observation
+([`core-representative-observation.json`](core-representative-observation.json))
+**passes** the precommitted policy: `beta_pass: true`, zero failed checks.
+
+| Repository | Median analyze | Max analyze | Max RSS | Semantic | Digests |
+|---|---:|---:|---:|---|---|
+| petgraph-0.6.5 | 2.0s | 2.4s | 50.6 MiB | 3 TP, 0 FP/FN | 1/1 |
+| serde_json-1.0.150 | 1.6s | 1.6s | 41.7 MiB | 4 TP, 0 FP/FN | 1/1 |
+| regex-1.12.4 | 0.5s | 0.6s | 19.6 MiB | 4 TP, 4 TN, 0 FP/FN | 1/1 |
+| click-8.4.1 | 3.9s | 4.2s | 47.6 MiB | 4 TP, 3 TN, 0 FP/FN | 1/1 |
+| pydantic-2.13.4 | 46.4s | 47.1s | 206.6 MiB | 3 TP, 1 TN, 0 FP/FN | 1/1 |
+| requests-2.34.2 | 2.4s | 2.5s | 28.5 MiB | 13 TP, 1 TN, 0 FP/FN | 1/1 |
+
+Sum of medians: 56.8s (limit 180s). Every repository has exactly one unique
+artifact digest and one unique canonical semantic digest across the five
+runs — the determinism gate this benchmark exists to enforce (see "Make
+.aether serialization canonical" in the git history) passes cleanly.
+
 ## Claims that remain open
 
 This gate measures fresh graph creation and exact success on 40 curated call
-edges. It does not close the following P0 evidence gaps:
+edges. It does not close the following evidence gaps:
 
 - genuine cold-cache indexing;
 - one-file incremental latency and stale-edge removal on the representative
   corpus;
 - framework-discovered representative test inventories, dynamic affected-test
-  precision/recall, and impact-query latency;
+  precision/recall, and impact-query latency (the closest evidence is
+  `docs/core-representative-mutations.md`'s single declared mutation, not a
+  representative sweep);
 - randomly or independently sampled semantic edges beyond the declared cases;
-- concurrent analysis isolation, bounded product Git/test subprocesses, and
-  fault-injected recovery; or
+  or
 - portability of the performance ceilings to other host/storage classes.
+
+Concurrent analysis isolation, bounded product Git/test subprocesses, and
+fault-injected recovery are closed separately — see `core-gap-analysis.md`.

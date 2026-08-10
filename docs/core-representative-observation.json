@@ -1,0 +1,3444 @@
+{
+  "assessment": {
+    "beta_pass": true,
+    "beta_policy_id": "core-representative-beta-v1",
+    "beta_policy_sha256": "1443594fd136f24d5834ab019de26c5eed2da5d5cd115fb10f5d34409350f782",
+    "checks": [
+      {
+        "actual": 5,
+        "id": "eligibility.runs_per_repository",
+        "passed": true,
+        "required": 5
+      },
+      {
+        "actual": 2,
+        "id": "eligibility.rayon_threads",
+        "passed": true,
+        "required": 2
+      },
+      {
+        "actual": true,
+        "id": "eligibility.source_worktree_clean",
+        "passed": true,
+        "required": true
+      },
+      {
+        "actual": 0,
+        "id": "semantic.aggregate.false_positives",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "id": "semantic.aggregate.false_negatives",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.aggregate.micro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.aggregate.micro_recall",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.aggregate.macro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.aggregate.macro_recall",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "id": "semantic.rust.false_positives",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "id": "semantic.rust.false_negatives",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.rust.micro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.rust.micro_recall",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.rust.macro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.rust.macro_recall",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "id": "semantic.python.false_positives",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "id": "semantic.python.false_negatives",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.python.micro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.python.micro_recall",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.python.macro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.python.macro_recall",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 5,
+        "id": "eligibility.petgraph-0.6.5.observed_runs",
+        "passed": true,
+        "required": 5
+      },
+      {
+        "actual": 1,
+        "id": "determinism.petgraph-0.6.5.artifact_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.petgraph-0.6.5.semantic_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.petgraph-0.6.5.unique_node_edge_count_pairs",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 2031,
+        "id": "performance.petgraph-0.6.5.analyze_median_ms",
+        "maximum": 15000,
+        "passed": true
+      },
+      {
+        "actual": 2420,
+        "id": "performance.petgraph-0.6.5.analyze_max_ms",
+        "maximum": 30000,
+        "passed": true
+      },
+      {
+        "actual": 50652,
+        "id": "performance.petgraph-0.6.5.rss_max_kib",
+        "maximum": 131072,
+        "passed": true
+      },
+      {
+        "actual": 129,
+        "id": "performance.petgraph-0.6.5.inspect_max_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 3101341,
+        "id": "performance.petgraph-0.6.5.graph_artifact_max_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 5,
+        "id": "eligibility.serde_json-1.0.150.observed_runs",
+        "passed": true,
+        "required": 5
+      },
+      {
+        "actual": 1,
+        "id": "determinism.serde_json-1.0.150.artifact_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.serde_json-1.0.150.semantic_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.serde_json-1.0.150.unique_node_edge_count_pairs",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1565,
+        "id": "performance.serde_json-1.0.150.analyze_median_ms",
+        "maximum": 15000,
+        "passed": true
+      },
+      {
+        "actual": 1637,
+        "id": "performance.serde_json-1.0.150.analyze_max_ms",
+        "maximum": 30000,
+        "passed": true
+      },
+      {
+        "actual": 41676,
+        "id": "performance.serde_json-1.0.150.rss_max_kib",
+        "maximum": 131072,
+        "passed": true
+      },
+      {
+        "actual": 150,
+        "id": "performance.serde_json-1.0.150.inspect_max_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 2876860,
+        "id": "performance.serde_json-1.0.150.graph_artifact_max_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 5,
+        "id": "eligibility.regex-1.12.4.observed_runs",
+        "passed": true,
+        "required": 5
+      },
+      {
+        "actual": 1,
+        "id": "determinism.regex-1.12.4.artifact_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.regex-1.12.4.semantic_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.regex-1.12.4.unique_node_edge_count_pairs",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 547,
+        "id": "performance.regex-1.12.4.analyze_median_ms",
+        "maximum": 15000,
+        "passed": true
+      },
+      {
+        "actual": 582,
+        "id": "performance.regex-1.12.4.analyze_max_ms",
+        "maximum": 30000,
+        "passed": true
+      },
+      {
+        "actual": 19584,
+        "id": "performance.regex-1.12.4.rss_max_kib",
+        "maximum": 131072,
+        "passed": true
+      },
+      {
+        "actual": 44,
+        "id": "performance.regex-1.12.4.inspect_max_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 1010880,
+        "id": "performance.regex-1.12.4.graph_artifact_max_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 5,
+        "id": "eligibility.click-8.4.1.observed_runs",
+        "passed": true,
+        "required": 5
+      },
+      {
+        "actual": 1,
+        "id": "determinism.click-8.4.1.artifact_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.click-8.4.1.semantic_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.click-8.4.1.unique_node_edge_count_pairs",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 3865,
+        "id": "performance.click-8.4.1.analyze_median_ms",
+        "maximum": 15000,
+        "passed": true
+      },
+      {
+        "actual": 4241,
+        "id": "performance.click-8.4.1.analyze_max_ms",
+        "maximum": 30000,
+        "passed": true
+      },
+      {
+        "actual": 47592,
+        "id": "performance.click-8.4.1.rss_max_kib",
+        "maximum": 131072,
+        "passed": true
+      },
+      {
+        "actual": 169,
+        "id": "performance.click-8.4.1.inspect_max_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 4219522,
+        "id": "performance.click-8.4.1.graph_artifact_max_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 5,
+        "id": "eligibility.pydantic-2.13.4.observed_runs",
+        "passed": true,
+        "required": 5
+      },
+      {
+        "actual": 1,
+        "id": "determinism.pydantic-2.13.4.artifact_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.pydantic-2.13.4.semantic_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.pydantic-2.13.4.unique_node_edge_count_pairs",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 46375,
+        "id": "performance.pydantic-2.13.4.analyze_median_ms",
+        "maximum": 120000,
+        "passed": true
+      },
+      {
+        "actual": 47127,
+        "id": "performance.pydantic-2.13.4.analyze_max_ms",
+        "maximum": 180000,
+        "passed": true
+      },
+      {
+        "actual": 206552,
+        "id": "performance.pydantic-2.13.4.rss_max_kib",
+        "maximum": 393216,
+        "passed": true
+      },
+      {
+        "actual": 1138,
+        "id": "performance.pydantic-2.13.4.inspect_max_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 24474145,
+        "id": "performance.pydantic-2.13.4.graph_artifact_max_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 5,
+        "id": "eligibility.requests-2.34.2.observed_runs",
+        "passed": true,
+        "required": 5
+      },
+      {
+        "actual": 1,
+        "id": "determinism.requests-2.34.2.artifact_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.requests-2.34.2.semantic_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.requests-2.34.2.unique_node_edge_count_pairs",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 2432,
+        "id": "performance.requests-2.34.2.analyze_median_ms",
+        "maximum": 15000,
+        "passed": true
+      },
+      {
+        "actual": 2482,
+        "id": "performance.requests-2.34.2.analyze_max_ms",
+        "maximum": 30000,
+        "passed": true
+      },
+      {
+        "actual": 28528,
+        "id": "performance.requests-2.34.2.rss_max_kib",
+        "maximum": 131072,
+        "passed": true
+      },
+      {
+        "actual": 87,
+        "id": "performance.requests-2.34.2.inspect_max_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 2173978,
+        "id": "performance.requests-2.34.2.graph_artifact_max_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 56815,
+        "id": "performance.sum_of_repository_medians_ms",
+        "maximum": 180000,
+        "passed": true
+      }
+    ],
+    "classification": "beta_policy_evaluation",
+    "failed_check_ids": []
+  },
+  "corpus_manifest_sha256": "cd69ebf7de6463616a5988e0b9deb6c0fcabc484515ebaa30b696b0fb39f9a7d",
+  "host": {
+    "arch": "x86_64",
+    "cpu_model": "Intel(R) Celeron(R) N4000 CPU @ 1.10GHz",
+    "execution_filesystem": {
+      "filesystem_type": "btrfs",
+      "mount_point": "/",
+      "source": "/dev/vdc"
+    },
+    "kernel": "6.6.119-09283-g9c138e0af8c3",
+    "load_policy": "uncontrolled",
+    "logical_cpus": 2,
+    "memory_bytes": 2881327104,
+    "os": "Linux",
+    "python": "3.11.2",
+    "rayon_threads": 2,
+    "rss_measurement": "posix-wait4-ru_maxrss-kib"
+  },
+  "kind": "representative-corpus-observation",
+  "repositories": [
+    {
+      "artifact_sha256": "b4c5cc86750666a3ed20bdaf5ca2a0344f9c67674cae0515bec2da16fbaa47db",
+      "id": "petgraph-0.6.5",
+      "language": "rust",
+      "runs": [
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "a8825a16fe085d397f0953298dedb5ba44a46516382f3c25efeadb9c031c1958",
+          "graph": {
+            "artifact_bytes": 3101341,
+            "artifact_sha256": "9e8682c859b683d23ce1b8868fdea53faf9bbfd6fedee8c00220e501273d0727",
+            "canonical_semantic_sha256": "8fd42bf47f3e9865af83a9ca4da4438a7a80e847c0c8b79f54f8ee5c1e18973f",
+            "edges": 4867,
+            "edges_by_kind": {
+              "Calls": 569,
+              "Contains": 986,
+              "DataFlow": 285,
+              "Inherits": 9,
+              "SemanticSimilar": 3018
+            },
+            "nodes": 1866
+          },
+          "inspect_wall_ms": 124,
+          "ordinal": 1,
+          "peak_rss_kib": 50648,
+          "phase_ms": {
+            "build": 1372,
+            "save": 404,
+            "similarity": 409
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "dijkstra-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::dijk",
+              "target": "crate::algo::dijkstra::dijkstra"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "astar-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::test_astar_null_heuristic",
+              "target": "crate::algo::astar::astar"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "astar-test-dijkstra-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::test_astar_null_heuristic",
+              "target": "crate::algo::dijkstra::dijkstra"
+            }
+          ],
+          "source_manifest_after_sha256": "74ad9b20cdfd3414fd26dbf9295f0894c3f2edfd908fe095205f1b164fd1dc4c",
+          "wall_ms": 2420
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "be50b86a4d3981b3e312e7293fd93b9550d5fac3174e36e7b6e7996874460acc",
+          "graph": {
+            "artifact_bytes": 3101341,
+            "artifact_sha256": "9e8682c859b683d23ce1b8868fdea53faf9bbfd6fedee8c00220e501273d0727",
+            "canonical_semantic_sha256": "8fd42bf47f3e9865af83a9ca4da4438a7a80e847c0c8b79f54f8ee5c1e18973f",
+            "edges": 4867,
+            "edges_by_kind": {
+              "Calls": 569,
+              "Contains": 986,
+              "DataFlow": 285,
+              "Inherits": 9,
+              "SemanticSimilar": 3018
+            },
+            "nodes": 1866
+          },
+          "inspect_wall_ms": 123,
+          "ordinal": 2,
+          "peak_rss_kib": 50364,
+          "phase_ms": {
+            "build": 1243,
+            "save": 230,
+            "similarity": 319
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "dijkstra-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::dijk",
+              "target": "crate::algo::dijkstra::dijkstra"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "astar-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::test_astar_null_heuristic",
+              "target": "crate::algo::astar::astar"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "astar-test-dijkstra-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::test_astar_null_heuristic",
+              "target": "crate::algo::dijkstra::dijkstra"
+            }
+          ],
+          "source_manifest_after_sha256": "74ad9b20cdfd3414fd26dbf9295f0894c3f2edfd908fe095205f1b164fd1dc4c",
+          "wall_ms": 2031
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "081c0cfe92a4012992ca51a0d60bc27cb99c48f3b2569dadfcd6a168f782665a",
+          "graph": {
+            "artifact_bytes": 3101341,
+            "artifact_sha256": "9e8682c859b683d23ce1b8868fdea53faf9bbfd6fedee8c00220e501273d0727",
+            "canonical_semantic_sha256": "8fd42bf47f3e9865af83a9ca4da4438a7a80e847c0c8b79f54f8ee5c1e18973f",
+            "edges": 4867,
+            "edges_by_kind": {
+              "Calls": 569,
+              "Contains": 986,
+              "DataFlow": 285,
+              "Inherits": 9,
+              "SemanticSimilar": 3018
+            },
+            "nodes": 1866
+          },
+          "inspect_wall_ms": 121,
+          "ordinal": 3,
+          "peak_rss_kib": 50644,
+          "phase_ms": {
+            "build": 1239,
+            "save": 154,
+            "similarity": 307
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "dijkstra-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::dijk",
+              "target": "crate::algo::dijkstra::dijkstra"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "astar-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::test_astar_null_heuristic",
+              "target": "crate::algo::astar::astar"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "astar-test-dijkstra-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::test_astar_null_heuristic",
+              "target": "crate::algo::dijkstra::dijkstra"
+            }
+          ],
+          "source_manifest_after_sha256": "74ad9b20cdfd3414fd26dbf9295f0894c3f2edfd908fe095205f1b164fd1dc4c",
+          "wall_ms": 1927
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "f85d49429488e425f3a21733a7e1779148b79d5937fdf9090ba7006932fff11f",
+          "graph": {
+            "artifact_bytes": 3101341,
+            "artifact_sha256": "9e8682c859b683d23ce1b8868fdea53faf9bbfd6fedee8c00220e501273d0727",
+            "canonical_semantic_sha256": "8fd42bf47f3e9865af83a9ca4da4438a7a80e847c0c8b79f54f8ee5c1e18973f",
+            "edges": 4867,
+            "edges_by_kind": {
+              "Calls": 569,
+              "Contains": 986,
+              "DataFlow": 285,
+              "Inherits": 9,
+              "SemanticSimilar": 3018
+            },
+            "nodes": 1866
+          },
+          "inspect_wall_ms": 118,
+          "ordinal": 4,
+          "peak_rss_kib": 50376,
+          "phase_ms": {
+            "build": 1301,
+            "save": 207,
+            "similarity": 304
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "dijkstra-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::dijk",
+              "target": "crate::algo::dijkstra::dijkstra"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "astar-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::test_astar_null_heuristic",
+              "target": "crate::algo::astar::astar"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "astar-test-dijkstra-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::test_astar_null_heuristic",
+              "target": "crate::algo::dijkstra::dijkstra"
+            }
+          ],
+          "source_manifest_after_sha256": "74ad9b20cdfd3414fd26dbf9295f0894c3f2edfd908fe095205f1b164fd1dc4c",
+          "wall_ms": 2040
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "3ff3d02a067c36745cca13195c81e99e54b514a494ecd1bd9d9ba20a0d238bbe",
+          "graph": {
+            "artifact_bytes": 3101341,
+            "artifact_sha256": "9e8682c859b683d23ce1b8868fdea53faf9bbfd6fedee8c00220e501273d0727",
+            "canonical_semantic_sha256": "8fd42bf47f3e9865af83a9ca4da4438a7a80e847c0c8b79f54f8ee5c1e18973f",
+            "edges": 4867,
+            "edges_by_kind": {
+              "Calls": 569,
+              "Contains": 986,
+              "DataFlow": 285,
+              "Inherits": 9,
+              "SemanticSimilar": 3018
+            },
+            "nodes": 1866
+          },
+          "inspect_wall_ms": 129,
+          "ordinal": 5,
+          "peak_rss_kib": 50652,
+          "phase_ms": {
+            "build": 1262,
+            "save": 159,
+            "similarity": 306
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "dijkstra-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::dijk",
+              "target": "crate::algo::dijkstra::dijkstra"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "astar-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::test_astar_null_heuristic",
+              "target": "crate::algo::astar::astar"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "astar-test-dijkstra-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::tests::graph::test_astar_null_heuristic",
+              "target": "crate::algo::dijkstra::dijkstra"
+            }
+          ],
+          "source_manifest_after_sha256": "74ad9b20cdfd3414fd26dbf9295f0894c3f2edfd908fe095205f1b164fd1dc4c",
+          "wall_ms": 1949
+        }
+      ],
+      "source": {
+        "bytes": 817654,
+        "files": 79,
+        "manifest_sha256": "74ad9b20cdfd3414fd26dbf9295f0894c3f2edfd908fe095205f1b164fd1dc4c",
+        "physical_lines": 27797
+      },
+      "summary": {
+        "artifact_unique_digests": 1,
+        "peak_rss_max_kib": 50652,
+        "peak_rss_median_kib": 50644,
+        "phase_median_ms": {
+          "build": 1262,
+          "save": 207,
+          "similarity": 307
+        },
+        "semantic": {
+          "fn": 0,
+          "fp": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tn": 0,
+          "tp": 3
+        },
+        "semantic_unique_digests": 1,
+        "unique_node_edge_count_pairs": 1,
+        "wall_max_ms": 2420,
+        "wall_median_ms": 2031
+      }
+    },
+    {
+      "artifact_sha256": "e8014e44b4736ed0538adeecded0fce2a272f22dc9578a7eb6b2d9993c74cfb9",
+      "id": "serde_json-1.0.150",
+      "language": "rust",
+      "runs": [
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "7cd68855234656b50782af5dfa0ea514781356764d85ca5194542ff81d4c6df0",
+          "graph": {
+            "artifact_bytes": 2876860,
+            "artifact_sha256": "183165dc746af633bea970f74b912972f515a1014d0e180f6a2a08b0f1e4e101",
+            "canonical_semantic_sha256": "397de80ad09e175ff990b25aae9bc8680942f9a68b7b8e3180f18caa3a8792e0",
+            "edges": 5897,
+            "edges_by_kind": {
+              "Calls": 840,
+              "Contains": 931,
+              "DataFlow": 253,
+              "Inherits": 15,
+              "SemanticSimilar": 3858
+            },
+            "nodes": 1549
+          },
+          "inspect_wall_ms": 150,
+          "ordinal": 1,
+          "peak_rss_kib": 41676,
+          "phase_ms": {
+            "build": 924,
+            "save": 153,
+            "similarity": 267
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-slice-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_slice",
+              "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-str-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_str",
+              "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "to-string-macro-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::ser::to_string",
+              "target": "crate::ser::to_vec"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "to-string-pretty-macro-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::ser::to_string_pretty",
+              "target": "crate::ser::to_vec_pretty"
+            }
+          ],
+          "source_manifest_after_sha256": "f6eecfbcf0baa8180f9b3d9989f9b9b52c9729d501aea22952b6e185edcbd289",
+          "wall_ms": 1562
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "c422de7d053a275bd3df554f8c3d32623c2dca06a4ee5b6198cb4adbc5847b54",
+          "graph": {
+            "artifact_bytes": 2876860,
+            "artifact_sha256": "183165dc746af633bea970f74b912972f515a1014d0e180f6a2a08b0f1e4e101",
+            "canonical_semantic_sha256": "397de80ad09e175ff990b25aae9bc8680942f9a68b7b8e3180f18caa3a8792e0",
+            "edges": 5897,
+            "edges_by_kind": {
+              "Calls": 840,
+              "Contains": 931,
+              "DataFlow": 253,
+              "Inherits": 15,
+              "SemanticSimilar": 3858
+            },
+            "nodes": 1549
+          },
+          "inspect_wall_ms": 116,
+          "ordinal": 2,
+          "peak_rss_kib": 41472,
+          "phase_ms": {
+            "build": 889,
+            "save": 157,
+            "similarity": 265
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-slice-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_slice",
+              "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-str-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_str",
+              "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "to-string-macro-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::ser::to_string",
+              "target": "crate::ser::to_vec"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "to-string-pretty-macro-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::ser::to_string_pretty",
+              "target": "crate::ser::to_vec_pretty"
+            }
+          ],
+          "source_manifest_after_sha256": "f6eecfbcf0baa8180f9b3d9989f9b9b52c9729d501aea22952b6e185edcbd289",
+          "wall_ms": 1520
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "821dc9ca0134eef39ac95a75e6a6db44fc261964273fc4b038a58b1d5f5cbc69",
+          "graph": {
+            "artifact_bytes": 2876860,
+            "artifact_sha256": "183165dc746af633bea970f74b912972f515a1014d0e180f6a2a08b0f1e4e101",
+            "canonical_semantic_sha256": "397de80ad09e175ff990b25aae9bc8680942f9a68b7b8e3180f18caa3a8792e0",
+            "edges": 5897,
+            "edges_by_kind": {
+              "Calls": 840,
+              "Contains": 931,
+              "DataFlow": 253,
+              "Inherits": 15,
+              "SemanticSimilar": 3858
+            },
+            "nodes": 1549
+          },
+          "inspect_wall_ms": 126,
+          "ordinal": 3,
+          "peak_rss_kib": 41420,
+          "phase_ms": {
+            "build": 886,
+            "save": 207,
+            "similarity": 266
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-slice-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_slice",
+              "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-str-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_str",
+              "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "to-string-macro-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::ser::to_string",
+              "target": "crate::ser::to_vec"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "to-string-pretty-macro-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::ser::to_string_pretty",
+              "target": "crate::ser::to_vec_pretty"
+            }
+          ],
+          "source_manifest_after_sha256": "f6eecfbcf0baa8180f9b3d9989f9b9b52c9729d501aea22952b6e185edcbd289",
+          "wall_ms": 1565
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "70fd1215059f4890cd4d5ffc6351424863ff0b6451f655514dd5a8b2fa83393d",
+          "graph": {
+            "artifact_bytes": 2876860,
+            "artifact_sha256": "183165dc746af633bea970f74b912972f515a1014d0e180f6a2a08b0f1e4e101",
+            "canonical_semantic_sha256": "397de80ad09e175ff990b25aae9bc8680942f9a68b7b8e3180f18caa3a8792e0",
+            "edges": 5897,
+            "edges_by_kind": {
+              "Calls": 840,
+              "Contains": 931,
+              "DataFlow": 253,
+              "Inherits": 15,
+              "SemanticSimilar": 3858
+            },
+            "nodes": 1549
+          },
+          "inspect_wall_ms": 115,
+          "ordinal": 4,
+          "peak_rss_kib": 41652,
+          "phase_ms": {
+            "build": 964,
+            "save": 170,
+            "similarity": 287
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-slice-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_slice",
+              "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-str-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_str",
+              "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "to-string-macro-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::ser::to_string",
+              "target": "crate::ser::to_vec"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "to-string-pretty-macro-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::ser::to_string_pretty",
+              "target": "crate::ser::to_vec_pretty"
+            }
+          ],
+          "source_manifest_after_sha256": "f6eecfbcf0baa8180f9b3d9989f9b9b52c9729d501aea22952b6e185edcbd289",
+          "wall_ms": 1637
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "6a0ff1ca256aae92c5d91af844434a4dddd6312cc26e9e1184cbada5609ce746",
+          "graph": {
+            "artifact_bytes": 2876860,
+            "artifact_sha256": "183165dc746af633bea970f74b912972f515a1014d0e180f6a2a08b0f1e4e101",
+            "canonical_semantic_sha256": "397de80ad09e175ff990b25aae9bc8680942f9a68b7b8e3180f18caa3a8792e0",
+            "edges": 5897,
+            "edges_by_kind": {
+              "Calls": 840,
+              "Contains": 931,
+              "DataFlow": 253,
+              "Inherits": 15,
+              "SemanticSimilar": 3858
+            },
+            "nodes": 1549
+          },
+          "inspect_wall_ms": 121,
+          "ordinal": 5,
+          "peak_rss_kib": 41252,
+          "phase_ms": {
+            "build": 941,
+            "save": 153,
+            "similarity": 267
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-slice-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_slice",
+              "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-str-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_str",
+              "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "to-string-macro-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::ser::to_string",
+              "target": "crate::ser::to_vec"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "to-string-pretty-macro-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::ser::to_string_pretty",
+              "target": "crate::ser::to_vec_pretty"
+            }
+          ],
+          "source_manifest_after_sha256": "f6eecfbcf0baa8180f9b3d9989f9b9b52c9729d501aea22952b6e185edcbd289",
+          "wall_ms": 1566
+        }
+      ],
+      "source": {
+        "bytes": 694275,
+        "files": 69,
+        "manifest_sha256": "f6eecfbcf0baa8180f9b3d9989f9b9b52c9729d501aea22952b6e185edcbd289",
+        "physical_lines": 23116
+      },
+      "summary": {
+        "artifact_unique_digests": 1,
+        "peak_rss_max_kib": 41676,
+        "peak_rss_median_kib": 41472,
+        "phase_median_ms": {
+          "build": 924,
+          "save": 157,
+          "similarity": 267
+        },
+        "semantic": {
+          "fn": 0,
+          "fp": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tn": 0,
+          "tp": 4
+        },
+        "semantic_unique_digests": 1,
+        "unique_node_edge_count_pairs": 1,
+        "wall_max_ms": 1637,
+        "wall_median_ms": 1565
+      }
+    },
+    {
+      "artifact_sha256": "f1292b7759ae1cb9ec195452d1390a074f0cd8541ab7a5a8c31cd6db45d4a6ba",
+      "id": "regex-1.12.4",
+      "language": "rust",
+      "runs": [
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "0c2e0f658f95579ef04f8e6d7d7e1bc9d1278be026070a15a90fe631a32dd3ef",
+          "graph": {
+            "artifact_bytes": 1010880,
+            "artifact_sha256": "e957343bf236c8199da39a0f35685ebd5e055f804c53bdf8aad77fbd06eb415b",
+            "canonical_semantic_sha256": "13bdd96d6502e647a84a97e701e82723668eecca32f53d6c743f8aa515935797",
+            "edges": 1566,
+            "edges_by_kind": {
+              "Calls": 85,
+              "Contains": 313,
+              "DataFlow": 160,
+              "SemanticSimilar": 1008
+            },
+            "nodes": 451
+          },
+          "inspect_wall_ms": 39,
+          "ordinal": 1,
+          "peak_rss_kib": 19584,
+          "phase_ms": {
+            "build": 286,
+            "save": 66,
+            "similarity": 18
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "string-replace-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::string::Regex::replace",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "string-replace-all-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::string::Regex::replace_all",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "bytes-replace-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::bytes::Regex::replace",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "bytes-replace-all-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::bytes::Regex::replace_all",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "string-replace-not-bytes",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::string::Regex::replace",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "string-replace-all-not-bytes",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::string::Regex::replace_all",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "bytes-replace-not-string",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::bytes::Regex::replace",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "bytes-replace-all-not-string",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::bytes::Regex::replace_all",
+              "target": "crate::regex::string::Regex::replacen"
+            }
+          ],
+          "source_manifest_after_sha256": "abed475d0db643753fdc8832787c498ff3c87b2d21e515cec3cd1a31a11052bf",
+          "wall_ms": 547
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "ce2139ce254fbae7e848df54d4e332f6fbbc4ed2d90c600211aad7aa94c3a332",
+          "graph": {
+            "artifact_bytes": 1010880,
+            "artifact_sha256": "e957343bf236c8199da39a0f35685ebd5e055f804c53bdf8aad77fbd06eb415b",
+            "canonical_semantic_sha256": "13bdd96d6502e647a84a97e701e82723668eecca32f53d6c743f8aa515935797",
+            "edges": 1566,
+            "edges_by_kind": {
+              "Calls": 85,
+              "Contains": 313,
+              "DataFlow": 160,
+              "SemanticSimilar": 1008
+            },
+            "nodes": 451
+          },
+          "inspect_wall_ms": 44,
+          "ordinal": 2,
+          "peak_rss_kib": 19456,
+          "phase_ms": {
+            "build": 278,
+            "save": 68,
+            "similarity": 18
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "string-replace-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::string::Regex::replace",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "string-replace-all-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::string::Regex::replace_all",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "bytes-replace-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::bytes::Regex::replace",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "bytes-replace-all-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::bytes::Regex::replace_all",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "string-replace-not-bytes",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::string::Regex::replace",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "string-replace-all-not-bytes",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::string::Regex::replace_all",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "bytes-replace-not-string",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::bytes::Regex::replace",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "bytes-replace-all-not-string",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::bytes::Regex::replace_all",
+              "target": "crate::regex::string::Regex::replacen"
+            }
+          ],
+          "source_manifest_after_sha256": "abed475d0db643753fdc8832787c498ff3c87b2d21e515cec3cd1a31a11052bf",
+          "wall_ms": 539
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "4a36704a799afa682a16f94b0b616de46b3455dcb1904c0b090d15a2405d1428",
+          "graph": {
+            "artifact_bytes": 1010880,
+            "artifact_sha256": "e957343bf236c8199da39a0f35685ebd5e055f804c53bdf8aad77fbd06eb415b",
+            "canonical_semantic_sha256": "13bdd96d6502e647a84a97e701e82723668eecca32f53d6c743f8aa515935797",
+            "edges": 1566,
+            "edges_by_kind": {
+              "Calls": 85,
+              "Contains": 313,
+              "DataFlow": 160,
+              "SemanticSimilar": 1008
+            },
+            "nodes": 451
+          },
+          "inspect_wall_ms": 40,
+          "ordinal": 3,
+          "peak_rss_kib": 19584,
+          "phase_ms": {
+            "build": 312,
+            "save": 64,
+            "similarity": 18
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "string-replace-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::string::Regex::replace",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "string-replace-all-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::string::Regex::replace_all",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "bytes-replace-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::bytes::Regex::replace",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "bytes-replace-all-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::bytes::Regex::replace_all",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "string-replace-not-bytes",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::string::Regex::replace",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "string-replace-all-not-bytes",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::string::Regex::replace_all",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "bytes-replace-not-string",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::bytes::Regex::replace",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "bytes-replace-all-not-string",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::bytes::Regex::replace_all",
+              "target": "crate::regex::string::Regex::replacen"
+            }
+          ],
+          "source_manifest_after_sha256": "abed475d0db643753fdc8832787c498ff3c87b2d21e515cec3cd1a31a11052bf",
+          "wall_ms": 582
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "f0817efc666735dd0ce1e33e53c488d6201fa039aedf3d1457fbdc4834210573",
+          "graph": {
+            "artifact_bytes": 1010880,
+            "artifact_sha256": "e957343bf236c8199da39a0f35685ebd5e055f804c53bdf8aad77fbd06eb415b",
+            "canonical_semantic_sha256": "13bdd96d6502e647a84a97e701e82723668eecca32f53d6c743f8aa515935797",
+            "edges": 1566,
+            "edges_by_kind": {
+              "Calls": 85,
+              "Contains": 313,
+              "DataFlow": 160,
+              "SemanticSimilar": 1008
+            },
+            "nodes": 451
+          },
+          "inspect_wall_ms": 39,
+          "ordinal": 4,
+          "peak_rss_kib": 19456,
+          "phase_ms": {
+            "build": 279,
+            "save": 68,
+            "similarity": 25
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "string-replace-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::string::Regex::replace",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "string-replace-all-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::string::Regex::replace_all",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "bytes-replace-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::bytes::Regex::replace",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "bytes-replace-all-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::bytes::Regex::replace_all",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "string-replace-not-bytes",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::string::Regex::replace",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "string-replace-all-not-bytes",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::string::Regex::replace_all",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "bytes-replace-not-string",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::bytes::Regex::replace",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "bytes-replace-all-not-string",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::bytes::Regex::replace_all",
+              "target": "crate::regex::string::Regex::replacen"
+            }
+          ],
+          "source_manifest_after_sha256": "abed475d0db643753fdc8832787c498ff3c87b2d21e515cec3cd1a31a11052bf",
+          "wall_ms": 547
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "a4f2d1f05de05f597a802de749fd23dcc1e18962536bbf85309aa7bf60f38c47",
+          "graph": {
+            "artifact_bytes": 1010880,
+            "artifact_sha256": "e957343bf236c8199da39a0f35685ebd5e055f804c53bdf8aad77fbd06eb415b",
+            "canonical_semantic_sha256": "13bdd96d6502e647a84a97e701e82723668eecca32f53d6c743f8aa515935797",
+            "edges": 1566,
+            "edges_by_kind": {
+              "Calls": 85,
+              "Contains": 313,
+              "DataFlow": 160,
+              "SemanticSimilar": 1008
+            },
+            "nodes": 451
+          },
+          "inspect_wall_ms": 39,
+          "ordinal": 5,
+          "peak_rss_kib": 19584,
+          "phase_ms": {
+            "build": 277,
+            "save": 65,
+            "similarity": 18
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "string-replace-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::string::Regex::replace",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "string-replace-all-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::string::Regex::replace_all",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "bytes-replace-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::bytes::Regex::replace",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "bytes-replace-all-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regex::bytes::Regex::replace_all",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "string-replace-not-bytes",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::string::Regex::replace",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "string-replace-all-not-bytes",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::string::Regex::replace_all",
+              "target": "crate::regex::bytes::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "bytes-replace-not-string",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::bytes::Regex::replace",
+              "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "bytes-replace-all-not-string",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::regex::bytes::Regex::replace_all",
+              "target": "crate::regex::string::Regex::replacen"
+            }
+          ],
+          "source_manifest_after_sha256": "abed475d0db643753fdc8832787c498ff3c87b2d21e515cec3cd1a31a11052bf",
+          "wall_ms": 536
+        }
+      ],
+      "source": {
+        "bytes": 450102,
+        "files": 22,
+        "manifest_sha256": "abed475d0db643753fdc8832787c498ff3c87b2d21e515cec3cd1a31a11052bf",
+        "physical_lines": 11973
+      },
+      "summary": {
+        "artifact_unique_digests": 1,
+        "peak_rss_max_kib": 19584,
+        "peak_rss_median_kib": 19584,
+        "phase_median_ms": {
+          "build": 279,
+          "save": 66,
+          "similarity": 18
+        },
+        "semantic": {
+          "fn": 0,
+          "fp": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tn": 4,
+          "tp": 4
+        },
+        "semantic_unique_digests": 1,
+        "unique_node_edge_count_pairs": 1,
+        "wall_max_ms": 582,
+        "wall_median_ms": 547
+      }
+    },
+    {
+      "artifact_sha256": "918b5633eddf6b41c32d4f454bf0de810065c74e3f7dbf8ee5452f8be88d3e96",
+      "id": "click-8.4.1",
+      "language": "python",
+      "runs": [
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "607b4b566446eca8ee4856a23bc82c2276a774975dc6d9bef560d804e8b95818",
+          "graph": {
+            "artifact_bytes": 4219522,
+            "artifact_sha256": "9f630581d4c6661c9d002138ebb353ba058e4d7b93c5c4d7d5a0541dd71f58c6",
+            "canonical_semantic_sha256": "a18673a9c0bebe7ae49423ada3e5f6e08034408ea1fd679bd06ca0f1316e98d9",
+            "edges": 7968,
+            "edges_by_kind": {
+              "Calls": 777,
+              "Contains": 2472,
+              "DataFlow": 336,
+              "Inherits": 37,
+              "SemanticSimilar": 4346
+            },
+            "nodes": 2521
+          },
+          "inspect_wall_ms": 168,
+          "ordinal": 1,
+          "peak_rss_kib": 47200,
+          "phase_ms": {
+            "build": 2719,
+            "save": 647,
+            "similarity": 655
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "command-context-invoke",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Context::invoke"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "command-parse-args",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::core::Command::make_context",
+              "target": "crate::click::core::Command::parse_args"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "parser-options-phase",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::parser::_OptionParser::parse_args",
+              "target": "crate::click::parser::_OptionParser::_process_args_for_options"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "parser-arguments-phase",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::parser::_OptionParser::parse_args",
+              "target": "crate::click::parser::_OptionParser::_process_args_for_args"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-self",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Command::invoke"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-group",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Group::invoke"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-runner",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::testing::CliRunner::invoke"
+            }
+          ],
+          "source_manifest_after_sha256": "fb79d60d40df77a448848d5938bb793746bbb30b10dfd96461ec0ba5bb09dc03",
+          "wall_ms": 4241
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "4a0b36e731c2a1a134c41d1414b8269a734a425838cd8f6a08f7034361b1b4dc",
+          "graph": {
+            "artifact_bytes": 4219522,
+            "artifact_sha256": "9f630581d4c6661c9d002138ebb353ba058e4d7b93c5c4d7d5a0541dd71f58c6",
+            "canonical_semantic_sha256": "a18673a9c0bebe7ae49423ada3e5f6e08034408ea1fd679bd06ca0f1316e98d9",
+            "edges": 7968,
+            "edges_by_kind": {
+              "Calls": 777,
+              "Contains": 2472,
+              "DataFlow": 336,
+              "Inherits": 37,
+              "SemanticSimilar": 4346
+            },
+            "nodes": 2521
+          },
+          "inspect_wall_ms": 163,
+          "ordinal": 2,
+          "peak_rss_kib": 47216,
+          "phase_ms": {
+            "build": 2751,
+            "save": 237,
+            "similarity": 663
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "command-context-invoke",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Context::invoke"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "command-parse-args",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::core::Command::make_context",
+              "target": "crate::click::core::Command::parse_args"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "parser-options-phase",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::parser::_OptionParser::parse_args",
+              "target": "crate::click::parser::_OptionParser::_process_args_for_options"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "parser-arguments-phase",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::parser::_OptionParser::parse_args",
+              "target": "crate::click::parser::_OptionParser::_process_args_for_args"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-self",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Command::invoke"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-group",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Group::invoke"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-runner",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::testing::CliRunner::invoke"
+            }
+          ],
+          "source_manifest_after_sha256": "fb79d60d40df77a448848d5938bb793746bbb30b10dfd96461ec0ba5bb09dc03",
+          "wall_ms": 3865
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "dfcae752121591d1fe6ba9ef0bce4776de92c226ef3a57261afe441b3c7b397c",
+          "graph": {
+            "artifact_bytes": 4219522,
+            "artifact_sha256": "9f630581d4c6661c9d002138ebb353ba058e4d7b93c5c4d7d5a0541dd71f58c6",
+            "canonical_semantic_sha256": "a18673a9c0bebe7ae49423ada3e5f6e08034408ea1fd679bd06ca0f1316e98d9",
+            "edges": 7968,
+            "edges_by_kind": {
+              "Calls": 777,
+              "Contains": 2472,
+              "DataFlow": 336,
+              "Inherits": 37,
+              "SemanticSimilar": 4346
+            },
+            "nodes": 2521
+          },
+          "inspect_wall_ms": 167,
+          "ordinal": 3,
+          "peak_rss_kib": 47340,
+          "phase_ms": {
+            "build": 2820,
+            "save": 269,
+            "similarity": 660
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "command-context-invoke",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Context::invoke"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "command-parse-args",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::core::Command::make_context",
+              "target": "crate::click::core::Command::parse_args"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "parser-options-phase",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::parser::_OptionParser::parse_args",
+              "target": "crate::click::parser::_OptionParser::_process_args_for_options"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "parser-arguments-phase",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::parser::_OptionParser::parse_args",
+              "target": "crate::click::parser::_OptionParser::_process_args_for_args"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-self",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Command::invoke"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-group",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Group::invoke"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-runner",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::testing::CliRunner::invoke"
+            }
+          ],
+          "source_manifest_after_sha256": "fb79d60d40df77a448848d5938bb793746bbb30b10dfd96461ec0ba5bb09dc03",
+          "wall_ms": 3961
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "d985c75521e1cc18f368d04809ecea2dfe6e79c22795f423d98be225b2a158ef",
+          "graph": {
+            "artifact_bytes": 4219522,
+            "artifact_sha256": "9f630581d4c6661c9d002138ebb353ba058e4d7b93c5c4d7d5a0541dd71f58c6",
+            "canonical_semantic_sha256": "a18673a9c0bebe7ae49423ada3e5f6e08034408ea1fd679bd06ca0f1316e98d9",
+            "edges": 7968,
+            "edges_by_kind": {
+              "Calls": 777,
+              "Contains": 2472,
+              "DataFlow": 336,
+              "Inherits": 37,
+              "SemanticSimilar": 4346
+            },
+            "nodes": 2521
+          },
+          "inspect_wall_ms": 169,
+          "ordinal": 4,
+          "peak_rss_kib": 47592,
+          "phase_ms": {
+            "build": 2774,
+            "save": 245,
+            "similarity": 615
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "command-context-invoke",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Context::invoke"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "command-parse-args",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::core::Command::make_context",
+              "target": "crate::click::core::Command::parse_args"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "parser-options-phase",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::parser::_OptionParser::parse_args",
+              "target": "crate::click::parser::_OptionParser::_process_args_for_options"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "parser-arguments-phase",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::parser::_OptionParser::parse_args",
+              "target": "crate::click::parser::_OptionParser::_process_args_for_args"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-self",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Command::invoke"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-group",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Group::invoke"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-runner",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::testing::CliRunner::invoke"
+            }
+          ],
+          "source_manifest_after_sha256": "fb79d60d40df77a448848d5938bb793746bbb30b10dfd96461ec0ba5bb09dc03",
+          "wall_ms": 3862
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "f4cc1da9e661b6a0bd3266d77db240f5d49add1abe3a5b484fa414760587ee5f",
+          "graph": {
+            "artifact_bytes": 4219522,
+            "artifact_sha256": "9f630581d4c6661c9d002138ebb353ba058e4d7b93c5c4d7d5a0541dd71f58c6",
+            "canonical_semantic_sha256": "a18673a9c0bebe7ae49423ada3e5f6e08034408ea1fd679bd06ca0f1316e98d9",
+            "edges": 7968,
+            "edges_by_kind": {
+              "Calls": 777,
+              "Contains": 2472,
+              "DataFlow": 336,
+              "Inherits": 37,
+              "SemanticSimilar": 4346
+            },
+            "nodes": 2521
+          },
+          "inspect_wall_ms": 166,
+          "ordinal": 5,
+          "peak_rss_kib": 47352,
+          "phase_ms": {
+            "build": 2738,
+            "save": 224,
+            "similarity": 619
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "command-context-invoke",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Context::invoke"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "command-parse-args",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::core::Command::make_context",
+              "target": "crate::click::core::Command::parse_args"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "parser-options-phase",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::parser::_OptionParser::parse_args",
+              "target": "crate::click::parser::_OptionParser::_process_args_for_options"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "parser-arguments-phase",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::parser::_OptionParser::parse_args",
+              "target": "crate::click::parser::_OptionParser::_process_args_for_args"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-self",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Command::invoke"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-group",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::core::Group::invoke"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "command-invoke-not-runner",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::click::core::Command::invoke",
+              "target": "crate::click::testing::CliRunner::invoke"
+            }
+          ],
+          "source_manifest_after_sha256": "fb79d60d40df77a448848d5938bb793746bbb30b10dfd96461ec0ba5bb09dc03",
+          "wall_ms": 3835
+        }
+      ],
+      "source": {
+        "bytes": 823452,
+        "files": 49,
+        "manifest_sha256": "fb79d60d40df77a448848d5938bb793746bbb30b10dfd96461ec0ba5bb09dc03",
+        "physical_lines": 24956
+      },
+      "summary": {
+        "artifact_unique_digests": 1,
+        "peak_rss_max_kib": 47592,
+        "peak_rss_median_kib": 47340,
+        "phase_median_ms": {
+          "build": 2751,
+          "save": 245,
+          "similarity": 655
+        },
+        "semantic": {
+          "fn": 0,
+          "fp": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tn": 3,
+          "tp": 4
+        },
+        "semantic_unique_digests": 1,
+        "unique_node_edge_count_pairs": 1,
+        "wall_max_ms": 4241,
+        "wall_median_ms": 3865
+      }
+    },
+    {
+      "artifact_sha256": "c40756b57adaa8b1efeeced5c196f3f3b7c435f90e84ea7f443901bec8099ef6",
+      "id": "pydantic-2.13.4",
+      "language": "python",
+      "runs": [
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "5a18c9c9324be87fc1a56a3725e3487025037fb87513be4f3fb6bf39391e7290",
+          "graph": {
+            "artifact_bytes": 24474145,
+            "artifact_sha256": "91bae5eb63d3621b31a0a53ca02ffb4e4e088273cf76452198d97138df119415",
+            "canonical_semantic_sha256": "6e5820be5c0350ee3dab06c46317afa7a14ddde118ceb0378f0a6f5cd0511b86",
+            "edges": 35416,
+            "edges_by_kind": {
+              "Calls": 2572,
+              "Contains": 18808,
+              "DataFlow": 1046,
+              "Inherits": 606,
+              "SemanticSimilar": 12384
+            },
+            "nodes": 19080
+          },
+          "inspect_wall_ms": 1119,
+          "ordinal": 1,
+          "peak_rss_kib": 206224,
+          "phase_ms": {
+            "build": 28859,
+            "save": 1288,
+            "similarity": 15753
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "camel-to-pascal",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::alias_generators::to_camel",
+              "target": "crate::pydantic::alias_generators::to_pascal"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "alias-generator-helper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::aliases::AliasGenerator::generate_aliases",
+              "target": "crate::pydantic::aliases::AliasGenerator::_generate_alias"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "isinstance-narrowed-alias-path",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
+              "target": "crate::pydantic::aliases::AliasPath::convert_to_aliases"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "alias-choices-not-recursive",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
+              "target": "crate::pydantic::aliases::AliasChoices::convert_to_aliases"
+            }
+          ],
+          "source_manifest_after_sha256": "f07f20f0bd7143e52915dcdba2455d11df5a415f9be8b8e9f908c59d4ff43c58",
+          "wall_ms": 46375
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "18ee9daf588c95571288db3835fcb6e8dde4aaba9304f7402989c8adf4769852",
+          "graph": {
+            "artifact_bytes": 24474145,
+            "artifact_sha256": "91bae5eb63d3621b31a0a53ca02ffb4e4e088273cf76452198d97138df119415",
+            "canonical_semantic_sha256": "6e5820be5c0350ee3dab06c46317afa7a14ddde118ceb0378f0a6f5cd0511b86",
+            "edges": 35416,
+            "edges_by_kind": {
+              "Calls": 2572,
+              "Contains": 18808,
+              "DataFlow": 1046,
+              "Inherits": 606,
+              "SemanticSimilar": 12384
+            },
+            "nodes": 19080
+          },
+          "inspect_wall_ms": 1119,
+          "ordinal": 2,
+          "peak_rss_kib": 206308,
+          "phase_ms": {
+            "build": 28340,
+            "save": 1198,
+            "similarity": 15137
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "camel-to-pascal",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::alias_generators::to_camel",
+              "target": "crate::pydantic::alias_generators::to_pascal"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "alias-generator-helper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::aliases::AliasGenerator::generate_aliases",
+              "target": "crate::pydantic::aliases::AliasGenerator::_generate_alias"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "isinstance-narrowed-alias-path",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
+              "target": "crate::pydantic::aliases::AliasPath::convert_to_aliases"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "alias-choices-not-recursive",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
+              "target": "crate::pydantic::aliases::AliasChoices::convert_to_aliases"
+            }
+          ],
+          "source_manifest_after_sha256": "f07f20f0bd7143e52915dcdba2455d11df5a415f9be8b8e9f908c59d4ff43c58",
+          "wall_ms": 45141
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "8e630496113f13f798c7071ca2a2c0ef8323a676bab9f7d29593e8bfce6db643",
+          "graph": {
+            "artifact_bytes": 24474145,
+            "artifact_sha256": "91bae5eb63d3621b31a0a53ca02ffb4e4e088273cf76452198d97138df119415",
+            "canonical_semantic_sha256": "6e5820be5c0350ee3dab06c46317afa7a14ddde118ceb0378f0a6f5cd0511b86",
+            "edges": 35416,
+            "edges_by_kind": {
+              "Calls": 2572,
+              "Contains": 18808,
+              "DataFlow": 1046,
+              "Inherits": 606,
+              "SemanticSimilar": 12384
+            },
+            "nodes": 19080
+          },
+          "inspect_wall_ms": 1125,
+          "ordinal": 3,
+          "peak_rss_kib": 206264,
+          "phase_ms": {
+            "build": 29186,
+            "save": 1235,
+            "similarity": 16270
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "camel-to-pascal",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::alias_generators::to_camel",
+              "target": "crate::pydantic::alias_generators::to_pascal"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "alias-generator-helper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::aliases::AliasGenerator::generate_aliases",
+              "target": "crate::pydantic::aliases::AliasGenerator::_generate_alias"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "isinstance-narrowed-alias-path",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
+              "target": "crate::pydantic::aliases::AliasPath::convert_to_aliases"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "alias-choices-not-recursive",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
+              "target": "crate::pydantic::aliases::AliasChoices::convert_to_aliases"
+            }
+          ],
+          "source_manifest_after_sha256": "f07f20f0bd7143e52915dcdba2455d11df5a415f9be8b8e9f908c59d4ff43c58",
+          "wall_ms": 47127
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "e32a7af0582204d4320293b0b07d4729a564b18356e519740dea528b3d5a8a24",
+          "graph": {
+            "artifact_bytes": 24474145,
+            "artifact_sha256": "91bae5eb63d3621b31a0a53ca02ffb4e4e088273cf76452198d97138df119415",
+            "canonical_semantic_sha256": "6e5820be5c0350ee3dab06c46317afa7a14ddde118ceb0378f0a6f5cd0511b86",
+            "edges": 35416,
+            "edges_by_kind": {
+              "Calls": 2572,
+              "Contains": 18808,
+              "DataFlow": 1046,
+              "Inherits": 606,
+              "SemanticSimilar": 12384
+            },
+            "nodes": 19080
+          },
+          "inspect_wall_ms": 1113,
+          "ordinal": 4,
+          "peak_rss_kib": 206552,
+          "phase_ms": {
+            "build": 28484,
+            "save": 1153,
+            "similarity": 16888
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "camel-to-pascal",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::alias_generators::to_camel",
+              "target": "crate::pydantic::alias_generators::to_pascal"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "alias-generator-helper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::aliases::AliasGenerator::generate_aliases",
+              "target": "crate::pydantic::aliases::AliasGenerator::_generate_alias"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "isinstance-narrowed-alias-path",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
+              "target": "crate::pydantic::aliases::AliasPath::convert_to_aliases"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "alias-choices-not-recursive",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
+              "target": "crate::pydantic::aliases::AliasChoices::convert_to_aliases"
+            }
+          ],
+          "source_manifest_after_sha256": "f07f20f0bd7143e52915dcdba2455d11df5a415f9be8b8e9f908c59d4ff43c58",
+          "wall_ms": 46948
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "29556cd318471731aa74025b2ffc024ba0eb2183cfd6a3e3e70eee5ecb658a01",
+          "graph": {
+            "artifact_bytes": 24474145,
+            "artifact_sha256": "91bae5eb63d3621b31a0a53ca02ffb4e4e088273cf76452198d97138df119415",
+            "canonical_semantic_sha256": "6e5820be5c0350ee3dab06c46317afa7a14ddde118ceb0378f0a6f5cd0511b86",
+            "edges": 35416,
+            "edges_by_kind": {
+              "Calls": 2572,
+              "Contains": 18808,
+              "DataFlow": 1046,
+              "Inherits": 606,
+              "SemanticSimilar": 12384
+            },
+            "nodes": 19080
+          },
+          "inspect_wall_ms": 1138,
+          "ordinal": 5,
+          "peak_rss_kib": 206340,
+          "phase_ms": {
+            "build": 28452,
+            "save": 1097,
+            "similarity": 15822
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "camel-to-pascal",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::alias_generators::to_camel",
+              "target": "crate::pydantic::alias_generators::to_pascal"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "alias-generator-helper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::aliases::AliasGenerator::generate_aliases",
+              "target": "crate::pydantic::aliases::AliasGenerator::_generate_alias"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "isinstance-narrowed-alias-path",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
+              "target": "crate::pydantic::aliases::AliasPath::convert_to_aliases"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "alias-choices-not-recursive",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
+              "target": "crate::pydantic::aliases::AliasChoices::convert_to_aliases"
+            }
+          ],
+          "source_manifest_after_sha256": "f07f20f0bd7143e52915dcdba2455d11df5a415f9be8b8e9f908c59d4ff43c58",
+          "wall_ms": 45787
+        }
+      ],
+      "source": {
+        "bytes": 3872154,
+        "files": 272,
+        "manifest_sha256": "f07f20f0bd7143e52915dcdba2455d11df5a415f9be8b8e9f908c59d4ff43c58",
+        "physical_lines": 114752
+      },
+      "summary": {
+        "artifact_unique_digests": 1,
+        "peak_rss_max_kib": 206552,
+        "peak_rss_median_kib": 206308,
+        "phase_median_ms": {
+          "build": 28484,
+          "save": 1198,
+          "similarity": 15822
+        },
+        "semantic": {
+          "fn": 0,
+          "fp": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tn": 1,
+          "tp": 3
+        },
+        "semantic_unique_digests": 1,
+        "unique_node_edge_count_pairs": 1,
+        "wall_max_ms": 47127,
+        "wall_median_ms": 46375
+      }
+    },
+    {
+      "artifact_sha256": "f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed",
+      "id": "requests-2.34.2",
+      "language": "python",
+      "runs": [
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "15fdf9cb52462d3519c6867a250db39f6e15e510f04d2d927a1aecde5e48ddcc",
+          "graph": {
+            "artifact_bytes": 2173978,
+            "artifact_sha256": "4002caad6be04f354dadd9efd5cc96d23eafa118027ee00b94cddadf3a652cb0",
+            "canonical_semantic_sha256": "4c980c3292731300f95f4b9eb2c7c2547752ee76616598682a6f931573313511",
+            "edges": 2639,
+            "edges_by_kind": {
+              "Calls": 518,
+              "Contains": 1435,
+              "DataFlow": 281,
+              "Inherits": 39,
+              "SemanticSimilar": 366
+            },
+            "nodes": 1470
+          },
+          "inspect_wall_ms": 87,
+          "ordinal": 1,
+          "peak_rss_kib": 28136,
+          "phase_ms": {
+            "build": 2008,
+            "save": 116,
+            "similarity": 170
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "get-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::get",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "options-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::options",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "head-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::head",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "post-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::post",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "put-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::put",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "patch-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::patch",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "delete-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::delete",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "prepared-request-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::models::Request::prepare",
+              "target": "crate::requests::models::PreparedRequest::prepare"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-prepared-request-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::models::PreparedRequest::prepare"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-setting",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::sessions::merge_setting"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-hooks",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::sessions::merge_hooks"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-cookies",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::cookies::merge_cookies"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-cookiejar-from-dict",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::cookies::cookiejar_from_dict"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "session-not-request-prepare",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::models::Request::prepare"
+            }
+          ],
+          "source_manifest_after_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
+          "wall_ms": 2481
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "f210db84a4accaa378a4e7adbcafd93b8d213a3b7ffa47a87909c3fa0bfe3bcb",
+          "graph": {
+            "artifact_bytes": 2173978,
+            "artifact_sha256": "4002caad6be04f354dadd9efd5cc96d23eafa118027ee00b94cddadf3a652cb0",
+            "canonical_semantic_sha256": "4c980c3292731300f95f4b9eb2c7c2547752ee76616598682a6f931573313511",
+            "edges": 2639,
+            "edges_by_kind": {
+              "Calls": 518,
+              "Contains": 1435,
+              "DataFlow": 281,
+              "Inherits": 39,
+              "SemanticSimilar": 366
+            },
+            "nodes": 1470
+          },
+          "inspect_wall_ms": 83,
+          "ordinal": 2,
+          "peak_rss_kib": 28528,
+          "phase_ms": {
+            "build": 1957,
+            "save": 116,
+            "similarity": 158
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "get-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::get",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "options-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::options",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "head-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::head",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "post-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::post",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "put-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::put",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "patch-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::patch",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "delete-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::delete",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "prepared-request-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::models::Request::prepare",
+              "target": "crate::requests::models::PreparedRequest::prepare"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-prepared-request-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::models::PreparedRequest::prepare"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-setting",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::sessions::merge_setting"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-hooks",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::sessions::merge_hooks"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-cookies",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::cookies::merge_cookies"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-cookiejar-from-dict",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::cookies::cookiejar_from_dict"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "session-not-request-prepare",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::models::Request::prepare"
+            }
+          ],
+          "source_manifest_after_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
+          "wall_ms": 2417
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "d8e1847f921052dba2a8135e159ceefd57c639e33d31de712cc83eedc805ef17",
+          "graph": {
+            "artifact_bytes": 2173978,
+            "artifact_sha256": "4002caad6be04f354dadd9efd5cc96d23eafa118027ee00b94cddadf3a652cb0",
+            "canonical_semantic_sha256": "4c980c3292731300f95f4b9eb2c7c2547752ee76616598682a6f931573313511",
+            "edges": 2639,
+            "edges_by_kind": {
+              "Calls": 518,
+              "Contains": 1435,
+              "DataFlow": 281,
+              "Inherits": 39,
+              "SemanticSimilar": 366
+            },
+            "nodes": 1470
+          },
+          "inspect_wall_ms": 83,
+          "ordinal": 3,
+          "peak_rss_kib": 28132,
+          "phase_ms": {
+            "build": 1979,
+            "save": 133,
+            "similarity": 183
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "get-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::get",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "options-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::options",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "head-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::head",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "post-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::post",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "put-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::put",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "patch-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::patch",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "delete-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::delete",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "prepared-request-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::models::Request::prepare",
+              "target": "crate::requests::models::PreparedRequest::prepare"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-prepared-request-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::models::PreparedRequest::prepare"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-setting",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::sessions::merge_setting"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-hooks",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::sessions::merge_hooks"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-cookies",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::cookies::merge_cookies"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-cookiejar-from-dict",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::cookies::cookiejar_from_dict"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "session-not-request-prepare",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::models::Request::prepare"
+            }
+          ],
+          "source_manifest_after_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
+          "wall_ms": 2482
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "dadcdab87f349362c30d22d84262bb2b4bd1efb76a396300ba68e3c99fd662cf",
+          "graph": {
+            "artifact_bytes": 2173978,
+            "artifact_sha256": "4002caad6be04f354dadd9efd5cc96d23eafa118027ee00b94cddadf3a652cb0",
+            "canonical_semantic_sha256": "4c980c3292731300f95f4b9eb2c7c2547752ee76616598682a6f931573313511",
+            "edges": 2639,
+            "edges_by_kind": {
+              "Calls": 518,
+              "Contains": 1435,
+              "DataFlow": 281,
+              "Inherits": 39,
+              "SemanticSimilar": 366
+            },
+            "nodes": 1470
+          },
+          "inspect_wall_ms": 83,
+          "ordinal": 4,
+          "peak_rss_kib": 28128,
+          "phase_ms": {
+            "build": 1941,
+            "save": 128,
+            "similarity": 161
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "get-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::get",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "options-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::options",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "head-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::head",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "post-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::post",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "put-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::put",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "patch-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::patch",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "delete-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::delete",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "prepared-request-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::models::Request::prepare",
+              "target": "crate::requests::models::PreparedRequest::prepare"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-prepared-request-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::models::PreparedRequest::prepare"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-setting",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::sessions::merge_setting"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-hooks",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::sessions::merge_hooks"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-cookies",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::cookies::merge_cookies"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-cookiejar-from-dict",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::cookies::cookiejar_from_dict"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "session-not-request-prepare",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::models::Request::prepare"
+            }
+          ],
+          "source_manifest_after_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
+          "wall_ms": 2427
+        },
+        {
+          "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_stdout_sha256": "c6a5c59384c6c3ac4ac649359e44be5edad5c36951f717d778d317902211b192",
+          "graph": {
+            "artifact_bytes": 2173978,
+            "artifact_sha256": "4002caad6be04f354dadd9efd5cc96d23eafa118027ee00b94cddadf3a652cb0",
+            "canonical_semantic_sha256": "4c980c3292731300f95f4b9eb2c7c2547752ee76616598682a6f931573313511",
+            "edges": 2639,
+            "edges_by_kind": {
+              "Calls": 518,
+              "Contains": 1435,
+              "DataFlow": 281,
+              "Inherits": 39,
+              "SemanticSimilar": 366
+            },
+            "nodes": 1470
+          },
+          "inspect_wall_ms": 86,
+          "ordinal": 5,
+          "peak_rss_kib": 28268,
+          "phase_ms": {
+            "build": 1963,
+            "save": 117,
+            "similarity": 160
+          },
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "get-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::get",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "options-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::options",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "head-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::head",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "post-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::post",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "put-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::put",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "patch-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::patch",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "delete-wrapper",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::api::delete",
+              "target": "crate::requests::api::request"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "prepared-request-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::models::Request::prepare",
+              "target": "crate::requests::models::PreparedRequest::prepare"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-prepared-request-owner",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::models::PreparedRequest::prepare"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-setting",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::sessions::merge_setting"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-hooks",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::sessions::merge_hooks"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-merge-cookies",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::cookies::merge_cookies"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "session-cookiejar-from-dict",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::cookies::cookiejar_from_dict"
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "session-not-request-prepare",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::requests::sessions::Session::prepare_request",
+              "target": "crate::requests::models::Request::prepare"
+            }
+          ],
+          "source_manifest_after_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
+          "wall_ms": 2432
+        }
+      ],
+      "source": {
+        "bytes": 390397,
+        "files": 35,
+        "manifest_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
+        "physical_lines": 11526
+      },
+      "summary": {
+        "artifact_unique_digests": 1,
+        "peak_rss_max_kib": 28528,
+        "peak_rss_median_kib": 28136,
+        "phase_median_ms": {
+          "build": 1963,
+          "save": 117,
+          "similarity": 161
+        },
+        "semantic": {
+          "fn": 0,
+          "fp": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tn": 1,
+          "tp": 13
+        },
+        "semantic_unique_digests": 1,
+        "unique_node_edge_count_pairs": 1,
+        "wall_max_ms": 2482,
+        "wall_median_ms": 2432
+      }
+    }
+  ],
+  "run_definition": "fresh-graph-fresh-process-os-cache-uncontrolled",
+  "schema_version": 1,
+  "semantic_summary": {
+    "aggregate": {
+      "fn": 0,
+      "fp": 0,
+      "macro_precision": 1.0,
+      "macro_recall": 1.0,
+      "micro_precision": 1.0,
+      "micro_recall": 1.0,
+      "tn": 9,
+      "tp": 31
+    },
+    "languages": {
+      "python": {
+        "fn": 0,
+        "fp": 0,
+        "macro_precision": 1.0,
+        "macro_recall": 1.0,
+        "micro_precision": 1.0,
+        "micro_recall": 1.0,
+        "tn": 5,
+        "tp": 20
+      },
+      "rust": {
+        "fn": 0,
+        "fp": 0,
+        "macro_precision": 1.0,
+        "macro_recall": 1.0,
+        "micro_precision": 1.0,
+        "micro_recall": 1.0,
+        "tn": 4,
+        "tp": 11
+      }
+    }
+  },
+  "suite_id": "core-representative-v1",
+  "tool": {
+    "analyze_argv": [
+      "bitcode",
+      "analyze",
+      "<checkout>",
+      "--json"
+    ],
+    "bitcode_sha256": "5afedfdc3c426bae53c98846d0e5f206f504b3be46c40a8af0ea26938b9ef116",
+    "harness_sha256": "4c7b1d1a107f548a5775a16685b72c00fc631539a7969bd609ac2acc790f6eaf",
+    "harness_support_sha256": "0a13974e3e906f41030bb2866e97a7d26017891a82b1c8f6cfe79cbedf306821",
+    "measure_process_sha256": "68a59b372977e451b82b6e0112cceb1d8389e5611a7c5ac0f224f46de4acd9d8",
+    "source_commit": "399d8bfd781df5b34014849014a97375eb5cbc82",
+    "source_worktree_clean": true
+  }
+}

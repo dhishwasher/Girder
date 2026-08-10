@@ -524,9 +524,19 @@ as gap 11 rather than silently accepted.
    above: a deterministic disk-state matrix over every journal transition
    plus real `BITCODE_FAULT_EXIT` crash injection through the binary, with
    all-old/all-new verification and idempotent re-recovery.
-7. **P0 — representative repositories.** Record cold/incremental indexing,
-   call-edge accuracy, impact latency, test-selection accuracy, and memory on at
-   least three real Rust/Python repositories without manual repair.
+7. **Closed (scoped) — representative repositories.** See
+   `docs/core-representative-benchmark.md`'s "Result" section: the
+   precommitted policy's first recorded observation passes —
+   `beta_pass: true`, zero failed checks, on six real Rust/Python
+   repositories (three each) with zero manual repair, perfect precision/
+   recall on all 40 declared call-edge cases, one unique artifact and
+   semantic digest per repository across five runs (determinism), and every
+   repository within its latency/RSS ceiling (sum of medians 56.8s of a
+   180s budget). Genuine cold-cache indexing, one-file incremental latency,
+   impact-query latency, and comprehensive dynamic test-selection accuracy
+   over the representative corpus remain open — the one declared
+   representative-mutation case (gap 11) is a narrow start, not that
+   evidence.
 8. **Closed — subprocess bounds.** See "Bounded product subprocesses" above:
    shared process-group engine with timeout/output classification for Git
    and configured `--run` children; debugger/DAP spawns remain named
