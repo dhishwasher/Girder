@@ -31,11 +31,25 @@ COMMANDS:
                               --json emits one bounded machine-readable summary.
     search <dir> <query...>   Concept search: rank functions by relevance to a
                               natural-language query
-    plan <dir> <intent...>    Preview what the swarm would build: runs the
+    swarm-plan <dir> <intent...>
+                              Preview what the swarm would build: runs the
                               graph-aware Planner, prints the multi-function
                               feature spec, but writes nothing to the graph.
     forge <dir> <intent...>   Dispatch the agent swarm on a project with a
                               natural-language intent, then save the graph
+    plan validate <plan.json>
+                              Check a Bit Code plan file's preconditions
+                              (clean worktree, HEAD == base_commit, edit
+                              paths, exact match counts) without writing
+                              anything.
+    plan explain <plan.json> Print a human-readable summary of a plan file.
+                              No execution, no preconditions.
+    plan run <plan.json> [--dry]
+                              Execute a plan file step by step: apply edits
+                              in a disposable copy, run each step's checks,
+                              commit to the real tree only once they pass.
+                              Writes a report to .bitcode/reports/. --dry
+                              never writes to the real tree.
     refactor <dir> rename <node::path> <new_name>
                               Semantic rename across the graph (follows Calls
                               edges, not text search), then save
@@ -103,10 +117,19 @@ fn main() {
         Some("config") => report(project::config(&args[1..])),
         Some("analyze") => report(project::analyze(&args[1..])),
         Some("search") => report(project::search(&args[1..])),
-        Some("plan") => {
+        Some("swarm-plan") => {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
-            report(rt.block_on(project::plan(&args[1..])));
+            report(rt.block_on(project::swarm_plan(&args[1..])));
         }
+        Some("plan") => match args.get(1).map(String::as_str) {
+            Some("validate") => report(project::plan_validate(&args[2..])),
+            Some("explain") => report(project::plan_explain(&args[2..])),
+            Some("run") => report(project::plan_run(&args[2..])),
+            _ => {
+                eprintln!("usage: bitcode plan <validate|explain|run> <plan.json> [--dry]\n");
+                println!("{USAGE}");
+            }
+        },
         Some("forge") => {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             report(rt.block_on(project::forge(&args[1..])));

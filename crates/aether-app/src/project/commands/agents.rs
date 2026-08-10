@@ -10,11 +10,11 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-pub async fn plan(args: &[String]) -> std::io::Result<()> {
+pub async fn swarm_plan(args: &[String]) -> std::io::Result<()> {
     let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
     let intent = args.get(1..).map(|rest| rest.join(" ")).unwrap_or_default();
     if intent.trim().is_empty() {
-        eprintln!("usage: bitcode plan <dir> <intent...>");
+        eprintln!("usage: bitcode swarm-plan <dir> <intent...>");
         return Ok(());
     }
 

@@ -116,6 +116,45 @@ pub(crate) fn git_is_repo(root: &Path) -> std::io::Result<bool> {
     Ok(stdout.trim() == "true")
 }
 
+/// `true` when `git status --porcelain` reports nothing outstanding — no
+/// staged, unstaged, or untracked changes. Used by the plan executor's
+/// preconditions and by `rollback_plan`'s reliance on a known-clean
+/// `base_commit` state.
+pub(crate) fn git_worktree_clean(root: &Path) -> std::io::Result<bool> {
+    let status = git_text(root, &["status", "--porcelain"])?;
+    Ok(status.trim().is_empty())
+}
+
+/// The full object id of `HEAD`, used to enforce a plan's `base_commit`
+/// precondition.
+pub(crate) fn git_head_commit(root: &Path) -> std::io::Result<String> {
+    let oid = git_text(root, &["rev-parse", "HEAD"])?;
+    Ok(oid.trim().to_string())
+}
+
+/// Restore `paths` to their exact contents at `commit`, deleting any path
+/// that did not exist there. `git checkout` alone does not remove files
+/// that are untracked at `commit` (e.g. a file a plan step created), so
+/// callers doing a full plan rollback must additionally delete paths they
+/// know a step created — this function only restores tracked history.
+pub(crate) fn git_checkout_paths(
+    root: &Path,
+    commit: &str,
+    paths: &[&Path],
+) -> std::io::Result<()> {
+    if paths.is_empty() {
+        return Ok(());
+    }
+    let mut args: Vec<&str> = vec!["checkout", commit, "--"];
+    let rendered: Vec<String> = paths
+        .iter()
+        .map(|path| path.to_string_lossy().replace('\\', "/"))
+        .collect();
+    args.extend(rendered.iter().map(String::as_str));
+    git_output(root, &args)?;
+    Ok(())
+}
+
 fn git_prefix(root: &Path) -> std::io::Result<String> {
     let output = git_text(root, &["rev-parse", "--show-prefix"])?;
     let output = output.strip_suffix('\n').unwrap_or(&output);

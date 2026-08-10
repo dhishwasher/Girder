@@ -69,6 +69,11 @@ impl TempRepo {
         self.git(&["add", "."]);
         self.git(&["commit", "-m", message]);
     }
+
+    fn head(&self) -> String {
+        let output = self.git(&["rev-parse", "HEAD"]);
+        String::from_utf8_lossy(&output.stdout).trim().to_string()
+    }
 }
 
 impl Drop for TempRepo {
@@ -2360,4 +2365,452 @@ fn crash_after_committed_marker_keeps_all_new_state() {
     assert!(generated.contains("fn authenticate"), "{generated}");
     let graph = aether_graph::SemanticGraph::load(repo.path().join("project.aether")).unwrap();
     assert!(graph.node_count() > 0);
+}
+
+// --- Bit Code Plan Format v1 --------------------------------------------
+
+/// Plan files must never sit inside the project worktree — an untracked
+/// plan.json there would itself trip the "worktree clean" precondition.
+fn write_plan(name: &str, json: &str) -> PathBuf {
+    let path = std::env::temp_dir().join(format!(
+        "bitcode-plan-{name}-{}-{}.json",
+        std::process::id(),
+        NEXT_ID.fetch_add(1, Ordering::Relaxed)
+    ));
+    std::fs::write(&path, json).unwrap();
+    path
+}
+
+fn run_plan_output(repo: &TempRepo, sub: &str, plan_path: &Path, extra: &[&str]) -> Output {
+    let mut args = vec!["plan", sub, plan_path.to_str().unwrap()];
+    args.extend_from_slice(extra);
+    Command::new(env!("CARGO_BIN_EXE_bitcode"))
+        .args(args)
+        .current_dir(repo.path())
+        .output()
+        .unwrap()
+}
+
+#[test]
+fn plan_validate_passes_on_a_clean_matching_plan() {
+    let repo = TempRepo::new("plan-validate-pass");
+    repo.write("src/lib.rs", "fn old() {}\n");
+    repo.commit_all("baseline");
+    let head = repo.head();
+
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"rename","base_commit":"BASE_COMMIT",
+        "steps":[{"id":"s1","description":"rename","edits":[
+            {"path":"src/lib.rs","match":"fn old() {}\n","replace":"fn new() {}\n","occurrences":1}
+        ],"checks":[]}]}"#;
+    let plan_path = write_plan("validate-pass", &template.replace("BASE_COMMIT", &head));
+
+    let output = run_plan_output(&repo, "validate", &plan_path, &[]);
+    assert!(
+        output.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let _ = std::fs::remove_file(&plan_path);
+}
+
+#[test]
+fn plan_validate_reports_every_precondition_failure_at_once() {
+    let repo = TempRepo::new("plan-validate-multi-fail");
+    repo.write("src/lib.rs", "fn old() {}\n");
+    repo.commit_all("baseline");
+    repo.write("dirty.rs", "uncommitted\n");
+
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"broken","base_commit":"0000000000000000000000000000000000000000",
+        "steps":[{"id":"s1","description":"broken","edits":[
+            {"path":"src/lib.rs","match":"does not occur anywhere","replace":"x","occurrences":1}
+        ],"checks":[]}]}"#;
+    let plan_path = write_plan("validate-multi-fail", template);
+
+    let output = run_plan_output(&repo, "validate", &plan_path, &[]);
+    assert!(!output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("worktree"), "{stdout}");
+    assert!(stdout.contains("HEAD is"), "{stdout}");
+    assert!(stdout.contains("expects 1"), "{stdout}");
+    let _ = std::fs::remove_file(&plan_path);
+}
+
+#[test]
+fn plan_run_applies_edits_and_commits_to_the_real_tree_when_checks_pass() {
+    let repo = TempRepo::new("plan-run-commit");
+    repo.write("src/lib.rs", "fn old() {}\n");
+    repo.commit_all("baseline");
+    let head = repo.head();
+
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"rename","base_commit":"BASE_COMMIT",
+        "steps":[{"id":"s1","description":"rename","edits":[
+            {"path":"src/lib.rs","match":"fn old() {}\n","replace":"fn new() {}\n","occurrences":1}
+        ],"checks":[{"kind":"command","run":"true","expect_exit":0}]}]}"#;
+    let plan_path = write_plan("run-commit", &template.replace("BASE_COMMIT", &head));
+
+    let output = run_plan_output(&repo, "run", &plan_path, &[]);
+    assert!(
+        output.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "fn new() {}\n"
+    );
+    assert!(
+        !repo.path().join(".bitcode/transactions").exists(),
+        "a fully committed plan must not leave a transaction journal behind"
+    );
+    assert!(
+        !repo.path().join(".bitcode/validation").exists(),
+        "a fully committed plan must not leave its disposable copy behind"
+    );
+    assert!(
+        repo.path().join(".bitcode/reports").is_dir(),
+        "a completed run must write its report under .bitcode/reports"
+    );
+    let _ = std::fs::remove_file(&plan_path);
+}
+
+#[test]
+fn plan_run_stop_leaves_the_tree_exactly_as_of_the_last_successful_step() {
+    let repo = TempRepo::new("plan-run-stop");
+    repo.write("src/lib.rs", "fn old() {}\n");
+    repo.commit_all("baseline");
+    let head = repo.head();
+
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"two steps","base_commit":"BASE_COMMIT","on_failure":"stop",
+        "steps":[
+          {"id":"s1","description":"first, succeeds","edits":[
+              {"path":"src/lib.rs","match":"fn old() {}\n","replace":"fn mid() {}\n","occurrences":1}
+          ],"checks":[{"kind":"command","run":"true","expect_exit":0}]},
+          {"id":"s2","description":"second, fails its check","edits":[
+              {"path":"src/lib.rs","match":"fn mid() {}\n","replace":"fn new() {}\n","occurrences":1}
+          ],"checks":[{"kind":"command","run":"false","expect_exit":0}]}
+        ]}"#;
+    let plan_path = write_plan("run-stop", &template.replace("BASE_COMMIT", &head));
+
+    let output = run_plan_output(&repo, "run", &plan_path, &[]);
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("stopped at step s2"), "{stderr}");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "fn mid() {}\n",
+        "step s1 must stay committed; step s2 must never have reached the real tree"
+    );
+    let _ = std::fs::remove_file(&plan_path);
+}
+
+#[test]
+fn plan_run_rollback_step_reports_distinctly_from_stop() {
+    let repo = TempRepo::new("plan-run-rollback-step");
+    repo.write("src/lib.rs", "fn old() {}\n");
+    repo.commit_all("baseline");
+    let head = repo.head();
+
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"one step fails","base_commit":"BASE_COMMIT","on_failure":"rollback_step",
+        "steps":[{"id":"s1","description":"fails its check","edits":[
+            {"path":"src/lib.rs","match":"fn old() {}\n","replace":"fn new() {}\n","occurrences":1}
+        ],"checks":[{"kind":"command","run":"false","expect_exit":0}]}]}"#;
+    let plan_path = write_plan("run-rollback-step", &template.replace("BASE_COMMIT", &head));
+
+    let output = run_plan_output(&repo, "run", &plan_path, &[]);
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("never committed"), "{stderr}");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "fn old() {}\n",
+        "a failing step's edits must never reach the real tree"
+    );
+    let _ = std::fs::remove_file(&plan_path);
+}
+
+#[test]
+fn plan_run_rollback_plan_reverts_committed_edits_and_deletes_created_files() {
+    let repo = TempRepo::new("plan-run-rollback-plan");
+    repo.write("src/lib.rs", "fn old() {}\n");
+    repo.commit_all("baseline");
+    let head = repo.head();
+
+    // Step 1 both edits an existing file and creates a new one, and
+    // succeeds. Step 2 fails, triggering the default rollback_plan: the
+    // edit must revert via git checkout and the created file must be
+    // explicitly deleted (checkout alone would leave it behind).
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"create then fail","base_commit":"BASE_COMMIT",
+        "steps":[
+          {"id":"s1","description":"edit and create, succeeds","edits":[
+              {"path":"src/lib.rs","match":"fn old() {}\n","replace":"fn mid() {}\n","occurrences":1},
+              {"path":"src/new_module.rs","create":"fn fresh() {}\n"}
+          ],"checks":[{"kind":"command","run":"true","expect_exit":0}]},
+          {"id":"s2","description":"fails its check","edits":[
+              {"path":"src/lib.rs","match":"fn mid() {}\n","replace":"fn new() {}\n","occurrences":1}
+          ],"checks":[{"kind":"command","run":"false","expect_exit":0}]}
+        ]}"#;
+    let plan_path = write_plan("run-rollback-plan", &template.replace("BASE_COMMIT", &head));
+
+    let output = run_plan_output(&repo, "run", &plan_path, &[]);
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("rolled back to base_commit"), "{stderr}");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "fn old() {}\n",
+        "the committed step's edit must be reverted back to base_commit content"
+    );
+    assert!(
+        !repo.path().join("src/new_module.rs").exists(),
+        "the committed step's created file must be deleted on rollback_plan"
+    );
+    // Every project file must be byte-identical to base_commit; the run's
+    // own report under `.bitcode/reports/` is expected to survive the
+    // rollback (it documents why the plan failed) and is the only allowed
+    // untracked entry.
+    let status = repo.git(&["status", "--porcelain"]);
+    let stdout = String::from_utf8_lossy(&status.stdout);
+    let unexpected: Vec<&str> = stdout
+        .lines()
+        .filter(|line| !line.contains(".bitcode"))
+        .collect();
+    assert!(
+        unexpected.is_empty(),
+        "worktree must be byte-identical to base_commit outside of .bitcode/ after rollback_plan: {unexpected:?}"
+    );
+    let _ = std::fs::remove_file(&plan_path);
+}
+
+#[cfg(unix)]
+#[test]
+fn plan_run_commit_inherits_the_journals_crash_recovery_for_free() {
+    let repo = TempRepo::new("plan-run-fault");
+    repo.write("src/lib.rs", "fn old() {}\n");
+    repo.commit_all("baseline");
+    let head = repo.head();
+
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"one step, no checks","base_commit":"BASE_COMMIT",
+        "steps":[{"id":"s1","description":"single edit","edits":[
+            {"path":"src/lib.rs","match":"fn old() {}\n","replace":"fn new() {}\n","occurrences":1}
+        ],"checks":[]}]}"#;
+    let plan_path = write_plan("run-fault", &template.replace("BASE_COMMIT", &head));
+
+    let output = Command::new(env!("CARGO_BIN_EXE_bitcode"))
+        .args(["plan", "run", plan_path.to_str().unwrap()])
+        .current_dir(repo.path())
+        .env("BITCODE_FAULT_EXIT", "after-staging")
+        .output()
+        .unwrap();
+    assert_eq!(
+        output.status.code(),
+        Some(87),
+        "plan run's real-tree commit must crash at the fault point exactly like forge's does\n\
+         stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        repo.path().join(".bitcode/transactions").exists(),
+        "the crash must leave a journal behind"
+    );
+
+    // Any later analysis command triggers recovery of the dead journal —
+    // the plan executor never reimplements journal recovery itself.
+    run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    assert!(
+        !repo.path().join(".bitcode").exists(),
+        "recovery must clean the crashed plan-run journal"
+    );
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "fn old() {}\n",
+        "a crash before the manifest is written must roll back to the pre-edit content"
+    );
+    let _ = std::fs::remove_file(&plan_path);
+}
+
+fn default_config_toml() -> &'static str {
+    r#"version = 1
+[tests]
+rust = ["cargo", "test", "-p", "demo", "{test}"]
+"#
+}
+
+#[test]
+fn plan_run_graph_callers_of_check_reflects_the_real_resolver() {
+    let repo = TempRepo::new("plan-run-graph-callers");
+    repo.write(
+        "src/lib.rs",
+        "pub fn callee() -> i64 { 1 }\npub fn caller() -> i64 { callee() }\n",
+    );
+    repo.commit_all("baseline");
+    let head = repo.head();
+
+    // Renaming `caller` must not change who calls `callee` (still `caller`,
+    // just under its new name is not tracked here — the check targets the
+    // stable callee node and expects the same single caller after the edit).
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"add a doc comment","base_commit":"BASE_COMMIT",
+        "steps":[{"id":"s1","description":"add a comment, behavior-preserving","edits":[
+            {"path":"src/lib.rs","match":"pub fn caller()","replace":"// documented\npub fn caller()","occurrences":1}
+        ],"checks":[
+            {"kind":"graph.callers_of","node":"crate::lib::callee","expect":["crate::lib::caller"],"mode":"exact"}
+        ]}]}"#;
+    let plan_path = write_plan("run-graph-callers", &template.replace("BASE_COMMIT", &head));
+
+    let output = run_plan_output(&repo, "run", &plan_path, &[]);
+    assert!(
+        output.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let _ = std::fs::remove_file(&plan_path);
+}
+
+#[test]
+fn plan_run_graph_unresolved_check_via_the_real_resolver_prove_then_fix() {
+    let repo = TempRepo::new("plan-run-graph-unresolved");
+    // `caller` does not call `callee` yet.
+    repo.write(
+        "src/lib.rs",
+        "pub fn callee() -> i64 { 1 }\npub fn caller() -> i64 { 0 }\n",
+    );
+    repo.commit_all("baseline");
+    let head = repo.head();
+
+    // The edit makes `caller` actually call `callee`. Before the edit (this
+    // is a single-step plan, so we assert on the post-edit graph only,
+    // which is what step checks always see) the call now resolves, so a
+    // default graph.unresolved check (expecting it to stay unresolved) must
+    // fail; a matching expect_result "fail" must pass.
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"wire the call","base_commit":"BASE_COMMIT",
+        "steps":[{"id":"s1","description":"make caller call callee","edits":[
+            {"path":"src/lib.rs","match":"pub fn caller() -> i64 { 0 }\n","replace":"pub fn caller() -> i64 { callee() }\n","occurrences":1}
+        ],"checks":[
+            {"kind":"graph.unresolved","from":"crate::lib::caller","node":"crate::lib::callee","expect_result":"fail"}
+        ]}]}"#;
+    let plan_path = write_plan(
+        "run-graph-unresolved",
+        &template.replace("BASE_COMMIT", &head),
+    );
+
+    let output = run_plan_output(&repo, "run", &plan_path, &[]);
+    assert!(
+        output.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let _ = std::fs::remove_file(&plan_path);
+}
+
+#[test]
+fn plan_run_tests_impacted_check_runs_only_the_selected_tests_and_fails_on_a_break() {
+    let repo = TempRepo::new("plan-run-tests-impacted");
+    repo.write(
+        "Cargo.toml",
+        "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+    );
+    repo.write(
+        "src/lib.rs",
+        "pub fn broken() -> i64 { 1 }\n\n\
+         #[cfg(test)]\n\
+         mod tests {\n    \
+             use super::*;\n    \
+             #[test]\n    \
+             fn covers_broken() { assert_eq!(broken(), 1); }\n\
+         }\n",
+    );
+    repo.write("bitcode.toml", default_config_toml());
+    repo.commit_all("baseline");
+    let head = repo.head();
+
+    // The edit changes `broken`'s return value to something its own test no
+    // longer accepts — tests.impacted must select exactly that test and the
+    // step must fail because the test now fails.
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"break a function","base_commit":"BASE_COMMIT","on_failure":"stop",
+        "steps":[{"id":"s1","description":"break it","edits":[
+            {"path":"src/lib.rs","match":"pub fn broken() -> i64 { 1 }\n","replace":"pub fn broken() -> i64 { 2 }\n","occurrences":1}
+        ],"checks":[{"kind":"tests.impacted","expect":"all_pass"}]}]}"#;
+    let plan_path = write_plan(
+        "run-tests-impacted",
+        &template.replace("BASE_COMMIT", &head),
+    );
+
+    let output = run_plan_output(&repo, "run", &plan_path, &[]);
+    assert!(!output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("tests.impacted"), "{stdout}");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "pub fn broken() -> i64 { 1 }\n\n\
+         #[cfg(test)]\n\
+         mod tests {\n    \
+             use super::*;\n    \
+             #[test]\n    \
+             fn covers_broken() { assert_eq!(broken(), 1); }\n\
+         }\n",
+        "a step whose own impacted test fails must never be committed"
+    );
+    let _ = std::fs::remove_file(&plan_path);
+}
+
+#[test]
+fn plan_run_dry_never_touches_the_real_tree_but_reports_the_same_checks() {
+    let repo = TempRepo::new("plan-run-dry");
+    repo.write("src/lib.rs", "fn old() {}\n");
+    repo.commit_all("baseline");
+    let head = repo.head();
+
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"rename","base_commit":"BASE_COMMIT",
+        "steps":[{"id":"s1","description":"rename","edits":[
+            {"path":"src/lib.rs","match":"fn old() {}\n","replace":"fn new() {}\n","occurrences":1}
+        ],"checks":[{"kind":"command","run":"true","expect_exit":0}]}]}"#;
+    let plan_path = write_plan("run-dry", &template.replace("BASE_COMMIT", &head));
+
+    let dry_output = run_plan_output(&repo, "run", &plan_path, &["--dry"]);
+    assert!(
+        dry_output.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&dry_output.stdout),
+        String::from_utf8_lossy(&dry_output.stderr)
+    );
+    let dry_stdout = String::from_utf8_lossy(&dry_output.stdout);
+    assert!(
+        dry_stdout.contains("\"result\": \"passed\""),
+        "{dry_stdout}"
+    );
+    assert!(dry_stdout.contains("dry run"), "{dry_stdout}");
+
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "fn old() {}\n",
+        "a dry run must never write to the real tree"
+    );
+    let status = repo.git(&["status", "--porcelain"]);
+    assert!(
+        status.stdout.is_empty(),
+        "a dry run must leave the worktree exactly as clean as it started: {}",
+        String::from_utf8_lossy(&status.stdout)
+    );
+    assert!(
+        !repo.path().join(".bitcode").exists(),
+        "a dry run must not leave a validation or journal directory behind"
+    );
+
+    // A real run of the identical plan does commit.
+    let real_output = run_plan_output(&repo, "run", &plan_path, &[]);
+    assert!(
+        real_output.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&real_output.stdout),
+        String::from_utf8_lossy(&real_output.stderr)
+    );
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "fn new() {}\n"
+    );
+    let _ = std::fs::remove_file(&plan_path);
 }

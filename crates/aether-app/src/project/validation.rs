@@ -528,13 +528,22 @@ fn check_cancelled(cancel: &Arc<AtomicBool>) -> std::io::Result<()> {
     }
 }
 
-struct CandidateWorkspace {
+/// A disposable copy of the project tree under `.bitcode/validation/`,
+/// removed on `Drop`. `validate_candidate` uses this internally; the plan
+/// executor (`crate::project::planfile::executor`) also creates one
+/// directly per step, applies edits into it, and runs checks there before
+/// ever touching the real tree.
+pub(crate) struct CandidateWorkspace {
     workspace: PathBuf,
     allocation: PathBuf,
 }
 
 impl CandidateWorkspace {
-    fn create(
+    pub(crate) fn workspace_path(&self) -> &Path {
+        &self.workspace
+    }
+
+    pub(crate) fn create(
         root: &Path,
         config: &ProjectConfig,
         cancel: &Arc<AtomicBool>,
