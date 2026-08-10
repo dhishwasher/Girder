@@ -1,0 +1,29 @@
+{
+  "aggregate": {
+    "false_negatives": 2,
+    "false_positives": 0,
+    "precision": 1.0,
+    "recall": 0.0,
+    "true_negatives": 1,
+    "true_positives": 0
+  },
+  "mutations": [
+    {
+      "false_negatives": [
+        "tests/test_chain.py::test_basic_chaining",
+        "tests/test_commands.py::test_other_command_forward"
+      ],
+      "false_positives": [],
+      "graph_path": "crate::click::core::Group::invoke",
+      "id": "group-invoke",
+      "precision": 1.0,
+      "recall": 0.0,
+      "true_negatives": [
+        "tests/test_commands.py::test_other_command_invoke"
+      ],
+      "true_positives": []
+    }
+  ],
+  "repository": "click-8.4.1",
+  "schema_version": 1
+}

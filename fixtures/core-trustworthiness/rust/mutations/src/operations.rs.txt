@@ -22,3 +22,19 @@ pub fn selected_operation() -> &'static str {
 pub fn unrelated_operation() -> &'static str {
     "unrelated"
 }
+
+/// RAII guard whose Drop reaches `selected_operation` only through the
+/// implicit destructor call, not an ordinary function call.
+pub struct Guard;
+
+impl Guard {
+    pub fn new() -> Self {
+        Guard
+    }
+}
+
+impl Drop for Guard {
+    fn drop(&mut self) {
+        let _ = selected_operation();
+    }
+}

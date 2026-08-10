@@ -1,0 +1,8 @@
+use std::env;
+use trust_rust::operations::selected_operation;
+
+fn main() {
+    if env::args().nth(1).as_deref() == Some("selected") {
+        println!("{}", selected_operation());
+    }
+}

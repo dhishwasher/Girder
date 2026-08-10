@@ -376,15 +376,21 @@ fn is_excluded(excludes: &GlobSet, relative: &str) -> bool {
     excludes.is_match(relative)
 }
 
-/// Exact `[[bin]] path = "…"` overrides from the project's root Cargo.toml,
-/// as a normalized project-relative file path -> declared target name map.
+/// Exact Cargo binary target names from the project's root Cargo.toml, as a
+/// normalized project-relative file path -> declared target name map:
+/// `[[bin]] path = "…"` overrides, plus the package's own name for the
+/// conventional `src/main.rs` binary (Cargo's default target name when no
+/// override names that exact path).
 ///
-/// Measured gap: Cargo target metadata is not otherwise indexed, so a binary
-/// at a custom path has no discoverable target name and its
-/// `CARGO_BIN_EXE_<target>` subprocess entrypoint stays unresolved. This
-/// reads only the declared `path`; a missing, unreadable, or unparseable
-/// manifest — or a `[[bin]]` entry without an explicit `path` — yields
-/// nothing here and convention remains the only source, exactly as before.
+/// Measured gap: Cargo target metadata is not otherwise indexed. A binary at
+/// a custom path has no discoverable target name and its
+/// `CARGO_BIN_EXE_<target>` subprocess entrypoint stays unresolved; more
+/// subtly, `src/main.rs`'s real target name (the package name, not
+/// necessarily knowable from source) only disambiguates against a same-named
+/// launch once a second binary exists in the project. A missing, unreadable,
+/// or unparseable manifest — or a `[[bin]]` entry without an explicit `path`
+/// — contributes nothing and convention remains the only source, exactly as
+/// before.
 fn cargo_bin_targets(root: &Path) -> HashMap<String, String> {
     let Ok(text) = std::fs::read_to_string(root.join("Cargo.toml")) else {
         return HashMap::new();
@@ -392,17 +398,29 @@ fn cargo_bin_targets(root: &Path) -> HashMap<String, String> {
     let Ok(manifest) = text.parse::<toml::Value>() else {
         return HashMap::new();
     };
-    let Some(bins) = manifest.get("bin").and_then(toml::Value::as_array) else {
-        return HashMap::new();
-    };
-    bins.iter()
+    let mut targets: HashMap<String, String> = manifest
+        .get("bin")
+        .and_then(toml::Value::as_array)
+        .into_iter()
+        .flatten()
         .filter_map(|bin| {
             let name = bin.get("name")?.as_str()?;
             let path = bin.get("path")?.as_str()?;
             (!name.is_empty() && !path.is_empty())
                 .then(|| (path.replace('\\', "/"), name.to_string()))
         })
-        .collect()
+        .collect();
+    if let Some(package_name) = manifest
+        .get("package")
+        .and_then(|package| package.get("name"))
+        .and_then(toml::Value::as_str)
+        .filter(|name| !name.is_empty())
+    {
+        targets
+            .entry("src/main.rs".to_string())
+            .or_insert_with(|| package_name.to_string());
+    }
+    targets
 }
 
 /// Build a graph from the configured source files.
@@ -1431,9 +1449,39 @@ path = "tools/anonymous.rs"
             Some("trust-custom")
         );
         assert_eq!(
+            targets.get("src/main.rs").map(String::as_str),
+            Some("demo"),
+            "the package name backs the conventional src/main.rs target"
+        );
+        assert_eq!(
             targets.len(),
-            1,
+            2,
             "entries missing name or path contribute nothing"
+        );
+    }
+
+    #[test]
+    fn cargo_bin_targets_prefers_an_explicit_override_for_src_main_rs() {
+        let dir = TempDir::new("bin-targets-main-override");
+        std::fs::write(
+            dir.0.join("Cargo.toml"),
+            br#"
+[package]
+name = "demo"
+version = "0.1.0"
+
+[[bin]]
+name = "renamed-main"
+path = "src/main.rs"
+"#,
+        )
+        .unwrap();
+
+        let targets = cargo_bin_targets(&dir.0);
+        assert_eq!(
+            targets.get("src/main.rs").map(String::as_str),
+            Some("renamed-main"),
+            "an explicit override for src/main.rs must win over the package name"
         );
     }
 

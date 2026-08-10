@@ -1,11 +1,20 @@
 use std::process::Command;
-use trust_rust::operations::{selected_operation, unrelated_operation};
+use trust_rust::operations::{selected_operation, unrelated_operation, Guard};
 
 fn run_cli(route: &str) -> String {
     let output = Command::new(env!("CARGO_BIN_EXE_trust-rust"))
         .arg(route)
         .output()
         .expect("run fixture binary");
+    assert!(output.status.success());
+    String::from_utf8(output.stdout).expect("UTF-8 fixture output")
+}
+
+fn run_custom_cli(route: &str) -> String {
+    let output = Command::new(env!("CARGO_BIN_EXE_trust-rust-custom"))
+        .arg(route)
+        .output()
+        .expect("run fixture custom binary");
     assert!(output.status.success());
     String::from_utf8(output.stdout).expect("UTF-8 fixture output")
 }
@@ -28,4 +37,14 @@ fn rust_cli_unrelated() {
 #[test]
 fn rust_unrelated() {
     assert_eq!(unrelated_operation(), "unrelated");
+}
+
+#[test]
+fn rust_custom_bin_selected() {
+    assert!(!run_custom_cli("selected").is_empty());
+}
+
+#[test]
+fn rust_raii_drop_selected() {
+    let _guard = Guard::new();
 }

@@ -445,24 +445,81 @@ Acceptance evidence:
 - Remaining unbounded spawns are named residuals: the toy debugger's
   `python_tracer` and the DAP adapter launch (per-request timeout only).
 
+## Test identity, argument routes, and call-semantics closures
+
+Verified defects, closed together because all three change the graph and
+the trustworthiness oracle's declared test universe, coordinated into one
+baseline re-record (see "Core Trustworthiness Measurement milestone" below
+for the refreshed numbers):
+
+- **CLI argument-route precision** (measured `0.667`, one false positive
+  `rust_cli_unrelated`): closed by failure-closed route modeling — see
+  `crates/aether-builder/src/mapper.rs` (`RouteEvidence`, dispatch-arm
+  tagging) and `crates/aether-graph/src/impact.rs` (context-aware BFS
+  pruning). Any unprovable evidence anywhere leaves the graph and BFS
+  byte-identical to before, so recall is preserved by construction.
+- **Framework test identity** (measured overcount of 10: 296 reported vs 286
+  authoritative): closed by matching `is_test` to real framework collection —
+  Python requires a `test*.py`/`*_test.py` file and module-level-or-method
+  position; Rust evaluates `#[cfg(...)]` against the analysis host; nested
+  definitions are scoped to their enclosing function, never flattened into
+  module scope. `test-impact`'s "skipped" count is a real set difference; test
+  selections are path-sorted for deterministic output. On this tree: Python's
+  inventory matches exactly (27 = 27). Rust's raw counts still differ (322
+  graph `is_test` nodes vs 312 `cargo test --workspace -- --list`), but a
+  full by-hand reconciliation (see `core-trustworthiness-measurement.md`)
+  matches 312 of 322 graph identities 1:1 to a distinct real Cargo test
+  under the already-known `mod`-flattening path-naming residual; the
+  remaining 10 are exactly the deliberately fail-open
+  `#[cfg(feature = "...")]` tests (`live-providers`, `gui`) this milestone's
+  design intentionally keeps marked rather than risk a false negative under
+  a differently-configured build. Zero unexplained phantom or missing test
+  identities remain.
+- **Unmeasured call semantics** (custom Cargo binary paths, RAII/`Drop`):
+  closed by reading `[[bin]]` overrides and `[package].name` from the root
+  manifest (fixing a latent ambiguity the second declared binary exposed:
+  the conventional `src/main.rs` target had no real name to match against),
+  and by a narrow, recall-safe RAII model — a resolved `Self`-returning
+  constructor call for a `Drop`-implementing type also calls that type's
+  `drop`.
+- **Oracle breadth**: the trustworthiness fixtures gained two Rust cases
+  (`rust_custom_bin_selected`, `rust_raii_drop_selected` — dynamic proof for
+  the two models above) and two Python cases
+  (`test_python_cross_module_selected`, a three-hop cross-file chain;
+  `test_python_third_party_decoy`, a third same-named-method decoy). All
+  four are dynamically verified true positives/negatives with `precision
+  1.000`/`recall 1.000` in the re-recorded baseline.
+
+## Representative dynamic comparison
+
+Closed: [`docs/core-representative-mutations.md`](core-representative-mutations.md)
+extends the trustworthiness oracle's per-test dynamic-proof technique to one
+cached real repository (`click-8.4.1`), for a small hand-declared mutation
+and its real, unmodified test callers — reproducible via
+`tools/core_representative_mutations.py` and checked against
+[`core-representative-mutations.json`](core-representative-mutations.json).
+This is evidence the extended dynamic comparison exists and runs, not a
+claim of general accuracy across Click's behavior; Rust representative
+mutations remain out of scope (compiling a mutation-per-checkout across
+representative-sized crates is not honest to run repeatedly on this host).
+
+The measurement found a real, previously unmeasured defect, recorded below
+as gap 11 rather than silently accepted.
+
 ## Prioritized open gaps
 
-1. **P0 — measured CLI precision defect.** Model argument-specific subprocess
-   routes without losing Cargo-entrypoint recall. The current bounded fixture
-   has one false positive and precision `0.667`.
-2. **P0 — framework test identity.** Reconcile graph test identities with
-   Cargo and Python framework discovery, including nested/non-collectable
-   Python functions and macro-expanded or conditional Rust cases. The current
-   repository overcount is 10.
+1. **Closed — measured CLI precision defect.** See "Test identity, argument
+   routes, and call-semantics closures" above.
+2. **Closed — framework test identity.** See "Test identity, argument
+   routes, and call-semantics closures" above.
 3. **Closed — concurrent analysis isolation.** See "Concurrent analysis
    workflow correctness" above: journal locking with dead-owner-only
    read-only recovery, `GIT_OPTIONAL_LOCKS=0`, and a five-round dual-process
    CLI regression requiring complete byte-identical output.
-4. **P0 — unmeasured call semantics.** Measure and then model custom Cargo
-   binary paths and implicit RAII/`Drop` execution.
-5. **P0 — oracle breadth.** Extend dynamic comparison to broader mutations and
-   representative real repositories; the checked synthetic fixtures establish
-   a baseline, not product-level accuracy.
+4. **Closed — unmeasured call semantics.** See "Test identity, argument
+   routes, and call-semantics closures" above.
+5. **Closed — oracle breadth.** See "Test identity, argument routes, and
+   call-semantics closures" and "Representative dynamic comparison" above.
 6. **Closed — recoverability proof.** See "Transaction recoverability proof"
    above: a deterministic disk-state matrix over every journal transition
    plus real `BITCODE_FAULT_EXIT` crash injection through the binary, with
@@ -478,6 +535,17 @@ Acceptance evidence:
    navigation latency under sustained edits.
 10. **P1 — agent outcome metrics.** Track accepted patches, validation catches,
    rejected patches, rollback success, and time-to-safe-commit.
+11. **P1 — fixture-mediated polymorphic dispatch, newly measured.** On real
+   Click code, a test reaching a `Group.invoke`-vs-`Command.invoke`
+   polymorphic dispatch only through an untyped pytest fixture parameter
+   (`runner`) and Click's own internal `Command.main` indirection is not
+   selected: two of three declared representative-mutation cases are false
+   negatives (recall `0.000` on that one mutation; see
+   [`core-representative-mutations.md`](core-representative-mutations.md)).
+   No receiver-type inference mechanism currently reaches through an
+   untyped fixture parameter and a same-named unqualified `self.invoke`
+   dispatch. Lower priority than the original P0 set because it is narrow
+   (one dispatch shape) and newly discovered, not a regression.
 
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,

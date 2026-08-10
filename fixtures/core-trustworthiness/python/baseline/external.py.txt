@@ -1,0 +1,7 @@
+class ThirdPartyIdentity:
+    def selected_operation(self):
+        return "third-party"
+
+
+def via_third_party(identity: ThirdPartyIdentity):
+    return identity.selected_operation()

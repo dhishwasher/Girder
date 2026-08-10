@@ -1,0 +1,6 @@
+from models import SessionIdentity
+from service import direct
+
+
+def via_gateway():
+    return direct(SessionIdentity())

@@ -3,4 +3,8 @@ name = "trust-rust"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "trust-rust-custom"
+path = "tools/custom_entry.rs"
+
 [dependencies]

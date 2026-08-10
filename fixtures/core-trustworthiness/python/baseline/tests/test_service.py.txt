@@ -1,5 +1,7 @@
 import unittest
 
+from external import ThirdPartyIdentity, via_third_party
+from gateway import via_gateway
 from models import DecoyIdentity, SessionIdentity
 from service import decoy, direct, optional
 
@@ -13,3 +15,11 @@ class OracleTests(unittest.TestCase):
 
     def test_python_decoy(self):
         self.assertEqual(decoy(DecoyIdentity()), "decoy")
+
+    def test_python_cross_module_selected(self):
+        self.assertNotEqual(via_gateway(), "")
+
+    def test_python_third_party_decoy(self):
+        self.assertEqual(
+            via_third_party(ThirdPartyIdentity()), "third-party"
+        )

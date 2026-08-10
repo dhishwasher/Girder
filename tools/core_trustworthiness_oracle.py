@@ -41,33 +41,28 @@ class Fixture:
     dynamic_commands: Mapping[str, tuple[str, ...]]
 
 
+RUST_TESTS = (
+    "rust_direct_selected",
+    "rust_cli_selected",
+    "rust_cli_unrelated",
+    "rust_unrelated",
+    "rust_custom_bin_selected",
+    "rust_raii_drop_selected",
+)
+PYTHON_TESTS = (
+    "test_python_direct_selected",
+    "test_python_optional_selected",
+    "test_python_decoy",
+    "test_python_cross_module_selected",
+    "test_python_third_party_decoy",
+)
+
 FIXTURES = (
     Fixture(
         name="rust",
-        tests=(
-            "rust_direct_selected",
-            "rust_cli_selected",
-            "rust_cli_unrelated",
-            "rust_unrelated",
-        ),
-        graph_paths={
-            test: f"crate::tests::impact::{test}"
-            for test in (
-                "rust_direct_selected",
-                "rust_cli_selected",
-                "rust_cli_unrelated",
-                "rust_unrelated",
-            )
-        },
-        framework_ids={
-            test: test
-            for test in (
-                "rust_direct_selected",
-                "rust_cli_selected",
-                "rust_cli_unrelated",
-                "rust_unrelated",
-            )
-        },
+        tests=RUST_TESTS,
+        graph_paths={test: f"crate::tests::impact::{test}" for test in RUST_TESTS},
+        framework_ids={test: test for test in RUST_TESTS},
         discovery_command=(
             "cargo",
             "test",
@@ -91,36 +86,18 @@ FIXTURES = (
                 "--exact",
                 "--test-threads=1",
             )
-            for test in (
-                "rust_direct_selected",
-                "rust_cli_selected",
-                "rust_cli_unrelated",
-                "rust_unrelated",
-            )
+            for test in RUST_TESTS
         },
     ),
     Fixture(
         name="python",
-        tests=(
-            "test_python_direct_selected",
-            "test_python_optional_selected",
-            "test_python_decoy",
-        ),
+        tests=PYTHON_TESTS,
         graph_paths={
             test: f"crate::tests::test_service::OracleTests::{test}"
-            for test in (
-                "test_python_direct_selected",
-                "test_python_optional_selected",
-                "test_python_decoy",
-            )
+            for test in PYTHON_TESTS
         },
         framework_ids={
-            test: f"tests.test_service.OracleTests.{test}"
-            for test in (
-                "test_python_direct_selected",
-                "test_python_optional_selected",
-                "test_python_decoy",
-            )
+            test: f"tests.test_service.OracleTests.{test}" for test in PYTHON_TESTS
         },
         discovery_command=(
             sys.executable,
@@ -144,11 +121,7 @@ print("\\n".join(test.id() for test in flatten(suite)))
                 "-q",
                 f"tests.test_service.OracleTests.{test}",
             )
-            for test in (
-                "test_python_direct_selected",
-                "test_python_optional_selected",
-                "test_python_decoy",
-            )
+            for test in PYTHON_TESTS
         },
     ),
 )
