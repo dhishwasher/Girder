@@ -1,0 +1,63 @@
+version = 1
+
+[source]
+# Scoped to library/binary source only. `module_path_for` strips a leading
+# "src" segment when deriving a node's semantic path, so rooting here (not
+# at the workspace root, and not including tests/) is what keeps paths at
+# "crate::project::..." instead of "crate::crates::aether-app::src::...":
+# analyzing from the workspace root always bakes the full
+# crates/<name>/src/ prefix into every path, since relative paths are
+# computed against whatever root the analysis started from, not per
+# source root. tests/ is excluded so cli.rs's fixtures and helper structs
+# don't pollute the semantic graph with unrelated test-harness nodes.
+roots = ["src"]
+exclude = [
+    "**/.git",
+    "**/.git/**",
+    "**/.aether-cache",
+    "**/.aether-cache/**",
+    "**/target",
+    "**/target/**",
+    "**/node_modules",
+    "**/node_modules/**",
+    "**/__pycache__",
+    "**/__pycache__/**",
+    "**/.venv",
+    "**/.venv/**",
+    "**/venv",
+    "**/venv/**",
+    "**/.*",
+    "**/.*/**",
+]
+follow_symlinks = false
+
+[graph]
+path = "project.aether"
+
+[tests]
+rust = [
+    "cargo",
+    "test",
+    "--workspace",
+    "{test}",
+]
+python = [
+    "pytest",
+    "-k",
+    "{filter}",
+]
+run_timeout_seconds = 1800
+run_max_output_bytes = 8388608
+
+[agents]
+output_module = "crate::forge"
+output_file = "src/forge.rs"
+timeout_seconds = 10
+
+[validation]
+enabled = true
+run_tests = true
+commands = []
+timeout_seconds = 300
+max_output_bytes = 131072
+max_copy_bytes = 536870912
