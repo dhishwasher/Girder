@@ -33,6 +33,7 @@ def run_bounded(
     env: Mapping[str, str] | None = None,
     timeout_seconds: float,
     max_output_bytes: int,
+    check: bool = True,
 ) -> BoundedProcessResult:
     """Run argv without a shell, enforcing one hard combined output budget."""
 
@@ -119,7 +120,7 @@ def run_bounded(
         raise RuntimeError(f"{failure}\nstdout:\n{stdout}\nstderr:\n{stderr}")
 
     returncode = process.returncode
-    if returncode != 0:
+    if check and returncode != 0:
         raise RuntimeError(
             f"command failed ({returncode}): {rendered}\n"
             f"stdout:\n{stdout}\nstderr:\n{stderr}"
