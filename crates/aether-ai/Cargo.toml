@@ -7,7 +7,7 @@ license.workspace = true
 [features]
 # Off by default so the workspace builds and the demo runs with no network /
 # API keys. Turning this on compiles the real HTTP-backed OpenAI and Anthropic
-# providers.
+# providers, including local Ollama through its HTTP API.
 default = []
 live-providers = ["dep:reqwest"]
 
