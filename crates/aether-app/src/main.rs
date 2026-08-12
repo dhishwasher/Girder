@@ -44,12 +44,14 @@ COMMANDS:
                               anything.
     plan explain <plan.json> Print a human-readable summary of a plan file.
                               No execution, no preconditions.
-    plan run <plan.json> [--dry]
+    plan run <plan.json> [--dry] [--authoring-receipt <receipt.json>]
                               Execute a plan file step by step: apply edits
                               in a disposable copy, run each step's checks,
                               commit to the real tree only once they pass.
                               Writes a report to .bitcode/reports/. --dry
-                              never writes to the real tree.
+                              never writes to the real tree. A versioned
+                              authoring receipt adds model/token provenance to
+                              the run report without changing Plan Format v1.
     refactor <dir> rename <node::path> <new_name>
                               Semantic rename across the graph (follows Calls
                               edges, not text search), then save

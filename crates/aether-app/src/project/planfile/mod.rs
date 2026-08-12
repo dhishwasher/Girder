@@ -117,8 +117,16 @@ pub(crate) fn explain(plan_path: &Path) -> std::io::Result<()> {
 /// `bitcode plan run <plan.json> [--dry]` — execute a plan step by step.
 /// Preconditions run against the real tree even in `--dry` mode; only the
 /// final real-tree commit is skipped when `dry` is set.
-pub(crate) fn run(root: &Path, plan_path: &Path, dry: bool) -> std::io::Result<()> {
+pub(crate) fn run(
+    root: &Path,
+    plan_path: &Path,
+    dry: bool,
+    authoring_receipt: Option<&Path>,
+) -> std::io::Result<()> {
     let plan = load_plan(plan_path)?;
+    let authoring_calls = authoring_receipt
+        .map(report::load_authoring_receipt)
+        .transpose()?;
     if let Err(failures) = precondition::check_preconditions(root, &plan)? {
         println!(
             "plan {} — {} precondition failure(s):",
@@ -146,7 +154,7 @@ pub(crate) fn run(root: &Path, plan_path: &Path, dry: bool) -> std::io::Result<(
         }
     }
 
-    let built_report = report::build_report(&plan, &result, dry);
+    let built_report = report::build_report(&plan, &result, dry, authoring_calls.as_deref());
     if dry {
         // A dry run must never write to the real tree, including the
         // report itself — print it instead of persisting it under

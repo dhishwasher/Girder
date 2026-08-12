@@ -2695,6 +2695,56 @@ fn plan_run_applies_edits_and_commits_to_the_real_tree_when_checks_pass() {
 }
 
 #[test]
+fn plan_run_records_a_local_only_authoring_receipt() {
+    let repo = TempRepo::new("plan-run-local-ledger");
+    repo.write("src/lib.rs", "fn old() {}\n");
+    repo.commit_all("baseline");
+    let plan = format!(
+        r#"{{"plan_version":1,"plan_id":"local-ledger","intent":"rename","base_commit":"{}",
+        "steps":[{{"id":"s1","description":"rename","edits":[
+            {{"path":"src/lib.rs","match":"fn old() {{}}\n","replace":"fn new() {{}}\n","occurrences":1}}
+        ],"checks":[{{"kind":"command","run":"true","expect_exit":0}}]}}]}}"#,
+        repo.head()
+    );
+    let plan_path = write_plan("local-ledger", &plan);
+    let receipt_path = write_plan(
+        "local-ledger-receipt",
+        r#"{"schema_version":1,"calls":[
+          {"provider":"ollama:local","model":"qwen2.5-coder:7b","tokens":57}
+        ]}"#,
+    );
+
+    let output = run_plan_output(
+        &repo,
+        "run",
+        &plan_path,
+        &["--authoring-receipt", receipt_path.to_str().unwrap()],
+    );
+    assert!(
+        output.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let reports = std::fs::read_dir(repo.path().join(".bitcode/reports"))
+        .unwrap()
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    assert_eq!(reports.len(), 1);
+    let report: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(reports[0].path()).unwrap()).unwrap();
+    assert_eq!(report["result"], "passed");
+    assert_eq!(report["tokens"]["authoring_tokens"], 57);
+    assert_eq!(report["tokens"]["remote_call_count"], 0);
+    assert_eq!(report["tokens"]["zero_remote"], true);
+    assert_eq!(report["tokens"]["calls"][0]["provider"], "ollama:local");
+    assert_eq!(report["tokens"]["calls"][0]["model"], "qwen2.5-coder:7b");
+
+    let _ = std::fs::remove_file(plan_path);
+    let _ = std::fs::remove_file(receipt_path);
+}
+
+#[test]
 fn plan_run_stop_leaves_the_tree_exactly_as_of_the_last_successful_step() {
     let repo = TempRepo::new("plan-run-stop");
     repo.write("src/lib.rs", "fn old() {}\n");

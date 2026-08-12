@@ -8,7 +8,7 @@
 use crate::project::planfile::executor::{PlanRunOutcome, RunOutcome};
 use crate::project::planfile::schema::Plan;
 use crate::project::source::safe_project_output_path;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Serialize)]
@@ -41,9 +41,92 @@ pub(crate) struct PlanReport {
     pub(crate) failed_at: Option<String>,
     pub(crate) steps: Vec<StepReport>,
     pub(crate) final_state: FinalState,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) tokens: Option<TokenLedger>,
 }
 
-pub(crate) fn build_report(plan: &Plan, run: &PlanRunOutcome, dry: bool) -> PlanReport {
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct AuthoringCall {
+    pub(crate) provider: String,
+    pub(crate) model: String,
+    pub(crate) tokens: u32,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AuthoringReceipt {
+    schema_version: u32,
+    calls: Vec<AuthoringCall>,
+}
+
+#[derive(Debug, Serialize)]
+pub(crate) struct TokenCall {
+    pub(crate) provider: String,
+    pub(crate) model: String,
+    pub(crate) tokens: u32,
+    pub(crate) remote: bool,
+}
+
+#[derive(Debug, Serialize)]
+pub(crate) struct TokenLedger {
+    pub(crate) authoring_tokens: u64,
+    pub(crate) calls: Vec<TokenCall>,
+    pub(crate) remote_call_count: usize,
+    pub(crate) zero_remote: bool,
+}
+
+pub(crate) fn load_authoring_receipt(path: &Path) -> std::io::Result<Vec<AuthoringCall>> {
+    let bytes = std::fs::read(path).map_err(|error| {
+        std::io::Error::new(
+            error.kind(),
+            format!(
+                "could not read authoring receipt {}: {error}",
+                path.display()
+            ),
+        )
+    })?;
+    let receipt: AuthoringReceipt = serde_json::from_slice(&bytes).map_err(|error| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!(
+                "could not parse authoring receipt {}: {error}",
+                path.display()
+            ),
+        )
+    })?;
+    if receipt.schema_version != 1 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!(
+                "unsupported authoring receipt schema_version {} (expected 1)",
+                receipt.schema_version
+            ),
+        ));
+    }
+    if receipt.calls.is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "authoring receipt must contain at least one model call",
+        ));
+    }
+    for (index, call) in receipt.calls.iter().enumerate() {
+        if call.provider.trim().is_empty() || call.model.trim().is_empty() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("authoring receipt call {index} must name a non-empty provider and model"),
+            ));
+        }
+    }
+    Ok(receipt.calls)
+}
+
+pub(crate) fn build_report(
+    plan: &Plan,
+    run: &PlanRunOutcome,
+    dry: bool,
+    authoring_calls: Option<&[AuthoringCall]>,
+) -> PlanReport {
     let (result, failed_at, description) = match &run.outcome {
         RunOutcome::Passed => (
             "passed",
@@ -104,7 +187,32 @@ pub(crate) fn build_report(plan: &Plan, run: &PlanRunOutcome, dry: bool) -> Plan
             dry_run: dry,
             description,
         },
+        tokens: authoring_calls.map(build_token_ledger),
     }
+}
+
+fn build_token_ledger(calls: &[AuthoringCall]) -> TokenLedger {
+    let calls: Vec<TokenCall> = calls
+        .iter()
+        .map(|call| TokenCall {
+            provider: call.provider.clone(),
+            model: call.model.clone(),
+            tokens: call.tokens,
+            remote: !is_local_provider(&call.provider),
+        })
+        .collect();
+    let authoring_tokens = calls.iter().map(|call| u64::from(call.tokens)).sum();
+    let remote_call_count = calls.iter().filter(|call| call.remote).count();
+    TokenLedger {
+        authoring_tokens,
+        calls,
+        remote_call_count,
+        zero_remote: remote_call_count == 0,
+    }
+}
+
+fn is_local_provider(provider: &str) -> bool {
+    matches!(provider, "ollama:local" | "mock")
 }
 
 pub(crate) fn write_report(root: &Path, report: &PlanReport) -> std::io::Result<PathBuf> {
@@ -197,7 +305,7 @@ mod tests {
                 }],
             }],
         };
-        let report = build_report(&plan(), &run, false);
+        let report = build_report(&plan(), &run, false, None);
         assert_eq!(report.result, "rolled_back_plan");
         assert_eq!(report.failed_at.as_deref(), Some("s2"));
         assert!(report.steps[0].checks[0].detail.contains("expected"));
@@ -224,7 +332,7 @@ mod tests {
             },
             steps: Vec::new(),
         };
-        let stop_report = build_report(&plan(), &stop_run, false);
+        let stop_report = build_report(&plan(), &stop_run, false, None);
         assert_eq!(stop_report.result, "stopped");
         assert_eq!(stop_report.failed_at.as_deref(), Some("s1"));
 
@@ -234,9 +342,63 @@ mod tests {
             },
             steps: Vec::new(),
         };
-        let rollback_report = build_report(&plan(), &rollback_run, false);
+        let rollback_report = build_report(&plan(), &rollback_run, false, None);
         assert_eq!(rollback_report.result, "rolled_back_plan");
         assert_eq!(rollback_report.failed_at.as_deref(), Some("s1"));
         let _ = std::fs::remove_dir_all(&root);
+    }
+
+    fn passed_run() -> PlanRunOutcome {
+        PlanRunOutcome {
+            outcome: RunOutcome::Passed,
+            steps: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn local_only_authoring_sets_zero_remote_and_names_every_call() {
+        let calls = vec![AuthoringCall {
+            provider: "ollama:local".to_string(),
+            model: "qwen2.5-coder:7b".to_string(),
+            tokens: 83,
+        }];
+        let report = build_report(&plan(), &passed_run(), false, Some(&calls));
+        let tokens = report.tokens.unwrap();
+        assert_eq!(tokens.authoring_tokens, 83);
+        assert_eq!(tokens.remote_call_count, 0);
+        assert!(tokens.zero_remote);
+        assert_eq!(tokens.calls[0].provider, "ollama:local");
+        assert_eq!(tokens.calls[0].model, "qwen2.5-coder:7b");
+        assert!(!tokens.calls[0].remote);
+    }
+
+    #[test]
+    fn mixed_or_unknown_authoring_fails_closed_as_remote() {
+        let calls = vec![
+            AuthoringCall {
+                provider: "ollama:local".to_string(),
+                model: "local-model".to_string(),
+                tokens: 10,
+            },
+            AuthoringCall {
+                provider: "unrecognized-provider".to_string(),
+                model: "mystery-model".to_string(),
+                tokens: 20,
+            },
+        ];
+        let report = build_report(&plan(), &passed_run(), false, Some(&calls));
+        let tokens = report.tokens.unwrap();
+        assert_eq!(tokens.authoring_tokens, 30);
+        assert_eq!(tokens.remote_call_count, 1);
+        assert!(!tokens.zero_remote);
+        assert!(!tokens.calls[0].remote);
+        assert!(tokens.calls[1].remote);
+    }
+
+    #[test]
+    fn absent_authoring_provenance_omits_the_tokens_block() {
+        let report = build_report(&plan(), &passed_run(), false, None);
+        let value = serde_json::to_value(report).unwrap();
+        assert!(value.get("tokens").is_none());
     }
 }
