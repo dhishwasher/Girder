@@ -1,0 +1,93 @@
+{
+  "corpus": {
+    "error_legibility": [
+      "edit-missing-path",
+      "edit-unknown-field",
+      "edit-multiple-discriminators",
+      "edit-substitute-missing-replace",
+      "edit-create-wrong-type",
+      "edit-delete-wrong-type",
+      "check-missing-kind",
+      "check-unknown-kind",
+      "check-unknown-field",
+      "step-unknown-field",
+      "plan-unknown-field"
+    ],
+    "fail_closed": [
+      "graph-callers-of-unknown-node",
+      "graph-callees-of-unknown-node",
+      "graph-tests-for-unknown-node",
+      "graph-node-exists-unknown-node",
+      "graph-node-absent-existing-node",
+      "graph-no-new-edges-unknown-node",
+      "graph-edge-delta-exceeded",
+      "graph-unresolved-unknown-from",
+      "tests-impacted-failing-runner",
+      "tests-named-unknown-test",
+      "tests-full-failing-runner",
+      "command-unknown-program",
+      "oracle-not-implemented",
+      "benchmark-not-implemented"
+    ],
+    "no_vacuous_pass": {
+      "forms": [
+        "missing-expect",
+        "empty-expect",
+        "misspelled-expect"
+      ],
+      "modes": [
+        "superset",
+        "absent"
+      ],
+      "set_check_kinds": [
+        "graph.callers_of",
+        "graph.callees_of",
+        "graph.tests_for"
+      ]
+    },
+    "plan_ids": [
+      "chained-substitution",
+      "created-node",
+      "cross-file-call",
+      "rollback-after-composed-step"
+    ],
+    "rollback_fidelity": [
+      "substitute-then-fail",
+      "create-then-fail",
+      "delete-then-fail"
+    ]
+  },
+  "execution": {
+    "command_timeout_seconds": 120,
+    "max_command_output_bytes": 1048576,
+    "require_clean_fixture_before_each_case": true,
+    "require_fresh_repository_per_run": true
+  },
+  "policy_id": "plan-executor-v1",
+  "properties": {
+    "P1_dry_equals_real": {
+      "max_outcome_mismatches": 0,
+      "required_plan_count": 4
+    },
+    "P2_no_vacuous_pass": {
+      "max_run_passes": 0,
+      "max_validate_acceptances": 0,
+      "required_mutation_count": 18
+    },
+    "P3_fail_closed": {
+      "max_unexpected_passes": 0,
+      "required_check_kind_count": 14
+    },
+    "P4_rollback_fidelity": {
+      "max_dirty_worktrees": 0,
+      "max_tree_mismatches": 0,
+      "required_plan_count": 3
+    },
+    "P5_error_legibility": {
+      "max_missing_path_diagnostics": 0,
+      "max_missing_step_diagnostics": 0,
+      "required_case_count": 11
+    }
+  },
+  "schema_version": 1
+}
