@@ -155,7 +155,9 @@ fn check_edit(
         Edit::Delete { delete, .. } => {
             if !*delete {
                 failures.push(PreconditionFailure {
-                    reason: format!("step {step_id}: {path}: a delete edit must set \"delete\": true"),
+                    reason: format!(
+                        "step {step_id}: {path}: a delete edit must set \"delete\": true"
+                    ),
                 });
                 return;
             }

@@ -17,6 +17,7 @@ use crate::project::planfile::schema::{Check, Edit, OnFailure, Plan, TestExpect}
 use crate::project::source::{build_from_dir_with_config, commit_project_writes};
 use crate::project::validation::CandidateWorkspace;
 use aether_graph::SemanticGraph;
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
@@ -53,10 +54,14 @@ pub(crate) fn run_plan(
     let mut steps = Vec::new();
     let mut committed_paths: Vec<PathBuf> = Vec::new();
     let mut created_paths: Vec<PathBuf> = Vec::new();
+    let mut dry_overlay = DryOverlay::default();
 
     for step in &plan.steps {
         let cancel = Arc::new(AtomicBool::new(false));
         let candidate = CandidateWorkspace::create(root, config, &cancel)?;
+        if dry {
+            dry_overlay.replay(candidate.workspace_path())?;
+        }
 
         let mut writes = Vec::new();
         let mut created_this_step = Vec::new();
@@ -104,9 +109,11 @@ pub(crate) fn run_plan(
         // Phase 4's graph.edge_delta) reflect exactly what this step did.
         let need_graph = checks_need_graph(&step.checks);
         let before_graph = need_graph
-            .then(|| build_from_dir_with_config(candidate.workspace_path(), config))
-            .transpose()?
-            .map(|(graph, _, _)| graph);
+            .then(|| {
+                build_from_dir_with_config(candidate.workspace_path(), config)
+                    .map(|(graph, _, _)| graph)
+            })
+            .transpose()?;
 
         for write in &writes {
             write_into(candidate.workspace_path(), write)?;
@@ -163,6 +170,7 @@ pub(crate) fn run_plan(
         }
 
         if dry {
+            dry_overlay.record(&writes);
             steps.push(StepOutcome {
                 id: step.id.clone(),
                 passed: true,
@@ -197,6 +205,42 @@ pub(crate) fn run_plan(
         outcome: RunOutcome::Passed,
         steps,
     })
+}
+
+#[derive(Default)]
+struct DryOverlay {
+    files: BTreeMap<PathBuf, Option<Vec<u8>>>,
+}
+
+impl DryOverlay {
+    fn replay(&self, workspace: &Path) -> std::io::Result<()> {
+        for (relative, contents) in &self.files {
+            let target = workspace.join(relative);
+            match contents {
+                Some(contents) => {
+                    if let Some(parent) = target.parent() {
+                        std::fs::create_dir_all(parent)?;
+                    }
+                    std::fs::write(target, contents)?;
+                }
+                None => match std::fs::remove_file(target) {
+                    Ok(()) => {}
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(error) => return Err(error),
+                },
+            }
+        }
+        Ok(())
+    }
+
+    fn record(&mut self, writes: &[crate::project::source::ProjectWrite]) {
+        for write in writes {
+            self.files.insert(
+                write.relative().to_path_buf(),
+                write.contents().map(|contents| contents.to_vec()),
+            );
+        }
+    }
 }
 
 fn checks_need_graph(checks: &[Check]) -> bool {
@@ -355,4 +399,59 @@ fn rollback_to_base(
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::project::source::ProjectWrite;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
+
+    struct TempDir(PathBuf);
+
+    impl TempDir {
+        fn new(name: &str) -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "bitcode-planfile-executor-{name}-{}-{}",
+                std::process::id(),
+                NEXT_ID.fetch_add(1, Ordering::Relaxed)
+            ));
+            let _ = std::fs::remove_dir_all(&path);
+            std::fs::create_dir_all(&path).unwrap();
+            Self(path)
+        }
+    }
+
+    impl Drop for TempDir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn dry_overlay_replays_substitutions_creates_and_deletes() {
+        let workspace = TempDir::new("overlay");
+        std::fs::write(workspace.0.join("changed.rs"), "pristine\n").unwrap();
+        std::fs::write(workspace.0.join("deleted.rs"), "remove me\n").unwrap();
+        let mut overlay = DryOverlay::default();
+        overlay.record(&[
+            ProjectWrite::text("changed.rs", Some(b"pristine\n".to_vec()), "planned\n"),
+            ProjectWrite::text("nested/created.rs", None, "created\n"),
+            ProjectWrite::delete("deleted.rs", b"remove me\n".to_vec()),
+        ]);
+
+        overlay.replay(&workspace.0).unwrap();
+
+        assert_eq!(
+            std::fs::read_to_string(workspace.0.join("changed.rs")).unwrap(),
+            "planned\n"
+        );
+        assert_eq!(
+            std::fs::read_to_string(workspace.0.join("nested/created.rs")).unwrap(),
+            "created\n"
+        );
+        assert!(!workspace.0.join("deleted.rs").exists());
+    }
 }

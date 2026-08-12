@@ -4,9 +4,12 @@
 //! a subset — this avoids re-touching the schema every time a new check
 //! kind is implemented.
 
-use serde::Deserialize;
+use serde::de::Error as _;
+use serde::{Deserialize, Deserializer};
+use serde_json::Value;
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct Plan {
     pub(crate) plan_version: u32,
     pub(crate) plan_id: String,
@@ -28,30 +31,87 @@ pub(crate) enum OnFailure {
     Stop,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone)]
 pub(crate) struct Step {
     pub(crate) id: String,
-    #[serde(default)]
     pub(crate) description: String,
-    #[serde(default)]
     pub(crate) edits: Vec<Edit>,
-    #[serde(default)]
     pub(crate) checks: Vec<Check>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawStep {
+    id: String,
+    #[serde(default)]
+    description: String,
+    #[serde(default)]
+    edits: Vec<Value>,
+    #[serde(default)]
+    checks: Vec<Value>,
+}
+
+impl<'de> Deserialize<'de> for Step {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let raw = RawStep::deserialize(deserializer)?;
+        let edits = raw
+            .edits
+            .into_iter()
+            .enumerate()
+            .map(|(index, value)| {
+                let path = value
+                    .get("path")
+                    .and_then(Value::as_str)
+                    .unwrap_or("<missing path>")
+                    .to_string();
+                serde_json::from_value(value).map_err(|error| {
+                    D::Error::custom(format!(
+                        "step {:?}: edits[{index}] path {path:?}: {error}",
+                        raw.id
+                    ))
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        let checks = raw
+            .checks
+            .into_iter()
+            .enumerate()
+            .map(|(index, value)| {
+                let kind = value
+                    .get("kind")
+                    .and_then(Value::as_str)
+                    .unwrap_or("<missing kind>")
+                    .to_string();
+                serde_json::from_value(value).map_err(|error| {
+                    D::Error::custom(format!(
+                        "step {:?}: checks[{index}] kind {kind:?}: {error}",
+                        raw.id
+                    ))
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self {
+            id: raw.id,
+            description: raw.description,
+            edits,
+            checks,
+        })
+    }
 }
 
 fn default_occurrences() -> u32 {
     1
 }
 
-#[derive(Debug, Clone, Deserialize)]
-#[serde(untagged)]
+#[derive(Debug, Clone)]
 pub(crate) enum Edit {
     Substitute {
         path: String,
-        #[serde(rename = "match")]
         match_text: String,
         replace: String,
-        #[serde(default = "default_occurrences")]
         occurrences: u32,
     },
     Create {
@@ -62,6 +122,100 @@ pub(crate) enum Edit {
         path: String,
         delete: bool,
     },
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SubstituteEdit {
+    path: String,
+    #[serde(rename = "match")]
+    match_text: String,
+    replace: String,
+    #[serde(default = "default_occurrences")]
+    occurrences: u32,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CreateEdit {
+    path: String,
+    create: String,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DeleteEdit {
+    path: String,
+    delete: bool,
+}
+
+impl<'de> Deserialize<'de> for Edit {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = Value::deserialize(deserializer)?;
+        let object = value
+            .as_object()
+            .ok_or_else(|| D::Error::custom("edit must be a JSON object"))?;
+        const KNOWN_FIELDS: &[&str] = &[
+            "path",
+            "match",
+            "replace",
+            "occurrences",
+            "create",
+            "delete",
+        ];
+        if let Some(field) = object
+            .keys()
+            .find(|field| !KNOWN_FIELDS.contains(&field.as_str()))
+        {
+            return Err(D::Error::custom(format!(
+                "unknown edit field {field:?}; expected one of {}",
+                KNOWN_FIELDS.join(", ")
+            )));
+        }
+
+        let discriminators: Vec<&str> = ["match", "create", "delete"]
+            .into_iter()
+            .filter(|field| object.contains_key(*field))
+            .collect();
+        if discriminators.len() != 1 {
+            return Err(D::Error::custom(format!(
+                "edit must contain exactly one discriminator field (match, create, or delete); found {discriminators:?}"
+            )));
+        }
+
+        match discriminators[0] {
+            "match" => {
+                let raw: SubstituteEdit = serde_json::from_value(value)
+                    .map_err(|error| D::Error::custom(error.to_string()))?;
+                Ok(Self::Substitute {
+                    path: raw.path,
+                    match_text: raw.match_text,
+                    replace: raw.replace,
+                    occurrences: raw.occurrences,
+                })
+            }
+            "create" => {
+                let raw: CreateEdit = serde_json::from_value(value)
+                    .map_err(|error| D::Error::custom(error.to_string()))?;
+                Ok(Self::Create {
+                    path: raw.path,
+                    create: raw.create,
+                })
+            }
+            "delete" => {
+                let raw: DeleteEdit = serde_json::from_value(value)
+                    .map_err(|error| D::Error::custom(error.to_string()))?;
+                Ok(Self::Delete {
+                    path: raw.path,
+                    delete: raw.delete,
+                })
+            }
+            _ => unreachable!("the discriminator list is fixed above"),
+        }
+    }
 }
 
 impl Edit {
@@ -109,7 +263,7 @@ fn default_timeout_secs() -> u64 {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-#[serde(tag = "kind")]
+#[serde(tag = "kind", deny_unknown_fields)]
 pub(crate) enum Check {
     #[serde(rename = "graph.callers_of")]
     GraphCallersOf {
@@ -226,6 +380,37 @@ impl Check {
     }
 }
 
+impl Plan {
+    pub(crate) fn validate(&self) -> Result<(), String> {
+        for step in &self.steps {
+            for (index, check) in step.checks.iter().enumerate() {
+                let invalid = match check {
+                    Check::GraphCallersOf { expect, mode, .. }
+                    | Check::GraphCalleesOf { expect, mode, .. }
+                    | Check::GraphTestsFor { expect, mode, .. } => {
+                        expect.is_empty() && matches!(mode, Mode::Superset | Mode::Absent)
+                    }
+                    _ => false,
+                };
+                if invalid {
+                    return Err(format!(
+                        "step {:?}: checks[{index}] {} uses mode {:?} with an empty expect set; this check would verify nothing",
+                        step.id,
+                        check.kind(),
+                        match check {
+                            Check::GraphCallersOf { mode, .. }
+                            | Check::GraphCalleesOf { mode, .. }
+                            | Check::GraphTestsFor { mode, .. } => mode,
+                            _ => unreachable!("invalid is true only for set checks"),
+                        }
+                    ));
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -333,5 +518,96 @@ mod tests {
             }
             other => panic!("expected delete edit, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn misspelled_check_field_is_rejected_with_step_context() {
+        let json = r#"{
+          "plan_version": 1,
+          "plan_id": "p",
+          "intent": "reject typo",
+          "base_commit": "abc",
+          "steps": [{
+            "id": "verify-callers",
+            "checks": [{
+              "kind": "graph.callers_of",
+              "node": "crate::target",
+              "expct": ["crate::caller"]
+            }]
+          }]
+        }"#;
+        let error = serde_json::from_str::<Plan>(json).unwrap_err().to_string();
+        assert!(error.contains("verify-callers"), "{error}");
+        assert!(error.contains("checks[0]"), "{error}");
+        assert!(error.contains("expct"), "{error}");
+    }
+
+    #[test]
+    fn empty_superset_and_absent_checks_are_rejected_but_exact_is_meaningful() {
+        for mode in ["superset", "absent"] {
+            let json = format!(
+                r#"{{
+                  "plan_version": 1,
+                  "plan_id": "p",
+                  "intent": "reject vacuity",
+                  "base_commit": "abc",
+                  "steps": [{{
+                    "id": "no-vacuous-pass",
+                    "checks": [{{
+                      "kind": "graph.callers_of",
+                      "node": "crate::target",
+                      "expect": [],
+                      "mode": "{mode}"
+                    }}]
+                  }}]
+                }}"#
+            );
+            let plan: Plan = serde_json::from_str(&json).unwrap();
+            let error = plan.validate().unwrap_err();
+            assert!(error.contains("no-vacuous-pass"), "{error}");
+            assert!(error.contains("empty expect"), "{error}");
+        }
+
+        let exact: Plan = serde_json::from_str(
+            r#"{
+              "plan_version": 1,
+              "plan_id": "p",
+              "intent": "empty is meaningful",
+              "base_commit": "abc",
+              "steps": [{
+                "id": "exact-empty",
+                "checks": [{
+                  "kind": "graph.callers_of",
+                  "node": "crate::target",
+                  "expect": [],
+                  "mode": "exact"
+                }]
+              }]
+            }"#,
+        )
+        .unwrap();
+        assert!(exact.validate().is_ok());
+    }
+
+    #[test]
+    fn malformed_edit_error_names_the_step_path_and_field() {
+        let json = r#"{
+          "plan_version": 1,
+          "plan_id": "p",
+          "intent": "reject malformed edit",
+          "base_commit": "abc",
+          "steps": [{
+            "id": "rewrite-session",
+            "edits": [{
+              "path": "src/session.rs",
+              "match": "old",
+              "replce": "new"
+            }]
+          }]
+        }"#;
+        let error = serde_json::from_str::<Plan>(json).unwrap_err().to_string();
+        assert!(error.contains("rewrite-session"), "{error}");
+        assert!(error.contains("src/session.rs"), "{error}");
+        assert!(error.contains("replce"), "{error}");
     }
 }

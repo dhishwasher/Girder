@@ -2437,6 +2437,225 @@ fn plan_validate_reports_every_precondition_failure_at_once() {
 }
 
 #[test]
+fn plan_validate_rejects_unknown_check_fields_before_execution() {
+    let repo = TempRepo::new("plan-validate-unknown-field");
+    let plan_path = write_plan(
+        "validate-unknown-field",
+        r#"{
+          "plan_version": 1,
+          "plan_id": "p",
+          "intent": "reject typo",
+          "base_commit": "unused",
+          "steps": [{
+            "id": "verify-callers",
+            "checks": [{
+              "kind": "graph.callers_of",
+              "node": "crate::target",
+              "expct": ["crate::caller"]
+            }]
+          }]
+        }"#,
+    );
+
+    let output = run_plan_output(&repo, "validate", &plan_path, &[]);
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("verify-callers"), "{stderr}");
+    assert!(stderr.contains("expct"), "{stderr}");
+    let _ = std::fs::remove_file(plan_path);
+}
+
+#[test]
+fn plan_validate_rejects_empty_superset_expect_as_vacuous() {
+    let repo = TempRepo::new("plan-validate-vacuous");
+    let plan_path = write_plan(
+        "validate-vacuous",
+        r#"{
+          "plan_version": 1,
+          "plan_id": "p",
+          "intent": "reject vacuity",
+          "base_commit": "unused",
+          "steps": [{
+            "id": "no-vacuous-pass",
+            "checks": [{
+              "kind": "graph.callers_of",
+              "node": "crate::target",
+              "expect": [],
+              "mode": "superset"
+            }]
+          }]
+        }"#,
+    );
+
+    let output = run_plan_output(&repo, "validate", &plan_path, &[]);
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("no-vacuous-pass"), "{stderr}");
+    assert!(stderr.contains("empty expect"), "{stderr}");
+    let _ = std::fs::remove_file(plan_path);
+}
+
+#[test]
+fn plan_validate_malformed_edit_error_names_step_path_and_field() {
+    let repo = TempRepo::new("plan-validate-malformed-edit");
+    let plan_path = write_plan(
+        "validate-malformed-edit",
+        r#"{
+          "plan_version": 1,
+          "plan_id": "p",
+          "intent": "reject malformed edit",
+          "base_commit": "unused",
+          "steps": [{
+            "id": "rewrite-session",
+            "edits": [{
+              "path": "src/session.rs",
+              "match": "old",
+              "replce": "new"
+            }]
+          }]
+        }"#,
+    );
+
+    let output = run_plan_output(&repo, "validate", &plan_path, &[]);
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("rewrite-session"), "{stderr}");
+    assert!(stderr.contains("src/session.rs"), "{stderr}");
+    assert!(stderr.contains("replce"), "{stderr}");
+    let _ = std::fs::remove_file(plan_path);
+}
+
+#[test]
+fn plan_run_dry_composes_three_steps_with_the_same_check_outcomes_as_real() {
+    fn initialized_repo(name: &str) -> (TempRepo, String) {
+        let repo = TempRepo::new(name);
+        repo.write("src/lib.rs", "pub fn baseline() -> i64 { 0 }\n");
+        repo.commit_all("baseline");
+        let head = repo.head();
+        (repo, head)
+    }
+
+    fn plan_json(base_commit: &str) -> String {
+        r#"{
+          "plan_version": 1,
+          "plan_id": "compose-three-steps",
+          "intent": "prove dry execution composes prior planned edits",
+          "base_commit": "BASE_COMMIT",
+          "steps": [
+            {
+              "id": "create",
+              "edits": [{
+                "path": "src/new_module.rs",
+                "create": "pub fn fresh() -> i64 { 1 }\n"
+              }]
+            },
+            {
+              "id": "substitute-created-text",
+              "edits": [{
+                "path": "src/new_module.rs",
+                "match": "{ 1 }",
+                "replace": "{ 2 }",
+                "occurrences": 1
+              }],
+              "checks": [{
+                "kind": "command",
+                "run": "grep -q '{ 2 }' src/new_module.rs"
+              }]
+            },
+            {
+              "id": "see-created-node",
+              "checks": [{
+                "kind": "graph.node_exists",
+                "node": "crate::new_module::fresh"
+              }]
+            }
+          ]
+        }"#
+        .replace("BASE_COMMIT", base_commit)
+    }
+
+    fn dry_report(output: &Output) -> serde_json::Value {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let marker = "report (dry run, not written to disk):\n";
+        let json = stdout
+            .split_once(marker)
+            .unwrap_or_else(|| panic!("dry output omitted report:\n{stdout}"))
+            .1;
+        serde_json::Deserializer::from_str(json)
+            .into_iter::<serde_json::Value>()
+            .next()
+            .expect("dry report JSON")
+            .expect("valid dry report JSON")
+    }
+
+    fn written_report(repo: &TempRepo) -> serde_json::Value {
+        let reports = std::fs::read_dir(repo.path().join(".bitcode/reports"))
+            .unwrap()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(reports.len(), 1, "expected exactly one real-run report");
+        serde_json::from_slice(&std::fs::read(reports[0].path()).unwrap()).unwrap()
+    }
+
+    fn per_step_outcomes(report: &serde_json::Value) -> serde_json::Value {
+        serde_json::Value::Array(
+            report["steps"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|step| {
+                    serde_json::json!({
+                        "id": step["id"],
+                        "result": step["result"],
+                        "files_changed": step["files_changed"],
+                        "checks": step["checks"],
+                    })
+                })
+                .collect(),
+        )
+    }
+
+    let (dry_repo, dry_head) = initialized_repo("plan-dry-composes");
+    let dry_path = write_plan("dry-composes", &plan_json(&dry_head));
+    let dry = run_plan_output(&dry_repo, "run", &dry_path, &["--dry"]);
+    assert!(
+        dry.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&dry.stdout),
+        String::from_utf8_lossy(&dry.stderr)
+    );
+    assert!(
+        !dry_repo.path().join("src/new_module.rs").exists(),
+        "dry execution must not commit its composed state"
+    );
+
+    let (real_repo, real_head) = initialized_repo("plan-real-composes");
+    let real_path = write_plan("real-composes", &plan_json(&real_head));
+    let real = run_plan_output(&real_repo, "run", &real_path, &[]);
+    assert!(
+        real.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&real.stdout),
+        String::from_utf8_lossy(&real.stderr)
+    );
+    assert_eq!(
+        std::fs::read_to_string(real_repo.path().join("src/new_module.rs")).unwrap(),
+        "pub fn fresh() -> i64 { 2 }\n"
+    );
+
+    let dry_report = dry_report(&dry);
+    let real_report = written_report(&real_repo);
+    assert_eq!(
+        per_step_outcomes(&dry_report),
+        per_step_outcomes(&real_report),
+        "dry and real execution must report identical per-step check outcomes"
+    );
+
+    let _ = std::fs::remove_file(dry_path);
+    let _ = std::fs::remove_file(real_path);
+}
+
+#[test]
 fn plan_run_applies_edits_and_commits_to_the_real_tree_when_checks_pass() {
     let repo = TempRepo::new("plan-run-commit");
     repo.write("src/lib.rs", "fn old() {}\n");

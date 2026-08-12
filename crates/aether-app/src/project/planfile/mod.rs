@@ -41,6 +41,12 @@ fn load_plan(path: &Path) -> std::io::Result<Plan> {
             ),
         ));
     }
+    plan.validate().map_err(|error| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("invalid plan file {}: {error}", path.display()),
+        )
+    })?;
     Ok(plan)
 }
 
