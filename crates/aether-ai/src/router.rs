@@ -64,6 +64,23 @@ impl Router {
         out
     }
 
+    /// Return the declared route before availability filtering. This keeps the
+    /// default policy assertable without requiring API keys or a live Ollama
+    /// server in tests.
+    #[cfg(test)]
+    pub(crate) fn configured_provider_names(&self, class: TaskClass) -> Vec<&str> {
+        let mut out: Vec<&str> = self
+            .routes
+            .iter()
+            .filter(|route| route.class == class)
+            .flat_map(|route| route.providers.iter().map(|provider| provider.name()))
+            .collect();
+        if let Some(fallback) = &self.fallback {
+            out.push(fallback.name());
+        }
+        out
+    }
+
     /// Complete a prompt, trying candidates in order until one succeeds.
     pub async fn complete(&self, prompt: Prompt) -> Result<Completion, AiError> {
         let class = prompt.class;

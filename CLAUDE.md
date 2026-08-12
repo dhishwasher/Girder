@@ -20,9 +20,8 @@ full design and `README.md` for usage.
 - `crates/aether-builder` — tree-sitter → graph (Rust + Python), incremental
   edit sync, project-wide call resolution, highlight spans.
 - `crates/aether-ai` — `AiProvider` trait, offline `MockProvider` (default),
-  `Router`, implemented OpenAI and Anthropic providers behind
-  `--features live-providers`; Gemini/Grok/Ollama are compile-clean extension
-  points only.
+  `Router`, and implemented OpenAI, Anthropic, and local Ollama providers behind
+  `--features live-providers`; Gemini/Grok remain compile-clean extension points.
 - `crates/aether-agents` — the swarm: broadcast bus, orchestrator, 8 agents.
 - `crates/aether-debugger` — toy-language recording interpreter + branching
   timeline + what-if.
@@ -56,9 +55,10 @@ cargo test -p aether-dap --test debugpy -- --ignored
   not per file. Don't add `Calls` edges during extraction.
 - Agents must **not hold the graph mutex across an `.await`** (lock, mutate,
   drop, then await/emit).
-- Keep the offline `MockProvider` the default so the demo/tests run with no
-  network or API key. OpenAI and Anthropic are the implemented live providers;
-  Gemini/Grok/Ollama must remain explicit EXTENSION POINTs until their real
+- Keep the offline `MockProvider` as the terminal fallback so the demo/tests run
+  with no network or API key. OpenAI, Anthropic, and Ollama are implemented live
+  providers; Ollama is enabled only by a live-provider build plus `OLLAMA_HOST`.
+  Gemini and Grok must remain explicit EXTENSION POINTs until their real
   request/response code exists.
 - Mark unfinished depth with `// EXTENSION POINT` rather than leaving it implicit.
 
