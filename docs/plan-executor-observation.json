@@ -1,0 +1,604 @@
+{
+  "bitcode_sha256": "322d2431b5b313206689abdb748beff7451c1a66dfbdd1383e238db09899ce75",
+  "policy": {
+    "passed": true,
+    "violations": []
+  },
+  "policy_id": "plan-executor-v1",
+  "results": {
+    "P1_dry_equals_real": {
+      "cases": [
+        {
+          "dry": {
+            "failed_at": null,
+            "result": "passed",
+            "steps": [
+              {
+                "checks": [],
+                "files_changed": [
+                  "src/lib.rs"
+                ],
+                "id": "introduce-mid",
+                "result": "passed"
+              },
+              {
+                "checks": [
+                  {
+                    "detail": "`grep -q 'target()' src/lib.rs` exited 0 (expected 0)",
+                    "kind": "command",
+                    "result": "passed"
+                  }
+                ],
+                "files_changed": [
+                  "src/lib.rs"
+                ],
+                "id": "consume-mid",
+                "result": "passed"
+              }
+            ]
+          },
+          "dry_returncode": 0,
+          "id": "chained-substitution",
+          "matched": true,
+          "real": {
+            "failed_at": null,
+            "result": "passed",
+            "steps": [
+              {
+                "checks": [],
+                "files_changed": [
+                  "src/lib.rs"
+                ],
+                "id": "introduce-mid",
+                "result": "passed"
+              },
+              {
+                "checks": [
+                  {
+                    "detail": "`grep -q 'target()' src/lib.rs` exited 0 (expected 0)",
+                    "kind": "command",
+                    "result": "passed"
+                  }
+                ],
+                "files_changed": [
+                  "src/lib.rs"
+                ],
+                "id": "consume-mid",
+                "result": "passed"
+              }
+            ]
+          },
+          "real_returncode": 0
+        },
+        {
+          "dry": {
+            "failed_at": null,
+            "result": "passed",
+            "steps": [
+              {
+                "checks": [],
+                "files_changed": [
+                  "src/new_module.rs"
+                ],
+                "id": "create-source",
+                "result": "passed"
+              },
+              {
+                "checks": [
+                  {
+                    "detail": "crate::new_module::fresh exists",
+                    "kind": "graph.node_exists",
+                    "result": "passed"
+                  }
+                ],
+                "files_changed": [],
+                "id": "observe-created-node",
+                "result": "passed"
+              }
+            ]
+          },
+          "dry_returncode": 0,
+          "id": "created-node",
+          "matched": true,
+          "real": {
+            "failed_at": null,
+            "result": "passed",
+            "steps": [
+              {
+                "checks": [],
+                "files_changed": [
+                  "src/new_module.rs"
+                ],
+                "id": "create-source",
+                "result": "passed"
+              },
+              {
+                "checks": [
+                  {
+                    "detail": "crate::new_module::fresh exists",
+                    "kind": "graph.node_exists",
+                    "result": "passed"
+                  }
+                ],
+                "files_changed": [],
+                "id": "observe-created-node",
+                "result": "passed"
+              }
+            ]
+          },
+          "real_returncode": 0
+        },
+        {
+          "dry": {
+            "failed_at": null,
+            "result": "passed",
+            "steps": [
+              {
+                "checks": [],
+                "files_changed": [
+                  "src/dep.rs"
+                ],
+                "id": "create-dependency",
+                "result": "passed"
+              },
+              {
+                "checks": [],
+                "files_changed": [
+                  "src/lib.rs"
+                ],
+                "id": "declare-dependency",
+                "result": "passed"
+              },
+              {
+                "checks": [
+                  {
+                    "detail": "graph.callees_of matched (1 actual, mode Superset)",
+                    "kind": "graph.callees_of",
+                    "result": "passed"
+                  }
+                ],
+                "files_changed": [
+                  "src/lib.rs"
+                ],
+                "id": "wire-cross-file-call",
+                "result": "passed"
+              }
+            ]
+          },
+          "dry_returncode": 0,
+          "id": "cross-file-call",
+          "matched": true,
+          "real": {
+            "failed_at": null,
+            "result": "passed",
+            "steps": [
+              {
+                "checks": [],
+                "files_changed": [
+                  "src/dep.rs"
+                ],
+                "id": "create-dependency",
+                "result": "passed"
+              },
+              {
+                "checks": [],
+                "files_changed": [
+                  "src/lib.rs"
+                ],
+                "id": "declare-dependency",
+                "result": "passed"
+              },
+              {
+                "checks": [
+                  {
+                    "detail": "graph.callees_of matched (1 actual, mode Superset)",
+                    "kind": "graph.callees_of",
+                    "result": "passed"
+                  }
+                ],
+                "files_changed": [
+                  "src/lib.rs"
+                ],
+                "id": "wire-cross-file-call",
+                "result": "passed"
+              }
+            ]
+          },
+          "real_returncode": 0
+        },
+        {
+          "dry": {
+            "failed_at": "composed-failure",
+            "result": "rolled_back_plan",
+            "steps": [
+              {
+                "checks": [],
+                "files_changed": [
+                  "src/lib.rs"
+                ],
+                "id": "first-success",
+                "result": "passed"
+              },
+              {
+                "checks": [
+                  {
+                    "detail": "`exit 9` exited 9 (expected 0)",
+                    "kind": "command",
+                    "result": "failed"
+                  }
+                ],
+                "files_changed": [
+                  "src/lib.rs"
+                ],
+                "id": "composed-failure",
+                "result": "failed"
+              }
+            ]
+          },
+          "dry_returncode": 1,
+          "id": "rollback-after-composed-step",
+          "matched": true,
+          "real": {
+            "failed_at": "composed-failure",
+            "result": "rolled_back_plan",
+            "steps": [
+              {
+                "checks": [],
+                "files_changed": [
+                  "src/lib.rs"
+                ],
+                "id": "first-success",
+                "result": "passed"
+              },
+              {
+                "checks": [
+                  {
+                    "detail": "`exit 9` exited 9 (expected 0)",
+                    "kind": "command",
+                    "result": "failed"
+                  }
+                ],
+                "files_changed": [
+                  "src/lib.rs"
+                ],
+                "id": "composed-failure",
+                "result": "failed"
+              }
+            ]
+          },
+          "real_returncode": 1
+        }
+      ],
+      "outcome_mismatches": 0,
+      "plan_count": 4
+    },
+    "P2_no_vacuous_pass": {
+      "cases": [
+        {
+          "id": "graph.callers_of-superset-missing-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.callers_of-superset-empty-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.callers_of-superset-misspelled-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.callers_of-absent-missing-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.callers_of-absent-empty-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.callers_of-absent-misspelled-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.callees_of-superset-missing-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.callees_of-superset-empty-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.callees_of-superset-misspelled-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.callees_of-absent-missing-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.callees_of-absent-empty-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.callees_of-absent-misspelled-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.tests_for-superset-missing-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.tests_for-superset-empty-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.tests_for-superset-misspelled-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.tests_for-absent-missing-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.tests_for-absent-empty-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        },
+        {
+          "id": "graph.tests_for-absent-misspelled-expect",
+          "run_rejected": true,
+          "validate_rejected": true
+        }
+      ],
+      "mutation_count": 18,
+      "run_passes": 0,
+      "validate_acceptances": 0
+    },
+    "P3_fail_closed": {
+      "cases": [
+        {
+          "detail": "node not found: crate::does_not_exist::missing",
+          "failed_closed": true,
+          "id": "graph-callers-of-unknown-node",
+          "kind": "graph.callers_of",
+          "returncode": 1
+        },
+        {
+          "detail": "node not found: crate::does_not_exist::missing",
+          "failed_closed": true,
+          "id": "graph-callees-of-unknown-node",
+          "kind": "graph.callees_of",
+          "returncode": 1
+        },
+        {
+          "detail": "node not found: crate::does_not_exist::missing",
+          "failed_closed": true,
+          "id": "graph-tests-for-unknown-node",
+          "kind": "graph.tests_for",
+          "returncode": 1
+        },
+        {
+          "detail": "crate::does_not_exist::missing not found",
+          "failed_closed": true,
+          "id": "graph-node-exists-unknown-node",
+          "kind": "graph.node_exists",
+          "returncode": 1
+        },
+        {
+          "detail": "crate::lib::target still exists",
+          "failed_closed": true,
+          "id": "graph-node-absent-existing-node",
+          "kind": "graph.node_absent",
+          "returncode": 1
+        },
+        {
+          "detail": "node not found: crate::does_not_exist::missing",
+          "failed_closed": true,
+          "id": "graph-no-new-edges-unknown-node",
+          "kind": "graph.no_new_edges_into",
+          "returncode": 1
+        },
+        {
+          "detail": "added 1 (max 0), removed 0 (max 0)",
+          "failed_closed": true,
+          "id": "graph-edge-delta-exceeded",
+          "kind": "graph.edge_delta",
+          "returncode": 1
+        },
+        {
+          "detail": "node not found: crate::does_not_exist::missing",
+          "failed_closed": true,
+          "id": "graph-unresolved-unknown-from",
+          "kind": "graph.unresolved",
+          "returncode": 1
+        },
+        {
+          "detail": "Rust command exited with 1: sh -c 'exit 1' -- known_test",
+          "failed_closed": true,
+          "id": "tests-impacted-failing-runner",
+          "kind": "tests.impacted",
+          "returncode": 1
+        },
+        {
+          "detail": "unknown test node path(s): crate::does_not_exist::missing",
+          "failed_closed": true,
+          "id": "tests-named-unknown-test",
+          "kind": "tests.named",
+          "returncode": 1
+        },
+        {
+          "detail": "Python command exited with 1: sh -c 'exit 1 # '",
+          "failed_closed": true,
+          "id": "tests-full-failing-runner",
+          "kind": "tests.full",
+          "returncode": 1
+        },
+        {
+          "detail": "`bitcode-plan-oracle-command-does-not-exist` exited 127 (expected 0)",
+          "failed_closed": true,
+          "id": "command-unknown-program",
+          "kind": "command",
+          "returncode": 1
+        },
+        {
+          "detail": "check kind oracle is not implemented yet",
+          "failed_closed": true,
+          "id": "oracle-not-implemented",
+          "kind": "oracle",
+          "returncode": 1
+        },
+        {
+          "detail": "check kind benchmark is not implemented yet",
+          "failed_closed": true,
+          "id": "benchmark-not-implemented",
+          "kind": "benchmark",
+          "returncode": 1
+        }
+      ],
+      "check_kind_count": 14,
+      "unexpected_passes": 0
+    },
+    "P4_rollback_fidelity": {
+      "cases": [
+        {
+          "actual_tree": "edc275f6ffcb22a8849103b9ed228e461ca54412",
+          "base_tree": "edc275f6ffcb22a8849103b9ed228e461ca54412",
+          "id": "substitute-then-fail",
+          "run_failed": true,
+          "status_porcelain": "",
+          "tree_matches": true
+        },
+        {
+          "actual_tree": "edc275f6ffcb22a8849103b9ed228e461ca54412",
+          "base_tree": "edc275f6ffcb22a8849103b9ed228e461ca54412",
+          "id": "create-then-fail",
+          "run_failed": true,
+          "status_porcelain": "",
+          "tree_matches": true
+        },
+        {
+          "actual_tree": "edc275f6ffcb22a8849103b9ed228e461ca54412",
+          "base_tree": "edc275f6ffcb22a8849103b9ed228e461ca54412",
+          "id": "delete-then-fail",
+          "run_failed": true,
+          "status_porcelain": "",
+          "tree_matches": true
+        }
+      ],
+      "dirty_worktrees": 0,
+      "plan_count": 3,
+      "tree_mismatches": 0
+    },
+    "P5_error_legibility": {
+      "case_count": 11,
+      "cases": [
+        {
+          "expected_path": "edits[0]",
+          "expected_step": "diagnose-malformed",
+          "id": "edit-missing-path",
+          "named_path": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "expected_path": "src/lib.rs",
+          "expected_step": "diagnose-malformed",
+          "id": "edit-unknown-field",
+          "named_path": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "expected_path": "src/lib.rs",
+          "expected_step": "diagnose-malformed",
+          "id": "edit-multiple-discriminators",
+          "named_path": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "expected_path": "src/lib.rs",
+          "expected_step": "diagnose-malformed",
+          "id": "edit-substitute-missing-replace",
+          "named_path": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "expected_path": "src/lib.rs",
+          "expected_step": "diagnose-malformed",
+          "id": "edit-create-wrong-type",
+          "named_path": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "expected_path": "src/lib.rs",
+          "expected_step": "diagnose-malformed",
+          "id": "edit-delete-wrong-type",
+          "named_path": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "expected_path": "checks[0]",
+          "expected_step": "diagnose-malformed",
+          "id": "check-missing-kind",
+          "named_path": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "expected_path": "checks[0]",
+          "expected_step": "diagnose-malformed",
+          "id": "check-unknown-kind",
+          "named_path": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "expected_path": "nod",
+          "expected_step": "diagnose-malformed",
+          "id": "check-unknown-field",
+          "named_path": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "expected_path": "unknown_step_field",
+          "expected_step": "diagnose-malformed",
+          "id": "step-unknown-field",
+          "named_path": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "expected_path": "unexpected_plan_field",
+          "expected_step": "diagnose-malformed",
+          "id": "plan-unknown-field",
+          "named_path": true,
+          "named_step": true,
+          "rejected": true
+        }
+      ],
+      "missing_path_diagnostics": 0,
+      "missing_step_diagnostics": 0
+    }
+  },
+  "schema_version": 1
+}

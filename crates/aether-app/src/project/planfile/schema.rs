@@ -8,18 +8,83 @@ use serde::de::Error as _;
 use serde::{Deserialize, Deserializer};
 use serde_json::Value;
 
-#[derive(Debug, Clone, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Debug, Clone)]
 pub(crate) struct Plan {
     pub(crate) plan_version: u32,
     pub(crate) plan_id: String,
     pub(crate) intent: String,
-    #[serde(default)]
     pub(crate) author: Option<String>,
     pub(crate) base_commit: String,
-    #[serde(default)]
     pub(crate) on_failure: OnFailure,
     pub(crate) steps: Vec<Step>,
+}
+
+#[derive(Deserialize)]
+struct RawPlan {
+    plan_version: u32,
+    plan_id: String,
+    intent: String,
+    #[serde(default)]
+    author: Option<String>,
+    base_commit: String,
+    #[serde(default)]
+    on_failure: OnFailure,
+    steps: Vec<Step>,
+}
+
+impl<'de> Deserialize<'de> for Plan {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = Value::deserialize(deserializer)?;
+        let object = value
+            .as_object()
+            .ok_or_else(|| D::Error::custom("plan must be a JSON object"))?;
+        let plan_id = object
+            .get("plan_id")
+            .and_then(Value::as_str)
+            .unwrap_or("<missing plan_id>")
+            .to_string();
+        let step_id = object
+            .get("steps")
+            .and_then(Value::as_array)
+            .and_then(|steps| steps.first())
+            .and_then(|step| step.get("id"))
+            .and_then(Value::as_str)
+            .unwrap_or("<missing step id>")
+            .to_string();
+        const KNOWN_FIELDS: &[&str] = &[
+            "plan_version",
+            "plan_id",
+            "intent",
+            "author",
+            "base_commit",
+            "on_failure",
+            "steps",
+        ];
+        if let Some(field) = object
+            .keys()
+            .find(|field| !KNOWN_FIELDS.contains(&field.as_str()))
+        {
+            return Err(D::Error::custom(format!(
+                "plan {plan_id:?}, step {step_id:?}: unknown plan field {field:?}; expected one of {}",
+                KNOWN_FIELDS.join(", ")
+            )));
+        }
+        let raw: RawPlan = serde_json::from_value(value).map_err(|error| {
+            D::Error::custom(format!("plan {plan_id:?}, step {step_id:?}: {error}"))
+        })?;
+        Ok(Self {
+            plan_version: raw.plan_version,
+            plan_id: raw.plan_id,
+            intent: raw.intent,
+            author: raw.author,
+            base_commit: raw.base_commit,
+            on_failure: raw.on_failure,
+            steps: raw.steps,
+        })
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, PartialEq, Eq)]
@@ -40,7 +105,6 @@ pub(crate) struct Step {
 }
 
 #[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawStep {
     id: String,
     #[serde(default)]
@@ -56,7 +120,27 @@ impl<'de> Deserialize<'de> for Step {
     where
         D: Deserializer<'de>,
     {
-        let raw = RawStep::deserialize(deserializer)?;
+        let value = Value::deserialize(deserializer)?;
+        let object = value
+            .as_object()
+            .ok_or_else(|| D::Error::custom("step must be a JSON object"))?;
+        let step_id = object
+            .get("id")
+            .and_then(Value::as_str)
+            .unwrap_or("<missing step id>")
+            .to_string();
+        const KNOWN_FIELDS: &[&str] = &["id", "description", "edits", "checks"];
+        if let Some(field) = object
+            .keys()
+            .find(|field| !KNOWN_FIELDS.contains(&field.as_str()))
+        {
+            return Err(D::Error::custom(format!(
+                "step {step_id:?}: unknown step field {field:?}; expected one of {}",
+                KNOWN_FIELDS.join(", ")
+            )));
+        }
+        let raw: RawStep = serde_json::from_value(value)
+            .map_err(|error| D::Error::custom(format!("step {step_id:?}: {error}")))?;
         let edits = raw
             .edits
             .into_iter()
@@ -609,5 +693,38 @@ mod tests {
         assert!(error.contains("rewrite-session"), "{error}");
         assert!(error.contains("src/session.rs"), "{error}");
         assert!(error.contains("replce"), "{error}");
+    }
+
+    #[test]
+    fn unknown_step_field_error_retains_the_step_id() {
+        let json = r#"{
+          "plan_version": 1,
+          "plan_id": "p",
+          "intent": "reject malformed step",
+          "base_commit": "abc",
+          "steps": [{
+            "id": "diagnose-malformed",
+            "unknown_step_field": true
+          }]
+        }"#;
+        let error = serde_json::from_str::<Plan>(json).unwrap_err().to_string();
+        assert!(error.contains("diagnose-malformed"), "{error}");
+        assert!(error.contains("unknown_step_field"), "{error}");
+    }
+
+    #[test]
+    fn unknown_plan_field_error_retains_plan_and_step_context() {
+        let json = r#"{
+          "plan_version": 1,
+          "plan_id": "contextual-plan",
+          "intent": "reject malformed plan",
+          "base_commit": "abc",
+          "steps": [{"id": "diagnose-malformed"}],
+          "unexpected_plan_field": true
+        }"#;
+        let error = serde_json::from_str::<Plan>(json).unwrap_err().to_string();
+        assert!(error.contains("contextual-plan"), "{error}");
+        assert!(error.contains("diagnose-malformed"), "{error}");
+        assert!(error.contains("unexpected_plan_field"), "{error}");
     }
 }

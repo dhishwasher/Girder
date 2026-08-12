@@ -162,7 +162,7 @@ def initialize_repository(root: Path, options: Mapping[str, Any]) -> str:
         'roots = ["src"]\n'
         "[tests]\n"
         'rust = ["sh", "-c", "exit 1", "--", "{test}"]\n'
-        'python = ["sh", "-c", "exit 1"]\n'
+        'python = ["sh", "-c", "exit 1 # {filter}"]\n'
         "run_timeout_seconds = 5\n"
         "run_max_output_bytes = 65536\n",
         encoding="utf-8",
@@ -200,9 +200,11 @@ def base_plan(case_id: str, base_commit: str, steps: list[Mapping[str, Any]]) ->
     }
 
 
-def parse_dry_report(stdout: str) -> Mapping[str, Any]:
+def parse_dry_report(stdout: str, stderr: str = "") -> Mapping[str, Any]:
     if DRY_REPORT_MARKER not in stdout:
-        raise RuntimeError(f"dry run omitted its JSON report\nstdout:\n{stdout}")
+        raise RuntimeError(
+            f"dry run omitted its JSON report\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        )
     tail = stdout.split(DRY_REPORT_MARKER, 1)[1].lstrip()
     report, _ = json.JSONDecoder().raw_decode(tail)
     if not isinstance(report, dict):
@@ -356,7 +358,9 @@ def measure_p1(
             result = run(command, cwd=repository, check=False, **options)
             returncodes[mode] = result.returncode
             reports[mode] = (
-                parse_dry_report(result.stdout) if mode == "dry" else read_real_report(repository)
+                parse_dry_report(result.stdout, result.stderr)
+                if mode == "dry"
+                else read_real_report(repository)
             )
         dry_projection = outcome_projection(reports["dry"])
         real_projection = outcome_projection(reports["real"])
