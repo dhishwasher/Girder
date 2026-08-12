@@ -55,6 +55,7 @@ pub(crate) fn run_plan(
     let mut committed_paths: Vec<PathBuf> = Vec::new();
     let mut created_paths: Vec<PathBuf> = Vec::new();
     let mut dry_overlay = DryOverlay::default();
+    let mut cached_graph: Option<SemanticGraph> = None;
 
     for step in &plan.steps {
         let cancel = Arc::new(AtomicBool::new(false));
@@ -110,8 +111,10 @@ pub(crate) fn run_plan(
         let need_graph = checks_need_graph(&step.checks);
         let before_graph = need_graph
             .then(|| {
-                build_from_dir_with_config(candidate.workspace_path(), config)
-                    .map(|(graph, _, _)| graph)
+                take_or_build_graph(&mut cached_graph, || {
+                    build_from_dir_with_config(candidate.workspace_path(), config)
+                        .map(|(graph, _, _)| graph)
+                })
             })
             .transpose()?;
 
@@ -171,6 +174,12 @@ pub(crate) fn run_plan(
 
         if dry {
             dry_overlay.record(&writes);
+            update_graph_cache(
+                &mut cached_graph,
+                need_graph,
+                !writes.is_empty(),
+                after_graph,
+            );
             steps.push(StepOutcome {
                 id: step.id.clone(),
                 passed: true,
@@ -189,6 +198,12 @@ pub(crate) fn run_plan(
         drop(candidate);
 
         let written = commit_project_writes(root, writes)?;
+        update_graph_cache(
+            &mut cached_graph,
+            need_graph,
+            !written.is_empty(),
+            after_graph,
+        );
         committed_paths.extend(written.iter().cloned());
         created_paths.extend(created_this_step);
 
@@ -205,6 +220,29 @@ pub(crate) fn run_plan(
         outcome: RunOutcome::Passed,
         steps,
     })
+}
+
+fn take_or_build_graph(
+    cache: &mut Option<SemanticGraph>,
+    build: impl FnOnce() -> std::io::Result<SemanticGraph>,
+) -> std::io::Result<SemanticGraph> {
+    match cache.take() {
+        Some(graph) => Ok(graph),
+        None => build(),
+    }
+}
+
+fn update_graph_cache(
+    cache: &mut Option<SemanticGraph>,
+    step_built_graph: bool,
+    content_changed: bool,
+    after_graph: Option<SemanticGraph>,
+) {
+    if step_built_graph {
+        *cache = after_graph;
+    } else if content_changed {
+        *cache = None;
+    }
 }
 
 #[derive(Default)]
@@ -405,9 +443,17 @@ fn rollback_to_base(
 mod tests {
     use super::*;
     use crate::project::source::ProjectWrite;
+    use std::collections::BTreeSet;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
+
+    type NodeSnapshot = BTreeSet<(aether_graph::NodeId, String)>;
+    type EdgeSnapshot = BTreeSet<(
+        aether_graph::NodeId,
+        aether_graph::NodeId,
+        aether_graph::EdgeKind,
+    )>;
 
     struct TempDir(PathBuf);
 
@@ -453,5 +499,69 @@ mod tests {
             "created\n"
         );
         assert!(!workspace.0.join("deleted.rs").exists());
+    }
+
+    fn graph_snapshot(graph: &SemanticGraph) -> (NodeSnapshot, EdgeSnapshot) {
+        let nodes = graph
+            .nodes()
+            .map(|node| (node.id, node.path.clone()))
+            .collect();
+        let edges = graph.edges().into_iter().collect();
+        (nodes, edges)
+    }
+
+    #[test]
+    fn graph_identity_is_independent_of_candidate_root() {
+        let first = TempDir::new("identity-first");
+        let second = TempDir::new("identity-second");
+        for root in [&first.0, &second.0] {
+            std::fs::create_dir_all(root.join("src")).unwrap();
+            std::fs::write(
+                root.join("src/lib.rs"),
+                "pub fn target() {}\npub fn caller() { target(); }\n",
+            )
+            .unwrap();
+        }
+        let config = ProjectConfig::default();
+        let (first_graph, _, _) = build_from_dir_with_config(&first.0, &config).unwrap();
+        let (second_graph, _, _) = build_from_dir_with_config(&second.0, &config).unwrap();
+
+        assert_eq!(graph_snapshot(&first_graph), graph_snapshot(&second_graph));
+        assert!(first_graph.find_by_path("crate::lib::caller").is_some());
+    }
+
+    #[test]
+    fn cached_after_graph_becomes_the_next_steps_before_graph_without_rebuilding() {
+        let mut graph = SemanticGraph::new();
+        let node =
+            aether_graph::Node::new(aether_graph::NodeKind::Function, "cached", "crate::cached")
+                .with_language("rust");
+        graph.upsert_node(node.clone());
+        let mut cache = Some(graph);
+        let mut builds = 0;
+
+        let reused = take_or_build_graph(&mut cache, || {
+            builds += 1;
+            Ok(SemanticGraph::new())
+        })
+        .unwrap();
+
+        assert_eq!(builds, 0);
+        assert!(reused.contains(node.id));
+        assert!(
+            cache.is_none(),
+            "the cached snapshot is consumed exactly once"
+        );
+    }
+
+    #[test]
+    fn content_changing_non_graph_steps_invalidate_the_cache() {
+        let mut cache = Some(SemanticGraph::new());
+        update_graph_cache(&mut cache, false, true, None);
+        assert!(cache.is_none());
+
+        let replacement = SemanticGraph::new();
+        update_graph_cache(&mut cache, true, true, Some(replacement));
+        assert!(cache.is_some());
     }
 }
