@@ -6,9 +6,16 @@ import unittest
 from pathlib import Path
 
 from tools.plan_executor_oracle import (
+    AUTHORING_POLICY,
     DEFAULT_POLICY,
     GRAPH_POLICY,
     atomic_write_json,
+    authored_plan_shape_error,
+    authoring_edits,
+    authoring_plan,
+    authoring_progress_header,
+    authoring_prompt_context,
+    authoring_reference_plan,
     create_graph_mutant_binary,
     create_mutant_binary,
     evaluate_graph_policy,
@@ -19,7 +26,10 @@ from tools.plan_executor_oracle import (
     outcome_projection,
     parse_dry_report,
     run,
+    sha256_file,
+    source_tree_digest,
     validate_graph_policy,
+    validate_authoring_policy,
     validate_policy,
 )
 
@@ -86,6 +96,125 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
         changed_mutant["mutation_adequacy"]["mutants"]["P8_span_safety"] = "noop"
         with self.assertRaisesRegex(RuntimeError, "mutation adequacy"):
             validate_graph_policy(changed_mutant)
+
+    def test_authoring_tasks_are_real_repository_files_with_paired_targets(self):
+        for language in ("rust", "python"):
+            for operation in ("replace", "rename", "delete", "insert"):
+                observed_language, graph_edit, text_edit = authoring_edits(
+                    f"{language}-{operation}"
+                )
+                self.assertEqual(observed_language, language)
+                projection = (Path(__file__).parents[1] / text_edit["path"]).read_text(
+                    encoding="utf-8"
+                )
+                self.assertIn("node", graph_edit)
+                self.assertNotIn("replace_node_body", graph_edit)
+                self.assertIn("match", text_edit)
+                self.assertEqual(
+                    projection.count(text_edit["match"]),
+                    text_edit.get("occurrences", 1),
+                )
+
+    def test_authoring_policy_rejects_corpus_and_threshold_weakening(self):
+        policy = json.loads(AUTHORING_POLICY.read_text(encoding="utf-8"))
+        validate_authoring_policy(policy)
+
+        shortened = copy.deepcopy(policy)
+        shortened["tasks"].pop()
+        with self.assertRaisesRegex(RuntimeError, "exact eight-task"):
+            validate_authoring_policy(shortened)
+
+        weakened = copy.deepcopy(policy)
+        weakened["success"]["minimum_common_successes"] = 1
+        with self.assertRaisesRegex(RuntimeError, "thresholds"):
+            validate_authoring_policy(weakened)
+
+        replacements = (
+            ("model", "another-model"),
+            (
+                "task_intents",
+                {**policy["task_intents"], "rust-delete": "Leak source"},
+            ),
+            (
+                "prompt_protocol",
+                {**policy["prompt_protocol"], "graph_context": "full source"},
+            ),
+            (
+                "task_sources",
+                {
+                    **policy["task_sources"],
+                    "rust": {"path": "other.rs", "sha256": "0" * 64},
+                },
+            ),
+        )
+        for field, replacement in replacements:
+            changed = copy.deepcopy(policy)
+            changed[field] = replacement
+            with self.assertRaisesRegex(RuntimeError, "precommitment"):
+                validate_authoring_policy(changed)
+
+    def test_authoring_shape_rejects_text_graph_swaps_and_side_effectful_checks(self):
+        canonical = authoring_plan("rust-replace", "abc", graph_addressed=True)
+        self.assertIsNone(
+            authored_plan_shape_error(copy.deepcopy(canonical), canonical, "graph")
+        )
+
+        text_edit = authoring_edits("rust-replace")[2]
+        swapped = copy.deepcopy(canonical)
+        swapped["steps"][0]["edits"] = [text_edit]
+        self.assertIn(
+            "unpermitted edit shape",
+            authored_plan_shape_error(swapped, canonical, "graph"),
+        )
+
+        checked = copy.deepcopy(canonical)
+        checked["steps"][0]["checks"] = [{"kind": "command", "run": "true"}]
+        self.assertIn(
+            "forbids checks",
+            authored_plan_shape_error(checked, canonical, "graph"),
+        )
+
+    def test_authoring_expected_tree_is_independent_of_graph_lowering(self):
+        text = authoring_reference_plan("python-rename", "abc")
+        graph = authoring_plan("python-rename", "abc", graph_addressed=True)
+
+        self.assertIn("path", text["steps"][0]["edits"][0])
+        self.assertNotIn("node", text["steps"][0]["edits"][0])
+        self.assertIn("node", graph["steps"][0]["edits"][0])
+
+    def test_authoring_graph_context_matches_precommitted_protocol(self):
+        graph_edit = authoring_edits("python-replace")[1]
+
+        context = authoring_prompt_context(
+            "graph", "python", graph_edit, Path("unused-for-graph-arm")
+        )
+
+        self.assertEqual(
+            context,
+            {"node": graph_edit["node"], "language": "python"},
+        )
+
+    def test_authoring_progress_binds_binary_and_harnesses(self):
+        binary = Path(sys.executable)
+
+        header = authoring_progress_header(
+            {"policy_sha256": "a" * 64, "source_commit": "b" * 40},
+            "c" * 64,
+            binary,
+        )
+
+        self.assertEqual(
+            set(header),
+            {
+                "policy_sha256",
+                "source_commit",
+                "model_manifest_sha256",
+                "bitcode_sha256",
+                "harness_sha256",
+                "harness_support_sha256",
+            },
+        )
+        self.assertEqual(header["bitcode_sha256"], sha256_file(binary))
 
     def test_dry_report_parser_ignores_trailing_human_output(self):
         report = parse_dry_report(
@@ -170,6 +299,36 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
             atomic_write_json(path, {"second": True})
 
             self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"second": True})
+
+    def test_source_tree_digest_excludes_bitcode_runtime_metadata_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "src").mkdir()
+            (root / "src" / "lib.rs").write_text("fn main() {}\n", encoding="utf-8")
+            (root / ".bitcode" / "reports").mkdir(parents=True)
+            (root / ".bitcode" / "reports" / "one.json").write_text(
+                '{"run":1}\n', encoding="utf-8"
+            )
+            for command in (
+                ("git", "init", "-q"),
+                ("git", "add", "src/lib.rs"),
+            ):
+                result = run(
+                    command,
+                    cwd=root,
+                    timeout_seconds=5,
+                    max_output_bytes=4096,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+            baseline = source_tree_digest(root)
+            (root / ".bitcode" / "reports" / "one.json").write_text(
+                '{"run":2}\n', encoding="utf-8"
+            )
+            self.assertEqual(source_tree_digest(root), baseline)
+            (root / "src" / "lib.rs").write_text("fn main() { panic!() }\n", encoding="utf-8")
+            self.assertNotEqual(source_tree_digest(root), baseline)
 
     def test_vacuity_mutant_is_an_executable_broken_binary(self):
         with tempfile.TemporaryDirectory() as directory:

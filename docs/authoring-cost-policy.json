@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "policy_id": "graph-edit-authoring-cost-v1",
+  "model": "tinyllama:1.1b",
+  "model_manifest_sha256": "2644915ede352ea7bdfaff0bfac0be74c719d5d5202acb63a6fb095b52f394a4",
+  "options": {
+    "temperature": 0,
+    "seed": 42,
+    "num_predict": 1024,
+    "max_attempts": 3,
+    "timeout_seconds": 300,
+    "max_repair_diagnostic_chars": 2048
+  },
+  "prompt_protocol": {
+    "initial_template": "Author a Bit Code plan for task {task}. Task: {intent}. Use plan_version {version}. Context: {context}. Permitted edit schema: {schema}. base_commit is {base_commit}. Return JSON only.",
+    "repair_suffix": " Previous output failed: {diagnostic}. Return only the corrected plan object.",
+    "text_context": "complete target-file projection",
+    "graph_context": "node path and language only"
+  },
+  "tasks": [
+    "rust-replace",
+    "rust-rename",
+    "rust-delete",
+    "rust-insert",
+    "python-replace",
+    "python-rename",
+    "python-delete",
+    "python-insert"
+  ],
+  "task_intents": {
+    "rust-replace": "Change Trace::final_env to use map_or_else(Env::new, |step| step.env.clone()).",
+    "rust-rename": "Rename Trace::final_env to completed_env.",
+    "rust-delete": "Delete Trace::final_env.",
+    "rust-insert": "Insert a module-level pub fn trace_fixture_marker() -> usize that returns 1.",
+    "python-replace": "Change greet so it returns hello(name).upper().",
+    "python-rename": "Rename greet to welcome_greeting.",
+    "python-delete": "Delete greet.",
+    "python-insert": "Insert a module-level sample_fixture_marker function that returns 1."
+  },
+  "task_sources": {
+    "rust": {
+      "path": "crates/aether-debugger/src/trace.rs",
+      "sha256": "089a12acd5983b1fc3d36422faa34516a9ad65aea340a595de6113da8a9f30bb"
+    },
+    "python": {
+      "path": "sample-project/calc.py",
+      "sha256": "77e4ee13f9c82fe115c0c24515116459c8a260e4b28668c615612cfe4674d345"
+    }
+  },
+  "success": {
+    "minimum_common_successes": 4,
+    "require_graph_solves_every_text_success": true,
+    "require_graph_total_input_tokens_lower": true
+  }
+}

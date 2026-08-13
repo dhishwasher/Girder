@@ -1075,7 +1075,11 @@ def source_tree_digest(repository: Path) -> str:
         ),
         "list tracked tree",
     )
-    paths = sorted(repository / value for value in listed.stdout.split("\0") if value)
+    paths = sorted(
+        repository / value
+        for value in listed.stdout.split("\0")
+        if value and not value.startswith(".bitcode/")
+    )
     for path in paths:
         relative = path.relative_to(repository).as_posix().encode()
         digest.update(len(relative).to_bytes(8, "big"))
@@ -1632,6 +1636,44 @@ def ollama_json(host: str, payload: Mapping[str, Any], timeout: int) -> Mapping[
     return parsed
 
 
+def recover_ollama_prompt_tokens(
+    host: str,
+    model: str,
+    prompt: str,
+    options: Mapping[str, Any],
+) -> int:
+    stopped = run_bounded(
+        ("ollama", "stop", model),
+        cwd=REPO_ROOT,
+        timeout_seconds=30,
+        max_output_bytes=64 * 1024,
+    )
+    if stopped.returncode != 0:
+        raise RuntimeError(
+            "could not stop the timed-out local model before recovering prompt tokens"
+        )
+    response = ollama_json(
+        host,
+        {
+            "model": model,
+            "prompt": prompt,
+            "stream": False,
+            "format": "json",
+            "keep_alive": 0,
+            "options": {
+                "temperature": options["temperature"],
+                "seed": options["seed"],
+                "num_predict": 1,
+            },
+        },
+        options["timeout_seconds"],
+    )
+    tokens = response.get("prompt_eval_count")
+    if type(tokens) is not int or tokens < 0:
+        raise RuntimeError("Ollama token-recovery response omitted prompt_eval_count")
+    return tokens
+
+
 def initialize_authoring_repository(root: Path, options: Mapping[str, Any]) -> str:
     require_success(
         run(("git", "clone", "--quiet", "--no-hardlinks", str(REPO_ROOT), str(root)),
@@ -1719,6 +1761,11 @@ def authoring_plan(case_id: str, base_commit: str, *, graph_addressed: bool) -> 
     }
 
 
+def authoring_reference_plan(case_id: str, base_commit: str) -> dict[str, Any]:
+    """Build the independent text-addressed oracle for either authored arm."""
+    return authoring_plan(case_id, base_commit, graph_addressed=False)
+
+
 def validate_authoring_policy(policy: Mapping[str, Any]) -> Mapping[str, Any]:
     required_fields = {
         "schema_version", "policy_id", "model", "model_manifest_sha256",
@@ -1768,6 +1815,40 @@ def validate_authoring_policy(policy: Mapping[str, Any]) -> Mapping[str, Any]:
     return policy
 
 
+def authoring_prompt_context(
+    arm: str,
+    language: str,
+    allowed_edit: Mapping[str, Any],
+    repository: Path,
+) -> Mapping[str, Any]:
+    if arm == "graph":
+        return {"node": allowed_edit["node"], "language": language}
+    if arm == "text":
+        path = allowed_edit["path"]
+        return {
+            "path": path,
+            "projection": (repository / path).read_text(encoding="utf-8"),
+        }
+    raise RuntimeError(f"unsupported authoring arm: {arm}")
+
+
+def authoring_progress_header(
+    provenance: Mapping[str, str],
+    model_manifest_sha256: str,
+    bitcode: Path,
+) -> dict[str, str]:
+    return {
+        "policy_sha256": provenance["policy_sha256"],
+        "source_commit": provenance["source_commit"],
+        "model_manifest_sha256": model_manifest_sha256,
+        "bitcode_sha256": sha256_file(bitcode),
+        "harness_sha256": sha256_file(Path(__file__)),
+        "harness_support_sha256": sha256_file(
+            REPO_ROOT / "tools" / "harness_support.py"
+        ),
+    }
+
+
 def authored_plan_shape_error(
     generated: Any, canonical: Mapping[str, Any], arm: str
 ) -> str | None:
@@ -1805,6 +1886,7 @@ def authored_plan_shape_error(
 def run_authoring_cost(args: argparse.Namespace) -> int:
     policy_bytes = AUTHORING_POLICY.read_bytes()
     policy = validate_authoring_policy(json.loads(policy_bytes))
+    provenance = observation_provenance(AUTHORING_POLICY)
     options = policy["options"]
     prompt_protocol = policy["prompt_protocol"]
     try:
@@ -1826,16 +1908,36 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
             "refusing authoring-cost measurement with a model manifest that differs from policy"
         )
 
-    execution = {"timeout_seconds": 120.0, "max_output_bytes": 1024 * 1024}
     bitcode = args.bitcode.resolve()
     if not bitcode.is_file():
         raise RuntimeError(f"authoring-cost Bit Code binary does not exist: {bitcode}")
+    progress_path = Path(tempfile.gettempdir()) / (
+        "bitcode-authoring-cost-"
+        f"{provenance['policy_sha256']}-{provenance['source_commit']}.json"
+    )
+    progress_header = authoring_progress_header(
+        provenance, normalized_manifest, bitcode
+    )
+    completed_arms: dict[str, Any] = {}
+    if progress_path.is_file():
+        progress = json.loads(progress_path.read_text(encoding="utf-8"))
+        if progress.get("header") != progress_header or not isinstance(
+            progress.get("completed_arms"), dict
+        ):
+            raise RuntimeError("authoring-cost progress file belongs to another measurement")
+        completed_arms = progress["completed_arms"]
+
+    execution = {"timeout_seconds": 120.0, "max_output_bytes": 1024 * 1024}
     results = []
     status = require_success(
         run_bounded(("git", "status", "--porcelain=v1", "--untracked-files=all"),
                     cwd=REPO_ROOT, timeout_seconds=30, max_output_bytes=1024 * 1024),
         "check authoring-cost source worktree",
     )
+    if status.stdout:
+        raise RuntimeError(
+            "refusing authoring-cost observation because the source tree is not the recorded commit"
+        )
     for source in policy["task_sources"].values():
         if sha256_file(REPO_ROOT / source["path"]) != source["sha256"]:
             raise RuntimeError(f"authoring task source drifted: {source['path']}")
@@ -1844,12 +1946,15 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
         for case_id in policy["tasks"]:
             arms = {}
             for arm in ("text", "graph"):
+                progress_key = f"{case_id}:{arm}"
+                if progress_key in completed_arms:
+                    arms[arm] = completed_arms[progress_key]
+                    print(f"authoring {progress_key}: resumed", flush=True)
+                    continue
                 language, _, _ = authoring_edits(case_id)
                 expected_repository = work_root / f"{case_id}-{arm}-expected"
                 expected_base = initialize_authoring_repository(expected_repository, execution)
-                expected_plan = authoring_plan(
-                    case_id, expected_base, graph_addressed=arm == "graph"
-                )
+                expected_plan = authoring_reference_plan(case_id, expected_base)
                 expected_plan_path = write_plan(
                     work_root, f"expected-{case_id}-{arm}", expected_plan
                 )
@@ -1863,19 +1968,19 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                 attempts = []
                 success = False
                 last_diagnostic = ""
+                token_count_complete = True
                 for ordinal in range(1, options["max_attempts"] + 1):
                     repository = work_root / f"{case_id}-{arm}-{ordinal}"
                     base_commit = initialize_authoring_repository(repository, execution)
                     canonical = authoring_plan(case_id, base_commit, graph_addressed=arm == "graph")
                     allowed_edit = canonical["steps"][0]["edits"][0]
                     operation = case_id.split("-", 1)[1]
+                    context = json.dumps(
+                        authoring_prompt_context(
+                            arm, language, allowed_edit, repository
+                        )
+                    )
                     if arm == "text":
-                        context = json.dumps({
-                            "path": allowed_edit["path"],
-                            "projection": (repository / allowed_edit["path"]).read_text(
-                                encoding="utf-8"
-                            ),
-                        })
                         edit_schema = {
                             "path": "<project-relative path>",
                             "match": "<exact existing bytes>",
@@ -1883,11 +1988,6 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                             "occurrences": "<positive integer>",
                         }
                     else:
-                        context = json.dumps({
-                            "node": allowed_edit["node"],
-                            "language": language,
-                            "node_kind": "module" if operation == "insert" else "function",
-                        })
                         graph_fields = {
                             "replace": {"replace_node": "<complete replacement>"},
                             "rename": {"rename_node": "<new identifier>"},
@@ -1917,21 +2017,45 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                             raise RuntimeError(
                                 f"graph authoring prompt leaked the {language} target projection"
                             )
-                    response = ollama_json(
-                        args.ollama_host,
-                        {
-                            "model": policy["model"],
-                            "prompt": prompt,
-                            "stream": False,
-                            "format": "json",
-                            "options": {
-                                "temperature": options["temperature"],
-                                "seed": options["seed"],
-                                "num_predict": options["num_predict"],
+                    try:
+                        response = ollama_json(
+                            args.ollama_host,
+                            {
+                                "model": policy["model"],
+                                "prompt": prompt,
+                                "stream": False,
+                                "format": "json",
+                                "options": {
+                                    "temperature": options["temperature"],
+                                    "seed": options["seed"],
+                                    "num_predict": options["num_predict"],
+                                },
                             },
-                        },
-                        options["timeout_seconds"],
-                    )
+                            options["timeout_seconds"],
+                        )
+                    except RuntimeError as error:
+                        last_diagnostic = str(error)
+                        try:
+                            tokens = recover_ollama_prompt_tokens(
+                                args.ollama_host,
+                                policy["model"],
+                                prompt,
+                                options,
+                            )
+                        except RuntimeError as recovery_error:
+                            tokens = None
+                            token_count_complete = False
+                            last_diagnostic += f"; token recovery failed: {recovery_error}"
+                        else:
+                            total_tokens += tokens
+                        attempts.append({
+                            "attempt": ordinal,
+                            "tokens": tokens,
+                            "success": False,
+                            "provider_error": last_diagnostic,
+                            "prompt_tokens_recovered": tokens is not None,
+                        })
+                        break
                     tokens = response.get("prompt_eval_count")
                     if type(tokens) is not int or tokens < 0:
                         raise RuntimeError("Ollama response omitted prompt_eval_count")
@@ -1976,8 +2100,25 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                                      "tree_matched": tree_matched})
                     if success:
                         break
-                arms[arm] = {"success": success, "input_tokens": total_tokens,
-                             "expected_tree_sha256": expected_digest, "attempts": attempts}
+                arms[arm] = {
+                    "success": success,
+                    "input_tokens": total_tokens if token_count_complete else None,
+                    "completed_input_tokens": total_tokens,
+                    "token_count_complete": token_count_complete,
+                    "expected_tree_sha256": expected_digest,
+                    "attempts": attempts,
+                }
+                completed_arms[progress_key] = arms[arm]
+                atomic_write_json(
+                    progress_path,
+                    {"header": progress_header, "completed_arms": completed_arms},
+                )
+                print(
+                    f"authoring {progress_key}: "
+                    f"{'passed' if success else 'failed'}; "
+                    f"tokens={arms[arm]['input_tokens']}",
+                    flush=True,
+                )
             if arms["text"]["expected_tree_sha256"] != arms["graph"]["expected_tree_sha256"]:
                 raise RuntimeError(f"authoring task {case_id} has non-equivalent arm fixtures")
             results.append({"id": case_id, "arms": arms})
@@ -1985,26 +2126,37 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
     common = [case for case in results if case["arms"]["text"]["success"] and case["arms"]["graph"]["success"]]
     text_successes = {case["id"] for case in results if case["arms"]["text"]["success"]}
     graph_successes = {case["id"] for case in results if case["arms"]["graph"]["success"]}
-    text_tokens = sum(case["arms"]["text"]["input_tokens"] for case in results)
-    graph_tokens = sum(case["arms"]["graph"]["input_tokens"] for case in results)
+    token_counts_complete = all(
+        arm["token_count_complete"]
+        for case in results
+        for arm in case["arms"].values()
+    )
+    text_completed_tokens = sum(
+        case["arms"]["text"]["completed_input_tokens"] for case in results
+    )
+    graph_completed_tokens = sum(
+        case["arms"]["graph"]["completed_input_tokens"] for case in results
+    )
+    text_tokens = text_completed_tokens if token_counts_complete else None
+    graph_tokens = graph_completed_tokens if token_counts_complete else None
     passed = (
+        token_counts_complete
+        and
         len(common) >= policy["success"]["minimum_common_successes"]
         and text_successes <= graph_successes
+        and graph_tokens is not None
+        and text_tokens is not None
         and graph_tokens < text_tokens
     )
     observation = {
         "schema_version": 1,
         "policy_id": policy["policy_id"],
-        "policy_sha256": hashlib.sha256(policy_bytes).hexdigest(),
+        "policy_sha256": provenance["policy_sha256"],
         "model": policy["model"],
         "model_manifest_sha256": normalized_manifest,
         "bitcode_sha256": sha256_file(bitcode),
-        "source_commit": require_success(
-            run_bounded(("git", "rev-parse", "HEAD"), cwd=REPO_ROOT,
-                        timeout_seconds=30, max_output_bytes=64 * 1024),
-            "resolve authoring-cost source commit",
-        ).stdout.strip(),
-        "source_worktree_clean": not status.stdout,
+        "source_commit": provenance["source_commit"],
+        "source_worktree_clean": True,
         "source_diff_sha256": hashlib.sha256(
             require_success(
                 run_bounded(("git", "diff", "--binary", "HEAD"), cwd=REPO_ROOT,
@@ -2013,12 +2165,35 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
             ).stdout.encode()
         ).hexdigest(),
         "source_snapshot_sha256": source_snapshot_sha256(REPO_ROOT),
+        "host": {
+            "hostname": socket.gethostname(),
+            "platform": platform.platform(),
+            "python": platform.python_version(),
+            "cpu_count": os.cpu_count(),
+        },
+        "run_definition": "fresh-clone-per-attempt-paired-arms-bounded-local-model",
+        "tool": {
+            "bitcode_sha256": sha256_file(bitcode),
+            "harness_sha256": sha256_file(Path(__file__)),
+            "harness_support_sha256": sha256_file(
+                REPO_ROOT / "tools" / "harness_support.py"
+            ),
+            "source_commit": provenance["source_commit"],
+        },
         "results": results,
-        "summary": {"passed": passed, "common_successes": len(common),
-                    "text_input_tokens": text_tokens, "graph_input_tokens": graph_tokens},
+        "summary": {
+            "passed": passed,
+            "common_successes": len(common),
+            "token_counts_complete": token_counts_complete,
+            "text_input_tokens": text_tokens,
+            "graph_input_tokens": graph_tokens,
+            "text_completed_input_tokens": text_completed_tokens,
+            "graph_completed_input_tokens": graph_completed_tokens,
+        },
     }
     output = args.output or REPO_ROOT / "docs" / "authoring-cost-observation.json"
     atomic_write_json(output.resolve(), observation)
+    progress_path.unlink(missing_ok=True)
     print(f"authoring cost: {'PASS' if passed else 'FAIL'}; observation: {output.resolve()}")
     return 0 if passed else 1
 

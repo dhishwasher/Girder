@@ -1,0 +1,459 @@
+{
+  "bitcode_sha256": "a568bcd7f5db29b58f3f863995bc1b1f8ed241dfc10fa4c8241ec5ce70f556c2",
+  "host": {
+    "cpu_count": 2,
+    "hostname": "penguin",
+    "platform": "Linux-6.6.119-09283-g9c138e0af8c3-x86_64-with-glibc2.36",
+    "python": "3.11.2"
+  },
+  "model": "tinyllama:1.1b",
+  "model_manifest_sha256": "2644915ede352ea7bdfaff0bfac0be74c719d5d5202acb63a6fb095b52f394a4",
+  "policy_id": "graph-edit-authoring-cost-v1",
+  "policy_sha256": "e0494609a4ec5177df30148e784f32c1e6559f02118329bcc33f665f5054fc8e",
+  "results": [
+    {
+      "arms": {
+        "graph": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 190
+            },
+            {
+              "attempt": 2,
+              "prompt_tokens_recovered": true,
+              "provider_error": "Ollama authoring request failed: timed out",
+              "success": false,
+              "tokens": 212
+            }
+          ],
+          "completed_input_tokens": 402,
+          "expected_tree_sha256": "957761e29422e9e9320296652dbcd656a16cba2184099f84f96f2ad6ed485182",
+          "input_tokens": 402,
+          "success": false,
+          "token_count_complete": true
+        },
+        "text": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 658
+            },
+            {
+              "attempt": 2,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 680
+            },
+            {
+              "attempt": 3,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 680
+            }
+          ],
+          "completed_input_tokens": 2018,
+          "expected_tree_sha256": "957761e29422e9e9320296652dbcd656a16cba2184099f84f96f2ad6ed485182",
+          "input_tokens": 2018,
+          "success": false,
+          "token_count_complete": true
+        }
+      },
+      "id": "rust-replace"
+    },
+    {
+      "arms": {
+        "graph": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 176
+            },
+            {
+              "attempt": 2,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 198
+            },
+            {
+              "attempt": 3,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 198
+            }
+          ],
+          "completed_input_tokens": 572,
+          "expected_tree_sha256": "10bdfc1290b0103af08296038b58db854181c45eb355a1e5b9c153ca660008a0",
+          "input_tokens": 572,
+          "success": false,
+          "token_count_complete": true
+        },
+        "text": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "prompt_tokens_recovered": true,
+              "provider_error": "Ollama authoring request failed: timed out",
+              "success": false,
+              "tokens": 643
+            }
+          ],
+          "completed_input_tokens": 643,
+          "expected_tree_sha256": "10bdfc1290b0103af08296038b58db854181c45eb355a1e5b9c153ca660008a0",
+          "input_tokens": 643,
+          "success": false,
+          "token_count_complete": true
+        }
+      },
+      "id": "rust-rename"
+    },
+    {
+      "arms": {
+        "graph": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 167
+            },
+            {
+              "attempt": 2,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 189
+            },
+            {
+              "attempt": 3,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 189
+            }
+          ],
+          "completed_input_tokens": 545,
+          "expected_tree_sha256": "8799bcb6a3cfa73ad8ba9db78f03c34fa1fb491269822e789497f787da49eb2d",
+          "input_tokens": 545,
+          "success": false,
+          "token_count_complete": true
+        },
+        "text": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "prompt_tokens_recovered": true,
+              "provider_error": "Ollama authoring request failed: timed out",
+              "success": false,
+              "tokens": 637
+            }
+          ],
+          "completed_input_tokens": 637,
+          "expected_tree_sha256": "8799bcb6a3cfa73ad8ba9db78f03c34fa1fb491269822e789497f787da49eb2d",
+          "input_tokens": 637,
+          "success": false,
+          "token_count_complete": true
+        }
+      },
+      "id": "rust-delete"
+    },
+    {
+      "arms": {
+        "graph": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 184
+            },
+            {
+              "attempt": 2,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 206
+            },
+            {
+              "attempt": 3,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 206
+            }
+          ],
+          "completed_input_tokens": 596,
+          "expected_tree_sha256": "01f070bb3a18a252fff6d7640bf06099a0fd58755a9d5c77998519b9d61895e4",
+          "input_tokens": 596,
+          "success": false,
+          "token_count_complete": true
+        },
+        "text": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "prompt_tokens_recovered": true,
+              "provider_error": "Ollama authoring request failed: timed out",
+              "success": false,
+              "tokens": 653
+            }
+          ],
+          "completed_input_tokens": 653,
+          "expected_tree_sha256": "01f070bb3a18a252fff6d7640bf06099a0fd58755a9d5c77998519b9d61895e4",
+          "input_tokens": 653,
+          "success": false,
+          "token_count_complete": true
+        }
+      },
+      "id": "rust-insert"
+    },
+    {
+      "arms": {
+        "graph": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 169
+            },
+            {
+              "attempt": 2,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 191
+            },
+            {
+              "attempt": 3,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 191
+            }
+          ],
+          "completed_input_tokens": 551,
+          "expected_tree_sha256": "dc526c0f06a76434ee638835a6b3df5ece09ce518d7b6052eed4ae62a833014d",
+          "input_tokens": 551,
+          "success": false,
+          "token_count_complete": true
+        },
+        "text": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 329
+            },
+            {
+              "attempt": 2,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 351
+            },
+            {
+              "attempt": 3,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 351
+            }
+          ],
+          "completed_input_tokens": 1031,
+          "expected_tree_sha256": "dc526c0f06a76434ee638835a6b3df5ece09ce518d7b6052eed4ae62a833014d",
+          "input_tokens": 1031,
+          "success": false,
+          "token_count_complete": true
+        }
+      },
+      "id": "python-replace"
+    },
+    {
+      "arms": {
+        "graph": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 168
+            },
+            {
+              "attempt": 2,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 190
+            },
+            {
+              "attempt": 3,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 190
+            }
+          ],
+          "completed_input_tokens": 548,
+          "expected_tree_sha256": "2c0690892d6d5b63610a9b74c0f856ff62df3b691a4747a3ae44380e3fc901fc",
+          "input_tokens": 548,
+          "success": false,
+          "token_count_complete": true
+        },
+        "text": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "prompt_tokens_recovered": true,
+              "provider_error": "Ollama authoring request failed: timed out",
+              "success": false,
+              "tokens": 327
+            }
+          ],
+          "completed_input_tokens": 327,
+          "expected_tree_sha256": "2c0690892d6d5b63610a9b74c0f856ff62df3b691a4747a3ae44380e3fc901fc",
+          "input_tokens": 327,
+          "success": false,
+          "token_count_complete": true
+        }
+      },
+      "id": "python-rename"
+    },
+    {
+      "arms": {
+        "graph": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 158
+            },
+            {
+              "attempt": 2,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 180
+            },
+            {
+              "attempt": 3,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 180
+            }
+          ],
+          "completed_input_tokens": 518,
+          "expected_tree_sha256": "f53928ce9e0d7d3bb451bf2ce85bd30dd5c0806a692e851bf4f23a70402327b4",
+          "input_tokens": 518,
+          "success": false,
+          "token_count_complete": true
+        },
+        "text": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 320
+            },
+            {
+              "attempt": 2,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 342
+            },
+            {
+              "attempt": 3,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 342
+            }
+          ],
+          "completed_input_tokens": 1004,
+          "expected_tree_sha256": "f53928ce9e0d7d3bb451bf2ce85bd30dd5c0806a692e851bf4f23a70402327b4",
+          "input_tokens": 1004,
+          "success": false,
+          "token_count_complete": true
+        }
+      },
+      "id": "python-delete"
+    },
+    {
+      "arms": {
+        "graph": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 176
+            },
+            {
+              "attempt": 2,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 198
+            },
+            {
+              "attempt": 3,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 198
+            }
+          ],
+          "completed_input_tokens": 572,
+          "expected_tree_sha256": "9bbaed9487b93fcc14366bd2194775189e1ba5ab00340149f85116a05a0d2bc3",
+          "input_tokens": 572,
+          "success": false,
+          "token_count_complete": true
+        },
+        "text": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 334
+            },
+            {
+              "attempt": 2,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 356
+            },
+            {
+              "attempt": 3,
+              "shape_error": "plan envelope has missing or extra fields",
+              "success": false,
+              "tokens": 356
+            }
+          ],
+          "completed_input_tokens": 1046,
+          "expected_tree_sha256": "9bbaed9487b93fcc14366bd2194775189e1ba5ab00340149f85116a05a0d2bc3",
+          "input_tokens": 1046,
+          "success": false,
+          "token_count_complete": true
+        }
+      },
+      "id": "python-insert"
+    }
+  ],
+  "run_definition": "fresh-clone-per-attempt-paired-arms-bounded-local-model",
+  "schema_version": 1,
+  "source_commit": "8e0045b3a64399c70b521be857e13d84f961bfbc",
+  "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_snapshot_sha256": "35c8318b7672b2f81e3c27f19d9c58850e79c1dee4f95cdff6d48b5c2497595e",
+  "source_worktree_clean": true,
+  "summary": {
+    "common_successes": 0,
+    "graph_completed_input_tokens": 4304,
+    "graph_input_tokens": 4304,
+    "passed": false,
+    "text_completed_input_tokens": 7359,
+    "text_input_tokens": 7359,
+    "token_counts_complete": true
+  },
+  "tool": {
+    "bitcode_sha256": "a568bcd7f5db29b58f3f863995bc1b1f8ed241dfc10fa4c8241ec5ce70f556c2",
+    "harness_sha256": "d985faf12ac10aae50fc5152c7532f1631485c2ca7c54181f85cdcd6931f8c6b",
+    "harness_support_sha256": "a63b069acf887b5879f9662251bb0a13fbe945e260937f999225ba85ec7da428",
+    "source_commit": "8e0045b3a64399c70b521be857e13d84f961bfbc"
+  }
+}
