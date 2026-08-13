@@ -1,0 +1,285 @@
+{
+  "corpus_id": "graph-edit-v2",
+  "fixture": {
+    "python": {
+      "doomed": "def doomed():\n    pass\n",
+      "lib": "def target():\n    return 1\n\ndef caller():\n    return target()\n\ndef second():\n    return 2\n"
+    },
+    "rust": {
+      "doomed": "pub fn doomed() {}\n",
+      "lib": "pub fn target() -> i64 { 1 }\npub fn caller() -> i64 { target() }\npub fn second() -> i64 { 2 }\n"
+    }
+  },
+  "lowering_determinism": {
+    "rust-replace-extra-edit": {
+      "node": "crate::doomed::doomed",
+      "replace_node": "pub fn doomed() { let _ = 1; }"
+    }
+  },
+  "paired_cases": {
+    "python-delete": {
+      "graph_edit": {
+        "delete_node": true,
+        "node": "crate::doomed::doomed"
+      },
+      "language": "python",
+      "text_edit": {
+        "match": "def doomed():\n    pass",
+        "path": "src/doomed.py",
+        "replace": ""
+      }
+    },
+    "python-insert": {
+      "graph_edit": {
+        "insert_into_module": "\ndef inserted():\n    return 7\n",
+        "node": "crate::lib"
+      },
+      "language": "python",
+      "text_edit": {
+        "match": "def second():\n    return 2\n",
+        "path": "src/lib.py",
+        "replace": "def second():\n    return 2\n\ndef inserted():\n    return 7\n"
+      }
+    },
+    "python-rename": {
+      "graph_edit": {
+        "node": "crate::lib::target",
+        "rename_node": "renamed"
+      },
+      "language": "python",
+      "text_edit": {
+        "match": "target",
+        "occurrences": 2,
+        "path": "src/lib.py",
+        "replace": "renamed"
+      }
+    },
+    "python-replace": {
+      "graph_edit": {
+        "node": "crate::lib::target",
+        "replace_node": "def target():\n    return 9"
+      },
+      "language": "python",
+      "text_edit": {
+        "match": "def target():\n    return 1",
+        "path": "src/lib.py",
+        "replace": "def target():\n    return 9"
+      }
+    },
+    "rust-delete": {
+      "graph_edit": {
+        "delete_node": true,
+        "node": "crate::doomed::doomed"
+      },
+      "language": "rust",
+      "text_edit": {
+        "match": "pub fn doomed() {}",
+        "path": "src/doomed.rs",
+        "replace": ""
+      }
+    },
+    "rust-insert": {
+      "graph_edit": {
+        "insert_into_module": "\npub fn inserted() -> i64 { 7 }\n",
+        "node": "crate::lib"
+      },
+      "language": "rust",
+      "text_edit": {
+        "match": "pub fn second() -> i64 { 2 }\n",
+        "path": "src/lib.rs",
+        "replace": "pub fn second() -> i64 { 2 }\n\npub fn inserted() -> i64 { 7 }\n"
+      }
+    },
+    "rust-rename": {
+      "graph_edit": {
+        "node": "crate::lib::target",
+        "rename_node": "renamed"
+      },
+      "language": "rust",
+      "text_edit": {
+        "match": "target",
+        "occurrences": 2,
+        "path": "src/lib.rs",
+        "replace": "renamed"
+      }
+    },
+    "rust-replace": {
+      "graph_edit": {
+        "node": "crate::lib::target",
+        "replace_node": "pub fn target() -> i64 { 9 }"
+      },
+      "language": "rust",
+      "text_edit": {
+        "match": "pub fn target() -> i64 { 1 }",
+        "path": "src/lib.rs",
+        "replace": "pub fn target() -> i64 { 9 }"
+      }
+    }
+  },
+  "resolution_fail_closed": {
+    "ambiguous-node": {
+      "category": "ambiguous node path",
+      "fixture": "def target():\n    return 1\n\ndef target():\n    return 2\n",
+      "node": "crate::lib::target"
+    },
+    "spanless-node": {
+      "category": "empty or reversed span",
+      "fixture": "",
+      "fixture_path": "src/empty.rs",
+      "node": "crate::empty"
+    },
+    "unknown-node": {
+      "category": "unknown node path",
+      "node": "crate::missing::target"
+    },
+    "unsupported-language": {
+      "category": "unsupported-language",
+      "fixture": "function target() {}\n",
+      "fixture_path": "src/legacy.js",
+      "node": "crate::legacy::target"
+    }
+  },
+  "schema_version": 1,
+  "span_safety": {
+    "python-shifted-spans": {
+      "expected_files": {
+        "src/doomed.py": "def doomed():\n    pass\n",
+        "src/lib.py": "def target():\n    return 111111\n\ndef caller():\n    return target()\n\ndef second():\n    return 222222\n"
+      },
+      "language": "python",
+      "should_pass": true,
+      "steps": [
+        {
+          "edits": [
+            {
+              "node": "crate::lib::target",
+              "replace_node": "def target():\n    return 111111"
+            },
+            {
+              "node": "crate::lib::second",
+              "replace_node": "def second():\n    return 222222"
+            }
+          ],
+          "id": "shift-and-re-resolve"
+        }
+      ]
+    },
+    "rust-ambiguous-callsite-rejected": {
+      "expected_files": {},
+      "fixture": "pub fn target() -> i64 { 1 }\npub fn caller() -> i64 { target() + object.target() }\npub fn second() -> i64 { 2 }\n",
+      "language": "rust",
+      "should_pass": false,
+      "steps": [
+        {
+          "edits": [
+            {
+              "node": "crate::lib::target",
+              "rename_node": "renamed"
+            }
+          ],
+          "id": "reject-ambiguous-callsite"
+        }
+      ]
+    },
+    "rust-nested-projections": {
+      "expected_files": {
+        "src/doomed.rs": "pub fn doomed() {}\n",
+        "src/lib.rs": "pub trait Boxed {\n    fn nested() -> i64 { 555555 }\n}\npub fn target() -> i64 { 1 }\n"
+      },
+      "fixture": "pub trait Boxed {\n    fn nested() -> i64 { 1 }\n}\npub fn target() -> i64 { 1 }\n",
+      "language": "rust",
+      "should_pass": true,
+      "steps": [
+        {
+          "edits": [
+            {
+              "node": "crate::lib::Boxed",
+              "replace_node": "pub trait Boxed {\n    fn nested() -> i64 { 444444 }\n}"
+            },
+            {
+              "node": "crate::lib::Boxed::nested",
+              "replace_node": "fn nested() -> i64 { 555555 }"
+            }
+          ],
+          "id": "replace-parent-then-child"
+        }
+      ]
+    },
+    "rust-rename-new-path": {
+      "expected_files": {
+        "src/doomed.rs": "pub fn doomed() {}\n",
+        "src/lib.rs": "pub fn renamed() -> i64 { 5 }\npub fn caller() -> i64 { renamed() }\npub fn second() -> i64 { 2 }\n"
+      },
+      "language": "rust",
+      "should_pass": true,
+      "steps": [
+        {
+          "edits": [
+            {
+              "node": "crate::lib::target",
+              "rename_node": "renamed"
+            }
+          ],
+          "id": "rename"
+        },
+        {
+          "edits": [
+            {
+              "node": "crate::lib::renamed",
+              "replace_node": "pub fn renamed() -> i64 { 5 }"
+            }
+          ],
+          "id": "follow-up"
+        }
+      ]
+    },
+    "rust-rename-old-path-rejected": {
+      "expected_files": {},
+      "language": "rust",
+      "should_pass": false,
+      "steps": [
+        {
+          "edits": [
+            {
+              "node": "crate::lib::target",
+              "rename_node": "renamed"
+            }
+          ],
+          "id": "rename"
+        },
+        {
+          "edits": [
+            {
+              "node": "crate::lib::target",
+              "replace_node": "pub fn renamed() -> i64 { 5 }"
+            }
+          ],
+          "id": "follow-up"
+        }
+      ]
+    },
+    "rust-shifted-spans": {
+      "expected_files": {
+        "src/doomed.rs": "pub fn doomed() {}\n",
+        "src/lib.rs": "pub fn target() -> i64 { 111111 }\npub fn caller() -> i64 { target() }\npub fn second() -> i64 { 222222 }\n"
+      },
+      "language": "rust",
+      "should_pass": true,
+      "steps": [
+        {
+          "edits": [
+            {
+              "node": "crate::lib::target",
+              "replace_node": "pub fn target() -> i64 { 111111 }"
+            },
+            {
+              "node": "crate::lib::second",
+              "replace_node": "pub fn second() -> i64 { 222222 }"
+            }
+          ],
+          "id": "shift-and-re-resolve"
+        }
+      ]
+    }
+  }
+}

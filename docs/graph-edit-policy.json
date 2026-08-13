@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "policy_id": "graph-edit-v2",
+  "execution": {
+    "command_timeout_seconds": 120,
+    "max_command_output_bytes": 1048576,
+    "repeated_runs": 3,
+    "require_clean_fixture_before_each_case": true,
+    "require_fresh_repository_per_run": true
+  },
+  "corpus": {
+    "lowering_determinism": [
+      "rust-replace",
+      "rust-rename",
+      "rust-delete",
+      "rust-insert",
+      "python-replace",
+      "python-rename",
+      "python-delete",
+      "python-insert"
+    ],
+    "text_equivalence": [
+      "rust-replace",
+      "rust-rename",
+      "rust-delete",
+      "rust-insert",
+      "python-replace",
+      "python-rename",
+      "python-delete",
+      "python-insert"
+    ],
+    "span_safety": [
+      "rust-shifted-spans",
+      "python-shifted-spans",
+      "rust-rename-new-path",
+      "rust-rename-old-path-rejected",
+      "rust-nested-projections",
+      "rust-ambiguous-callsite-rejected"
+    ],
+    "resolution_fail_closed": [
+      "unknown-node",
+      "ambiguous-node",
+      "unsupported-language",
+      "spanless-node"
+    ]
+  },
+  "properties": {
+    "P6_lowering_determinism": {
+      "required_plan_count": 8,
+      "required_runs_per_plan": 3,
+      "max_fingerprint_mismatches": 0
+    },
+    "P7_text_equivalence": {
+      "required_pair_count": 8,
+      "max_tree_mismatches": 0
+    },
+    "P8_span_safety": {
+      "required_case_count": 6,
+      "max_corruptions": 0,
+      "max_rule_mismatches": 0
+    },
+    "P9_resolution_fail_closed": {
+      "required_case_count": 4,
+      "max_unexpected_passes": 0,
+      "max_missing_node_diagnostics": 0,
+      "max_missing_step_diagnostics": 0,
+      "max_missing_category_diagnostics": 0
+    }
+  },
+  "mutation_adequacy": {
+    "required_property_count": 4,
+    "max_surviving_mutants": 0,
+    "mutants": {
+      "P6_lowering_determinism": "drop-write-fingerprints",
+      "P7_text_equivalence": "corrupt-graph-result",
+      "P8_span_safety": "skip-second-graph-edit",
+      "P9_resolution_fail_closed": "accept-resolution-failure"
+    }
+  }
+}
