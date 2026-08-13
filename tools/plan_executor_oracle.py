@@ -187,7 +187,7 @@ def validate_policy(data: Mapping[str, Any]) -> Mapping[str, Any]:
     list_fields = {
         "plan_ids": 4,
         "fail_closed": 14,
-        "rollback_fidelity": 3,
+        "rollback_fidelity": 4,
         "error_legibility": 11,
     }
     for field, expected_count in list_fields.items():
@@ -781,6 +781,29 @@ def rollback_steps(case_id: str) -> list[Mapping[str, Any]]:
         edits = [{"path": "src/created.rs", "create": "pub fn created() {}\n"}]
     elif case_id == "delete-then-fail":
         edits = [{"path": "src/doomed.rs", "delete": True}]
+    elif case_id == "delete-recreate-across-steps-then-fail":
+        return [
+            {
+                "id": "delete-tracked",
+                "edits": [{"path": "src/doomed.rs", "delete": True}],
+                "checks": [{"kind": "command", "run": "true"}],
+            },
+            {"id": "intervening-step"},
+            {
+                "id": "recreate-tracked",
+                "edits": [
+                    {
+                        "path": "src/doomed.rs",
+                        "create": "pub fn recreated_doomed() {}\n",
+                    }
+                ],
+                "checks": [{"kind": "command", "run": "true"}],
+            },
+            {
+                "id": "trigger-rollback",
+                "checks": [{"kind": "command", "run": "false"}],
+            },
+        ]
     else:
         raise RuntimeError(f"unknown P4 case id: {case_id}")
     return [
@@ -930,6 +953,7 @@ def measure_p5(
 def create_mutant_binary(root: Path, bitcode: Path, property_name: str) -> Path:
     mutant = root / f"bitcode-mutant-{property_name.lower()}"
     script = f'''#!/usr/bin/env python3
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -955,8 +979,9 @@ if MUTATION == "P1_dry_equals_real" and is_dry_run:
 elif MUTATION == "P3_fail_closed" and is_plan_run:
     returncode = 0
 elif MUTATION == "P4_rollback_fidelity" and is_plan_run:
-    target = Path.cwd() / "src" / "lib.rs"
-    target.write_text(target.read_text(encoding="utf-8") + "// rollback mutant\\n", encoding="utf-8")
+    plan = json.loads(Path(ARGS[2]).read_text(encoding="utf-8"))
+    if plan.get("plan_id") == "delete-recreate-across-steps-then-fail":
+        (Path.cwd() / "src" / "doomed.rs").unlink(missing_ok=True)
 
 raise SystemExit(returncode)
 '''

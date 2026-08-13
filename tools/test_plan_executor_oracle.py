@@ -25,6 +25,7 @@ from tools.plan_executor_oracle import (
     observation_provenance,
     outcome_projection,
     parse_dry_report,
+    rollback_steps,
     run,
     sha256_file,
     source_tree_digest,
@@ -44,7 +45,7 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
         self.assertEqual(policy["policy_id"], "plan-executor-v1")
         self.assertEqual(len(policy["corpus"]["plan_ids"]), 4)
         self.assertEqual(len(policy["corpus"]["fail_closed"]), 14)
-        self.assertEqual(len(policy["corpus"]["rollback_fidelity"]), 3)
+        self.assertEqual(len(policy["corpus"]["rollback_fidelity"]), 4)
         self.assertEqual(len(policy["corpus"]["error_legibility"]), 11)
         for thresholds in policy["properties"].values():
             for field, value in thresholds.items():
@@ -255,7 +256,7 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
             },
             "P3_fail_closed": {"check_kind_count": 14, "unexpected_passes": 0},
             "P4_rollback_fidelity": {
-                "plan_count": 3,
+                "plan_count": 4,
                 "dirty_worktrees": 0,
                 "tree_mismatches": 0,
             },
@@ -273,6 +274,23 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
                 "max_outcome_mismatches=0"
             ],
         )
+
+    def test_cross_step_rollback_case_deletes_then_recreates_before_failure(self):
+        steps = rollback_steps("delete-recreate-across-steps-then-fail")
+
+        self.assertEqual(
+            [step["id"] for step in steps],
+            [
+                "delete-tracked",
+                "intervening-step",
+                "recreate-tracked",
+                "trigger-rollback",
+            ],
+        )
+        self.assertEqual(steps[0]["edits"], [{"path": "src/doomed.rs", "delete": True}])
+        self.assertEqual(steps[2]["edits"][0]["path"], "src/doomed.rs")
+        self.assertIn("create", steps[2]["edits"][0])
+        self.assertEqual(steps[3]["checks"], [{"kind": "command", "run": "false"}])
 
     def test_every_legibility_case_declares_step_and_path_expectations(self):
         for case_id in self.policy["corpus"]["error_legibility"]:
@@ -345,6 +363,38 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
             )
 
         self.assertEqual(result.returncode, 0)
+
+    def test_rollback_mutant_removes_recreated_tracked_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "src").mkdir()
+            tracked = root / "src" / "doomed.rs"
+            tracked.write_text("pub fn doomed() {}\n", encoding="utf-8")
+            plan = root / "rollback.json"
+            plan.write_text(
+                json.dumps(
+                    {
+                        "plan_id": "delete-recreate-across-steps-then-fail",
+                        "steps": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            real = root / "real-bitcode"
+            real.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+            real.chmod(0o700)
+            mutant = create_mutant_binary(root, real, "P4_rollback_fidelity")
+
+            result = run(
+                (str(mutant), "plan", "run", str(plan)),
+                cwd=root,
+                timeout_seconds=5,
+                max_output_bytes=1024,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertFalse(tracked.exists())
 
     def test_resolution_mutant_is_an_executable_broken_binary(self):
         with tempfile.TemporaryDirectory() as directory:
