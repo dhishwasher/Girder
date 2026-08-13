@@ -556,6 +556,33 @@ as gap 11 rather than silently accepted.
    untyped fixture parameter and a same-named unqualified `self.invoke`
    dispatch. Lower priority than the original P0 set because it is narrow
    (one dispatch shape) and newly discovered, not a regression.
+12. **P0 — local plan authoring remains incapable despite lower context
+   cost.** The precommitted eight-task TinyLlama comparison in
+   [`authoring-cost.md`](authoring-cost.md) measured 7,359 text-arm input
+   tokens versus 4,304 graph-arm tokens, a 41.5% reduction, but neither arm
+   produced a working plan for any task. Common successes were 0 against the
+   required 4, so the policy failed. Graph addressing has established a lower
+   input cost on this corpus; it has not established that Bit Code can complete
+   work with no remote model calls. The dominant completed-response defect was
+   failure to emit the exact plan envelope after repairs; five arms also hit
+   the bounded local-provider timeout.
+13. **P0 — conservative semantic rename can reject a valid exact node on
+   repository-wide name collisions.** An independent canonical-plan probe of
+   `crate::sample-project::calc::greet` failed closed because identifiers named
+   `greet` in `crates/aether-builder/src/lib.rs` were not graph-proven call
+   sites. This was not a model-observation result: that arm's generated plans
+   failed shape validation before execution. Rejecting is safer than rewriting
+   unproven syntax, but `rename_node` is not generally usable for otherwise
+   unambiguous node paths until the graph records call-site-level provenance or
+   lowering can prove a narrower lexical scope.
+14. **P1 — rollback misclassifies delete-then-recreate across plan steps.** If
+   a tracked path is deleted in one step, recreated in a later step, and a
+   subsequent `rollback_plan` occurs, created-path bookkeeping can classify the
+   recreated path as base-new and remove it instead of restoring the base
+   projection. This predates Plan Format v2 and was intentionally not changed
+   in the graph-edit slice because commit/rollback semantics were out of scope;
+   it needs a base-existence ledger and a tracked-path regression before the
+   broader P4 claim covers cross-step recreation.
 
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
