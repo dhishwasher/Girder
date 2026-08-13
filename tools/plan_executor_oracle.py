@@ -6,10 +6,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
+import platform
+import socket
 import shutil
 import stat
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -22,7 +27,56 @@ except ModuleNotFoundError:  # Direct execution via `python tools/<script>.py`.
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_POLICY = REPO_ROOT / "docs" / "plan-executor-policy.json"
 DEFAULT_OBSERVATION = REPO_ROOT / "docs" / "plan-executor-observation.json"
+GRAPH_POLICY = REPO_ROOT / "docs" / "graph-edit-policy.json"
+GRAPH_OBSERVATION = REPO_ROOT / "docs" / "graph-edit-observation.json"
+GRAPH_CORPUS = REPO_ROOT / "docs" / "graph-edit-corpus.json"
+AUTHORING_POLICY = REPO_ROOT / "docs" / "authoring-cost-policy.json"
 DRY_REPORT_MARKER = "report (dry run, not written to disk):\n"
+OBSERVATION_OUTPUTS = {
+    "docs/plan-executor-observation.json",
+    "docs/graph-edit-observation.json",
+    "docs/authoring-cost-observation.json",
+}
+AUTHORING_MODEL = "tinyllama:1.1b"
+AUTHORING_PROMPT_PROTOCOL = {
+    "initial_template": (
+        "Author a Bit Code plan for task {task}. Task: {intent}. Use plan_version {version}. "
+        "Context: {context}. Permitted edit schema: {schema}. base_commit is {base_commit}. "
+        "Return JSON only."
+    ),
+    "repair_suffix": (
+        " Previous output failed: {diagnostic}. Return only the corrected plan object."
+    ),
+    "text_context": "complete target-file projection",
+    "graph_context": "node path and language only",
+}
+AUTHORING_TASK_INTENTS = {
+    "rust-replace": "Change Trace::final_env to use map_or_else(Env::new, |step| step.env.clone()).",
+    "rust-rename": "Rename Trace::final_env to completed_env.",
+    "rust-delete": "Delete Trace::final_env.",
+    "rust-insert": "Insert a module-level pub fn trace_fixture_marker() -> usize that returns 1.",
+    "python-replace": "Change greet so it returns hello(name).upper().",
+    "python-rename": "Rename greet to welcome_greeting.",
+    "python-delete": "Delete greet.",
+    "python-insert": "Insert a module-level sample_fixture_marker function that returns 1.",
+}
+AUTHORING_TASK_SOURCES = {
+    "rust": {
+        "path": "crates/aether-debugger/src/trace.rs",
+        "sha256": "089a12acd5983b1fc3d36422faa34516a9ad65aea340a595de6113da8a9f30bb",
+    },
+    "python": {
+        "path": "sample-project/calc.py",
+        "sha256": "77e4ee13f9c82fe115c0c24515116459c8a260e4b28668c615612cfe4674d345",
+    },
+}
+
+
+def graph_corpus() -> Mapping[str, Any]:
+    corpus = json.loads(GRAPH_CORPUS.read_bytes())
+    if corpus.get("schema_version") != 1 or corpus.get("corpus_id") != "graph-edit-v2":
+        raise RuntimeError("unsupported graph-edit corpus manifest")
+    return corpus
 
 
 def sha256_file(path: Path) -> str:
@@ -39,7 +93,6 @@ def observation_provenance(
     policy_sha256 = sha256_file(policy_path)
     if len(policy_sha256) != 64:
         raise RuntimeError("refusing to emit observation without policy SHA-256")
-
     source_commit = require_success(
         run(
             ("git", "rev-parse", "--verify", "HEAD^{commit}"),
@@ -53,7 +106,6 @@ def observation_provenance(
         character not in "0123456789abcdef" for character in source_commit
     ):
         raise RuntimeError("refusing to emit observation without source commit")
-
     status = require_success(
         run(
             ("git", "status", "--porcelain=v1", "--untracked-files=all"),
@@ -67,8 +119,33 @@ def observation_provenance(
         raise RuntimeError(
             "refusing to emit observation because the source tree is not the recorded commit"
         )
-
     return {"policy_sha256": policy_sha256, "source_commit": source_commit}
+
+
+def source_snapshot_sha256(root: Path) -> str:
+    listed = require_success(
+        run_bounded(
+            ("git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"),
+            cwd=root,
+            timeout_seconds=30,
+            max_output_bytes=16 * 1024 * 1024,
+        ),
+        "list measured source snapshot",
+    )
+    digest = hashlib.sha256()
+    for relative in sorted(value for value in listed.stdout.split("\0") if value):
+        if relative in OBSERVATION_OUTPUTS:
+            continue
+        path = root / relative
+        if not path.is_file():
+            continue
+        encoded = relative.encode()
+        contents = path.read_bytes()
+        digest.update(len(encoded).to_bytes(8, "big"))
+        digest.update(encoded)
+        digest.update(len(contents).to_bytes(8, "big"))
+        digest.update(contents)
+    return digest.hexdigest()
 
 
 def validate_policy(data: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -151,6 +228,105 @@ def validate_policy(data: Mapping[str, Any]) -> Mapping[str, Any]:
             if not field.startswith("required_") and value != 0:
                 raise RuntimeError(f"{property_name}.{field} must remain zero tolerance")
     return data
+
+
+def validate_graph_policy(data: Mapping[str, Any]) -> Mapping[str, Any]:
+    if set(data) != {
+        "schema_version",
+        "policy_id",
+        "execution",
+        "corpus",
+        "properties",
+        "mutation_adequacy",
+    }:
+        raise RuntimeError("graph edit policy has missing or unknown top-level fields")
+    if data.get("schema_version") != 1 or data.get("policy_id") != "graph-edit-v2":
+        raise RuntimeError("graph edit policy must be schema_version 1 and graph-edit-v2")
+    execution = data.get("execution")
+    corpus = data.get("corpus")
+    properties = data.get("properties")
+    if not all(isinstance(section, dict) for section in (execution, corpus, properties)):
+        raise RuntimeError("graph edit policy sections must be objects")
+    if execution.get("repeated_runs") != 3:
+        raise RuntimeError("graph edit policy repeated_runs must remain precommitted at 3")
+    for field in ("command_timeout_seconds", "max_command_output_bytes"):
+        if type(execution.get(field)) is not int or execution[field] <= 0:
+            raise RuntimeError(f"graph edit execution {field} must be positive")
+    for field in ("require_clean_fixture_before_each_case", "require_fresh_repository_per_run"):
+        if execution.get(field) is not True:
+            raise RuntimeError(f"graph edit execution {field} must be true")
+    expected_counts = {
+        "lowering_determinism": 8,
+        "text_equivalence": 8,
+        "span_safety": 6,
+        "resolution_fail_closed": 4,
+    }
+    for field, count in expected_counts.items():
+        values = corpus.get(field)
+        if not isinstance(values, list) or len(values) != count or len(set(values)) != count:
+            raise RuntimeError(f"graph edit corpus {field} must contain {count} unique ids")
+    expected_properties = {
+        "P6_lowering_determinism",
+        "P7_text_equivalence",
+        "P8_span_safety",
+        "P9_resolution_fail_closed",
+    }
+    if set(properties) != expected_properties:
+        raise RuntimeError("graph edit policy must define exactly P6 through P9")
+    for name, thresholds in properties.items():
+        if not isinstance(thresholds, dict):
+            raise RuntimeError(f"{name} thresholds must be an object")
+        for field, value in thresholds.items():
+            if type(value) is not int or value < 0:
+                raise RuntimeError(f"{name}.{field} must be a non-negative integer")
+            if not field.startswith("required_") and value != 0:
+                raise RuntimeError(f"{name}.{field} must remain zero tolerance")
+    required = {
+        "P6_lowering_determinism": {
+            "required_plan_count": 8,
+            "required_runs_per_plan": 3,
+        },
+        "P7_text_equivalence": {"required_pair_count": 8},
+        "P8_span_safety": {"required_case_count": 6},
+        "P9_resolution_fail_closed": {"required_case_count": 4},
+    }
+    for property_name, fields in required.items():
+        for field, expected in fields.items():
+            if properties[property_name].get(field) != expected:
+                raise RuntimeError(f"{property_name}.{field} must remain {expected}")
+    manifest = graph_corpus()
+    if manifest.get("corpus_id") != data["policy_id"]:
+        raise RuntimeError("graph corpus manifest must identify the measured policy")
+    manifest_cases = {
+        "lowering_determinism": list(manifest.get("paired_cases", {})),
+        "text_equivalence": list(manifest.get("paired_cases", {})),
+        "span_safety": list(manifest.get("span_safety", {})),
+        "resolution_fail_closed": list(manifest.get("resolution_fail_closed", {})),
+    }
+    if any(set(manifest_cases[field]) != set(corpus[field]) for field in manifest_cases):
+        raise RuntimeError("graph policy corpus ids differ from graph-edit-corpus.json")
+    expected_mutation_adequacy = {
+        "required_property_count": 4,
+        "max_surviving_mutants": 0,
+        "mutants": {
+            "P6_lowering_determinism": "drop-write-fingerprints",
+            "P7_text_equivalence": "corrupt-graph-result",
+            "P8_span_safety": "skip-second-graph-edit",
+            "P9_resolution_fail_closed": "accept-resolution-failure",
+        },
+    }
+    if data.get("mutation_adequacy") != expected_mutation_adequacy:
+        raise RuntimeError("graph edit mutation adequacy differs from the precommitment")
+    return data
+
+
+def validate_selected_policy(data: Mapping[str, Any]) -> Mapping[str, Any]:
+    policy_id = data.get("policy_id")
+    if policy_id == "plan-executor-v1":
+        return validate_policy(data)
+    if policy_id == "graph-edit-v2":
+        return validate_graph_policy(data)
+    raise RuntimeError(f"unsupported policy_id: {policy_id!r}")
 
 
 def run(
@@ -809,12 +985,7 @@ def measure_mutation_adequacy(
     survivors = []
     for property_name, measurement in measurements.items():
         mutant = create_mutant_binary(work_root, bitcode, property_name)
-        observed = measurement(
-            policy,
-            work_root / property_name.lower(),
-            mutant,
-            options,
-        )
+        observed = measurement(policy, work_root / property_name.lower(), mutant, options)
         mutant_results = dict(baseline_results)
         mutant_results[property_name] = observed
         introduced = sorted(
@@ -825,21 +996,505 @@ def measure_mutation_adequacy(
         killed = bool(introduced)
         if not killed:
             survivors.append(property_name)
-        cases.append(
-            {
-                "property": property_name,
-                "mutant_sha256": sha256_file(mutant),
-                "killed": killed,
-                "violations": introduced,
-                "observed": {key: value for key, value in observed.items() if key != "cases"},
-            }
-        )
+        cases.append({
+            "property": property_name,
+            "mutant_sha256": sha256_file(mutant),
+            "killed": killed,
+            "violations": introduced,
+            "observed": {key: value for key, value in observed.items() if key != "cases"},
+        })
     if survivors:
         raise RuntimeError(
             "refusing to emit observation because property mutants survived: "
             + ", ".join(survivors)
         )
     return {"required_property_count": len(measurements), "survivors": 0, "cases": cases}
+
+
+def initialize_graph_repository(root: Path, language: str, options: Mapping[str, Any]) -> str:
+    root.mkdir(parents=True)
+    (root / "src").mkdir()
+    (root / ".gitignore").write_text(".bitcode/\n", encoding="utf-8")
+    fixtures = graph_corpus()["fixture"]
+    if language not in fixtures:
+        raise RuntimeError(f"unknown graph fixture language: {language}")
+    extension = "rs" if language == "rust" else "py"
+    (root / "src" / f"lib.{extension}").write_text(fixtures[language]["lib"], encoding="utf-8")
+    (root / "src" / f"doomed.{extension}").write_text(
+        fixtures[language]["doomed"], encoding="utf-8"
+    )
+    (root / "bitcode.toml").write_text(
+        "version = 1\n[source]\nroots = [\"src\"]\n", encoding="utf-8"
+    )
+    for command in (
+        ("git", "init", "--quiet"),
+        ("git", "config", "user.email", "graph-oracle@bitcode.invalid"),
+        ("git", "config", "user.name", "Bit Code Graph Oracle"),
+        ("git", "add", "."),
+        ("git", "commit", "--quiet", "-m", "baseline"),
+    ):
+        require_success(run(command, cwd=root, check=False, **options), " ".join(command))
+    return require_success(
+        run(("git", "rev-parse", "HEAD"), cwd=root, check=False, **options),
+        "resolve graph baseline",
+    ).stdout.strip()
+
+
+def graph_and_text_edits(case_id: str) -> tuple[str, Mapping[str, Any], Mapping[str, Any]]:
+    try:
+        case = graph_corpus()["paired_cases"][case_id]
+    except KeyError as error:
+        raise RuntimeError(f"unknown graph edit corpus case: {case_id}") from error
+    return case["language"], case["graph_edit"], case["text_edit"]
+
+
+def paired_plan(
+    case_id: str, base_commit: str, *, graph_addressed: bool
+) -> tuple[str, dict[str, Any]]:
+    language, graph_edit, text_edit = graph_and_text_edits(case_id)
+    edit = graph_edit if graph_addressed else text_edit
+    plan = {
+        "plan_version": 2 if graph_addressed else 1,
+        "plan_id": f"{case_id}-{'graph' if graph_addressed else 'text'}",
+        "intent": f"measure paired {case_id}",
+        "base_commit": base_commit,
+        "on_failure": "rollback_plan",
+        "steps": [{"id": "apply-change", "edits": [edit]}],
+    }
+    return language, plan
+
+
+def source_tree_digest(repository: Path) -> str:
+    digest = hashlib.sha256()
+    listed = require_success(
+        run_bounded(
+            ("git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"),
+            cwd=repository,
+            timeout_seconds=30,
+            max_output_bytes=1024 * 1024,
+        ),
+        "list tracked tree",
+    )
+    paths = sorted(repository / value for value in listed.stdout.split("\0") if value)
+    for path in paths:
+        relative = path.relative_to(repository).as_posix().encode()
+        digest.update(len(relative).to_bytes(8, "big"))
+        digest.update(relative)
+        if not path.is_file():
+            digest.update(b"\x00")
+            continue
+        digest.update(b"\x01")
+        contents = path.read_bytes()
+        digest.update(len(contents).to_bytes(8, "big"))
+        digest.update(contents)
+    return digest.hexdigest()
+
+
+def valid_fingerprint_side(byte_count: Any, digest: Any) -> bool:
+    return (byte_count is None and digest is None) or (
+        type(byte_count) is int
+        and byte_count >= 0
+        and isinstance(digest, str)
+        and len(digest) == 64
+        and all(character in "0123456789abcdef" for character in digest)
+    )
+
+
+def measure_p6(
+    policy: Mapping[str, Any], work_root: Path, bitcode: Path, options: Mapping[str, Any]
+) -> dict[str, Any]:
+    cases = []
+    mismatches = 0
+    runs_per_plan = policy["execution"]["repeated_runs"]
+    for case_id in policy["corpus"]["lowering_determinism"]:
+        fingerprints = []
+        for ordinal in range(1, runs_per_plan + 1):
+            language, _ = graph_and_text_edits(case_id)[:2]
+            repository = work_root / f"{case_id}-{ordinal}"
+            base_commit = initialize_graph_repository(repository, language, options)
+            _, plan = paired_plan(case_id, base_commit, graph_addressed=True)
+            if case_id == "rust-replace":
+                plan["steps"][0]["edits"].append(
+                    graph_corpus()["lowering_determinism"]["rust-replace-extra-edit"]
+                )
+            plan_path = write_plan(work_root, f"{case_id}-{ordinal}", plan)
+            result = require_success(
+                run((str(bitcode), "plan", "run", str(plan_path), "--dry"),
+                    cwd=repository, check=False, **options),
+                f"P6 {case_id} run {ordinal}",
+            )
+            report = parse_dry_report(result.stdout, result.stderr)
+            writes = report["steps"][0].get("writes")
+            if not isinstance(writes, list) or not writes:
+                raise RuntimeError(f"P6 {case_id} omitted non-empty write fingerprints")
+            for write in writes:
+                if (
+                    not isinstance(write, dict)
+                    or set(write) != {
+                        "path", "before_bytes", "before_sha256", "after_bytes", "after_sha256"
+                    }
+                    or not isinstance(write["path"], str)
+                    or not valid_fingerprint_side(
+                        write["before_bytes"], write["before_sha256"]
+                    )
+                    or not valid_fingerprint_side(
+                        write["after_bytes"], write["after_sha256"]
+                    )
+                ):
+                    raise RuntimeError(f"P6 {case_id} emitted malformed write fingerprint")
+            if case_id == "rust-replace" and len(writes) < 2:
+                raise RuntimeError("P6 cross-file case emitted fewer than two writes")
+            fingerprints.append(writes)
+        matched = all(value == fingerprints[0] for value in fingerprints[1:])
+        mismatches += int(not matched)
+        cases.append({"id": case_id, "matched": matched, "fingerprints": fingerprints})
+    return {
+        "plan_count": len(cases),
+        "runs_per_plan": runs_per_plan,
+        "fingerprint_mismatches": mismatches,
+        "cases": cases,
+    }
+
+
+def measure_p7(
+    policy: Mapping[str, Any], work_root: Path, bitcode: Path, options: Mapping[str, Any]
+) -> dict[str, Any]:
+    cases = []
+    mismatches = 0
+    for case_id in policy["corpus"]["text_equivalence"]:
+        digests = {}
+        for mode in ("text", "graph"):
+            language, _ = graph_and_text_edits(case_id)[:2]
+            repository = work_root / f"{case_id}-{mode}"
+            base_commit = initialize_graph_repository(repository, language, options)
+            _, plan = paired_plan(case_id, base_commit, graph_addressed=mode == "graph")
+            plan_path = write_plan(work_root, f"{case_id}-{mode}", plan)
+            require_success(
+                run((str(bitcode), "plan", "run", str(plan_path)),
+                    cwd=repository, check=False, **options),
+                f"P7 {case_id} {mode}",
+            )
+            digests[mode] = source_tree_digest(repository)
+        matched = digests["text"] == digests["graph"]
+        mismatches += int(not matched)
+        cases.append({"id": case_id, "matched": matched, "tree_sha256": digests})
+    return {"pair_count": len(cases), "tree_mismatches": mismatches, "cases": cases}
+
+
+def span_safety_plan(case_id: str, base_commit: str) -> tuple[str, dict[str, Any], bool]:
+    try:
+        case = graph_corpus()["span_safety"][case_id]
+    except KeyError as error:
+        raise RuntimeError(f"unknown span-safety corpus case: {case_id}") from error
+    language = case["language"]
+    steps = case["steps"]
+    should_pass = case["should_pass"]
+    return language, {
+        "plan_version": 2,
+        "plan_id": case_id,
+        "intent": "measure span safety",
+        "base_commit": base_commit,
+        "on_failure": "rollback_plan",
+        "steps": steps,
+    }, should_pass
+
+
+def measure_p8(
+    policy: Mapping[str, Any], work_root: Path, bitcode: Path, options: Mapping[str, Any]
+) -> dict[str, Any]:
+    cases = []
+    corruptions = 0
+    rule_mismatches = 0
+    for case_id in policy["corpus"]["span_safety"]:
+        language = "python" if case_id.startswith("python") else "rust"
+        case = graph_corpus()["span_safety"][case_id]
+        outcomes = {}
+        corrupted = False
+        should_pass = case["should_pass"]
+        expected_digest = None
+        if should_pass:
+            expected_repository = work_root / f"{case_id}-expected"
+            initialize_graph_repository(expected_repository, language, options)
+            for relative, contents in case["expected_files"].items():
+                (expected_repository / relative).write_text(contents, encoding="utf-8")
+            expected_digest = source_tree_digest(expected_repository)
+        for mode in ("dry", "real"):
+            repository = work_root / f"{case_id}-{mode}"
+            base_commit = initialize_graph_repository(repository, language, options)
+            fixture = case.get("fixture")
+            if fixture is not None:
+                source_path = repository / "src/lib.rs"
+                source_path.write_text(fixture, encoding="utf-8")
+                require_success(run(("git", "add", "."), cwd=repository,
+                                    check=False, **options), f"stage {case_id} fixture")
+                require_success(run(("git", "commit", "--quiet", "-m", case_id),
+                                    cwd=repository, check=False, **options),
+                                f"commit {case_id} fixture")
+                base_commit = git_output(repository, options, "rev-parse", "HEAD")
+            _, plan, should_pass = span_safety_plan(case_id, base_commit)
+            plan_path = write_plan(work_root, f"{case_id}-{mode}", plan)
+            before_digest = source_tree_digest(repository)
+            command = [str(bitcode), "plan", "run", str(plan_path)]
+            if mode == "dry":
+                command.append("--dry")
+            result = run(command, cwd=repository, check=False, **options)
+            outcomes[mode] = result.returncode == 0
+            after_digest = source_tree_digest(repository)
+            if mode == "dry" or not should_pass:
+                corrupted |= after_digest != before_digest
+            else:
+                corrupted |= expected_digest is None or after_digest != expected_digest
+        matched = outcomes["dry"] == outcomes["real"] == should_pass
+        rule_mismatches += int(not matched)
+        corruptions += int(corrupted)
+        cases.append({"id": case_id, "expected_pass": should_pass, "passed": outcomes,
+                      "rule_matched": matched, "corrupted": corrupted})
+    return {"case_count": len(cases), "corruptions": corruptions,
+            "rule_mismatches": rule_mismatches, "cases": cases}
+
+
+def resolution_failure_fixture(
+    case_id: str, repository: Path, options: Mapping[str, Any]
+) -> tuple[str, str, dict[str, Any], str]:
+    case = graph_corpus()["resolution_fail_closed"][case_id]
+    if case_id == "ambiguous-node":
+        base_commit = initialize_graph_repository(repository, "python", options)
+        (repository / "src/lib.py").write_text(case["fixture"], encoding="utf-8")
+        require_success(run(("git", "add", "."), cwd=repository, check=False, **options), "stage")
+        require_success(run(("git", "commit", "--quiet", "-m", "ambiguous"),
+                            cwd=repository, check=False, **options), "commit ambiguous")
+        base_commit = git_output(repository, options, "rev-parse", "HEAD")
+    elif case_id == "spanless-node":
+        base_commit = initialize_graph_repository(repository, "rust", options)
+        (repository / case["fixture_path"]).write_text(case["fixture"], encoding="utf-8")
+        require_success(run(("git", "add", "."), cwd=repository, check=False, **options), "stage")
+        require_success(run(("git", "commit", "--quiet", "-m", "empty"),
+                            cwd=repository, check=False, **options), "commit empty")
+        base_commit = git_output(repository, options, "rev-parse", "HEAD")
+    elif case_id == "unsupported-language":
+        base_commit = initialize_graph_repository(repository, "rust", options)
+        (repository / case["fixture_path"]).write_text(case["fixture"], encoding="utf-8")
+        require_success(run(("git", "add", "."), cwd=repository, check=False, **options), "stage")
+        require_success(run(("git", "commit", "--quiet", "-m", "unsupported"),
+                            cwd=repository, check=False, **options), "commit unsupported")
+        base_commit = git_output(repository, options, "rev-parse", "HEAD")
+    else:
+        base_commit = initialize_graph_repository(repository, "rust", options)
+    node = case["node"]
+    plan = {
+        "plan_version": 2, "plan_id": case_id, "intent": "reject resolution",
+        "base_commit": base_commit, "steps": [{"id": "reject-resolution", "edits": [{
+            "node": node,
+            "insert_into_module" if case_id == "spanless-node" else "delete_node":
+                "fn inserted() {}\n" if case_id == "spanless-node" else True,
+        }]}],
+    }
+    return base_commit, node, plan, case["category"]
+
+
+def measure_p9(
+    policy: Mapping[str, Any], work_root: Path, bitcode: Path, options: Mapping[str, Any]
+) -> dict[str, Any]:
+    cases = []
+    unexpected_passes = missing_nodes = missing_steps = missing_categories = 0
+    for case_id in policy["corpus"]["resolution_fail_closed"]:
+        repository = work_root / case_id
+        _, node, plan, expected_category = resolution_failure_fixture(case_id, repository, options)
+        plan_path = write_plan(work_root, case_id, plan)
+        result = run((str(bitcode), "plan", "validate", str(plan_path)),
+                     cwd=repository, check=False, **options)
+        diagnostic = f"{result.stdout}\n{result.stderr}"
+        rejected = result.returncode != 0
+        named_node = node in diagnostic
+        named_step = "reject-resolution" in diagnostic
+        named_category = expected_category in diagnostic
+        unexpected_passes += int(not rejected)
+        missing_nodes += int(not named_node)
+        missing_steps += int(not named_step)
+        missing_categories += int(not named_category)
+        cases.append({"id": case_id, "rejected": rejected, "named_node": named_node,
+                      "named_step": named_step, "named_category": named_category})
+    return {"case_count": len(cases), "unexpected_passes": unexpected_passes,
+            "missing_node_diagnostics": missing_nodes,
+            "missing_step_diagnostics": missing_steps,
+            "missing_category_diagnostics": missing_categories, "cases": cases}
+
+
+def create_graph_mutant_binary(root: Path, bitcode: Path, mutant_id: str) -> Path:
+    mutant = root / f"bitcode-mutant-{mutant_id}"
+    script = f'''#!/usr/bin/env python3
+import json
+import os
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+MUTATION = {mutant_id!r}
+REAL_BITCODE = {str(bitcode)!r}
+ARGS = sys.argv[1:]
+MARKER = "report (dry run, not written to disk):\\n"
+
+is_validate = len(ARGS) >= 2 and ARGS[:2] == ["plan", "validate"]
+is_run = len(ARGS) >= 3 and ARGS[:2] == ["plan", "run"]
+is_dry = is_run and "--dry" in ARGS
+temporary_plan = None
+
+if MUTATION == "accept-resolution-failure" and is_validate:
+    raise SystemExit(0)
+
+if MUTATION == "skip-second-graph-edit" and is_run:
+    plan_path = Path(ARGS[2])
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    changed = False
+    for step in plan.get("steps", []):
+        edits = step.get("edits", [])
+        if len(edits) > 1:
+            step["edits"] = edits[:-1]
+            changed = True
+            break
+    if changed:
+        handle = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", encoding="utf-8", delete=False
+        )
+        json.dump(plan, handle)
+        handle.close()
+        temporary_plan = handle.name
+        ARGS[2] = temporary_plan
+
+completed = subprocess.run(
+    [REAL_BITCODE, *ARGS], check=False, capture_output=True, text=True
+)
+stdout = completed.stdout
+stderr = completed.stderr
+
+if MUTATION == "drop-write-fingerprints" and is_dry and completed.returncode == 0:
+    before, tail = stdout.split(MARKER, 1)
+    report, offset = json.JSONDecoder().raw_decode(tail.lstrip())
+    for step in report.get("steps", []):
+        step.pop("writes", None)
+    stdout = before + MARKER + json.dumps(report) + tail.lstrip()[offset:]
+
+if MUTATION == "corrupt-graph-result" and is_run and not is_dry and completed.returncode == 0:
+    plan = json.loads(Path(ARGS[2]).read_text(encoding="utf-8"))
+    if plan.get("plan_version") == 2:
+        for relative in ("src/lib.rs", "src/lib.py"):
+            target = Path.cwd() / relative
+            if target.is_file():
+                target.write_text(
+                    target.read_text(encoding="utf-8") + "\\n# graph result mutant\\n",
+                    encoding="utf-8",
+                )
+                break
+
+sys.stdout.write(stdout)
+sys.stderr.write(stderr)
+if temporary_plan is not None:
+    os.unlink(temporary_plan)
+raise SystemExit(completed.returncode)
+'''
+    mutant.write_text(script, encoding="utf-8")
+    mutant.chmod(mutant.stat().st_mode | stat.S_IXUSR)
+    return mutant
+
+
+def measure_graph_mutation_adequacy(
+    policy: Mapping[str, Any],
+    work_root: Path,
+    bitcode: Path,
+    options: Mapping[str, Any],
+    baseline_results: Mapping[str, Any],
+) -> dict[str, Any]:
+    work_root.mkdir(parents=True)
+    measurements = {
+        "P6_lowering_determinism": measure_p6,
+        "P7_text_equivalence": measure_p7,
+        "P8_span_safety": measure_p8,
+        "P9_resolution_fail_closed": measure_p9,
+    }
+    baseline_violations = set(evaluate_graph_policy(policy, baseline_results))
+    cases = []
+    survivors = []
+    for property_name, measurement in measurements.items():
+        mutant_id = policy["mutation_adequacy"]["mutants"][property_name]
+        mutant = create_graph_mutant_binary(work_root, bitcode, mutant_id)
+        try:
+            observed = measurement(
+                policy,
+                work_root / property_name.lower(),
+                mutant,
+                options,
+            )
+        except RuntimeError as error:
+            observed = {"measurement_error": str(error)}
+            introduced = [f"{property_name} rejected mutant: {error}"]
+        else:
+            mutant_results = dict(baseline_results)
+            mutant_results[property_name] = observed
+            introduced = sorted(
+                violation
+                for violation in set(evaluate_graph_policy(policy, mutant_results))
+                - baseline_violations
+                if violation.startswith(f"{property_name}.")
+            )
+        killed = bool(introduced)
+        if not killed:
+            survivors.append(property_name)
+        cases.append({
+            "property": property_name,
+            "mutant": mutant_id,
+            "mutant_sha256": sha256_file(mutant),
+            "killed": killed,
+            "violations": introduced,
+            "observed": {key: value for key, value in observed.items() if key != "cases"},
+        })
+    required = policy["mutation_adequacy"]["required_property_count"]
+    maximum = policy["mutation_adequacy"]["max_surviving_mutants"]
+    if len(cases) != required or len(survivors) > maximum:
+        raise RuntimeError(
+            "refusing to emit observation because graph property mutants survived: "
+            + ", ".join(survivors)
+        )
+    return {"required_property_count": required, "survivors": len(survivors), "cases": cases}
+
+
+def evaluate_graph_policy(policy: Mapping[str, Any], results: Mapping[str, Any]) -> list[str]:
+    comparisons = {
+        "P6_lowering_determinism": {
+            "required_plan_count": ("plan_count", "equal"),
+            "required_runs_per_plan": ("runs_per_plan", "equal"),
+            "max_fingerprint_mismatches": ("fingerprint_mismatches", "maximum"),
+        },
+        "P7_text_equivalence": {
+            "required_pair_count": ("pair_count", "equal"),
+            "max_tree_mismatches": ("tree_mismatches", "maximum"),
+        },
+        "P8_span_safety": {
+            "required_case_count": ("case_count", "equal"),
+            "max_corruptions": ("corruptions", "maximum"),
+            "max_rule_mismatches": ("rule_mismatches", "maximum"),
+        },
+        "P9_resolution_fail_closed": {
+            "required_case_count": ("case_count", "equal"),
+            "max_unexpected_passes": ("unexpected_passes", "maximum"),
+            "max_missing_node_diagnostics": ("missing_node_diagnostics", "maximum"),
+            "max_missing_step_diagnostics": ("missing_step_diagnostics", "maximum"),
+            "max_missing_category_diagnostics": (
+                "missing_category_diagnostics", "maximum"
+            ),
+        },
+    }
+    violations = []
+    for property_name, fields in comparisons.items():
+        for threshold_name, (result_name, comparison) in fields.items():
+            expected = policy["properties"][property_name][threshold_name]
+            actual = results[property_name][result_name]
+            passed = actual == expected if comparison == "equal" else actual <= expected
+            if not passed:
+                violations.append(
+                    f"{property_name}.{result_name}={actual} violates {threshold_name}={expected}"
+                )
+    return violations
 
 
 def evaluate_policy(policy: Mapping[str, Any], results: Mapping[str, Any]) -> list[str]:
@@ -893,15 +1548,482 @@ def atomic_write_json(path: Path, document: Mapping[str, Any]) -> None:
     temporary.replace(path)
 
 
-def measure(
-    policy: Mapping[str, Any],
-    bitcode: Path,
-    provenance: Mapping[str, str],
-) -> dict[str, Any]:
-    policy_sha256 = provenance.get("policy_sha256", "")
-    source_commit = provenance.get("source_commit", "")
-    if len(policy_sha256) != 64 or len(source_commit) != 40:
-        raise RuntimeError("refusing to emit observation without complete provenance")
+def observation_metadata(policy: Mapping[str, Any], policy_bytes: bytes, bitcode_sha: str) -> dict[str, Any]:
+    source = run_bounded(
+        ("git", "rev-parse", "HEAD"),
+        cwd=REPO_ROOT,
+        timeout_seconds=30,
+        max_output_bytes=64 * 1024,
+    )
+    source_commit = source.stdout.strip()
+    if (
+        source.returncode != 0
+        or len(source_commit) != 40
+        or any(character not in "0123456789abcdef" for character in source_commit)
+    ):
+        raise RuntimeError("refusing to write observation without source commit")
+    status = run_bounded(
+        ("git", "status", "--porcelain=v1", "--untracked-files=all"),
+        cwd=REPO_ROOT,
+        timeout_seconds=30,
+        max_output_bytes=1024 * 1024,
+    )
+    if status.returncode != 0:
+        raise RuntimeError("refusing to write observation without a successful git status")
+    if status.stdout:
+        raise RuntimeError(
+            "refusing to write observation because the source tree is not the recorded commit"
+        )
+    policy_sha = hashlib.sha256(policy_bytes).hexdigest()
+    if len(policy_sha) != 64:
+        raise RuntimeError("refusing to write observation without policy SHA-256")
+    corpus_bytes = (
+        GRAPH_CORPUS.read_bytes()
+        if policy["policy_id"] == "graph-edit-v2"
+        else json.dumps(policy["corpus"], sort_keys=True, separators=(",", ":")).encode()
+    )
+    return {
+        "policy_sha256": policy_sha,
+        "corpus_manifest_sha256": hashlib.sha256(corpus_bytes).hexdigest(),
+        "host": {
+            "hostname": socket.gethostname(),
+            "platform": platform.platform(),
+            "python": platform.python_version(),
+            "cpu_count": os.cpu_count(),
+        },
+        "run_definition": "fresh-repository-per-case-private-binary-bounded-subprocesses",
+        "tool": {
+            "bitcode_sha256": bitcode_sha,
+            "harness_sha256": sha256_file(Path(__file__)),
+            "harness_support_sha256": sha256_file(REPO_ROOT / "tools" / "harness_support.py"),
+            "source_commit": source_commit,
+            "source_worktree_clean": True,
+            "source_diff_sha256": hashlib.sha256(
+                require_success(
+                    run_bounded(
+                        ("git", "diff", "--binary", "HEAD"),
+                        cwd=REPO_ROOT,
+                        timeout_seconds=30,
+                        max_output_bytes=16 * 1024 * 1024,
+                    ),
+                    "capture measured source diff",
+                ).stdout.encode()
+            ).hexdigest(),
+            "source_snapshot_sha256": source_snapshot_sha256(REPO_ROOT),
+            "argv": ["bitcode", "plan", "validate|run", "<plan>", "[--dry]"],
+        },
+    }
+
+
+def ollama_json(host: str, payload: Mapping[str, Any], timeout: int) -> Mapping[str, Any]:
+    request = urllib.request.Request(
+        f"{host.rstrip('/')}/api/generate",
+        data=json.dumps(payload).encode(),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            parsed = json.loads(response.read())
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
+        raise RuntimeError(f"Ollama authoring request failed: {error}") from error
+    if not isinstance(parsed, dict):
+        raise RuntimeError("Ollama authoring response must be an object")
+    return parsed
+
+
+def initialize_authoring_repository(root: Path, options: Mapping[str, Any]) -> str:
+    require_success(
+        run(("git", "clone", "--quiet", "--no-hardlinks", str(REPO_ROOT), str(root)),
+            cwd=REPO_ROOT, check=False, **options),
+        "clone Bit Code authoring fixture",
+    )
+    return git_output(root, options, "rev-parse", "HEAD")
+
+
+def authoring_edits(case_id: str) -> tuple[str, Mapping[str, Any], Mapping[str, Any]]:
+    language, operation = case_id.split("-", 1)
+    if language == "rust":
+        path = "crates/aether-debugger/src/trace.rs"
+        module = "crate::crates::aether-debugger::src::trace"
+        node = f"{module}::Trace::final_env"
+        old = (
+            "pub fn final_env(&self) -> Env {\n"
+            "        self.steps.last().map(|s| s.env.clone()).unwrap_or_default()\n"
+            "    }"
+        )
+        replacement = (
+            "pub fn final_env(&self) -> Env {\n"
+            "        self.steps.last().map_or_else(Env::new, |step| step.env.clone())\n"
+            "    }"
+        )
+        terminal = (
+            "    pub fn is_empty(&self) -> bool {\n"
+            "        self.steps.is_empty()\n"
+            "    }\n"
+            "}\n"
+        )
+        insertion = "\npub fn trace_fixture_marker() -> usize { 1 }\n"
+        rename_old = "final_env"
+        rename_new = "completed_env"
+    elif language == "python":
+        path = "sample-project/calc.py"
+        module = "crate::sample-project::calc"
+        node = f"{module}::greet"
+        old = "def greet(name):\n    return hello(name)"
+        replacement = "def greet(name):\n    return hello(name).upper()"
+        terminal = (
+            "class ScientificCalculator(Calculator):\n"
+            "    def square(self, value):\n"
+            "        return value * value\n"
+        )
+        insertion = "\n\ndef sample_fixture_marker():\n    return 1\n"
+        rename_old = "greet"
+        rename_new = "welcome_greeting"
+    else:
+        raise RuntimeError(f"unknown authoring task language: {language}")
+
+    if operation == "replace":
+        return language, {"node": node, "replace_node": replacement}, {
+            "path": path, "match": old, "replace": replacement
+        }
+    if operation == "rename":
+        rename_node = (
+            f"{module}::Trace::{rename_old}" if language == "rust" else f"{module}::{rename_old}"
+        )
+        occurrences = 1
+        return language, {"node": rename_node, "rename_node": rename_new}, {
+            "path": path, "match": rename_old, "replace": rename_new,
+            "occurrences": occurrences,
+        }
+    if operation == "delete":
+        return language, {"node": node, "delete_node": True}, {
+            "path": path, "match": old, "replace": ""
+        }
+    if operation == "insert":
+        return language, {"node": module, "insert_into_module": insertion}, {
+            "path": path, "match": terminal, "replace": terminal + insertion
+        }
+    raise RuntimeError(f"unknown authoring task operation: {operation}")
+
+
+def authoring_plan(case_id: str, base_commit: str, *, graph_addressed: bool) -> dict[str, Any]:
+    _, graph_edit, text_edit = authoring_edits(case_id)
+    return {
+        "plan_version": 2 if graph_addressed else 1,
+        "plan_id": f"authoring-{case_id}-{'graph' if graph_addressed else 'text'}",
+        "intent": f"measure authoring cost for {case_id}",
+        "base_commit": base_commit,
+        "on_failure": "rollback_plan",
+        "steps": [{"id": "apply-change", "edits": [graph_edit if graph_addressed else text_edit]}],
+    }
+
+
+def validate_authoring_policy(policy: Mapping[str, Any]) -> Mapping[str, Any]:
+    required_fields = {
+        "schema_version", "policy_id", "model", "model_manifest_sha256",
+        "options", "prompt_protocol", "tasks", "task_intents", "task_sources", "success",
+    }
+    if set(policy) != required_fields:
+        raise RuntimeError("authoring-cost policy has missing or unknown fields")
+    if policy.get("schema_version") != 1 or policy.get("policy_id") != "graph-edit-authoring-cost-v1":
+        raise RuntimeError("unsupported authoring-cost policy")
+    exact_tasks = [
+        f"{language}-{operation}"
+        for language in ("rust", "python")
+        for operation in ("replace", "rename", "delete", "insert")
+    ]
+    if policy.get("tasks") != exact_tasks:
+        raise RuntimeError("authoring-cost policy must contain the exact eight-task corpus")
+    if policy.get("task_intents") != AUTHORING_TASK_INTENTS:
+        raise RuntimeError("authoring-cost task intents differ from the precommitment")
+    if policy.get("prompt_protocol") != AUTHORING_PROMPT_PROTOCOL:
+        raise RuntimeError("authoring-cost prompt protocol differs from the precommitment")
+    if policy.get("model") != AUTHORING_MODEL:
+        raise RuntimeError("authoring-cost model differs from the precommitment")
+    exact_success = {
+        "minimum_common_successes": 4,
+        "require_graph_solves_every_text_success": True,
+        "require_graph_total_input_tokens_lower": True,
+    }
+    if policy.get("success") != exact_success:
+        raise RuntimeError("authoring-cost success thresholds differ from the precommitment")
+    exact_options = {
+        "temperature": 0,
+        "seed": 42,
+        "num_predict": 1024,
+        "max_attempts": 3,
+        "timeout_seconds": 300,
+        "max_repair_diagnostic_chars": 2048,
+    }
+    if policy.get("options") != exact_options:
+        raise RuntimeError("authoring-cost sampling and repair options differ from policy")
+    manifest = policy.get("model_manifest_sha256")
+    if not isinstance(manifest, str) or len(manifest) != 64 or any(
+        character not in "0123456789abcdef" for character in manifest
+    ):
+        raise RuntimeError("authoring-cost model manifest must be an exact SHA-256")
+    if policy.get("task_sources") != AUTHORING_TASK_SOURCES:
+        raise RuntimeError("authoring-cost task sources differ from the precommitment")
+    return policy
+
+
+def authored_plan_shape_error(
+    generated: Any, canonical: Mapping[str, Any], arm: str
+) -> str | None:
+    if not isinstance(generated, dict):
+        return "plan output is not an object"
+    if set(generated) != set(canonical):
+        return "plan envelope has missing or extra fields"
+    if generated.get("plan_version") != canonical["plan_version"]:
+        return f"{arm} arm used the wrong plan_version"
+    if generated.get("base_commit") != canonical["base_commit"]:
+        return "plan used the wrong base_commit"
+    if generated.get("on_failure") != "rollback_plan":
+        return "plan must use rollback_plan"
+    steps = generated.get("steps")
+    if not isinstance(steps, list) or len(steps) != 1 or not isinstance(steps[0], dict):
+        return "plan must contain exactly one step"
+    if set(steps[0]) != {"id", "edits"}:
+        return "authoring measurement forbids checks and extra step fields"
+    edits = steps[0].get("edits")
+    if not isinstance(edits, list) or len(edits) != 1 or not isinstance(edits[0], dict):
+        return "plan must contain exactly one edit"
+    expected = canonical["steps"][0]["edits"][0]
+    if set(edits[0]) != set(expected):
+        return f"{arm} arm used an unpermitted edit shape"
+    address = "node" if arm == "graph" else "path"
+    if edits[0].get(address) != expected[address]:
+        return f"{arm} arm addressed the wrong {address}"
+    if arm == "graph" and "path" in edits[0]:
+        return "graph arm used a text-addressed edit"
+    if arm == "text" and "node" in edits[0]:
+        return "text arm used a graph-addressed edit"
+    return None
+
+
+def run_authoring_cost(args: argparse.Namespace) -> int:
+    policy_bytes = AUTHORING_POLICY.read_bytes()
+    policy = validate_authoring_policy(json.loads(policy_bytes))
+    options = policy["options"]
+    prompt_protocol = policy["prompt_protocol"]
+    try:
+        with urllib.request.urlopen(f"{args.ollama_host.rstrip('/')}/api/tags", timeout=5) as response:
+            tags = json.loads(response.read())
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
+        raise RuntimeError(f"authoring-cost measurement requires reachable Ollama: {error}") from error
+    models = [model.get("name") for model in tags.get("models", []) if isinstance(model, dict)]
+    if policy["model"] not in models:
+        raise RuntimeError(
+            f"authoring-cost measurement requires exact model {policy['model']!r}; available={models!r}"
+        )
+    manifest_digest = tags["models"][models.index(policy["model"])].get("digest")
+    if not isinstance(manifest_digest, str) or not manifest_digest:
+        raise RuntimeError("refusing authoring-cost measurement without model manifest digest")
+    normalized_manifest = manifest_digest.removeprefix("sha256:")
+    if normalized_manifest != policy["model_manifest_sha256"]:
+        raise RuntimeError(
+            "refusing authoring-cost measurement with a model manifest that differs from policy"
+        )
+
+    execution = {"timeout_seconds": 120.0, "max_output_bytes": 1024 * 1024}
+    bitcode = args.bitcode.resolve()
+    if not bitcode.is_file():
+        raise RuntimeError(f"authoring-cost Bit Code binary does not exist: {bitcode}")
+    results = []
+    status = require_success(
+        run_bounded(("git", "status", "--porcelain=v1", "--untracked-files=all"),
+                    cwd=REPO_ROOT, timeout_seconds=30, max_output_bytes=1024 * 1024),
+        "check authoring-cost source worktree",
+    )
+    for source in policy["task_sources"].values():
+        if sha256_file(REPO_ROOT / source["path"]) != source["sha256"]:
+            raise RuntimeError(f"authoring task source drifted: {source['path']}")
+    with tempfile.TemporaryDirectory(prefix="bitcode-authoring-cost-") as directory:
+        work_root = Path(directory)
+        for case_id in policy["tasks"]:
+            arms = {}
+            for arm in ("text", "graph"):
+                language, _, _ = authoring_edits(case_id)
+                expected_repository = work_root / f"{case_id}-{arm}-expected"
+                expected_base = initialize_authoring_repository(expected_repository, execution)
+                expected_plan = authoring_plan(
+                    case_id, expected_base, graph_addressed=arm == "graph"
+                )
+                expected_plan_path = write_plan(
+                    work_root, f"expected-{case_id}-{arm}", expected_plan
+                )
+                require_success(
+                    run((str(bitcode), "plan", "run", str(expected_plan_path)),
+                        cwd=expected_repository, check=False, **execution),
+                    f"authoring expected tree {case_id} {arm}",
+                )
+                expected_digest = source_tree_digest(expected_repository)
+                total_tokens = 0
+                attempts = []
+                success = False
+                last_diagnostic = ""
+                for ordinal in range(1, options["max_attempts"] + 1):
+                    repository = work_root / f"{case_id}-{arm}-{ordinal}"
+                    base_commit = initialize_authoring_repository(repository, execution)
+                    canonical = authoring_plan(case_id, base_commit, graph_addressed=arm == "graph")
+                    allowed_edit = canonical["steps"][0]["edits"][0]
+                    operation = case_id.split("-", 1)[1]
+                    if arm == "text":
+                        context = json.dumps({
+                            "path": allowed_edit["path"],
+                            "projection": (repository / allowed_edit["path"]).read_text(
+                                encoding="utf-8"
+                            ),
+                        })
+                        edit_schema = {
+                            "path": "<project-relative path>",
+                            "match": "<exact existing bytes>",
+                            "replace": "<replacement bytes>",
+                            "occurrences": "<positive integer>",
+                        }
+                    else:
+                        context = json.dumps({
+                            "node": allowed_edit["node"],
+                            "language": language,
+                            "node_kind": "module" if operation == "insert" else "function",
+                        })
+                        graph_fields = {
+                            "replace": {"replace_node": "<complete replacement>"},
+                            "rename": {"rename_node": "<new identifier>"},
+                            "delete": {"delete_node": True},
+                            "insert": {"insert_into_module": "<source to append>"},
+                        }
+                        edit_schema = {"node": "<exact semantic path>", **graph_fields[operation]}
+                    prompt = prompt_protocol["initial_template"].format(
+                        task=case_id,
+                        intent=policy["task_intents"][case_id],
+                        version=1 if arm == "text" else 2,
+                        context=context,
+                        schema=json.dumps(edit_schema, sort_keys=True),
+                        base_commit=base_commit,
+                    )
+                    if attempts:
+                        prompt += prompt_protocol["repair_suffix"].format(
+                            diagnostic=last_diagnostic[
+                                : options["max_repair_diagnostic_chars"]
+                            ]
+                        )
+                    if arm == "graph":
+                        pinned_projection = (
+                            repository / policy["task_sources"][language]["path"]
+                        ).read_text(encoding="utf-8")
+                        if pinned_projection in prompt:
+                            raise RuntimeError(
+                                f"graph authoring prompt leaked the {language} target projection"
+                            )
+                    response = ollama_json(
+                        args.ollama_host,
+                        {
+                            "model": policy["model"],
+                            "prompt": prompt,
+                            "stream": False,
+                            "format": "json",
+                            "options": {
+                                "temperature": options["temperature"],
+                                "seed": options["seed"],
+                                "num_predict": options["num_predict"],
+                            },
+                        },
+                        options["timeout_seconds"],
+                    )
+                    tokens = response.get("prompt_eval_count")
+                    if type(tokens) is not int or tokens < 0:
+                        raise RuntimeError("Ollama response omitted prompt_eval_count")
+                    total_tokens += tokens
+                    try:
+                        generated = json.loads(response.get("response", ""))
+                    except (json.JSONDecodeError, TypeError) as error:
+                        last_diagnostic = str(error)
+                        attempts.append({"attempt": ordinal, "tokens": tokens, "error": str(error)})
+                        continue
+                    shape_error = authored_plan_shape_error(generated, canonical, arm)
+                    if shape_error is not None:
+                        last_diagnostic = shape_error
+                        attempts.append({
+                            "attempt": ordinal,
+                            "tokens": tokens,
+                            "success": False,
+                            "shape_error": shape_error,
+                        })
+                        continue
+                    plan_path = write_plan(work_root, f"authored-{case_id}-{arm}-{ordinal}", generated)
+                    validated = run((str(bitcode), "plan", "validate", str(plan_path)),
+                                    cwd=repository, check=False, **execution)
+                    executed = (
+                        run((str(bitcode), "plan", "run", str(plan_path)),
+                            cwd=repository, check=False, **execution)
+                        if validated.returncode == 0
+                        else None
+                    )
+                    tree_matched = (
+                        executed is not None
+                        and executed.returncode == 0
+                        and source_tree_digest(repository) == expected_digest
+                    )
+                    success = validated.returncode == 0 and tree_matched
+                    if validated.returncode != 0:
+                        last_diagnostic = f"{validated.stdout}\n{validated.stderr}".strip()
+                    elif not tree_matched:
+                        last_diagnostic = "plan ran but the resulting tree did not match the task"
+                    attempts.append({"attempt": ordinal, "tokens": tokens, "success": success,
+                                     "validated": validated.returncode == 0,
+                                     "tree_matched": tree_matched})
+                    if success:
+                        break
+                arms[arm] = {"success": success, "input_tokens": total_tokens,
+                             "expected_tree_sha256": expected_digest, "attempts": attempts}
+            if arms["text"]["expected_tree_sha256"] != arms["graph"]["expected_tree_sha256"]:
+                raise RuntimeError(f"authoring task {case_id} has non-equivalent arm fixtures")
+            results.append({"id": case_id, "arms": arms})
+
+    common = [case for case in results if case["arms"]["text"]["success"] and case["arms"]["graph"]["success"]]
+    text_successes = {case["id"] for case in results if case["arms"]["text"]["success"]}
+    graph_successes = {case["id"] for case in results if case["arms"]["graph"]["success"]}
+    text_tokens = sum(case["arms"]["text"]["input_tokens"] for case in results)
+    graph_tokens = sum(case["arms"]["graph"]["input_tokens"] for case in results)
+    passed = (
+        len(common) >= policy["success"]["minimum_common_successes"]
+        and text_successes <= graph_successes
+        and graph_tokens < text_tokens
+    )
+    observation = {
+        "schema_version": 1,
+        "policy_id": policy["policy_id"],
+        "policy_sha256": hashlib.sha256(policy_bytes).hexdigest(),
+        "model": policy["model"],
+        "model_manifest_sha256": normalized_manifest,
+        "bitcode_sha256": sha256_file(bitcode),
+        "source_commit": require_success(
+            run_bounded(("git", "rev-parse", "HEAD"), cwd=REPO_ROOT,
+                        timeout_seconds=30, max_output_bytes=64 * 1024),
+            "resolve authoring-cost source commit",
+        ).stdout.strip(),
+        "source_worktree_clean": not status.stdout,
+        "source_diff_sha256": hashlib.sha256(
+            require_success(
+                run_bounded(("git", "diff", "--binary", "HEAD"), cwd=REPO_ROOT,
+                            timeout_seconds=30, max_output_bytes=16 * 1024 * 1024),
+                "capture authoring-cost source diff",
+            ).stdout.encode()
+        ).hexdigest(),
+        "source_snapshot_sha256": source_snapshot_sha256(REPO_ROOT),
+        "results": results,
+        "summary": {"passed": passed, "common_successes": len(common),
+                    "text_input_tokens": text_tokens, "graph_input_tokens": graph_tokens},
+    }
+    output = args.output or REPO_ROOT / "docs" / "authoring-cost-observation.json"
+    atomic_write_json(output.resolve(), observation)
+    print(f"authoring cost: {'PASS' if passed else 'FAIL'}; observation: {output.resolve()}")
+    return 0 if passed else 1
+
+
+def measure(policy: Mapping[str, Any], policy_bytes: bytes, bitcode: Path) -> dict[str, Any]:
     execution = policy["execution"]
     options = {
         "timeout_seconds": float(execution["command_timeout_seconds"]),
@@ -915,64 +2037,101 @@ def measure(
         measured_bitcode.chmod(0o500)
         if sha256_file(measured_bitcode) != original_sha:
             raise RuntimeError("private Bit Code copy differs from the supplied binary")
-        results = {
-            "P1_dry_equals_real": measure_p1(policy, root / "p1", measured_bitcode, options),
-            "P2_no_vacuous_pass": measure_p2(policy, root / "p2", measured_bitcode, options),
-            "P3_fail_closed": measure_p3(policy, root / "p3", measured_bitcode, options),
-            "P4_rollback_fidelity": measure_p4(policy, root / "p4", measured_bitcode, options),
-            "P5_error_legibility": measure_p5(policy, root / "p5", measured_bitcode, options),
-        }
-        mutation_adequacy = measure_mutation_adequacy(
-            policy,
-            root / "mutation-adequacy",
-            measured_bitcode,
-            options,
-            results,
-        )
+        if policy["policy_id"] == "plan-executor-v1":
+            results = {
+                "P1_dry_equals_real": measure_p1(policy, root / "p1", measured_bitcode, options),
+                "P2_no_vacuous_pass": measure_p2(policy, root / "p2", measured_bitcode, options),
+                "P3_fail_closed": measure_p3(policy, root / "p3", measured_bitcode, options),
+                "P4_rollback_fidelity": measure_p4(policy, root / "p4", measured_bitcode, options),
+                "P5_error_legibility": measure_p5(policy, root / "p5", measured_bitcode, options),
+            }
+            mutation_adequacy = measure_mutation_adequacy(
+                policy,
+                root / "mutation-adequacy",
+                measured_bitcode,
+                options,
+                results,
+            )
+        else:
+            results = {
+                "P6_lowering_determinism": measure_p6(
+                    policy, root / "p6", measured_bitcode, options
+                ),
+                "P7_text_equivalence": measure_p7(
+                    policy, root / "p7", measured_bitcode, options
+                ),
+                "P8_span_safety": measure_p8(policy, root / "p8", measured_bitcode, options),
+                "P9_resolution_fail_closed": measure_p9(
+                    policy, root / "p9", measured_bitcode, options
+                ),
+            }
+            mutation_adequacy = measure_graph_mutation_adequacy(
+                policy,
+                root / "mutation-adequacy",
+                measured_bitcode,
+                options,
+                results,
+            )
         if sha256_file(measured_bitcode) != original_sha:
             raise RuntimeError("private Bit Code copy changed during measurement")
     if sha256_file(bitcode) != original_sha:
         raise RuntimeError("supplied Bit Code binary changed during measurement")
-    violations = evaluate_policy(policy, results)
-    return {
+    violations = (
+        evaluate_policy(policy, results)
+        if policy["policy_id"] == "plan-executor-v1"
+        else evaluate_graph_policy(policy, results)
+    )
+    observation = {
         "schema_version": 1,
         "policy_id": policy["policy_id"],
-        "policy_sha256": policy_sha256,
         "bitcode_sha256": original_sha,
-        "tool": {
-            "bitcode_sha256": original_sha,
-            "source_commit": source_commit,
-        },
         "results": results,
         "mutation_adequacy": mutation_adequacy,
         "policy": {"passed": not violations, "violations": violations},
     }
+    observation.update(observation_metadata(policy, policy_bytes, original_sha))
+    return observation
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bitcode", type=Path, required=True, help="exact Bit Code binary to measure")
     parser.add_argument("--policy", type=Path, default=DEFAULT_POLICY, help="precommitted policy JSON")
-    parser.add_argument("--output", type=Path, default=DEFAULT_OBSERVATION, help="observation JSON path")
+    parser.add_argument("--output", type=Path, help="observation JSON path")
     parser.add_argument("--json", action="store_true", help="also print the full observation")
+    parser.add_argument(
+        "--authoring-cost",
+        action="store_true",
+        help="run the separately precommitted local-model authoring-cost measurement",
+    )
+    parser.add_argument("--ollama-host", default="http://127.0.0.1:11434")
     args = parser.parse_args()
+    if args.authoring_cost:
+        return run_authoring_cost(args)
     bitcode = args.bitcode.resolve()
     if not bitcode.is_file():
         parser.error(f"Bit Code binary does not exist: {bitcode}")
     policy_path = args.policy.resolve()
-    policy = validate_policy(json.loads(policy_path.read_text(encoding="utf-8")))
+    policy_bytes = policy_path.read_bytes()
+    policy = validate_selected_policy(json.loads(policy_bytes))
     provenance = observation_provenance(policy_path)
-    observation = measure(policy, bitcode, provenance)
-    if not observation.get("policy_sha256") or not observation.get("tool", {}).get(
-        "source_commit"
+    output = args.output or (
+        GRAPH_OBSERVATION if policy["policy_id"] == "graph-edit-v2" else DEFAULT_OBSERVATION
+    )
+    observation = measure(policy, policy_bytes, bitcode)
+    if (
+        observation.get("policy_sha256") != provenance["policy_sha256"]
+        or observation.get("tool", {}).get("source_commit") != provenance["source_commit"]
     ):
-        raise RuntimeError("refusing to write observation without complete provenance")
-    atomic_write_json(args.output.resolve(), observation)
+        raise RuntimeError("refusing to write observation with inconsistent provenance")
+    if not observation.get("policy_sha256") or not observation.get("tool", {}).get("source_commit"):
+        raise RuntimeError("refusing to write incomplete observation metadata")
+    atomic_write_json(output.resolve(), observation)
     if args.json:
         print(json.dumps(observation, indent=2, sort_keys=True))
     print(
         f"plan executor policy: {'PASS' if observation['policy']['passed'] else 'FAIL'}; "
-        f"observation: {args.output.resolve()}"
+        f"observation: {output.resolve()}"
     )
     for violation in observation["policy"]["violations"]:
         print(f"  - {violation}", file=sys.stderr)

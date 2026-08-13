@@ -7,15 +7,19 @@ from pathlib import Path
 
 from tools.plan_executor_oracle import (
     DEFAULT_POLICY,
+    GRAPH_POLICY,
     atomic_write_json,
+    create_graph_mutant_binary,
     create_mutant_binary,
+    evaluate_graph_policy,
     evaluate_policy,
+    graph_corpus,
     malformed_plan,
-    measure,
     observation_provenance,
     outcome_projection,
     parse_dry_report,
     run,
+    validate_graph_policy,
     validate_policy,
 )
 
@@ -47,6 +51,41 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
         shortened["corpus"]["fail_closed"].pop()
         with self.assertRaisesRegex(RuntimeError, "14 unique ids"):
             validate_policy(shortened)
+
+    def test_graph_policy_binds_exact_zero_tolerance_corpus_and_mutants(self):
+        policy = validate_graph_policy(
+            json.loads(GRAPH_POLICY.read_text(encoding="utf-8"))
+        )
+
+        self.assertEqual(policy["properties"]["P8_span_safety"]["required_case_count"], 6)
+        self.assertEqual(policy["mutation_adequacy"]["required_property_count"], 4)
+        self.assertEqual(policy["mutation_adequacy"]["max_surviving_mutants"], 0)
+        for thresholds in policy["properties"].values():
+            for field, value in thresholds.items():
+                if not field.startswith("required_"):
+                    self.assertEqual(value, 0, field)
+        for case in graph_corpus()["span_safety"].values():
+            self.assertIn("expected_files", case)
+            if case["should_pass"]:
+                self.assertTrue(case["expected_files"])
+
+    def test_graph_policy_rejects_threshold_corpus_and_mutant_drift(self):
+        policy = json.loads(GRAPH_POLICY.read_text(encoding="utf-8"))
+
+        weakened = copy.deepcopy(policy)
+        weakened["properties"]["P8_span_safety"]["max_corruptions"] = 1
+        with self.assertRaisesRegex(RuntimeError, "zero tolerance"):
+            validate_graph_policy(weakened)
+
+        shortened = copy.deepcopy(policy)
+        shortened["corpus"]["span_safety"].pop()
+        with self.assertRaisesRegex(RuntimeError, "6 unique ids"):
+            validate_graph_policy(shortened)
+
+        changed_mutant = copy.deepcopy(policy)
+        changed_mutant["mutation_adequacy"]["mutants"]["P8_span_safety"] = "noop"
+        with self.assertRaisesRegex(RuntimeError, "mutation adequacy"):
+            validate_graph_policy(changed_mutant)
 
     def test_dry_report_parser_ignores_trailing_human_output(self):
         report = parse_dry_report(
@@ -132,10 +171,6 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
 
             self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"second": True})
 
-    def test_measurement_refuses_incomplete_provenance_before_running(self):
-        with self.assertRaisesRegex(RuntimeError, "complete provenance"):
-            measure(self.policy, Path("unused-bitcode"), {})
-
     def test_vacuity_mutant_is_an_executable_broken_binary(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -151,6 +186,55 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
             )
 
         self.assertEqual(result.returncode, 0)
+
+    def test_resolution_mutant_is_an_executable_broken_binary(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            real = root / "real-bitcode"
+            real.write_text("#!/bin/sh\nexit 99\n", encoding="utf-8")
+            mutant = create_graph_mutant_binary(
+                root, real, "accept-resolution-failure"
+            )
+            result = run(
+                (str(mutant), "plan", "validate", "unused.json"),
+                cwd=root,
+                timeout_seconds=5,
+                max_output_bytes=1024,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 0)
+
+    def test_graph_policy_evaluation_reports_exact_threshold_violation(self):
+        policy = json.loads(GRAPH_POLICY.read_text(encoding="utf-8"))
+        results = {
+            "P6_lowering_determinism": {
+                "plan_count": 8,
+                "runs_per_plan": 3,
+                "fingerprint_mismatches": 1,
+            },
+            "P7_text_equivalence": {"pair_count": 8, "tree_mismatches": 0},
+            "P8_span_safety": {
+                "case_count": 6,
+                "corruptions": 0,
+                "rule_mismatches": 0,
+            },
+            "P9_resolution_fail_closed": {
+                "case_count": 4,
+                "unexpected_passes": 0,
+                "missing_node_diagnostics": 0,
+                "missing_step_diagnostics": 0,
+                "missing_category_diagnostics": 0,
+            },
+        }
+
+        self.assertEqual(
+            evaluate_graph_policy(policy, results),
+            [
+                "P6_lowering_determinism.fingerprint_mismatches=1 violates "
+                "max_fingerprint_mismatches=0"
+            ],
+        )
 
     def test_provenance_binds_policy_and_clean_source_commit(self):
         with tempfile.TemporaryDirectory() as directory:

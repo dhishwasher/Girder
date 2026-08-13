@@ -1,0 +1,566 @@
+{
+  "bitcode_sha256": "a568bcd7f5db29b58f3f863995bc1b1f8ed241dfc10fa4c8241ec5ce70f556c2",
+  "corpus_manifest_sha256": "ca3ae1d878a354a0218bef33cee497a1f0111df1be60dbe91ee1e7287fcb3fed",
+  "host": {
+    "cpu_count": 2,
+    "hostname": "penguin",
+    "platform": "Linux-6.6.119-09283-g9c138e0af8c3-x86_64-with-glibc2.36",
+    "python": "3.11.2"
+  },
+  "mutation_adequacy": {
+    "cases": [
+      {
+        "killed": true,
+        "mutant": "drop-write-fingerprints",
+        "mutant_sha256": "9e5a5c293039a273dfe062608a0fc9d693cf72896e2102032051c16eb5813726",
+        "observed": {
+          "measurement_error": "P6 rust-replace omitted non-empty write fingerprints"
+        },
+        "property": "P6_lowering_determinism",
+        "violations": [
+          "P6_lowering_determinism rejected mutant: P6 rust-replace omitted non-empty write fingerprints"
+        ]
+      },
+      {
+        "killed": true,
+        "mutant": "corrupt-graph-result",
+        "mutant_sha256": "9e0a4d6039bb85ffd35b4e5b31bd19e8c80c13dfb377e45ccffd2604dbc67e69",
+        "observed": {
+          "pair_count": 8,
+          "tree_mismatches": 8
+        },
+        "property": "P7_text_equivalence",
+        "violations": [
+          "P7_text_equivalence.tree_mismatches=8 violates max_tree_mismatches=0"
+        ]
+      },
+      {
+        "killed": true,
+        "mutant": "skip-second-graph-edit",
+        "mutant_sha256": "30142b073aa48f6a22ed92aeefff0dff2f0c4a32249101f9f2d374ef3a0d2fc5",
+        "observed": {
+          "case_count": 6,
+          "corruptions": 3,
+          "rule_mismatches": 0
+        },
+        "property": "P8_span_safety",
+        "violations": [
+          "P8_span_safety.corruptions=3 violates max_corruptions=0"
+        ]
+      },
+      {
+        "killed": true,
+        "mutant": "accept-resolution-failure",
+        "mutant_sha256": "a56997424a86aa729f2dbaf9eb54afc7836cee7ecc3ef912b44846ea273c362e",
+        "observed": {
+          "case_count": 4,
+          "missing_category_diagnostics": 4,
+          "missing_node_diagnostics": 4,
+          "missing_step_diagnostics": 4,
+          "unexpected_passes": 4
+        },
+        "property": "P9_resolution_fail_closed",
+        "violations": [
+          "P9_resolution_fail_closed.missing_category_diagnostics=4 violates max_missing_category_diagnostics=0",
+          "P9_resolution_fail_closed.missing_node_diagnostics=4 violates max_missing_node_diagnostics=0",
+          "P9_resolution_fail_closed.missing_step_diagnostics=4 violates max_missing_step_diagnostics=0",
+          "P9_resolution_fail_closed.unexpected_passes=4 violates max_unexpected_passes=0"
+        ]
+      }
+    ],
+    "required_property_count": 4,
+    "survivors": 0
+  },
+  "policy": {
+    "passed": true,
+    "violations": []
+  },
+  "policy_id": "graph-edit-v2",
+  "policy_sha256": "9836b933a98c44be81ac3b0bbc4f490ac9792e3d19c56edd2fbd7ae1fc29994f",
+  "results": {
+    "P6_lowering_determinism": {
+      "cases": [
+        {
+          "fingerprints": [
+            [
+              {
+                "after_bytes": 31,
+                "after_sha256": "b2efb37e4568b240db3143434e54336a5c668c76175603e12d09c026a0a4d31c",
+                "before_bytes": 19,
+                "before_sha256": "e45a7b28cf2ff0b7caa32e507962a415261ebac1f6931e4f6632eea8f6081629",
+                "path": "src/doomed.rs"
+              },
+              {
+                "after_bytes": 94,
+                "after_sha256": "4270621bfa2acb643897cfddef782f180318cceae4ccae030e605376fbe85640",
+                "before_bytes": 94,
+                "before_sha256": "20cd9516e47bfb8d2022e58087d60ccbb950b8ade5f42e619b32a9cf21a26606",
+                "path": "src/lib.rs"
+              }
+            ],
+            [
+              {
+                "after_bytes": 31,
+                "after_sha256": "b2efb37e4568b240db3143434e54336a5c668c76175603e12d09c026a0a4d31c",
+                "before_bytes": 19,
+                "before_sha256": "e45a7b28cf2ff0b7caa32e507962a415261ebac1f6931e4f6632eea8f6081629",
+                "path": "src/doomed.rs"
+              },
+              {
+                "after_bytes": 94,
+                "after_sha256": "4270621bfa2acb643897cfddef782f180318cceae4ccae030e605376fbe85640",
+                "before_bytes": 94,
+                "before_sha256": "20cd9516e47bfb8d2022e58087d60ccbb950b8ade5f42e619b32a9cf21a26606",
+                "path": "src/lib.rs"
+              }
+            ],
+            [
+              {
+                "after_bytes": 31,
+                "after_sha256": "b2efb37e4568b240db3143434e54336a5c668c76175603e12d09c026a0a4d31c",
+                "before_bytes": 19,
+                "before_sha256": "e45a7b28cf2ff0b7caa32e507962a415261ebac1f6931e4f6632eea8f6081629",
+                "path": "src/doomed.rs"
+              },
+              {
+                "after_bytes": 94,
+                "after_sha256": "4270621bfa2acb643897cfddef782f180318cceae4ccae030e605376fbe85640",
+                "before_bytes": 94,
+                "before_sha256": "20cd9516e47bfb8d2022e58087d60ccbb950b8ade5f42e619b32a9cf21a26606",
+                "path": "src/lib.rs"
+              }
+            ]
+          ],
+          "id": "rust-replace",
+          "matched": true
+        },
+        {
+          "fingerprints": [
+            [
+              {
+                "after_bytes": 96,
+                "after_sha256": "d7f2b528c63000645d859c206d7f6a78a894454d26932d5dd429dac25fb40307",
+                "before_bytes": 94,
+                "before_sha256": "20cd9516e47bfb8d2022e58087d60ccbb950b8ade5f42e619b32a9cf21a26606",
+                "path": "src/lib.rs"
+              }
+            ],
+            [
+              {
+                "after_bytes": 96,
+                "after_sha256": "d7f2b528c63000645d859c206d7f6a78a894454d26932d5dd429dac25fb40307",
+                "before_bytes": 94,
+                "before_sha256": "20cd9516e47bfb8d2022e58087d60ccbb950b8ade5f42e619b32a9cf21a26606",
+                "path": "src/lib.rs"
+              }
+            ],
+            [
+              {
+                "after_bytes": 96,
+                "after_sha256": "d7f2b528c63000645d859c206d7f6a78a894454d26932d5dd429dac25fb40307",
+                "before_bytes": 94,
+                "before_sha256": "20cd9516e47bfb8d2022e58087d60ccbb950b8ade5f42e619b32a9cf21a26606",
+                "path": "src/lib.rs"
+              }
+            ]
+          ],
+          "id": "rust-rename",
+          "matched": true
+        },
+        {
+          "fingerprints": [
+            [
+              {
+                "after_bytes": 1,
+                "after_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+                "before_bytes": 19,
+                "before_sha256": "e45a7b28cf2ff0b7caa32e507962a415261ebac1f6931e4f6632eea8f6081629",
+                "path": "src/doomed.rs"
+              }
+            ],
+            [
+              {
+                "after_bytes": 1,
+                "after_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+                "before_bytes": 19,
+                "before_sha256": "e45a7b28cf2ff0b7caa32e507962a415261ebac1f6931e4f6632eea8f6081629",
+                "path": "src/doomed.rs"
+              }
+            ],
+            [
+              {
+                "after_bytes": 1,
+                "after_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+                "before_bytes": 19,
+                "before_sha256": "e45a7b28cf2ff0b7caa32e507962a415261ebac1f6931e4f6632eea8f6081629",
+                "path": "src/doomed.rs"
+              }
+            ]
+          ],
+          "id": "rust-delete",
+          "matched": true
+        },
+        {
+          "fingerprints": [
+            [
+              {
+                "after_bytes": 126,
+                "after_sha256": "41b609c37cc01df13016538aa6a7bb2ba89240adf5e46e9af7c059663e51a376",
+                "before_bytes": 94,
+                "before_sha256": "20cd9516e47bfb8d2022e58087d60ccbb950b8ade5f42e619b32a9cf21a26606",
+                "path": "src/lib.rs"
+              }
+            ],
+            [
+              {
+                "after_bytes": 126,
+                "after_sha256": "41b609c37cc01df13016538aa6a7bb2ba89240adf5e46e9af7c059663e51a376",
+                "before_bytes": 94,
+                "before_sha256": "20cd9516e47bfb8d2022e58087d60ccbb950b8ade5f42e619b32a9cf21a26606",
+                "path": "src/lib.rs"
+              }
+            ],
+            [
+              {
+                "after_bytes": 126,
+                "after_sha256": "41b609c37cc01df13016538aa6a7bb2ba89240adf5e46e9af7c059663e51a376",
+                "before_bytes": 94,
+                "before_sha256": "20cd9516e47bfb8d2022e58087d60ccbb950b8ade5f42e619b32a9cf21a26606",
+                "path": "src/lib.rs"
+              }
+            ]
+          ],
+          "id": "rust-insert",
+          "matched": true
+        },
+        {
+          "fingerprints": [
+            [
+              {
+                "after_bytes": 90,
+                "after_sha256": "a69fd477f47cb19344e98addef445a829f1ae6e7f8477bcea5c53271e212dfc8",
+                "before_bytes": 90,
+                "before_sha256": "36d364d6afde58547e14268642894daf84437706c24f0a92363f221c8807bff4",
+                "path": "src/lib.py"
+              }
+            ],
+            [
+              {
+                "after_bytes": 90,
+                "after_sha256": "a69fd477f47cb19344e98addef445a829f1ae6e7f8477bcea5c53271e212dfc8",
+                "before_bytes": 90,
+                "before_sha256": "36d364d6afde58547e14268642894daf84437706c24f0a92363f221c8807bff4",
+                "path": "src/lib.py"
+              }
+            ],
+            [
+              {
+                "after_bytes": 90,
+                "after_sha256": "a69fd477f47cb19344e98addef445a829f1ae6e7f8477bcea5c53271e212dfc8",
+                "before_bytes": 90,
+                "before_sha256": "36d364d6afde58547e14268642894daf84437706c24f0a92363f221c8807bff4",
+                "path": "src/lib.py"
+              }
+            ]
+          ],
+          "id": "python-replace",
+          "matched": true
+        },
+        {
+          "fingerprints": [
+            [
+              {
+                "after_bytes": 92,
+                "after_sha256": "02f0650d8892df1207d16e025766199646a3ed74b10fc36cc226687e8ecd15fa",
+                "before_bytes": 90,
+                "before_sha256": "36d364d6afde58547e14268642894daf84437706c24f0a92363f221c8807bff4",
+                "path": "src/lib.py"
+              }
+            ],
+            [
+              {
+                "after_bytes": 92,
+                "after_sha256": "02f0650d8892df1207d16e025766199646a3ed74b10fc36cc226687e8ecd15fa",
+                "before_bytes": 90,
+                "before_sha256": "36d364d6afde58547e14268642894daf84437706c24f0a92363f221c8807bff4",
+                "path": "src/lib.py"
+              }
+            ],
+            [
+              {
+                "after_bytes": 92,
+                "after_sha256": "02f0650d8892df1207d16e025766199646a3ed74b10fc36cc226687e8ecd15fa",
+                "before_bytes": 90,
+                "before_sha256": "36d364d6afde58547e14268642894daf84437706c24f0a92363f221c8807bff4",
+                "path": "src/lib.py"
+              }
+            ]
+          ],
+          "id": "python-rename",
+          "matched": true
+        },
+        {
+          "fingerprints": [
+            [
+              {
+                "after_bytes": 1,
+                "after_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+                "before_bytes": 23,
+                "before_sha256": "e55c097a64aeed96ce1b994f4df0ec14c813ed42da1a4db1010dbad6ca51d8cf",
+                "path": "src/doomed.py"
+              }
+            ],
+            [
+              {
+                "after_bytes": 1,
+                "after_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+                "before_bytes": 23,
+                "before_sha256": "e55c097a64aeed96ce1b994f4df0ec14c813ed42da1a4db1010dbad6ca51d8cf",
+                "path": "src/doomed.py"
+              }
+            ],
+            [
+              {
+                "after_bytes": 1,
+                "after_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+                "before_bytes": 23,
+                "before_sha256": "e55c097a64aeed96ce1b994f4df0ec14c813ed42da1a4db1010dbad6ca51d8cf",
+                "path": "src/doomed.py"
+              }
+            ]
+          ],
+          "id": "python-delete",
+          "matched": true
+        },
+        {
+          "fingerprints": [
+            [
+              {
+                "after_bytes": 120,
+                "after_sha256": "0e33019588649bb6981c96d43acb9601856ddb09caa24976f55ddd7139edb2c4",
+                "before_bytes": 90,
+                "before_sha256": "36d364d6afde58547e14268642894daf84437706c24f0a92363f221c8807bff4",
+                "path": "src/lib.py"
+              }
+            ],
+            [
+              {
+                "after_bytes": 120,
+                "after_sha256": "0e33019588649bb6981c96d43acb9601856ddb09caa24976f55ddd7139edb2c4",
+                "before_bytes": 90,
+                "before_sha256": "36d364d6afde58547e14268642894daf84437706c24f0a92363f221c8807bff4",
+                "path": "src/lib.py"
+              }
+            ],
+            [
+              {
+                "after_bytes": 120,
+                "after_sha256": "0e33019588649bb6981c96d43acb9601856ddb09caa24976f55ddd7139edb2c4",
+                "before_bytes": 90,
+                "before_sha256": "36d364d6afde58547e14268642894daf84437706c24f0a92363f221c8807bff4",
+                "path": "src/lib.py"
+              }
+            ]
+          ],
+          "id": "python-insert",
+          "matched": true
+        }
+      ],
+      "fingerprint_mismatches": 0,
+      "plan_count": 8,
+      "runs_per_plan": 3
+    },
+    "P7_text_equivalence": {
+      "cases": [
+        {
+          "id": "rust-replace",
+          "matched": true,
+          "tree_sha256": {
+            "graph": "18cde49586247e02ea71d763df7890e1596a5a7018e792740b8ba3c3c40d2eab",
+            "text": "18cde49586247e02ea71d763df7890e1596a5a7018e792740b8ba3c3c40d2eab"
+          }
+        },
+        {
+          "id": "rust-rename",
+          "matched": true,
+          "tree_sha256": {
+            "graph": "18f0f07acd8fe18fcac2860a32bb8ae3be1eac8fe6ebd5a5387e5eeef7448819",
+            "text": "18f0f07acd8fe18fcac2860a32bb8ae3be1eac8fe6ebd5a5387e5eeef7448819"
+          }
+        },
+        {
+          "id": "rust-delete",
+          "matched": true,
+          "tree_sha256": {
+            "graph": "7d42ed0e55d4f685ede4fa63e425b50678f249df25d06cbb3b7621207ea830e3",
+            "text": "7d42ed0e55d4f685ede4fa63e425b50678f249df25d06cbb3b7621207ea830e3"
+          }
+        },
+        {
+          "id": "rust-insert",
+          "matched": true,
+          "tree_sha256": {
+            "graph": "c761e9d17f51691c308d0fcf748867864f5dfbab8c965fd814fb5acde466c10b",
+            "text": "c761e9d17f51691c308d0fcf748867864f5dfbab8c965fd814fb5acde466c10b"
+          }
+        },
+        {
+          "id": "python-replace",
+          "matched": true,
+          "tree_sha256": {
+            "graph": "135ff33885e25ac504b639f59814aad93378469dd011121f7548991597488a77",
+            "text": "135ff33885e25ac504b639f59814aad93378469dd011121f7548991597488a77"
+          }
+        },
+        {
+          "id": "python-rename",
+          "matched": true,
+          "tree_sha256": {
+            "graph": "b7320a5bf75b5921ee7e53836c092f4eda9c419cc2e4af8105d7b5b809d1eb65",
+            "text": "b7320a5bf75b5921ee7e53836c092f4eda9c419cc2e4af8105d7b5b809d1eb65"
+          }
+        },
+        {
+          "id": "python-delete",
+          "matched": true,
+          "tree_sha256": {
+            "graph": "c04026a1d43caed4727eed436954f38a7c441ec4a531c9c05a84b73096f23a91",
+            "text": "c04026a1d43caed4727eed436954f38a7c441ec4a531c9c05a84b73096f23a91"
+          }
+        },
+        {
+          "id": "python-insert",
+          "matched": true,
+          "tree_sha256": {
+            "graph": "919b58164059bb9b1dc9c3b147d3b93a85db67c4b0e6a96a1891af49997e8c63",
+            "text": "919b58164059bb9b1dc9c3b147d3b93a85db67c4b0e6a96a1891af49997e8c63"
+          }
+        }
+      ],
+      "pair_count": 8,
+      "tree_mismatches": 0
+    },
+    "P8_span_safety": {
+      "case_count": 6,
+      "cases": [
+        {
+          "corrupted": false,
+          "expected_pass": true,
+          "id": "rust-shifted-spans",
+          "passed": {
+            "dry": true,
+            "real": true
+          },
+          "rule_matched": true
+        },
+        {
+          "corrupted": false,
+          "expected_pass": true,
+          "id": "python-shifted-spans",
+          "passed": {
+            "dry": true,
+            "real": true
+          },
+          "rule_matched": true
+        },
+        {
+          "corrupted": false,
+          "expected_pass": true,
+          "id": "rust-rename-new-path",
+          "passed": {
+            "dry": true,
+            "real": true
+          },
+          "rule_matched": true
+        },
+        {
+          "corrupted": false,
+          "expected_pass": false,
+          "id": "rust-rename-old-path-rejected",
+          "passed": {
+            "dry": false,
+            "real": false
+          },
+          "rule_matched": true
+        },
+        {
+          "corrupted": false,
+          "expected_pass": true,
+          "id": "rust-nested-projections",
+          "passed": {
+            "dry": true,
+            "real": true
+          },
+          "rule_matched": true
+        },
+        {
+          "corrupted": false,
+          "expected_pass": false,
+          "id": "rust-ambiguous-callsite-rejected",
+          "passed": {
+            "dry": false,
+            "real": false
+          },
+          "rule_matched": true
+        }
+      ],
+      "corruptions": 0,
+      "rule_mismatches": 0
+    },
+    "P9_resolution_fail_closed": {
+      "case_count": 4,
+      "cases": [
+        {
+          "id": "unknown-node",
+          "named_category": true,
+          "named_node": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "id": "ambiguous-node",
+          "named_category": true,
+          "named_node": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "id": "unsupported-language",
+          "named_category": true,
+          "named_node": true,
+          "named_step": true,
+          "rejected": true
+        },
+        {
+          "id": "spanless-node",
+          "named_category": true,
+          "named_node": true,
+          "named_step": true,
+          "rejected": true
+        }
+      ],
+      "missing_category_diagnostics": 0,
+      "missing_node_diagnostics": 0,
+      "missing_step_diagnostics": 0,
+      "unexpected_passes": 0
+    }
+  },
+  "run_definition": "fresh-repository-per-case-private-binary-bounded-subprocesses",
+  "schema_version": 1,
+  "tool": {
+    "argv": [
+      "bitcode",
+      "plan",
+      "validate|run",
+      "<plan>",
+      "[--dry]"
+    ],
+    "bitcode_sha256": "a568bcd7f5db29b58f3f863995bc1b1f8ed241dfc10fa4c8241ec5ce70f556c2",
+    "harness_sha256": "05e870c7bd5c7122db852b3b34ce08d01074fbc4d7dbe57e5a40b790aa6aecc9",
+    "harness_support_sha256": "a63b069acf887b5879f9662251bb0a13fbe945e260937f999225ba85ec7da428",
+    "source_commit": "895b60e529c9253dbce6f92eece99fc1739fffee",
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_snapshot_sha256": "89b6d72a23b598f7ae2e091b129f2de107d81741ed60f7b6efa5216df61c3b78",
+    "source_worktree_clean": true
+  }
+}
