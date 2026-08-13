@@ -8,8 +8,11 @@ from pathlib import Path
 from tools.plan_executor_oracle import (
     DEFAULT_POLICY,
     atomic_write_json,
+    create_mutant_binary,
     evaluate_policy,
     malformed_plan,
+    measure,
+    observation_provenance,
     outcome_projection,
     parse_dry_report,
     run,
@@ -128,6 +131,63 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
             atomic_write_json(path, {"second": True})
 
             self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"second": True})
+
+    def test_measurement_refuses_incomplete_provenance_before_running(self):
+        with self.assertRaisesRegex(RuntimeError, "complete provenance"):
+            measure(self.policy, Path("unused-bitcode"), {})
+
+    def test_vacuity_mutant_is_an_executable_broken_binary(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            real = root / "real-bitcode"
+            real.write_text("#!/bin/sh\nexit 99\n", encoding="utf-8")
+            mutant = create_mutant_binary(root, real, "P2_no_vacuous_pass")
+            result = run(
+                (str(mutant), "plan", "validate", "unused.json"),
+                cwd=root,
+                timeout_seconds=5,
+                max_output_bytes=1024,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 0)
+
+    def test_provenance_binds_policy_and_clean_source_commit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            policy = root / "policy.json"
+            policy.write_text('{"precommitted":true}\n', encoding="utf-8")
+            commands = (
+                ("git", "init", "-q"),
+                ("git", "config", "user.name", "Plan Oracle"),
+                ("git", "config", "user.email", "oracle@example.invalid"),
+                ("git", "add", "policy.json"),
+                ("git", "commit", "-q", "-m", "Precommit policy"),
+            )
+            for command in commands:
+                result = run(
+                    command,
+                    cwd=root,
+                    timeout_seconds=5,
+                    max_output_bytes=4096,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+            provenance = observation_provenance(policy, root)
+            head = run(
+                ("git", "rev-parse", "HEAD"),
+                cwd=root,
+                timeout_seconds=5,
+                max_output_bytes=4096,
+                check=False,
+            ).stdout.strip()
+
+            self.assertEqual(provenance["source_commit"], head)
+            self.assertEqual(len(provenance["policy_sha256"]), 64)
+            policy.write_text('{"precommitted":false}\n', encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "not the recorded commit"):
+                observation_provenance(policy, root)
 
 
 if __name__ == "__main__":

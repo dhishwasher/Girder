@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import shutil
+import stat
 import sys
 import tempfile
 from pathlib import Path
@@ -30,6 +31,44 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def observation_provenance(
+    policy_path: Path, source_root: Path = REPO_ROOT
+) -> dict[str, str]:
+    policy_sha256 = sha256_file(policy_path)
+    if len(policy_sha256) != 64:
+        raise RuntimeError("refusing to emit observation without policy SHA-256")
+
+    source_commit = require_success(
+        run(
+            ("git", "rev-parse", "--verify", "HEAD^{commit}"),
+            cwd=source_root,
+            timeout_seconds=30,
+            max_output_bytes=64 * 1024,
+        ),
+        "resolve source commit",
+    ).stdout.strip()
+    if len(source_commit) != 40 or any(
+        character not in "0123456789abcdef" for character in source_commit
+    ):
+        raise RuntimeError("refusing to emit observation without source commit")
+
+    status = require_success(
+        run(
+            ("git", "status", "--porcelain=v1", "--untracked-files=all"),
+            cwd=source_root,
+            timeout_seconds=30,
+            max_output_bytes=1024 * 1024,
+        ),
+        "verify source worktree",
+    )
+    if status.stdout:
+        raise RuntimeError(
+            "refusing to emit observation because the source tree is not the recorded commit"
+        )
+
+    return {"policy_sha256": policy_sha256, "source_commit": source_commit}
 
 
 def validate_policy(data: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -712,6 +751,97 @@ def measure_p5(
     }
 
 
+def create_mutant_binary(root: Path, bitcode: Path, property_name: str) -> Path:
+    mutant = root / f"bitcode-mutant-{property_name.lower()}"
+    script = f'''#!/usr/bin/env python3
+import subprocess
+import sys
+from pathlib import Path
+
+MUTATION = {property_name!r}
+REAL_BITCODE = {str(bitcode)!r}
+ARGS = sys.argv[1:]
+
+is_plan_validate = len(ARGS) >= 2 and ARGS[0:2] == ["plan", "validate"]
+is_plan_run = len(ARGS) >= 2 and ARGS[0:2] == ["plan", "run"]
+is_dry_run = is_plan_run and "--dry" in ARGS
+
+if MUTATION == "P2_no_vacuous_pass" and (is_plan_validate or is_dry_run):
+    raise SystemExit(0)
+if MUTATION == "P5_error_legibility" and is_plan_validate:
+    print("invalid plan", file=sys.stderr)
+    raise SystemExit(1)
+
+completed = subprocess.run([REAL_BITCODE, *ARGS], check=False)
+returncode = completed.returncode
+if MUTATION == "P1_dry_equals_real" and is_dry_run:
+    returncode = 1 if returncode == 0 else 0
+elif MUTATION == "P3_fail_closed" and is_plan_run:
+    returncode = 0
+elif MUTATION == "P4_rollback_fidelity" and is_plan_run:
+    target = Path.cwd() / "src" / "lib.rs"
+    target.write_text(target.read_text(encoding="utf-8") + "// rollback mutant\\n", encoding="utf-8")
+
+raise SystemExit(returncode)
+'''
+    mutant.write_text(script, encoding="utf-8")
+    mutant.chmod(mutant.stat().st_mode | stat.S_IXUSR)
+    return mutant
+
+
+def measure_mutation_adequacy(
+    policy: Mapping[str, Any],
+    work_root: Path,
+    bitcode: Path,
+    options: Mapping[str, Any],
+    baseline_results: Mapping[str, Any],
+) -> dict[str, Any]:
+    work_root.mkdir(parents=True)
+    measurements = {
+        "P1_dry_equals_real": measure_p1,
+        "P2_no_vacuous_pass": measure_p2,
+        "P3_fail_closed": measure_p3,
+        "P4_rollback_fidelity": measure_p4,
+        "P5_error_legibility": measure_p5,
+    }
+    baseline_violations = set(evaluate_policy(policy, baseline_results))
+    cases = []
+    survivors = []
+    for property_name, measurement in measurements.items():
+        mutant = create_mutant_binary(work_root, bitcode, property_name)
+        observed = measurement(
+            policy,
+            work_root / property_name.lower(),
+            mutant,
+            options,
+        )
+        mutant_results = dict(baseline_results)
+        mutant_results[property_name] = observed
+        introduced = sorted(
+            violation
+            for violation in set(evaluate_policy(policy, mutant_results)) - baseline_violations
+            if violation.startswith(f"{property_name}.")
+        )
+        killed = bool(introduced)
+        if not killed:
+            survivors.append(property_name)
+        cases.append(
+            {
+                "property": property_name,
+                "mutant_sha256": sha256_file(mutant),
+                "killed": killed,
+                "violations": introduced,
+                "observed": {key: value for key, value in observed.items() if key != "cases"},
+            }
+        )
+    if survivors:
+        raise RuntimeError(
+            "refusing to emit observation because property mutants survived: "
+            + ", ".join(survivors)
+        )
+    return {"required_property_count": len(measurements), "survivors": 0, "cases": cases}
+
+
 def evaluate_policy(policy: Mapping[str, Any], results: Mapping[str, Any]) -> list[str]:
     comparisons = {
         "P1_dry_equals_real": {
@@ -763,7 +893,15 @@ def atomic_write_json(path: Path, document: Mapping[str, Any]) -> None:
     temporary.replace(path)
 
 
-def measure(policy: Mapping[str, Any], bitcode: Path) -> dict[str, Any]:
+def measure(
+    policy: Mapping[str, Any],
+    bitcode: Path,
+    provenance: Mapping[str, str],
+) -> dict[str, Any]:
+    policy_sha256 = provenance.get("policy_sha256", "")
+    source_commit = provenance.get("source_commit", "")
+    if len(policy_sha256) != 64 or len(source_commit) != 40:
+        raise RuntimeError("refusing to emit observation without complete provenance")
     execution = policy["execution"]
     options = {
         "timeout_seconds": float(execution["command_timeout_seconds"]),
@@ -784,6 +922,13 @@ def measure(policy: Mapping[str, Any], bitcode: Path) -> dict[str, Any]:
             "P4_rollback_fidelity": measure_p4(policy, root / "p4", measured_bitcode, options),
             "P5_error_legibility": measure_p5(policy, root / "p5", measured_bitcode, options),
         }
+        mutation_adequacy = measure_mutation_adequacy(
+            policy,
+            root / "mutation-adequacy",
+            measured_bitcode,
+            options,
+            results,
+        )
         if sha256_file(measured_bitcode) != original_sha:
             raise RuntimeError("private Bit Code copy changed during measurement")
     if sha256_file(bitcode) != original_sha:
@@ -792,8 +937,14 @@ def measure(policy: Mapping[str, Any], bitcode: Path) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "policy_id": policy["policy_id"],
+        "policy_sha256": policy_sha256,
         "bitcode_sha256": original_sha,
+        "tool": {
+            "bitcode_sha256": original_sha,
+            "source_commit": source_commit,
+        },
         "results": results,
+        "mutation_adequacy": mutation_adequacy,
         "policy": {"passed": not violations, "violations": violations},
     }
 
@@ -808,8 +959,14 @@ def main() -> int:
     bitcode = args.bitcode.resolve()
     if not bitcode.is_file():
         parser.error(f"Bit Code binary does not exist: {bitcode}")
-    policy = validate_policy(json.loads(args.policy.resolve().read_text(encoding="utf-8")))
-    observation = measure(policy, bitcode)
+    policy_path = args.policy.resolve()
+    policy = validate_policy(json.loads(policy_path.read_text(encoding="utf-8")))
+    provenance = observation_provenance(policy_path)
+    observation = measure(policy, bitcode, provenance)
+    if not observation.get("policy_sha256") or not observation.get("tool", {}).get(
+        "source_commit"
+    ):
+        raise RuntimeError("refusing to write observation without complete provenance")
     atomic_write_json(args.output.resolve(), observation)
     if args.json:
         print(json.dumps(observation, indent=2, sort_keys=True))
