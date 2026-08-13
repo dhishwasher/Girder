@@ -12,11 +12,12 @@ use crate::project::planfile::checks::test_checks::{
     changed_node_ids, run_tests_full, run_tests_impacted, run_tests_named,
 };
 use crate::project::planfile::checks::CheckOutcome;
-use crate::project::planfile::edit::{apply_edit, write_into};
+use crate::project::planfile::edit::{apply_edit, apply_step_edits_v2, write_into, EditState};
 use crate::project::planfile::schema::{Check, Edit, OnFailure, Plan, TestExpect};
 use crate::project::source::{build_from_dir_with_config, commit_project_writes};
 use crate::project::validation::CandidateWorkspace;
 use aether_graph::SemanticGraph;
+use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicBool;
@@ -29,6 +30,16 @@ pub(crate) struct StepOutcome {
     pub(crate) committed: bool,
     pub(crate) files_changed: Vec<PathBuf>,
     pub(crate) checks: Vec<CheckOutcome>,
+    pub(crate) write_fingerprints: Option<Vec<WriteFingerprint>>,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct WriteFingerprint {
+    pub(crate) path: PathBuf,
+    pub(crate) before_bytes: Option<usize>,
+    pub(crate) before_sha256: Option<String>,
+    pub(crate) after_bytes: Option<usize>,
+    pub(crate) after_sha256: Option<String>,
 }
 
 #[derive(Debug)]
@@ -51,6 +62,9 @@ pub(crate) fn run_plan(
     plan: &Plan,
     dry: bool,
 ) -> std::io::Result<PlanRunOutcome> {
+    if plan.plan_version == 2 {
+        return run_plan_v2(root, config, plan, dry);
+    }
     let mut steps = Vec::new();
     let mut committed_paths: Vec<PathBuf> = Vec::new();
     let mut created_paths: Vec<PathBuf> = Vec::new();
@@ -93,6 +107,7 @@ pub(crate) fn run_plan(
                     passed: false,
                     detail: error.to_string(),
                 }],
+                write_fingerprints: None,
             });
             return finish_run(
                 root,
@@ -160,6 +175,7 @@ pub(crate) fn run_plan(
                 committed: false,
                 files_changed,
                 checks: check_outcomes,
+                write_fingerprints: None,
             });
             return finish_run(
                 root,
@@ -186,6 +202,7 @@ pub(crate) fn run_plan(
                 committed: false,
                 files_changed,
                 checks: check_outcomes,
+                write_fingerprints: None,
             });
             continue;
         }
@@ -213,6 +230,7 @@ pub(crate) fn run_plan(
             committed: true,
             files_changed: written,
             checks: check_outcomes,
+            write_fingerprints: None,
         });
     }
 
@@ -220,6 +238,171 @@ pub(crate) fn run_plan(
         outcome: RunOutcome::Passed,
         steps,
     })
+}
+
+fn run_plan_v2(
+    root: &Path,
+    config: &ProjectConfig,
+    plan: &Plan,
+    dry: bool,
+) -> std::io::Result<PlanRunOutcome> {
+    let mut steps = Vec::new();
+    let mut committed_paths: Vec<PathBuf> = Vec::new();
+    let mut created_paths: Vec<PathBuf> = Vec::new();
+    let mut dry_overlay = DryOverlay::default();
+    let mut edit_state = EditState::default();
+
+    for step in &plan.steps {
+        let cancel = Arc::new(AtomicBool::new(false));
+        let candidate = CandidateWorkspace::create(root, config, &cancel)?;
+        if dry {
+            dry_overlay.replay(candidate.workspace_path())?;
+        }
+
+        let need_graph = checks_need_graph(&step.checks);
+        if need_graph || step.edits.iter().any(Edit::is_graph_addressed) {
+            edit_state.ensure_graph(candidate.workspace_path(), config)?;
+        }
+        let before_graph = need_graph.then(|| edit_state.graph().cloned()).flatten();
+
+        let writes = match apply_step_edits_v2(
+            candidate.workspace_path(),
+            config,
+            &step.id,
+            &step.edits,
+            &mut edit_state,
+        ) {
+            Ok(writes) => writes,
+            Err(error) => {
+                steps.push(StepOutcome {
+                    id: step.id.clone(),
+                    passed: false,
+                    committed: false,
+                    files_changed: Vec::new(),
+                    checks: vec![CheckOutcome {
+                        kind: "edit".to_string(),
+                        passed: false,
+                        detail: error.to_string(),
+                    }],
+                    write_fingerprints: Some(Vec::new()),
+                });
+                return finish_run(
+                    root,
+                    plan,
+                    steps,
+                    &step.id,
+                    &committed_paths,
+                    &created_paths,
+                    dry,
+                );
+            }
+        };
+
+        let files_changed: Vec<PathBuf> = writes
+            .iter()
+            .map(|write| write.relative().to_path_buf())
+            .collect();
+        let write_fingerprints = fingerprint_writes(&writes);
+        let after_graph = need_graph.then(|| edit_state.graph().cloned()).flatten();
+        let changed: Vec<aether_graph::NodeId> = match (&before_graph, &after_graph) {
+            (Some(before), Some(after)) => changed_node_ids(before, after),
+            _ => Vec::new(),
+        };
+
+        let mut check_outcomes = Vec::new();
+        let mut all_passed = true;
+        for check in &step.checks {
+            let outcome = run_check(
+                candidate.workspace_path(),
+                check,
+                config,
+                before_graph.as_ref(),
+                after_graph.as_ref(),
+                &changed,
+            );
+            all_passed &= outcome.passed;
+            check_outcomes.push(outcome);
+            if !all_passed {
+                break;
+            }
+        }
+
+        if !all_passed {
+            steps.push(StepOutcome {
+                id: step.id.clone(),
+                passed: false,
+                committed: false,
+                files_changed,
+                checks: check_outcomes,
+                write_fingerprints: Some(write_fingerprints),
+            });
+            return finish_run(
+                root,
+                plan,
+                steps,
+                &step.id,
+                &committed_paths,
+                &created_paths,
+                dry,
+            );
+        }
+
+        if dry {
+            dry_overlay.record(&writes);
+            steps.push(StepOutcome {
+                id: step.id.clone(),
+                passed: true,
+                committed: false,
+                files_changed,
+                checks: check_outcomes,
+                write_fingerprints: Some(write_fingerprints),
+            });
+            continue;
+        }
+
+        let created_this_step: Vec<PathBuf> = writes
+            .iter()
+            .filter(|write| write.expected().is_none() && write.contents().is_some())
+            .map(|write| write.relative().to_path_buf())
+            .collect();
+        drop(candidate);
+        let written = commit_project_writes(root, writes)?;
+        committed_paths.extend(written.iter().cloned());
+        created_paths.extend(created_this_step);
+        steps.push(StepOutcome {
+            id: step.id.clone(),
+            passed: true,
+            committed: true,
+            files_changed: written,
+            checks: check_outcomes,
+            write_fingerprints: Some(write_fingerprints),
+        });
+    }
+
+    Ok(PlanRunOutcome {
+        outcome: RunOutcome::Passed,
+        steps,
+    })
+}
+
+fn fingerprint_writes(writes: &[crate::project::source::ProjectWrite]) -> Vec<WriteFingerprint> {
+    writes
+        .iter()
+        .map(|write| WriteFingerprint {
+            path: write.relative().to_path_buf(),
+            before_bytes: write.expected().map(<[u8]>::len),
+            before_sha256: write.expected().map(sha256_hex),
+            after_bytes: write.contents().map(<[u8]>::len),
+            after_sha256: write.contents().map(sha256_hex),
+        })
+        .collect()
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    Sha256::digest(bytes)
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
 }
 
 fn take_or_build_graph(

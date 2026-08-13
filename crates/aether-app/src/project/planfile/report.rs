@@ -25,6 +25,17 @@ pub(crate) struct StepReport {
     pub(crate) committed: bool,
     pub(crate) files_changed: Vec<PathBuf>,
     pub(crate) checks: Vec<CheckReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) writes: Option<Vec<WriteFingerprintReport>>,
+}
+
+#[derive(Debug, Serialize)]
+pub(crate) struct WriteFingerprintReport {
+    pub(crate) path: PathBuf,
+    pub(crate) before_bytes: Option<usize>,
+    pub(crate) before_sha256: Option<String>,
+    pub(crate) after_bytes: Option<usize>,
+    pub(crate) after_sha256: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -174,6 +185,18 @@ pub(crate) fn build_report(
                     detail: check.detail.clone(),
                 })
                 .collect(),
+            writes: step.write_fingerprints.as_ref().map(|writes| {
+                writes
+                    .iter()
+                    .map(|write| WriteFingerprintReport {
+                        path: write.path.clone(),
+                        before_bytes: write.before_bytes,
+                        before_sha256: write.before_sha256.clone(),
+                        after_bytes: write.after_bytes,
+                        after_sha256: write.after_sha256.clone(),
+                    })
+                    .collect()
+            }),
         })
         .collect();
 
@@ -303,6 +326,7 @@ mod tests {
                     passed: false,
                     detail: "mode Exact: expected [\"a\"], actual [\"a\", \"b\"]".to_string(),
                 }],
+                write_fingerprints: None,
             }],
         };
         let report = build_report(&plan(), &run, false, None);

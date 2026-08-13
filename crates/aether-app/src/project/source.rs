@@ -269,6 +269,24 @@ pub(crate) fn collect_sources_with_config(
     root: &Path,
     config: &ProjectConfig,
 ) -> std::io::Result<Vec<(PathBuf, String)>> {
+    collect_configured_files(root, config, true)
+}
+
+/// Recursively collect every configured, non-excluded project file. Graph
+/// lowering uses this to distinguish an unknown semantic path from one that
+/// names a projection in an unsupported language.
+pub(crate) fn collect_project_files_with_config(
+    root: &Path,
+    config: &ProjectConfig,
+) -> std::io::Result<Vec<(PathBuf, String)>> {
+    collect_configured_files(root, config, false)
+}
+
+fn collect_configured_files(
+    root: &Path,
+    config: &ProjectConfig,
+    supported_sources_only: bool,
+) -> std::io::Result<Vec<(PathBuf, String)>> {
     let canonical_root = std::fs::canonicalize(root)?;
     if !canonical_root.is_dir() {
         return Err(std::io::Error::new(
@@ -346,7 +364,7 @@ pub(crate) fn collect_sources_with_config(
             if canonical.is_dir() {
                 stack.push(canonical);
             } else if canonical.is_file()
-                && is_supported_source_path(&relative_text)
+                && (!supported_sources_only || is_supported_source_path(&relative_text))
                 && visited_files.insert(std::fs::canonicalize(&canonical)?)
             {
                 out.push((canonical, relative_text));
@@ -1152,6 +1170,7 @@ mod tests {
         std::fs::create_dir_all(dir.0.join("src")).unwrap();
         std::fs::create_dir_all(dir.0.join("vendor")).unwrap();
         std::fs::write(dir.0.join("src/lib.rs"), "fn keep() {}\n").unwrap();
+        std::fs::write(dir.0.join("src/legacy.js"), "function keep() {}\n").unwrap();
         std::fs::write(dir.0.join("src/generated.rs"), "fn skip() {}\n").unwrap();
         std::fs::write(dir.0.join("vendor/third_party.rs"), "fn vendor() {}\n").unwrap();
 
@@ -1166,6 +1185,14 @@ mod tests {
                 .map(|(_, relative)| relative.as_str())
                 .collect::<Vec<_>>(),
             ["src/lib.rs"]
+        );
+        assert_eq!(
+            collect_project_files_with_config(&dir.0, &config)
+                .unwrap()
+                .into_iter()
+                .map(|(_, relative)| relative)
+                .collect::<Vec<_>>(),
+            vec!["src/legacy.js".to_string(), "src/lib.rs".to_string()]
         );
     }
 

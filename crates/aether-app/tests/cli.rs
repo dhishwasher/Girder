@@ -2367,7 +2367,7 @@ fn crash_after_committed_marker_keeps_all_new_state() {
     assert!(graph.node_count() > 0);
 }
 
-// --- Bit Code Plan Format v1 --------------------------------------------
+// --- Bit Code Plan Format v1/v2 -----------------------------------------
 
 /// Plan files must never sit inside the project worktree — an untracked
 /// plan.json there would itself trip the "worktree clean" precondition.
@@ -2412,6 +2412,92 @@ fn plan_validate_passes_on_a_clean_matching_plan() {
         String::from_utf8_lossy(&output.stderr)
     );
     let _ = std::fs::remove_file(&plan_path);
+}
+
+#[test]
+fn plan_v2_rename_updates_callers_and_requires_the_new_path_in_later_steps() {
+    let repo = TempRepo::new("plan-v2-rename");
+    repo.write(
+        "src/lib.rs",
+        "pub fn target() -> i64 { 1 }\npub fn caller() -> i64 { target() }\n",
+    );
+    repo.commit_all("baseline");
+    let head = repo.head();
+    let template = r#"{
+      "plan_version": 2,
+      "plan_id": "semantic-rename",
+      "intent": "rename by graph identity",
+      "base_commit": "BASE_COMMIT",
+      "steps": [
+        {"id":"rename","edits":[{"node":"crate::lib::target","rename_node":"renamed"}]},
+        {"id":"rewrite-new-path","edits":[{
+          "node":"crate::lib::renamed",
+          "replace_node":"pub fn renamed() -> i64 { 2 }"
+        }],"checks":[{"kind":"graph.node_exists","node":"crate::lib::renamed"}]}
+      ]
+    }"#;
+    let plan_path = write_plan("v2-rename", &template.replace("BASE_COMMIT", &head));
+
+    let output = run_plan_output(&repo, "run", &plan_path, &[]);
+    assert!(
+        output.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let source = std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap();
+    assert!(source.contains("fn renamed() -> i64 { 2 }"), "{source}");
+    assert!(source.contains("renamed() }"), "{source}");
+    let report = std::fs::read_dir(repo.path().join(".bitcode/reports"))
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap()
+        .path();
+    let report: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(report).unwrap()).unwrap();
+    assert_eq!(report["steps"][0]["writes"][0]["path"], "src/lib.rs");
+    assert_eq!(
+        report["steps"][0]["writes"][0]["after_sha256"]
+            .as_str()
+            .unwrap()
+            .len(),
+        64
+    );
+    let _ = std::fs::remove_file(plan_path);
+}
+
+#[test]
+fn plan_v2_validate_rejects_unsupported_language_with_step_and_node() {
+    let repo = TempRepo::new("plan-v2-unsupported-language");
+    repo.write("src/legacy.js", "function target() {}\n");
+    repo.commit_all("baseline");
+    let head = repo.head();
+    let template = r#"{
+      "plan_version":2,
+      "plan_id":"unsupported-language",
+      "intent":"fail closed before execution",
+      "base_commit":"BASE_COMMIT",
+      "steps":[{"id":"reject-javascript","edits":[{
+        "node":"crate::legacy::target","delete_node":true
+      }]}]
+    }"#;
+    let plan_path = write_plan(
+        "v2-unsupported-language",
+        &template.replace("BASE_COMMIT", &head),
+    );
+
+    let output = run_plan_output(&repo, "validate", &plan_path, &[]);
+    assert!(!output.status.success());
+    let diagnostic = format!(
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(diagnostic.contains("reject-javascript"), "{diagnostic}");
+    assert!(diagnostic.contains("crate::legacy::target"), "{diagnostic}");
+    assert!(diagnostic.contains("unsupported-language"), "{diagnostic}");
+    let _ = std::fs::remove_file(plan_path);
 }
 
 #[test]

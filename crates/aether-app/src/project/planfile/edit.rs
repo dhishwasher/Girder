@@ -1,12 +1,21 @@
-//! The match/replace/create/delete edit engine. Pure text operations only —
-//! no knowledge of the journal or the graph. `apply_edit` turns a validated
-//! [`crate::project::planfile::schema::Edit`] into a `ProjectWrite` by
-//! reading from `base_dir` (either the disposable copy or, for the initial
-//! per-step read, the real project root); it never writes anything itself.
+//! Plan edit lowering. Version 1 text edits lower directly to one
+//! `ProjectWrite`; version 2 may resolve semantic nodes and sequentially
+//! re-project multiple edits into deterministic per-file writes. Only the
+//! disposable candidate is changed here. Real-tree writes still go through
+//! the project journal in `commit_project_writes`.
 
+use crate::project::config::ProjectConfig;
 use crate::project::planfile::schema::Edit;
-use crate::project::source::ProjectWrite;
-use std::path::Path;
+use crate::project::source::{
+    build_from_dir_with_config, collect_project_files_with_config, is_configured_source_path,
+    safe_project_input_path, safe_project_output_path, ProjectWrite,
+};
+use aether_builder::{
+    callee_identifier_spans, has_leading_declaration_metadata, identifier_spans, GraphBuilder,
+};
+use aether_graph::{Node, NodeKind, SemanticGraph};
+use std::collections::{BTreeMap, HashMap};
+use std::path::{Path, PathBuf};
 
 /// Count non-overlapping, byte-exact occurrences of `needle` in `haystack`.
 /// Empty needles never occur (avoids an infinite/degenerate count).
@@ -35,7 +44,7 @@ pub(crate) fn apply_edit(base_dir: &Path, edit: &Edit) -> std::io::Result<Projec
             replace,
             occurrences,
         } => {
-            let target = base_dir.join(path);
+            let target = safe_project_input_path(base_dir, path)?;
             let contents = std::fs::read_to_string(&target).map_err(|error| {
                 std::io::Error::new(
                     error.kind(),
@@ -61,7 +70,7 @@ pub(crate) fn apply_edit(base_dir: &Path, edit: &Edit) -> std::io::Result<Projec
             ))
         }
         Edit::Create { path, create } => {
-            let target = base_dir.join(path);
+            let target = safe_project_output_path(base_dir, path)?;
             if target.exists() {
                 return Err(std::io::Error::new(
                     std::io::ErrorKind::AlreadyExists,
@@ -77,7 +86,7 @@ pub(crate) fn apply_edit(base_dir: &Path, edit: &Edit) -> std::io::Result<Projec
                     format!("{path}: a delete edit must set \"delete\": true"),
                 ));
             }
-            let target = base_dir.join(path);
+            let target = safe_project_input_path(base_dir, path)?;
             let contents = std::fs::read(&target).map_err(|error| {
                 std::io::Error::new(
                     error.kind(),
@@ -90,8 +99,8 @@ pub(crate) fn apply_edit(base_dir: &Path, edit: &Edit) -> std::io::Result<Projec
         | Edit::RenameNode { .. }
         | Edit::DeleteNode { .. }
         | Edit::InsertIntoModule { .. } => Err(std::io::Error::new(
-            std::io::ErrorKind::Unsupported,
-            "graph-addressed edit lowering is not available in this format-only checkpoint",
+            std::io::ErrorKind::InvalidInput,
+            "graph-addressed edits require Plan Format v2 lowering",
         )),
     }
 }
@@ -110,6 +119,637 @@ pub(crate) fn write_into(dir: &Path, write: &ProjectWrite) -> std::io::Result<()
     } else {
         std::fs::remove_file(&target)
     }
+}
+
+struct GraphWorkspace {
+    graph: SemanticGraph,
+    builder: GraphBuilder,
+}
+
+#[derive(Default)]
+pub(crate) struct EditState {
+    workspace: Option<GraphWorkspace>,
+    renames: HashMap<String, (String, String)>,
+}
+
+impl EditState {
+    pub(crate) fn ensure_graph(
+        &mut self,
+        root: &Path,
+        config: &ProjectConfig,
+    ) -> std::io::Result<()> {
+        if self.workspace.is_none() {
+            let (graph, builder, _) = build_from_dir_with_config(root, config)?;
+            self.workspace = Some(GraphWorkspace { graph, builder });
+        }
+        Ok(())
+    }
+
+    pub(crate) fn graph(&self) -> Option<&SemanticGraph> {
+        self.workspace.as_ref().map(|workspace| &workspace.graph)
+    }
+
+    fn refresh_file(
+        &mut self,
+        root: &Path,
+        config: &ProjectConfig,
+        file: &str,
+    ) -> std::io::Result<()> {
+        if !is_configured_source_path(config, file)? {
+            return Ok(());
+        }
+        let source = match std::fs::read_to_string(root.join(file)) {
+            Ok(source) => source,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                if self.workspace.is_some() {
+                    let (graph, builder, _) = build_from_dir_with_config(root, config)?;
+                    self.workspace = Some(GraphWorkspace { graph, builder });
+                }
+                return Ok(());
+            }
+            Err(error) => return Err(error),
+        };
+        let Some(workspace) = self.workspace.as_mut() else {
+            return Ok(());
+        };
+        workspace
+            .builder
+            .update_file(&mut workspace.graph, file, &source);
+        Ok(())
+    }
+}
+
+#[derive(Default)]
+struct StepAccumulator {
+    before: BTreeMap<PathBuf, Option<Vec<u8>>>,
+}
+
+impl StepAccumulator {
+    fn capture(&mut self, root: &Path, relative: &Path) -> std::io::Result<()> {
+        if self.before.contains_key(relative) {
+            return Ok(());
+        }
+        let bytes = match std::fs::read(root.join(relative)) {
+            Ok(bytes) => Some(bytes),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+            Err(error) => return Err(error),
+        };
+        self.before.insert(relative.to_path_buf(), bytes);
+        Ok(())
+    }
+
+    fn finish(self, root: &Path) -> std::io::Result<Vec<ProjectWrite>> {
+        let mut writes = Vec::new();
+        for (relative, before) in self.before {
+            let after = match std::fs::read(root.join(&relative)) {
+                Ok(bytes) => Some(bytes),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+                Err(error) => return Err(error),
+            };
+            if before == after {
+                continue;
+            }
+            match after {
+                Some(contents) => writes.push(ProjectWrite::bytes(relative, before, contents)),
+                None => {
+                    let expected = before.ok_or_else(|| {
+                        std::io::Error::other("a missing file cannot be deleted twice")
+                    })?;
+                    writes.push(ProjectWrite::delete(relative, expected));
+                }
+            }
+        }
+        Ok(writes)
+    }
+}
+
+#[derive(Clone)]
+struct Splice {
+    node: String,
+    file: String,
+    start: usize,
+    end: usize,
+    expected: String,
+    replacement: String,
+}
+
+/// Apply one v2 step sequentially to its disposable candidate and coalesce all
+/// intermediate mutations into one deterministic `ProjectWrite` per file.
+pub(crate) fn apply_step_edits_v2(
+    root: &Path,
+    config: &ProjectConfig,
+    step_id: &str,
+    edits: &[Edit],
+    state: &mut EditState,
+) -> std::io::Result<Vec<ProjectWrite>> {
+    let mut accumulator = StepAccumulator::default();
+    for (index, edit) in edits.iter().enumerate() {
+        let result: std::io::Result<()> = (|| {
+            if edit.is_graph_addressed() {
+                state.ensure_graph(root, config)?;
+                apply_graph_edit(root, config, step_id, edit, state, &mut accumulator)
+            } else {
+                let path = edit.path().expect("text edits have paths");
+                let normalized = Path::new(path)
+                    .components()
+                    .map(|component| match component {
+                        std::path::Component::Normal(value) => {
+                            Some(value.to_string_lossy().into_owned())
+                        }
+                        _ => None,
+                    })
+                    .collect::<Option<Vec<_>>>()
+                    .ok_or_else(|| {
+                        invalid(format!(
+                            "v2 text edit path {path:?} must be a normalized project-relative path"
+                        ))
+                    })?
+                    .join("/");
+                if normalized != path || path.contains('\\') {
+                    return Err(invalid(format!(
+                        "v2 text edit path {path:?} must be a normalized project-relative path"
+                    )));
+                }
+                let write = apply_edit(root, edit)?;
+                accumulator.capture(root, write.relative())?;
+                write_into(root, &write)?;
+                state.refresh_file(root, config, path)?;
+                Ok(())
+            }
+        })();
+        if let Err(error) = result {
+            let target = edit
+                .node()
+                .or_else(|| edit.path())
+                .unwrap_or("<missing target>");
+            return Err(std::io::Error::new(
+                error.kind(),
+                format!("step {step_id}: edits[{index}] target {target:?}: {error}"),
+            ));
+        }
+    }
+    accumulator.finish(root)
+}
+
+fn apply_graph_edit(
+    root: &Path,
+    config: &ProjectConfig,
+    step_id: &str,
+    edit: &Edit,
+    state: &mut EditState,
+    accumulator: &mut StepAccumulator,
+) -> std::io::Result<()> {
+    let node_path = edit
+        .node()
+        .ok_or_else(|| std::io::Error::other("missing node path"))?;
+    match edit {
+        Edit::ReplaceNode { replacement, .. } => {
+            let node = resolve_node(root, config, state, node_path)?;
+            if !matches!(node.kind, NodeKind::Function | NodeKind::Type) {
+                return Err(invalid(format!(
+                    "node {node_path:?} is {:?}; replace_node requires a function or type with a complete source projection",
+                    node.kind
+                )));
+            }
+            let splice = splice_for_node(root, config, &node, replacement.clone(), false)?;
+            apply_splices(root, config, state, accumulator, vec![splice])?;
+            require_occurrences(state, node_path, 1)?;
+        }
+        Edit::DeleteNode { delete, .. } => {
+            if !*delete {
+                return Err(invalid(format!(
+                    "node {node_path:?}: delete_node must be true"
+                )));
+            }
+            let node = resolve_node(root, config, state, node_path)?;
+            if !matches!(node.kind, NodeKind::Function | NodeKind::Type) {
+                return Err(invalid(format!(
+                    "node {node_path:?} is {:?}; delete_node requires a function or type with a complete source projection",
+                    node.kind
+                )));
+            }
+            let file = node.file.as_deref().ok_or_else(|| {
+                invalid(format!("node {node_path:?} has no source projection file"))
+            })?;
+            let source = std::fs::read_to_string(root.join(file))?;
+            if has_leading_declaration_metadata(&source, file, node.span.start_byte) {
+                return Err(invalid(format!(
+                    "node {node_path:?} has leading attributes, documentation, or decorators outside its projection; refusing delete_node because that metadata would be orphaned"
+                )));
+            }
+            let splice = splice_for_node(root, config, &node, String::new(), false)?;
+            apply_splices(root, config, state, accumulator, vec![splice])?;
+            require_occurrences(state, node_path, 0)?;
+        }
+        Edit::InsertIntoModule { insertion, .. } => {
+            let node = resolve_node(root, config, state, node_path)?;
+            if node.kind != NodeKind::Module {
+                return Err(invalid(format!(
+                    "node {node_path:?} is {:?}; insert_into_module requires a module",
+                    node.kind
+                )));
+            }
+            let splice = splice_for_node(root, config, &node, insertion.clone(), true)?;
+            apply_splices(root, config, state, accumulator, vec![splice])?;
+            require_occurrences(state, node_path, 1)?;
+        }
+        Edit::RenameNode { new_name, .. } => {
+            validate_new_name(node_path, new_name)?;
+            let node = resolve_node(root, config, state, node_path)?;
+            if node.kind != NodeKind::Function {
+                return Err(invalid(format!(
+                    "node {node_path:?} is {:?}; rename_node currently requires a function",
+                    node.kind
+                )));
+            }
+            let old_name = node.name.clone();
+            let same_named = state
+                .workspace
+                .as_ref()
+                .expect("graph ensured above")
+                .graph
+                .query_by_kind(NodeKind::Function)
+                .into_iter()
+                .filter(|candidate| candidate.name == old_name)
+                .count();
+            if same_named != 1 {
+                return Err(invalid(format!(
+                    "node {node_path:?} cannot be renamed safely: {same_named} functions share the identifier {old_name:?}"
+                )));
+            }
+            let original = state
+                .workspace
+                .as_ref()
+                .expect("graph ensured above")
+                .graph
+                .clone();
+            let outcome = state
+                .workspace
+                .as_mut()
+                .expect("graph ensured above")
+                .graph
+                .rename_node(node.id, new_name)
+                .map_err(|error| {
+                    invalid(format!("could not rename node {node_path:?}: {error}"))
+                })?;
+            let caller_nodes: Vec<Node> = outcome
+                .updated_callers
+                .iter()
+                .map(|caller_path| {
+                    original.find_by_path(caller_path).cloned().ok_or_else(|| {
+                        invalid(format!(
+                            "rename caller {caller_path:?} disappeared from the old graph"
+                        ))
+                    })
+                })
+                .collect::<std::io::Result<_>>()?;
+            let splices =
+                safe_rename_splices(root, config, &original, &node, &caller_nodes, new_name)?;
+            apply_splices(root, config, state, accumulator, splices)?;
+            require_occurrences(state, node_path, 0)?;
+            require_occurrences(state, &outcome.new_path, 1)?;
+            state.renames.insert(
+                node_path.to_string(),
+                (outcome.new_path.clone(), step_id.to_string()),
+            );
+        }
+        Edit::Substitute { .. } | Edit::Create { .. } | Edit::Delete { .. } => {
+            unreachable!("text edits are handled by apply_step_edits_v2")
+        }
+    }
+    Ok(())
+}
+
+fn resolve_node(
+    root: &Path,
+    config: &ProjectConfig,
+    state: &EditState,
+    path: &str,
+) -> std::io::Result<Node> {
+    if let Some((new_path, step)) = state.renames.get(path) {
+        return Err(invalid(format!(
+            "node path {path:?} was renamed in step {step:?} to {new_path:?}; use the new path"
+        )));
+    }
+    let workspace = state.workspace.as_ref().expect("graph must be initialized");
+    let occurrences = workspace.builder.path_occurrences(path);
+    if occurrences > 1 {
+        return Err(invalid(format!(
+            "ambiguous node path {path:?}: {occurrences} parsed declarations claim it"
+        )));
+    }
+    let exact: Vec<&Node> = workspace
+        .graph
+        .nodes()
+        .filter(|node| node.path == path)
+        .collect();
+    if occurrences == 0 || exact.is_empty() {
+        if let Some(file) = unsupported_projection_for(root, config, path)? {
+            return Err(invalid(format!(
+                "node path {path:?} addresses unsupported-language file {file:?}; graph edits support only Rust and Python"
+            )));
+        }
+        return Err(invalid(format!(
+            "unknown node path {path:?}; graph edits address only parsed Rust/Python projections"
+        )));
+    }
+    if exact.len() != 1 {
+        return Err(invalid(format!(
+            "ambiguous node path {path:?}: {} exact graph nodes match",
+            exact.len()
+        )));
+    }
+    let node = exact[0];
+    if node.id != aether_graph::NodeId::from_path(path) {
+        return Err(invalid(format!(
+            "node path {path:?} has an inconsistent path-derived identity"
+        )));
+    }
+    Ok(node.clone())
+}
+
+fn unsupported_projection_for(
+    root: &Path,
+    config: &ProjectConfig,
+    node_path: &str,
+) -> std::io::Result<Option<String>> {
+    for (_, relative) in collect_project_files_with_config(root, config)? {
+        if crate::project::source::is_supported_source_path(&relative) {
+            continue;
+        }
+        let module = aether_builder::module_path_for(&relative);
+        if node_path == module || node_path.starts_with(&format!("{module}::")) {
+            return Ok(Some(relative));
+        }
+    }
+    Ok(None)
+}
+
+fn require_occurrences(state: &EditState, path: &str, expected: usize) -> std::io::Result<()> {
+    let workspace = state.workspace.as_ref().expect("graph must be initialized");
+    let actual = workspace.builder.path_occurrences(path);
+    if actual != expected {
+        return Err(invalid(format!(
+            "node path {path:?} resolved {actual} time(s) after lowering; expected {expected}"
+        )));
+    }
+    Ok(())
+}
+
+fn splice_for_node(
+    root: &Path,
+    config: &ProjectConfig,
+    node: &Node,
+    replacement: String,
+    insertion: bool,
+) -> std::io::Result<Splice> {
+    validate_projection(root, config, node)?;
+    let file = node.file.clone().expect("validated above");
+    let (start, end, expected) = if insertion {
+        (node.span.end_byte, node.span.end_byte, String::new())
+    } else {
+        (
+            node.span.start_byte,
+            node.span.end_byte,
+            node.source.clone(),
+        )
+    };
+    Ok(Splice {
+        node: node.path.clone(),
+        file,
+        start,
+        end,
+        expected,
+        replacement,
+    })
+}
+
+fn safe_rename_splices(
+    root: &Path,
+    config: &ProjectConfig,
+    graph: &SemanticGraph,
+    definition: &Node,
+    callers: &[Node],
+    new_name: &str,
+) -> std::io::Result<Vec<Splice>> {
+    validate_projection(root, config, definition)?;
+    let old_name = &definition.name;
+    let mut all_identifiers: BTreeMap<(String, usize, usize), ()> = BTreeMap::new();
+    let mut call_identifiers: BTreeMap<(String, usize, usize), ()> = BTreeMap::new();
+    let files: std::collections::BTreeSet<String> =
+        graph.nodes().filter_map(|node| node.file.clone()).collect();
+    for file in files {
+        let source = std::fs::read_to_string(root.join(&file))?;
+        for (start, end) in identifier_spans(&source, &file, old_name) {
+            all_identifiers.insert((file.clone(), start, end), ());
+        }
+        let callee_spans = callee_identifier_spans(&source, &file, old_name);
+        for caller in callers
+            .iter()
+            .filter(|caller| caller.file.as_deref() == Some(&file))
+        {
+            let within = callee_spans
+                .iter()
+                .filter(|(start, end)| {
+                    *start >= caller.span.start_byte && *end <= caller.span.end_byte
+                })
+                .count();
+            if within != 1 {
+                return Err(invalid(format!(
+                    "node {:?} cannot be renamed safely: graph-proven caller {:?} contains {within} matching callee sites; call-site provenance is ambiguous",
+                    definition.path, caller.path
+                )));
+            }
+        }
+        if definition.file.as_deref() == Some(&file) {
+            let recursive_sites = callee_spans
+                .iter()
+                .filter(|(start, end)| {
+                    *start >= definition.span.start_byte && *end <= definition.span.end_byte
+                })
+                .count();
+            if recursive_sites > 0 {
+                return Err(invalid(format!(
+                    "node {:?} cannot be renamed safely: its definition contains {recursive_sites} same-named callee sites; recursive call-site provenance is not represented",
+                    definition.path
+                )));
+            }
+        }
+        for (start, end) in callee_spans {
+            let proven = callers.iter().any(|caller| {
+                caller.file.as_deref() == Some(file.as_str())
+                    && start >= caller.span.start_byte
+                    && end <= caller.span.end_byte
+            });
+            if proven {
+                call_identifiers.insert((file.clone(), start, end), ());
+            }
+        }
+    }
+    let definition_file = definition.file.clone().expect("validated above");
+    let definition_name = all_identifiers
+        .keys()
+        .find(|(file, start, end)| {
+            file == &definition_file
+                && *start >= definition.span.start_byte
+                && *end <= definition.span.end_byte
+                && !call_identifiers.contains_key(&(file.clone(), *start, *end))
+        })
+        .cloned()
+        .ok_or_else(|| {
+            invalid(format!(
+                "node {:?} has no syntax-verified definition identifier",
+                definition.path
+            ))
+        })?;
+    let mut rewrite = call_identifiers;
+    rewrite.insert(definition_name, ());
+    if rewrite.keys().ne(all_identifiers.keys()) {
+        let unaccounted: Vec<String> = all_identifiers
+            .keys()
+            .filter(|span| !rewrite.contains_key(*span))
+            .map(|(file, start, end)| format!("{file}:{start}..{end}"))
+            .collect();
+        return Err(invalid(format!(
+            "node {:?} cannot be renamed safely: identifier occurrences outside its definition and graph-proven call sites at {}",
+            definition.path,
+            unaccounted.join(", ")
+        )));
+    }
+    Ok(rewrite
+        .into_keys()
+        .map(|(file, start, end)| Splice {
+            node: definition.path.clone(),
+            file,
+            start,
+            end,
+            expected: old_name.clone(),
+            replacement: new_name.to_string(),
+        })
+        .collect())
+}
+
+fn validate_projection(root: &Path, config: &ProjectConfig, node: &Node) -> std::io::Result<()> {
+    if !matches!(node.language.as_str(), "rust" | "python") {
+        return Err(invalid(format!(
+            "node {:?} uses unsupported language {:?}; graph edits support only Rust and Python",
+            node.path, node.language
+        )));
+    }
+    let file = node.file.as_deref().ok_or_else(|| {
+        invalid(format!(
+            "node {:?} has no source projection file",
+            node.path
+        ))
+    })?;
+    if !is_configured_source_path(config, file)? {
+        return Err(invalid(format!(
+            "node {:?} projects to unsupported or unconfigured source file {file:?}; graph edits support only configured Rust and Python files",
+            node.path
+        )));
+    }
+    let target = safe_project_input_path(root, file)?;
+    let source = std::fs::read_to_string(&target).map_err(|error| {
+        std::io::Error::new(
+            error.kind(),
+            format!(
+                "could not read projection {file:?} for node {:?}: {error}",
+                node.path
+            ),
+        )
+    })?;
+    let span = node.span;
+    if span.start_byte >= span.end_byte {
+        return Err(invalid(format!(
+            "node {:?} has an empty or reversed span {}..{}",
+            node.path, span.start_byte, span.end_byte
+        )));
+    }
+    if span.end_byte > source.len()
+        || !source.is_char_boundary(span.start_byte)
+        || !source.is_char_boundary(span.end_byte)
+    {
+        return Err(invalid(format!(
+            "node {:?} has an out-of-bounds or non-UTF-8 span {}..{} for {file:?}",
+            node.path, span.start_byte, span.end_byte
+        )));
+    }
+    if source[span.start_byte..span.end_byte] != node.source {
+        return Err(invalid(format!(
+            "node {:?} has a stale projection span in {file:?}; source bytes do not match the graph",
+            node.path
+        )));
+    }
+    Ok(())
+}
+
+fn apply_splices(
+    root: &Path,
+    config: &ProjectConfig,
+    state: &mut EditState,
+    accumulator: &mut StepAccumulator,
+    splices: Vec<Splice>,
+) -> std::io::Result<()> {
+    let mut by_file: BTreeMap<String, Vec<Splice>> = BTreeMap::new();
+    for splice in splices {
+        by_file.entry(splice.file.clone()).or_default().push(splice);
+    }
+    let files: Vec<String> = by_file.keys().cloned().collect();
+    for (file, mut file_splices) in by_file {
+        file_splices.sort_by_key(|splice| (splice.start, splice.end));
+        for pair in file_splices.windows(2) {
+            if pair[0].end > pair[1].start {
+                return Err(invalid(format!(
+                    "overlapping graph edits in {file:?}: node {:?} span {}..{} overlaps node {:?} span {}..{}",
+                    pair[0].node,
+                    pair[0].start,
+                    pair[0].end,
+                    pair[1].node,
+                    pair[1].start,
+                    pair[1].end
+                )));
+            }
+        }
+        let relative = PathBuf::from(&file);
+        accumulator.capture(root, &relative)?;
+        let mut source = std::fs::read_to_string(root.join(&relative))?;
+        for splice in file_splices.into_iter().rev() {
+            if splice.end > source.len()
+                || !source.is_char_boundary(splice.start)
+                || !source.is_char_boundary(splice.end)
+                || source[splice.start..splice.end] != splice.expected
+            {
+                return Err(invalid(format!(
+                    "node {:?} projection changed while lowering; refusing stale span {}..{} in {file:?}",
+                    splice.node, splice.start, splice.end
+                )));
+            }
+            source.replace_range(splice.start..splice.end, &splice.replacement);
+        }
+        std::fs::write(root.join(&relative), source)?;
+    }
+    for file in files {
+        state.refresh_file(root, config, &file)?;
+    }
+    Ok(())
+}
+
+fn validate_new_name(path: &str, new_name: &str) -> std::io::Result<()> {
+    let mut chars = new_name.chars();
+    let valid = chars
+        .next()
+        .is_some_and(|first| first == '_' || first.is_alphabetic())
+        && chars.all(|character| character == '_' || character.is_alphanumeric());
+    if !valid {
+        return Err(invalid(format!(
+            "node {path:?} rename target {new_name:?} is not one identifier"
+        )));
+    }
+    Ok(())
+}
+
+fn invalid(message: impl Into<String>) -> std::io::Error {
+    std::io::Error::new(std::io::ErrorKind::InvalidData, message.into())
 }
 
 #[cfg(test)]
@@ -289,5 +929,424 @@ mod tests {
             "fresh\n"
         );
         assert!(!dir.0.join("gone.rs").exists());
+    }
+
+    fn v2_fixture(name: &str, file: &str, source: &str) -> (TempDir, ProjectConfig) {
+        let dir = TempDir::new(name);
+        let target = dir.0.join(file);
+        std::fs::create_dir_all(target.parent().unwrap()).unwrap();
+        std::fs::write(target, source).unwrap();
+        (dir, ProjectConfig::default())
+    }
+
+    #[test]
+    fn graph_edits_in_one_file_re_resolve_shifted_spans() {
+        let (dir, config) = v2_fixture(
+            "graph-shift",
+            "src/lib.rs",
+            "pub fn first() -> i32 { 1 }\npub fn second() -> i32 { 2 }\n",
+        );
+        let edits = vec![
+            Edit::ReplaceNode {
+                node: "crate::lib::first".into(),
+                replacement: "pub fn first() -> i32 { 111111 }".into(),
+            },
+            Edit::ReplaceNode {
+                node: "crate::lib::second".into(),
+                replacement: "pub fn second() -> i32 { 222222 }".into(),
+            },
+        ];
+        let mut state = EditState::default();
+        let writes = apply_step_edits_v2(&dir.0, &config, "shift", &edits, &mut state).unwrap();
+        assert_eq!(writes.len(), 1);
+        assert_eq!(
+            std::fs::read_to_string(dir.0.join("src/lib.rs")).unwrap(),
+            "pub fn first() -> i32 { 111111 }\npub fn second() -> i32 { 222222 }\n"
+        );
+    }
+
+    #[test]
+    fn deleting_a_source_file_removes_its_module_from_the_live_graph() {
+        let (dir, config) = v2_fixture("graph-delete-file", "src/old.rs", "pub fn old() {}\n");
+        std::fs::write(dir.0.join("src/keep.rs"), "pub fn keep() {}\n").unwrap();
+        let mut state = EditState::default();
+        state.ensure_graph(&dir.0, &config).unwrap();
+        apply_step_edits_v2(
+            &dir.0,
+            &config,
+            "delete-file",
+            &[Edit::Delete {
+                path: "src/old.rs".into(),
+                delete: true,
+            }],
+            &mut state,
+        )
+        .unwrap();
+        assert!(state.graph().unwrap().find_by_path("crate::old").is_none());
+        assert!(state.graph().unwrap().find_by_path("crate::keep").is_some());
+    }
+
+    #[test]
+    fn nested_graph_projections_are_re_resolved_after_parent_replacement() {
+        let (dir, config) = v2_fixture(
+            "graph-nested-projections",
+            "src/lib.rs",
+            "pub trait Boxed {\n    fn nested() -> i32 { 1 }\n}\n",
+        );
+        let edits = vec![
+            Edit::ReplaceNode {
+                node: "crate::lib::Boxed".into(),
+                replacement: "pub trait Boxed {\n    fn nested() -> i32 { 444444 }\n}".into(),
+            },
+            Edit::ReplaceNode {
+                node: "crate::lib::Boxed::nested".into(),
+                replacement: "fn nested() -> i32 { 555555 }".into(),
+            },
+        ];
+        let mut state = EditState::default();
+        apply_step_edits_v2(&dir.0, &config, "nested", &edits, &mut state).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(dir.0.join("src/lib.rs")).unwrap(),
+            "pub trait Boxed {\n    fn nested() -> i32 { 555555 }\n}\n"
+        );
+    }
+
+    #[test]
+    fn rename_updates_definition_and_graph_proven_callers() {
+        let (dir, config) = v2_fixture(
+            "graph-rename",
+            "src/lib.rs",
+            "pub fn target() -> i32 { 1 }\npub fn caller() -> i32 { target() }\n",
+        );
+        let mut state = EditState::default();
+        apply_step_edits_v2(
+            &dir.0,
+            &config,
+            "rename",
+            &[Edit::RenameNode {
+                node: "crate::lib::target".into(),
+                new_name: "renamed".into(),
+            }],
+            &mut state,
+        )
+        .unwrap();
+        let source = std::fs::read_to_string(dir.0.join("src/lib.rs")).unwrap();
+        assert!(source.contains("fn renamed()"), "{source}");
+        assert!(source.contains("renamed() }"), "{source}");
+
+        let error = apply_step_edits_v2(
+            &dir.0,
+            &config,
+            "later",
+            &[Edit::DeleteNode {
+                node: "crate::lib::target".into(),
+                delete: true,
+            }],
+            &mut state,
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("renamed in step"), "{error}");
+        assert!(error.to_string().contains("crate::lib::renamed"), "{error}");
+    }
+
+    #[test]
+    fn duplicate_and_empty_span_targets_fail_closed_with_context() {
+        let (duplicates, config) = v2_fixture(
+            "graph-duplicate",
+            "src/lib.py",
+            "def target():\n    return 1\n\ndef target():\n    return 2\n",
+        );
+        let mut state = EditState::default();
+        let error = apply_step_edits_v2(
+            &duplicates.0,
+            &config,
+            "ambiguous-step",
+            &[Edit::DeleteNode {
+                node: "crate::lib::target".into(),
+                delete: true,
+            }],
+            &mut state,
+        )
+        .unwrap_err();
+        let diagnostic = error.to_string();
+        assert!(diagnostic.contains("ambiguous-step"), "{diagnostic}");
+        assert!(diagnostic.contains("crate::lib::target"), "{diagnostic}");
+        assert!(diagnostic.contains("ambiguous"), "{diagnostic}");
+
+        let (empty, config) = v2_fixture("graph-empty", "src/lib.rs", "");
+        let mut state = EditState::default();
+        let error = apply_step_edits_v2(
+            &empty.0,
+            &config,
+            "spanless-step",
+            &[Edit::InsertIntoModule {
+                node: "crate::lib".into(),
+                insertion: "fn added() {}\n".into(),
+            }],
+            &mut state,
+        )
+        .unwrap_err();
+        let diagnostic = error.to_string();
+        assert!(diagnostic.contains("spanless-step"), "{diagnostic}");
+        assert!(diagnostic.contains("crate::lib"), "{diagnostic}");
+        assert!(diagnostic.contains("empty"), "{diagnostic}");
+    }
+
+    #[test]
+    fn unknown_and_fileless_targets_fail_closed_with_step_and_node() {
+        let (dir, config) = v2_fixture(
+            "graph-resolution-failures",
+            "src/lib.rs",
+            "fn target() {}\n",
+        );
+        let mut state = EditState::default();
+        let error = apply_step_edits_v2(
+            &dir.0,
+            &config,
+            "unknown-step",
+            &[Edit::DeleteNode {
+                node: "crate::lib::missing".into(),
+                delete: true,
+            }],
+            &mut state,
+        )
+        .unwrap_err();
+        let diagnostic = error.to_string();
+        assert!(diagnostic.contains("unknown-step"), "{diagnostic}");
+        assert!(diagnostic.contains("crate::lib::missing"), "{diagnostic}");
+        assert!(diagnostic.contains("unknown node path"), "{diagnostic}");
+
+        state.ensure_graph(&dir.0, &config).unwrap();
+        state.workspace.as_mut().unwrap().graph.upsert_node(
+            Node::new(NodeKind::Function, "target", "crate::lib::target")
+                .with_language("rust")
+                .with_source("fn target() {}"),
+        );
+        let error = apply_step_edits_v2(
+            &dir.0,
+            &config,
+            "fileless-step",
+            &[Edit::ReplaceNode {
+                node: "crate::lib::target".into(),
+                replacement: "fn target() { panic!() }".into(),
+            }],
+            &mut state,
+        )
+        .unwrap_err();
+        let diagnostic = error.to_string();
+        assert!(diagnostic.contains("fileless-step"), "{diagnostic}");
+        assert!(diagnostic.contains("crate::lib::target"), "{diagnostic}");
+        assert!(
+            diagnostic.contains("no source projection file"),
+            "{diagnostic}"
+        );
+    }
+
+    #[test]
+    fn unsupported_language_targets_fail_closed_with_step_and_node() {
+        let (dir, config) = v2_fixture(
+            "graph-unsupported-language",
+            "src/legacy.js",
+            "function target() {}\n",
+        );
+        let mut state = EditState::default();
+        let error = apply_step_edits_v2(
+            &dir.0,
+            &config,
+            "unsupported-step",
+            &[Edit::DeleteNode {
+                node: "crate::legacy::target".into(),
+                delete: true,
+            }],
+            &mut state,
+        )
+        .unwrap_err();
+        let diagnostic = error.to_string();
+        assert!(diagnostic.contains("unsupported-step"), "{diagnostic}");
+        assert!(diagnostic.contains("crate::legacy::target"), "{diagnostic}");
+        assert!(diagnostic.contains("unsupported-language"), "{diagnostic}");
+    }
+
+    #[test]
+    fn delete_node_rejects_leading_attributes_and_decorators() {
+        for (name, file, source) in [
+            (
+                "rust-attribute",
+                "src/lib.rs",
+                "#[test]\nfn target() {}\nfn next() {}\n",
+            ),
+            (
+                "python-decorator",
+                "src/lib.py",
+                "@decorator\ndef target():\n    pass\n\ndef next():\n    pass\n",
+            ),
+        ] {
+            let (dir, config) = v2_fixture(name, file, source);
+            let mut state = EditState::default();
+            let error = apply_step_edits_v2(
+                &dir.0,
+                &config,
+                "decorated-delete",
+                &[Edit::DeleteNode {
+                    node: "crate::lib::target".into(),
+                    delete: true,
+                }],
+                &mut state,
+            )
+            .unwrap_err();
+            assert!(
+                error.to_string().contains("metadata would be orphaned"),
+                "{error}"
+            );
+            assert_eq!(std::fs::read_to_string(dir.0.join(file)).unwrap(), source);
+        }
+    }
+
+    #[test]
+    fn v2_text_paths_cannot_escape_or_alias_the_candidate() {
+        let (dir, config) = v2_fixture("graph-safe-path", "src/lib.rs", "fn old() {}\n");
+        for path in [
+            "../outside.rs",
+            "./src/lib.rs",
+            "src/./lib.rs",
+            "src//lib.rs",
+            "src\\lib.rs",
+        ] {
+            let mut state = EditState::default();
+            let error = apply_step_edits_v2(
+                &dir.0,
+                &config,
+                "safe-path",
+                &[Edit::Substitute {
+                    path: path.into(),
+                    match_text: "old".into(),
+                    replace: "new".into(),
+                    occurrences: 1,
+                }],
+                &mut state,
+            )
+            .unwrap_err();
+            assert!(error.to_string().contains("safe-path"), "{error}");
+        }
+        assert_eq!(
+            std::fs::read_to_string(dir.0.join("src/lib.rs")).unwrap(),
+            "fn old() {}\n"
+        );
+    }
+
+    #[test]
+    fn rename_rejects_ambiguous_same_named_call_sites() {
+        let (dir, config) = v2_fixture(
+            "graph-rename-ambiguous-call",
+            "src/lib.rs",
+            "pub fn target() -> i32 { 1 }\npub fn caller() -> i32 { target() + object.target() }\n",
+        );
+        let mut state = EditState::default();
+        let error = apply_step_edits_v2(
+            &dir.0,
+            &config,
+            "ambiguous-call",
+            &[Edit::RenameNode {
+                node: "crate::lib::target".into(),
+                new_name: "renamed".into(),
+            }],
+            &mut state,
+        )
+        .unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("call-site provenance is ambiguous"),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn rename_rejects_ambiguous_same_named_recursive_call_sites() {
+        let (dir, config) = v2_fixture(
+            "graph-rename-ambiguous-recursive",
+            "src/lib.rs",
+            "pub fn target() -> i32 { target() + object.target() }\n",
+        );
+        let mut state = EditState::default();
+        let error = apply_step_edits_v2(
+            &dir.0,
+            &config,
+            "ambiguous-recursive-call",
+            &[Edit::RenameNode {
+                node: "crate::lib::target".into(),
+                new_name: "renamed".into(),
+            }],
+            &mut state,
+        )
+        .unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("recursive call-site provenance is not represented"),
+            "{error}"
+        );
+        assert_eq!(
+            std::fs::read_to_string(dir.0.join("src/lib.rs")).unwrap(),
+            "pub fn target() -> i32 { target() + object.target() }\n"
+        );
+    }
+
+    #[test]
+    fn rename_rejects_shadowable_bare_calls_inside_the_definition() {
+        let (dir, config) = v2_fixture(
+            "graph-rename-shadowed-recursive",
+            "src/lib.py",
+            "def target():\n    def target():\n        return 1\n    return target()\n",
+        );
+        let mut state = EditState::default();
+        let error = apply_step_edits_v2(
+            &dir.0,
+            &config,
+            "shadowed-recursive-call",
+            &[Edit::RenameNode {
+                node: "crate::lib::target".into(),
+                new_name: "renamed".into(),
+            }],
+            &mut state,
+        )
+        .unwrap_err();
+        assert!(
+            error.to_string().contains("cannot be renamed safely"),
+            "{error}"
+        );
+        assert_eq!(
+            std::fs::read_to_string(dir.0.join("src/lib.py")).unwrap(),
+            "def target():\n    def target():\n        return 1\n    return target()\n"
+        );
+    }
+
+    #[test]
+    fn graph_re_resolution_handles_shared_utf8_prefix_bytes() {
+        let (dir, config) = v2_fixture(
+            "graph-utf8-prefix",
+            "src/lib.py",
+            "def greeting():\n    return \"é\"\n\ndef second():\n    return 2\n",
+        );
+        let mut state = EditState::default();
+        let writes = apply_step_edits_v2(
+            &dir.0,
+            &config,
+            "utf8-prefix",
+            &[Edit::ReplaceNode {
+                node: "crate::lib::greeting".into(),
+                replacement: "def greeting():\n    return \"ê\"".into(),
+            }],
+            &mut state,
+        )
+        .unwrap();
+        assert_eq!(writes.len(), 1);
+        assert!(state
+            .graph()
+            .unwrap()
+            .find_by_path("crate::lib::greeting")
+            .unwrap()
+            .source
+            .contains("ê"));
     }
 }

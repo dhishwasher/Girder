@@ -15,6 +15,143 @@ pub use mapper::{extract, module_path_for, BuildOutput};
 pub use parser::{IncrementalParser, Lang};
 pub use sync::GraphBuilder;
 
+/// Byte spans of syntax identifiers equal to `name`, excluding comments and
+/// strings because tree-sitter does not classify their contents as identifiers.
+pub fn identifier_spans(source: &str, file: &str, name: &str) -> Vec<(usize, usize)> {
+    let Some(language) = Lang::from_path(file) else {
+        return Vec::new();
+    };
+    let mut parser = IncrementalParser::new(language);
+    let tree = parser.parse(source);
+    let mut spans = Vec::new();
+    let mut stack = vec![tree.root_node()];
+    while let Some(node) = stack.pop() {
+        if matches!(node.kind(), "identifier" | "field_identifier")
+            && source.get(node.byte_range()) == Some(name)
+        {
+            spans.push((node.start_byte(), node.end_byte()));
+        }
+        let mut cursor = node.walk();
+        stack.extend(node.children(&mut cursor));
+    }
+    spans.sort_unstable();
+    spans.dedup();
+    spans
+}
+
+/// Syntax-verified callee identifier spans equal to `name`.
+pub fn callee_identifier_spans(source: &str, file: &str, name: &str) -> Vec<(usize, usize)> {
+    let Some(language) = Lang::from_path(file) else {
+        return Vec::new();
+    };
+    let mut parser = IncrementalParser::new(language);
+    let tree = parser.parse(source);
+    let call_kind = match language {
+        Lang::Rust => "call_expression",
+        Lang::Python => "call",
+    };
+    let mut spans = Vec::new();
+    let mut stack = vec![tree.root_node()];
+    while let Some(node) = stack.pop() {
+        if node.kind() == call_kind {
+            if let Some(function) = node.child_by_field_name("function") {
+                let mut identifiers = identifier_nodes(function, source, name);
+                identifiers.sort_by_key(|candidate| candidate.start_byte());
+                if let Some(candidate) = identifiers.last() {
+                    spans.push((candidate.start_byte(), candidate.end_byte()));
+                }
+            }
+        }
+        let mut cursor = node.walk();
+        stack.extend(node.children(&mut cursor));
+    }
+    spans.sort_unstable();
+    spans.dedup();
+    spans
+}
+
+/// Whether the declaration beginning at `start` has leading syntax metadata
+/// that is outside the declaration's own source span. Deleting only the node
+/// projection would orphan this metadata onto the next declaration.
+pub fn has_leading_declaration_metadata(source: &str, file: &str, start: usize) -> bool {
+    let Some(language) = Lang::from_path(file) else {
+        return false;
+    };
+    let mut parser = IncrementalParser::new(language);
+    let tree = parser.parse(source);
+    let mut stack = vec![tree.root_node()];
+    while let Some(node) = stack.pop() {
+        if node.start_byte() == start
+            && matches!(
+                node.kind(),
+                "function_item"
+                    | "struct_item"
+                    | "enum_item"
+                    | "trait_item"
+                    | "function_definition"
+                    | "class_definition"
+            )
+        {
+            if language == Lang::Python
+                && node
+                    .parent()
+                    .is_some_and(|parent| parent.kind() == "decorated_definition")
+            {
+                return true;
+            }
+            if language == Lang::Rust {
+                let mut previous = node.prev_sibling();
+                while let Some(sibling) = previous {
+                    if matches!(sibling.kind(), "attribute_item" | "inner_attribute_item") {
+                        return true;
+                    }
+                    if sibling.kind() == "line_comment"
+                        && source
+                            .get(sibling.byte_range())
+                            .is_some_and(|text| text.trim_start().starts_with("///"))
+                    {
+                        return true;
+                    }
+                    if sibling.kind() == "block_comment"
+                        && source
+                            .get(sibling.byte_range())
+                            .is_some_and(|text| text.trim_start().starts_with("/**"))
+                    {
+                        return true;
+                    }
+                    if !matches!(sibling.kind(), "line_comment" | "block_comment") {
+                        break;
+                    }
+                    previous = sibling.prev_sibling();
+                }
+            }
+            return false;
+        }
+        let mut cursor = node.walk();
+        stack.extend(node.children(&mut cursor));
+    }
+    false
+}
+
+fn identifier_nodes<'tree>(
+    root: tree_sitter::Node<'tree>,
+    source: &str,
+    name: &str,
+) -> Vec<tree_sitter::Node<'tree>> {
+    let mut matches = Vec::new();
+    let mut stack = vec![root];
+    while let Some(node) = stack.pop() {
+        if matches!(node.kind(), "identifier" | "field_identifier")
+            && source.get(node.byte_range()) == Some(name)
+        {
+            matches.push(node);
+        }
+        let mut cursor = node.walk();
+        stack.extend(node.children(&mut cursor));
+    }
+    matches
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

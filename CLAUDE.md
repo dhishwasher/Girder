@@ -46,11 +46,21 @@ cargo test -p aether-dap --test debugpy -- --ignored
 
 - **The default build must always compile and all tests must pass.** This is the
   binding constraint.
-- The **graph is the source of truth**; text/files are projections. New code
-  should mutate the graph, not treat files as authoritative.
+- The **graph is the source of truth**; text/files are projections. Plan Format
+  v2 graph edits address exact semantic paths and lower verified Rust/Python
+  projections to journaled file writes; v1 text-addressed plans remain supported.
+  New code should mutate the graph, not treat files as authoritative.
 - **Node ids are path-derived** (`NodeId::from_path`, FNV-1a of the semantic
   path). They survive body edits and serialization, but a semantic rename creates
   a new id and remaps graph edges.
+- Graph-addressed plan edits re-resolve after every edit. A later step must use
+  a rename's new semantic path; old paths fail closed instead of aliasing.
+  Format v2 supports `replace_node`, `rename_node`, `delete_node`, and
+  `insert_into_module` on Rust/Python projections. `replace_node` replaces the
+  complete `Node.source` declaration, including its signature. Function renames
+  rewrite the definition and syntax-verified graph-proven call sites; ambiguous
+  call sites, imports/re-exports, recursive calls, or any other unproven
+  identifier occurrence reject the rename instead of risking a partial projection.
 - **Calls are resolved project-wide** in `aether-builder::sync::resolve_calls`,
   not per file. Don't add `Calls` edges during extraction.
 - Agents must **not hold the graph mutex across an `.await`** (lock, mutate,

@@ -6,12 +6,16 @@
 //! (not the output variant) is used deliberately so checking a plan never
 //! creates a directory as a side effect.
 
+use crate::project::config::ProjectConfig;
 use crate::project::git::{git_head_commit, git_worktree_clean};
-use crate::project::planfile::edit::count_occurrences;
+use crate::project::planfile::edit::{apply_step_edits_v2, count_occurrences, EditState};
 use crate::project::planfile::schema::{Edit, Plan};
 use crate::project::source::safe_project_input_path;
+use crate::project::validation::CandidateWorkspace;
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 
 pub(crate) struct PreconditionFailure {
     pub(crate) reason: String,
@@ -46,6 +50,35 @@ pub(crate) fn check_preconditions(
         }),
     }
 
+    if plan.plan_version == 2 && !failures.is_empty() {
+        return Ok(Err(failures));
+    }
+    if plan.plan_version == 2 {
+        let config = ProjectConfig::load(root)?;
+        let cancel = Arc::new(AtomicBool::new(false));
+        let candidate = CandidateWorkspace::create(root, &config, &cancel)?;
+        let mut state = EditState::default();
+        for step in &plan.steps {
+            if let Err(error) = apply_step_edits_v2(
+                candidate.workspace_path(),
+                &config,
+                &step.id,
+                &step.edits,
+                &mut state,
+            ) {
+                failures.push(PreconditionFailure {
+                    reason: error.to_string(),
+                });
+                break;
+            }
+        }
+        return if failures.is_empty() {
+            Ok(Ok(()))
+        } else {
+            Ok(Err(failures))
+        };
+    }
+
     // A later step's edit is validated against the state earlier steps in
     // *this plan* would leave behind, not against the pristine on-disk
     // file — otherwise a plan whose step 2 edits text that only exists
@@ -73,6 +106,12 @@ fn check_edit(
     virtual_files: &mut HashMap<String, Option<String>>,
 ) {
     let Some(edit_path) = edit.path() else {
+        failures.push(PreconditionFailure {
+            reason: format!(
+                "step {step_id}: graph-addressed edit for node {:?} requires plan_version 2 lowering",
+                edit.node().unwrap_or("<missing node>")
+            ),
+        });
         return;
     };
     let validated = match safe_project_input_path(root, edit_path) {

@@ -21,6 +21,8 @@ struct FileState {
     source: String,
     /// Node ids this file currently contributes to the graph.
     owned: HashSet<NodeId>,
+    /// Semantic paths before graph upsert de-duplicates equal `NodeId`s.
+    paths: Vec<String>,
     /// Unresolved call references found in this file, for the project resolver.
     calls: Vec<CallRef>,
     /// Unresolved inheritance references found in this file.
@@ -601,6 +603,7 @@ impl GraphBuilder {
                 parser,
                 source: source.to_string(),
                 owned,
+                paths: out.nodes.iter().map(|node| node.path.clone()).collect(),
                 calls: out.calls.clone(),
                 inherits: out.inherits.clone(),
                 rust_imports: out.rust_imports.clone(),
@@ -629,6 +632,7 @@ impl GraphBuilder {
                 parser: IncrementalParser::new(lang),
                 source: String::new(),
                 owned: HashSet::new(),
+                paths: Vec::new(),
                 calls: Vec::new(),
                 inherits: Vec::new(),
                 rust_imports: Vec::new(),
@@ -645,6 +649,7 @@ impl GraphBuilder {
         let new_owned = self.apply(graph, file, &out, &prev_owned);
         if let Some(state) = self.files.get_mut(file) {
             state.owned = new_owned;
+            state.paths = out.nodes.iter().map(|node| node.path.clone()).collect();
             state.calls = out.calls.clone();
             state.inherits = out.inherits.clone();
             state.rust_imports = out.rust_imports.clone();
@@ -997,6 +1002,17 @@ impl GraphBuilder {
     pub fn source_of(&self, file: &str) -> Option<&str> {
         self.files.get(file).map(|s| s.source.as_str())
     }
+
+    /// Number of parsed declarations currently claiming an exact semantic path.
+    /// This is intentionally counted before graph upsert, whose path-derived id
+    /// would otherwise collapse duplicate definitions and hide ambiguity.
+    pub fn path_occurrences(&self, path: &str) -> usize {
+        self.files
+            .values()
+            .flat_map(|state| state.paths.iter())
+            .filter(|candidate| candidate.as_str() == path)
+            .count()
+    }
 }
 
 /// Build a conservative [`InputEdit`] describing "the whole buffer changed".
@@ -1005,11 +1021,14 @@ impl GraphBuilder {
 /// prototype we hand tree-sitter the changed byte range from the start of the
 /// first difference, which still lets it reuse the unchanged prefix's subtree.
 fn whole_buffer_edit(old: &str, new: &str) -> InputEdit {
-    let common = old
+    let mut common = old
         .bytes()
         .zip(new.bytes())
         .take_while(|(a, b)| a == b)
         .count();
+    while common > 0 && (!old.is_char_boundary(common) || !new.is_char_boundary(common)) {
+        common -= 1;
+    }
     let start_point = byte_to_point(old, common);
     InputEdit {
         start_byte: common,
