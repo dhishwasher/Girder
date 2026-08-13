@@ -1,4 +1,4 @@
-//! Bit Code Plan Format v1: an external author writes an exact, literal JSON
+//! Bit Code Plan Format v1/v2: an external author writes an exact, literal JSON
 //! plan (text edits plus verification checks) and Bit Code executes it
 //! deterministically — no inference, no fuzzy retries. See the plan file
 //! `now-create-a-plan-optimized-spark.md` in this repository's planning
@@ -15,10 +15,6 @@ use crate::project::config::ProjectConfig;
 use schema::Plan;
 use std::path::Path;
 
-/// The only plan format version this executor understands. Per the format
-/// spec: "Executor refuses unknown versions."
-const SUPPORTED_PLAN_VERSION: u32 = 1;
-
 fn load_plan(path: &Path) -> std::io::Result<Plan> {
     let text = std::fs::read_to_string(path).map_err(|error| {
         std::io::Error::new(
@@ -32,15 +28,6 @@ fn load_plan(path: &Path) -> std::io::Result<Plan> {
             format!("could not parse plan file {}: {error}", path.display()),
         )
     })?;
-    if plan.plan_version != SUPPORTED_PLAN_VERSION {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            format!(
-                "unsupported plan_version {} (this executor only understands {SUPPORTED_PLAN_VERSION})",
-                plan.plan_version
-            ),
-        ));
-    }
     plan.validate().map_err(|error| {
         std::io::Error::new(
             std::io::ErrorKind::InvalidData,
@@ -103,6 +90,24 @@ pub(crate) fn explain(plan_path: &Path) -> std::io::Result<()> {
                     } => println!("        substitute in {path} ({occurrences} occurrence(s))"),
                     schema::Edit::Create { path, .. } => println!("        create {path}"),
                     schema::Edit::Delete { path, .. } => println!("        delete {path}"),
+                    schema::Edit::ReplaceNode { node, replacement } => {
+                        println!(
+                            "        replace full node projection {node} ({} byte(s))",
+                            replacement.len()
+                        )
+                    }
+                    schema::Edit::RenameNode { node, new_name } => {
+                        println!("        rename {node} to {new_name}")
+                    }
+                    schema::Edit::DeleteNode { node, delete } => {
+                        println!("        delete node {node} (delete={delete})")
+                    }
+                    schema::Edit::InsertIntoModule { node, insertion } => {
+                        println!(
+                            "        insert into module {node} ({} byte(s))",
+                            insertion.len()
+                        )
+                    }
                 }
             }
         }

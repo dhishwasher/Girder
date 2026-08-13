@@ -72,20 +72,23 @@ fn check_edit(
     failures: &mut Vec<PreconditionFailure>,
     virtual_files: &mut HashMap<String, Option<String>>,
 ) {
-    let validated = match safe_project_input_path(root, edit.path()) {
+    let Some(edit_path) = edit.path() else {
+        return;
+    };
+    let validated = match safe_project_input_path(root, edit_path) {
         Ok(path) => path,
         Err(error) => {
             failures.push(PreconditionFailure {
                 reason: format!(
                     "step {step_id}: edit path {:?} does not resolve inside the project: {error}",
-                    edit.path()
+                    edit_path
                 ),
             });
             return;
         }
     };
 
-    let path = edit.path().to_string();
+    let path = edit_path.to_string();
     let current: Option<String> = match virtual_files.get(&path) {
         Some(state) => state.clone(),
         None => match std::fs::read(&validated) {
@@ -172,6 +175,10 @@ fn check_edit(
             }
             virtual_files.insert(path, None);
         }
+        Edit::ReplaceNode { .. }
+        | Edit::RenameNode { .. }
+        | Edit::DeleteNode { .. }
+        | Edit::InsertIntoModule { .. } => unreachable!("graph edits returned above"),
     }
 }
 

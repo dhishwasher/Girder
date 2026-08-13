@@ -86,6 +86,13 @@ pub(crate) fn apply_edit(base_dir: &Path, edit: &Edit) -> std::io::Result<Projec
             })?;
             Ok(ProjectWrite::delete(path.clone(), contents))
         }
+        Edit::ReplaceNode { .. }
+        | Edit::RenameNode { .. }
+        | Edit::DeleteNode { .. }
+        | Edit::InsertIntoModule { .. } => Err(std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "graph-addressed edit lowering is not available in this format-only checkpoint",
+        )),
     }
 }
 

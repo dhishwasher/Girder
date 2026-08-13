@@ -1,4 +1,4 @@
-//! Serde structs for the Bit Code Plan Format v1 JSON schema. Parsing is
+//! Serde structs for the Bit Code Plan Format v1/v2 JSON schema. Parsing is
 //! deliberately permissive about which check `kind`s exist (all documented
 //! kinds parse from Phase 1 onward) even though earlier phases only execute
 //! a subset — this avoids re-touching the schema every time a new check
@@ -148,8 +148,9 @@ impl<'de> Deserialize<'de> for Step {
             .map(|(index, value)| {
                 let path = value
                     .get("path")
+                    .or_else(|| value.get("node"))
                     .and_then(Value::as_str)
-                    .unwrap_or("<missing path>")
+                    .unwrap_or("<missing path or node>")
                     .to_string();
                 serde_json::from_value(value).map_err(|error| {
                     D::Error::custom(format!(
@@ -206,6 +207,24 @@ pub(crate) enum Edit {
         path: String,
         delete: bool,
     },
+    /// Replace the node's complete `Node::source` projection, including its
+    /// declaration/signature rather than only its brace or suite interior.
+    ReplaceNode {
+        node: String,
+        replacement: String,
+    },
+    RenameNode {
+        node: String,
+        new_name: String,
+    },
+    DeleteNode {
+        node: String,
+        delete: bool,
+    },
+    InsertIntoModule {
+        node: String,
+        insertion: String,
+    },
 }
 
 #[derive(Deserialize)]
@@ -233,6 +252,34 @@ struct DeleteEdit {
     delete: bool,
 }
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ReplaceNodeEdit {
+    node: String,
+    replace_node: String,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RenameNodeEdit {
+    node: String,
+    rename_node: String,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DeleteNodeEdit {
+    node: String,
+    delete_node: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct InsertIntoModuleEdit {
+    node: String,
+    insert_into_module: String,
+}
+
 impl<'de> Deserialize<'de> for Edit {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -249,6 +296,11 @@ impl<'de> Deserialize<'de> for Edit {
             "occurrences",
             "create",
             "delete",
+            "node",
+            "replace_node",
+            "rename_node",
+            "delete_node",
+            "insert_into_module",
         ];
         if let Some(field) = object
             .keys()
@@ -260,13 +312,21 @@ impl<'de> Deserialize<'de> for Edit {
             )));
         }
 
-        let discriminators: Vec<&str> = ["match", "create", "delete"]
-            .into_iter()
-            .filter(|field| object.contains_key(*field))
-            .collect();
+        let discriminators: Vec<&str> = [
+            "match",
+            "create",
+            "delete",
+            "replace_node",
+            "rename_node",
+            "delete_node",
+            "insert_into_module",
+        ]
+        .into_iter()
+        .filter(|field| object.contains_key(*field))
+        .collect();
         if discriminators.len() != 1 {
             return Err(D::Error::custom(format!(
-                "edit must contain exactly one discriminator field (match, create, or delete); found {discriminators:?}"
+                "edit must contain exactly one discriminator field (match, create, delete, replace_node, rename_node, delete_node, or insert_into_module); found {discriminators:?}"
             )));
         }
 
@@ -297,18 +357,68 @@ impl<'de> Deserialize<'de> for Edit {
                     delete: raw.delete,
                 })
             }
+            "replace_node" => {
+                let raw: ReplaceNodeEdit = serde_json::from_value(value)
+                    .map_err(|error| D::Error::custom(error.to_string()))?;
+                Ok(Self::ReplaceNode {
+                    node: raw.node,
+                    replacement: raw.replace_node,
+                })
+            }
+            "rename_node" => {
+                let raw: RenameNodeEdit = serde_json::from_value(value)
+                    .map_err(|error| D::Error::custom(error.to_string()))?;
+                Ok(Self::RenameNode {
+                    node: raw.node,
+                    new_name: raw.rename_node,
+                })
+            }
+            "delete_node" => {
+                let raw: DeleteNodeEdit = serde_json::from_value(value)
+                    .map_err(|error| D::Error::custom(error.to_string()))?;
+                Ok(Self::DeleteNode {
+                    node: raw.node,
+                    delete: raw.delete_node,
+                })
+            }
+            "insert_into_module" => {
+                let raw: InsertIntoModuleEdit = serde_json::from_value(value)
+                    .map_err(|error| D::Error::custom(error.to_string()))?;
+                Ok(Self::InsertIntoModule {
+                    node: raw.node,
+                    insertion: raw.insert_into_module,
+                })
+            }
             _ => unreachable!("the discriminator list is fixed above"),
         }
     }
 }
 
 impl Edit {
-    pub(crate) fn path(&self) -> &str {
+    pub(crate) fn path(&self) -> Option<&str> {
         match self {
-            Edit::Substitute { path, .. } => path,
-            Edit::Create { path, .. } => path,
-            Edit::Delete { path, .. } => path,
+            Edit::Substitute { path, .. }
+            | Edit::Create { path, .. }
+            | Edit::Delete { path, .. } => Some(path),
+            Edit::ReplaceNode { .. }
+            | Edit::RenameNode { .. }
+            | Edit::DeleteNode { .. }
+            | Edit::InsertIntoModule { .. } => None,
         }
+    }
+
+    pub(crate) fn node(&self) -> Option<&str> {
+        match self {
+            Edit::ReplaceNode { node, .. }
+            | Edit::RenameNode { node, .. }
+            | Edit::DeleteNode { node, .. }
+            | Edit::InsertIntoModule { node, .. } => Some(node),
+            Edit::Substitute { .. } | Edit::Create { .. } | Edit::Delete { .. } => None,
+        }
+    }
+
+    pub(crate) fn is_graph_addressed(&self) -> bool {
+        self.node().is_some()
     }
 }
 
@@ -466,7 +576,27 @@ impl Check {
 
 impl Plan {
     pub(crate) fn validate(&self) -> Result<(), String> {
+        if !matches!(self.plan_version, 1 | 2) {
+            return Err(format!(
+                "unsupported plan_version {} (this executor understands 1 and 2)",
+                self.plan_version
+            ));
+        }
         for step in &self.steps {
+            if self.plan_version == 1 {
+                if let Some((index, edit)) = step
+                    .edits
+                    .iter()
+                    .enumerate()
+                    .find(|(_, edit)| edit.is_graph_addressed())
+                {
+                    return Err(format!(
+                        "step {:?}: edits[{index}] node {:?} requires plan_version 2",
+                        step.id,
+                        edit.node().unwrap_or("<missing node>")
+                    ));
+                }
+            }
             for (index, check) in step.checks.iter().enumerate() {
                 let invalid = match check {
                     Check::GraphCallersOf { expect, mode, .. }
@@ -602,6 +732,70 @@ mod tests {
             }
             other => panic!("expected delete edit, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn graph_edits_parse_in_v2_and_are_rejected_in_v1() {
+        let edits = r#"[
+          {"node":"crate::m::f","replace_node":"fn f() {}"},
+          {"node":"crate::m::f","rename_node":"g"},
+          {"node":"crate::m::g","delete_node":true},
+          {"node":"crate::m","insert_into_module":"\nfn h() {}\n"}
+        ]"#;
+        let json = format!(
+            r#"{{"plan_version":2,"plan_id":"p","intent":"i","base_commit":"abc","steps":[{{"id":"s","edits":{edits}}}]}}"#
+        );
+        let plan: Plan = serde_json::from_str(&json).unwrap();
+        assert!(plan.validate().is_ok());
+        assert!(matches!(plan.steps[0].edits[0], Edit::ReplaceNode { .. }));
+        assert!(matches!(plan.steps[0].edits[1], Edit::RenameNode { .. }));
+        assert!(matches!(plan.steps[0].edits[2], Edit::DeleteNode { .. }));
+        assert!(matches!(
+            plan.steps[0].edits[3],
+            Edit::InsertIntoModule { .. }
+        ));
+
+        let v1 = json.replacen("\"plan_version\":2", "\"plan_version\":1", 1);
+        let plan: Plan = serde_json::from_str(&v1).unwrap();
+        let error = plan.validate().unwrap_err();
+        assert!(error.contains("requires plan_version 2"), "{error}");
+        assert!(error.contains("crate::m::f"), "{error}");
+
+        let misleading = json.replacen("replace_node", "replace_node_body", 1);
+        let error = serde_json::from_str::<Plan>(&misleading)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("replace_node_body"), "{error}");
+    }
+
+    #[test]
+    fn malformed_graph_edit_names_its_step_node_and_field() {
+        let json = r#"{
+          "plan_version": 2,
+          "plan_id": "p",
+          "intent": "reject malformed graph edit",
+          "base_commit": "abc",
+          "steps": [{
+            "id": "rewrite-node",
+            "edits": [{
+              "node": "crate::m::f",
+              "replace_nod": "fn f() {}"
+            }]
+          }]
+        }"#;
+        let error = serde_json::from_str::<Plan>(json).unwrap_err().to_string();
+        assert!(error.contains("rewrite-node"), "{error}");
+        assert!(error.contains("crate::m::f"), "{error}");
+        assert!(error.contains("replace_nod"), "{error}");
+    }
+
+    #[test]
+    fn unknown_plan_versions_fail_closed() {
+        let json =
+            r#"{"plan_version":3,"plan_id":"p","intent":"i","base_commit":"abc","steps":[]}"#;
+        let plan: Plan = serde_json::from_str(json).unwrap();
+        let error = plan.validate().unwrap_err();
+        assert!(error.contains("unsupported plan_version 3"), "{error}");
     }
 
     #[test]
