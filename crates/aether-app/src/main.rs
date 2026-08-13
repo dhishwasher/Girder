@@ -58,14 +58,19 @@ COMMANDS:
     inspect <file.aether> [path|--json]
                               Load a saved graph; with a node path, show its
                               impact set. --json exports sorted exact graph records.
-    review <dir> [--since <ref>]
+    review <dir> [--since <ref>] [--quiet]
                               Semantic code review vs a git ref (default: HEAD).
                               Shows added/modified/removed nodes + edges, impact
                               radius, and test coverage gaps — not text diffs.
-    test-impact <dir> [--run] [node::path...]
+                              --quiet prints only changed node paths, one per
+                              line, and nothing when there are no changes.
+    test-impact <dir> [--run] [--quiet] [node::path...]
                               Find the minimal set of tests that cover changed
                               functions (auto-detected via git diff, or explicit
                               node paths). Pass --run to execute them immediately.
+                              --quiet prints only the selected test names, one
+                              per line, suitable for `cargo test $(bitcode
+                              test-impact . --quiet)`.
     collab <operation>        Exchange deterministic semantic-graph CRDT bundles.
                               Operations: init, status, fork, member, sync, merge,
                               compact, review, apply, materialize, secret,

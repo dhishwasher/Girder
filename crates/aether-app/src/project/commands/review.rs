@@ -10,22 +10,45 @@ pub fn review(args: &[String]) -> std::io::Result<()> {
         .find(|w| w[0] == "--since")
         .map(|w| w[1].as_str())
         .unwrap_or("HEAD");
+    let quiet = args.iter().any(|a| a == "--quiet");
 
     // Build current graph from working tree.
-    println!("Building current graph for {} ...", root.display());
+    if !quiet {
+        println!("Building current graph for {} ...", root.display());
+    }
     let (current, _builder, files) = build_from_dir(&root)?;
-    println!("  {} file(s), {} nodes", files, current.node_count());
+    if !quiet {
+        println!("  {} file(s), {} nodes", files, current.node_count());
+    }
 
     // Build baseline graph from the git ref, file by file.
-    println!("Building baseline graph from {since} ...");
+    if !quiet {
+        println!("Building baseline graph from {since} ...");
+    }
     let baseline = build_baseline_graph(&root, since)?;
-    println!("  {} nodes in baseline", baseline.node_count());
+    if !quiet {
+        println!("  {} nodes in baseline", baseline.node_count());
+    }
 
     // Diff the two graphs.
     let diff = current.diff_from(&baseline);
 
     if diff.is_empty() {
-        println!("\nNo semantic changes detected vs {since}.");
+        if !quiet {
+            println!("\nNo semantic changes detected vs {since}.");
+        }
+        return Ok(());
+    }
+
+    if quiet {
+        for c in diff
+            .added
+            .iter()
+            .chain(diff.modified.iter())
+            .chain(diff.removed.iter())
+        {
+            println!("{}", c.path);
+        }
         return Ok(());
     }
 

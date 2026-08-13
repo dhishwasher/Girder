@@ -9,23 +9,28 @@ use std::path::PathBuf;
 pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
     let run = args.iter().any(|a| a == "--run");
+    let quiet = args.iter().any(|a| a == "--quiet");
     let explicit: Vec<&str> = args
         .get(1..)
         .unwrap_or_default()
         .iter()
-        .filter(|a| *a != "--run")
+        .filter(|a| *a != "--run" && *a != "--quiet")
         .map(String::as_str)
         .collect();
 
-    println!("Building semantic graph for {} ...", root.display());
+    if !quiet {
+        println!("Building semantic graph for {} ...", root.display());
+    }
     let config = ProjectConfig::load(&root)?;
     let (graph, _builder, files) = build_from_dir_with_config(&root, &config)?;
-    println!(
-        "  {} file(s), {} nodes, {} edges",
-        files,
-        graph.node_count(),
-        graph.edge_count()
-    );
+    if !quiet {
+        println!(
+            "  {} file(s), {} nodes, {} edges",
+            files,
+            graph.node_count(),
+            graph.edge_count()
+        );
+    }
 
     let mut baseline_test_paths: Vec<String> = Vec::new();
 
@@ -35,10 +40,12 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
                 && impact.origin_ids.is_empty()
                 && impact.baseline_test_paths.is_empty()
             {
-                println!("  no semantic changes detected vs HEAD");
+                if !quiet {
+                    println!("  no semantic changes detected vs HEAD");
+                }
                 return Ok(());
             }
-            if !impact.changed_files.is_empty() {
+            if !impact.changed_files.is_empty() && !quiet {
                 println!("  changed files: {}", impact.changed_files.join(", "));
             }
             baseline_test_paths = impact.baseline_test_paths;
@@ -68,20 +75,24 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     };
 
     if origin_ids.is_empty() && baseline_test_paths.is_empty() {
-        println!("  no functions found for the changed files");
+        if !quiet {
+            println!("  no functions found for the changed files");
+        }
         return Ok(());
     }
 
-    if !origin_ids.is_empty() {
-        println!("\nChanged functions ({}):", origin_ids.len());
-        for id in &origin_ids {
-            if let Some(n) = graph.get(*id) {
-                println!("  · {}", n.path);
+    if !quiet {
+        if !origin_ids.is_empty() {
+            println!("\nChanged functions ({}):", origin_ids.len());
+            for id in &origin_ids {
+                if let Some(n) = graph.get(*id) {
+                    println!("  · {}", n.path);
+                }
             }
+        } else {
+            println!("\nNo currently present changed functions.");
+            println!("  Removed functions were detected; using their baseline test coverage.");
         }
-    } else {
-        println!("\nNo currently present changed functions.");
-        println!("  Removed functions were detected; using their baseline test coverage.");
     }
 
     let mut test_ids = graph.tests_for_nodes(&origin_ids);
@@ -95,19 +106,30 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     }
 
     if test_ids.is_empty() {
-        println!("\nNo tests found in the impact set.");
-        println!("  The changed functions have no test coverage reachable via the call graph.");
-        println!("  Consider adding tests, or run the full suite to be safe.");
+        if !quiet {
+            println!("\nNo tests found in the impact set.");
+            println!("  The changed functions have no test coverage reachable via the call graph.");
+            println!("  Consider adding tests, or run the full suite to be safe.");
+        }
         return Ok(());
     }
 
     let mut rust_tests: Vec<String> = Vec::new();
     let mut python_tests: Vec<String> = Vec::new();
 
-    println!("\nImpacted tests ({}):", test_ids.len());
+    if !quiet {
+        println!("\nImpacted tests ({}):", test_ids.len());
+    }
     for id in &test_ids {
         if let Some(n) = graph.get(*id) {
-            println!("  ✓ {} ({})", n.path, n.language);
+            if quiet {
+                match n.language.as_str() {
+                    "rust" | "python" => println!("{}", n.name),
+                    _ => {}
+                }
+            } else {
+                println!("  ✓ {} ({})", n.path, n.language);
+            }
             match n.language.as_str() {
                 "rust" => rust_tests.push(n.name.clone()),
                 "python" => python_tests.push(n.name.clone()),
@@ -116,21 +138,27 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
         }
     }
 
-    println!("\nCommands to run impacted tests only:");
+    if !quiet {
+        println!("\nCommands to run impacted tests only:");
+    }
     let mut commands = Vec::new();
     for name in &rust_tests {
         if let Some(command) = config.rust_test_command(name) {
-            println!("  {}", command.display());
+            if !quiet {
+                println!("  {}", command.display());
+            }
             commands.push(("Rust", command));
         }
     }
     if !python_tests.is_empty() {
         if let Some(command) = config.python_test_command(&python_tests.join(" or ")) {
-            println!("  {}", command.display());
+            if !quiet {
+                println!("  {}", command.display());
+            }
             commands.push(("Python", command));
         }
     }
-    if commands.is_empty() {
+    if commands.is_empty() && !quiet {
         println!("  (test commands are disabled in bitcode.toml)");
     }
 
@@ -141,7 +169,7 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
         .nodes()
         .filter(|n| n.attr("is_test").is_some() && !selected.contains(&n.id))
         .count();
-    if skipped > 0 {
+    if skipped > 0 && !quiet {
         println!("\n  ({skipped} other test(s) not in impact set — skipped)");
     }
 
@@ -151,7 +179,9 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
                 "cannot run impacted tests because no test commands are configured",
             ));
         }
-        println!("\nRunning ...");
+        if !quiet {
+            println!("\nRunning ...");
+        }
         let mut failures = Vec::new();
         for (language, command) in &commands {
             let status = run_command(command, &root, &config)?;

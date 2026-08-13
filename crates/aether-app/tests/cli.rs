@@ -313,6 +313,79 @@ fn review_preserves_leading_whitespace_in_a_nested_repository_root() {
 }
 
 #[test]
+fn review_quiet_prints_only_changed_node_paths() {
+    let repo = TempRepo::new("review-quiet");
+    repo.write(
+        "src/lib.rs",
+        r#"
+pub fn add(a: i64, b: i64) -> i64 { a + b }
+pub fn removed(x: i64) -> i64 { x + 1 }
+"#,
+    );
+    repo.commit_all("baseline");
+
+    repo.write(
+        "src/lib.rs",
+        r#"
+pub fn add(a: i64, b: i64) -> i64 { a - b }
+pub fn added(x: i64) -> i64 { add(x, 2) }
+"#,
+    );
+
+    let stdout = run_bitcode(&[
+        "review",
+        repo.path().to_str().unwrap(),
+        "--since",
+        "HEAD",
+        "--quiet",
+    ]);
+
+    let lines: Vec<&str> = stdout.lines().collect();
+    for expected in [
+        "crate::lib::add",
+        "crate::lib::added",
+        "crate::lib::removed",
+    ] {
+        assert!(lines.contains(&expected), "{stdout}");
+    }
+    for line in &lines {
+        assert!(
+            !line.trim_start().starts_with(['+', '-', '~', '!']) && *line == line.trim(),
+            "line has decoration: {line:?} in {stdout}"
+        );
+    }
+    for header in [
+        "Building",
+        "Semantic Review",
+        "modified",
+        "impacts:",
+        "tests:",
+        "edge",
+        "Test gaps",
+    ] {
+        assert!(!stdout.contains(header), "{stdout}");
+    }
+}
+
+#[test]
+fn review_quiet_prints_nothing_when_there_are_no_semantic_changes() {
+    let repo = TempRepo::new("review-quiet-no-changes");
+    repo.write("src/lib.rs", "pub fn stable() -> i64 { 1 }\n");
+    repo.commit_all("baseline");
+
+    let output = run_bitcode_output(&[
+        "review",
+        repo.path().to_str().unwrap(),
+        "--since",
+        "HEAD",
+        "--quiet",
+    ]);
+
+    assert!(output.status.success());
+    assert!(output.stdout.is_empty(), "{:?}", output.stdout);
+}
+
+#[test]
 fn automatic_test_impact_scopes_nested_repository_changes_to_the_project_root() {
     let repo = TempRepo::new("impact-nested-root");
     repo.write(
@@ -1202,6 +1275,64 @@ fn source_read_failures_abort_analysis_without_replacing_the_durable_graph() {
             "{stderr}"
         );
         assert_eq!(std::fs::read(&graph_path).unwrap(), durable_before);
+    }
+}
+
+#[test]
+fn test_impact_quiet_prints_only_selected_test_names() {
+    let repo = TempRepo::new("test-impact-quiet");
+    repo.write(
+        "src/lib.rs",
+        r#"
+pub fn add(a: i64, b: i64) -> i64 { a + b }
+
+#[test]
+fn test_add() {
+    assert_eq!(add(2, 3), 5);
+}
+
+#[test]
+fn unrelated_test() {
+    assert_eq!(2 + 2, 4);
+}
+"#,
+    );
+    repo.commit_all("baseline");
+
+    repo.write(
+        "src/lib.rs",
+        r#"
+pub fn add(a: i64, b: i64) -> i64 { a - b }
+
+#[test]
+fn test_add() {
+    assert_eq!(add(2, 3), -1);
+}
+
+#[test]
+fn unrelated_test() {
+    assert_eq!(2 + 2, 4);
+}
+"#,
+    );
+
+    let output = run_bitcode_output(&["test-impact", repo.path().to_str().unwrap(), "--quiet"]);
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert_eq!(stdout, "test_add\n", "{stdout}");
+    for header in [
+        "Building",
+        "nodes",
+        "edges",
+        "changed files",
+        "Changed functions",
+        "Impacted tests",
+        "Commands to run",
+        "skipped",
+        "--quiet",
+        "unknown explicit node path",
+    ] {
+        assert!(!stdout.contains(header), "{stdout}");
     }
 }
 
