@@ -625,8 +625,10 @@ fn rollback_to_base(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::project::planfile::schema::Plan;
     use crate::project::source::ProjectWrite;
     use std::collections::BTreeSet;
+    use std::process::Command;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
@@ -657,6 +659,81 @@ mod tests {
         fn drop(&mut self) {
             let _ = std::fs::remove_dir_all(&self.0);
         }
+    }
+
+    fn git(root: &Path, args: &[&str]) -> String {
+        let output = Command::new("git")
+            .args(args)
+            .current_dir(root)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "git {} failed: {}",
+            args.join(" "),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        String::from_utf8(output.stdout).unwrap().trim().to_string()
+    }
+
+    #[test]
+    fn rollback_plan_restores_base_file_deleted_then_recreated_across_steps() {
+        let repository = TempDir::new("delete-recreate-rollback");
+        let tracked = repository.0.join("tracked.rs");
+        std::fs::write(&tracked, "pub fn base_value() -> i32 { 1 }\n").unwrap();
+        git(&repository.0, &["init", "--quiet"]);
+        git(&repository.0, &["add", "tracked.rs"]);
+        git(
+            &repository.0,
+            &[
+                "-c",
+                "user.name=Bit Code Tests",
+                "-c",
+                "user.email=tests@bitcode.invalid",
+                "commit",
+                "--quiet",
+                "-m",
+                "base",
+            ],
+        );
+        let base_commit = git(&repository.0, &["rev-parse", "HEAD"]);
+        let plan: Plan = serde_json::from_value(serde_json::json!({
+            "plan_version": 1,
+            "plan_id": "delete-recreate-rollback",
+            "intent": "restore a base-existing path after cross-step recreation",
+            "base_commit": base_commit,
+            "on_failure": "rollback_plan",
+            "steps": [
+                {
+                    "id": "delete-tracked",
+                    "edits": [{"path": "tracked.rs", "delete": true}]
+                },
+                {"id": "intervening-step"},
+                {
+                    "id": "recreate-tracked",
+                    "edits": [{
+                        "path": "tracked.rs",
+                        "create": "pub fn recreated_value() -> i32 { 3 }\n"
+                    }]
+                },
+                {
+                    "id": "force-rollback",
+                    "checks": [{"kind": "command", "run": "exit 9"}]
+                }
+            ]
+        }))
+        .unwrap();
+
+        let result = run_plan(&repository.0, &ProjectConfig::default(), &plan, false).unwrap();
+
+        assert!(matches!(
+            result.outcome,
+            RunOutcome::RolledBackPlan { ref at_step } if at_step == "force-rollback"
+        ));
+        assert_eq!(
+            std::fs::read_to_string(tracked).unwrap(),
+            "pub fn base_value() -> i32 { 1 }\n"
+        );
     }
 
     #[test]
