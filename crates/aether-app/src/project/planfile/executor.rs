@@ -66,8 +66,7 @@ pub(crate) fn run_plan(
         return run_plan_v2(root, config, plan, dry);
     }
     let mut steps = Vec::new();
-    let mut committed_paths: Vec<PathBuf> = Vec::new();
-    let mut created_paths: Vec<PathBuf> = Vec::new();
+    let mut base_existence = BaseExistenceLedger::default();
     let mut dry_overlay = DryOverlay::default();
     let mut cached_graph: Option<SemanticGraph> = None;
 
@@ -79,14 +78,10 @@ pub(crate) fn run_plan(
         }
 
         let mut writes = Vec::new();
-        let mut created_this_step = Vec::new();
         let mut apply_error = None;
         for edit in &step.edits {
             match apply_edit(candidate.workspace_path(), edit) {
                 Ok(write) => {
-                    if matches!(edit, Edit::Create { .. }) {
-                        created_this_step.push(write.relative().to_path_buf());
-                    }
                     writes.push(write);
                 }
                 Err(error) => {
@@ -109,15 +104,7 @@ pub(crate) fn run_plan(
                 }],
                 write_fingerprints: None,
             });
-            return finish_run(
-                root,
-                plan,
-                steps,
-                &step.id,
-                &committed_paths,
-                &created_paths,
-                dry,
-            );
+            return finish_run(root, plan, steps, &step.id, &base_existence, dry);
         }
 
         // The graph "before" snapshot must be taken before this step's
@@ -177,15 +164,7 @@ pub(crate) fn run_plan(
                 checks: check_outcomes,
                 write_fingerprints: None,
             });
-            return finish_run(
-                root,
-                plan,
-                steps,
-                &step.id,
-                &committed_paths,
-                &created_paths,
-                dry,
-            );
+            return finish_run(root, plan, steps, &step.id, &base_existence, dry);
         }
 
         if dry {
@@ -214,6 +193,7 @@ pub(crate) fn run_plan(
         // validation/...` directory would leak forever.
         drop(candidate);
 
+        base_existence.observe(&writes);
         let written = commit_project_writes(root, writes)?;
         update_graph_cache(
             &mut cached_graph,
@@ -221,9 +201,6 @@ pub(crate) fn run_plan(
             !written.is_empty(),
             after_graph,
         );
-        committed_paths.extend(written.iter().cloned());
-        created_paths.extend(created_this_step);
-
         steps.push(StepOutcome {
             id: step.id.clone(),
             passed: true,
@@ -247,8 +224,7 @@ fn run_plan_v2(
     dry: bool,
 ) -> std::io::Result<PlanRunOutcome> {
     let mut steps = Vec::new();
-    let mut committed_paths: Vec<PathBuf> = Vec::new();
-    let mut created_paths: Vec<PathBuf> = Vec::new();
+    let mut base_existence = BaseExistenceLedger::default();
     let mut dry_overlay = DryOverlay::default();
     let mut edit_state = EditState::default();
 
@@ -286,15 +262,7 @@ fn run_plan_v2(
                     }],
                     write_fingerprints: Some(Vec::new()),
                 });
-                return finish_run(
-                    root,
-                    plan,
-                    steps,
-                    &step.id,
-                    &committed_paths,
-                    &created_paths,
-                    dry,
-                );
+                return finish_run(root, plan, steps, &step.id, &base_existence, dry);
             }
         };
 
@@ -336,15 +304,7 @@ fn run_plan_v2(
                 checks: check_outcomes,
                 write_fingerprints: Some(write_fingerprints),
             });
-            return finish_run(
-                root,
-                plan,
-                steps,
-                &step.id,
-                &committed_paths,
-                &created_paths,
-                dry,
-            );
+            return finish_run(root, plan, steps, &step.id, &base_existence, dry);
         }
 
         if dry {
@@ -360,15 +320,9 @@ fn run_plan_v2(
             continue;
         }
 
-        let created_this_step: Vec<PathBuf> = writes
-            .iter()
-            .filter(|write| write.expected().is_none() && write.contents().is_some())
-            .map(|write| write.relative().to_path_buf())
-            .collect();
         drop(candidate);
+        base_existence.observe(&writes);
         let written = commit_project_writes(root, writes)?;
-        committed_paths.extend(written.iter().cloned());
-        created_paths.extend(created_this_step);
         steps.push(StepOutcome {
             id: step.id.clone(),
             passed: true,
@@ -571,8 +525,7 @@ fn finish_run(
     plan: &Plan,
     steps: Vec<StepOutcome>,
     failed_step_id: &str,
-    committed_paths: &[PathBuf],
-    created_paths: &[PathBuf],
+    base_existence: &BaseExistenceLedger,
     dry: bool,
 ) -> std::io::Result<PlanRunOutcome> {
     let outcome = match plan.on_failure {
@@ -584,7 +537,7 @@ fn finish_run(
         },
         OnFailure::RollbackPlan => {
             if !dry {
-                rollback_to_base(root, plan, committed_paths, created_paths)?;
+                rollback_to_base(root, plan, base_existence)?;
             }
             RunOutcome::RolledBackPlan {
                 at_step: failed_step_id.to_string(),
@@ -594,26 +547,42 @@ fn finish_run(
     Ok(PlanRunOutcome { outcome, steps })
 }
 
-/// Restore every path a prior step in this plan committed back to its
-/// `base_commit` content, then delete every path a prior step's `create`
-/// edit introduced — `git checkout` alone leaves untracked-at-base files
-/// in place, so created paths need an explicit delete.
+#[derive(Default)]
+struct BaseExistenceLedger {
+    paths: BTreeMap<PathBuf, bool>,
+}
+
+impl BaseExistenceLedger {
+    fn observe(&mut self, writes: &[crate::project::source::ProjectWrite]) {
+        for write in writes {
+            self.paths
+                .entry(write.relative().to_path_buf())
+                .or_insert_with(|| write.expected().is_some());
+        }
+    }
+}
+
+/// Restore every base-existing path a prior step committed, then delete every
+/// base-new path. The ledger records existence on first touch, before later
+/// steps can make a deleted base path look newly created.
 fn rollback_to_base(
     root: &Path,
     plan: &Plan,
-    committed_paths: &[PathBuf],
-    created_paths: &[PathBuf],
+    base_existence: &BaseExistenceLedger,
 ) -> std::io::Result<()> {
-    let restore: Vec<&Path> = committed_paths
+    let restore: Vec<&Path> = base_existence
+        .paths
         .iter()
-        .filter(|path| !created_paths.contains(path))
-        .map(PathBuf::as_path)
+        .filter_map(|(path, existed)| existed.then_some(path.as_path()))
         .collect();
     if !restore.is_empty() {
         git_checkout_paths(root, &plan.base_commit, &restore)?;
     }
-    for created in created_paths {
-        match std::fs::remove_file(root.join(created)) {
+    for (path, existed) in &base_existence.paths {
+        if *existed {
+            continue;
+        }
+        match std::fs::remove_file(root.join(path)) {
             Ok(()) => {}
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
             Err(error) => return Err(error),
