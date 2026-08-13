@@ -1,10 +1,17 @@
 {
-  "bitcode_sha256": "7b3c79b36123a1b2189847082d0996b850a54b0a7b2785ae5df6fb6750967b64",
+  "bitcode_sha256": "ef640b18d4f5f352c3d6de25ca5bef01de80e09f7194baf0e5ebdeeb620f79ad",
+  "corpus_manifest_sha256": "177000ae398ee67bb0c6ec1f5e505e7ac74b7ddb6dd6bfef637b2a31ccbc2753",
+  "host": {
+    "cpu_count": 2,
+    "hostname": "penguin",
+    "platform": "Linux-6.6.119-09283-g9c138e0af8c3-x86_64-with-glibc2.36",
+    "python": "3.11.2"
+  },
   "mutation_adequacy": {
     "cases": [
       {
         "killed": true,
-        "mutant_sha256": "24763bd548f7bf9d1f329e73dafc01b9ec445420a04880e54a75524eaa59c48b",
+        "mutant_sha256": "8b08a178e3e2d3e23d2d81033cbc05e93b4b17f5507c0f42b05d814078209a88",
         "observed": {
           "outcome_mismatches": 4,
           "plan_count": 4
@@ -16,7 +23,7 @@
       },
       {
         "killed": true,
-        "mutant_sha256": "0a0eeb764854901a7da8ccceb71e0212b37265ec92553357eb3c8d69d3f3c404",
+        "mutant_sha256": "a28d0237dc3c2cda0bee728beb69006a160fb94b4a37dac0450b4926bb2cf75b",
         "observed": {
           "mutation_count": 18,
           "run_passes": 18,
@@ -30,7 +37,7 @@
       },
       {
         "killed": true,
-        "mutant_sha256": "977beb8ca41a4243ea7c29d0f4ddb987bbcc0efb2946fed0f3652ac48edde4d3",
+        "mutant_sha256": "d748224ef8c159848981f0d8f4dbfc9282eab0371d70a279384c7a568a5623eb",
         "observed": {
           "check_kind_count": 14,
           "unexpected_passes": 14
@@ -42,20 +49,20 @@
       },
       {
         "killed": true,
-        "mutant_sha256": "0defade4952027916226a5e5d0ce263085f9ff8b71ca02a7267052dd09496a49",
+        "mutant_sha256": "872b5439b6b04c58b09e88c93588b6b5fd166298c7568c227604a986fb42e2c0",
         "observed": {
-          "dirty_worktrees": 3,
-          "plan_count": 3,
+          "dirty_worktrees": 1,
+          "plan_count": 4,
           "tree_mismatches": 0
         },
         "property": "P4_rollback_fidelity",
         "violations": [
-          "P4_rollback_fidelity.dirty_worktrees=3 violates max_dirty_worktrees=0"
+          "P4_rollback_fidelity.dirty_worktrees=1 violates max_dirty_worktrees=0"
         ]
       },
       {
         "killed": true,
-        "mutant_sha256": "4abe3eea6954e5a3566dc25a470a61b359fac6e6aa9fbcfcb8dc04873932f4af",
+        "mutant_sha256": "713c88d523c853519fd5e64121d7183e45a224e2d9f6b6c058e0bdb1b35766de",
         "observed": {
           "case_count": 11,
           "missing_path_diagnostics": 11,
@@ -76,7 +83,7 @@
     "violations": []
   },
   "policy_id": "plan-executor-v1",
-  "policy_sha256": "a0ebcb9b99ae8170debc8223fa6bec7af343b0bb6ed65dc3738a9c98815ebddb",
+  "policy_sha256": "e41271a50ea520a27947dd66734f8c77ae30d1e4ae70ddd9504dd068313c0da6",
   "results": {
     "P1_dry_equals_real": {
       "cases": [
@@ -570,10 +577,18 @@
           "run_failed": true,
           "status_porcelain": "",
           "tree_matches": true
+        },
+        {
+          "actual_tree": "edc275f6ffcb22a8849103b9ed228e461ca54412",
+          "base_tree": "edc275f6ffcb22a8849103b9ed228e461ca54412",
+          "id": "delete-recreate-across-steps-then-fail",
+          "run_failed": true,
+          "status_porcelain": "",
+          "tree_matches": true
         }
       ],
       "dirty_worktrees": 0,
-      "plan_count": 3,
+      "plan_count": 4,
       "tree_mismatches": 0
     },
     "P5_error_legibility": {
@@ -672,9 +687,22 @@
       "missing_step_diagnostics": 0
     }
   },
+  "run_definition": "fresh-repository-per-case-private-binary-bounded-subprocesses",
   "schema_version": 1,
   "tool": {
-    "bitcode_sha256": "7b3c79b36123a1b2189847082d0996b850a54b0a7b2785ae5df6fb6750967b64",
-    "source_commit": "5e8b85fc2f47454ded76e2413e2211679e77fd44"
+    "argv": [
+      "bitcode",
+      "plan",
+      "validate|run",
+      "<plan>",
+      "[--dry]"
+    ],
+    "bitcode_sha256": "ef640b18d4f5f352c3d6de25ca5bef01de80e09f7194baf0e5ebdeeb620f79ad",
+    "harness_sha256": "1be6ebf49929ebd2d82de20b2d6bb819760bd42703dbccacf65dfc48d36504d3",
+    "harness_support_sha256": "a63b069acf887b5879f9662251bb0a13fbe945e260937f999225ba85ec7da428",
+    "source_commit": "85409e31542f66d268501f813d3510902f53137c",
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_snapshot_sha256": "4597b81f6e733be96fcab87773bff4f8e93495c4026489a36f3f8b910321b8f6",
+    "source_worktree_clean": true
   }
 }

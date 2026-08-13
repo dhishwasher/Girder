@@ -575,14 +575,20 @@ as gap 11 rather than silently accepted.
    unproven syntax, but `rename_node` is not generally usable for otherwise
    unambiguous node paths until the graph records call-site-level provenance or
    lowering can prove a narrower lexical scope.
-14. **P1 — rollback misclassifies delete-then-recreate across plan steps.** If
-   a tracked path is deleted in one step, recreated in a later step, and a
-   subsequent `rollback_plan` occurs, created-path bookkeeping can classify the
-   recreated path as base-new and remove it instead of restoring the base
-   projection. This predates Plan Format v2 and was intentionally not changed
-   in the graph-edit slice because commit/rollback semantics were out of scope;
-   it needs a base-existence ledger and a tracked-path regression before the
-   broader P4 claim covers cross-step recreation.
+14. **Closed — rollback preserves base existence across plan steps.** The v1
+   and v2 executors now share a first-touch `BaseExistenceLedger`, so deleting a
+   tracked path and recreating it later cannot reclassify that path as base-new.
+   The regression
+   `rollback_plan_restores_base_file_deleted_then_recreated_across_steps`
+   deletes a tracked file in step 1, recreates it in step 3, forces
+   `rollback_plan` in step 4, and verifies the original `base_commit` bytes.
+   The precommitted P4 corpus now includes
+   `delete-recreate-across-steps-then-fail`; the clean-source observation in
+   [`plan-executor-observation.json`](plan-executor-observation.json) records
+   all four rollback plans with zero dirty worktrees and zero tree mismatches.
+   Its deliberately broken P4 binary removes the recreated tracked path and is
+   killed by the policy with one dirty worktree, binding the claim to the
+   defect rather than only to the three earlier rollback shapes.
 
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
