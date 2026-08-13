@@ -54,7 +54,8 @@
     "rollback_fidelity": [
       "substitute-then-fail",
       "create-then-fail",
-      "delete-then-fail"
+      "delete-then-fail",
+      "delete-recreate-across-steps-then-fail"
     ]
   },
   "execution": {
@@ -81,7 +82,7 @@
     "P4_rollback_fidelity": {
       "max_dirty_worktrees": 0,
       "max_tree_mismatches": 0,
-      "required_plan_count": 3
+      "required_plan_count": 4
     },
     "P5_error_legibility": {
       "max_missing_path_diagnostics": 0,
