@@ -10,7 +10,6 @@ from tools.plan_executor_oracle import (
     DEFAULT_POLICY,
     GRAPH_POLICY,
     atomic_write_json,
-    authoring_source_tree_digest,
     authored_plan_envelope_error,
     authored_plan_shape_error,
     authoring_edits,
@@ -18,7 +17,6 @@ from tools.plan_executor_oracle import (
     authoring_plan_json_schema,
     authoring_progress_header,
     authoring_prompt_context,
-    authoring_reference_plan,
     authoring_target_node_source,
     create_graph_mutant_binary,
     create_mutant_binary,
@@ -158,7 +156,7 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "precommitment"):
                 validate_authoring_policy(changed)
 
-    def test_authoring_shape_rejects_text_graph_swaps_and_side_effectful_checks(self):
+    def test_authoring_shape_rejects_text_graph_swaps_and_changed_semantic_check(self):
         canonical = authoring_plan("rust-replace", "abc", graph_addressed=True)
         self.assertIsNone(
             authored_plan_shape_error(copy.deepcopy(canonical), canonical, "graph")
@@ -175,7 +173,7 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
         checked = copy.deepcopy(canonical)
         checked["steps"][0]["checks"] = [{"kind": "command", "run": "true"}]
         self.assertIn(
-            "forbids checks",
+            "required task-specific semantic check",
             authored_plan_shape_error(checked, canonical, "graph"),
         )
 
@@ -189,6 +187,7 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
         self.assertEqual((steps["minItems"], steps["maxItems"]), (1, 1))
         step = steps["items"]
         self.assertFalse(step["additionalProperties"])
+        self.assertEqual(set(step["required"]), {"id", "edits", "checks"})
         edit = step["properties"]["edits"]["items"]
         self.assertEqual(set(edit["required"]), {"node", "replace_node"})
         self.assertFalse(edit["additionalProperties"])
@@ -205,42 +204,6 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
         changed_content = copy.deepcopy(canonical)
         changed_content["base_commit"] = "wrong"
         self.assertIsNone(authored_plan_envelope_error(changed_content, canonical))
-
-    def test_authoring_expected_tree_is_independent_of_graph_lowering(self):
-        text = authoring_reference_plan("python-rename", "abc")
-        graph = authoring_plan("python-rename", "abc", graph_addressed=True)
-
-        self.assertIn("path", text["steps"][0]["edits"][0])
-        self.assertNotIn("node", text["steps"][0]["edits"][0])
-        self.assertIn("node", graph["steps"][0]["edits"][0])
-
-    def test_authoring_tree_normalizes_quotes_but_rejects_wrong_edit(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            source = root / "sample.py"
-            source.write_text(
-                'def greet(name):\n    return f"hi {name}"\n', encoding="utf-8"
-            )
-            for command in (("git", "init", "-q"), ("git", "add", "sample.py")):
-                result = run(
-                    command,
-                    cwd=root,
-                    timeout_seconds=5,
-                    max_output_bytes=4096,
-                    check=False,
-                )
-                self.assertEqual(result.returncode, 0, result.stderr)
-
-            expected = authoring_source_tree_digest(root)
-            source.write_text(
-                "def greet(name):\n    return f'hi {name}'\n", encoding="utf-8"
-            )
-            self.assertEqual(authoring_source_tree_digest(root), expected)
-
-            source.write_text(
-                "def greet(name):\n    return f'bye {name}'\n", encoding="utf-8"
-            )
-            self.assertNotEqual(authoring_source_tree_digest(root), expected)
 
     def test_authoring_graph_context_matches_precommitted_protocol(self):
         graph_edit = authoring_edits("python-replace")[1]
@@ -301,6 +264,7 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
                 "bitcode_sha256",
                 "harness_sha256",
                 "harness_support_sha256",
+                "authoring_task_check_sha256",
             },
         )
         self.assertEqual(header["bitcode_sha256"], sha256_file(binary))

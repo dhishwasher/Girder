@@ -4,9 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import ast
 import hashlib
-import io
 import json
 import os
 import platform
@@ -15,7 +13,6 @@ import shutil
 import stat
 import sys
 import tempfile
-import tokenize
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -1133,60 +1130,6 @@ def source_tree_digest(repository: Path) -> str:
     return digest.hexdigest()
 
 
-def normalize_authoring_source(path: Path, contents: bytes) -> bytes:
-    """Deterministically format source for authoring-oracle comparison."""
-    if path.suffix != ".py":
-        return contents
-    tokens = []
-    try:
-        generated = tokenize.tokenize(io.BytesIO(contents).readline)
-        for token in generated:
-            value = token.string
-            if token.type == tokenize.STRING:
-                try:
-                    value = ast.unparse(ast.parse(value, mode="eval").body)
-                except SyntaxError:
-                    # Preserve malformed literals so they cannot normalize to a valid tree.
-                    pass
-            tokens.append((token.type, value))
-        normalized = tokenize.untokenize(tokens)
-    except (IndentationError, SyntaxError, tokenize.TokenError):
-        return contents
-    return normalized if isinstance(normalized, bytes) else normalized.encode("utf-8")
-
-
-def authoring_source_tree_digest(repository: Path) -> str:
-    """Hash an authoring tree after deterministic source formatting."""
-    digest = hashlib.sha256()
-    listed = require_success(
-        run_bounded(
-            ("git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"),
-            cwd=repository,
-            timeout_seconds=30,
-            max_output_bytes=1024 * 1024,
-        ),
-        "list authoring tree",
-    )
-    paths = sorted(
-        repository / value
-        for value in listed.stdout.split("\0")
-        if value and not value.startswith(".bitcode/")
-    )
-    for path in paths:
-        relative_path = path.relative_to(repository)
-        relative = relative_path.as_posix().encode()
-        digest.update(len(relative).to_bytes(8, "big"))
-        digest.update(relative)
-        if not path.is_file():
-            digest.update(b"\x00")
-            continue
-        digest.update(b"\x01")
-        contents = normalize_authoring_source(relative_path, path.read_bytes())
-        digest.update(len(contents).to_bytes(8, "big"))
-        digest.update(contents)
-    return digest.hexdigest()
-
-
 def valid_fingerprint_side(byte_count: Any, digest: Any) -> bool:
     return (byte_count is None and digest is None) or (
         type(byte_count) is int
@@ -1853,7 +1796,18 @@ def authoring_plan(case_id: str, base_commit: str, *, graph_addressed: bool) -> 
         "intent": f"measure authoring cost for {case_id}",
         "base_commit": base_commit,
         "on_failure": "rollback_plan",
-        "steps": [{"id": "apply-change", "edits": [graph_edit if graph_addressed else text_edit]}],
+        "steps": [
+            {
+                "id": "apply-change",
+                "edits": [graph_edit if graph_addressed else text_edit],
+                "checks": [
+                    {
+                        "kind": "command",
+                        "run": f"python3 tools/authoring_task_check.py {case_id}",
+                    }
+                ],
+            }
+        ],
     }
 
 
@@ -1886,11 +1840,6 @@ def authoring_plan_json_schema(plan: Mapping[str, Any]) -> dict[str, Any]:
         raise RuntimeError(f"unsupported authoring plan grammar value: {type(value)!r}")
 
     return schema_for(dict(plan))
-
-
-def authoring_reference_plan(case_id: str, base_commit: str) -> dict[str, Any]:
-    """Build the independent text-addressed oracle for either authored arm."""
-    return authoring_plan(case_id, base_commit, graph_addressed=False)
 
 
 def validate_authoring_policy(policy: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -2021,6 +1970,9 @@ def authoring_progress_header(
         "harness_support_sha256": sha256_file(
             REPO_ROOT / "tools" / "harness_support.py"
         ),
+        "authoring_task_check_sha256": sha256_file(
+            REPO_ROOT / "tools" / "authoring_task_check.py"
+        ),
     }
 
 
@@ -2040,8 +1992,8 @@ def authored_plan_shape_error(
     steps = generated.get("steps")
     if not isinstance(steps, list) or len(steps) != 1 or not isinstance(steps[0], dict):
         return "plan must contain exactly one step"
-    if set(steps[0]) != {"id", "edits"}:
-        return "authoring measurement forbids checks and extra step fields"
+    if set(steps[0]) != {"id", "edits", "checks"}:
+        return "authoring measurement requires edits and declared checks only"
     edits = steps[0].get("edits")
     if not isinstance(edits, list) or len(edits) != 1 or not isinstance(edits[0], dict):
         return "plan must contain exactly one edit"
@@ -2055,6 +2007,8 @@ def authored_plan_shape_error(
         return "graph arm used a text-addressed edit"
     if arm == "text" and "node" in edits[0]:
         return "text arm used a graph-addressed edit"
+    if steps[0].get("checks") != canonical["steps"][0]["checks"]:
+        return "plan changed the required task-specific semantic check"
     return None
 
 
@@ -2156,18 +2110,6 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                     print(f"authoring {progress_key}: resumed", flush=True)
                     continue
                 language, _, _ = authoring_edits(case_id)
-                expected_repository = work_root / f"{case_id}-{arm}-expected"
-                expected_base = initialize_authoring_repository(expected_repository, execution)
-                expected_plan = authoring_reference_plan(case_id, expected_base)
-                expected_plan_path = write_plan(
-                    work_root, f"expected-{case_id}-{arm}", expected_plan
-                )
-                require_success(
-                    run((str(bitcode), "plan", "run", str(expected_plan_path)),
-                        cwd=expected_repository, check=False, **execution),
-                    f"authoring expected tree {case_id} {arm}",
-                )
-                expected_digest = authoring_source_tree_digest(expected_repository)
                 total_tokens = 0
                 attempts = []
                 success = False
@@ -2205,12 +2147,16 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                             "insert": {"insert_into_module": "<source to append>"},
                         }
                         edit_schema = {"node": "<exact semantic path>", **graph_fields[operation]}
+                    prompt_schema = {
+                        "edit": edit_schema,
+                        "required_check": canonical["steps"][0]["checks"][0],
+                    }
                     prompt = prompt_protocol["initial_template"].format(
                         task=case_id,
                         intent=policy["task_intents"][case_id],
                         version=1 if arm == "text" else 2,
                         context=context,
-                        schema=json.dumps(edit_schema, sort_keys=True),
+                        schema=json.dumps(prompt_schema, sort_keys=True),
                         base_commit=base_commit,
                     )
                     if attempts:
@@ -2305,19 +2251,54 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                         if validated.returncode == 0
                         else None
                     )
-                    tree_matched = (
-                        executed is not None
-                        and executed.returncode == 0
-                        and authoring_source_tree_digest(repository) == expected_digest
+                    declared_checks_passed = (
+                        executed is not None and executed.returncode == 0
                     )
-                    success = validated.returncode == 0 and tree_matched
+                    impacted = (
+                        run(
+                            (str(bitcode), "test-impact", ".", "--run", "--quiet"),
+                            cwd=repository,
+                            check=False,
+                            timeout_seconds=900,
+                            max_output_bytes=1024 * 1024,
+                        )
+                        if declared_checks_passed
+                        else None
+                    )
+                    impacted_tests_passed = impacted is not None and impacted.returncode == 0
+                    success = (
+                        validated.returncode == 0
+                        and declared_checks_passed
+                        and impacted_tests_passed
+                    )
                     if validated.returncode != 0:
                         last_diagnostic = f"{validated.stdout}\n{validated.stderr}".strip()
-                    elif not tree_matched:
-                        last_diagnostic = "plan ran but the resulting tree did not match the task"
-                    attempts.append({"attempt": ordinal, "tokens": tokens, "success": success,
-                                     "validated": validated.returncode == 0,
-                                     "tree_matched": tree_matched})
+                    elif not declared_checks_passed:
+                        last_diagnostic = f"{executed.stdout}\n{executed.stderr}".strip()
+                    elif not impacted_tests_passed:
+                        last_diagnostic = f"{impacted.stdout}\n{impacted.stderr}".strip()
+                    attempts.append({
+                        "attempt": ordinal,
+                        "tokens": tokens,
+                        "success": success,
+                        "validated": validated.returncode == 0,
+                        "plan_run_passed": declared_checks_passed,
+                        "declared_checks_passed": declared_checks_passed,
+                        "impacted_tests": (
+                            {
+                                "command": list(impacted.args),
+                                "passed": impacted_tests_passed,
+                                "returncode": impacted.returncode,
+                                "stdout": impacted.stdout,
+                                "stderr": impacted.stderr,
+                                "stdout_sha256": impacted.stdout_sha256,
+                                "stderr_sha256": impacted.stderr_sha256,
+                                "wall_seconds": impacted.wall_seconds,
+                            }
+                            if impacted is not None
+                            else None
+                        ),
+                    })
                     if success:
                         break
                 arms[arm] = {
@@ -2328,7 +2309,6 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                     "input_tokens": total_tokens if token_count_complete else None,
                     "completed_input_tokens": total_tokens,
                     "token_count_complete": token_count_complete,
-                    "expected_tree_sha256": expected_digest,
                     "attempts": attempts,
                 }
                 completed_arms[progress_key] = arms[arm]
@@ -2342,8 +2322,6 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                     f"tokens={arms[arm]['input_tokens']}",
                     flush=True,
                 )
-            if arms["text"]["expected_tree_sha256"] != arms["graph"]["expected_tree_sha256"]:
-                raise RuntimeError(f"authoring task {case_id} has non-equivalent arm fixtures")
             results.append({"id": case_id, "arms": arms})
 
     common = [case for case in results if case["arms"]["text"]["success"] and case["arms"]["graph"]["success"]]
@@ -2387,7 +2365,7 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
         and graph_tokens < text_tokens
     )
     observation = {
-        "schema_version": 1,
+        "schema_version": 2,
         "policy_id": policy["policy_id"],
         "policy_sha256": provenance["policy_sha256"],
         "model": policy["model"],
@@ -2409,15 +2387,22 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
             "python": platform.python_version(),
             "cpu_count": os.cpu_count(),
         },
-        "run_definition": "fresh-clone-per-attempt-paired-arms-bounded-local-model",
+        "run_definition": (
+            "fresh-clone-per-attempt-paired-arms-bounded-local-model-"
+            "declared-semantic-checks-and-impacted-tests"
+        ),
         "tool": {
             "bitcode_sha256": sha256_file(bitcode),
             "harness_sha256": sha256_file(Path(__file__)),
             "harness_support_sha256": sha256_file(
                 REPO_ROOT / "tools" / "harness_support.py"
             ),
+            "authoring_task_check_sha256": sha256_file(
+                REPO_ROOT / "tools" / "authoring_task_check.py"
+            ),
             "source_commit": provenance["source_commit"],
         },
+        "semantic_verification": policy["semantic_verification"],
         "results": results,
         "summary": {
             "passed": passed,
