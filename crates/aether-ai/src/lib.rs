@@ -52,11 +52,12 @@ pub fn default_router() -> Router {
         )
         .route(
             TaskClass::Codegen,
-            vec![openai.clone(), anthropic, ollama.clone()],
+            vec![openai.clone(), anthropic.clone(), ollama.clone()],
         )
         .route(TaskClass::Testing, vec![ollama.clone(), openai.clone()])
         .route(TaskClass::Summarize, vec![ollama.clone(), openai.clone()])
-        .route(TaskClass::Quick, vec![ollama, openai])
+        .route(TaskClass::Quick, vec![ollama.clone(), openai.clone()])
+        .route(TaskClass::Authoring, vec![ollama, openai, anthropic])
         .with_fallback(mock)
 }
 
@@ -75,6 +76,7 @@ mod tests {
             TaskClass::Summarize,
             TaskClass::Quick,
             TaskClass::Extension,
+            TaskClass::Authoring,
         ] {
             let completion = router
                 .complete(Prompt::new(class, "", "add a multiply function"))
@@ -105,5 +107,18 @@ mod tests {
         for class in [TaskClass::Quick, TaskClass::Summarize, TaskClass::Testing] {
             assert_eq!(router.configured_provider_names(class), local_first);
         }
+
+        // Authoring is local-first too, but (unlike Quick/Summarize/Testing)
+        // still escalates to Anthropic before the offline mock — see
+        // `docs/authoring-cost.md` for why local-first is the point here.
+        assert_eq!(
+            router.configured_provider_names(TaskClass::Authoring),
+            vec![
+                "ollama:local",
+                "openai:responses",
+                "anthropic:claude",
+                "mock"
+            ],
+        );
     }
 }

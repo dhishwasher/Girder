@@ -56,12 +56,7 @@ impl AiProvider for OpenAiProvider {
             .as_ref()
             .ok_or_else(|| AiError::Unsupported("openai:responses (no OPENAI_API_KEY)".into()))?;
 
-        let body = serde_json::json!({
-            "model": self.model,
-            "instructions": prompt.system,
-            "input": prompt.user,
-            "max_output_tokens": prompt.max_tokens.max(1),
-        });
+        let body = request_body(&self.model, &prompt);
 
         let resp = reqwest::Client::new()
             .post(&self.endpoint)
@@ -107,6 +102,27 @@ impl AiProvider for OpenAiProvider {
             "openai:responses (build with --features live-providers)".into(),
         ))
     }
+}
+
+#[cfg(any(feature = "live-providers", test))]
+fn request_body(model: &str, prompt: &Prompt) -> serde_json::Value {
+    let mut body = serde_json::json!({
+        "model": model,
+        "instructions": prompt.system,
+        "input": prompt.user,
+        "max_output_tokens": prompt.max_tokens.max(1),
+    });
+    if let Some(schema) = &prompt.response_schema {
+        body["text"] = serde_json::json!({
+            "format": {
+                "type": "json_schema",
+                "name": "bitcode_plan_step",
+                "schema": schema,
+                "strict": true,
+            }
+        });
+    }
+    body
 }
 
 #[cfg(feature = "live-providers")]
@@ -156,6 +172,24 @@ mod tests {
             model: "test-model".to_string(),
         };
         assert!(provider.handles(TaskClass::Codegen));
+    }
+
+    #[test]
+    fn request_omits_text_format_when_no_schema_is_requested() {
+        let prompt = Prompt::new(TaskClass::Codegen, "", "write a function");
+        let body = request_body("test-model", &prompt);
+        assert!(body.get("text").is_none());
+    }
+
+    #[test]
+    fn response_schema_becomes_strict_structured_output_format() {
+        let schema = serde_json::json!({"type": "object", "required": ["id"]});
+        let prompt = Prompt::new(TaskClass::Authoring, "", "author a step")
+            .with_response_schema(schema.clone());
+        let body = request_body("test-model", &prompt);
+        assert_eq!(body["text"]["format"]["type"], "json_schema");
+        assert_eq!(body["text"]["format"]["schema"], schema);
+        assert_eq!(body["text"]["format"]["strict"], true);
     }
 
     #[test]

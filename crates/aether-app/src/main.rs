@@ -37,6 +37,18 @@ COMMANDS:
                               feature spec, but writes nothing to the graph.
     forge <dir> <intent...>   Dispatch the agent swarm on a project with a
                               natural-language intent, then save the graph
+    do <dir> \"<intent...>\" [--dry] [--max-repairs N]
+                              Author a plan via a model and execute it. Selects
+                              the top few concept-search nodes for the intent
+                              (printed before any model call), asks the router
+                              for a grammar-constrained Plan Format v2 step,
+                              runs it through the existing plan executor, and
+                              on failure repairs from the check output up to
+                              --max-repairs times (default 2) before escalating
+                              to the next provider. Every authored plan is
+                              additionally verified by a mandatory
+                              tests.impacted check the model cannot remove.
+                              --dry never writes to the real tree.
     plan validate <plan.json>
                               Check a Bit Code plan file's preconditions
                               (clean worktree, HEAD == base_commit, edit
@@ -140,6 +152,10 @@ fn main() {
         Some("forge") => {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             report(rt.block_on(project::forge(&args[1..])));
+        }
+        Some("do") => {
+            let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+            report(rt.block_on(project::do_intent(&args[1..])));
         }
         Some("refactor") => report(project::refactor(&args[1..])),
         Some("inspect") => report(project::inspect(&args[1..])),

@@ -1,4 +1,5 @@
 mod agents;
+mod author;
 mod collaboration;
 mod config;
 mod dap;
@@ -11,6 +12,7 @@ mod review;
 mod test_impact;
 
 pub(crate) use agents::{forge, swarm_plan};
+pub(crate) use author::do_intent;
 pub(crate) use collaboration::collaboration;
 pub(crate) use config::config;
 pub(crate) use dap::dap;

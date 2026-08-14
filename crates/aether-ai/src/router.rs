@@ -49,8 +49,11 @@ impl Router {
     }
 
     /// Resolve the ordered candidate list for a class (preferred first, then
-    /// fallback).
-    fn candidates(&self, class: TaskClass) -> Vec<Arc<dyn AiProvider>> {
+    /// fallback), filtered to providers that `handles(class)`. Exposed so a
+    /// caller like `bitcode do` can walk providers one at a time itself
+    /// (e.g. to run a repair loop against each before moving to the next),
+    /// rather than only getting `complete`'s single resolved outcome.
+    pub fn candidates(&self, class: TaskClass) -> Vec<Arc<dyn AiProvider>> {
         let mut out: Vec<Arc<dyn AiProvider>> = self
             .routes
             .iter()

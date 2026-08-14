@@ -23,6 +23,12 @@ struct OllamaRequest<'a> {
     messages: Vec<OllamaRequestMessage<'a>>,
     stream: bool,
     options: OllamaOptions,
+    /// Grammar-constrains decoding to this JSON Schema via `/api/chat`'s
+    /// `format` field — the mechanism `tools/plan_executor_oracle.py`
+    /// validated for authoring-cost measurement. Omitted entirely when no
+    /// schema was requested, so every existing caller is unaffected.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    format: Option<&'a serde_json::Value>,
 }
 
 #[cfg(any(feature = "live-providers", test))]
@@ -122,6 +128,7 @@ fn request_body<'a>(model: &'a str, prompt: &'a Prompt) -> OllamaRequest<'a> {
         options: OllamaOptions {
             num_predict: prompt.max_tokens.max(1),
         },
+        format: prompt.response_schema.as_ref(),
     }
 }
 
@@ -222,6 +229,16 @@ mod tests {
         assert_eq!(value["messages"][0]["content"], "be exact");
         assert_eq!(value["messages"][1]["role"], "user");
         assert_eq!(value["messages"][1]["content"], "write a function");
+        assert!(value.get("format").is_none());
+    }
+
+    #[test]
+    fn request_carries_response_schema_as_format_when_present() {
+        let schema = serde_json::json!({"type": "object", "required": ["id"]});
+        let prompt = Prompt::new(TaskClass::Authoring, "", "author a step")
+            .with_response_schema(schema.clone());
+        let value = serde_json::to_value(request_body("coder", &prompt)).unwrap();
+        assert_eq!(value["format"], schema);
     }
 
     #[test]

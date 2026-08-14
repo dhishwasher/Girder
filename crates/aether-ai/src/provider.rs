@@ -18,6 +18,10 @@ pub enum TaskClass {
     Quick,
     /// Strict declarative extension-recipe generation.
     Extension,
+    /// Graph-addressed plan authoring for `bitcode do`. Routed local-first
+    /// (unlike `Planning`) because it is the task the authoring-cost
+    /// measurement in `docs/authoring-cost.md` is about.
+    Authoring,
 }
 
 /// A request to a model. Deliberately minimal but provider-agnostic.
@@ -31,6 +35,12 @@ pub struct Prompt {
     pub class: TaskClass,
     /// Soft cap on response length.
     pub max_tokens: u32,
+    /// A JSON Schema the response must satisfy, when the provider is able to
+    /// grammar-constrain decoding to it (Ollama's `/api/chat` `format`,
+    /// OpenAI's structured outputs). `None` — the default — is the only
+    /// value any caller passed before `bitcode do` existed, so no existing
+    /// provider behavior changes unless a caller opts in.
+    pub response_schema: Option<serde_json::Value>,
 }
 
 impl Prompt {
@@ -40,7 +50,16 @@ impl Prompt {
             user: user.into(),
             class,
             max_tokens: 1024,
+            response_schema: None,
         }
+    }
+
+    /// Attach a JSON Schema the response must satisfy. Providers that can
+    /// grammar-constrain decoding to it will; providers that can't (or a
+    /// build without `live-providers`) simply ignore it.
+    pub fn with_response_schema(mut self, schema: serde_json::Value) -> Self {
+        self.response_schema = Some(schema);
+        self
     }
 }
 

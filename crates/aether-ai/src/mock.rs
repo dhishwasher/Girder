@@ -214,6 +214,22 @@ impl AiProvider for MockProvider {
     }
 
     async fn complete(&self, prompt: Prompt) -> Result<Completion, AiError> {
+        // Mock is an offline stand-in, not a model: it cannot actually
+        // author a plan that satisfies an arbitrary JSON Schema, and
+        // fabricating one that merely *parses* would let a default build
+        // silently "succeed" at `bitcode do` without ever running a real
+        // model — exactly the false-pass this repo's measurement discipline
+        // (see docs/authoring-cost.md) exists to prevent. Decline instead,
+        // so the router's next candidate (or a clear final error) is what
+        // the user sees, not a plan nobody authored.
+        if prompt.response_schema.is_some() {
+            return Err(AiError::Unsupported(
+                "mock (offline deterministic provider does not author schema-constrained \
+                 plans; set OLLAMA_HOST for a local model, or build with \
+                 --features live-providers and set OPENAI_API_KEY/ANTHROPIC_API_KEY)"
+                    .into(),
+            ));
+        }
         let text = match prompt.class {
             TaskClass::Planning => Self::plan(&prompt.user),
             TaskClass::Codegen => Self::code(&prompt.user),
@@ -224,6 +240,7 @@ impl AiProvider for MockProvider {
             ),
             TaskClass::Quick => prompt.user.chars().take(40).collect(),
             TaskClass::Extension => Self::extension(&prompt.user),
+            TaskClass::Authoring => Self::plan(&prompt.user),
         };
         let tokens = (text.len() / 4) as u32;
         Ok(Completion {
@@ -237,6 +254,15 @@ impl AiProvider for MockProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn declines_schema_constrained_prompts_instead_of_fabricating_a_plan() {
+        let provider = MockProvider::new();
+        let prompt = Prompt::new(TaskClass::Authoring, "", "author a step")
+            .with_response_schema(serde_json::json!({"type": "object"}));
+        let error = provider.complete(prompt).await.unwrap_err();
+        assert!(matches!(error, AiError::Unsupported(_)));
+    }
 
     #[tokio::test(flavor = "current_thread")]
     async fn codegen_reacts_to_intent() {

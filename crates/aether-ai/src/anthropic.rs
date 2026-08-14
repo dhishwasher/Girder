@@ -103,6 +103,17 @@ impl AiProvider for AnthropicProvider {
             AiError::Unsupported("anthropic:claude (no ANTHROPIC_API_KEY)".into())
         })?;
 
+        // EXTENSION POINT: `prompt.response_schema` is not wired here. The
+        // Messages API has no `response_format`/json-schema parameter like
+        // Ollama's `format` or OpenAI's `text.format`; grammar-constraining
+        // Anthropic would require forced tool-use (`tool_choice: {type:
+        // "tool", ...}` with an `input_schema`, then reading the answer off
+        // a `tool_use` content block instead of a `text` block) — a
+        // different response-parsing path, deferred until a caller actually
+        // needs Anthropic in the loop. `bitcode do` still lists Anthropic in
+        // its provider chain; it just gets a best-effort free-text
+        // completion here rather than a grammar-guaranteed one, same as
+        // before this field existed.
         let body = Request {
             model: &self.model,
             max_tokens: prompt.max_tokens.max(1),
