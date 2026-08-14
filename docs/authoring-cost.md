@@ -7,56 +7,79 @@ observed outcome, not an architectural claim.
 ## Precommitted method
 
 - Policy: `docs/authoring-cost-policy.json` (SHA-256
-  `e0494609a4ec5177df30148e784f32c1e6559f02118329bcc33f665f5054fc8e`).
-- Model: local Ollama `tinyllama:1.1b`, manifest
-  `2644915ede352ea7bdfaff0bfac0be74c719d5d5202acb63a6fb095b52f394a4`,
+  `6e160be6a7893eff565109414e33c4b53ca42d5b4bb670f9151c4d4aed9f7790`).
+- Model: local Ollama `qwen2.5-coder:1.5b`, manifest
+  `d7372fd828518a4d38b1eb196c673c31a85f2ed302b3d1e406c4c2d1b64a0668`,
   temperature 0, seed 42, and at most three repair attempts.
 - Corpus: replace, rename, delete, and module insertion in both Rust and
-  Python, run on fresh clones of source commit
-  `8e0045b3a64399c70b521be857e13d84f961bfbc`.
+  Python, run on fresh clones of clean source commit
+  `423e6528e05dcb4e1f4048f6e815fd79d66b4fb1`. The two task-source hashes,
+  intents, prompts, repair protocol, options, and success thresholds are
+  unchanged from the TinyLlama control.
 - The text arm received the complete target-file projection. The graph arm
-  received only node path, language, intent, and the permitted v2
-  edit shape. The runner mechanically rejected graph prompts containing the
-  pinned target projection.
+  received only node path, language, intent, and the permitted v2 edit shape.
+  The runner mechanically rejected graph prompts containing the pinned target
+  projection.
 - A generated plan counted as successful only if its envelope and edit shape
   matched the assigned arm, `plan validate` passed, a real `plan run` passed,
   and its project tree matched an independently text-derived expected tree.
   `.bitcode/` runtime reports were excluded from the project-tree digest.
-- Ollama `prompt_eval_count` was accumulated for every attempt. When a full
-  generation exceeded the fixed 300-second limit, a one-token replay after
-  unloading the local worker recovered the same prompt's input-token count;
-  the generation itself remained a failure.
+- Before tree comparison, both Python trees passed through the same
+  deterministic token formatter. It canonicalizes string and f-string tokens
+  through Python's parser/unparser while retaining all other tokens. Non-Python
+  files remain byte-exact. The regression test proves double- versus
+  single-quoted equivalent f-strings compare equal while a changed string value
+  still fails.
+- Ollama `prompt_eval_count` is reported separately for the first attempt and
+  for all attempts summed. A full generation that exceeded the fixed
+  300-second limit remained a failure. The one-token recovery request supplied
+  the prompt count when it completed; unavailable counts were not estimated.
 
 ## Observation
 
-| Task | Text tokens | Text result | Graph tokens | Graph result |
-|---|---:|---|---:|---|
-| Rust replace | 2,018 | failed | 402 | failed |
-| Rust rename | 643 | failed | 572 | failed |
-| Rust delete | 637 | failed | 545 | failed |
-| Rust insert | 653 | failed | 596 | failed |
-| Python replace | 1,031 | failed | 551 | failed |
-| Python rename | 327 | failed | 548 | failed |
-| Python delete | 1,004 | failed | 518 | failed |
-| Python insert | 1,046 | failed | 572 | failed |
-| **Total** | **7,359** | **0/8** | **4,304** | **0/8** |
+| Task | Text first | Text all attempts | Text result | Graph first | Graph all attempts | Graph result |
+|---|---:|---:|---|---:|---:|---|
+| Rust replace | — | — | failed | 171 | 551 | failed |
+| Rust rename | — | — | failed | 157 | 509 | failed |
+| Rust delete | 551 | 551 | failed | 151 | 491 | failed |
+| Rust insert | — | — | failed | 161 | 521 | failed |
+| Python replace | 271 | 561 | failed | 150 | 488 | failed |
+| Python rename | 267 | 267 | failed | 146 | 476 | failed |
+| Python delete | 262 | 824 | failed | 139 | 455 | failed |
+| Python insert | 272 | 272 | failed | 150 | 488 | failed |
+| **Known/exact total** | **1,623 known** | **2,475 known** | **0/8** | **1,225** | **3,979** | **0/8** |
 
-Graph addressing reduced measured input tokens by 3,055, or **41.5%**
-(`4,304 / 7,359 = 0.5849`). It did not make this model capable of authoring a
-working plan: neither arm solved any task, so common successes were 0 against
-the precommitted minimum of 4. The policy result is therefore **FAIL**.
+`—` means both the original request and its one-token recovery timed out, so
+the input-token count is unavailable. This occurred for the Rust replace,
+rename, and insert text arms. Consequently, no honest full-corpus text-versus-
+graph token percentage can be calculated.
 
-The predominant completed-response failure was an invalid plan envelope after
-all permitted repairs. Five arms also encountered a bounded provider timeout:
-three Rust text arms, Python rename text, and Rust replace graph. Their prompt
-tokens were recovered and recorded, but the generations remained failures.
-An independent canonical-plan probe—not the model observation, whose generated
-rename plan failed shape validation first—also found that Python graph rename
-cannot lower safely in the current repository because unrelated same-named
-identifiers are not call-site-proven. That executor limitation is recorded
-separately in `core-gap-analysis.md`.
+For the five tasks with complete first-attempt counts in both arms, the text
+prompts used 1,623 tokens and the corresponding graph prompts used 736 tokens,
+a **54.7% first-attempt reduction**. This paired subtotal measures context
+size. Across all repairs for the same five tasks, the counts were 2,475 text
+and 2,398 graph, only a 3.1% difference; that second figure primarily mixes
+context with different retry counts and is not the authoring-context result.
+The graph arm's exact eight-task totals were 1,225 first-attempt tokens and
+3,979 tokens across repairs.
 
-The complete per-attempt record, hashes, host metadata, and failure details are
-in `docs/authoring-cost-observation.json`. The finding is narrower than “graph
-addressing works for local authoring”: graph addressing lowers context cost,
-but this model and prompt protocol did not complete work with no remote calls.
+Neither arm produced a working plan. Common successes were 0 against the
+precommitted minimum of 4, and the missing text counts also prevent evaluation
+of the full-corpus total-token threshold. The policy result is therefore
+**FAIL**.
+
+Of 35 attempts, 28 completed responses failed because the plan envelope had
+missing or extra fields; the other seven attempts hit the bounded provider
+timeout. Three of those seven also lacked a recovered token count. The earlier
+3/3 minimal envelope probe used a schema-constrained `/api/chat` request with
+the edit body supplied verbatim. This run used the precommitted real-task
+`/api/generate` protocol with JSON-object output, larger prompts, task-specific
+edit shapes, and repairs. The probe established model capability under its
+narrow protocol, but it did not predict success under this one.
+
+The complete per-attempt record, hashes, host metadata, clean-source evidence,
+and tool provenance are in `docs/authoring-cost-observation.json`. This rerun
+does not establish successful local plan authoring or a full-corpus context
+reduction. It establishes a 54.7% first-attempt reduction on the five complete
+pairs and shows that real-task envelope emission and provider reliability
+remain blockers under the precommitted protocol.

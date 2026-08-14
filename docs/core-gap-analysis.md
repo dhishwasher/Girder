@@ -556,16 +556,22 @@ as gap 11 rather than silently accepted.
    untyped fixture parameter and a same-named unqualified `self.invoke`
    dispatch. Lower priority than the original P0 set because it is narrow
    (one dispatch shape) and newly discovered, not a regression.
-12. **P0 — local plan authoring remains incapable despite lower context
-   cost.** The precommitted eight-task TinyLlama comparison in
-   [`authoring-cost.md`](authoring-cost.md) measured 7,359 text-arm input
-   tokens versus 4,304 graph-arm tokens, a 41.5% reduction, but neither arm
-   produced a working plan for any task. Common successes were 0 against the
-   required 4, so the policy failed. Graph addressing has established a lower
-   input cost on this corpus; it has not established that Bit Code can complete
-   work with no remote model calls. The dominant completed-response defect was
-   failure to emit the exact plan envelope after repairs; five arms also hit
-   the bounded local-provider timeout.
+12. **P0 — capable-model rerun still did not author a working local plan.**
+   The precommitted eight-task `qwen2.5-coder:1.5b` rerun in
+   [`authoring-cost.md`](authoring-cost.md) produced 0/8 text-arm and 0/8
+   graph-arm successes, so common successes remained 0 against the required 4
+   and the policy failed. Of 35 attempts, 28 completed responses had missing or
+   extra plan-envelope fields and seven hit the bounded provider timeout. Three
+   text-arm timeout recoveries also failed, so a full eight-task token ratio is
+   unavailable and the prior 41.5% retry-summed figure is not retained as a
+   context-size result. On the five tasks with complete paired counts, first
+   attempts used 1,623 text tokens versus 736 graph tokens, a 54.7% reduction;
+   the graph arm's exact eight-task first-attempt total was 1,225. Graph
+   addressing lowers first-attempt context on the measurable pairs, but this
+   protocol still has not established that Bit Code can complete work with no
+   remote model calls. The earlier 3/3 minimal envelope probe supplied the edit
+   body and used schema-constrained `/api/chat`; it did not establish real-task
+   authoring under this measurement's `/api/generate` protocol.
 13. **P0 — conservative semantic rename can reject a valid exact node on
    repository-wide name collisions.** An independent canonical-plan probe of
    `crate::sample-project::calc::greet` failed closed because identifiers named
