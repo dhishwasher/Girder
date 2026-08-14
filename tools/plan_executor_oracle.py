@@ -40,7 +40,7 @@ OBSERVATION_OUTPUTS = {
     "docs/graph-edit-observation.json",
     "docs/authoring-cost-observation.json",
 }
-AUTHORING_MODEL = "tinyllama:1.1b"
+AUTHORING_MODEL = "qwen2.5-coder:1.5b"
 AUTHORING_PROMPT_PROTOCOL = {
     "initial_template": (
         "Author a Bit Code plan for task {task}. Task: {intent}. Use plan_version {version}. "
@@ -2184,6 +2184,9 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                         break
                 arms[arm] = {
                     "success": success,
+                    "first_attempt_input_tokens": (
+                        attempts[0].get("tokens") if attempts else None
+                    ),
                     "input_tokens": total_tokens if token_count_complete else None,
                     "completed_input_tokens": total_tokens,
                     "token_count_complete": token_count_complete,
@@ -2212,6 +2215,21 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
         arm["token_count_complete"]
         for case in results
         for arm in case["arms"].values()
+    )
+    first_attempt_token_counts_complete = all(
+        type(arm["first_attempt_input_tokens"]) is int
+        for case in results
+        for arm in case["arms"].values()
+    )
+    text_first_attempt_tokens = (
+        sum(case["arms"]["text"]["first_attempt_input_tokens"] for case in results)
+        if first_attempt_token_counts_complete
+        else None
+    )
+    graph_first_attempt_tokens = (
+        sum(case["arms"]["graph"]["first_attempt_input_tokens"] for case in results)
+        if first_attempt_token_counts_complete
+        else None
     )
     text_completed_tokens = sum(
         case["arms"]["text"]["completed_input_tokens"] for case in results
@@ -2266,6 +2284,9 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
         "summary": {
             "passed": passed,
             "common_successes": len(common),
+            "first_attempt_token_counts_complete": first_attempt_token_counts_complete,
+            "text_first_attempt_input_tokens": text_first_attempt_tokens,
+            "graph_first_attempt_input_tokens": graph_first_attempt_tokens,
             "token_counts_complete": token_counts_complete,
             "text_input_tokens": text_tokens,
             "graph_input_tokens": graph_tokens,
