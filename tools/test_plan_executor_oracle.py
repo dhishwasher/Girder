@@ -19,6 +19,7 @@ from tools.plan_executor_oracle import (
     authoring_progress_header,
     authoring_prompt_context,
     authoring_reference_plan,
+    authoring_target_node_source,
     create_graph_mutant_binary,
     create_mutant_binary,
     evaluate_graph_policy,
@@ -245,13 +246,42 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
         graph_edit = authoring_edits("python-replace")[1]
 
         context = authoring_prompt_context(
-            "graph", "python", graph_edit, Path("unused-for-graph-arm")
+            "graph",
+            "python",
+            graph_edit,
+            Path(__file__).parents[1],
+            case_id="python-replace",
+            intent="uppercase the greeting",
         )
 
         self.assertEqual(
             context,
-            {"node": graph_edit["node"], "language": "python"},
+            {
+                "node": graph_edit["node"],
+                "language": "python",
+                "intent": "uppercase the greeting",
+                "source": "def greet(name):\n    return hello(name)",
+            },
         )
+
+    def test_authoring_graph_context_never_contains_full_target_projection(self):
+        root = Path(__file__).parents[1]
+        for language in ("rust", "python"):
+            projection = (
+                root / self._authoring_source_path(language)
+            ).read_text(encoding="utf-8")
+            for operation in ("replace", "rename", "delete", "insert"):
+                case_id = f"{language}-{operation}"
+                node_source = authoring_target_node_source(case_id, root)
+                self.assertIn(node_source, projection)
+                self.assertNotEqual(node_source, projection)
+
+    @staticmethod
+    def _authoring_source_path(language: str) -> str:
+        return {
+            "rust": "crates/aether-debugger/src/trace.rs",
+            "python": "sample-project/calc.py",
+        }[language]
 
     def test_authoring_progress_binds_binary_and_harnesses(self):
         binary = Path(sys.executable)

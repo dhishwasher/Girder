@@ -1950,9 +1950,19 @@ def authoring_prompt_context(
     language: str,
     allowed_edit: Mapping[str, Any],
     repository: Path,
+    *,
+    case_id: str | None = None,
+    intent: str | None = None,
 ) -> Mapping[str, Any]:
     if arm == "graph":
-        return {"node": allowed_edit["node"], "language": language}
+        if case_id is None or intent is None:
+            raise RuntimeError("graph authoring context requires case id and intent")
+        return {
+            "node": allowed_edit["node"],
+            "language": language,
+            "intent": intent,
+            "source": authoring_target_node_source(case_id, repository),
+        }
     if arm == "text":
         path = allowed_edit["path"]
         return {
@@ -1960,6 +1970,41 @@ def authoring_prompt_context(
             "projection": (repository / path).read_text(encoding="utf-8"),
         }
     raise RuntimeError(f"unsupported authoring arm: {arm}")
+
+
+def authoring_target_node_source(case_id: str, repository: Path) -> str:
+    """Return bounded current graph-node source without projecting the target file."""
+    language, operation = case_id.split("-", 1)
+    projection = (
+        repository / AUTHORING_TASK_SOURCES[language]["path"]
+    ).read_text(encoding="utf-8")
+    if language == "rust" and operation == "insert":
+        node_source = (
+            "pub fn is_empty(&self) -> bool {\n"
+            "        self.steps.is_empty()\n"
+            "    }"
+        )
+    elif language == "rust":
+        node_source = (
+            "pub fn final_env(&self) -> Env {\n"
+            "        self.steps.last().map(|s| s.env.clone()).unwrap_or_default()\n"
+            "    }"
+        )
+    elif language == "python" and operation == "insert":
+        node_source = (
+            "class ScientificCalculator(Calculator):\n"
+            "    def square(self, value):\n"
+            "        return value * value"
+        )
+    elif language == "python":
+        node_source = "def greet(name):\n    return hello(name)"
+    else:
+        raise RuntimeError(f"unsupported authoring task: {case_id}")
+    if projection.count(node_source) != 1:
+        raise RuntimeError(f"authoring target Node.source drifted for {case_id}")
+    if node_source == projection:
+        raise RuntimeError(f"authoring target Node.source is the full {language} projection")
+    return node_source
 
 
 def authoring_progress_header(
@@ -2137,7 +2182,12 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                     operation = case_id.split("-", 1)[1]
                     context = json.dumps(
                         authoring_prompt_context(
-                            arm, language, allowed_edit, repository
+                            arm,
+                            language,
+                            allowed_edit,
+                            repository,
+                            case_id=case_id,
+                            intent=policy["task_intents"][case_id],
                         )
                     )
                     if arm == "text":
