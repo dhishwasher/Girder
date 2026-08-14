@@ -8,8 +8,8 @@
   },
   "model": "qwen2.5-coder:1.5b",
   "model_manifest_sha256": "d7372fd828518a4d38b1eb196c673c31a85f2ed302b3d1e406c4c2d1b64a0668",
-  "policy_id": "graph-edit-authoring-cost-v1",
-  "policy_sha256": "6e160be6a7893eff565109414e33c4b53ca42d5b4bb670f9151c4d4aed9f7790",
+  "policy_id": "graph-edit-authoring-cost-v2",
+  "policy_sha256": "4efed6d5759c9f4ef836d2d46ebe0648c8da2b10c46e712ec4022ec464080d01",
   "results": [
     {
       "arms": {
@@ -17,27 +17,15 @@
           "attempts": [
             {
               "attempt": 1,
-              "shape_error": "plan envelope has missing or extra fields",
+              "prompt_tokens_recovered": true,
+              "provider_error": "Ollama authoring request failed: timed out",
               "success": false,
-              "tokens": 171
-            },
-            {
-              "attempt": 2,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 190
-            },
-            {
-              "attempt": 3,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 190
+              "tokens": 263
             }
           ],
-          "completed_input_tokens": 551,
-          "expected_tree_sha256": "151aac46b474d6686b24ed965265f23666f9abd6e4f958eaf067bfaed77a1367",
-          "first_attempt_input_tokens": 171,
-          "input_tokens": 551,
+          "completed_input_tokens": 263,
+          "first_attempt_input_tokens": 263,
+          "input_tokens": 263,
           "success": false,
           "token_count_complete": true
         },
@@ -52,7 +40,6 @@
             }
           ],
           "completed_input_tokens": 0,
-          "expected_tree_sha256": "151aac46b474d6686b24ed965265f23666f9abd6e4f958eaf067bfaed77a1367",
           "first_attempt_input_tokens": null,
           "input_tokens": null,
           "success": false,
@@ -67,27 +54,15 @@
           "attempts": [
             {
               "attempt": 1,
-              "shape_error": "plan envelope has missing or extra fields",
+              "prompt_tokens_recovered": true,
+              "provider_error": "Ollama authoring request failed: timed out",
               "success": false,
-              "tokens": 157
-            },
-            {
-              "attempt": 2,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 176
-            },
-            {
-              "attempt": 3,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 176
+              "tokens": 235
             }
           ],
-          "completed_input_tokens": 509,
-          "expected_tree_sha256": "1bfa3164258b029e0c7076f4fbc04bc260969ed469391c04faa6f9f29e009703",
-          "first_attempt_input_tokens": 157,
-          "input_tokens": 509,
+          "completed_input_tokens": 235,
+          "first_attempt_input_tokens": 235,
+          "input_tokens": 235,
           "success": false,
           "token_count_complete": true
         },
@@ -102,7 +77,6 @@
             }
           ],
           "completed_input_tokens": 0,
-          "expected_tree_sha256": "1bfa3164258b029e0c7076f4fbc04bc260969ed469391c04faa6f9f29e009703",
           "first_attempt_input_tokens": null,
           "input_tokens": null,
           "success": false,
@@ -117,27 +91,15 @@
           "attempts": [
             {
               "attempt": 1,
-              "shape_error": "plan envelope has missing or extra fields",
+              "prompt_tokens_recovered": true,
+              "provider_error": "Ollama authoring request failed: timed out",
               "success": false,
-              "tokens": 151
-            },
-            {
-              "attempt": 2,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 170
-            },
-            {
-              "attempt": 3,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 170
+              "tokens": 225
             }
           ],
-          "completed_input_tokens": 491,
-          "expected_tree_sha256": "5882090224f2f2627890cd4b33b6f8b971c86b04828cd349dced7c717197e941",
-          "first_attempt_input_tokens": 151,
-          "input_tokens": 491,
+          "completed_input_tokens": 225,
+          "first_attempt_input_tokens": 225,
+          "input_tokens": 225,
           "success": false,
           "token_count_complete": true
         },
@@ -148,13 +110,12 @@
               "prompt_tokens_recovered": true,
               "provider_error": "Ollama authoring request failed: timed out",
               "success": false,
-              "tokens": 551
+              "tokens": 579
             }
           ],
-          "completed_input_tokens": 551,
-          "expected_tree_sha256": "5882090224f2f2627890cd4b33b6f8b971c86b04828cd349dced7c717197e941",
-          "first_attempt_input_tokens": 551,
-          "input_tokens": 551,
+          "completed_input_tokens": 579,
+          "first_attempt_input_tokens": 579,
+          "input_tokens": 579,
           "success": false,
           "token_count_complete": true
         }
@@ -167,27 +128,15 @@
           "attempts": [
             {
               "attempt": 1,
-              "shape_error": "plan envelope has missing or extra fields",
+              "prompt_tokens_recovered": true,
+              "provider_error": "Ollama authoring request failed: timed out",
               "success": false,
-              "tokens": 161
-            },
-            {
-              "attempt": 2,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 180
-            },
-            {
-              "attempt": 3,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 180
+              "tokens": 235
             }
           ],
-          "completed_input_tokens": 521,
-          "expected_tree_sha256": "8b6d9b6bdd61dd572e159f535d7bfa288af7a9b4a822ee108a54f048e0c2bd56",
-          "first_attempt_input_tokens": 161,
-          "input_tokens": 521,
+          "completed_input_tokens": 235,
+          "first_attempt_input_tokens": 235,
+          "input_tokens": 235,
           "success": false,
           "token_count_complete": true
         },
@@ -202,7 +151,6 @@
             }
           ],
           "completed_input_tokens": 0,
-          "expected_tree_sha256": "8b6d9b6bdd61dd572e159f535d7bfa288af7a9b4a822ee108a54f048e0c2bd56",
           "first_attempt_input_tokens": null,
           "input_tokens": null,
           "success": false,
@@ -217,50 +165,54 @@
           "attempts": [
             {
               "attempt": 1,
-              "shape_error": "plan envelope has missing or extra fields",
+              "shape_error": "plan must use rollback_plan",
               "success": false,
-              "tokens": 150
+              "tokens": 208
             },
             {
               "attempt": 2,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 169
-            },
-            {
-              "attempt": 3,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 169
+              "declared_checks_passed": true,
+              "impacted_tests": {
+                "command": [
+                  "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/bitcode",
+                  "test-impact",
+                  ".",
+                  "--run",
+                  "--quiet"
+                ],
+                "passed": true,
+                "returncode": 0,
+                "stderr": "",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout": "",
+                "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "wall_seconds": 13.583987369998795
+              },
+              "plan_run_passed": true,
+              "success": true,
+              "tokens": 225,
+              "validated": true
             }
           ],
-          "completed_input_tokens": 488,
-          "expected_tree_sha256": "356c23d664b5f66431b036b206d70970c8559be8f095a273cbf29c050087b04d",
-          "first_attempt_input_tokens": 150,
-          "input_tokens": 488,
-          "success": false,
+          "completed_input_tokens": 433,
+          "first_attempt_input_tokens": 208,
+          "input_tokens": 433,
+          "success": true,
           "token_count_complete": true
         },
         "text": {
           "attempts": [
             {
               "attempt": 1,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 271
-            },
-            {
-              "attempt": 2,
               "prompt_tokens_recovered": true,
               "provider_error": "Ollama authoring request failed: timed out",
               "success": false,
-              "tokens": 290
+              "tokens": 300
             }
           ],
-          "completed_input_tokens": 561,
-          "expected_tree_sha256": "356c23d664b5f66431b036b206d70970c8559be8f095a273cbf29c050087b04d",
-          "first_attempt_input_tokens": 271,
-          "input_tokens": 561,
+          "completed_input_tokens": 300,
+          "first_attempt_input_tokens": 300,
+          "input_tokens": 300,
           "success": false,
           "token_count_complete": true
         }
@@ -273,27 +225,29 @@
           "attempts": [
             {
               "attempt": 1,
-              "shape_error": "plan envelope has missing or extra fields",
+              "shape_error": "plan must use rollback_plan",
               "success": false,
-              "tokens": 146
+              "tokens": 200
             },
             {
               "attempt": 2,
-              "shape_error": "plan envelope has missing or extra fields",
+              "declared_checks_passed": false,
+              "impacted_tests": null,
+              "plan_run_passed": false,
               "success": false,
-              "tokens": 165
+              "tokens": 217,
+              "validated": false
             },
             {
               "attempt": 3,
-              "shape_error": "plan envelope has missing or extra fields",
+              "shape_error": "plan must use rollback_plan",
               "success": false,
-              "tokens": 165
+              "tokens": 329
             }
           ],
-          "completed_input_tokens": 476,
-          "expected_tree_sha256": "045485ca38a88a1543ba8c99fdc86e56fbd2a2bc8784e97af7d638aa8dd5c5d6",
-          "first_attempt_input_tokens": 146,
-          "input_tokens": 476,
+          "completed_input_tokens": 746,
+          "first_attempt_input_tokens": 200,
+          "input_tokens": 746,
           "success": false,
           "token_count_complete": true
         },
@@ -304,13 +258,12 @@
               "prompt_tokens_recovered": true,
               "provider_error": "Ollama authoring request failed: timed out",
               "success": false,
-              "tokens": 267
+              "tokens": 296
             }
           ],
-          "completed_input_tokens": 267,
-          "expected_tree_sha256": "045485ca38a88a1543ba8c99fdc86e56fbd2a2bc8784e97af7d638aa8dd5c5d6",
-          "first_attempt_input_tokens": 267,
-          "input_tokens": 267,
+          "completed_input_tokens": 296,
+          "first_attempt_input_tokens": 296,
+          "input_tokens": 296,
           "success": false,
           "token_count_complete": true
         }
@@ -323,55 +276,54 @@
           "attempts": [
             {
               "attempt": 1,
-              "shape_error": "plan envelope has missing or extra fields",
+              "shape_error": "plan must use rollback_plan",
               "success": false,
-              "tokens": 139
+              "tokens": 188
             },
             {
               "attempt": 2,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 158
-            },
-            {
-              "attempt": 3,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 158
+              "declared_checks_passed": true,
+              "impacted_tests": {
+                "command": [
+                  "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/bitcode",
+                  "test-impact",
+                  ".",
+                  "--run",
+                  "--quiet"
+                ],
+                "passed": true,
+                "returncode": 0,
+                "stderr": "",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout": "",
+                "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "wall_seconds": 13.990954292999959
+              },
+              "plan_run_passed": true,
+              "success": true,
+              "tokens": 205,
+              "validated": true
             }
           ],
-          "completed_input_tokens": 455,
-          "expected_tree_sha256": "0d9d583f3e919b534d0c20891b8aed2a8a11b1bc48ca5f8e4422b3f8ccdcb66c",
-          "first_attempt_input_tokens": 139,
-          "input_tokens": 455,
-          "success": false,
+          "completed_input_tokens": 393,
+          "first_attempt_input_tokens": 188,
+          "input_tokens": 393,
+          "success": true,
           "token_count_complete": true
         },
         "text": {
           "attempts": [
             {
               "attempt": 1,
-              "shape_error": "plan envelope has missing or extra fields",
+              "prompt_tokens_recovered": true,
+              "provider_error": "Ollama authoring request failed: timed out",
               "success": false,
-              "tokens": 262
-            },
-            {
-              "attempt": 2,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 281
-            },
-            {
-              "attempt": 3,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 281
+              "tokens": 290
             }
           ],
-          "completed_input_tokens": 824,
-          "expected_tree_sha256": "0d9d583f3e919b534d0c20891b8aed2a8a11b1bc48ca5f8e4422b3f8ccdcb66c",
-          "first_attempt_input_tokens": 262,
-          "input_tokens": 824,
+          "completed_input_tokens": 290,
+          "first_attempt_input_tokens": 290,
+          "input_tokens": 290,
           "success": false,
           "token_count_complete": true
         }
@@ -384,27 +336,15 @@
           "attempts": [
             {
               "attempt": 1,
-              "shape_error": "plan envelope has missing or extra fields",
+              "prompt_tokens_recovered": true,
+              "provider_error": "Ollama authoring request failed: timed out",
               "success": false,
-              "tokens": 150
-            },
-            {
-              "attempt": 2,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 169
-            },
-            {
-              "attempt": 3,
-              "shape_error": "plan envelope has missing or extra fields",
-              "success": false,
-              "tokens": 169
+              "tokens": 221
             }
           ],
-          "completed_input_tokens": 488,
-          "expected_tree_sha256": "cf670aaca273bbb2228d08da146870e488198690e900047f81dbe9290f5e5e2a",
-          "first_attempt_input_tokens": 150,
-          "input_tokens": 488,
+          "completed_input_tokens": 221,
+          "first_attempt_input_tokens": 221,
+          "input_tokens": 221,
           "success": false,
           "token_count_complete": true
         },
@@ -415,13 +355,12 @@
               "prompt_tokens_recovered": true,
               "provider_error": "Ollama authoring request failed: timed out",
               "success": false,
-              "tokens": 272
+              "tokens": 300
             }
           ],
-          "completed_input_tokens": 272,
-          "expected_tree_sha256": "cf670aaca273bbb2228d08da146870e488198690e900047f81dbe9290f5e5e2a",
-          "first_attempt_input_tokens": 272,
-          "input_tokens": 272,
+          "completed_input_tokens": 300,
+          "first_attempt_input_tokens": 300,
+          "input_tokens": 300,
           "success": false,
           "token_count_complete": true
         }
@@ -429,28 +368,36 @@
       "id": "python-insert"
     }
   ],
-  "run_definition": "fresh-clone-per-attempt-paired-arms-bounded-local-model",
-  "schema_version": 1,
-  "source_commit": "423e6528e05dcb4e1f4048f6e815fd79d66b4fb1",
+  "run_definition": "fresh-clone-per-attempt-paired-arms-bounded-local-model-declared-semantic-checks-and-impacted-tests",
+  "schema_version": 2,
+  "semantic_verification": {
+    "declared_checks": "required task-specific semantic check and must pass",
+    "impacted_tests": "bitcode test-impact . --run --quiet must pass",
+    "plan_run": "required",
+    "plan_validate": "required",
+    "reference_tree_comparison": false
+  },
+  "source_commit": "fd74d3468b65fddce6e853103aa9368767a0c90d",
   "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "source_snapshot_sha256": "9c46849782ae8a3b9207760177b173415caeba0bb5e2d281614520e5fea290b3",
+  "source_snapshot_sha256": "575a600d0bfb7efc294d8652ce85b278548e95ffac021cb2dfd3b4d25daaf43b",
   "source_worktree_clean": true,
   "summary": {
     "common_successes": 0,
     "first_attempt_token_counts_complete": false,
-    "graph_completed_input_tokens": 3979,
+    "graph_completed_input_tokens": 2751,
     "graph_first_attempt_input_tokens": null,
     "graph_input_tokens": null,
     "passed": false,
-    "text_completed_input_tokens": 2475,
+    "text_completed_input_tokens": 1765,
     "text_first_attempt_input_tokens": null,
     "text_input_tokens": null,
     "token_counts_complete": false
   },
   "tool": {
+    "authoring_task_check_sha256": "0d87768564decabb80e948098258155222bd927790a91ca4b59b2b9ee174fe37",
     "bitcode_sha256": "ef640b18d4f5f352c3d6de25ca5bef01de80e09f7194baf0e5ebdeeb620f79ad",
-    "harness_sha256": "4ea421377e67f3142f8948a9141e2debe1020f0a3443ee8a89e4b4f21d93f00c",
+    "harness_sha256": "326b5ff4cb3f3756422094922c7252a908e363754b77ddd373d2e8d7034d4aed",
     "harness_support_sha256": "a63b069acf887b5879f9662251bb0a13fbe945e260937f999225ba85ec7da428",
-    "source_commit": "423e6528e05dcb4e1f4048f6e815fd79d66b4fb1"
+    "source_commit": "fd74d3468b65fddce6e853103aa9368767a0c90d"
   }
 }
