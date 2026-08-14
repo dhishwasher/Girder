@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "policy_id": "graph-edit-authoring-cost-v1",
+  "schema_version": 2,
+  "policy_id": "graph-edit-authoring-cost-v2",
   "model": "qwen2.5-coder:1.5b",
   "model_manifest_sha256": "d7372fd828518a4d38b1eb196c673c31a85f2ed302b3d1e406c4c2d1b64a0668",
   "options": {
@@ -14,8 +14,12 @@
   "prompt_protocol": {
     "initial_template": "Author a Bit Code plan for task {task}. Task: {intent}. Use plan_version {version}. Context: {context}. Permitted edit schema: {schema}. base_commit is {base_commit}. Return JSON only.",
     "repair_suffix": " Previous output failed: {diagnostic}. Return only the corrected plan object.",
+    "transport": "ollama /api/chat",
+    "response_format": "task-specific plan JSON schema",
+    "envelope_shape": "structurally enforced; repair loop evaluates content errors only",
     "text_context": "complete target-file projection",
-    "graph_context": "node path and language only"
+    "graph_context": "node path, language, and bounded current Node.source only",
+    "graph_full_projection": "reject"
   },
   "tasks": [
     "rust-replace",
@@ -46,6 +50,13 @@
       "path": "sample-project/calc.py",
       "sha256": "77e4ee13f9c82fe115c0c24515116459c8a260e4b28668c615612cfe4674d345"
     }
+  },
+  "semantic_verification": {
+    "plan_validate": "required",
+    "plan_run": "required",
+    "declared_checks": "required task-specific semantic check and must pass",
+    "impacted_tests": "bitcode test-impact . --run --quiet must pass",
+    "reference_tree_comparison": false
   },
   "success": {
     "minimum_common_successes": 4,
