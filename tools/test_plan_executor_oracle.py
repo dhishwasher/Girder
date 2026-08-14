@@ -10,6 +10,7 @@ from tools.plan_executor_oracle import (
     DEFAULT_POLICY,
     GRAPH_POLICY,
     atomic_write_json,
+    authoring_source_tree_digest,
     authored_plan_shape_error,
     authoring_edits,
     authoring_plan,
@@ -182,6 +183,34 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
         self.assertIn("path", text["steps"][0]["edits"][0])
         self.assertNotIn("node", text["steps"][0]["edits"][0])
         self.assertIn("node", graph["steps"][0]["edits"][0])
+
+    def test_authoring_tree_normalizes_quotes_but_rejects_wrong_edit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "sample.py"
+            source.write_text(
+                'def greet(name):\n    return f"hi {name}"\n', encoding="utf-8"
+            )
+            for command in (("git", "init", "-q"), ("git", "add", "sample.py")):
+                result = run(
+                    command,
+                    cwd=root,
+                    timeout_seconds=5,
+                    max_output_bytes=4096,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+            expected = authoring_source_tree_digest(root)
+            source.write_text(
+                "def greet(name):\n    return f'hi {name}'\n", encoding="utf-8"
+            )
+            self.assertEqual(authoring_source_tree_digest(root), expected)
+
+            source.write_text(
+                "def greet(name):\n    return f'bye {name}'\n", encoding="utf-8"
+            )
+            self.assertNotEqual(authoring_source_tree_digest(root), expected)
 
     def test_authoring_graph_context_matches_precommitted_protocol(self):
         graph_edit = authoring_edits("python-replace")[1]

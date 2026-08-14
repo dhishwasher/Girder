@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
+import io
 import json
 import os
 import platform
@@ -13,6 +15,7 @@ import shutil
 import stat
 import sys
 import tempfile
+import tokenize
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -1119,6 +1122,60 @@ def source_tree_digest(repository: Path) -> str:
     return digest.hexdigest()
 
 
+def normalize_authoring_source(path: Path, contents: bytes) -> bytes:
+    """Deterministically format source for authoring-oracle comparison."""
+    if path.suffix != ".py":
+        return contents
+    tokens = []
+    try:
+        generated = tokenize.tokenize(io.BytesIO(contents).readline)
+        for token in generated:
+            value = token.string
+            if token.type == tokenize.STRING:
+                try:
+                    value = ast.unparse(ast.parse(value, mode="eval").body)
+                except SyntaxError:
+                    # Preserve malformed literals so they cannot normalize to a valid tree.
+                    pass
+            tokens.append((token.type, value))
+        normalized = tokenize.untokenize(tokens)
+    except (IndentationError, SyntaxError, tokenize.TokenError):
+        return contents
+    return normalized if isinstance(normalized, bytes) else normalized.encode("utf-8")
+
+
+def authoring_source_tree_digest(repository: Path) -> str:
+    """Hash an authoring tree after deterministic source formatting."""
+    digest = hashlib.sha256()
+    listed = require_success(
+        run_bounded(
+            ("git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"),
+            cwd=repository,
+            timeout_seconds=30,
+            max_output_bytes=1024 * 1024,
+        ),
+        "list authoring tree",
+    )
+    paths = sorted(
+        repository / value
+        for value in listed.stdout.split("\0")
+        if value and not value.startswith(".bitcode/")
+    )
+    for path in paths:
+        relative_path = path.relative_to(repository)
+        relative = relative_path.as_posix().encode()
+        digest.update(len(relative).to_bytes(8, "big"))
+        digest.update(relative)
+        if not path.is_file():
+            digest.update(b"\x00")
+            continue
+        digest.update(b"\x01")
+        contents = normalize_authoring_source(relative_path, path.read_bytes())
+        digest.update(len(contents).to_bytes(8, "big"))
+        digest.update(contents)
+    return digest.hexdigest()
+
+
 def valid_fingerprint_side(byte_count: Any, digest: Any) -> bool:
     return (byte_count is None and digest is None) or (
         type(byte_count) is int
@@ -1988,7 +2045,7 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                         cwd=expected_repository, check=False, **execution),
                     f"authoring expected tree {case_id} {arm}",
                 )
-                expected_digest = source_tree_digest(expected_repository)
+                expected_digest = authoring_source_tree_digest(expected_repository)
                 total_tokens = 0
                 attempts = []
                 success = False
@@ -2113,7 +2170,7 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                     tree_matched = (
                         executed is not None
                         and executed.returncode == 0
-                        and source_tree_digest(repository) == expected_digest
+                        and authoring_source_tree_digest(repository) == expected_digest
                     )
                     success = validated.returncode == 0 and tree_matched
                     if validated.returncode != 0:
