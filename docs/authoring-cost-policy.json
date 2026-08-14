@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "policy_id": "graph-edit-authoring-cost-v1",
-  "model": "tinyllama:1.1b",
-  "model_manifest_sha256": "2644915ede352ea7bdfaff0bfac0be74c719d5d5202acb63a6fb095b52f394a4",
+  "model": "qwen2.5-coder:1.5b",
+  "model_manifest_sha256": "d7372fd828518a4d38b1eb196c673c31a85f2ed302b3d1e406c4c2d1b64a0668",
   "options": {
     "temperature": 0,
     "seed": 42,
