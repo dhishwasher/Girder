@@ -50,8 +50,19 @@ AUTHORING_PROMPT_PROTOCOL = {
     "repair_suffix": (
         " Previous output failed: {diagnostic}. Return only the corrected plan object."
     ),
+    "transport": "ollama /api/chat",
+    "response_format": "task-specific plan JSON schema",
+    "envelope_shape": "structurally enforced; repair loop evaluates content errors only",
     "text_context": "complete target-file projection",
-    "graph_context": "node path and language only",
+    "graph_context": "node path, language, and bounded current Node.source only",
+    "graph_full_projection": "reject",
+}
+AUTHORING_SEMANTIC_VERIFICATION = {
+    "plan_validate": "required",
+    "plan_run": "required",
+    "declared_checks": "required task-specific semantic check and must pass",
+    "impacted_tests": "bitcode test-impact . --run --quiet must pass",
+    "reference_tree_comparison": False,
 }
 AUTHORING_TASK_INTENTS = {
     "rust-replace": "Change Trace::final_env to use map_or_else(Env::new, |step| step.env.clone()).",
@@ -1701,9 +1712,11 @@ def observation_metadata(policy: Mapping[str, Any], policy_bytes: bytes, bitcode
     }
 
 
-def ollama_json(host: str, payload: Mapping[str, Any], timeout: int) -> Mapping[str, Any]:
+def ollama_chat_json(
+    host: str, payload: Mapping[str, Any], timeout: int
+) -> Mapping[str, Any]:
     request = urllib.request.Request(
-        f"{host.rstrip('/')}/api/generate",
+        f"{host.rstrip('/')}/api/chat",
         data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json"},
         method="POST",
@@ -1722,6 +1735,7 @@ def recover_ollama_prompt_tokens(
     host: str,
     model: str,
     prompt: str,
+    response_schema: Mapping[str, Any],
     options: Mapping[str, Any],
 ) -> int:
     stopped = run_bounded(
@@ -1734,13 +1748,13 @@ def recover_ollama_prompt_tokens(
         raise RuntimeError(
             "could not stop the timed-out local model before recovering prompt tokens"
         )
-    response = ollama_json(
+    response = ollama_chat_json(
         host,
         {
             "model": model,
-            "prompt": prompt,
+            "messages": [{"role": "user", "content": prompt}],
             "stream": False,
-            "format": "json",
+            "format": response_schema,
             "keep_alive": 0,
             "options": {
                 "temperature": options["temperature"],
@@ -1843,6 +1857,37 @@ def authoring_plan(case_id: str, base_commit: str, *, graph_addressed: bool) -> 
     }
 
 
+def authoring_plan_json_schema(plan: Mapping[str, Any]) -> dict[str, Any]:
+    """Build the exact structural grammar for one authoring plan envelope."""
+
+    def schema_for(value: Any) -> dict[str, Any]:
+        if isinstance(value, dict):
+            return {
+                "type": "object",
+                "required": list(value),
+                "additionalProperties": False,
+                "properties": {key: schema_for(item) for key, item in value.items()},
+            }
+        if isinstance(value, list):
+            if len(value) != 1:
+                raise RuntimeError("authoring plan grammar requires singleton arrays")
+            return {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1,
+                "items": schema_for(value[0]),
+            }
+        if type(value) is bool:
+            return {"type": "boolean"}
+        if type(value) is int:
+            return {"type": "integer"}
+        if isinstance(value, str):
+            return {"type": "string"}
+        raise RuntimeError(f"unsupported authoring plan grammar value: {type(value)!r}")
+
+    return schema_for(dict(plan))
+
+
 def authoring_reference_plan(case_id: str, base_commit: str) -> dict[str, Any]:
     """Build the independent text-addressed oracle for either authored arm."""
     return authoring_plan(case_id, base_commit, graph_addressed=False)
@@ -1851,11 +1896,12 @@ def authoring_reference_plan(case_id: str, base_commit: str) -> dict[str, Any]:
 def validate_authoring_policy(policy: Mapping[str, Any]) -> Mapping[str, Any]:
     required_fields = {
         "schema_version", "policy_id", "model", "model_manifest_sha256",
-        "options", "prompt_protocol", "tasks", "task_intents", "task_sources", "success",
+        "options", "prompt_protocol", "tasks", "task_intents", "task_sources",
+        "semantic_verification", "success",
     }
     if set(policy) != required_fields:
         raise RuntimeError("authoring-cost policy has missing or unknown fields")
-    if policy.get("schema_version") != 1 or policy.get("policy_id") != "graph-edit-authoring-cost-v1":
+    if policy.get("schema_version") != 2 or policy.get("policy_id") != "graph-edit-authoring-cost-v2":
         raise RuntimeError("unsupported authoring-cost policy")
     exact_tasks = [
         f"{language}-{operation}"
@@ -1894,6 +1940,8 @@ def validate_authoring_policy(policy: Mapping[str, Any]) -> Mapping[str, Any]:
         raise RuntimeError("authoring-cost model manifest must be an exact SHA-256")
     if policy.get("task_sources") != AUTHORING_TASK_SOURCES:
         raise RuntimeError("authoring-cost task sources differ from the precommitment")
+    if policy.get("semantic_verification") != AUTHORING_SEMANTIC_VERIFICATION:
+        raise RuntimeError("authoring-cost semantic verification differs from the precommitment")
     return policy
 
 
@@ -1962,6 +2010,35 @@ def authored_plan_shape_error(
         return "graph arm used a text-addressed edit"
     if arm == "text" and "node" in edits[0]:
         return "text arm used a graph-addressed edit"
+    return None
+
+
+def authored_plan_envelope_error(generated: Any, canonical: Any, path: str = "plan") -> str | None:
+    """Defensively verify the shape that Ollama's JSON grammar must enforce."""
+    if isinstance(canonical, dict):
+        if not isinstance(generated, dict):
+            return f"{path} is not an object"
+        if set(generated) != set(canonical):
+            return f"{path} has missing or extra fields"
+        for key in canonical:
+            error = authored_plan_envelope_error(
+                generated[key], canonical[key], f"{path}.{key}"
+            )
+            if error is not None:
+                return error
+        return None
+    if isinstance(canonical, list):
+        if not isinstance(generated, list) or len(generated) != len(canonical):
+            return f"{path} does not have the structurally required length"
+        for index, item in enumerate(canonical):
+            error = authored_plan_envelope_error(
+                generated[index], item, f"{path}[{index}]"
+            )
+            if error is not None:
+                return error
+        return None
+    if type(generated) is not type(canonical):
+        return f"{path} has the wrong JSON type"
     return None
 
 
@@ -2055,6 +2132,7 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                     repository = work_root / f"{case_id}-{arm}-{ordinal}"
                     base_commit = initialize_authoring_repository(repository, execution)
                     canonical = authoring_plan(case_id, base_commit, graph_addressed=arm == "graph")
+                    response_schema = authoring_plan_json_schema(canonical)
                     allowed_edit = canonical["steps"][0]["edits"][0]
                     operation = case_id.split("-", 1)[1]
                     context = json.dumps(
@@ -2100,13 +2178,13 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                                 f"graph authoring prompt leaked the {language} target projection"
                             )
                     try:
-                        response = ollama_json(
+                        response = ollama_chat_json(
                             args.ollama_host,
                             {
                                 "model": policy["model"],
-                                "prompt": prompt,
+                                "messages": [{"role": "user", "content": prompt}],
                                 "stream": False,
-                                "format": "json",
+                                "format": response_schema,
                                 "options": {
                                     "temperature": options["temperature"],
                                     "seed": options["seed"],
@@ -2122,6 +2200,7 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                                 args.ollama_host,
                                 policy["model"],
                                 prompt,
+                                response_schema,
                                 options,
                             )
                         except RuntimeError as recovery_error:
@@ -2142,12 +2221,21 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
                     if type(tokens) is not int or tokens < 0:
                         raise RuntimeError("Ollama response omitted prompt_eval_count")
                     total_tokens += tokens
+                    message = response.get("message")
+                    if not isinstance(message, dict):
+                        raise RuntimeError("Ollama chat response omitted message object")
                     try:
-                        generated = json.loads(response.get("response", ""))
+                        generated = json.loads(message.get("content", ""))
                     except (json.JSONDecodeError, TypeError) as error:
-                        last_diagnostic = str(error)
-                        attempts.append({"attempt": ordinal, "tokens": tokens, "error": str(error)})
-                        continue
+                        raise RuntimeError(
+                            "schema-constrained Ollama response was not valid JSON"
+                        ) from error
+                    envelope_error = authored_plan_envelope_error(generated, canonical)
+                    if envelope_error is not None:
+                        raise RuntimeError(
+                            "schema-constrained Ollama response violated its envelope: "
+                            f"{envelope_error}"
+                        )
                     shape_error = authored_plan_shape_error(generated, canonical, arm)
                     if shape_error is not None:
                         last_diagnostic = shape_error

@@ -11,9 +11,11 @@ from tools.plan_executor_oracle import (
     GRAPH_POLICY,
     atomic_write_json,
     authoring_source_tree_digest,
+    authored_plan_envelope_error,
     authored_plan_shape_error,
     authoring_edits,
     authoring_plan,
+    authoring_plan_json_schema,
     authoring_progress_header,
     authoring_prompt_context,
     authoring_reference_plan,
@@ -175,6 +177,33 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
             "forbids checks",
             authored_plan_shape_error(checked, canonical, "graph"),
         )
+
+    def test_authoring_json_schema_structurally_enforces_exact_envelope(self):
+        canonical = authoring_plan("python-replace", "abc", graph_addressed=True)
+        schema = authoring_plan_json_schema(canonical)
+
+        self.assertFalse(schema["additionalProperties"])
+        self.assertEqual(set(schema["required"]), set(canonical))
+        steps = schema["properties"]["steps"]
+        self.assertEqual((steps["minItems"], steps["maxItems"]), (1, 1))
+        step = steps["items"]
+        self.assertFalse(step["additionalProperties"])
+        edit = step["properties"]["edits"]["items"]
+        self.assertEqual(set(edit["required"]), {"node", "replace_node"})
+        self.assertFalse(edit["additionalProperties"])
+
+    def test_authoring_envelope_violation_is_a_protocol_error_not_content_repair(self):
+        canonical = authoring_plan("python-replace", "abc", graph_addressed=True)
+        malformed = copy.deepcopy(canonical)
+        malformed["unexpected"] = True
+
+        self.assertEqual(
+            authored_plan_envelope_error(malformed, canonical),
+            "plan has missing or extra fields",
+        )
+        changed_content = copy.deepcopy(canonical)
+        changed_content["base_commit"] = "wrong"
+        self.assertIsNone(authored_plan_envelope_error(changed_content, canonical))
 
     def test_authoring_expected_tree_is_independent_of_graph_lowering(self):
         text = authoring_reference_plan("python-rename", "abc")
