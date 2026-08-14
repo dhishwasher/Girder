@@ -128,7 +128,7 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
             validate_authoring_policy(shortened)
 
         weakened = copy.deepcopy(policy)
-        weakened["success"]["minimum_common_successes"] = 1
+        weakened["success"]["minimum_graph_semantic_successes"] = 1
         with self.assertRaisesRegex(RuntimeError, "thresholds"):
             validate_authoring_policy(weakened)
 
@@ -155,6 +155,25 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
             changed[field] = replacement
             with self.assertRaisesRegex(RuntimeError, "precommitment"):
                 validate_authoring_policy(changed)
+
+    def test_authoring_policy_pins_on_failure_and_criterion_rationale(self):
+        policy = json.loads(AUTHORING_POLICY.read_text(encoding="utf-8"))
+
+        missing = copy.deepcopy(policy)
+        del missing["rationale"]
+        with self.assertRaisesRegex(RuntimeError, "missing or unknown fields"):
+            validate_authoring_policy(missing)
+
+        reworded = copy.deepcopy(policy)
+        reworded["rationale"]["success_criterion"] = "different reasoning"
+        with self.assertRaisesRegex(RuntimeError, "rationale"):
+            validate_authoring_policy(reworded)
+
+        self.assertIn("on_failure", policy["rationale"])
+        self.assertIn("success_criterion", policy["rationale"])
+        self.assertEqual(policy["success"]["primary_criterion"], "graph_arm_semantic_successes")
+        self.assertEqual(policy["success"]["minimum_graph_semantic_successes"], 4)
+        self.assertEqual(policy["success"]["text_arm_reporting"], "secondary_hardware_bounded")
 
     def test_authoring_shape_rejects_text_graph_swaps_and_changed_semantic_check(self):
         canonical = authoring_plan("rust-replace", "abc", graph_addressed=True)
