@@ -38,6 +38,8 @@ OBSERVATION_OUTPUTS = {
     "docs/authoring-cost-observation.json",
 }
 AUTHORING_MODEL = "qwen2.5-coder:1.5b"
+# Mirrors OnFailure in crates/aether-app/src/project/planfile/schema.rs.
+AUTHORING_ON_FAILURE_VALUES = ("rollback_plan", "rollback_step", "stop")
 AUTHORING_PROMPT_PROTOCOL = {
     "initial_template": (
         "Author a Bit Code plan for task {task}. Task: {intent}. Use plan_version {version}. "
@@ -1814,13 +1816,13 @@ def authoring_plan(case_id: str, base_commit: str, *, graph_addressed: bool) -> 
 def authoring_plan_json_schema(plan: Mapping[str, Any]) -> dict[str, Any]:
     """Build the exact structural grammar for one authoring plan envelope."""
 
-    def schema_for(value: Any) -> dict[str, Any]:
+    def schema_for(value: Any, key: str | None = None) -> dict[str, Any]:
         if isinstance(value, dict):
             return {
                 "type": "object",
                 "required": list(value),
                 "additionalProperties": False,
-                "properties": {key: schema_for(item) for key, item in value.items()},
+                "properties": {k: schema_for(item, k) for k, item in value.items()},
             }
         if isinstance(value, list):
             if len(value) != 1:
@@ -1829,13 +1831,15 @@ def authoring_plan_json_schema(plan: Mapping[str, Any]) -> dict[str, Any]:
                 "type": "array",
                 "minItems": 1,
                 "maxItems": 1,
-                "items": schema_for(value[0]),
+                "items": schema_for(value[0], key),
             }
         if type(value) is bool:
             return {"type": "boolean"}
         if type(value) is int:
             return {"type": "integer"}
         if isinstance(value, str):
+            if key == "on_failure":
+                return {"type": "string", "enum": list(AUTHORING_ON_FAILURE_VALUES)}
             return {"type": "string"}
         raise RuntimeError(f"unsupported authoring plan grammar value: {type(value)!r}")
 

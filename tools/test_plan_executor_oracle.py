@@ -192,6 +192,15 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
         self.assertEqual(set(edit["required"]), {"node", "replace_node"})
         self.assertFalse(edit["additionalProperties"])
 
+    def test_authoring_json_schema_constrains_on_failure_enum(self):
+        canonical = authoring_plan("python-replace", "abc", graph_addressed=True)
+        schema = authoring_plan_json_schema(canonical)
+
+        self.assertEqual(
+            schema["properties"]["on_failure"],
+            {"type": "string", "enum": ["rollback_plan", "rollback_step", "stop"]},
+        )
+
     def test_authoring_envelope_violation_is_a_protocol_error_not_content_repair(self):
         canonical = authoring_plan("python-replace", "abc", graph_addressed=True)
         malformed = copy.deepcopy(canonical)
