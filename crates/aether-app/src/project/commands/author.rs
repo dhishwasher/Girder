@@ -1,10 +1,12 @@
-//! `bitcode do <dir> "<intent...>" [--dry] [--max-repairs N]` — connects the
-//! plan executor to a model. Selects the graph nodes most relevant to the
-//! intent via the existing concept-search ranking, asks the router for a
-//! grammar-constrained plan step addressing only those nodes, executes it
-//! through the *existing* plan executor (`planfile::run_for_authoring`), and
-//! on failure repairs with the check output up to `--max-repairs` times
-//! before escalating to the next provider in the router's chain.
+//! `bitcode do <dir> "<intent...>" [--dry] [--max-repairs N] [--nodes
+//! <path>[,<path>...]]` — connects the plan executor to a model. Selects the
+//! graph nodes most relevant to the intent via the existing concept-search
+//! ranking (or, with `--nodes`, uses exactly the given paths and skips search
+//! entirely), asks the router for a grammar-constrained plan step addressing
+//! only those nodes, executes it through the *existing* plan executor
+//! (`planfile::run_for_authoring`), and on failure repairs with the check
+//! output up to `--max-repairs` times before escalating to the next provider
+//! in the router's chain.
 //!
 //! This module never applies an edit, runs a check, commits, or rolls back
 //! itself — all of that stays inside `planfile`, unmodified.
@@ -18,15 +20,26 @@ use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-/// How many concept-search hits to show the model. Matches the "top few
-/// nodes" the design settled on: enough to give the model room to pick the
-/// right target, few enough that the printed selection stays readable.
-const TOP_K: usize = 5;
+/// How many concept-search hits to show the model. First-run evidence (see
+/// gap #15 in `docs/core-gap-analysis.md`): a five-candidate list let four
+/// noise nodes scoring 0.05-0.09 sit in the schema enum next to the one real
+/// 0.17 hit, and every attempt addressed a noise node. Three keeps room for a
+/// real runner-up without diluting the enum with near-zero scores as badly.
+const TOP_K: usize = 3;
+/// Discard any search hit scoring below this fraction of the top hit's
+/// score. On the run that motivated this constant, the top hit was 0.17 and
+/// the noise sat at 0.09/0.09/0.05/0.05 (see gap #15 in
+/// `docs/core-gap-analysis.md`); a 0.5 floor is the starting point for
+/// separating a real hit from noise like that. Named so the ratio isn't a
+/// magic literal buried in the filter — retune here if a future run shows
+/// 0.5 admits noise or excludes a real runner-up.
+const NODE_SCORE_FLOOR_RATIO: f32 = 0.5;
 const DEFAULT_MAX_REPAIRS: usize = 2;
 
 static TEMP_FILE_COUNTER: AtomicU64 = AtomicU64::new(0);
 
-const USAGE: &str = "usage: bitcode do <dir> \"<intent...>\" [--dry] [--max-repairs N]";
+const USAGE: &str =
+    "usage: bitcode do <dir> \"<intent...>\" [--dry] [--max-repairs N] [--nodes <path>[,<path>...]]";
 
 pub async fn do_intent(args: &[String]) -> std::io::Result<()> {
     let Some(root_arg) = args.first() else {
@@ -45,6 +58,25 @@ pub async fn do_intent(args: &[String]) -> std::io::Result<()> {
             .map_err(|_| invalid_input("--max-repairs requires a non-negative integer"))?,
         None => DEFAULT_MAX_REPAIRS,
     };
+    let nodes_value = args.windows(2).find(|window| window[0] == "--nodes");
+    if args.iter().any(|arg| arg == "--nodes") && nodes_value.is_none() {
+        return Err(invalid_input("--nodes requires a value"));
+    }
+    let pinned_node_paths: Option<Vec<String>> = match nodes_value {
+        Some(window) => {
+            let paths: Vec<String> = window[1]
+                .split(',')
+                .map(str::trim)
+                .filter(|path| !path.is_empty())
+                .map(String::from)
+                .collect();
+            if paths.is_empty() {
+                return Err(invalid_input("--nodes requires at least one node path"));
+            }
+            Some(paths)
+        }
+        None => None,
+    };
     let intent = collect_intent(args);
     if intent.trim().is_empty() {
         eprintln!("{USAGE}");
@@ -56,19 +88,39 @@ pub async fn do_intent(args: &[String]) -> std::io::Result<()> {
     let (graph, _builder, files) = build_from_dir_with_config(&root, &config)?;
     println!("  {files} file(s), {} nodes", graph.node_count());
 
-    let hits = graph.semantic_search(&intent, TOP_K);
-    if hits.is_empty() {
-        println!("\nNo nodes matched \"{intent}\"; nothing to author.");
-        return Ok(());
-    }
-    println!("\nSelecting nodes for \"{intent}\":");
-    let mut nodes = Vec::with_capacity(hits.len());
-    for (id, score) in &hits {
-        if let Some(node) = graph.get(*id) {
-            println!("  {score:.2}  {}", node.path);
-            nodes.push(node.clone());
+    let nodes: Vec<aether_graph::Node> = match &pinned_node_paths {
+        Some(paths) => {
+            println!("\nUsing pinned nodes for \"{intent}\":");
+            let mut pinned = Vec::with_capacity(paths.len());
+            for path in paths {
+                let Some(node) = graph.find_by_path(path) else {
+                    return Err(invalid_input(&format!(
+                        "--nodes references a path not present in the graph: {path}"
+                    )));
+                };
+                println!("  {}", node.path);
+                pinned.push(node.clone());
+            }
+            pinned
         }
-    }
+        None => {
+            let hits = graph.semantic_search(&intent, TOP_K);
+            if hits.is_empty() {
+                println!("\nNo nodes matched \"{intent}\"; nothing to author.");
+                return Ok(());
+            }
+            let hits = apply_score_floor(hits);
+            println!("\nSelecting nodes for \"{intent}\":");
+            let mut selected = Vec::with_capacity(hits.len());
+            for (id, score) in &hits {
+                if let Some(node) = graph.get(*id) {
+                    println!("  {score:.2}  {}", node.path);
+                    selected.push(node.clone());
+                }
+            }
+            selected
+        }
+    };
     let node_paths: Vec<String> = nodes.iter().map(|node| node.path.clone()).collect();
     let node_context: Vec<Value> = nodes
         .iter()
@@ -104,6 +156,7 @@ pub async fn do_intent(args: &[String]) -> std::io::Result<()> {
             let prompt = build_prompt(
                 &intent,
                 &node_context,
+                &node_paths,
                 &schema,
                 (attempt > 0).then_some(diagnostic.as_str()),
             );
@@ -190,6 +243,19 @@ pub async fn do_intent(args: &[String]) -> std::io::Result<()> {
     }
 }
 
+/// Keep only hits scoring at least [`NODE_SCORE_FLOOR_RATIO`] of the top
+/// hit's score. `hits` must already be sorted best-first (as
+/// `semantic_search` returns them) — the floor is relative to `hits[0]`.
+fn apply_score_floor(hits: Vec<(aether_graph::NodeId, f32)>) -> Vec<(aether_graph::NodeId, f32)> {
+    let Some(&(_, top_score)) = hits.first() else {
+        return hits;
+    };
+    let floor = top_score * NODE_SCORE_FLOOR_RATIO;
+    hits.into_iter()
+        .filter(|&(_, score)| score >= floor)
+        .collect()
+}
+
 fn collect_intent(args: &[String]) -> String {
     let mut words = Vec::new();
     let mut skip_next = false;
@@ -201,7 +267,7 @@ fn collect_intent(args: &[String]) -> String {
         if arg == "--dry" {
             continue;
         }
-        if arg == "--max-repairs" {
+        if arg == "--max-repairs" || arg == "--nodes" {
             skip_next = true;
             continue;
         }
@@ -244,6 +310,7 @@ fn write_temp_json(value: &Value, label: &str) -> std::io::Result<PathBuf> {
 fn build_prompt(
     intent: &str,
     node_context: &[Value],
+    node_paths: &[String],
     schema: &Value,
     repair_diagnostic: Option<&str>,
 ) -> Prompt {
@@ -263,11 +330,46 @@ fn build_prompt(
         serde_json::to_string(&Value::Array(node_context.to_vec())).unwrap_or_default()
     );
     if let Some(diagnostic) = repair_diagnostic {
-        user.push_str(&format!(
-            "\n\nThe previous attempt failed:\n{diagnostic}\nReturn a corrected step object only."
-        ));
+        // A diagnostic that names one of the offered nodes means the node
+        // choice, not just the edit kind, may be wrong — attempt 3 of the
+        // qwen2.5-coder:1.5b run (gap #15 in docs/core-gap-analysis.md) kept
+        // the same bad node across repairs because the repair prompt only
+        // ever said an edit failed, never that the node itself looked wrong.
+        // Restating the intent and the node list with the failure pinned to
+        // that node gives the model a reason to reconsider it instead of
+        // just swapping the operation.
+        match node_paths
+            .iter()
+            .find(|path| diagnostic.contains(path.as_str()))
+        {
+            Some(implicated) => {
+                user.push_str(&format!(
+                    "\n\nThe previous attempt failed, and the failure is attributed to node \
+                     `{implicated}`:\n{diagnostic}\n\
+                     Re-read the intent — \"{intent}\" — and reconsider whether `{implicated}` \
+                     is actually the right node. Nodes offered: {}. If it is not, choose a \
+                     different offered node instead of only changing the operation on the same \
+                     node. Return a corrected step object only.",
+                    node_paths.join(", ")
+                ));
+            }
+            None => {
+                user.push_str(&format!(
+                    "\n\nThe previous attempt failed:\n{diagnostic}\nReturn a corrected step object only."
+                ));
+            }
+        }
     }
-    Prompt::new(TaskClass::Authoring, system, user).with_response_schema(schema.clone())
+    let mut prompt =
+        Prompt::new(TaskClass::Authoring, system, user).with_response_schema(schema.clone());
+    // 1024 (Prompt::new's default) truncated a schema-constrained response
+    // mid-string on the first local qwen2.5-coder:1.5b run ("EOF while
+    // parsing a string at line 22 column 1216") because a plan step here
+    // carries a full replacement Node.source, not just a short decision.
+    // 8192 gives room for a multi-line function body plus checks without
+    // matching the largest remote budgets used elsewhere in this codebase.
+    prompt.max_tokens = 8_192;
+    prompt
 }
 
 /// A flat, discriminant-selected shape rather than a `oneOf` union:
@@ -546,6 +648,106 @@ mod tests {
             "greet".to_string(),
         ];
         assert_eq!(collect_intent(&args), "add validation to greet");
+    }
+
+    #[test]
+    fn collect_intent_skips_nodes_flag_and_its_value() {
+        let args = vec![
+            ".".to_string(),
+            "add".to_string(),
+            "validation".to_string(),
+            "--nodes".to_string(),
+            "crate::calc::greet,crate::calc::hello".to_string(),
+            "to".to_string(),
+            "greet".to_string(),
+        ];
+        assert_eq!(collect_intent(&args), "add validation to greet");
+    }
+
+    #[test]
+    fn apply_score_floor_drops_hits_under_half_the_top_score() {
+        let top = aether_graph::NodeId::from_path("crate::calc::greet");
+        let noise_a = aether_graph::NodeId::from_path("crate::tools::noise_a");
+        let noise_b = aether_graph::NodeId::from_path("crate::tools::noise_b");
+        // Mirrors the shape of the observed run (top hit 0.17, noise well
+        // below it): every noise score here is strictly under half of 0.17.
+        let hits = vec![(top, 0.17), (noise_a, 0.08), (noise_b, 0.05)];
+        let kept = apply_score_floor(hits);
+        assert_eq!(kept, vec![(top, 0.17)]);
+    }
+
+    #[test]
+    fn apply_score_floor_keeps_a_close_runner_up() {
+        let top = aether_graph::NodeId::from_path("crate::calc::greet");
+        let runner_up = aether_graph::NodeId::from_path("crate::calc::greet_loudly");
+        let hits = vec![(top, 0.20), (runner_up, 0.15)];
+        let kept = apply_score_floor(hits);
+        assert_eq!(kept, vec![(top, 0.20), (runner_up, 0.15)]);
+    }
+
+    #[test]
+    fn build_prompt_attributes_a_repair_failure_to_the_node_it_names() {
+        let node_context = vec![json!({
+            "path": "crate::calc::greet",
+            "language": "python",
+            "source": "def greet(): pass"
+        })];
+        let schema = json!({"type": "object"});
+        let diagnostic = "    FAIL graph.node_exists: crate::calc::greet not found";
+        let prompt = build_prompt(
+            "add validation to greet",
+            &node_context,
+            &node_paths(),
+            &schema,
+            Some(diagnostic),
+        );
+        assert!(
+            prompt
+                .user
+                .contains("attributed to node `crate::calc::greet`"),
+            "{}",
+            prompt.user
+        );
+        assert!(prompt.user.contains("add validation to greet"));
+        assert!(prompt.user.contains(&node_paths().join(", ")));
+    }
+
+    #[test]
+    fn build_prompt_falls_back_to_the_plain_diagnostic_when_no_node_is_named() {
+        let node_context = vec![json!({
+            "path": "crate::calc::greet",
+            "language": "python",
+            "source": "def greet(): pass"
+        })];
+        let schema = json!({"type": "object"});
+        let diagnostic = "model response was not valid JSON: EOF while parsing a string";
+        let prompt = build_prompt(
+            "add validation to greet",
+            &node_context,
+            &node_paths(),
+            &schema,
+            Some(diagnostic),
+        );
+        assert!(!prompt.user.contains("attributed to node"));
+        assert!(prompt.user.contains(diagnostic));
+    }
+
+    #[test]
+    fn build_prompt_raises_max_tokens_above_the_default() {
+        let node_context = vec![json!({
+            "path": "crate::calc::greet",
+            "language": "python",
+            "source": "def greet(): pass"
+        })];
+        let schema = json!({"type": "object"});
+        let prompt = build_prompt(
+            "add validation",
+            &node_context,
+            &node_paths(),
+            &schema,
+            None,
+        );
+        assert!(prompt.max_tokens > 1024, "{}", prompt.max_tokens);
     }
 
     #[test]

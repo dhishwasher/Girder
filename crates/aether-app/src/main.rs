@@ -37,9 +37,10 @@ COMMANDS:
                               feature spec, but writes nothing to the graph.
     forge <dir> <intent...>   Dispatch the agent swarm on a project with a
                               natural-language intent, then save the graph
-    do <dir> \"<intent...>\" [--dry] [--max-repairs N]
+    do <dir> \"<intent...>\" [--dry] [--max-repairs N] [--nodes <path>[,<path>...]]
                               Author a plan via a model and execute it. Selects
-                              the top few concept-search nodes for the intent
+                              the top few concept-search nodes for the intent,
+                              discarding any scoring below half the top hit
                               (printed before any model call), asks the router
                               for a grammar-constrained Plan Format v2 step,
                               runs it through the existing plan executor, and
@@ -48,7 +49,9 @@ COMMANDS:
                               to the next provider. Every authored plan is
                               additionally verified by a mandatory
                               tests.impacted check the model cannot remove.
-                              --dry never writes to the real tree.
+                              --nodes bypasses search and pins exact node
+                              paths instead. --dry never writes to the real
+                              tree.
     plan validate <plan.json>
                               Check a Bit Code plan file's preconditions
                               (clean worktree, HEAD == base_commit, edit

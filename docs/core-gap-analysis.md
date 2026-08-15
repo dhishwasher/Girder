@@ -1,6 +1,6 @@
 # Core workflow gap analysis
 
-Last updated: 2026-08-09
+Last updated: 2026-08-15
 
 This is the prioritized, evidence-based comparison for Bit Code's core
 `analyze → navigate/search → edit/refactor → review impact → select tests →
@@ -600,6 +600,92 @@ as gap 11 rather than silently accepted.
    Its deliberately broken P4 binary removes the recreated tracked path and is
    killed by the policy with one dirty worktree, binding the claim to the
    defect rather than only to the three earlier rollback shapes.
+15. **P1 — first live-model `bitcode do` run: node over-selection, a truncated
+   authoring response, and a repair prompt that didn't attribute failure to
+   the node it named.** The first end-to-end run against a local
+   `qwen2.5-coder:1.5b` produced 0/3 working plans, but the harness itself
+   behaved correctly — provider escalation, the repair loop, and precondition
+   checks all ran as designed, and nothing reached the tree. Three defects,
+   fixed here in priority order:
+   - Node over-selection was the primary cause: concept search returned the
+     correct node (`greet`) at 0.17 and four unrelated nodes at
+     0.09/0.09/0.05/0.05, and the default top-5 selection put every one of
+     them into the schema enum as a legal edit target; all three attempts
+     addressed one of the noise nodes instead of `greet`. Fixed three ways in
+     `crates/aether-app/src/project/commands/author.rs`: the default
+     selection dropped from 5 to 3 (`TOP_K`); a named relative-score floor
+     (`NODE_SCORE_FLOOR_RATIO = 0.5`) now discards any hit scoring below half
+     the top hit's score; and `bitcode do` gained `--nodes
+     <path>[,<path>...]` to bypass search entirely and pin exact node paths,
+     which is what makes the command testable in isolation — the question
+     "can the model do this job given only the right node?" is the one
+     `docs/authoring-cost.md` already answered yes to, and there was
+     previously no way to ask it through `bitcode do` itself.
+   - Attempt 1 failed with `EOF while parsing a string at line 22 column
+     1216` — the response was truncated mid-string, not malformed. The
+     `Prompt::new` default of 1024 `max_tokens` is too low for a
+     schema-constrained plan step that carries a full replacement
+     `Node.source`, not just a short decision. `build_prompt` now sets
+     `prompt.max_tokens = 8_192` for `TaskClass::Authoring`, with the reason
+     recorded in a comment at the call site.
+   - The repair prompt said an edit failed but never said the node choice
+     itself might be wrong: attempt 3 kept the same wrong node across
+     repairs and only swapped the edit's `operation`. `build_prompt` now
+     scans the prior diagnostic for one of the offered node paths; when a
+     diagnostic names a node, the repair prompt restates the intent, pins
+     that node's failure to it explicitly ("the failure is attributed to
+     node `...`"), and tells the model to reconsider it against the full
+     node list rather than only changing the operation.
+
+   These are code fixes verified by unit tests
+   (`crates/aether-app/src/project/commands/author.rs::tests`) and the full
+   `cargo test --workspace` and Python measurement-harness suites; none of
+   the three touch `planfile`/`executor.rs`, so they don't change P1-P5
+   oracle behavior, but the oracle itself could not be rerun here because
+   `plan_executor_oracle.py` refuses to write an observation against an
+   uncommitted worktree (`observation_provenance` binds every result to a
+   clean `HEAD`). They also have not yet been reverified against a live
+   local-model rerun of `bitcode do`, so this stays open rather than closed.
+
+   Investigated per this run but not fixed: the node every attempt kept
+   targeting was a method inside a Python class in `tools/`, and it had zero
+   resolved callers even before any edit. Two separate questions, both
+   checked directly against the built graph rather than assumed:
+   - **Is it a nested class?** No — there are no nested classes (a `class`
+     defined inside another `class` body) anywhere in `tools/`; every one of
+     its 12 `Type` nodes is a top-level class. Auditing every class method
+     under `tools/` found 62 total, of which 59 have zero static callers, and
+     every zero-caller method checked is either a `unittest.TestCase` method
+     invoked by test discovery (`setUp`/`test_*`) or
+     `RejectRedirects.redirect_request`, an `HTTPRedirectHandler` override
+     invoked by `urllib` through polymorphic dispatch — both are a framework
+     calling a method by convention/reflection rather than a static call site
+     in this codebase, the same category as the already-open
+     polymorphic-dispatch gap 11. This alone explains the "resolved 0 times"
+     observation: node over-selection above aimed the model at
+     framework-dispatched methods because they scored as noise, not because
+     class methods are unresolvable.
+   - **Do nested-class methods resolve at all, in general?** A same-file
+     synthetic fixture (`Outer` containing `class Inner` containing `def
+     helper`, called from a sibling method as `Outer.Inner().helper()`)
+     resolved correctly, including the arbitrary-depth path
+     `crate::main::Outer::Inner::helper` that `collect_defs`'s recursive
+     `Scope` walk in `crates/aether-builder/src/mapper.rs` builds generically
+     for any nesting depth. But a cross-file variant — two files each
+     defining their own `Outer`/`Other` class containing a same-named nested
+     `class Inner` with a same-named `def helper` — resolved to zero `Calls`
+     edges on *both* sides, because `qualifier_matches_owner` in
+     `crates/aether-builder/src/sync.rs` matches a receiver hint against only
+     the trailing type-name segment of the candidate's owner path, and
+     `select_candidate`'s `only_candidate` fails closed on the resulting
+     ambiguity. Repeating the same experiment with two **flat**, non-nested
+     classes (`class Widget` with `def helper` in each of two files)
+     reproduced the identical zero-edge outcome, which rules out nesting as
+     the cause: this is the general same-name-across-files ambiguity
+     already covered by the P0 "measure resolved/unresolved call edges" gap
+     in the competitive-baseline table and the same fail-closed posture as
+     gap 13, not a defect specific to nested classes, and not worth a new
+     gap number on its own.
 
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
