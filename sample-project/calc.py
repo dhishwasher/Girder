@@ -2,7 +2,7 @@
 
 
 def greet(name):
-    return hello(name)
+    return hello(name).upper()
 
 
 def hello(name):
