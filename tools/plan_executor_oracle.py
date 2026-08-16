@@ -488,6 +488,15 @@ def outcome_projection(report: Mapping[str, Any]) -> dict[str, Any]:
                 "result": step.get("result"),
                 "files_changed": step.get("files_changed"),
                 "checks": step.get("checks"),
+                # Unlike "committed" and final_state (which legitimately
+                # differ dry vs real — dry never commits), the write
+                # fingerprints are computed by the same fingerprint_writes()
+                # call on the same candidate-workspace writes regardless of
+                # dry/real (executor.rs), so before/after byte counts and
+                # sha256 hashes have no principled reason to differ between
+                # modes. Comparing them here is what P1 needs to catch dry
+                # and real fingerprinting silently diverging.
+                "writes": step.get("writes"),
             }
         )
     return {

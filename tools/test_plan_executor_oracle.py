@@ -328,6 +328,45 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
 
         self.assertEqual(outcome_projection(dry), outcome_projection(real))
 
+    def test_outcome_projection_compares_write_fingerprints(self):
+        # Unlike "committed"/final_state, write fingerprints have no
+        # principled reason to differ dry vs real (executor.rs computes them
+        # from the same fingerprint_writes() call either way), so this is
+        # the one field the projection should actually compare rather than
+        # ignore.
+        writes = [
+            {
+                "path": "src/lib.rs",
+                "before_bytes": 10,
+                "before_sha256": "a" * 64,
+                "after_bytes": 12,
+                "after_sha256": "b" * 64,
+            }
+        ]
+        dry = {
+            "result": "passed",
+            "failed_at": None,
+            "steps": [
+                {
+                    "id": "s1",
+                    "result": "passed",
+                    "committed": False,
+                    "files_changed": ["src/lib.rs"],
+                    "checks": [],
+                    "writes": copy.deepcopy(writes),
+                }
+            ],
+            "final_state": {"dry_run": True},
+        }
+        real_matching = copy.deepcopy(dry)
+        real_matching["steps"][0]["committed"] = True
+        real_matching["final_state"] = {"dry_run": False}
+        self.assertEqual(outcome_projection(dry), outcome_projection(real_matching))
+
+        real_diverged = copy.deepcopy(real_matching)
+        real_diverged["steps"][0]["writes"][0]["after_sha256"] = "c" * 64
+        self.assertNotEqual(outcome_projection(dry), outcome_projection(real_diverged))
+
     def test_policy_evaluation_reports_exact_threshold_violation(self):
         results = {
             "P1_dry_equals_real": {"plan_count": 4, "outcome_mismatches": 1},

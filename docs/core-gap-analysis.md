@@ -729,6 +729,99 @@ as gap 11 rather than silently accepted.
      in the competitive-baseline table and the same fail-closed posture as
      gap 13, not a defect specific to nested classes, and not worth a new
      gap number on its own.
+16. **P1 — the plan-executor oracle never checked a passing plan's claims
+   against ground truth.** The first non-dry `plan run --authored` through
+   the real CLI committed an edit correctly — `git status --porcelain`
+   showed the file modified, the bytes were right — but the report claimed
+   `"committed": true` / `"description": "committed through the final
+   step"` while `git log` showed HEAD unchanged and the edit sitting
+   uncommitted (expected: this codebase's "commit" has always meant
+   "durably write to the real tree," never a git commit — verified via
+   `executor.rs`'s "only commit to the real tree" doc comment, dated to the
+   executor's original 2026-08-10 commit, and via `rollback_to_base`'s use
+   of `git_checkout_paths(root, &plan.base_commit, ...)`, which targets the
+   plan's original base commit directly and never depends on bitcode having
+   made one of its own). Not a defect in the report or in `--authored`
+   (confirmed identical behavior in an isolated worktree with `--authored`
+   absent) — but auditing why the precommitted oracle would have passed a
+   binary with a genuinely false "committed" claim found a real one:
+   - `measure_p1` (`P1_dry_equals_real`) compares `outcome_projection(dry
+     report) == outcome_projection(real report)` — two self-reported
+     artifacts compared to each other, never against git or the
+     filesystem. Worse, `outcome_projection` didn't carry `committed` at
+     all, so even a dry/real disagreement on that one field specifically
+     would have passed through unprojected.
+   - `measure_p4` (`P4_rollback_fidelity`) does check real ground truth —
+     `git status --porcelain` and `git write-tree` against the base tree —
+     but only on plans engineered to fail and roll back.
+   - No case anywhere in P1-P5 ran a plan to a **passing** conclusion and
+     then verified the report's claims against what git and the filesystem
+     independently show. A binary where `commit_project_writes` silently
+     no-op'd while everything else kept reporting success would have
+     sailed through.
+
+   Fixed by adding `P6_commit_ground_truth` to `plan-executor-v1`
+   (`docs/plan-executor-policy.json`, `tools/plan_executor_oracle.py`):
+   three cases (substitute/create/delete), each a plan expected to
+   genuinely pass, run for real. Ground truth is file bytes read directly
+   from disk plus `git status --porcelain`; `.bitcode/reports` is read
+   exactly once per case, solely to cross-check the report's own claim
+   against the ground truth already established above it — that
+   cross-check can add a violation but can never suppress one. Mutation-tested
+   the same way as P1-P5: a wrapper-script mutant lets the real binary run
+   to completion (so the report is genuine, untampered output) and then
+   reverts the edited path to `base_commit` content behind its back —
+   the literal external observation of "commit silently no-ops while the
+   surrounding code still reports success." Confirmed killed
+   (`content_mismatches=3` and `report_mismatches=3`, both independently),
+   confirmed the real binary passes clean (`0`/`0`), and confirmed the
+   full mutation-adequacy sweep across all six properties now completes
+   with zero survivors.
+
+   **Worth preserving as a control — a near-miss of the same error class
+   this gap is about.** The first version of `measure_p6_ground_truth`
+   additionally compared `git write-tree` output against the base tree,
+   mirroring `measure_p4`. It failed immediately against the *real,
+   correct* binary: `git write-tree` reads the index, and bitcode never
+   runs `git add`, so the written tree is identical to `base_commit`'s
+   regardless of whether the working tree actually changed — a vacuous
+   ground-truth check with exactly the shape of the defect this corpus
+   exists to catch, just one level removed, and it was caught only because
+   the new case was run against the real binary before being trusted.
+   Dropped in favor of `git status --porcelain` alone, which genuinely
+   reflects the unstaged real-tree edit.
+
+   **Follow-up: `outcome_projection` drops one other field that carries a
+   real guarantee.** Besides `committed` (legitimately excluded from P1's
+   comparison — dry mode never commits, so it differs by design, same as
+   `final_state.dry_run`), step-level `writes`
+   (`before_bytes`/`before_sha256`/`after_bytes`/`after_sha256`) is
+   computed by the identical `fingerprint_writes()` call in `executor.rs`
+   regardless of dry/real/pass/fail on a passing step — nothing about it
+   should legitimately differ between modes, yet it was dropped from the
+   comparison with no such justification. Added `"writes":
+   step.get("writes")` to `outcome_projection`. Mutation-tested with a
+   standalone wrapper mutant that perturbs a dry-run plan's edit content
+   (a comment appended to created content, not touching the symbol a later
+   check depends on) before delegating to the real binary, so the dry
+   pass's fingerprints genuinely reflect different bytes than the real
+   pass's — same technique as every other mutant here, built to verify
+   this specific case rather than added to the precommitted sweep. Result:
+   **P1's own corpus is structurally insensitive to this**, for a reason
+   unrelated to the fix. `base_plan()` hardcodes every P1 case to
+   `plan_version: 1`, and `executor.rs::run_plan` only computes
+   `write_fingerprints` in `run_plan_v2` (`if plan.plan_version == 2`); the
+   v1 path sets `write_fingerprints: None` at all four `StepOutcome`
+   construction sites, so `"writes"` is absent from every P1 report
+   regardless of mode, and the mutated dry run and the correct real run
+   both project to `writes: None`. The comparison logic itself is correct
+   and covered directly — `test_outcome_projection_compares_write_fingerprints`
+   proves it flags a genuine before/after-hash divergence when the reports
+   actually carry fingerprint data — but nothing in the current P1 corpus
+   exercises it end to end. Reported as found rather than forced: making
+   P1 sensitive to this in practice would mean migrating at least one P1
+   case to `plan_version: 2`, a corpus change with its own consequences,
+   not attempted here.
 
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
