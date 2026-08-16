@@ -1,5 +1,5 @@
 {
-  "bitcode_sha256": "1c2c6c4898d98d7aeadae8121d3166cbe4637e9d8483cfc6fed1a91c3f19e729",
+  "bitcode_sha256": "dd65376734350ec24c1b224fdeb10aa0bea7fce98fac9e0b699887c577b19265",
   "corpus_manifest_sha256": "177000ae398ee67bb0c6ec1f5e505e7ac74b7ddb6dd6bfef637b2a31ccbc2753",
   "host": {
     "cpu_count": 2,
@@ -11,7 +11,7 @@
     "cases": [
       {
         "killed": true,
-        "mutant_sha256": "b523da9116b13154c0655b6228e957f5d0e805d3433fa7c32c7b573f2f714727",
+        "mutant_sha256": "13d5f5bfd558564c9f7fe1985b6209319c1c9dca064d7bcca778e866b60a64ae",
         "observed": {
           "outcome_mismatches": 4,
           "plan_count": 4
@@ -23,7 +23,7 @@
       },
       {
         "killed": true,
-        "mutant_sha256": "75057c9ee34310f8ac60f625d5436369b1b4aeb6c4477413d958073f3430691e",
+        "mutant_sha256": "973246e08a3d7246f8136a250b237f1918565e3857f1de9e9380645a2a3d5535",
         "observed": {
           "mutation_count": 18,
           "run_passes": 18,
@@ -37,7 +37,7 @@
       },
       {
         "killed": true,
-        "mutant_sha256": "92d5c8a7aab3db657f6ac0a8b32b57329ca74c4c184948920bf47072b049c5e1",
+        "mutant_sha256": "2534a27d1bcd6c726b927178b6bf55dfc3531eb3194da7f73aa35145c41f3d5b",
         "observed": {
           "check_kind_count": 14,
           "unexpected_passes": 14
@@ -49,7 +49,7 @@
       },
       {
         "killed": true,
-        "mutant_sha256": "6542ae6f6179ed5e857c0eef5c59f7b5ed74014c1592d1a4e3053dcf04c9dfae",
+        "mutant_sha256": "3a8fcf947968a359dfdfeb67fbf335236a281a76283bea448d43db53d4cee3c3",
         "observed": {
           "dirty_worktrees": 1,
           "plan_count": 4,
@@ -62,7 +62,7 @@
       },
       {
         "killed": true,
-        "mutant_sha256": "e21ffab4365324adb125c09387c92c8bc605557ab85f8561cb668d9d739f4f65",
+        "mutant_sha256": "35085868799f994f3cb92da53dd35f72d889f94e0be0a7aa92fcdcab5d4ee91c",
         "observed": {
           "case_count": 11,
           "missing_path_diagnostics": 11,
@@ -697,12 +697,12 @@
       "<plan>",
       "[--dry]"
     ],
-    "bitcode_sha256": "1c2c6c4898d98d7aeadae8121d3166cbe4637e9d8483cfc6fed1a91c3f19e729",
+    "bitcode_sha256": "dd65376734350ec24c1b224fdeb10aa0bea7fce98fac9e0b699887c577b19265",
     "harness_sha256": "b240fbdb6335c77500f63c2465a4add2bb70e5edf100c93219de5e0a48dd6397",
     "harness_support_sha256": "a63b069acf887b5879f9662251bb0a13fbe945e260937f999225ba85ec7da428",
-    "source_commit": "b0ecc1280cf4a72a72501821abc7b31abc5b0654",
+    "source_commit": "c8810a7bd33b7a99d10775d827011a136c7f72b4",
     "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "source_snapshot_sha256": "3599ec5eb625237f698c12d8eda5bdbd57f1359d611f6f90e4d9023a6b51f2f8",
+    "source_snapshot_sha256": "1e379ae0802d7d428219a44cf289a011703b90effb56624a6dda99a71033205e",
     "source_worktree_clean": true
   }
 }
