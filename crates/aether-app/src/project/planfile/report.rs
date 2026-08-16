@@ -54,6 +54,13 @@ pub(crate) struct PlanReport {
     pub(crate) final_state: FinalState,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) tokens: Option<TokenLedger>,
+    /// Set only by `plan run --authored --authored-by <name>`: the
+    /// externally authoring model's name, so a report (and git history)
+    /// distinguishes a locally-authored plan from a remotely-authored one.
+    /// Absent (not merely null) for every other run, so this field never
+    /// appears in a report `bitcode do`/plain `plan run` produces.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) authored_by: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -137,6 +144,7 @@ pub(crate) fn build_report(
     run: &PlanRunOutcome,
     dry: bool,
     authoring_calls: Option<&[AuthoringCall]>,
+    authored_by: Option<&str>,
 ) -> PlanReport {
     let (result, failed_at, description) = match &run.outcome {
         RunOutcome::Passed => (
@@ -211,6 +219,7 @@ pub(crate) fn build_report(
             description,
         },
         tokens: authoring_calls.map(build_token_ledger),
+        authored_by: authored_by.map(String::from),
     }
 }
 
@@ -329,7 +338,7 @@ mod tests {
                 write_fingerprints: None,
             }],
         };
-        let report = build_report(&plan(), &run, false, None);
+        let report = build_report(&plan(), &run, false, None, None);
         assert_eq!(report.result, "rolled_back_plan");
         assert_eq!(report.failed_at.as_deref(), Some("s2"));
         assert!(report.steps[0].checks[0].detail.contains("expected"));
@@ -356,7 +365,7 @@ mod tests {
             },
             steps: Vec::new(),
         };
-        let stop_report = build_report(&plan(), &stop_run, false, None);
+        let stop_report = build_report(&plan(), &stop_run, false, None, None);
         assert_eq!(stop_report.result, "stopped");
         assert_eq!(stop_report.failed_at.as_deref(), Some("s1"));
 
@@ -366,7 +375,7 @@ mod tests {
             },
             steps: Vec::new(),
         };
-        let rollback_report = build_report(&plan(), &rollback_run, false, None);
+        let rollback_report = build_report(&plan(), &rollback_run, false, None, None);
         assert_eq!(rollback_report.result, "rolled_back_plan");
         assert_eq!(rollback_report.failed_at.as_deref(), Some("s1"));
         let _ = std::fs::remove_dir_all(&root);
@@ -386,7 +395,7 @@ mod tests {
             model: "qwen2.5-coder:7b".to_string(),
             tokens: 83,
         }];
-        let report = build_report(&plan(), &passed_run(), false, Some(&calls));
+        let report = build_report(&plan(), &passed_run(), false, Some(&calls), None);
         let tokens = report.tokens.unwrap();
         assert_eq!(tokens.authoring_tokens, 83);
         assert_eq!(tokens.remote_call_count, 0);
@@ -410,7 +419,7 @@ mod tests {
                 tokens: 20,
             },
         ];
-        let report = build_report(&plan(), &passed_run(), false, Some(&calls));
+        let report = build_report(&plan(), &passed_run(), false, Some(&calls), None);
         let tokens = report.tokens.unwrap();
         assert_eq!(tokens.authoring_tokens, 30);
         assert_eq!(tokens.remote_call_count, 1);
@@ -421,8 +430,23 @@ mod tests {
 
     #[test]
     fn absent_authoring_provenance_omits_the_tokens_block() {
-        let report = build_report(&plan(), &passed_run(), false, None);
+        let report = build_report(&plan(), &passed_run(), false, None, None);
         let value = serde_json::to_value(report).unwrap();
         assert!(value.get("tokens").is_none());
+    }
+
+    #[test]
+    fn absent_authored_by_omits_the_field_entirely() {
+        let report = build_report(&plan(), &passed_run(), false, None, None);
+        let value = serde_json::to_value(report).unwrap();
+        assert!(value.get("authored_by").is_none());
+    }
+
+    #[test]
+    fn authored_by_is_recorded_when_given() {
+        let report = build_report(&plan(), &passed_run(), false, None, Some("claude-sonnet-5"));
+        assert_eq!(report.authored_by.as_deref(), Some("claude-sonnet-5"));
+        let value = serde_json::to_value(report).unwrap();
+        assert_eq!(value["authored_by"], "claude-sonnet-5");
     }
 }

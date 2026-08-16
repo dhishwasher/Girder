@@ -25,7 +25,8 @@ pub fn plan_explain(args: &[String]) -> std::io::Result<()> {
 pub fn plan_run(args: &[String]) -> std::io::Result<()> {
     let Some(plan_path) = args.first() else {
         eprintln!(
-            "usage: bitcode plan run <plan.json> [--dry] [--authoring-receipt <receipt.json>]"
+            "usage: bitcode plan run <plan.json> [--dry] [--authoring-receipt <receipt.json>] \
+             [--authored [--authored-by <name>]]"
         );
         return Ok(());
     };
@@ -40,10 +41,29 @@ pub fn plan_run(args: &[String]) -> std::io::Result<()> {
             "--authoring-receipt requires a receipt path",
         ));
     }
+    let authored = args.iter().any(|arg| arg == "--authored");
+    let authored_by = args
+        .windows(2)
+        .find(|window| window[0] == "--authored-by")
+        .map(|window| window[1].as_str());
+    if args.iter().any(|arg| arg == "--authored-by") && authored_by.is_none() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "--authored-by requires a name",
+        ));
+    }
+    if authored_by.is_some() && !authored {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "--authored-by requires --authored",
+        ));
+    }
     planfile::run(
         &PathBuf::from("."),
         Path::new(plan_path),
         dry,
         authoring_receipt,
+        authored,
+        authored_by,
     )
 }

@@ -52,6 +52,17 @@ COMMANDS:
                               --nodes bypasses search and pins exact node
                               paths instead. --dry never writes to the real
                               tree.
+    context <dir> [--nodes <path>[,<path>...]] [\"<intent>\"] --json
+                              Read-only: the same node selection and
+                              authoring JSON Schema `do` sends a model, plus
+                              a plan skeleton (harness-owned fields and one
+                              placeholder step with empty edits and the
+                              mandatory tests.impacted check already
+                              present), printed as one JSON object on
+                              stdout. No model call, no network, no writes —
+                              for pasting context into an external chat
+                              model not wired in as a provider, then running
+                              its plan with `plan run --authored`.
     plan validate <plan.json>
                               Check a Bit Code plan file's preconditions
                               (clean worktree, HEAD == base_commit, edit
@@ -60,6 +71,7 @@ COMMANDS:
     plan explain <plan.json> Print a human-readable summary of a plan file.
                               No execution, no preconditions.
     plan run <plan.json> [--dry] [--authoring-receipt <receipt.json>]
+                              [--authored [--authored-by <name>]]
                               Execute a plan file step by step: apply edits
                               in a disposable copy, run each step's checks,
                               commit to the real tree only once they pass.
@@ -67,6 +79,16 @@ COMMANDS:
                               never writes to the real tree. A versioned
                               authoring receipt adds model/token provenance to
                               the run report without changing Plan Format v1.
+                              --authored applies the same harness guarantees
+                              `do` applies internally to a plan written
+                              outside Bit Code: on_failure is forced to
+                              rollback_plan and a mandatory tests.impacted
+                              check is injected if the plan doesn't already
+                              have one. A zero-step plan is refused outright
+                              rather than passed vacuously with nothing
+                              verified. --authored-by <name> (requires
+                              --authored) records the authoring model's name
+                              in the report.
     refactor <dir> rename <node::path> <new_name>
                               Semantic rename across the graph (follows Calls
                               edges, not text search), then save
@@ -139,6 +161,7 @@ fn main() {
         Some("config") => report(project::config(&args[1..])),
         Some("analyze") => report(project::analyze(&args[1..])),
         Some("search") => report(project::search(&args[1..])),
+        Some("context") => report(project::context(&args[1..])),
         Some("swarm-plan") => {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             report(rt.block_on(project::swarm_plan(&args[1..])));

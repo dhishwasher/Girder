@@ -119,19 +119,68 @@ pub(crate) fn explain(plan_path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-/// `bitcode plan run <plan.json> [--dry]` — execute a plan step by step.
-/// Preconditions run against the real tree even in `--dry` mode; only the
-/// final real-tree commit is skipped when `dry` is set.
+/// `bitcode plan run <plan.json> [--dry] [--authored [--authored-by <name>]]`
+/// — execute a plan step by step. Preconditions run against the real tree
+/// even in `--dry` mode; only the final real-tree commit is skipped when
+/// `dry` is set.
+///
+/// `authored` and `authored_by` default to `false`/`None` at the CLI's only
+/// call site unless `--authored`/`--authored-by` are passed, so every
+/// existing invocation (`plan run <plan.json>`, `--dry`,
+/// `--authoring-receipt <r>`) takes the same `plan`, the same preconditions,
+/// the same executor call, the same printed lines, and the same report
+/// shape as before this parameter existed.
 pub(crate) fn run(
     root: &Path,
     plan_path: &Path,
     dry: bool,
     authoring_receipt: Option<&Path>,
+    authored: bool,
+    authored_by: Option<&str>,
 ) -> std::io::Result<()> {
-    let plan = load_plan(plan_path)?;
+    let mut plan = load_plan(plan_path)?;
     let authoring_calls = authoring_receipt
         .map(report::load_authoring_receipt)
         .transpose()?;
+
+    if authored {
+        // A zero-step plan has nowhere to inject the mandatory check below
+        // — `steps.last_mut()` would silently no-op — and nothing else in
+        // this codebase rejects it: `Plan::validate()` has no `steps`
+        // non-emptiness check, `precondition::check_preconditions` and
+        // `executor::run_plan_v2` both just iterate `&plan.steps` and fall
+        // through to `RunOutcome::Passed` on zero iterations. Left
+        // unchecked, `--authored` would "pass" a plan that verified
+        // nothing at all, which is a worse hole than the one this flag
+        // exists to close. Fail closed instead.
+        if plan.steps.is_empty() {
+            return Err(std::io::Error::other(format!(
+                "plan {} has zero steps; --authored refuses to run a plan with nothing to verify",
+                plan.plan_id
+            )));
+        }
+        // The same harness guarantees `bitcode do` applies internally
+        // (`author::wrap_step_into_plan`) to a plan written outside Bit
+        // Code: force a clean revert on any failure, and close the
+        // vacuous-check hole by guaranteeing at least one real test
+        // verification — but only inject it if the plan doesn't already
+        // have one; unlike a local model (schema-forbidden from ever
+        // emitting `tests.impacted` itself), an external plan is free-form
+        // and may already carry a legitimate one.
+        plan.on_failure = schema::OnFailure::RollbackPlan;
+        let has_impacted_check = plan.steps.iter().any(|step| {
+            step.checks
+                .iter()
+                .any(|check| matches!(check, schema::Check::TestsImpacted { .. }))
+        });
+        if !has_impacted_check {
+            let last_step = plan.steps.last_mut().expect("checked non-empty above");
+            last_step.checks.push(schema::Check::TestsImpacted {
+                expect: schema::TestExpect::AllPass,
+            });
+        }
+    }
+
     if let Err(failures) = precondition::check_preconditions(root, &plan)? {
         println!(
             "plan {} — {} precondition failure(s):",
@@ -159,7 +208,8 @@ pub(crate) fn run(
         }
     }
 
-    let built_report = report::build_report(&plan, &result, dry, authoring_calls.as_deref());
+    let built_report =
+        report::build_report(&plan, &result, dry, authoring_calls.as_deref(), authored_by);
     if dry {
         // A dry run must never write to the real tree, including the
         // report itself — print it instead of persisting it under
@@ -260,7 +310,7 @@ pub(crate) fn run_for_authoring(
         }
     }
 
-    let built_report = report::build_report(&plan, &result, dry, authoring_calls.as_deref());
+    let built_report = report::build_report(&plan, &result, dry, authoring_calls.as_deref(), None);
     let (report_path, report_json) = if dry {
         let rendered = serde_json::to_string_pretty(&built_report)
             .map_err(|error| std::io::Error::other(error.to_string()))?;
@@ -452,6 +502,103 @@ mod tests {
             .as_ref()
             .is_some_and(|json| json.contains("\"passed\"")));
         assert!(!root.join(".bitcode/reports").exists());
+        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn run_with_authored_rejects_a_zero_step_plan() {
+        let root = temp_git_root("authored-zero-step");
+        let base_commit = init_git_repo(&root);
+        let path = write_plan(
+            "authored-zero-step",
+            &format!(
+                r#"{{"plan_version":2,"plan_id":"p","intent":"i",
+                    "base_commit":"{base_commit}","steps":[]}}"#
+            ),
+        );
+
+        let error = run(&root, &path, false, None, true, None).unwrap_err();
+        assert!(error.to_string().contains("zero steps"), "{error}");
+
+        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn run_with_authored_injects_the_mandatory_check_when_absent() {
+        let root = temp_git_root("authored-inject");
+        let base_commit = init_git_repo(&root);
+        let path = write_plan(
+            "authored-inject",
+            &format!(
+                r#"{{"plan_version":2,"plan_id":"authored-inject","intent":"i",
+                    "base_commit":"{base_commit}",
+                    "steps":[{{"id":"s1","checks":[{{"kind":"command","run":"true"}}]}}]}}"#
+            ),
+        );
+
+        assert!(run(&root, &path, false, None, true, None).is_ok());
+
+        let mut entries = std::fs::read_dir(root.join(".bitcode/reports")).unwrap();
+        let report_path = entries.next().unwrap().unwrap().path();
+        let written = std::fs::read_to_string(report_path).unwrap();
+        let report: serde_json::Value = serde_json::from_str(&written).unwrap();
+        let checks = report["steps"][0]["checks"].as_array().unwrap();
+        assert!(
+            checks.iter().any(|check| check["kind"] == "tests.impacted"),
+            "{written}"
+        );
+        assert!(report.get("authored_by").is_none(), "{written}");
+
+        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn run_with_authored_forces_rollback_plan_even_when_the_plan_declares_stop() {
+        let root = temp_git_root("authored-force-rollback");
+        let base_commit = init_git_repo(&root);
+        let path = write_plan(
+            "authored-force-rollback",
+            &format!(
+                r#"{{"plan_version":2,"plan_id":"authored-force-rollback","intent":"i",
+                    "base_commit":"{base_commit}","on_failure":"stop",
+                    "steps":[{{"id":"s1","checks":[{{"kind":"command","run":"false"}}]}}]}}"#
+            ),
+        );
+
+        let error = run(&root, &path, false, None, true, None).unwrap_err();
+        assert!(
+            error.to_string().contains("rolled back to base_commit"),
+            "{error}"
+        );
+
+        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn run_records_authored_by_in_the_written_report() {
+        let root = temp_git_root("authored-by");
+        let base_commit = init_git_repo(&root);
+        let path = write_plan(
+            "authored-by",
+            &format!(
+                r#"{{"plan_version":2,"plan_id":"authored-by","intent":"i",
+                    "base_commit":"{base_commit}",
+                    "steps":[{{"id":"s1","checks":[{{"kind":"command","run":"true"}}]}}]}}"#
+            ),
+        );
+
+        assert!(run(&root, &path, false, None, true, Some("claude-sonnet-5")).is_ok());
+
+        let mut entries = std::fs::read_dir(root.join(".bitcode/reports")).unwrap();
+        let report_path = entries.next().unwrap().unwrap().path();
+        let written = std::fs::read_to_string(report_path).unwrap();
+        let report: serde_json::Value = serde_json::from_str(&written).unwrap();
+        assert_eq!(report["authored_by"], "claude-sonnet-5", "{written}");
+
         let _ = std::fs::remove_file(&path);
         let _ = std::fs::remove_dir_all(&root);
     }

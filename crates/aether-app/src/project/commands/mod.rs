@@ -1,7 +1,9 @@
 mod agents;
 mod author;
+mod authoring_context;
 mod collaboration;
 mod config;
+mod context_cmd;
 mod dap;
 mod debug;
 pub(crate) mod extensions;
@@ -15,6 +17,7 @@ pub(crate) use agents::{forge, swarm_plan};
 pub(crate) use author::do_intent;
 pub(crate) use collaboration::collaboration;
 pub(crate) use config::config;
+pub(crate) use context_cmd::context;
 pub(crate) use dap::dap;
 pub(crate) use debug::debug;
 pub(crate) use extensions::extensions;

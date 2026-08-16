@@ -11,6 +11,10 @@
 //! This module never applies an edit, runs a check, commits, or rolls back
 //! itself — all of that stays inside `planfile`, unmodified.
 
+use super::authoring_context::{
+    build_authoring_context, collect_words, generate_plan_id, invalid_input, parse_pinned_nodes,
+    SelectionError,
+};
 use crate::project::config::ProjectConfig;
 use crate::project::git::git_head_commit;
 use crate::project::planfile::{run_for_authoring, AuthoringRunResult};
@@ -20,20 +24,6 @@ use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-/// How many concept-search hits to show the model. First-run evidence (see
-/// gap #15 in `docs/core-gap-analysis.md`): a five-candidate list let four
-/// noise nodes scoring 0.05-0.09 sit in the schema enum next to the one real
-/// 0.17 hit, and every attempt addressed a noise node. Three keeps room for a
-/// real runner-up without diluting the enum with near-zero scores as badly.
-const TOP_K: usize = 3;
-/// Discard any search hit scoring below this fraction of the top hit's
-/// score. On the run that motivated this constant, the top hit was 0.17 and
-/// the noise sat at 0.09/0.09/0.05/0.05 (see gap #15 in
-/// `docs/core-gap-analysis.md`); a 0.5 floor is the starting point for
-/// separating a real hit from noise like that. Named so the ratio isn't a
-/// magic literal buried in the filter — retune here if a future run shows
-/// 0.5 admits noise or excludes a real runner-up.
-const NODE_SCORE_FLOOR_RATIO: f32 = 0.5;
 const DEFAULT_MAX_REPAIRS: usize = 2;
 
 static TEMP_FILE_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -58,25 +48,7 @@ pub async fn do_intent(args: &[String]) -> std::io::Result<()> {
             .map_err(|_| invalid_input("--max-repairs requires a non-negative integer"))?,
         None => DEFAULT_MAX_REPAIRS,
     };
-    let nodes_value = args.windows(2).find(|window| window[0] == "--nodes");
-    if args.iter().any(|arg| arg == "--nodes") && nodes_value.is_none() {
-        return Err(invalid_input("--nodes requires a value"));
-    }
-    let pinned_node_paths: Option<Vec<String>> = match nodes_value {
-        Some(window) => {
-            let paths: Vec<String> = window[1]
-                .split(',')
-                .map(str::trim)
-                .filter(|path| !path.is_empty())
-                .map(String::from)
-                .collect();
-            if paths.is_empty() {
-                return Err(invalid_input("--nodes requires at least one node path"));
-            }
-            Some(paths)
-        }
-        None => None,
-    };
+    let pinned_node_paths = parse_pinned_nodes(args)?;
     let intent = collect_intent(args);
     if intent.trim().is_empty() {
         eprintln!("{USAGE}");
@@ -88,44 +60,32 @@ pub async fn do_intent(args: &[String]) -> std::io::Result<()> {
     let (graph, _builder, files) = build_from_dir_with_config(&root, &config)?;
     println!("  {files} file(s), {} nodes", graph.node_count());
 
-    let nodes: Vec<aether_graph::Node> = match &pinned_node_paths {
-        Some(paths) => {
-            println!("\nUsing pinned nodes for \"{intent}\":");
-            let mut pinned = Vec::with_capacity(paths.len());
-            for path in paths {
-                let Some(node) = graph.find_by_path(path) else {
-                    return Err(invalid_input(&format!(
-                        "--nodes references a path not present in the graph: {path}"
-                    )));
-                };
-                println!("  {}", node.path);
-                pinned.push(node.clone());
-            }
-            pinned
+    let ctx = match build_authoring_context(&graph, &intent, pinned_node_paths.as_deref()) {
+        Ok(ctx) => ctx,
+        Err(SelectionError::NoMatches) => {
+            println!("\nNo nodes matched \"{intent}\"; nothing to author.");
+            return Ok(());
         }
-        None => {
-            let hits = graph.semantic_search(&intent, TOP_K);
-            if hits.is_empty() {
-                println!("\nNo nodes matched \"{intent}\"; nothing to author.");
-                return Ok(());
-            }
-            let hits = apply_score_floor(hits);
-            println!("\nSelecting nodes for \"{intent}\":");
-            let mut selected = Vec::with_capacity(hits.len());
-            for (id, score) in &hits {
-                if let Some(node) = graph.get(*id) {
-                    println!("  {score:.2}  {}", node.path);
-                    selected.push(node.clone());
-                }
-            }
-            selected
+        Err(SelectionError::UnknownPath(path)) => {
+            return Err(invalid_input(&format!(
+                "--nodes references a path not present in the graph: {path}"
+            )));
         }
     };
-    let node_paths: Vec<String> = nodes.iter().map(|node| node.path.clone()).collect();
-    let node_context: Vec<Value> = nodes
-        .iter()
-        .map(|node| json!({"path": node.path, "language": node.language, "source": node.source}))
-        .collect();
+    if pinned_node_paths.is_some() {
+        println!("\nUsing pinned nodes for \"{intent}\":");
+    } else {
+        println!("\nSelecting nodes for \"{intent}\":");
+    }
+    for selected in &ctx.nodes {
+        match selected.score {
+            Some(score) => println!("  {score:.2}  {}", selected.node.path),
+            None => println!("  {}", selected.node.path),
+        }
+    }
+    let node_paths = ctx.node_paths;
+    let node_context = ctx.node_context;
+    let schema = ctx.schema;
 
     let base_commit = git_head_commit(&root)?;
     let router = aether_ai::default_router();
@@ -137,7 +97,6 @@ pub async fn do_intent(args: &[String]) -> std::io::Result<()> {
     }
     let total_providers = candidates.len();
 
-    let schema = step_schema(&node_paths);
     let plan_id = generate_plan_id();
 
     let mut calls: Vec<Value> = Vec::new();
@@ -252,49 +211,8 @@ pub async fn do_intent(args: &[String]) -> std::io::Result<()> {
     }
 }
 
-/// Keep only hits scoring at least [`NODE_SCORE_FLOOR_RATIO`] of the top
-/// hit's score. `hits` must already be sorted best-first (as
-/// `semantic_search` returns them) — the floor is relative to `hits[0]`.
-fn apply_score_floor(hits: Vec<(aether_graph::NodeId, f32)>) -> Vec<(aether_graph::NodeId, f32)> {
-    let Some(&(_, top_score)) = hits.first() else {
-        return hits;
-    };
-    let floor = top_score * NODE_SCORE_FLOOR_RATIO;
-    hits.into_iter()
-        .filter(|&(_, score)| score >= floor)
-        .collect()
-}
-
 fn collect_intent(args: &[String]) -> String {
-    let mut words = Vec::new();
-    let mut skip_next = false;
-    for arg in args.iter().skip(1) {
-        if skip_next {
-            skip_next = false;
-            continue;
-        }
-        if arg == "--dry" {
-            continue;
-        }
-        if arg == "--max-repairs" || arg == "--nodes" {
-            skip_next = true;
-            continue;
-        }
-        words.push(arg.as_str());
-    }
-    words.join(" ")
-}
-
-fn generate_plan_id() -> String {
-    let millis = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis();
-    format!("do-{millis}-{}", std::process::id())
-}
-
-fn invalid_input(message: &str) -> std::io::Error {
-    std::io::Error::new(std::io::ErrorKind::InvalidInput, message)
+    collect_words(args, &["--dry"], &["--max-repairs", "--nodes"])
 }
 
 fn indent(text: &str) -> String {
@@ -389,100 +307,6 @@ fn build_prompt(
     // revisit it if the local model changes.
     prompt.max_tokens = 1024;
     prompt
-}
-
-/// A flat, discriminant-selected shape rather than a `oneOf` union:
-/// `tools/plan_executor_oracle.py`'s `authoring_plan_json_schema` avoids
-/// unions entirely (it builds a schema from one concrete example per fixed
-/// task), which is evidence that a JSON-Schema union is not a shape to lean
-/// on for grammar-constrained local decoding. Since `bitcode do` doesn't
-/// know the operation ahead of time the way that fixed corpus does, every
-/// operation field is present and required; only the one named by
-/// `operation` is read back out in `convert_edit`/`convert_check`.
-fn step_schema(node_paths: &[String]) -> Value {
-    let max_edits = node_paths.len().clamp(1, 3);
-    json!({
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id", "description", "edits", "checks"],
-        "properties": {
-            "id": {"type": "string"},
-            "description": {"type": "string"},
-            "edits": {
-                "type": "array",
-                "minItems": 1,
-                "maxItems": max_edits,
-                "items": edit_schema(node_paths)
-            },
-            "checks": {
-                "type": "array",
-                "minItems": 0,
-                "maxItems": 3,
-                "items": check_schema(node_paths)
-            }
-        }
-    })
-}
-
-fn edit_schema(node_paths: &[String]) -> Value {
-    json!({
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-            "node", "operation", "replace_node", "rename_node", "delete_node",
-            "insert_into_module"
-        ],
-        "properties": {
-            "node": {"type": "string", "enum": node_paths},
-            "operation": {
-                "type": "string",
-                "enum": ["replace_node", "rename_node", "delete_node", "insert_into_module"]
-            },
-            "replace_node": {"type": "string"},
-            "rename_node": {"type": "string"},
-            "delete_node": {"type": "boolean"},
-            "insert_into_module": {"type": "string"}
-        }
-    })
-}
-
-/// Deliberately a curated subset of the check kinds `plan run` supports —
-/// enough to sanity-check a graph edit (does the node still exist / was it
-/// removed / who calls it) plus an escape hatch to a command, without
-/// bloating every check item with the full kind menu's field union. Every
-/// authored plan additionally gets a harness-injected `tests.impacted`
-/// check the model cannot see, remove, or replace (see `wrap_step_into_plan`).
-fn check_schema(node_paths: &[String]) -> Value {
-    let mut node_enum = node_paths.to_vec();
-    node_enum.push(String::new());
-    json!({
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["kind", "node", "expect", "run", "expect_exit"],
-        "properties": {
-            "kind": {
-                "type": "string",
-                "enum": [
-                    "graph.node_exists",
-                    "graph.node_absent",
-                    "graph.callers_of",
-                    "graph.callees_of",
-                    "command"
-                ]
-            },
-            "node": {"type": "string", "enum": node_enum},
-            "expect": {"type": "array", "items": {"type": "string"}},
-            // A command check with an empty run is useless and previously
-            // reached `convert_check` as "command check missing a
-            // non-empty run" — a repairable diagnostic, but one the
-            // grammar should reject up front instead. Every check kind
-            // still must supply some string here (the shape stays flat
-            // per the module-level rationale on `step_schema`), but it can
-            // no longer be empty.
-            "run": {"type": "string", "minLength": 1},
-            "expect_exit": {"type": "integer"}
-        }
-    })
 }
 
 /// Turn the model's flat step JSON into a Plan Format v2 plan: harness-owned
@@ -691,27 +515,6 @@ mod tests {
     }
 
     #[test]
-    fn apply_score_floor_drops_hits_under_half_the_top_score() {
-        let top = aether_graph::NodeId::from_path("crate::calc::greet");
-        let noise_a = aether_graph::NodeId::from_path("crate::tools::noise_a");
-        let noise_b = aether_graph::NodeId::from_path("crate::tools::noise_b");
-        // Mirrors the shape of the observed run (top hit 0.17, noise well
-        // below it): every noise score here is strictly under half of 0.17.
-        let hits = vec![(top, 0.17), (noise_a, 0.08), (noise_b, 0.05)];
-        let kept = apply_score_floor(hits);
-        assert_eq!(kept, vec![(top, 0.17)]);
-    }
-
-    #[test]
-    fn apply_score_floor_keeps_a_close_runner_up() {
-        let top = aether_graph::NodeId::from_path("crate::calc::greet");
-        let runner_up = aether_graph::NodeId::from_path("crate::calc::greet_loudly");
-        let hits = vec![(top, 0.20), (runner_up, 0.15)];
-        let kept = apply_score_floor(hits);
-        assert_eq!(kept, vec![(top, 0.20), (runner_up, 0.15)]);
-    }
-
-    #[test]
     fn build_prompt_attributes_a_repair_failure_to_the_node_it_names() {
         let node_context = vec![json!({
             "path": "crate::calc::greet",
@@ -857,18 +660,5 @@ mod tests {
         assert_eq!(checks.len(), 2);
         assert!(checks.iter().any(|check| check["kind"] == "command"));
         assert!(checks.iter().any(|check| check["kind"] == "tests.impacted"));
-    }
-
-    #[test]
-    fn step_schema_bounds_edits_to_the_number_of_offered_nodes() {
-        let schema = step_schema(&node_paths());
-        assert_eq!(schema["properties"]["edits"]["maxItems"], 2);
-        assert_eq!(schema["properties"]["edits"]["minItems"], 1);
-    }
-
-    #[test]
-    fn check_schema_rejects_an_empty_run_string() {
-        let schema = check_schema(&node_paths());
-        assert_eq!(schema["properties"]["run"]["minLength"], 1);
     }
 }
