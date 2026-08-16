@@ -9,3 +9,4 @@ project.aether
 *.aetherb
 *.aether.bak
 .bitcode/
+.bitcode/
