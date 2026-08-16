@@ -18,6 +18,7 @@ from tools.plan_executor_oracle import (
     authoring_progress_header,
     authoring_prompt_context,
     authoring_target_node_source,
+    commit_ground_truth_plan,
     create_graph_mutant_binary,
     create_mutant_binary,
     evaluate_graph_policy,
@@ -49,6 +50,7 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
         self.assertEqual(len(policy["corpus"]["fail_closed"]), 14)
         self.assertEqual(len(policy["corpus"]["rollback_fidelity"]), 4)
         self.assertEqual(len(policy["corpus"]["error_legibility"]), 11)
+        self.assertEqual(len(policy["corpus"]["commit_ground_truth"]), 3)
         for thresholds in policy["properties"].values():
             for field, value in thresholds.items():
                 if not field.startswith("required_"):
@@ -345,6 +347,11 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
                 "missing_path_diagnostics": 0,
                 "missing_step_diagnostics": 0,
             },
+            "P6_commit_ground_truth": {
+                "plan_count": 3,
+                "content_mismatches": 0,
+                "report_mismatches": 0,
+            },
         }
 
         self.assertEqual(
@@ -377,6 +384,20 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
             plan, step_id, path = malformed_plan(case_id, "abc")
             self.assertEqual(plan["steps"][0]["id"], step_id)
             self.assertTrue(path, case_id)
+
+    def test_every_commit_ground_truth_case_declares_a_real_edit_and_expectation(self):
+        for case_id in self.policy["corpus"]["commit_ground_truth"]:
+            plan, edited_path, expected_content = commit_ground_truth_plan(case_id, "abc")
+            self.assertEqual(plan["plan_id"], case_id)
+            self.assertEqual(plan["base_commit"], "abc")
+            edits = plan["steps"][0]["edits"]
+            self.assertEqual(len(edits), 1, case_id)
+            self.assertEqual(edits[0]["path"], edited_path, case_id)
+            if case_id == "delete-passes":
+                self.assertIsNone(expected_content, case_id)
+                self.assertEqual(edits[0], {"path": edited_path, "delete": True})
+            else:
+                self.assertIsNotNone(expected_content, case_id)
 
     def test_bounded_runner_can_observe_expected_nonzero_status(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -475,6 +496,97 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 1)
             self.assertFalse(tracked.exists())
+
+    def _init_baseline_repo(self, root: Path) -> str:
+        for command in (
+            ("git", "init", "-q"),
+            ("git", "config", "user.name", "Plan Oracle"),
+            ("git", "config", "user.email", "oracle@example.invalid"),
+            ("git", "add", "."),
+            ("git", "commit", "-q", "-m", "baseline"),
+        ):
+            result = run(
+                command, cwd=root, timeout_seconds=5, max_output_bytes=4096, check=False
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+        return run(
+            ("git", "rev-parse", "HEAD"),
+            cwd=root,
+            timeout_seconds=5,
+            max_output_bytes=4096,
+            check=False,
+        ).stdout.strip()
+
+    def test_commit_ground_truth_mutant_reverts_an_edited_path_after_a_successful_run(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "src").mkdir()
+            (root / "src" / "lib.rs").write_text(
+                "pub fn caller() -> i64 { 0 }\n", encoding="utf-8"
+            )
+            base_commit = self._init_baseline_repo(root)
+            plan = root / "substitute.json"
+            plan.write_text(
+                json.dumps(
+                    {"plan_id": "substitute-passes", "base_commit": base_commit, "steps": []}
+                ),
+                encoding="utf-8",
+            )
+            # Stands in for a real bitcode run that actually applied the
+            # edit and exited success, without needing the compiled binary.
+            real = root / "real-bitcode"
+            real.write_text(
+                "#!/bin/sh\necho 'pub fn caller() -> i64 { 42 }' > src/lib.rs\nexit 0\n",
+                encoding="utf-8",
+            )
+            real.chmod(0o700)
+            mutant = create_mutant_binary(root, real, "P6_commit_ground_truth")
+
+            result = run(
+                (str(mutant), "plan", "run", str(plan)),
+                cwd=root,
+                timeout_seconds=5,
+                max_output_bytes=1024,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0)
+            self.assertEqual(
+                (root / "src" / "lib.rs").read_text(encoding="utf-8"),
+                "pub fn caller() -> i64 { 0 }\n",
+            )
+
+    def test_commit_ground_truth_mutant_removes_a_newly_created_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "src").mkdir()
+            (root / "src" / "lib.rs").write_text("// base\n", encoding="utf-8")
+            base_commit = self._init_baseline_repo(root)
+            plan = root / "create.json"
+            plan.write_text(
+                json.dumps(
+                    {"plan_id": "create-passes", "base_commit": base_commit, "steps": []}
+                ),
+                encoding="utf-8",
+            )
+            real = root / "real-bitcode"
+            real.write_text(
+                "#!/bin/sh\necho 'pub fn created() {}' > src/created.rs\nexit 0\n",
+                encoding="utf-8",
+            )
+            real.chmod(0o700)
+            mutant = create_mutant_binary(root, real, "P6_commit_ground_truth")
+
+            result = run(
+                (str(mutant), "plan", "run", str(plan)),
+                cwd=root,
+                timeout_seconds=5,
+                max_output_bytes=1024,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0)
+            self.assertFalse((root / "src" / "created.rs").exists())
 
     def test_resolution_mutant_is_an_executable_broken_binary(self):
         with tempfile.TemporaryDirectory() as directory:

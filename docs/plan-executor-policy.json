@@ -1,5 +1,10 @@
 {
   "corpus": {
+    "commit_ground_truth": [
+      "substitute-passes",
+      "create-passes",
+      "delete-passes"
+    ],
     "error_legibility": [
       "edit-missing-path",
       "edit-unknown-field",
@@ -88,6 +93,11 @@
       "max_missing_path_diagnostics": 0,
       "max_missing_step_diagnostics": 0,
       "required_case_count": 11
+    },
+    "P6_commit_ground_truth": {
+      "max_content_mismatches": 0,
+      "max_report_mismatches": 0,
+      "required_plan_count": 3
     }
   },
   "schema_version": 1

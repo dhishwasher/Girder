@@ -213,9 +213,10 @@ def validate_policy(data: Mapping[str, Any]) -> Mapping[str, Any]:
         "P3_fail_closed",
         "P4_rollback_fidelity",
         "P5_error_legibility",
+        "P6_commit_ground_truth",
     }
     if set(properties) != expected_properties:
-        raise RuntimeError("plan executor policy must define exactly P1 through P5")
+        raise RuntimeError("plan executor policy must define exactly P1 through P6")
     for name, thresholds in properties.items():
         if not isinstance(thresholds, dict):
             raise RuntimeError(f"{name} thresholds must be an object")
@@ -228,6 +229,7 @@ def validate_policy(data: Mapping[str, Any]) -> Mapping[str, Any]:
         "fail_closed": 14,
         "rollback_fidelity": 4,
         "error_legibility": 11,
+        "commit_ground_truth": 3,
     }
     for field, expected_count in list_fields.items():
         values = corpus.get(field)
@@ -258,6 +260,7 @@ def validate_policy(data: Mapping[str, Any]) -> Mapping[str, Any]:
         "P3_fail_closed": ("required_check_kind_count", len(corpus["fail_closed"])),
         "P4_rollback_fidelity": ("required_plan_count", len(corpus["rollback_fidelity"])),
         "P5_error_legibility": ("required_case_count", len(corpus["error_legibility"])),
+        "P6_commit_ground_truth": ("required_plan_count", len(corpus["commit_ground_truth"])),
     }
     for property_name, (field, count) in required_counts.items():
         if properties[property_name].get(field) != count:
@@ -989,6 +992,147 @@ def measure_p5(
     }
 
 
+def commit_ground_truth_plan(
+    case_id: str, base_commit: str
+) -> tuple[dict[str, Any], str, str | None]:
+    """Returns (plan, edited path, expected post-edit content). Expected
+    content is `None` for a case whose ground truth is the *absence* of the
+    path rather than specific bytes (the delete case)."""
+    if case_id == "substitute-passes":
+        edited_path = "src/lib.rs"
+        expected_content = (
+            "// MODULES\n"
+            "pub fn target() -> i64 { 1 }\n"
+            "pub fn caller() -> i64 { 42 }\n"
+            "#[cfg(test)]\n"
+            "mod tests {\n"
+            "    use super::*;\n"
+            "    #[test]\n"
+            "    fn known_test() { assert_eq!(target(), 1); }\n"
+            "}\n"
+        )
+        steps = [
+            {
+                "id": "substitute",
+                "edits": [
+                    {
+                        "path": edited_path,
+                        "match": "pub fn caller() -> i64 { 0 }",
+                        "replace": "pub fn caller() -> i64 { 42 }",
+                    }
+                ],
+                "checks": [{"kind": "command", "run": "true"}],
+            }
+        ]
+    elif case_id == "create-passes":
+        edited_path = "src/created.rs"
+        expected_content = "pub fn created() {}\n"
+        steps = [
+            {
+                "id": "create",
+                "edits": [{"path": edited_path, "create": expected_content}],
+                "checks": [{"kind": "command", "run": "true"}],
+            }
+        ]
+    elif case_id == "delete-passes":
+        edited_path = "src/doomed.rs"
+        expected_content = None
+        steps = [
+            {
+                "id": "delete",
+                "edits": [{"path": edited_path, "delete": True}],
+                "checks": [{"kind": "command", "run": "true"}],
+            }
+        ]
+    else:
+        raise RuntimeError(f"unknown P6 commit-ground-truth case id: {case_id}")
+    return base_plan(case_id, base_commit, steps), edited_path, expected_content
+
+
+def measure_p6_ground_truth(
+    policy: Mapping[str, Any], work_root: Path, bitcode: Path, options: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Runs a plan that is expected to PASS for real (no --dry) and checks
+    whether the edit actually landed, using only git and the filesystem as
+    the source of truth — never the report the binary under test wrote.
+    `.bitcode/reports` is read exactly once per case, purely to cross-check
+    the report's own claim against the ground truth already established
+    above it; that comparison never contributes to `edit_applied`."""
+    cases = []
+    content_mismatches = 0
+    report_mismatches = 0
+    for case_id in policy["corpus"]["commit_ground_truth"]:
+        repository = work_root / case_id
+        base_commit = initialize_repository(repository, options)
+        plan, edited_path, expected_content = commit_ground_truth_plan(case_id, base_commit)
+        plan_path = write_plan(work_root, case_id, plan)
+        result = run(
+            (str(bitcode), "plan", "run", str(plan_path)),
+            cwd=repository,
+            check=False,
+            **options,
+        )
+
+        target = repository / edited_path
+        if expected_content is None:
+            content_matches = not target.exists()
+        else:
+            try:
+                actual_content = target.read_text(encoding="utf-8")
+            except FileNotFoundError:
+                actual_content = None
+            content_matches = actual_content == expected_content
+        # `git write-tree` deliberately not used here: it reads the INDEX,
+        # and bitcode never runs `git add`, so it is identical to
+        # base_commit's tree whether or not the working tree actually
+        # changed — a silent vacuous check that would have hidden exactly
+        # the class of bug this corpus exists to catch. `git status
+        # --porcelain` compares the working tree itself against the index
+        # (== HEAD == base_commit here, since nothing is ever staged), so
+        # it is the one that actually reflects an unstaged real-tree edit.
+        status = git_output(repository, options, "status", "--porcelain")
+
+        # Ground truth, derived only from git and the filesystem: did the
+        # edit that commit_project_writes is supposed to durably apply
+        # actually land in the real tree? Nothing below this line reads
+        # the report.
+        edit_applied = content_matches and status != ""
+        if not edit_applied:
+            content_mismatches += 1
+
+        # Cross-check only, and the one and only read of .bitcode/reports
+        # in this measurement: does the report's own claim agree with what
+        # git and the filesystem independently just showed happened? This
+        # can never make edit_applied true when the ground truth above said
+        # otherwise — it only detects the report lying in either direction.
+        report = read_real_report(repository)
+        step = (report.get("steps") or [{}])[0]
+        report_claims_committed = (
+            report.get("result") == "passed" and step.get("committed") is True
+        )
+        report_matches_ground_truth = report_claims_committed == edit_applied
+        if not report_matches_ground_truth:
+            report_mismatches += 1
+
+        cases.append(
+            {
+                "id": case_id,
+                "run_failed": result.returncode != 0,
+                "edit_applied": edit_applied,
+                "content_matches": content_matches,
+                "status_porcelain": status,
+                "report_claims_committed": report_claims_committed,
+                "report_matches_ground_truth": report_matches_ground_truth,
+            }
+        )
+    return {
+        "plan_count": len(cases),
+        "content_mismatches": content_mismatches,
+        "report_mismatches": report_mismatches,
+        "cases": cases,
+    }
+
+
 def create_mutant_binary(root: Path, bitcode: Path, property_name: str) -> Path:
     mutant = root / f"bitcode-mutant-{property_name.lower()}"
     script = f'''#!/usr/bin/env python3
@@ -1021,6 +1165,31 @@ elif MUTATION == "P4_rollback_fidelity" and is_plan_run:
     plan = json.loads(Path(ARGS[2]).read_text(encoding="utf-8"))
     if plan.get("plan_id") == "delete-recreate-across-steps-then-fail":
         (Path.cwd() / "src" / "doomed.rs").unlink(missing_ok=True)
+elif MUTATION == "P6_commit_ground_truth" and is_plan_run and not is_dry_run:
+    # Simulates commit_project_writes silently no-op'ing while the
+    # surrounding code still reports success: let the real binary run to
+    # completion (so its report is the genuine, untampered "passed"/
+    # "committed" report a real success produces), then revert the edited
+    # path back to its base_commit content behind its back.
+    plan = json.loads(Path(ARGS[2]).read_text(encoding="utf-8"))
+    base = plan.get("base_commit")
+    plan_id = plan.get("plan_id")
+    if plan_id == "substitute-passes":
+        target = "src/lib.rs"
+    elif plan_id == "create-passes":
+        target = "src/created.rs"
+    elif plan_id == "delete-passes":
+        target = "src/doomed.rs"
+    else:
+        target = None
+    if target and base:
+        existed_at_base = subprocess.run(
+            ["git", "cat-file", "-e", base + ":" + target], check=False
+        ).returncode == 0
+        if existed_at_base:
+            subprocess.run(["git", "checkout", base, "--", target], check=False)
+        else:
+            Path(target).unlink(missing_ok=True)
 
 raise SystemExit(returncode)
 '''
@@ -1043,6 +1212,7 @@ def measure_mutation_adequacy(
         "P3_fail_closed": measure_p3,
         "P4_rollback_fidelity": measure_p4,
         "P5_error_legibility": measure_p5,
+        "P6_commit_ground_truth": measure_p6_ground_truth,
     }
     baseline_violations = set(evaluate_policy(policy, baseline_results))
     cases = []
@@ -1589,6 +1759,11 @@ def evaluate_policy(policy: Mapping[str, Any], results: Mapping[str, Any]) -> li
             "required_case_count": ("case_count", "equal"),
             "max_missing_path_diagnostics": ("missing_path_diagnostics", "maximum"),
             "max_missing_step_diagnostics": ("missing_step_diagnostics", "maximum"),
+        },
+        "P6_commit_ground_truth": {
+            "required_plan_count": ("plan_count", "equal"),
+            "max_content_mismatches": ("content_mismatches", "maximum"),
+            "max_report_mismatches": ("report_mismatches", "maximum"),
         },
     }
     violations = []
@@ -2467,6 +2642,9 @@ def measure(policy: Mapping[str, Any], policy_bytes: bytes, bitcode: Path) -> di
                 "P3_fail_closed": measure_p3(policy, root / "p3", measured_bitcode, options),
                 "P4_rollback_fidelity": measure_p4(policy, root / "p4", measured_bitcode, options),
                 "P5_error_legibility": measure_p5(policy, root / "p5", measured_bitcode, options),
+                "P6_commit_ground_truth": measure_p6_ground_truth(
+                    policy, root / "p6-commit-ground-truth", measured_bitcode, options
+                ),
             }
             mutation_adequacy = measure_mutation_adequacy(
                 policy,
