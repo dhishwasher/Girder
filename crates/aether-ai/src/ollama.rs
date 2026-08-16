@@ -10,10 +10,17 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 const DEFAULT_MODEL: &str = "llama3.1";
+/// Falls back to this when `OLLAMA_TIMEOUT_SECS` is unset, blank, zero, or
+/// unparseable. A live run against `qwen2.5-coder:1.5b` sat past an hour with
+/// no timeout at all (no request-level deadline was ever set), so this exists
+/// to guarantee the request is eventually cancelled and surfaces as a normal
+/// provider error the router can escalate past, not a hang.
+const DEFAULT_TIMEOUT_SECS: u64 = 600;
 
 pub struct OllamaProvider {
     host: Option<String>,
     model: String,
+    timeout_secs: u64,
 }
 
 #[cfg(any(feature = "live-providers", test))]
@@ -73,6 +80,7 @@ impl OllamaProvider {
                 .ok()
                 .filter(|model| !model.trim().is_empty())
                 .unwrap_or_else(|| DEFAULT_MODEL.to_string()),
+            timeout_secs: parse_timeout_secs(std::env::var("OLLAMA_TIMEOUT_SECS").ok().as_deref()),
         }
     }
 
@@ -86,6 +94,11 @@ impl OllamaProvider {
         self
     }
 
+    pub fn with_timeout_secs(mut self, timeout_secs: u64) -> Self {
+        self.timeout_secs = timeout_secs;
+        self
+    }
+
     pub fn host(&self) -> Option<&str> {
         self.host.as_deref()
     }
@@ -94,6 +107,15 @@ impl OllamaProvider {
     fn endpoint(&self) -> Option<String> {
         self.host.as_ref().map(|host| format!("{host}/api/chat"))
     }
+}
+
+/// Pure so it's testable without mutating process-global env state (tests
+/// run in parallel and would otherwise race on `std::env::set_var`).
+fn parse_timeout_secs(value: Option<&str>) -> u64 {
+    value
+        .and_then(|value| value.trim().parse::<u64>().ok())
+        .filter(|secs| *secs > 0)
+        .unwrap_or(DEFAULT_TIMEOUT_SECS)
 }
 
 fn normalize_host(host: &str) -> Option<String> {
@@ -149,6 +171,7 @@ impl AiProvider for OllamaProvider {
         })?;
         let response = reqwest::Client::new()
             .post(endpoint)
+            .timeout(std::time::Duration::from_secs(self.timeout_secs))
             .json(&request_body(&self.model, &prompt))
             .send()
             .await
@@ -189,6 +212,7 @@ mod tests {
         OllamaProvider {
             host: Some("http://127.0.0.1:11434".to_string()),
             model: "test-model".to_string(),
+            timeout_secs: DEFAULT_TIMEOUT_SECS,
         }
     }
 
@@ -197,6 +221,7 @@ mod tests {
         let provider = OllamaProvider {
             host: None,
             model: "test-model".to_string(),
+            timeout_secs: DEFAULT_TIMEOUT_SECS,
         }
         .with_host(" 127.0.0.1:11434/ ");
         assert_eq!(provider.host(), Some("http://127.0.0.1:11434"));
@@ -211,10 +236,34 @@ mod tests {
         let provider = OllamaProvider {
             host: None,
             model: "test-model".to_string(),
+            timeout_secs: DEFAULT_TIMEOUT_SECS,
         }
         .with_host("  ");
         assert_eq!(provider.host(), None);
         assert!(!provider.handles(TaskClass::Quick));
+    }
+
+    #[test]
+    fn timeout_secs_falls_back_to_default_when_unset_zero_or_unparseable() {
+        assert_eq!(parse_timeout_secs(None), DEFAULT_TIMEOUT_SECS);
+        assert_eq!(parse_timeout_secs(Some("")), DEFAULT_TIMEOUT_SECS);
+        assert_eq!(parse_timeout_secs(Some("0")), DEFAULT_TIMEOUT_SECS);
+        assert_eq!(
+            parse_timeout_secs(Some("not-a-number")),
+            DEFAULT_TIMEOUT_SECS
+        );
+    }
+
+    #[test]
+    fn timeout_secs_honors_a_positive_override() {
+        assert_eq!(parse_timeout_secs(Some("120")), 120);
+        assert_eq!(parse_timeout_secs(Some(" 45 ")), 45);
+    }
+
+    #[test]
+    fn with_timeout_secs_overrides_the_configured_value() {
+        let provider = configured_provider().with_timeout_secs(30);
+        assert_eq!(provider.timeout_secs, 30);
     }
 
     #[test]

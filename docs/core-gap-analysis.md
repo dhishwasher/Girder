@@ -623,11 +623,14 @@ as gap 11 rather than silently accepted.
      previously no way to ask it through `bitcode do` itself.
    - Attempt 1 failed with `EOF while parsing a string at line 22 column
      1216` — the response was truncated mid-string, not malformed. The
-     `Prompt::new` default of 1024 `max_tokens` is too low for a
+     `Prompt::new` default of 1024 `max_tokens` looked too low for a
      schema-constrained plan step that carries a full replacement
-     `Node.source`, not just a short decision. `build_prompt` now sets
-     `prompt.max_tokens = 8_192` for `TaskClass::Authoring`, with the reason
-     recorded in a comment at the call site.
+     `Node.source`, so `build_prompt` initially raised it to `8_192`. **This
+     diagnosis was corrected in a follow-up pass — see "Correction" below:**
+     1216 characters of JSON is well under 1024 tokens' worth of output, so
+     the truncation was never actually a `max_tokens` ceiling; `max_tokens`
+     is now set back to `1024`, derived from measured local throughput
+     instead, and the real cause (no request timeout) is fixed separately.
    - The repair prompt said an edit failed but never said the node choice
      itself might be wrong: attempt 3 kept the same wrong node across
      repairs and only swapped the edit's `operation`. `build_prompt` now
@@ -641,11 +644,51 @@ as gap 11 rather than silently accepted.
    (`crates/aether-app/src/project/commands/author.rs::tests`) and the full
    `cargo test --workspace` and Python measurement-harness suites; none of
    the three touch `planfile`/`executor.rs`, so they don't change P1-P5
-   oracle behavior, but the oracle itself could not be rerun here because
-   `plan_executor_oracle.py` refuses to write an observation against an
-   uncommitted worktree (`observation_provenance` binds every result to a
-   clean `HEAD`). They also have not yet been reverified against a live
-   local-model rerun of `bitcode do`, so this stays open rather than closed.
+   oracle behavior. The oracle was rerun after this pass and PASSed (every
+   mutation case still killed; see
+   [`plan-executor-observation.json`](plan-executor-observation.json)). A
+   live local-model rerun of `bitcode do` itself is what surfaced the
+   corrections below, so this gap stays open rather than closed.
+
+   **Correction, same run, after measuring local throughput.** Timing the
+   local model directly (`/api/generate`, `eval_count`/`eval_duration`)
+   measured `qwen2.5-coder:1.5b` on this machine at **1.49 tok/s** (95
+   tokens in 63.7s) — slow enough that the `max_tokens = 8_192` set above is
+   a roughly 91-minute ceiling per attempt, not a reasonable one. Three
+   further fixes:
+   - `max_tokens` for `TaskClass::Authoring` is back to `1024`
+     (`crates/aether-app/src/project/commands/author.rs`), now derived from
+     throughput rather than the truncation guess: at 1.49 tok/s, 1024 tokens
+     is roughly an 11-minute ceiling (1024 / 1.49 ≈ 687s), and the original
+     truncation (~1216 characters) was well under what 1024 tokens of JSON
+     produces, confirming it was never a `max_tokens` problem. The comment
+     at the call site notes the bound is throughput-derived and should be
+     revisited if the local model changes.
+   - The real cause of the unbounded attempt was that `OllamaProvider` set
+     no request timeout at all — one attempt ran past an hour uncut.
+     `crates/aether-ai/src/ollama.rs` now applies a per-request timeout via
+     `OLLAMA_TIMEOUT_SECS` (default 600s, parsed by the pure, unit-tested
+     `parse_timeout_secs`, falling back on unset/zero/unparseable values). A
+     timeout surfaces through the same `reqwest` error path every other
+     transport failure already does — `AiError::Transport`, which
+     `bitcode do`'s attempt loop already treats as a decline and escalates
+     past — so no new error-handling path was needed, only the missing
+     deadline.
+   - A further live attempt failed with "command check missing a
+     non-empty run": the model emitted a `command` check with an empty
+     `run` string despite the existing preference for `graph.*` checks.
+     `check_schema` now sets `"run": {"type": "string", "minLength": 1}` so
+     this is rejected at the grammar level instead of reaching
+     `convert_check`, and the prompt in `build_prompt` was strengthened from
+     a soft preference to an explicit "Do NOT use a `command` check" plus
+     "the checks array may be left empty — do this unless you have a
+     specific `graph.*` check in mind," since `tests.impacted` is added
+     automatically either way.
+
+   Also, each attempt now prints how long the model call took
+   (`  <provider> responded in <N>s`, or `<N>s elapsed` on a decline/timeout)
+   so a slow local model is visibly slow instead of indistinguishable from a
+   hang.
 
    Investigated per this run but not fixed: the node every attempt kept
    targeting was a method inside a Python class in `tools/`, and it had zero

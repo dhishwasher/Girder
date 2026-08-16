@@ -160,18 +160,27 @@ pub async fn do_intent(args: &[String]) -> std::io::Result<()> {
                 &schema,
                 (attempt > 0).then_some(diagnostic.as_str()),
             );
+            let started = std::time::Instant::now();
             let completion = match provider.complete(prompt).await {
                 Ok(completion) => completion,
                 Err(error) => {
                     diagnostic = format!("{} declined: {error}", provider.name());
-                    println!("  {diagnostic}");
+                    println!("  {diagnostic} ({}s elapsed)", started.elapsed().as_secs());
                     // A decline is permanent for this provider (no key, no
                     // host, or an unconditional refusal) — retrying the same
                     // prompt against it won't help, so move on immediately
-                    // instead of burning the repair budget.
+                    // instead of burning the repair budget. A timeout is one
+                    // such decline: OllamaProvider now bounds every request
+                    // (OLLAMA_TIMEOUT_SECS), so a slow local model surfaces
+                    // here as an ordinary error instead of hanging forever.
                     break;
                 }
             };
+            println!(
+                "  {} responded in {}s",
+                provider.name(),
+                started.elapsed().as_secs()
+            );
             calls.push(json!({
                 "provider": provider.name(),
                 "model": completion.model,
@@ -322,11 +331,15 @@ fn build_prompt(
          Nodes available (path, language, current source) — edit only these:\n{}\n\n\
          Author one plan step. For each edit, set \"operation\" to exactly one of \
          replace_node, rename_node, delete_node, or insert_into_module; only the field \
-         with that same name is used, so leave the other three empty/false. Prefer \
-         graph.node_exists, graph.node_absent, graph.callers_of, or graph.callees_of \
-         checks over \"command\" — a command check can trigger a full project build. A \
-         tests.impacted check runs automatically after your plan; you do not need to add \
-         one yourself. Return JSON only, no prose.",
+         with that same name is used, so leave the other three empty/false. A \
+         tests.impacted check runs automatically after your plan, so the checks array may \
+         be left empty — do this unless you have a specific graph.* check in mind. Do NOT \
+         use a \"command\" check: it can trigger a full project build and is almost never \
+         the right choice here. If you do add a check, it must be graph.node_exists, \
+         graph.node_absent, graph.callers_of, or graph.callees_of. Every check field is \
+         required regardless of kind, including \"run\" — for a non-command check, set \
+         \"run\" to a single placeholder character such as \"-\" (it is ignored), never \
+         the empty string. Return JSON only, no prose.",
         serde_json::to_string(&Value::Array(node_context.to_vec())).unwrap_or_default()
     );
     if let Some(diagnostic) = repair_diagnostic {
@@ -362,13 +375,19 @@ fn build_prompt(
     }
     let mut prompt =
         Prompt::new(TaskClass::Authoring, system, user).with_response_schema(schema.clone());
-    // 1024 (Prompt::new's default) truncated a schema-constrained response
-    // mid-string on the first local qwen2.5-coder:1.5b run ("EOF while
-    // parsing a string at line 22 column 1216") because a plan step here
-    // carries a full replacement Node.source, not just a short decision.
-    // 8192 gives room for a multi-line function body plus checks without
-    // matching the largest remote budgets used elsewhere in this codebase.
-    prompt.max_tokens = 8_192;
+    // Set from measured local throughput, not the truncation this bound was
+    // first raised for. qwen2.5-coder:1.5b generates at 1.49 tok/s on this
+    // machine (95 tokens in 63.7s, via /api/generate eval_count/
+    // eval_duration), so 1024 tokens is roughly an 11-minute ceiling per
+    // attempt (1024 / 1.49 tok/s ~= 687s). The gap #15 truncation ("EOF
+    // while parsing a string at line 22 column 1216") failed at ~1216
+    // characters of JSON — well under 1024 tokens' worth — so it was never
+    // actually a max_tokens problem; raising this to 8192 (a 91-minute
+    // ceiling at this throughput) didn't address the real cause, which was
+    // the Ollama provider having no request timeout (now fixed via
+    // OLLAMA_TIMEOUT_SECS in aether-ai). This value is throughput-derived:
+    // revisit it if the local model changes.
+    prompt.max_tokens = 1024;
     prompt
 }
 
@@ -453,7 +472,14 @@ fn check_schema(node_paths: &[String]) -> Value {
             },
             "node": {"type": "string", "enum": node_enum},
             "expect": {"type": "array", "items": {"type": "string"}},
-            "run": {"type": "string"},
+            // A command check with an empty run is useless and previously
+            // reached `convert_check` as "command check missing a
+            // non-empty run" — a repairable diagnostic, but one the
+            // grammar should reject up front instead. Every check kind
+            // still must supply some string here (the shape stays flat
+            // per the module-level rationale on `step_schema`), but it can
+            // no longer be empty.
+            "run": {"type": "string", "minLength": 1},
             "expect_exit": {"type": "integer"}
         }
     })
@@ -733,7 +759,7 @@ mod tests {
     }
 
     #[test]
-    fn build_prompt_raises_max_tokens_above_the_default() {
+    fn build_prompt_sets_the_throughput_derived_max_tokens() {
         let node_context = vec![json!({
             "path": "crate::calc::greet",
             "language": "python",
@@ -747,7 +773,7 @@ mod tests {
             &schema,
             None,
         );
-        assert!(prompt.max_tokens > 1024, "{}", prompt.max_tokens);
+        assert_eq!(prompt.max_tokens, 1024);
     }
 
     #[test]
@@ -838,5 +864,11 @@ mod tests {
         let schema = step_schema(&node_paths());
         assert_eq!(schema["properties"]["edits"]["maxItems"], 2);
         assert_eq!(schema["properties"]["edits"]["minItems"], 1);
+    }
+
+    #[test]
+    fn check_schema_rejects_an_empty_run_string() {
+        let schema = check_schema(&node_paths());
+        assert_eq!(schema["properties"]["run"]["minLength"], 1);
     }
 }
