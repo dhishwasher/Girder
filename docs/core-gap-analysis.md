@@ -823,6 +823,61 @@ as gap 11 rather than silently accepted.
    case to `plan_version: 2`, a corpus change with its own consequences,
    not attempted here.
 
+17. **Closed — `bitcode context` emitted a schema `plan run` would reject.**
+    `authoring_context::step_schema` is the flat, all-operation-fields-required
+    shape `bitcode do`'s local model uses, which `author::convert_edit`/
+    `convert_check` translate into real Plan Format v2 before it ever reaches a
+    plan file. `bitcode context` handed that same schema, unfiltered, to an
+    external model that writes a plan file directly with no translation layer.
+    Confirmed before any fix, with a test: a step built to satisfy the emitted
+    schema exactly (`operation` plus all four operation fields; `run`/
+    `expect_exit` on every check) is rejected by the real loader —
+    `operation` isn't even in `planfile::schema::Edit`'s known-field list, so
+    it fails before the discriminator check ever runs, and a `run`/
+    `expect_exit` field on `graph.node_exists` hits that variant's
+    `deny_unknown_fields`
+    (`crates/aether-app/src/project/commands/context_cmd.rs`,
+    `a_step_satisfying_the_flat_local_authoring_schema_is_rejected_by_load_plan`).
+    So the entire external-authoring loop the command exists to support was
+    unusable end to end: paste `context`'s schema to any chat model, follow it
+    exactly, and `plan run --authored` rejects the result.
+
+    Fixed by adding `authoring_context::plan_schema()` — a discriminated-union
+    (`oneOf`) shape matching `planfile::schema`'s actual `Edit`/`Check`
+    deserializers exactly — and emitting that from `context_cmd::build_output`
+    instead of the flat local-authoring schema. `bitcode do`'s local path
+    keeps `step_schema` unchanged; `author.rs` was not touched. A second test
+    (`a_step_satisfying_plan_schema_round_trips_through_load_plan`) proves a
+    step satisfying `plan_schema` loads successfully, closing the loop the
+    first test opened. `load_plan` is now `pub(crate)` so both tests drive the
+    real loader directly instead of trusting a description of its behavior.
+    `context_cmd.rs` also gained coverage for the `--json` requirement, both
+    `SelectionError` paths, and the full top-level output shape (previously
+    one test asserting almost nothing). The P1-P6 oracle was rerun against a
+    release build of this fix and passed clean.
+
+18. **P2 — pre-existing, unrelated to this pass: the Python measurement-harness
+    suite's canonical-edit rename case fails against the live
+    `sample-project/calc.py`.**
+    `tools/test_authoring_task_check.py::test_all_eight_canonical_edits_pass_semantic_verification`
+    builds its fixture from whatever is currently on disk at
+    `sample-project/calc.py`, not a pinned snapshot. Commit `fe0f476`
+    ("Uppercase greet's return value", 2026-08-15, authored externally via
+    `bitcode context`/`plan run --authored` — the loop gap 17 above concerns)
+    permanently changed `greet`'s body from `return hello(name)` to `return
+    hello(name).upper()`. The `python-rename` canonical edit still assumes the
+    original body: it renames `greet` to `welcome_greeting` and then expects
+    the un-uppercased behavior (`upper=False`), but the live file already
+    uppercases, so the fixture fails with "welcome_greeting has wrong
+    behavior." Not caused by, or fixed as part of, this pass — `git log --
+    sample-project/calc.py` shows `fe0f476` predates every commit in this
+    pass — but it means the Python suite gate this pass's other commits were
+    checked against was not fully green for a reason those commits don't own.
+    Left open rather than silently worked around: closing it means either
+    pinning the fixture's baseline independent of the live file, or
+    reverting/adjusting `calc.py`, and either choice touches a file this pass
+    did not otherwise need to.
+
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
 validated projection, and recoverable commit. That advantage is unproven until
