@@ -2105,6 +2105,28 @@ def validate_authoring_policy(policy: Mapping[str, Any]) -> Mapping[str, Any]:
     return policy
 
 
+def validate_authoring_observation_matches_policy(
+    policy: Mapping[str, Any], observation: Mapping[str, Any]
+) -> None:
+    """Refuse to treat a checked-in authoring-cost observation as evidence for
+    a policy it was not measured against. `docs/authoring-cost-policy.json`
+    and `docs/authoring-cost-observation.json` are independent files with no
+    structural link forcing them to agree — a policy schema bump (e.g. v2 ->
+    v3) leaves the old observation sitting there, still schema-valid on its
+    own, silently implying a result for a policy version that was never
+    actually run. Comparing `policy_id` catches that drift with a message
+    naming both, instead of leaving the mismatch to be noticed by a human
+    diffing two JSON files.
+    """
+    policy_id = policy.get("policy_id")
+    observation_id = observation.get("policy_id")
+    if policy_id != observation_id:
+        raise RuntimeError(
+            "authoring-cost observation does not match the current policy: "
+            f"observation.policy_id={observation_id!r}, policy.policy_id={policy_id!r}"
+        )
+
+
 def authoring_prompt_context(
     arm: str,
     language: str,
@@ -2255,6 +2277,10 @@ def authored_plan_envelope_error(generated: Any, canonical: Any, path: str = "pl
 def run_authoring_cost(args: argparse.Namespace) -> int:
     policy_bytes = AUTHORING_POLICY.read_bytes()
     policy = validate_authoring_policy(json.loads(policy_bytes))
+    output_path = args.output or REPO_ROOT / "docs" / "authoring-cost-observation.json"
+    if output_path.is_file():
+        existing_observation = json.loads(output_path.read_text(encoding="utf-8"))
+        validate_authoring_observation_matches_policy(policy, existing_observation)
     provenance = observation_provenance(AUTHORING_POLICY)
     options = policy["options"]
     prompt_protocol = policy["prompt_protocol"]
@@ -2623,10 +2649,9 @@ def run_authoring_cost(args: argparse.Namespace) -> int:
             "graph_completed_input_tokens": graph_completed_tokens,
         },
     }
-    output = args.output or REPO_ROOT / "docs" / "authoring-cost-observation.json"
-    atomic_write_json(output.resolve(), observation)
+    atomic_write_json(output_path.resolve(), observation)
     progress_path.unlink(missing_ok=True)
-    print(f"authoring cost: {'PASS' if passed else 'FAIL'}; observation: {output.resolve()}")
+    print(f"authoring cost: {'PASS' if passed else 'FAIL'}; observation: {output_path.resolve()}")
     return 0 if passed else 1
 
 

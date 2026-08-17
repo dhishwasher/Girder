@@ -878,6 +878,38 @@ as gap 11 rather than silently accepted.
     reverting/adjusting `calc.py`, and either choice touches a file this pass
     did not otherwise need to.
 
+19. **P1 — open measurement gap, made unmissable rather than fixed:
+    `docs/authoring-cost-policy.json` is `graph-edit-authoring-cost-v3`
+    (`schema_version` 3) but `docs/authoring-cost-observation.json` is still
+    `graph-edit-authoring-cost-v2` (`schema_version` 2).** The v3 policy has
+    never actually been measured against a live model — the checked-in
+    observation predates it. Nothing previously compared the two files, so
+    the mismatch was only visible to a human who happened to diff their
+    `policy_id` fields by hand; `docs/authoring-cost.md`'s narrative
+    describing the v2 result could otherwise be read as describing v3.
+    Deliberately not re-run here: the measurement is a live-model corpus that
+    takes hours at this machine's measured 1.49 tok/s throughput (see gap 15),
+    and re-running it was explicitly out of scope for this pass.
+
+    Instead, added `validate_authoring_observation_matches_policy(policy,
+    observation)` to `tools/plan_executor_oracle.py`, wired into
+    `run_authoring_cost` as the first check — before the Ollama reachability
+    check, before touching git status, before any of the expensive work —
+    so a future `--authoring-cost` invocation with a stale checked-in
+    observation fails immediately with a message naming both
+    `policy.policy_id` and `observation.policy_id`, instead of silently
+    overwriting (or coexisting beside) data measured against a different
+    policy version. Two tests in `tools/test_plan_executor_oracle.py`:
+    `test_authoring_observation_validation_refuses_a_policy_id_mismatch`
+    covers the function in isolation (matching pair passes, deliberately
+    stale pair raises with both ids in the message), and
+    `test_checked_in_authoring_observation_is_stale_against_the_current_policy`
+    asserts the *actual* checked-in v2 observation is currently rejected
+    against the *actual* checked-in v3 policy — a test written to fail on
+    purpose today and start passing again only once someone re-runs the v3
+    measurement for real, so the repository's own test suite states the gap
+    rather than quietly tolerating it.
+
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
 validated projection, and recoverable commit. That advantage is unproven until

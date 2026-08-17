@@ -1,5 +1,6 @@
 import copy
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -34,6 +35,7 @@ from tools.plan_executor_oracle import (
     source_tree_digest,
     validate_graph_policy,
     validate_authoring_policy,
+    validate_authoring_observation_matches_policy,
     validate_policy,
 )
 
@@ -176,6 +178,34 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
         self.assertEqual(policy["success"]["primary_criterion"], "graph_arm_semantic_successes")
         self.assertEqual(policy["success"]["minimum_graph_semantic_successes"], 4)
         self.assertEqual(policy["success"]["text_arm_reporting"], "secondary_hardware_bounded")
+
+    def test_authoring_observation_validation_refuses_a_policy_id_mismatch(self):
+        policy = json.loads(AUTHORING_POLICY.read_text(encoding="utf-8"))
+
+        matching_observation = {"policy_id": policy["policy_id"]}
+        validate_authoring_observation_matches_policy(policy, matching_observation)
+
+        stale_observation = {"policy_id": "graph-edit-authoring-cost-v2"}
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"observation\.policy_id='graph-edit-authoring-cost-v2'.*policy\.policy_id="
+            + re.escape(repr(policy["policy_id"])),
+        ):
+            validate_authoring_observation_matches_policy(policy, stale_observation)
+
+    def test_checked_in_authoring_observation_is_stale_against_the_current_policy(self):
+        # docs/authoring-cost-policy.json is schema_version 3
+        # (graph-edit-authoring-cost-v3); docs/authoring-cost-observation.json
+        # is still the schema_version 2 result. Pin that this mismatch is
+        # real and currently unresolved (see gap in docs/core-gap-analysis.md)
+        # rather than silently letting it drift further: this test should
+        # start failing, on purpose, the day someone re-runs the v3
+        # measurement and the files agree again.
+        policy = json.loads(AUTHORING_POLICY.read_text(encoding="utf-8"))
+        observation_path = Path(__file__).parents[1] / "docs" / "authoring-cost-observation.json"
+        observation = json.loads(observation_path.read_text(encoding="utf-8"))
+        with self.assertRaisesRegex(RuntimeError, "does not match the current policy"):
+            validate_authoring_observation_matches_policy(policy, observation)
 
     def test_authoring_shape_rejects_text_graph_swaps_and_changed_semantic_check(self):
         canonical = authoring_plan("rust-replace", "abc", graph_addressed=True)
