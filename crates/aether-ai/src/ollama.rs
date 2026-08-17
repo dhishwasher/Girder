@@ -9,7 +9,14 @@ use async_trait::async_trait;
 #[cfg(any(feature = "live-providers", test))]
 use serde::{Deserialize, Serialize};
 
-const DEFAULT_MODEL: &str = "llama3.1";
+/// `qwen2.5-coder:1.5b` is the model every measurement in this repository's
+/// record actually used (`docs/authoring-cost-observation.json`,
+/// `docs/authoring-cost-policy.json`) and the one gap 15 in
+/// `docs/core-gap-analysis.md` documents a real live run against.
+/// `"llama3.1"`, the previous default, appears in no measured record and
+/// already cost a failed live run against a server that didn't have it
+/// pulled.
+const DEFAULT_MODEL: &str = "qwen2.5-coder:1.5b";
 /// Falls back to this when `OLLAMA_TIMEOUT_SECS` is unset, blank, zero, or
 /// unparseable. A live run against `qwen2.5-coder:1.5b` sat past an hour with
 /// no timeout at all (no request-level deadline was ever set), so this exists
@@ -118,6 +125,19 @@ fn parse_timeout_secs(value: Option<&str>) -> u64 {
         .unwrap_or(DEFAULT_TIMEOUT_SECS)
 }
 
+/// Pure so a 404's exact wording is testable without a live Ollama server.
+/// Names both the requested model and the env var that selects it — a 404
+/// here almost always means the model was never `ollama pull`ed, and the
+/// prior generic `"{status}: {detail}"` message left a reader to guess
+/// which of the two things (model? server?) was actually wrong.
+#[cfg(any(feature = "live-providers", test))]
+fn model_not_found_message(model: &str, detail: &str) -> String {
+    format!(
+        "model {model:?} not found on the Ollama server (set OLLAMA_MODEL to an installed \
+         model, or `ollama pull` this one); server said: {detail}"
+    )
+}
+
 fn normalize_host(host: &str) -> Option<String> {
     let host = host.trim().trim_end_matches('/');
     if host.is_empty() {
@@ -179,6 +199,12 @@ impl AiProvider for OllamaProvider {
         if !response.status().is_success() {
             let status = response.status();
             let detail = response.text().await.unwrap_or_default();
+            if status == reqwest::StatusCode::NOT_FOUND {
+                return Err(AiError::Provider(format!(
+                    "{status}: {}",
+                    model_not_found_message(&self.model, &detail)
+                )));
+            }
             return Err(AiError::Provider(format!("{status}: {detail}")));
         }
         let parsed: OllamaResponse = response
@@ -252,6 +278,19 @@ mod tests {
             parse_timeout_secs(Some("not-a-number")),
             DEFAULT_TIMEOUT_SECS
         );
+    }
+
+    #[test]
+    fn default_model_matches_the_measured_record() {
+        assert_eq!(DEFAULT_MODEL, "qwen2.5-coder:1.5b");
+    }
+
+    #[test]
+    fn not_found_message_names_the_model_and_the_env_var() {
+        let message = model_not_found_message("qwen2.5-coder:1.5b", "model not found");
+        assert!(message.contains("qwen2.5-coder:1.5b"), "{message}");
+        assert!(message.contains("OLLAMA_MODEL"), "{message}");
+        assert!(message.contains("model not found"), "{message}");
     }
 
     #[test]
