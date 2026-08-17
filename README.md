@@ -7,11 +7,28 @@ agent workflow, semantic review/test impact, and time-travel debugging.
 This repo is a runnable Rust prototype of that architecture. It is *not* a fork
 of any existing editor. See [`BLUEPRINT.md`](./BLUEPRINT.md) for the full design.
 
+## Install
+
+```bash
+cargo install --path crates/aether-app
+bitcode --help
+```
+
+This builds the default headless profile and installs the `bitcode` binary to
+`~/.cargo/bin` (make sure it's on your `PATH`). No GPU, display, network, or API
+key is required — the default AI provider is an offline `MockProvider`. The GUI
+and live AI providers are opt-in Cargo features not included in a plain
+install; see [The GUI](#the-gui) and [Local-first AI](#local-first-ai) below.
+
+Everything below assumes `bitcode` is on your `PATH`. Building from a source
+checkout without installing works the same way with `cargo run -p aether-app --`
+in place of `bitcode`.
+
 ## Quickstart
 
 ```bash
 # Full end-to-end demo — no GPU, display, or API key required:
-cargo run -p aether-app
+bitcode
 
 # Run the test suite (graph, builder, AI router, agent swarm, debugger):
 cargo test --workspace
@@ -28,139 +45,158 @@ Bit Code is also a CLI that operates on actual directories:
 
 ```bash
 # Build the semantic graph from a project and save it as <dir>/project.aether:
-cargo run -p aether-app -- analyze sample-project
+bitcode analyze sample-project
 
 # Inspect a saved graph and a node's impact set:
-cargo run -p aether-app -- inspect sample-project/project.aether crate::lib::add
+bitcode inspect sample-project/project.aether crate::lib::add
 
 # Concept search: rank functions by relevance to a natural-language query:
-cargo run -p aether-app -- search sample-project "sum numbers in a list"
+bitcode search sample-project "sum numbers in a list"
 
 # Graph-semantic rename — follows Calls edges (not text search) and rewrites
 # only the real callers, then saves the updated graph:
-cargo run -p aether-app -- refactor sample-project rename crate::lib::add plus
+bitcode refactor sample-project rename crate::lib::add plus
 
 # Preview what the swarm would build — graph-aware Planner only, no code written:
-cargo run -p aether-app -- plan sample-project "add user authentication"
+bitcode swarm-plan sample-project "add user authentication"
 
 # Dispatch the agent swarm on a project with a natural-language intent:
-cargo run -p aether-app -- forge sample-project "add a subtract function"
+bitcode forge sample-project "add a subtract function"
+
+# Author a single graph-addressed plan step via a wired-in model (the
+# offline MockProvider by default) and execute it through the same
+# verified plan executor as `plan run` below, repairing from check
+# failures automatically:
+bitcode do sample-project "uppercase greet's return value"
+
+# Emit graph context, a real Plan Format v2 authoring schema, and a plan
+# skeleton as one JSON object — for pasting into any external chat model
+# that isn't wired in as a provider. See "External authoring" below for
+# the full loop from here to a verified, applied edit:
+bitcode context sample-project --nodes crate::calc::greet "uppercase greet's return value" --json
+
+# Validate/inspect/execute a plan file directly. `--authored` is for a plan
+# an external model wrote by hand (see "External authoring" below); without
+# it, `run` executes a plan exactly as authored (used internally by `do`):
+bitcode plan validate my-plan.json
+bitcode plan explain my-plan.json
+bitcode plan run my-plan.json --dry
 
 # Semantic code review vs HEAD (typed mutations, not text diffs):
-cargo run -p aether-app -- review sample-project --since HEAD~1
+bitcode review sample-project --since HEAD~1
 
 # Minimal test selection: find every test reachable from changed functions:
-cargo run -p aether-app -- test-impact sample-project --run
+bitcode test-impact sample-project --run
 
 # Knowledge-graph query — answer a question by traversing the semantic graph:
-cargo run -p aether-app -- query sample-project "what would break if I change add?"
-cargo run -p aether-app -- query sample-project "what calls sum_list?"
-cargo run -p aether-app -- query sample-project  # interactive REPL (reads stdin)
+bitcode query sample-project "what would break if I change add?"
+bitcode query sample-project "what calls sum_list?"
+bitcode query sample-project  # interactive REPL (reads stdin)
 
 # Start a graph-native collaboration history, give another replica its own actor,
 # record that replica's current source graph, and deterministically merge it:
-cargo run -p aether-app -- collab init sample-project alice alice.aetherc
-cargo run -p aether-app -- collab fork alice.aetherc bob bob.aetherc --approve
-cargo run -p aether-app -- collab sync sample-project bob.aetherc
-cargo run -p aether-app -- collab merge alice.aetherc bob.aetherc merged.aethercb
-cargo run -p aether-app -- collab materialize merged.aethercb merged.aether
+bitcode collab init sample-project alice alice.aetherc
+bitcode collab fork alice.aetherc bob bob.aetherc --approve
+bitcode collab sync sample-project bob.aetherc
+bitcode collab merge alice.aetherc bob.aetherc merged.aethercb
+bitcode collab materialize merged.aethercb merged.aether
 # Membership changes are causal operations and require explicit approval:
-cargo run -p aether-app -- collab member add alice.aetherc carol --approve
-cargo run -p aether-app -- collab member remove alice.aetherc carol --approve
+bitcode collab member add alice.aetherc carol --approve
+bitcode collab member remove alice.aetherc carol --approve
 
 # Or exchange deltas in a mutually authenticated live loopback session.
 # Secret contents are generated with private permissions and never printed.
 # Group-secret-only operation remains available as a migration mode:
-cargo run -p aether-app -- collab secret collaboration.secret
+bitcode collab secret collaboration.secret
 
 # Strict identity mode additionally pins each roster actor to an Ed25519 key.
 # Generate each actor's private/shareable-public pair, compare the printed
 # SHA-256 fingerprints out of band, and approve the exact peer fingerprint:
-cargo run -p aether-app -- collab identity generate alice.aetherc \
+bitcode collab identity generate alice.aetherc \
   alice.identity alice.identity.pub
-cargo run -p aether-app -- collab identity generate bob.aetherc \
+bitcode collab identity generate bob.aetherc \
   bob.identity bob.identity.pub
-cargo run -p aether-app -- collab identity show bob.identity.pub
-cargo run -p aether-app -- collab identity trust alice.trust \
+bitcode collab identity show bob.identity.pub
+bitcode collab identity trust alice.trust \
   bob.identity.pub --approve <bob-fingerprint>
-cargo run -p aether-app -- collab identity trust bob.trust \
+bitcode collab identity trust bob.trust \
   alice.identity.pub --approve <alice-fingerprint>
 # Sign existing local-authored history now (strict host/join also does this
 # in memory before exchange), then audit a fully attested bundle offline:
-cargo run -p aether-app -- collab identity attest alice.aetherc alice.identity
-cargo run -p aether-app -- collab identity attest bob.aetherc bob.identity
+bitcode collab identity attest alice.aetherc alice.identity
+bitcode collab identity attest bob.aetherc bob.identity
 
-cargo run -p aether-app -- collab host alice.aetherc 127.0.0.1:7331 \
+bitcode collab host alice.aetherc 127.0.0.1:7331 \
   --identity-file alice.identity --trust-store alice.trust \
   --secret-file collaboration.secret --discovery-dir .bitcode/peers \
   --presence "reviewing parser changes"
-cargo run -p aether-app -- collab discover bob.aetherc .bitcode/peers \
+bitcode collab discover bob.aetherc .bitcode/peers \
   --secret-file collaboration.secret
-cargo run -p aether-app -- collab join-peer bob.aetherc alice .bitcode/peers \
+bitcode collab join-peer bob.aetherc alice .bitcode/peers \
   --identity-file bob.identity --trust-store bob.trust \
   --secret-file collaboration.secret --presence "running transport tests"
 # An explicit address remains available when local discovery is not in use:
-cargo run -p aether-app -- collab join bob.aetherc 127.0.0.1:7331 \
+bitcode collab join bob.aetherc 127.0.0.1:7331 \
   --secret-file collaboration.secret \
   --identity-file bob.identity --trust-store bob.trust
 # Verify every retained non-bootstrap operation against the current local pins:
-cargo run -p aether-app -- collab identity verify \
+bitcode collab identity verify \
   alice.aetherc alice.identity alice.trust
 # To rotate your own key, first generate a new pair, then record a dual-signed
 # causal transition while both private keys are available. Peers can then rotate
 # their current pin before the next strict session:
-cargo run -p aether-app -- collab identity generate alice.aetherc \
+bitcode collab identity generate alice.aetherc \
   alice-new.identity alice-new.identity.pub
-cargo run -p aether-app -- collab identity rotate-local alice.aetherc \
+bitcode collab identity rotate-local alice.aetherc \
   alice.identity alice-new.identity \
   --from <old-alice-fingerprint> --approve <new-alice-fingerprint>
 # Peer trust rotation/removal also requires the exact reviewed fingerprints:
-cargo run -p aether-app -- collab identity rotate alice.trust \
+bitcode collab identity rotate alice.trust \
   bob-new.identity.pub --from <old-bob-fingerprint> --approve <new-bob-fingerprint>
-cargo run -p aether-app -- collab identity remove alice.trust bob \
+bitcode collab identity remove alice.trust bob \
   --approve <new-bob-fingerprint>
 # Successful sessions persist both peers' causal acknowledgements. Once every
 # active member has acknowledged superseded history, prune it conservatively:
-cargo run -p aether-app -- collab compact alice.aetherc
+bitcode collab compact alice.aetherc
 # Rebuild remote whole-file projections, show semantic/file changes and
 # conflicts, then explicitly validate and journal-commit the reviewed bytes:
-cargo run -p aether-app -- collab review sample-project alice.aetherc
-cargo run -p aether-app -- collab apply sample-project alice.aetherc --approve
+bitcode collab review sample-project alice.aetherc
+bitcode collab apply sample-project alice.aetherc --approve
 
 # Real Python execution tracer — records every variable at every line/call/return:
-cargo run -p aether-app -- debug script.py
-cargo run -p aether-app -- debug script.py --what-if x=10 at 2
+bitcode debug script.py
+bitcode debug script.py --what-if x=10 at 2
 
 # DAP adapter dry-run: resolve graph breakpoints without launching an adapter:
-cargo run -p aether-app -- dap script.py --dry-run
+bitcode dap script.py --dry-run
 
 # Generate and review an extension recipe without changing the project:
-cargo run -p aether-app -- extension sample-project generate "show call impact"
+bitcode extension sample-project generate "show call impact"
 
 # Grant the exact recipe digest/capabilities, then manage its lifecycle:
-cargo run -p aether-app -- extension sample-project generate "show call impact" --approve
-cargo run -p aether-app -- extension sample-project list
-cargo run -p aether-app -- extension sample-project disable dev.bitcode.generated.show-call-impact
-cargo run -p aether-app -- extension sample-project remove dev.bitcode.generated.show-call-impact
+bitcode extension sample-project generate "show call impact" --approve
+bitcode extension sample-project list
+bitcode extension sample-project disable dev.bitcode.generated.show-call-impact
+bitcode extension sample-project remove dev.bitcode.generated.show-call-impact
 
 # Install a hand-authored declarative recipe after the same explicit review:
-cargo run -p aether-app -- extension sample-project install recipe.json --approve
+bitcode extension sample-project install recipe.json --approve
 
 # Browse the built-in reviewed marketplace and inspect a listing:
-cargo run -p aether-app -- extension sample-project marketplace search impact
-cargo run -p aether-app -- extension sample-project marketplace show org.bitcode.impact-navigator
+bitcode extension sample-project marketplace search impact
+bitcode extension sample-project marketplace show org.bitcode.impact-navigator
 
 # Regenerate a reviewed intent for this project, preview its capability delta,
 # then explicitly approve the adapted recipe:
-cargo run -p aether-app -- extension sample-project marketplace adapt org.bitcode.impact-navigator
-cargo run -p aether-app -- extension sample-project marketplace adapt org.bitcode.impact-navigator --approve
+bitcode extension sample-project marketplace adapt org.bitcode.impact-navigator
+bitcode extension sample-project marketplace adapt org.bitcode.impact-navigator --approve
 
 # Portable catalogs use the same bounded parser and print a catalog fingerprint:
-cargo run -p aether-app -- extension sample-project marketplace list \
+bitcode extension sample-project marketplace list \
   --catalog marketplace/bitcode-extensions.json
 
 # Full help:
-cargo run -p aether-app -- --help
+bitcode --help
 ```
 
 `analyze`/`forge` walk every `.rs`/`.py` file (skipping `target`, `.git`, …),
@@ -302,8 +338,8 @@ Bit Code works without configuration. To materialize and inspect the validated
 defaults for a project:
 
 ```bash
-cargo run -p aether-app -- config sample-project --init
-cargo run -p aether-app -- config sample-project
+bitcode config sample-project --init
+bitcode config sample-project
 ```
 
 `bitcode.toml` controls source roots and ignore globs, symlink policy, graph
@@ -316,9 +352,49 @@ inside the disposable candidate copy. Invalid keys, escaping paths, broken
 globs, unsupported graph extensions, malformed commands, and unsupported config
 versions fail before project analysis starts.
 
+## External authoring: `bitcode context` + `plan run --authored`
+
+`bitcode do` drives a wired-in provider (OpenAI, Anthropic, Ollama, or the
+offline `MockProvider`) automatically. `bitcode context` and `plan run
+--authored` split that same workflow at the model boundary, so *any* chat
+model — one with no API integration in this codebase at all — can author a
+verified graph edit. The loop:
+
+```bash
+# 1. Emit graph context, a real Plan Format v2 authoring schema, and a plan
+#    skeleton (base_commit, on_failure, the mandatory tests.impacted check)
+#    as one JSON object:
+bitcode context sample-project --nodes crate::calc::greet \
+  "uppercase greet's return value" --json > context.json
+
+# 2. Paste context.json into any chat model. Ask it to fill in the plan
+#    skeleton's step (id, description, edits) so the step satisfies the
+#    schema exactly, and save its response as plan.json — the schema is the
+#    literal Plan Format v2 the executor loads, not an approximation of it,
+#    so a model that follows it produces a file that loads without
+#    translation.
+
+# 3. Run and verify it. --authored applies the same harness guarantees `do`
+#    applies internally to a model-authored plan: on_failure is forced to
+#    rollback_plan, a tests.impacted check is injected if the plan doesn't
+#    already carry one, and a zero-step plan is refused outright rather than
+#    passing vacuously. --authored-by <name> records who authored it in the
+#    written report:
+bitcode plan run plan.json --authored --authored-by claude-opus-5
+```
+
+A passing run applies the edit to the real tree and writes a report under
+`.bitcode/reports/`; a failing check rolls the tree back to `base_commit`
+automatically, so a bad edit from an untrusted external model never lands
+half-applied. `plan_schema()`'s exact shape (a `oneOf` discriminated union
+per edit/check kind, matching `planfile::schema`'s deserializer field for
+field) is what makes step 2 reliable — see gap 17 in
+[`docs/core-gap-analysis.md`](docs/core-gap-analysis.md) for the defect this
+closed and the round-trip test that proves it.
+
 ### The pipeline demo
 
-`cargo run -p aether-app` (no args) walks the entire pipeline over stdout:
+`bitcode` (no args) walks the entire pipeline over stdout:
 
 1. **Builds a semantic graph** from source with tree-sitter (the graph is the
    source of truth; text is a projection).
@@ -343,7 +419,7 @@ versions fail before project analysis starts.
 | `aether-debugger` | Recording interpreter, execution trace, branching timeline, what-if + AI root-cause. |
 | `aether-dap` | Debug Adapter Protocol client/session layer with graph-aware breakpoint support. |
 | `aether-extensions` | Strict declarative recipes, digest-bound grants, graph-native lifecycle, bounded UI and project contributions. |
-| `aether-app` | egui/wgpu GUI (feature `gui`) + the headless `smoke` demo binary. |
+| `aether-app` | The `bitcode` binary: every CLI subcommand, plus the egui/wgpu GUI behind feature `gui`. |
 
 ## The GUI
 
@@ -425,7 +501,7 @@ hard-fails. It has been verified headlessly under `Xvfb` + lavapipe:
 
 ![Bit Code GUI](docs/bitcode-gui.png)
 
-> The **default headless build, all tests, and the `cargo run` demo require none
+> The **default headless build, all tests, and `bitcode`'s demo require none
 > of this** — no GPU, display, or extra system libraries.
 
 ## Local-first AI
@@ -484,6 +560,7 @@ Implemented features:
 | DAP integration | Two-phase DAP launch, graph-node breakpoints, stop/stack inspection, and real `debugpy` coverage |
 | Declarative extensions | AI/JSON recipe generation, exact digest-bound approval, parameterized capabilities, graph-native records/contributions, GUI/CLI lifecycle, reversible validated projections |
 | Generative marketplace | Bounded portable catalogs, deterministic fingerprints/search, digest-bound reviews, project-aware regeneration, exact capability deltas, CLI and native browser |
+| External authoring | `bitcode context` emits graph context plus a real Plan Format v2 schema for any external chat model; `plan run --authored` re-enforces rollback/impacted-test guarantees on the result |
 
 Optional DAP adapter smoke test:
 
