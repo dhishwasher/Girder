@@ -178,6 +178,27 @@ pub(crate) fn run(
                 .any(|check| matches!(check, schema::Check::TestsImpacted { .. }))
         });
         if !has_impacted_check {
+            // Deliberately the *last* step only, not every step — a real
+            // decision, not an accident of `last_mut()`. The guarantee this
+            // exists to provide is "the tree, if this plan durably commits,
+            // passes its impacted tests" — a property of the plan's final
+            // cumulative state, not of every intermediate one.
+            // `run_plan_v2` stops at the first failing step, and `on_failure`
+            // is forced to `RollbackPlan` above, so nothing partial is ever
+            // durably committed regardless of where the check lands: either
+            // every step (including this injected one) passes and the full
+            // set of edits commits, or the first failure anywhere rolls the
+            // whole plan back to `base_commit`. Injecting per-step would
+            // enforce a *stronger* and often wrong property instead — that
+            // every intermediate step independently passes tests — which
+            // rejects legitimate staged edits by design (e.g. a rename split
+            // across two steps: step 1 renames the definition, step 2
+            // updates the caller; running impacted tests after step 1 alone
+            // would see a stale caller and fail on an inconsistency the plan
+            // was always going to resolve by its next step). It would also
+            // run the impacted-test command once per step instead of once
+            // per plan, which is real cost for no additional guarantee on a
+            // plan that passes.
             let last_step = plan.steps.last_mut().expect("checked non-empty above");
             last_step.checks.push(schema::Check::TestsImpacted {
                 expect: schema::TestExpect::AllPass,
@@ -554,6 +575,52 @@ mod tests {
             "{written}"
         );
         assert!(report.get("authored_by").is_none(), "{written}");
+
+        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn run_with_authored_injects_the_mandatory_check_on_the_last_step_only() {
+        // Deliberate: the guarantee is "the final cumulative state passes,"
+        // not "every intermediate step independently passes" (see the
+        // comment at the injection site in `run`). A two-step plan with no
+        // existing `tests.impacted` check should get exactly one injected
+        // check, on step two, and none on step one.
+        let root = temp_git_root("authored-inject-multi-step");
+        let base_commit = init_git_repo(&root);
+        let path = write_plan(
+            "authored-inject-multi-step",
+            &format!(
+                r#"{{"plan_version":2,"plan_id":"authored-inject-multi-step","intent":"i",
+                    "base_commit":"{base_commit}",
+                    "steps":[
+                        {{"id":"s1","checks":[{{"kind":"command","run":"true"}}]}},
+                        {{"id":"s2","checks":[{{"kind":"command","run":"true"}}]}}
+                    ]}}"#
+            ),
+        );
+
+        assert!(run(&root, &path, false, None, true, None).is_ok());
+
+        let mut entries = std::fs::read_dir(root.join(".bitcode/reports")).unwrap();
+        let report_path = entries.next().unwrap().unwrap().path();
+        let written = std::fs::read_to_string(report_path).unwrap();
+        let report: serde_json::Value = serde_json::from_str(&written).unwrap();
+        let step1_checks = report["steps"][0]["checks"].as_array().unwrap();
+        let step2_checks = report["steps"][1]["checks"].as_array().unwrap();
+        assert!(
+            step1_checks
+                .iter()
+                .all(|check| check["kind"] != "tests.impacted"),
+            "{written}"
+        );
+        assert!(
+            step2_checks
+                .iter()
+                .any(|check| check["kind"] == "tests.impacted"),
+            "{written}"
+        );
 
         let _ = std::fs::remove_file(&path);
         let _ = std::fs::remove_dir_all(&root);
