@@ -240,6 +240,126 @@ fn check_schema(node_paths: &[String]) -> Value {
     })
 }
 
+/// Real Plan Format v2 step shape (see `planfile::schema`) — unlike
+/// [`step_schema`]'s flat shape (translated by `author::convert_edit`/
+/// `convert_check` before it ever reaches a plan file), `bitcode context`
+/// hands this to an external model that writes a plan file directly, with
+/// no translation layer, straight into `load_plan`. So this describes
+/// exactly what `load_plan` accepts: an edit is `oneOf` the one
+/// discriminator field the model actually chose (`schema.rs`'s custom
+/// `Edit` deserializer rejects zero or more than one of
+/// `replace_node`/`rename_node`/`delete_node`/`insert_into_module` present
+/// at once), and a check is tagged by `kind` with only that kind's own
+/// fields allowed (`schema.rs`'s `Check` is `#[serde(tag = "kind",
+/// deny_unknown_fields)]`). Curated to the same operations/check kinds as
+/// [`step_schema`] for parity, just shaped so the loader actually accepts
+/// it.
+pub(crate) fn plan_schema(node_paths: &[String]) -> Value {
+    let max_edits = node_paths.len().clamp(1, 3);
+    json!({
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "edits", "checks"],
+        "properties": {
+            "id": {"type": "string"},
+            "description": {"type": "string"},
+            "edits": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": max_edits,
+                "items": plan_edit_schema(node_paths)
+            },
+            "checks": {
+                "type": "array",
+                "minItems": 0,
+                "maxItems": 3,
+                "items": plan_check_schema(node_paths)
+            }
+        }
+    })
+}
+
+fn plan_edit_schema(node_paths: &[String]) -> Value {
+    let node = json!({"type": "string", "enum": node_paths});
+    json!({
+        "type": "object",
+        "oneOf": [
+            {
+                "additionalProperties": false,
+                "required": ["node", "replace_node"],
+                "properties": {"node": node.clone(), "replace_node": {"type": "string"}}
+            },
+            {
+                "additionalProperties": false,
+                "required": ["node", "rename_node"],
+                "properties": {"node": node.clone(), "rename_node": {"type": "string"}}
+            },
+            {
+                "additionalProperties": false,
+                "required": ["node", "delete_node"],
+                "properties": {"node": node.clone(), "delete_node": {"type": "boolean"}}
+            },
+            {
+                "additionalProperties": false,
+                "required": ["node", "insert_into_module"],
+                "properties": {"node": node, "insert_into_module": {"type": "string"}}
+            }
+        ]
+    })
+}
+
+fn plan_check_schema(node_paths: &[String]) -> Value {
+    let node = json!({"type": "string", "enum": node_paths});
+    json!({
+        "type": "object",
+        "oneOf": [
+            {
+                "additionalProperties": false,
+                "required": ["kind", "node"],
+                "properties": {
+                    "kind": {"const": "graph.node_exists"},
+                    "node": node.clone()
+                }
+            },
+            {
+                "additionalProperties": false,
+                "required": ["kind", "node"],
+                "properties": {
+                    "kind": {"const": "graph.node_absent"},
+                    "node": node.clone()
+                }
+            },
+            {
+                "additionalProperties": false,
+                "required": ["kind", "node"],
+                "properties": {
+                    "kind": {"const": "graph.callers_of"},
+                    "node": node.clone(),
+                    "expect": {"type": "array", "items": {"type": "string"}}
+                }
+            },
+            {
+                "additionalProperties": false,
+                "required": ["kind", "node"],
+                "properties": {
+                    "kind": {"const": "graph.callees_of"},
+                    "node": node,
+                    "expect": {"type": "array", "items": {"type": "string"}}
+                }
+            },
+            {
+                "additionalProperties": false,
+                "required": ["kind", "run"],
+                "properties": {
+                    "kind": {"const": "command"},
+                    "run": {"type": "string", "minLength": 1},
+                    "expect_exit": {"type": "integer"}
+                }
+            }
+        ]
+    })
+}
+
 pub(crate) fn generate_plan_id() -> String {
     let millis = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)

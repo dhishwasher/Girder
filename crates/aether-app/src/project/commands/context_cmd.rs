@@ -10,7 +10,7 @@
 
 use super::authoring_context::{
     build_authoring_context, collect_words, generate_plan_id, invalid_input, parse_pinned_nodes,
-    plan_skeleton, SelectionError,
+    plan_schema, plan_skeleton, SelectionError,
 };
 use crate::project::config::ProjectConfig;
 use crate::project::git::git_head_commit;
@@ -59,7 +59,12 @@ pub fn context(args: &[String]) -> std::io::Result<()> {
         "intent": intent,
         "base_commit": base_commit,
         "nodes": ctx.node_context,
-        "schema": ctx.schema,
+        // Real Plan Format v2 (see `plan_schema`'s doc comment), not
+        // `ctx.schema` — this JSON goes to an external model that writes a
+        // plan file directly, straight into `load_plan`, with no
+        // translation layer the way `bitcode do`'s local path has
+        // (`author::convert_edit`/`convert_check`).
+        "schema": plan_schema(&ctx.node_paths),
         "plan_skeleton": plan_skeleton(&base_commit, &intent, &plan_id),
     });
     let rendered = serde_json::to_string_pretty(&output)
@@ -71,9 +76,100 @@ pub fn context(args: &[String]) -> std::io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
+
+    fn write_temp_plan(name: &str, plan: &serde_json::Value) -> PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "bitcode-context-cmd-{name}-{}-{}.json",
+            std::process::id(),
+            NEXT_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        std::fs::write(&path, serde_json::to_vec_pretty(plan).unwrap()).unwrap();
+        path
+    }
+
+    fn plan_with_step(step: serde_json::Value) -> serde_json::Value {
+        json!({
+            "plan_version": 2,
+            "plan_id": "schema-shape-test",
+            "intent": "test",
+            "base_commit": "deadbeef",
+            "on_failure": "rollback_plan",
+            "steps": [step]
+        })
+    }
 
     #[test]
     fn requires_a_dir_argument() {
         assert!(context(&[]).is_ok());
+    }
+
+    // The bug this closes: `bitcode context` used to hand an external model
+    // `authoring_context::step_schema` — the flat shape `bitcode do`'s local
+    // path translates via `convert_edit`/`convert_check` before it ever
+    // reaches a plan file. An external model has no such translation layer;
+    // its output goes straight to `load_plan`. This test proves a step
+    // literally satisfying that flat schema is rejected by the real loader,
+    // which is why `context` must emit `plan_schema` instead (see the test
+    // below).
+    #[test]
+    fn a_step_satisfying_the_flat_local_authoring_schema_is_rejected_by_load_plan() {
+        let node_paths = vec!["crate::calc::greet".to_string()];
+        let step = json!({
+            "id": "step-1",
+            "description": "",
+            "edits": [{
+                "node": "crate::calc::greet",
+                "operation": "replace_node",
+                "replace_node": "fn greet() {}",
+                "rename_node": "",
+                "delete_node": false,
+                "insert_into_module": ""
+            }],
+            "checks": [{
+                "kind": "graph.node_exists",
+                "node": "crate::calc::greet",
+                "expect": [],
+                "run": "-",
+                "expect_exit": 0
+            }]
+        });
+        // `edits[0]` and `checks[0]` above are built to satisfy
+        // `authoring_context::step_schema(&node_paths)` exactly.
+        let _ = crate::project::commands::authoring_context::step_schema(&node_paths);
+        let path = write_temp_plan("flat-schema-rejected", &plan_with_step(step));
+
+        let error = crate::project::planfile::load_plan(&path).unwrap_err();
+
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn a_step_satisfying_plan_schema_round_trips_through_load_plan() {
+        let node_paths = vec!["crate::calc::greet".to_string()];
+        let schema = plan_schema(&node_paths);
+        // Sanity on the schema shape itself: an edit is a discriminated
+        // union (`oneOf`), not the flat all-fields-required shape.
+        assert!(schema["properties"]["edits"]["items"]["oneOf"].is_array());
+        assert!(schema["properties"]["checks"]["items"]["oneOf"].is_array());
+
+        let step = json!({
+            "id": "step-1",
+            "description": "uppercase greet's greeting",
+            "edits": [{"node": "crate::calc::greet", "replace_node": "fn greet() {}"}],
+            "checks": [{"kind": "graph.node_exists", "node": "crate::calc::greet"}]
+        });
+        let path = write_temp_plan("plan-schema-round-trip", &plan_with_step(step));
+
+        let loaded = crate::project::planfile::load_plan(&path)
+            .expect("a step satisfying plan_schema must be accepted by load_plan");
+
+        assert_eq!(loaded.steps.len(), 1);
+        assert_eq!(loaded.steps[0].edits.len(), 1);
+        assert_eq!(loaded.steps[0].checks.len(), 1);
+        let _ = std::fs::remove_file(&path);
     }
 }

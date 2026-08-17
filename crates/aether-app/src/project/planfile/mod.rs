@@ -15,7 +15,11 @@ use crate::project::config::ProjectConfig;
 use schema::Plan;
 use std::path::Path;
 
-fn load_plan(path: &Path) -> std::io::Result<Plan> {
+// pub(crate) rather than private: `context_cmd`'s tests round-trip
+// `authoring_context::plan_schema`-shaped steps through this exact loader
+// to prove the schema `bitcode context` emits to an external model is one
+// `load_plan` actually accepts (see gap in `docs/core-gap-analysis.md`).
+pub(crate) fn load_plan(path: &Path) -> std::io::Result<Plan> {
     let text = std::fs::read_to_string(path).map_err(|error| {
         std::io::Error::new(
             error.kind(),
