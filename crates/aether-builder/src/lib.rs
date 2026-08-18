@@ -2865,4 +2865,172 @@ fn test_add() { assert_eq!(add(2, 3), 5); }
             .collect();
         assert!(calls.contains(&existing));
     }
+
+    // Gap 22 (docs/core-gap-analysis.md item 22): `bitcode test-impact`
+    // silently selects zero tests for changed functions that real tests do
+    // reach, because the underlying call resolver in `sync.rs` drops or
+    // misattributes certain call shapes. These four tests pin the defect as
+    // failing (or, for the fourth, passing) tests so a later fix has a
+    // concrete target. Do not remove `#[ignore]` from a case until the
+    // resolver actually produces the asserted edge.
+
+    #[test]
+    #[ignore = "gap 22 — remove this attribute when fixed"]
+    fn gap22_chained_call_resolves_to_its_real_caller() {
+        // Case 1: a method chained directly onto the result of a
+        // constructor call, with no intermediate `let` binding — the exact
+        // shape of `Interpreter::new(&program).run_with_counts(None)` in
+        // crates/aether-debugger/src/timeline.rs. `callee_target` in
+        // mapper.rs takes the *entire* preceding-call source text
+        // ("Interpreter::new(&program)") as the new call's qualifier, since
+        // there is no local binding to look up a receiver type for. That
+        // raw text is never a plain identifier, so sync.rs's
+        // `qualifier_matches_owner` extracts a nonsense tail from it (here,
+        // "new" from the qualifier's own trailing "new(...)") that matches
+        // no real owner, and the true call is silently dropped even though
+        // `run_with_counts` is the only function of that name in the graph.
+        let src = r#"
+pub struct Interpreter;
+impl Interpreter {
+    pub fn new(seed: i64) -> Self { Interpreter }
+    pub fn run_with_counts(&self, budget: i64) -> i64 { budget }
+}
+pub fn caller() -> i64 {
+    Interpreter::new(1).run_with_counts(2)
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/lib.rs", src);
+
+        let caller = NodeId::from_path("crate::lib::caller");
+        let run_with_counts = NodeId::from_path("crate::lib::Interpreter::run_with_counts");
+        let callers: Vec<_> = graph
+            .callers(run_with_counts)
+            .into_iter()
+            .map(|n| n.id)
+            .collect();
+        assert!(
+            callers.contains(&caller),
+            "run_with_counts should record `caller` as a caller; got {callers:?}"
+        );
+    }
+
+    #[test]
+    fn gap22_nested_argument_call_resolves_to_its_real_caller() {
+        // Case 2: a plain, unchained, qualified call whose *argument* is
+        // itself a call expression — the shape of
+        // `Timeline::record(buggy_demo_program())` in
+        // crates/aether-debugger/src/lib.rs. Investigating gap 22 further
+        // showed the inner call (`g` here, `buggy_demo_program` there)
+        // resolves correctly today: the AST walk visits the argument's call
+        // expression independently of the outer call, with its own clean
+        // (unqualified) callee name, so it is not garbled by anything the
+        // outer call does. `Timeline::record` itself was failing for an
+        // unrelated reason (case 3's ambiguity-collision mechanism, not
+        // argument nesting), so this case is NOT ignored: it documents
+        // that nested-argument calls, in isolation, are not part of gap 22
+        // and must keep resolving correctly.
+        let src = r#"
+pub fn g() -> i64 { 1 }
+pub fn f(x: i64) -> i64 { x }
+pub fn caller() -> i64 {
+    f(g())
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/lib.rs", src);
+
+        let caller = NodeId::from_path("crate::lib::caller");
+        let g = NodeId::from_path("crate::lib::g");
+        let callers: Vec<_> = graph.callers(g).into_iter().map(|n| n.id).collect();
+        assert!(
+            callers.contains(&caller),
+            "g should record `caller` as a caller; got {callers:?}"
+        );
+    }
+
+    #[test]
+    #[ignore = "gap 22 — remove this attribute when fixed"]
+    fn gap22_chained_call_is_not_misattributed_to_an_unrelated_caller() {
+        // Case 3 (the worst case): case 1's chained call
+        // (`Widget::new().commit()`) is dropped by the same mechanism as
+        // case 1, but the story does not end at "missing." sync.rs's
+        // unqualified branch of `select_candidate` has a last-resort
+        // fallback — "if this name is globally unique in the graph, assume
+        // any bare unqualified call to it means this" — for cases like a
+        // plain top-level `helper()` call whose definition lives in another
+        // module. That fallback fires for ANY same-spelled bare call,
+        // including a call to a same-named local closure/parameter the
+        // extractor has no way to distinguish from a real global call
+        // (mapper.rs's own doc comment: "a pragmatic extractor, not a full
+        // type checker"). `call_with_probe`'s parameter named `commit`
+        // collides with `Widget::commit` by spelling alone and, because the
+        // real call from `build_widget` was already dropped by case 1's
+        // defect, `call_with_probe` becomes `Widget::commit`'s only
+        // recorded caller — a wrong answer, not a missing one. This
+        // mirrors gap 22's real find: `Program::function` resolved to
+        // `tools::authoring_task_check::call_with_probe` instead of
+        // `buggy_demo_program`, its true (and also chain-dropped) caller.
+        let src = r#"
+pub struct Widget;
+impl Widget {
+    pub fn new() -> Self { Widget }
+    pub fn commit(&self) -> i64 { 1 }
+}
+pub fn build_widget() -> i64 {
+    Widget::new().commit()
+}
+pub fn call_with_probe(commit: impl Fn() -> i64) -> i64 {
+    commit()
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/lib.rs", src);
+
+        let build_widget = NodeId::from_path("crate::lib::build_widget");
+        let call_with_probe = NodeId::from_path("crate::lib::call_with_probe");
+        let commit = NodeId::from_path("crate::lib::Widget::commit");
+        let callers: Vec<_> = graph.callers(commit).into_iter().map(|n| n.id).collect();
+        assert!(
+            callers.contains(&build_widget),
+            "commit's real caller build_widget is missing; got {callers:?}"
+        );
+        assert!(
+            !callers.contains(&call_with_probe),
+            "commit was misattributed to call_with_probe's unrelated `commit` parameter; got {callers:?}"
+        );
+    }
+
+    #[test]
+    fn gap22_unchained_call_still_resolves_regression_guard() {
+        // Case 4: a plain, unchained associated-function call
+        // (`Program::new()` in crates/aether-debugger/src/lib.rs) already
+        // resolves correctly today and must keep doing so. NOT ignored —
+        // this is the guard that stops an eventual gap-22 fix from
+        // regressing the ordinary case while it changes how chained and
+        // ambiguous-suffix calls resolve.
+        let src = r#"
+pub struct Program;
+impl Program {
+    pub fn new() -> Self { Program }
+}
+pub fn caller() -> Program {
+    Program::new()
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/lib.rs", src);
+
+        let caller = NodeId::from_path("crate::lib::caller");
+        let new_fn = NodeId::from_path("crate::lib::Program::new");
+        let callers: Vec<_> = graph.callers(new_fn).into_iter().map(|n| n.id).collect();
+        assert!(
+            callers.contains(&caller),
+            "Program::new should record `caller` as a caller; got {callers:?}"
+        );
+    }
 }
