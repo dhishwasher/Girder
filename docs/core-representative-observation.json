@@ -1,6 +1,6 @@
 {
   "assessment": {
-    "beta_pass": true,
+    "beta_pass": false,
     "beta_policy_id": "core-representative-beta-v1",
     "beta_policy_sha256": "1443594fd136f24d5834ab019de26c5eed2da5d5cd115fb10f5d34409350f782",
     "checks": [
@@ -23,10 +23,10 @@
         "required": true
       },
       {
-        "actual": 0,
+        "actual": 1,
         "id": "semantic.aggregate.false_positives",
         "maximum": 0,
-        "passed": true
+        "passed": false
       },
       {
         "actual": 0,
@@ -35,10 +35,10 @@
         "passed": true
       },
       {
-        "actual": 1.0,
+        "actual": 0.970588,
         "id": "semantic.aggregate.micro_precision",
         "minimum": 1.0,
-        "passed": true
+        "passed": false
       },
       {
         "actual": 1.0,
@@ -47,10 +47,10 @@
         "passed": true
       },
       {
-        "actual": 1.0,
+        "actual": 0.966667,
         "id": "semantic.aggregate.macro_precision",
         "minimum": 1.0,
-        "passed": true
+        "passed": false
       },
       {
         "actual": 1.0,
@@ -95,10 +95,10 @@
         "passed": true
       },
       {
-        "actual": 0,
+        "actual": 1,
         "id": "semantic.python.false_positives",
         "maximum": 0,
-        "passed": true
+        "passed": false
       },
       {
         "actual": 0,
@@ -107,10 +107,10 @@
         "passed": true
       },
       {
-        "actual": 1.0,
+        "actual": 0.952381,
         "id": "semantic.python.micro_precision",
         "minimum": 1.0,
-        "passed": true
+        "passed": false
       },
       {
         "actual": 1.0,
@@ -119,10 +119,10 @@
         "passed": true
       },
       {
-        "actual": 1.0,
+        "actual": 0.933333,
         "id": "semantic.python.macro_precision",
         "minimum": 1.0,
-        "passed": true
+        "passed": false
       },
       {
         "actual": 1.0,
@@ -155,31 +155,31 @@
         "passed": true
       },
       {
-        "actual": 2031,
+        "actual": 1933,
         "id": "performance.petgraph-0.6.5.analyze_median_ms",
         "maximum": 15000,
         "passed": true
       },
       {
-        "actual": 2420,
+        "actual": 2464,
         "id": "performance.petgraph-0.6.5.analyze_max_ms",
         "maximum": 30000,
         "passed": true
       },
       {
-        "actual": 50652,
+        "actual": 49344,
         "id": "performance.petgraph-0.6.5.rss_max_kib",
         "maximum": 131072,
         "passed": true
       },
       {
-        "actual": 129,
+        "actual": 165,
         "id": "performance.petgraph-0.6.5.inspect_max_ms",
         "maximum": 5000,
         "passed": true
       },
       {
-        "actual": 3101341,
+        "actual": 3195603,
         "id": "performance.petgraph-0.6.5.graph_artifact_max_bytes",
         "maximum": 33554432,
         "passed": true
@@ -209,31 +209,31 @@
         "passed": true
       },
       {
-        "actual": 1565,
+        "actual": 1364,
         "id": "performance.serde_json-1.0.150.analyze_median_ms",
         "maximum": 15000,
         "passed": true
       },
       {
-        "actual": 1637,
+        "actual": 1436,
         "id": "performance.serde_json-1.0.150.analyze_max_ms",
         "maximum": 30000,
         "passed": true
       },
       {
-        "actual": 41676,
+        "actual": 39732,
         "id": "performance.serde_json-1.0.150.rss_max_kib",
         "maximum": 131072,
         "passed": true
       },
       {
-        "actual": 150,
+        "actual": 104,
         "id": "performance.serde_json-1.0.150.inspect_max_ms",
         "maximum": 5000,
         "passed": true
       },
       {
-        "actual": 2876860,
+        "actual": 2884531,
         "id": "performance.serde_json-1.0.150.graph_artifact_max_bytes",
         "maximum": 33554432,
         "passed": true
@@ -263,31 +263,31 @@
         "passed": true
       },
       {
-        "actual": 547,
+        "actual": 502,
         "id": "performance.regex-1.12.4.analyze_median_ms",
         "maximum": 15000,
         "passed": true
       },
       {
-        "actual": 582,
+        "actual": 530,
         "id": "performance.regex-1.12.4.analyze_max_ms",
         "maximum": 30000,
         "passed": true
       },
       {
-        "actual": 19584,
+        "actual": 17664,
         "id": "performance.regex-1.12.4.rss_max_kib",
         "maximum": 131072,
         "passed": true
       },
       {
-        "actual": 44,
+        "actual": 54,
         "id": "performance.regex-1.12.4.inspect_max_ms",
         "maximum": 5000,
         "passed": true
       },
       {
-        "actual": 1010880,
+        "actual": 1016562,
         "id": "performance.regex-1.12.4.graph_artifact_max_bytes",
         "maximum": 33554432,
         "passed": true
@@ -317,31 +317,31 @@
         "passed": true
       },
       {
-        "actual": 3865,
+        "actual": 3346,
         "id": "performance.click-8.4.1.analyze_median_ms",
         "maximum": 15000,
         "passed": true
       },
       {
-        "actual": 4241,
+        "actual": 3416,
         "id": "performance.click-8.4.1.analyze_max_ms",
         "maximum": 30000,
         "passed": true
       },
       {
-        "actual": 47592,
+        "actual": 45756,
         "id": "performance.click-8.4.1.rss_max_kib",
         "maximum": 131072,
         "passed": true
       },
       {
-        "actual": 169,
+        "actual": 152,
         "id": "performance.click-8.4.1.inspect_max_ms",
         "maximum": 5000,
         "passed": true
       },
       {
-        "actual": 4219522,
+        "actual": 4221322,
         "id": "performance.click-8.4.1.graph_artifact_max_bytes",
         "maximum": 33554432,
         "passed": true
@@ -371,31 +371,31 @@
         "passed": true
       },
       {
-        "actual": 46375,
+        "actual": 37253,
         "id": "performance.pydantic-2.13.4.analyze_median_ms",
         "maximum": 120000,
         "passed": true
       },
       {
-        "actual": 47127,
+        "actual": 40837,
         "id": "performance.pydantic-2.13.4.analyze_max_ms",
         "maximum": 180000,
         "passed": true
       },
       {
-        "actual": 206552,
+        "actual": 206576,
         "id": "performance.pydantic-2.13.4.rss_max_kib",
         "maximum": 393216,
         "passed": true
       },
       {
-        "actual": 1138,
+        "actual": 1147,
         "id": "performance.pydantic-2.13.4.inspect_max_ms",
         "maximum": 5000,
         "passed": true
       },
       {
-        "actual": 24474145,
+        "actual": 24475972,
         "id": "performance.pydantic-2.13.4.graph_artifact_max_bytes",
         "maximum": 33554432,
         "passed": true
@@ -425,46 +425,53 @@
         "passed": true
       },
       {
-        "actual": 2432,
+        "actual": 2042,
         "id": "performance.requests-2.34.2.analyze_median_ms",
         "maximum": 15000,
         "passed": true
       },
       {
-        "actual": 2482,
+        "actual": 2070,
         "id": "performance.requests-2.34.2.analyze_max_ms",
         "maximum": 30000,
         "passed": true
       },
       {
-        "actual": 28528,
+        "actual": 26456,
         "id": "performance.requests-2.34.2.rss_max_kib",
         "maximum": 131072,
         "passed": true
       },
       {
-        "actual": 87,
+        "actual": 74,
         "id": "performance.requests-2.34.2.inspect_max_ms",
         "maximum": 5000,
         "passed": true
       },
       {
-        "actual": 2173978,
+        "actual": 2178848,
         "id": "performance.requests-2.34.2.graph_artifact_max_bytes",
         "maximum": 33554432,
         "passed": true
       },
       {
-        "actual": 56815,
+        "actual": 46440,
         "id": "performance.sum_of_repository_medians_ms",
         "maximum": 180000,
         "passed": true
       }
     ],
     "classification": "beta_policy_evaluation",
-    "failed_check_ids": []
+    "failed_check_ids": [
+      "semantic.aggregate.false_positives",
+      "semantic.aggregate.micro_precision",
+      "semantic.aggregate.macro_precision",
+      "semantic.python.false_positives",
+      "semantic.python.micro_precision",
+      "semantic.python.macro_precision"
+    ]
   },
-  "corpus_manifest_sha256": "cd69ebf7de6463616a5988e0b9deb6c0fcabc484515ebaa30b696b0fb39f9a7d",
+  "corpus_manifest_sha256": "eb3cab0b8648e9258e19f712433e6d70ac11ebd446e0cf6f88eee90b33da69a0",
   "host": {
     "arch": "x86_64",
     "cpu_model": "Intel(R) Celeron(R) N4000 CPU @ 1.10GHz",
@@ -476,7 +483,7 @@
     "kernel": "6.6.119-09283-g9c138e0af8c3",
     "load_policy": "uncontrolled",
     "logical_cpus": 2,
-    "memory_bytes": 2881327104,
+    "memory_bytes": 2881331200,
     "os": "Linux",
     "python": "3.11.2",
     "rayon_threads": 2,
@@ -491,14 +498,14 @@
       "runs": [
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "a8825a16fe085d397f0953298dedb5ba44a46516382f3c25efeadb9c031c1958",
+          "analyze_stdout_sha256": "f797477de13c5507bcd4b426adc674a87a879fce26087fcd65599809f3fceca4",
           "graph": {
-            "artifact_bytes": 3101341,
-            "artifact_sha256": "9e8682c859b683d23ce1b8868fdea53faf9bbfd6fedee8c00220e501273d0727",
-            "canonical_semantic_sha256": "8fd42bf47f3e9865af83a9ca4da4438a7a80e847c0c8b79f54f8ee5c1e18973f",
-            "edges": 4867,
+            "artifact_bytes": 3195603,
+            "artifact_sha256": "3f4ddcb79d5f40f3e15c8b7e514738a02dea4df31cedc02de67334ef518a3f49",
+            "canonical_semantic_sha256": "949d6083b635ff58d92a3af124b15455a1f057c41f966fc802946fd10fab8541",
+            "edges": 5759,
             "edges_by_kind": {
-              "Calls": 569,
+              "Calls": 1461,
               "Contains": 986,
               "DataFlow": 285,
               "Inherits": 9,
@@ -506,13 +513,13 @@
             },
             "nodes": 1866
           },
-          "inspect_wall_ms": 124,
+          "inspect_wall_ms": 105,
           "ordinal": 1,
-          "peak_rss_kib": 50648,
+          "peak_rss_kib": 49180,
           "phase_ms": {
-            "build": 1372,
-            "save": 404,
-            "similarity": 409
+            "build": 1627,
+            "save": 131,
+            "similarity": 400
           },
           "semantic_cases": [
             {
@@ -544,18 +551,18 @@
             }
           ],
           "source_manifest_after_sha256": "74ad9b20cdfd3414fd26dbf9295f0894c3f2edfd908fe095205f1b164fd1dc4c",
-          "wall_ms": 2420
+          "wall_ms": 2464
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "be50b86a4d3981b3e312e7293fd93b9550d5fac3174e36e7b6e7996874460acc",
+          "analyze_stdout_sha256": "87aaf27bfea10c7586fdba1a8206fbe985f8fe533c09fb921b031be1203c1ed0",
           "graph": {
-            "artifact_bytes": 3101341,
-            "artifact_sha256": "9e8682c859b683d23ce1b8868fdea53faf9bbfd6fedee8c00220e501273d0727",
-            "canonical_semantic_sha256": "8fd42bf47f3e9865af83a9ca4da4438a7a80e847c0c8b79f54f8ee5c1e18973f",
-            "edges": 4867,
+            "artifact_bytes": 3195603,
+            "artifact_sha256": "3f4ddcb79d5f40f3e15c8b7e514738a02dea4df31cedc02de67334ef518a3f49",
+            "canonical_semantic_sha256": "949d6083b635ff58d92a3af124b15455a1f057c41f966fc802946fd10fab8541",
+            "edges": 5759,
             "edges_by_kind": {
-              "Calls": 569,
+              "Calls": 1461,
               "Contains": 986,
               "DataFlow": 285,
               "Inherits": 9,
@@ -563,13 +570,13 @@
             },
             "nodes": 1866
           },
-          "inspect_wall_ms": 123,
+          "inspect_wall_ms": 99,
           "ordinal": 2,
-          "peak_rss_kib": 50364,
+          "peak_rss_kib": 49344,
           "phase_ms": {
-            "build": 1243,
-            "save": 230,
-            "similarity": 319
+            "build": 1219,
+            "save": 123,
+            "similarity": 252
           },
           "semantic_cases": [
             {
@@ -601,18 +608,18 @@
             }
           ],
           "source_manifest_after_sha256": "74ad9b20cdfd3414fd26dbf9295f0894c3f2edfd908fe095205f1b164fd1dc4c",
-          "wall_ms": 2031
+          "wall_ms": 1933
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "081c0cfe92a4012992ca51a0d60bc27cb99c48f3b2569dadfcd6a168f782665a",
+          "analyze_stdout_sha256": "5ea50044340b9441cfa7431b17404371719118077776f8b6e24f043313845662",
           "graph": {
-            "artifact_bytes": 3101341,
-            "artifact_sha256": "9e8682c859b683d23ce1b8868fdea53faf9bbfd6fedee8c00220e501273d0727",
-            "canonical_semantic_sha256": "8fd42bf47f3e9865af83a9ca4da4438a7a80e847c0c8b79f54f8ee5c1e18973f",
-            "edges": 4867,
+            "artifact_bytes": 3195603,
+            "artifact_sha256": "3f4ddcb79d5f40f3e15c8b7e514738a02dea4df31cedc02de67334ef518a3f49",
+            "canonical_semantic_sha256": "949d6083b635ff58d92a3af124b15455a1f057c41f966fc802946fd10fab8541",
+            "edges": 5759,
             "edges_by_kind": {
-              "Calls": 569,
+              "Calls": 1461,
               "Contains": 986,
               "DataFlow": 285,
               "Inherits": 9,
@@ -620,13 +627,13 @@
             },
             "nodes": 1866
           },
-          "inspect_wall_ms": 121,
+          "inspect_wall_ms": 165,
           "ordinal": 3,
-          "peak_rss_kib": 50644,
+          "peak_rss_kib": 49164,
           "phase_ms": {
-            "build": 1239,
-            "save": 154,
-            "similarity": 307
+            "build": 1245,
+            "save": 168,
+            "similarity": 343
           },
           "semantic_cases": [
             {
@@ -658,18 +665,18 @@
             }
           ],
           "source_manifest_after_sha256": "74ad9b20cdfd3414fd26dbf9295f0894c3f2edfd908fe095205f1b164fd1dc4c",
-          "wall_ms": 1927
+          "wall_ms": 2365
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "f85d49429488e425f3a21733a7e1779148b79d5937fdf9090ba7006932fff11f",
+          "analyze_stdout_sha256": "2f1e6a049a75d22c7e6ad59f71d9c9b4c7a82513794babb5097005e008f0581c",
           "graph": {
-            "artifact_bytes": 3101341,
-            "artifact_sha256": "9e8682c859b683d23ce1b8868fdea53faf9bbfd6fedee8c00220e501273d0727",
-            "canonical_semantic_sha256": "8fd42bf47f3e9865af83a9ca4da4438a7a80e847c0c8b79f54f8ee5c1e18973f",
-            "edges": 4867,
+            "artifact_bytes": 3195603,
+            "artifact_sha256": "3f4ddcb79d5f40f3e15c8b7e514738a02dea4df31cedc02de67334ef518a3f49",
+            "canonical_semantic_sha256": "949d6083b635ff58d92a3af124b15455a1f057c41f966fc802946fd10fab8541",
+            "edges": 5759,
             "edges_by_kind": {
-              "Calls": 569,
+              "Calls": 1461,
               "Contains": 986,
               "DataFlow": 285,
               "Inherits": 9,
@@ -677,13 +684,13 @@
             },
             "nodes": 1866
           },
-          "inspect_wall_ms": 118,
+          "inspect_wall_ms": 101,
           "ordinal": 4,
-          "peak_rss_kib": 50376,
+          "peak_rss_kib": 49220,
           "phase_ms": {
-            "build": 1301,
-            "save": 207,
-            "similarity": 304
+            "build": 1205,
+            "save": 160,
+            "similarity": 217
           },
           "semantic_cases": [
             {
@@ -715,18 +722,18 @@
             }
           ],
           "source_manifest_after_sha256": "74ad9b20cdfd3414fd26dbf9295f0894c3f2edfd908fe095205f1b164fd1dc4c",
-          "wall_ms": 2040
+          "wall_ms": 1877
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "3ff3d02a067c36745cca13195c81e99e54b514a494ecd1bd9d9ba20a0d238bbe",
+          "analyze_stdout_sha256": "e45890a363dc71daaf26f0764f8b171233c639fa1ed426355cab5cecfb09a456",
           "graph": {
-            "artifact_bytes": 3101341,
-            "artifact_sha256": "9e8682c859b683d23ce1b8868fdea53faf9bbfd6fedee8c00220e501273d0727",
-            "canonical_semantic_sha256": "8fd42bf47f3e9865af83a9ca4da4438a7a80e847c0c8b79f54f8ee5c1e18973f",
-            "edges": 4867,
+            "artifact_bytes": 3195603,
+            "artifact_sha256": "3f4ddcb79d5f40f3e15c8b7e514738a02dea4df31cedc02de67334ef518a3f49",
+            "canonical_semantic_sha256": "949d6083b635ff58d92a3af124b15455a1f057c41f966fc802946fd10fab8541",
+            "edges": 5759,
             "edges_by_kind": {
-              "Calls": 569,
+              "Calls": 1461,
               "Contains": 986,
               "DataFlow": 285,
               "Inherits": 9,
@@ -734,13 +741,13 @@
             },
             "nodes": 1866
           },
-          "inspect_wall_ms": 129,
+          "inspect_wall_ms": 98,
           "ordinal": 5,
-          "peak_rss_kib": 50652,
+          "peak_rss_kib": 49332,
           "phase_ms": {
-            "build": 1262,
-            "save": 159,
-            "similarity": 306
+            "build": 1062,
+            "save": 124,
+            "similarity": 245
           },
           "semantic_cases": [
             {
@@ -772,7 +779,7 @@
             }
           ],
           "source_manifest_after_sha256": "74ad9b20cdfd3414fd26dbf9295f0894c3f2edfd908fe095205f1b164fd1dc4c",
-          "wall_ms": 1949
+          "wall_ms": 1665
         }
       ],
       "source": {
@@ -783,12 +790,12 @@
       },
       "summary": {
         "artifact_unique_digests": 1,
-        "peak_rss_max_kib": 50652,
-        "peak_rss_median_kib": 50644,
+        "peak_rss_max_kib": 49344,
+        "peak_rss_median_kib": 49220,
         "phase_median_ms": {
-          "build": 1262,
-          "save": 207,
-          "similarity": 307
+          "build": 1219,
+          "save": 131,
+          "similarity": 252
         },
         "semantic": {
           "fn": 0,
@@ -800,8 +807,8 @@
         },
         "semantic_unique_digests": 1,
         "unique_node_edge_count_pairs": 1,
-        "wall_max_ms": 2420,
-        "wall_median_ms": 2031
+        "wall_max_ms": 2464,
+        "wall_median_ms": 1933
       }
     },
     {
@@ -811,14 +818,14 @@
       "runs": [
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "7cd68855234656b50782af5dfa0ea514781356764d85ca5194542ff81d4c6df0",
+          "analyze_stdout_sha256": "becf384bb962c0c2e93dd45c437ffb6d244dfdbeb17f6103a722c34395c68ec5",
           "graph": {
-            "artifact_bytes": 2876860,
-            "artifact_sha256": "183165dc746af633bea970f74b912972f515a1014d0e180f6a2a08b0f1e4e101",
-            "canonical_semantic_sha256": "397de80ad09e175ff990b25aae9bc8680942f9a68b7b8e3180f18caa3a8792e0",
-            "edges": 5897,
+            "artifact_bytes": 2884531,
+            "artifact_sha256": "8f60e0e079892894aaac2882978dfe7ad120a1f0c25fcd4f0c366a269ec06763",
+            "canonical_semantic_sha256": "75788afd4be0f123b29931f53acab4247f553e93ae3943066dbe12d86ee82a8d",
+            "edges": 5970,
             "edges_by_kind": {
-              "Calls": 840,
+              "Calls": 913,
               "Contains": 931,
               "DataFlow": 253,
               "Inherits": 15,
@@ -826,13 +833,13 @@
             },
             "nodes": 1549
           },
-          "inspect_wall_ms": 150,
+          "inspect_wall_ms": 96,
           "ordinal": 1,
-          "peak_rss_kib": 41676,
+          "peak_rss_kib": 39728,
           "phase_ms": {
-            "build": 924,
-            "save": 153,
-            "similarity": 267
+            "build": 867,
+            "save": 101,
+            "similarity": 193
           },
           "semantic_cases": [
             {
@@ -843,6 +850,15 @@
               "observed_present": true,
               "source": "crate::de::from_slice",
               "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-slice-nested-argument-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_slice",
+              "target": "crate::read::SliceRead<'a>::new"
             },
             {
               "classification": "tp",
@@ -873,18 +889,18 @@
             }
           ],
           "source_manifest_after_sha256": "f6eecfbcf0baa8180f9b3d9989f9b9b52c9729d501aea22952b6e185edcbd289",
-          "wall_ms": 1562
+          "wall_ms": 1364
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "c422de7d053a275bd3df554f8c3d32623c2dca06a4ee5b6198cb4adbc5847b54",
+          "analyze_stdout_sha256": "81420b5e8742f03cbb3c55d6ad928769067e90d55dec87792e374ee20a768f39",
           "graph": {
-            "artifact_bytes": 2876860,
-            "artifact_sha256": "183165dc746af633bea970f74b912972f515a1014d0e180f6a2a08b0f1e4e101",
-            "canonical_semantic_sha256": "397de80ad09e175ff990b25aae9bc8680942f9a68b7b8e3180f18caa3a8792e0",
-            "edges": 5897,
+            "artifact_bytes": 2884531,
+            "artifact_sha256": "8f60e0e079892894aaac2882978dfe7ad120a1f0c25fcd4f0c366a269ec06763",
+            "canonical_semantic_sha256": "75788afd4be0f123b29931f53acab4247f553e93ae3943066dbe12d86ee82a8d",
+            "edges": 5970,
             "edges_by_kind": {
-              "Calls": 840,
+              "Calls": 913,
               "Contains": 931,
               "DataFlow": 253,
               "Inherits": 15,
@@ -892,13 +908,13 @@
             },
             "nodes": 1549
           },
-          "inspect_wall_ms": 116,
+          "inspect_wall_ms": 93,
           "ordinal": 2,
-          "peak_rss_kib": 41472,
+          "peak_rss_kib": 39552,
           "phase_ms": {
-            "build": 889,
-            "save": 157,
-            "similarity": 265
+            "build": 788,
+            "save": 143,
+            "similarity": 215
           },
           "semantic_cases": [
             {
@@ -909,6 +925,15 @@
               "observed_present": true,
               "source": "crate::de::from_slice",
               "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-slice-nested-argument-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_slice",
+              "target": "crate::read::SliceRead<'a>::new"
             },
             {
               "classification": "tp",
@@ -939,18 +964,18 @@
             }
           ],
           "source_manifest_after_sha256": "f6eecfbcf0baa8180f9b3d9989f9b9b52c9729d501aea22952b6e185edcbd289",
-          "wall_ms": 1520
+          "wall_ms": 1375
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "821dc9ca0134eef39ac95a75e6a6db44fc261964273fc4b038a58b1d5f5cbc69",
+          "analyze_stdout_sha256": "08c1eeba246a6a70b73a76a06ad7edd17a10530df4ec48137b17fc851c9a999f",
           "graph": {
-            "artifact_bytes": 2876860,
-            "artifact_sha256": "183165dc746af633bea970f74b912972f515a1014d0e180f6a2a08b0f1e4e101",
-            "canonical_semantic_sha256": "397de80ad09e175ff990b25aae9bc8680942f9a68b7b8e3180f18caa3a8792e0",
-            "edges": 5897,
+            "artifact_bytes": 2884531,
+            "artifact_sha256": "8f60e0e079892894aaac2882978dfe7ad120a1f0c25fcd4f0c366a269ec06763",
+            "canonical_semantic_sha256": "75788afd4be0f123b29931f53acab4247f553e93ae3943066dbe12d86ee82a8d",
+            "edges": 5970,
             "edges_by_kind": {
-              "Calls": 840,
+              "Calls": 913,
               "Contains": 931,
               "DataFlow": 253,
               "Inherits": 15,
@@ -958,13 +983,13 @@
             },
             "nodes": 1549
           },
-          "inspect_wall_ms": 126,
+          "inspect_wall_ms": 93,
           "ordinal": 3,
-          "peak_rss_kib": 41420,
+          "peak_rss_kib": 39468,
           "phase_ms": {
-            "build": 886,
-            "save": 207,
-            "similarity": 266
+            "build": 854,
+            "save": 108,
+            "similarity": 239
           },
           "semantic_cases": [
             {
@@ -975,6 +1000,15 @@
               "observed_present": true,
               "source": "crate::de::from_slice",
               "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-slice-nested-argument-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_slice",
+              "target": "crate::read::SliceRead<'a>::new"
             },
             {
               "classification": "tp",
@@ -1005,18 +1039,18 @@
             }
           ],
           "source_manifest_after_sha256": "f6eecfbcf0baa8180f9b3d9989f9b9b52c9729d501aea22952b6e185edcbd289",
-          "wall_ms": 1565
+          "wall_ms": 1436
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "70fd1215059f4890cd4d5ffc6351424863ff0b6451f655514dd5a8b2fa83393d",
+          "analyze_stdout_sha256": "c7fc8f9de760d9df947692460764ef81e1b1ceb53380f6e43e82241aa3406362",
           "graph": {
-            "artifact_bytes": 2876860,
-            "artifact_sha256": "183165dc746af633bea970f74b912972f515a1014d0e180f6a2a08b0f1e4e101",
-            "canonical_semantic_sha256": "397de80ad09e175ff990b25aae9bc8680942f9a68b7b8e3180f18caa3a8792e0",
-            "edges": 5897,
+            "artifact_bytes": 2884531,
+            "artifact_sha256": "8f60e0e079892894aaac2882978dfe7ad120a1f0c25fcd4f0c366a269ec06763",
+            "canonical_semantic_sha256": "75788afd4be0f123b29931f53acab4247f553e93ae3943066dbe12d86ee82a8d",
+            "edges": 5970,
             "edges_by_kind": {
-              "Calls": 840,
+              "Calls": 913,
               "Contains": 931,
               "DataFlow": 253,
               "Inherits": 15,
@@ -1024,13 +1058,13 @@
             },
             "nodes": 1549
           },
-          "inspect_wall_ms": 115,
+          "inspect_wall_ms": 104,
           "ordinal": 4,
-          "peak_rss_kib": 41652,
+          "peak_rss_kib": 39732,
           "phase_ms": {
-            "build": 964,
-            "save": 170,
-            "similarity": 287
+            "build": 776,
+            "save": 96,
+            "similarity": 191
           },
           "semantic_cases": [
             {
@@ -1041,6 +1075,15 @@
               "observed_present": true,
               "source": "crate::de::from_slice",
               "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-slice-nested-argument-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_slice",
+              "target": "crate::read::SliceRead<'a>::new"
             },
             {
               "classification": "tp",
@@ -1071,18 +1114,18 @@
             }
           ],
           "source_manifest_after_sha256": "f6eecfbcf0baa8180f9b3d9989f9b9b52c9729d501aea22952b6e185edcbd289",
-          "wall_ms": 1637
+          "wall_ms": 1276
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "6a0ff1ca256aae92c5d91af844434a4dddd6312cc26e9e1184cbada5609ce746",
+          "analyze_stdout_sha256": "ca8229141dea0ba353461008934aa83d6e43034deca55bd14f694b5950501ffe",
           "graph": {
-            "artifact_bytes": 2876860,
-            "artifact_sha256": "183165dc746af633bea970f74b912972f515a1014d0e180f6a2a08b0f1e4e101",
-            "canonical_semantic_sha256": "397de80ad09e175ff990b25aae9bc8680942f9a68b7b8e3180f18caa3a8792e0",
-            "edges": 5897,
+            "artifact_bytes": 2884531,
+            "artifact_sha256": "8f60e0e079892894aaac2882978dfe7ad120a1f0c25fcd4f0c366a269ec06763",
+            "canonical_semantic_sha256": "75788afd4be0f123b29931f53acab4247f553e93ae3943066dbe12d86ee82a8d",
+            "edges": 5970,
             "edges_by_kind": {
-              "Calls": 840,
+              "Calls": 913,
               "Contains": 931,
               "DataFlow": 253,
               "Inherits": 15,
@@ -1090,13 +1133,13 @@
             },
             "nodes": 1549
           },
-          "inspect_wall_ms": 121,
+          "inspect_wall_ms": 99,
           "ordinal": 5,
-          "peak_rss_kib": 41252,
+          "peak_rss_kib": 39668,
           "phase_ms": {
-            "build": 941,
-            "save": 153,
-            "similarity": 267
+            "build": 829,
+            "save": 111,
+            "similarity": 191
           },
           "semantic_cases": [
             {
@@ -1107,6 +1150,15 @@
               "observed_present": true,
               "source": "crate::de::from_slice",
               "target": "crate::de::from_trait"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "from-slice-nested-argument-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::de::from_slice",
+              "target": "crate::read::SliceRead<'a>::new"
             },
             {
               "classification": "tp",
@@ -1137,7 +1189,7 @@
             }
           ],
           "source_manifest_after_sha256": "f6eecfbcf0baa8180f9b3d9989f9b9b52c9729d501aea22952b6e185edcbd289",
-          "wall_ms": 1566
+          "wall_ms": 1351
         }
       ],
       "source": {
@@ -1148,12 +1200,12 @@
       },
       "summary": {
         "artifact_unique_digests": 1,
-        "peak_rss_max_kib": 41676,
-        "peak_rss_median_kib": 41472,
+        "peak_rss_max_kib": 39732,
+        "peak_rss_median_kib": 39668,
         "phase_median_ms": {
-          "build": 924,
-          "save": 157,
-          "similarity": 267
+          "build": 829,
+          "save": 108,
+          "similarity": 193
         },
         "semantic": {
           "fn": 0,
@@ -1161,12 +1213,12 @@
           "precision": 1.0,
           "recall": 1.0,
           "tn": 0,
-          "tp": 4
+          "tp": 5
         },
         "semantic_unique_digests": 1,
         "unique_node_edge_count_pairs": 1,
-        "wall_max_ms": 1637,
-        "wall_median_ms": 1565
+        "wall_max_ms": 1436,
+        "wall_median_ms": 1364
       }
     },
     {
@@ -1176,27 +1228,27 @@
       "runs": [
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "0c2e0f658f95579ef04f8e6d7d7e1bc9d1278be026070a15a90fe631a32dd3ef",
+          "analyze_stdout_sha256": "e8e4e9f17c24cb6f5f87b7a3fb1633fce0a3af3cb10f6d90bbcedce6a53f359a",
           "graph": {
-            "artifact_bytes": 1010880,
-            "artifact_sha256": "e957343bf236c8199da39a0f35685ebd5e055f804c53bdf8aad77fbd06eb415b",
-            "canonical_semantic_sha256": "13bdd96d6502e647a84a97e701e82723668eecca32f53d6c743f8aa515935797",
-            "edges": 1566,
+            "artifact_bytes": 1016562,
+            "artifact_sha256": "1281944fc091d7d319ce07a80d07fec8bf0b4526813e8b771dff3665d7ea7e0b",
+            "canonical_semantic_sha256": "e1c9b311d6856d96c82cc83833dcc197ceb533b17e9067f0f078133f5b7cc2ae",
+            "edges": 1621,
             "edges_by_kind": {
-              "Calls": 85,
+              "Calls": 140,
               "Contains": 313,
               "DataFlow": 160,
               "SemanticSimilar": 1008
             },
             "nodes": 451
           },
-          "inspect_wall_ms": 39,
+          "inspect_wall_ms": 54,
           "ordinal": 1,
-          "peak_rss_kib": 19584,
+          "peak_rss_kib": 17536,
           "phase_ms": {
-            "build": 286,
-            "save": 66,
-            "similarity": 18
+            "build": 245,
+            "save": 49,
+            "similarity": 13
           },
           "semantic_cases": [
             {
@@ -1270,34 +1322,43 @@
               "observed_present": false,
               "source": "crate::regex::bytes::Regex::replace_all",
               "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "regexset-new-chained-builder-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regexset::bytes::RegexSet::new",
+              "target": "crate::builders::RegexSetBuilder::build"
             }
           ],
           "source_manifest_after_sha256": "abed475d0db643753fdc8832787c498ff3c87b2d21e515cec3cd1a31a11052bf",
-          "wall_ms": 547
+          "wall_ms": 502
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "ce2139ce254fbae7e848df54d4e332f6fbbc4ed2d90c600211aad7aa94c3a332",
+          "analyze_stdout_sha256": "330158bd521583b4756726d610b1fc01884e3ed3ce8505be3af476f1217d20b1",
           "graph": {
-            "artifact_bytes": 1010880,
-            "artifact_sha256": "e957343bf236c8199da39a0f35685ebd5e055f804c53bdf8aad77fbd06eb415b",
-            "canonical_semantic_sha256": "13bdd96d6502e647a84a97e701e82723668eecca32f53d6c743f8aa515935797",
-            "edges": 1566,
+            "artifact_bytes": 1016562,
+            "artifact_sha256": "1281944fc091d7d319ce07a80d07fec8bf0b4526813e8b771dff3665d7ea7e0b",
+            "canonical_semantic_sha256": "e1c9b311d6856d96c82cc83833dcc197ceb533b17e9067f0f078133f5b7cc2ae",
+            "edges": 1621,
             "edges_by_kind": {
-              "Calls": 85,
+              "Calls": 140,
               "Contains": 313,
               "DataFlow": 160,
               "SemanticSimilar": 1008
             },
             "nodes": 451
           },
-          "inspect_wall_ms": 44,
+          "inspect_wall_ms": 30,
           "ordinal": 2,
-          "peak_rss_kib": 19456,
+          "peak_rss_kib": 17664,
           "phase_ms": {
-            "build": 278,
+            "build": 259,
             "save": 68,
-            "similarity": 18
+            "similarity": 14
           },
           "semantic_cases": [
             {
@@ -1371,34 +1432,43 @@
               "observed_present": false,
               "source": "crate::regex::bytes::Regex::replace_all",
               "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "regexset-new-chained-builder-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regexset::bytes::RegexSet::new",
+              "target": "crate::builders::RegexSetBuilder::build"
             }
           ],
           "source_manifest_after_sha256": "abed475d0db643753fdc8832787c498ff3c87b2d21e515cec3cd1a31a11052bf",
-          "wall_ms": 539
+          "wall_ms": 530
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "4a36704a799afa682a16f94b0b616de46b3455dcb1904c0b090d15a2405d1428",
+          "analyze_stdout_sha256": "917f03d03d0a34dd05cdf2294893e9beeeae99f763dd77bc69bc3d3ffabd89a1",
           "graph": {
-            "artifact_bytes": 1010880,
-            "artifact_sha256": "e957343bf236c8199da39a0f35685ebd5e055f804c53bdf8aad77fbd06eb415b",
-            "canonical_semantic_sha256": "13bdd96d6502e647a84a97e701e82723668eecca32f53d6c743f8aa515935797",
-            "edges": 1566,
+            "artifact_bytes": 1016562,
+            "artifact_sha256": "1281944fc091d7d319ce07a80d07fec8bf0b4526813e8b771dff3665d7ea7e0b",
+            "canonical_semantic_sha256": "e1c9b311d6856d96c82cc83833dcc197ceb533b17e9067f0f078133f5b7cc2ae",
+            "edges": 1621,
             "edges_by_kind": {
-              "Calls": 85,
+              "Calls": 140,
               "Contains": 313,
               "DataFlow": 160,
               "SemanticSimilar": 1008
             },
             "nodes": 451
           },
-          "inspect_wall_ms": 40,
+          "inspect_wall_ms": 30,
           "ordinal": 3,
-          "peak_rss_kib": 19584,
+          "peak_rss_kib": 17408,
           "phase_ms": {
-            "build": 312,
-            "save": 64,
-            "similarity": 18
+            "build": 248,
+            "save": 51,
+            "similarity": 13
           },
           "semantic_cases": [
             {
@@ -1472,34 +1542,43 @@
               "observed_present": false,
               "source": "crate::regex::bytes::Regex::replace_all",
               "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "regexset-new-chained-builder-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regexset::bytes::RegexSet::new",
+              "target": "crate::builders::RegexSetBuilder::build"
             }
           ],
           "source_manifest_after_sha256": "abed475d0db643753fdc8832787c498ff3c87b2d21e515cec3cd1a31a11052bf",
-          "wall_ms": 582
+          "wall_ms": 510
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "f0817efc666735dd0ce1e33e53c488d6201fa039aedf3d1457fbdc4834210573",
+          "analyze_stdout_sha256": "2926182f3f88cabdea95e23ef3dee16aac37c4a93a9236ef850bc23d0f2eb294",
           "graph": {
-            "artifact_bytes": 1010880,
-            "artifact_sha256": "e957343bf236c8199da39a0f35685ebd5e055f804c53bdf8aad77fbd06eb415b",
-            "canonical_semantic_sha256": "13bdd96d6502e647a84a97e701e82723668eecca32f53d6c743f8aa515935797",
-            "edges": 1566,
+            "artifact_bytes": 1016562,
+            "artifact_sha256": "1281944fc091d7d319ce07a80d07fec8bf0b4526813e8b771dff3665d7ea7e0b",
+            "canonical_semantic_sha256": "e1c9b311d6856d96c82cc83833dcc197ceb533b17e9067f0f078133f5b7cc2ae",
+            "edges": 1621,
             "edges_by_kind": {
-              "Calls": 85,
+              "Calls": 140,
               "Contains": 313,
               "DataFlow": 160,
               "SemanticSimilar": 1008
             },
             "nodes": 451
           },
-          "inspect_wall_ms": 39,
+          "inspect_wall_ms": 30,
           "ordinal": 4,
-          "peak_rss_kib": 19456,
+          "peak_rss_kib": 17536,
           "phase_ms": {
-            "build": 279,
-            "save": 68,
-            "similarity": 25
+            "build": 237,
+            "save": 49,
+            "similarity": 12
           },
           "semantic_cases": [
             {
@@ -1573,34 +1652,43 @@
               "observed_present": false,
               "source": "crate::regex::bytes::Regex::replace_all",
               "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "regexset-new-chained-builder-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regexset::bytes::RegexSet::new",
+              "target": "crate::builders::RegexSetBuilder::build"
             }
           ],
           "source_manifest_after_sha256": "abed475d0db643753fdc8832787c498ff3c87b2d21e515cec3cd1a31a11052bf",
-          "wall_ms": 547
+          "wall_ms": 482
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "a4f2d1f05de05f597a802de749fd23dcc1e18962536bbf85309aa7bf60f38c47",
+          "analyze_stdout_sha256": "2fe5d578f618e932e4d616b2197ffea9bac0d98e7fbafb8312091dc2e084ba70",
           "graph": {
-            "artifact_bytes": 1010880,
-            "artifact_sha256": "e957343bf236c8199da39a0f35685ebd5e055f804c53bdf8aad77fbd06eb415b",
-            "canonical_semantic_sha256": "13bdd96d6502e647a84a97e701e82723668eecca32f53d6c743f8aa515935797",
-            "edges": 1566,
+            "artifact_bytes": 1016562,
+            "artifact_sha256": "1281944fc091d7d319ce07a80d07fec8bf0b4526813e8b771dff3665d7ea7e0b",
+            "canonical_semantic_sha256": "e1c9b311d6856d96c82cc83833dcc197ceb533b17e9067f0f078133f5b7cc2ae",
+            "edges": 1621,
             "edges_by_kind": {
-              "Calls": 85,
+              "Calls": 140,
               "Contains": 313,
               "DataFlow": 160,
               "SemanticSimilar": 1008
             },
             "nodes": 451
           },
-          "inspect_wall_ms": 39,
+          "inspect_wall_ms": 33,
           "ordinal": 5,
-          "peak_rss_kib": 19584,
+          "peak_rss_kib": 17536,
           "phase_ms": {
-            "build": 277,
-            "save": 65,
-            "similarity": 18
+            "build": 246,
+            "save": 47,
+            "similarity": 13
           },
           "semantic_cases": [
             {
@@ -1674,10 +1762,19 @@
               "observed_present": false,
               "source": "crate::regex::bytes::Regex::replace_all",
               "target": "crate::regex::string::Regex::replacen"
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "regexset-new-chained-builder-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::regexset::bytes::RegexSet::new",
+              "target": "crate::builders::RegexSetBuilder::build"
             }
           ],
           "source_manifest_after_sha256": "abed475d0db643753fdc8832787c498ff3c87b2d21e515cec3cd1a31a11052bf",
-          "wall_ms": 536
+          "wall_ms": 479
         }
       ],
       "source": {
@@ -1688,12 +1785,12 @@
       },
       "summary": {
         "artifact_unique_digests": 1,
-        "peak_rss_max_kib": 19584,
-        "peak_rss_median_kib": 19584,
+        "peak_rss_max_kib": 17664,
+        "peak_rss_median_kib": 17536,
         "phase_median_ms": {
-          "build": 279,
-          "save": 66,
-          "similarity": 18
+          "build": 246,
+          "save": 49,
+          "similarity": 13
         },
         "semantic": {
           "fn": 0,
@@ -1701,12 +1798,12 @@
           "precision": 1.0,
           "recall": 1.0,
           "tn": 4,
-          "tp": 4
+          "tp": 5
         },
         "semantic_unique_digests": 1,
         "unique_node_edge_count_pairs": 1,
-        "wall_max_ms": 582,
-        "wall_median_ms": 547
+        "wall_max_ms": 530,
+        "wall_median_ms": 502
       }
     },
     {
@@ -1716,14 +1813,14 @@
       "runs": [
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "607b4b566446eca8ee4856a23bc82c2276a774975dc6d9bef560d804e8b95818",
+          "analyze_stdout_sha256": "72c298ea1ebb157b67c63e1917f34b98089abf6b281dacf82496e9e0807a7b4c",
           "graph": {
-            "artifact_bytes": 4219522,
-            "artifact_sha256": "9f630581d4c6661c9d002138ebb353ba058e4d7b93c5c4d7d5a0541dd71f58c6",
-            "canonical_semantic_sha256": "a18673a9c0bebe7ae49423ada3e5f6e08034408ea1fd679bd06ca0f1316e98d9",
-            "edges": 7968,
+            "artifact_bytes": 4221322,
+            "artifact_sha256": "c9e9215ba2df4537bd36219181c8534489fa852157c130f8f8afc2c9475620dd",
+            "canonical_semantic_sha256": "06521ec2be2d8edd6bd294953596eb7d4bc28e487c1b1fb7cd646c15c7607c9f",
+            "edges": 7985,
             "edges_by_kind": {
-              "Calls": 777,
+              "Calls": 794,
               "Contains": 2472,
               "DataFlow": 336,
               "Inherits": 37,
@@ -1731,13 +1828,13 @@
             },
             "nodes": 2521
           },
-          "inspect_wall_ms": 168,
+          "inspect_wall_ms": 140,
           "ordinal": 1,
-          "peak_rss_kib": 47200,
+          "peak_rss_kib": 45600,
           "phase_ms": {
-            "build": 2719,
-            "save": 647,
-            "similarity": 655
+            "build": 2374,
+            "save": 225,
+            "similarity": 479
           },
           "semantic_cases": [
             {
@@ -1802,21 +1899,30 @@
               "observed_present": false,
               "source": "crate::click::core::Command::invoke",
               "target": "crate::click::testing::CliRunner::invoke"
+            },
+            {
+              "classification": "fp",
+              "expected_present": false,
+              "id": "getchar-not-testing-isolation-mock",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::termui::getchar",
+              "target": "crate::click::testing::CliRunner::isolation::_getchar"
             }
           ],
           "source_manifest_after_sha256": "fb79d60d40df77a448848d5938bb793746bbb30b10dfd96461ec0ba5bb09dc03",
-          "wall_ms": 4241
+          "wall_ms": 3346
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "4a0b36e731c2a1a134c41d1414b8269a734a425838cd8f6a08f7034361b1b4dc",
+          "analyze_stdout_sha256": "eb92cea9e43c149d5c64e55c65370eb0768db6f80a64d0c748a69a3f38f138cf",
           "graph": {
-            "artifact_bytes": 4219522,
-            "artifact_sha256": "9f630581d4c6661c9d002138ebb353ba058e4d7b93c5c4d7d5a0541dd71f58c6",
-            "canonical_semantic_sha256": "a18673a9c0bebe7ae49423ada3e5f6e08034408ea1fd679bd06ca0f1316e98d9",
-            "edges": 7968,
+            "artifact_bytes": 4221322,
+            "artifact_sha256": "c9e9215ba2df4537bd36219181c8534489fa852157c130f8f8afc2c9475620dd",
+            "canonical_semantic_sha256": "06521ec2be2d8edd6bd294953596eb7d4bc28e487c1b1fb7cd646c15c7607c9f",
+            "edges": 7985,
             "edges_by_kind": {
-              "Calls": 777,
+              "Calls": 794,
               "Contains": 2472,
               "DataFlow": 336,
               "Inherits": 37,
@@ -1824,13 +1930,13 @@
             },
             "nodes": 2521
           },
-          "inspect_wall_ms": 163,
+          "inspect_wall_ms": 133,
           "ordinal": 2,
-          "peak_rss_kib": 47216,
+          "peak_rss_kib": 45544,
           "phase_ms": {
-            "build": 2751,
-            "save": 237,
-            "similarity": 663
+            "build": 2275,
+            "save": 196,
+            "similarity": 422
           },
           "semantic_cases": [
             {
@@ -1895,21 +2001,30 @@
               "observed_present": false,
               "source": "crate::click::core::Command::invoke",
               "target": "crate::click::testing::CliRunner::invoke"
+            },
+            {
+              "classification": "fp",
+              "expected_present": false,
+              "id": "getchar-not-testing-isolation-mock",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::termui::getchar",
+              "target": "crate::click::testing::CliRunner::isolation::_getchar"
             }
           ],
           "source_manifest_after_sha256": "fb79d60d40df77a448848d5938bb793746bbb30b10dfd96461ec0ba5bb09dc03",
-          "wall_ms": 3865
+          "wall_ms": 3126
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "dfcae752121591d1fe6ba9ef0bce4776de92c226ef3a57261afe441b3c7b397c",
+          "analyze_stdout_sha256": "3bf9d5262ff0c65f5d7f27f5eeb1ef49ff4d41511624b405c9673b13d92cd39c",
           "graph": {
-            "artifact_bytes": 4219522,
-            "artifact_sha256": "9f630581d4c6661c9d002138ebb353ba058e4d7b93c5c4d7d5a0541dd71f58c6",
-            "canonical_semantic_sha256": "a18673a9c0bebe7ae49423ada3e5f6e08034408ea1fd679bd06ca0f1316e98d9",
-            "edges": 7968,
+            "artifact_bytes": 4221322,
+            "artifact_sha256": "c9e9215ba2df4537bd36219181c8534489fa852157c130f8f8afc2c9475620dd",
+            "canonical_semantic_sha256": "06521ec2be2d8edd6bd294953596eb7d4bc28e487c1b1fb7cd646c15c7607c9f",
+            "edges": 7985,
             "edges_by_kind": {
-              "Calls": 777,
+              "Calls": 794,
               "Contains": 2472,
               "DataFlow": 336,
               "Inherits": 37,
@@ -1917,13 +2032,13 @@
             },
             "nodes": 2521
           },
-          "inspect_wall_ms": 167,
+          "inspect_wall_ms": 152,
           "ordinal": 3,
-          "peak_rss_kib": 47340,
+          "peak_rss_kib": 45756,
           "phase_ms": {
-            "build": 2820,
-            "save": 269,
-            "similarity": 660
+            "build": 2514,
+            "save": 173,
+            "similarity": 480
           },
           "semantic_cases": [
             {
@@ -1988,21 +2103,30 @@
               "observed_present": false,
               "source": "crate::click::core::Command::invoke",
               "target": "crate::click::testing::CliRunner::invoke"
+            },
+            {
+              "classification": "fp",
+              "expected_present": false,
+              "id": "getchar-not-testing-isolation-mock",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::termui::getchar",
+              "target": "crate::click::testing::CliRunner::isolation::_getchar"
             }
           ],
           "source_manifest_after_sha256": "fb79d60d40df77a448848d5938bb793746bbb30b10dfd96461ec0ba5bb09dc03",
-          "wall_ms": 3961
+          "wall_ms": 3416
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "d985c75521e1cc18f368d04809ecea2dfe6e79c22795f423d98be225b2a158ef",
+          "analyze_stdout_sha256": "907ff8d49dc69029c008e14e2e6f266d0fdd47e0628ededa451bf0357532b4bb",
           "graph": {
-            "artifact_bytes": 4219522,
-            "artifact_sha256": "9f630581d4c6661c9d002138ebb353ba058e4d7b93c5c4d7d5a0541dd71f58c6",
-            "canonical_semantic_sha256": "a18673a9c0bebe7ae49423ada3e5f6e08034408ea1fd679bd06ca0f1316e98d9",
-            "edges": 7968,
+            "artifact_bytes": 4221322,
+            "artifact_sha256": "c9e9215ba2df4537bd36219181c8534489fa852157c130f8f8afc2c9475620dd",
+            "canonical_semantic_sha256": "06521ec2be2d8edd6bd294953596eb7d4bc28e487c1b1fb7cd646c15c7607c9f",
+            "edges": 7985,
             "edges_by_kind": {
-              "Calls": 777,
+              "Calls": 794,
               "Contains": 2472,
               "DataFlow": 336,
               "Inherits": 37,
@@ -2010,13 +2134,13 @@
             },
             "nodes": 2521
           },
-          "inspect_wall_ms": 169,
+          "inspect_wall_ms": 143,
           "ordinal": 4,
-          "peak_rss_kib": 47592,
+          "peak_rss_kib": 45728,
           "phase_ms": {
-            "build": 2774,
-            "save": 245,
-            "similarity": 615
+            "build": 2266,
+            "save": 165,
+            "similarity": 455
           },
           "semantic_cases": [
             {
@@ -2081,21 +2205,30 @@
               "observed_present": false,
               "source": "crate::click::core::Command::invoke",
               "target": "crate::click::testing::CliRunner::invoke"
+            },
+            {
+              "classification": "fp",
+              "expected_present": false,
+              "id": "getchar-not-testing-isolation-mock",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::termui::getchar",
+              "target": "crate::click::testing::CliRunner::isolation::_getchar"
             }
           ],
           "source_manifest_after_sha256": "fb79d60d40df77a448848d5938bb793746bbb30b10dfd96461ec0ba5bb09dc03",
-          "wall_ms": 3862
+          "wall_ms": 3133
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "f4cc1da9e661b6a0bd3266d77db240f5d49add1abe3a5b484fa414760587ee5f",
+          "analyze_stdout_sha256": "0bf82d130d32bf91004fe8207d358b73c9f5c4dc347f7b02bdd820d8addb422e",
           "graph": {
-            "artifact_bytes": 4219522,
-            "artifact_sha256": "9f630581d4c6661c9d002138ebb353ba058e4d7b93c5c4d7d5a0541dd71f58c6",
-            "canonical_semantic_sha256": "a18673a9c0bebe7ae49423ada3e5f6e08034408ea1fd679bd06ca0f1316e98d9",
-            "edges": 7968,
+            "artifact_bytes": 4221322,
+            "artifact_sha256": "c9e9215ba2df4537bd36219181c8534489fa852157c130f8f8afc2c9475620dd",
+            "canonical_semantic_sha256": "06521ec2be2d8edd6bd294953596eb7d4bc28e487c1b1fb7cd646c15c7607c9f",
+            "edges": 7985,
             "edges_by_kind": {
-              "Calls": 777,
+              "Calls": 794,
               "Contains": 2472,
               "DataFlow": 336,
               "Inherits": 37,
@@ -2103,13 +2236,13 @@
             },
             "nodes": 2521
           },
-          "inspect_wall_ms": 166,
+          "inspect_wall_ms": 130,
           "ordinal": 5,
-          "peak_rss_kib": 47352,
+          "peak_rss_kib": 45620,
           "phase_ms": {
-            "build": 2738,
-            "save": 224,
-            "similarity": 619
+            "build": 2572,
+            "save": 146,
+            "similarity": 433
           },
           "semantic_cases": [
             {
@@ -2174,10 +2307,19 @@
               "observed_present": false,
               "source": "crate::click::core::Command::invoke",
               "target": "crate::click::testing::CliRunner::invoke"
+            },
+            {
+              "classification": "fp",
+              "expected_present": false,
+              "id": "getchar-not-testing-isolation-mock",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::click::termui::getchar",
+              "target": "crate::click::testing::CliRunner::isolation::_getchar"
             }
           ],
           "source_manifest_after_sha256": "fb79d60d40df77a448848d5938bb793746bbb30b10dfd96461ec0ba5bb09dc03",
-          "wall_ms": 3835
+          "wall_ms": 3364
         }
       ],
       "source": {
@@ -2188,25 +2330,25 @@
       },
       "summary": {
         "artifact_unique_digests": 1,
-        "peak_rss_max_kib": 47592,
-        "peak_rss_median_kib": 47340,
+        "peak_rss_max_kib": 45756,
+        "peak_rss_median_kib": 45620,
         "phase_median_ms": {
-          "build": 2751,
-          "save": 245,
-          "similarity": 655
+          "build": 2374,
+          "save": 173,
+          "similarity": 455
         },
         "semantic": {
           "fn": 0,
-          "fp": 0,
-          "precision": 1.0,
+          "fp": 1,
+          "precision": 0.8,
           "recall": 1.0,
           "tn": 3,
           "tp": 4
         },
         "semantic_unique_digests": 1,
         "unique_node_edge_count_pairs": 1,
-        "wall_max_ms": 4241,
-        "wall_median_ms": 3865
+        "wall_max_ms": 3416,
+        "wall_median_ms": 3346
       }
     },
     {
@@ -2216,14 +2358,14 @@
       "runs": [
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "5a18c9c9324be87fc1a56a3725e3487025037fb87513be4f3fb6bf39391e7290",
+          "analyze_stdout_sha256": "2d4842440b172e271e27efd77655b195b980ac1286c3ade9bb498fa70fdcecd7",
           "graph": {
-            "artifact_bytes": 24474145,
-            "artifact_sha256": "91bae5eb63d3621b31a0a53ca02ffb4e4e088273cf76452198d97138df119415",
-            "canonical_semantic_sha256": "6e5820be5c0350ee3dab06c46317afa7a14ddde118ceb0378f0a6f5cd0511b86",
-            "edges": 35416,
+            "artifact_bytes": 24475972,
+            "artifact_sha256": "a9a110ddc98c00e30f8c0b53d1079eff1a766bdfb931e1e4743ef2c7dc1415af",
+            "canonical_semantic_sha256": "6de7340818f276ff519908980caaea1e246d7ad4d9576060118f5f10a24fece3",
+            "edges": 35433,
             "edges_by_kind": {
-              "Calls": 2572,
+              "Calls": 2589,
               "Contains": 18808,
               "DataFlow": 1046,
               "Inherits": 606,
@@ -2231,13 +2373,13 @@
             },
             "nodes": 19080
           },
-          "inspect_wall_ms": 1119,
+          "inspect_wall_ms": 1147,
           "ordinal": 1,
-          "peak_rss_kib": 206224,
+          "peak_rss_kib": 206568,
           "phase_ms": {
-            "build": 28859,
-            "save": 1288,
-            "similarity": 15753
+            "build": 24545,
+            "save": 918,
+            "similarity": 14915
           },
           "semantic_cases": [
             {
@@ -2278,18 +2420,18 @@
             }
           ],
           "source_manifest_after_sha256": "f07f20f0bd7143e52915dcdba2455d11df5a415f9be8b8e9f908c59d4ff43c58",
-          "wall_ms": 46375
+          "wall_ms": 40837
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "18ee9daf588c95571288db3835fcb6e8dde4aaba9304f7402989c8adf4769852",
+          "analyze_stdout_sha256": "c77479dda7cbf298fdf9b6c58c0b8dc84bf2371c84f5a344d8bd248974d615e3",
           "graph": {
-            "artifact_bytes": 24474145,
-            "artifact_sha256": "91bae5eb63d3621b31a0a53ca02ffb4e4e088273cf76452198d97138df119415",
-            "canonical_semantic_sha256": "6e5820be5c0350ee3dab06c46317afa7a14ddde118ceb0378f0a6f5cd0511b86",
-            "edges": 35416,
+            "artifact_bytes": 24475972,
+            "artifact_sha256": "a9a110ddc98c00e30f8c0b53d1079eff1a766bdfb931e1e4743ef2c7dc1415af",
+            "canonical_semantic_sha256": "6de7340818f276ff519908980caaea1e246d7ad4d9576060118f5f10a24fece3",
+            "edges": 35433,
             "edges_by_kind": {
-              "Calls": 2572,
+              "Calls": 2589,
               "Contains": 18808,
               "DataFlow": 1046,
               "Inherits": 606,
@@ -2297,13 +2439,13 @@
             },
             "nodes": 19080
           },
-          "inspect_wall_ms": 1119,
+          "inspect_wall_ms": 884,
           "ordinal": 2,
-          "peak_rss_kib": 206308,
+          "peak_rss_kib": 206564,
           "phase_ms": {
-            "build": 28340,
-            "save": 1198,
-            "similarity": 15137
+            "build": 23898,
+            "save": 816,
+            "similarity": 12101
           },
           "semantic_cases": [
             {
@@ -2344,18 +2486,18 @@
             }
           ],
           "source_manifest_after_sha256": "f07f20f0bd7143e52915dcdba2455d11df5a415f9be8b8e9f908c59d4ff43c58",
-          "wall_ms": 45141
+          "wall_ms": 37253
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "8e630496113f13f798c7071ca2a2c0ef8323a676bab9f7d29593e8bfce6db643",
+          "analyze_stdout_sha256": "75cc3fabf2667c7c4e0e782c62328e5f3509ce9e781bb1bf05420ba1f85b0ca7",
           "graph": {
-            "artifact_bytes": 24474145,
-            "artifact_sha256": "91bae5eb63d3621b31a0a53ca02ffb4e4e088273cf76452198d97138df119415",
-            "canonical_semantic_sha256": "6e5820be5c0350ee3dab06c46317afa7a14ddde118ceb0378f0a6f5cd0511b86",
-            "edges": 35416,
+            "artifact_bytes": 24475972,
+            "artifact_sha256": "a9a110ddc98c00e30f8c0b53d1079eff1a766bdfb931e1e4743ef2c7dc1415af",
+            "canonical_semantic_sha256": "6de7340818f276ff519908980caaea1e246d7ad4d9576060118f5f10a24fece3",
+            "edges": 35433,
             "edges_by_kind": {
-              "Calls": 2572,
+              "Calls": 2589,
               "Contains": 18808,
               "DataFlow": 1046,
               "Inherits": 606,
@@ -2363,13 +2505,13 @@
             },
             "nodes": 19080
           },
-          "inspect_wall_ms": 1125,
+          "inspect_wall_ms": 977,
           "ordinal": 3,
-          "peak_rss_kib": 206264,
+          "peak_rss_kib": 206436,
           "phase_ms": {
-            "build": 29186,
-            "save": 1235,
-            "similarity": 16270
+            "build": 25022,
+            "save": 931,
+            "similarity": 13643
           },
           "semantic_cases": [
             {
@@ -2410,18 +2552,18 @@
             }
           ],
           "source_manifest_after_sha256": "f07f20f0bd7143e52915dcdba2455d11df5a415f9be8b8e9f908c59d4ff43c58",
-          "wall_ms": 47127
+          "wall_ms": 40132
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "e32a7af0582204d4320293b0b07d4729a564b18356e519740dea528b3d5a8a24",
+          "analyze_stdout_sha256": "a1cd702e05b753ece1159f170aa6faf7f19710b48ab7ec8043210eced8b6c551",
           "graph": {
-            "artifact_bytes": 24474145,
-            "artifact_sha256": "91bae5eb63d3621b31a0a53ca02ffb4e4e088273cf76452198d97138df119415",
-            "canonical_semantic_sha256": "6e5820be5c0350ee3dab06c46317afa7a14ddde118ceb0378f0a6f5cd0511b86",
-            "edges": 35416,
+            "artifact_bytes": 24475972,
+            "artifact_sha256": "a9a110ddc98c00e30f8c0b53d1079eff1a766bdfb931e1e4743ef2c7dc1415af",
+            "canonical_semantic_sha256": "6de7340818f276ff519908980caaea1e246d7ad4d9576060118f5f10a24fece3",
+            "edges": 35433,
             "edges_by_kind": {
-              "Calls": 2572,
+              "Calls": 2589,
               "Contains": 18808,
               "DataFlow": 1046,
               "Inherits": 606,
@@ -2429,13 +2571,13 @@
             },
             "nodes": 19080
           },
-          "inspect_wall_ms": 1113,
+          "inspect_wall_ms": 843,
           "ordinal": 4,
-          "peak_rss_kib": 206552,
+          "peak_rss_kib": 206576,
           "phase_ms": {
-            "build": 28484,
-            "save": 1153,
-            "similarity": 16888
+            "build": 23528,
+            "save": 850,
+            "similarity": 12082
           },
           "semantic_cases": [
             {
@@ -2476,18 +2618,18 @@
             }
           ],
           "source_manifest_after_sha256": "f07f20f0bd7143e52915dcdba2455d11df5a415f9be8b8e9f908c59d4ff43c58",
-          "wall_ms": 46948
+          "wall_ms": 36912
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "29556cd318471731aa74025b2ffc024ba0eb2183cfd6a3e3e70eee5ecb658a01",
+          "analyze_stdout_sha256": "57db61b003f4d6db8f66fde4b56eaa0d19944f55853c6b94231c8c8bafd518cc",
           "graph": {
-            "artifact_bytes": 24474145,
-            "artifact_sha256": "91bae5eb63d3621b31a0a53ca02ffb4e4e088273cf76452198d97138df119415",
-            "canonical_semantic_sha256": "6e5820be5c0350ee3dab06c46317afa7a14ddde118ceb0378f0a6f5cd0511b86",
-            "edges": 35416,
+            "artifact_bytes": 24475972,
+            "artifact_sha256": "a9a110ddc98c00e30f8c0b53d1079eff1a766bdfb931e1e4743ef2c7dc1415af",
+            "canonical_semantic_sha256": "6de7340818f276ff519908980caaea1e246d7ad4d9576060118f5f10a24fece3",
+            "edges": 35433,
             "edges_by_kind": {
-              "Calls": 2572,
+              "Calls": 2589,
               "Contains": 18808,
               "DataFlow": 1046,
               "Inherits": 606,
@@ -2495,13 +2637,13 @@
             },
             "nodes": 19080
           },
-          "inspect_wall_ms": 1138,
+          "inspect_wall_ms": 763,
           "ordinal": 5,
-          "peak_rss_kib": 206340,
+          "peak_rss_kib": 206528,
           "phase_ms": {
-            "build": 28452,
-            "save": 1097,
-            "similarity": 15822
+            "build": 23474,
+            "save": 762,
+            "similarity": 12029
           },
           "semantic_cases": [
             {
@@ -2542,7 +2684,7 @@
             }
           ],
           "source_manifest_after_sha256": "f07f20f0bd7143e52915dcdba2455d11df5a415f9be8b8e9f908c59d4ff43c58",
-          "wall_ms": 45787
+          "wall_ms": 36678
         }
       ],
       "source": {
@@ -2553,12 +2695,12 @@
       },
       "summary": {
         "artifact_unique_digests": 1,
-        "peak_rss_max_kib": 206552,
-        "peak_rss_median_kib": 206308,
+        "peak_rss_max_kib": 206576,
+        "peak_rss_median_kib": 206564,
         "phase_median_ms": {
-          "build": 28484,
-          "save": 1198,
-          "similarity": 15822
+          "build": 23898,
+          "save": 850,
+          "similarity": 12101
         },
         "semantic": {
           "fn": 0,
@@ -2570,8 +2712,8 @@
         },
         "semantic_unique_digests": 1,
         "unique_node_edge_count_pairs": 1,
-        "wall_max_ms": 47127,
-        "wall_median_ms": 46375
+        "wall_max_ms": 40837,
+        "wall_median_ms": 37253
       }
     },
     {
@@ -2581,14 +2723,14 @@
       "runs": [
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "15fdf9cb52462d3519c6867a250db39f6e15e510f04d2d927a1aecde5e48ddcc",
+          "analyze_stdout_sha256": "a319f7ef05a0de61acaa216957becf95047074b1c0aad4c1148277588f7ba956",
           "graph": {
-            "artifact_bytes": 2173978,
-            "artifact_sha256": "4002caad6be04f354dadd9efd5cc96d23eafa118027ee00b94cddadf3a652cb0",
-            "canonical_semantic_sha256": "4c980c3292731300f95f4b9eb2c7c2547752ee76616598682a6f931573313511",
-            "edges": 2639,
+            "artifact_bytes": 2178848,
+            "artifact_sha256": "e4e7c3424cee6e0495c3b6a9f36c9bdf2ea1110bada21375a0aec22eb072200d",
+            "canonical_semantic_sha256": "b91828d3284d00138154b04c341784e5878769f861c78ff0a483ca277ad4b512",
+            "edges": 2685,
             "edges_by_kind": {
-              "Calls": 518,
+              "Calls": 564,
               "Contains": 1435,
               "DataFlow": 281,
               "Inherits": 39,
@@ -2596,13 +2738,13 @@
             },
             "nodes": 1470
           },
-          "inspect_wall_ms": 87,
+          "inspect_wall_ms": 74,
           "ordinal": 1,
-          "peak_rss_kib": 28136,
+          "peak_rss_kib": 26344,
           "phase_ms": {
-            "build": 2008,
-            "save": 116,
-            "similarity": 170
+            "build": 1630,
+            "save": 88,
+            "similarity": 115
           },
           "semantic_cases": [
             {
@@ -2733,18 +2875,18 @@
             }
           ],
           "source_manifest_after_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
-          "wall_ms": 2481
+          "wall_ms": 2027
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "f210db84a4accaa378a4e7adbcafd93b8d213a3b7ffa47a87909c3fa0bfe3bcb",
+          "analyze_stdout_sha256": "14d395f335cce8a64c2ebf803f2ce89ee8768202f9e3f4f67e49d7bdca1866a5",
           "graph": {
-            "artifact_bytes": 2173978,
-            "artifact_sha256": "4002caad6be04f354dadd9efd5cc96d23eafa118027ee00b94cddadf3a652cb0",
-            "canonical_semantic_sha256": "4c980c3292731300f95f4b9eb2c7c2547752ee76616598682a6f931573313511",
-            "edges": 2639,
+            "artifact_bytes": 2178848,
+            "artifact_sha256": "e4e7c3424cee6e0495c3b6a9f36c9bdf2ea1110bada21375a0aec22eb072200d",
+            "canonical_semantic_sha256": "b91828d3284d00138154b04c341784e5878769f861c78ff0a483ca277ad4b512",
+            "edges": 2685,
             "edges_by_kind": {
-              "Calls": 518,
+              "Calls": 564,
               "Contains": 1435,
               "DataFlow": 281,
               "Inherits": 39,
@@ -2752,13 +2894,13 @@
             },
             "nodes": 1470
           },
-          "inspect_wall_ms": 83,
+          "inspect_wall_ms": 64,
           "ordinal": 2,
-          "peak_rss_kib": 28528,
+          "peak_rss_kib": 26456,
           "phase_ms": {
-            "build": 1957,
-            "save": 116,
-            "similarity": 158
+            "build": 1624,
+            "save": 84,
+            "similarity": 130
           },
           "semantic_cases": [
             {
@@ -2889,18 +3031,18 @@
             }
           ],
           "source_manifest_after_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
-          "wall_ms": 2417
+          "wall_ms": 2042
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "d8e1847f921052dba2a8135e159ceefd57c639e33d31de712cc83eedc805ef17",
+          "analyze_stdout_sha256": "3c9170411bc04ae0b037ecfc1e9a5f2bf4d94c848f835456cf11a3d2b93cfc26",
           "graph": {
-            "artifact_bytes": 2173978,
-            "artifact_sha256": "4002caad6be04f354dadd9efd5cc96d23eafa118027ee00b94cddadf3a652cb0",
-            "canonical_semantic_sha256": "4c980c3292731300f95f4b9eb2c7c2547752ee76616598682a6f931573313511",
-            "edges": 2639,
+            "artifact_bytes": 2178848,
+            "artifact_sha256": "e4e7c3424cee6e0495c3b6a9f36c9bdf2ea1110bada21375a0aec22eb072200d",
+            "canonical_semantic_sha256": "b91828d3284d00138154b04c341784e5878769f861c78ff0a483ca277ad4b512",
+            "edges": 2685,
             "edges_by_kind": {
-              "Calls": 518,
+              "Calls": 564,
               "Contains": 1435,
               "DataFlow": 281,
               "Inherits": 39,
@@ -2908,13 +3050,13 @@
             },
             "nodes": 1470
           },
-          "inspect_wall_ms": 83,
+          "inspect_wall_ms": 63,
           "ordinal": 3,
-          "peak_rss_kib": 28132,
+          "peak_rss_kib": 26352,
           "phase_ms": {
-            "build": 1979,
-            "save": 133,
-            "similarity": 183
+            "build": 1671,
+            "save": 86,
+            "similarity": 131
           },
           "semantic_cases": [
             {
@@ -3045,18 +3187,18 @@
             }
           ],
           "source_manifest_after_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
-          "wall_ms": 2482
+          "wall_ms": 2070
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "dadcdab87f349362c30d22d84262bb2b4bd1efb76a396300ba68e3c99fd662cf",
+          "analyze_stdout_sha256": "a8a194f4272349294d69bd655a85e2a45ebfd3e93845d93d8f72fe8ff7af276c",
           "graph": {
-            "artifact_bytes": 2173978,
-            "artifact_sha256": "4002caad6be04f354dadd9efd5cc96d23eafa118027ee00b94cddadf3a652cb0",
-            "canonical_semantic_sha256": "4c980c3292731300f95f4b9eb2c7c2547752ee76616598682a6f931573313511",
-            "edges": 2639,
+            "artifact_bytes": 2178848,
+            "artifact_sha256": "e4e7c3424cee6e0495c3b6a9f36c9bdf2ea1110bada21375a0aec22eb072200d",
+            "canonical_semantic_sha256": "b91828d3284d00138154b04c341784e5878769f861c78ff0a483ca277ad4b512",
+            "edges": 2685,
             "edges_by_kind": {
-              "Calls": 518,
+              "Calls": 564,
               "Contains": 1435,
               "DataFlow": 281,
               "Inherits": 39,
@@ -3064,13 +3206,13 @@
             },
             "nodes": 1470
           },
-          "inspect_wall_ms": 83,
+          "inspect_wall_ms": 62,
           "ordinal": 4,
-          "peak_rss_kib": 28128,
+          "peak_rss_kib": 26340,
           "phase_ms": {
-            "build": 1941,
-            "save": 128,
-            "similarity": 161
+            "build": 1600,
+            "save": 110,
+            "similarity": 110
           },
           "semantic_cases": [
             {
@@ -3201,18 +3343,18 @@
             }
           ],
           "source_manifest_after_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
-          "wall_ms": 2427
+          "wall_ms": 2005
         },
         {
           "analyze_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "analyze_stdout_sha256": "c6a5c59384c6c3ac4ac649359e44be5edad5c36951f717d778d317902211b192",
+          "analyze_stdout_sha256": "46f5f73d1f363805b60406ee10fc60ac2ff67c4d1c3b7f87e281ea5259364905",
           "graph": {
-            "artifact_bytes": 2173978,
-            "artifact_sha256": "4002caad6be04f354dadd9efd5cc96d23eafa118027ee00b94cddadf3a652cb0",
-            "canonical_semantic_sha256": "4c980c3292731300f95f4b9eb2c7c2547752ee76616598682a6f931573313511",
-            "edges": 2639,
+            "artifact_bytes": 2178848,
+            "artifact_sha256": "e4e7c3424cee6e0495c3b6a9f36c9bdf2ea1110bada21375a0aec22eb072200d",
+            "canonical_semantic_sha256": "b91828d3284d00138154b04c341784e5878769f861c78ff0a483ca277ad4b512",
+            "edges": 2685,
             "edges_by_kind": {
-              "Calls": 518,
+              "Calls": 564,
               "Contains": 1435,
               "DataFlow": 281,
               "Inherits": 39,
@@ -3220,13 +3362,13 @@
             },
             "nodes": 1470
           },
-          "inspect_wall_ms": 86,
+          "inspect_wall_ms": 68,
           "ordinal": 5,
-          "peak_rss_kib": 28268,
+          "peak_rss_kib": 26320,
           "phase_ms": {
-            "build": 1963,
-            "save": 117,
-            "similarity": 160
+            "build": 1653,
+            "save": 83,
+            "similarity": 119
           },
           "semantic_cases": [
             {
@@ -3357,7 +3499,7 @@
             }
           ],
           "source_manifest_after_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
-          "wall_ms": 2432
+          "wall_ms": 2053
         }
       ],
       "source": {
@@ -3368,12 +3510,12 @@
       },
       "summary": {
         "artifact_unique_digests": 1,
-        "peak_rss_max_kib": 28528,
-        "peak_rss_median_kib": 28136,
+        "peak_rss_max_kib": 26456,
+        "peak_rss_median_kib": 26344,
         "phase_median_ms": {
-          "build": 1963,
-          "save": 117,
-          "similarity": 161
+          "build": 1630,
+          "save": 86,
+          "similarity": 119
         },
         "semantic": {
           "fn": 0,
@@ -3385,8 +3527,8 @@
         },
         "semantic_unique_digests": 1,
         "unique_node_edge_count_pairs": 1,
-        "wall_max_ms": 2482,
-        "wall_median_ms": 2432
+        "wall_max_ms": 2070,
+        "wall_median_ms": 2042
       }
     }
   ],
@@ -3395,21 +3537,21 @@
   "semantic_summary": {
     "aggregate": {
       "fn": 0,
-      "fp": 0,
-      "macro_precision": 1.0,
+      "fp": 1,
+      "macro_precision": 0.966667,
       "macro_recall": 1.0,
-      "micro_precision": 1.0,
+      "micro_precision": 0.970588,
       "micro_recall": 1.0,
       "tn": 9,
-      "tp": 31
+      "tp": 33
     },
     "languages": {
       "python": {
         "fn": 0,
-        "fp": 0,
-        "macro_precision": 1.0,
+        "fp": 1,
+        "macro_precision": 0.933333,
         "macro_recall": 1.0,
-        "micro_precision": 1.0,
+        "micro_precision": 0.952381,
         "micro_recall": 1.0,
         "tn": 5,
         "tp": 20
@@ -3422,7 +3564,7 @@
         "micro_precision": 1.0,
         "micro_recall": 1.0,
         "tn": 4,
-        "tp": 11
+        "tp": 13
       }
     }
   },
@@ -3434,11 +3576,11 @@
       "<checkout>",
       "--json"
     ],
-    "bitcode_sha256": "5afedfdc3c426bae53c98846d0e5f206f504b3be46c40a8af0ea26938b9ef116",
+    "bitcode_sha256": "28862adca5bb34b5acd16e34dea74d87dd437387514a3653d7f2a9b990fe840a",
     "harness_sha256": "4c7b1d1a107f548a5775a16685b72c00fc631539a7969bd609ac2acc790f6eaf",
-    "harness_support_sha256": "0a13974e3e906f41030bb2866e97a7d26017891a82b1c8f6cfe79cbedf306821",
+    "harness_support_sha256": "a63b069acf887b5879f9662251bb0a13fbe945e260937f999225ba85ec7da428",
     "measure_process_sha256": "68a59b372977e451b82b6e0112cceb1d8389e5611a7c5ac0f224f46de4acd9d8",
-    "source_commit": "399d8bfd781df5b34014849014a97375eb5cbc82",
+    "source_commit": "18d189aa04c4602702c0ea43c8dc50321a3366bc",
     "source_worktree_clean": true
   }
 }
