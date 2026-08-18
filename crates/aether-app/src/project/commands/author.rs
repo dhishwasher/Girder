@@ -21,15 +21,296 @@ use crate::project::planfile::{run_for_authoring, AuthoringRunResult};
 use crate::project::source::build_from_dir_with_config;
 use aether_ai::{Prompt, TaskClass};
 use serde_json::{json, Value};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-const DEFAULT_MAX_REPAIRS: usize = 2;
+pub(crate) const DEFAULT_MAX_REPAIRS: usize = 2;
 
 static TEMP_FILE_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 const USAGE: &str =
     "usage: bitcode do <dir> \"<intent...>\" [--dry] [--max-repairs N] [--nodes <path>[,<path>...]]";
+
+/// One observable step of an [`author`] run, emitted through its progress
+/// callback instead of printed directly, so `bitcode do` (which prints each
+/// variant verbatim) and the GUI's Author tab (which streams each variant
+/// into a scrolling log) render the exact same authoring run without either
+/// side reimplementing node selection, prompting, or the repair loop.
+pub(crate) enum AuthorEvent {
+    Loading {
+        root: PathBuf,
+    },
+    Loaded {
+        files: usize,
+        node_count: usize,
+    },
+    NodesSelected {
+        pinned: bool,
+        intent: String,
+        nodes: Vec<(String, Option<f32>)>,
+    },
+    AttemptStarted {
+        provider: String,
+        attempt: usize,
+        max_attempts: usize,
+        node_paths: Vec<String>,
+    },
+    ProviderDeclined {
+        diagnostic: String,
+        elapsed_secs: u64,
+    },
+    ProviderResponded {
+        provider: String,
+        elapsed_secs: u64,
+    },
+    ModelResponseInvalid {
+        diagnostic: String,
+    },
+    PlanWrapFailed {
+        diagnostic: String,
+    },
+    AttemptFailed {
+        diagnostic: String,
+    },
+}
+
+/// The final result of an [`author`] run.
+pub(crate) enum AuthorOutcome {
+    /// Node selection matched nothing; nothing was authored, and this is
+    /// not an error (mirrors `do_intent`'s current `Ok(())` early return).
+    NoMatches,
+    Authored {
+        provider: String,
+        model: String,
+        repairs: usize,
+        report_path: Option<PathBuf>,
+        report_json: Option<String>,
+    },
+}
+
+/// Selects nodes, asks the router for a grammar-constrained plan step, and
+/// executes it through `run_for_authoring`, repairing with check output up
+/// to `max_repairs` times before escalating to the next provider — this is
+/// the entire body of `bitcode do`, extracted so the GUI's Author tab can
+/// call the exact same function instead of a second implementation.
+///
+/// `on_progress` fires once per observable step; it must be `Send` because
+/// the GUI runs this inside a `tokio::spawn`ed future, which requires the
+/// whole future — including any closure held across the `.await` points
+/// below — to be `Send`.
+pub(crate) async fn author(
+    root: &Path,
+    intent: &str,
+    pinned_node_paths: Option<&[String]>,
+    dry: bool,
+    max_repairs: usize,
+    router: &aether_ai::Router,
+    mut on_progress: impl FnMut(AuthorEvent) + Send,
+) -> std::io::Result<AuthorOutcome> {
+    on_progress(AuthorEvent::Loading {
+        root: root.to_path_buf(),
+    });
+    let config = ProjectConfig::load(root)?;
+    let (graph, _builder, files) = build_from_dir_with_config(root, &config)?;
+    on_progress(AuthorEvent::Loaded {
+        files,
+        node_count: graph.node_count(),
+    });
+
+    let ctx = match build_authoring_context(&graph, intent, pinned_node_paths) {
+        Ok(ctx) => ctx,
+        Err(SelectionError::NoMatches) => return Ok(AuthorOutcome::NoMatches),
+        Err(SelectionError::UnknownPath(path)) => {
+            return Err(invalid_input(&format!(
+                "--nodes references a path not present in the graph: {path}"
+            )));
+        }
+    };
+    on_progress(AuthorEvent::NodesSelected {
+        pinned: pinned_node_paths.is_some(),
+        intent: intent.to_string(),
+        nodes: ctx
+            .nodes
+            .iter()
+            .map(|selected| (selected.node.path.clone(), selected.score))
+            .collect(),
+    });
+    let node_paths = ctx.node_paths;
+    let node_context = ctx.node_context;
+    let schema = ctx.schema;
+
+    let base_commit = git_head_commit(root)?;
+    let candidates = router.candidates(TaskClass::Authoring);
+    if candidates.is_empty() {
+        return Err(std::io::Error::other(
+            "no provider is configured for authoring",
+        ));
+    }
+    let total_providers = candidates.len();
+
+    let plan_id = generate_plan_id();
+
+    let mut calls: Vec<Value> = Vec::new();
+    let mut diagnostic = String::new();
+    let mut succeeded: Option<(String, String, usize, AuthoringRunResult)> = None;
+
+    'providers: for provider in &candidates {
+        for attempt in 0..=max_repairs {
+            on_progress(AuthorEvent::AttemptStarted {
+                provider: provider.name().to_string(),
+                attempt: attempt + 1,
+                max_attempts: max_repairs + 1,
+                node_paths: node_paths.clone(),
+            });
+            let prompt = build_prompt(
+                intent,
+                &node_context,
+                &node_paths,
+                &schema,
+                (attempt > 0).then_some(diagnostic.as_str()),
+            );
+            let started = std::time::Instant::now();
+            let completion = match provider.complete(prompt).await {
+                Ok(completion) => completion,
+                Err(error) => {
+                    diagnostic = format!("{} declined: {error}", provider.name());
+                    on_progress(AuthorEvent::ProviderDeclined {
+                        diagnostic: diagnostic.clone(),
+                        elapsed_secs: started.elapsed().as_secs(),
+                    });
+                    // A decline is permanent for this provider (no key, no
+                    // host, or an unconditional refusal) — retrying the same
+                    // prompt against it won't help, so move on immediately
+                    // instead of burning the repair budget. A timeout is one
+                    // such decline: OllamaProvider now bounds every request
+                    // (OLLAMA_TIMEOUT_SECS), so a slow local model surfaces
+                    // here as an ordinary error instead of hanging forever.
+                    break;
+                }
+            };
+            on_progress(AuthorEvent::ProviderResponded {
+                provider: provider.name().to_string(),
+                elapsed_secs: started.elapsed().as_secs(),
+            });
+            calls.push(json!({
+                "provider": provider.name(),
+                "model": completion.model,
+                "tokens": completion.tokens
+            }));
+
+            let step_value: Value = match serde_json::from_str(&completion.text) {
+                Ok(value) => value,
+                Err(error) => {
+                    diagnostic = format!("model response was not valid JSON: {error}");
+                    on_progress(AuthorEvent::ModelResponseInvalid {
+                        diagnostic: diagnostic.clone(),
+                    });
+                    continue;
+                }
+            };
+            let plan_value =
+                match wrap_step_into_plan(&step_value, &node_paths, &base_commit, intent, &plan_id)
+                {
+                    Ok(value) => value,
+                    Err(error) => {
+                        diagnostic = error;
+                        on_progress(AuthorEvent::PlanWrapFailed {
+                            diagnostic: diagnostic.clone(),
+                        });
+                        continue;
+                    }
+                };
+
+            let plan_path = write_temp_json(&plan_value, "plan")?;
+            let receipt_path =
+                write_temp_json(&json!({"schema_version": 1, "calls": calls}), "receipt")?;
+            let run_outcome = run_for_authoring(root, &plan_path, dry, Some(&receipt_path));
+            let _ = std::fs::remove_file(&plan_path);
+            let _ = std::fs::remove_file(&receipt_path);
+            let result = run_outcome?;
+
+            if result.passed {
+                succeeded = Some((
+                    provider.name().to_string(),
+                    completion.model.clone(),
+                    attempt,
+                    result,
+                ));
+                break 'providers;
+            }
+            diagnostic = result.diagnostic;
+            on_progress(AuthorEvent::AttemptFailed {
+                diagnostic: diagnostic.clone(),
+            });
+        }
+    }
+
+    match succeeded {
+        Some((provider_name, model, repairs, result)) => Ok(AuthorOutcome::Authored {
+            provider: provider_name,
+            model,
+            repairs,
+            report_path: result.report_path,
+            report_json: result.report_json,
+        }),
+        None => Err(std::io::Error::other(format!(
+            "no provider produced a working plan for \"{intent}\" after trying \
+             {total_providers} provider(s); last diagnostic: {diagnostic}"
+        ))),
+    }
+}
+
+/// `bitcode do`'s progress callback: prints each [`AuthorEvent`] exactly as
+/// `do_intent` printed it before `author` was extracted.
+fn print_author_event(event: AuthorEvent) {
+    match event {
+        AuthorEvent::Loading { root } => println!("Loading {} ...", root.display()),
+        AuthorEvent::Loaded { files, node_count } => {
+            println!("  {files} file(s), {node_count} nodes")
+        }
+        AuthorEvent::NodesSelected {
+            pinned,
+            intent,
+            nodes,
+        } => {
+            if pinned {
+                println!("\nUsing pinned nodes for \"{intent}\":");
+            } else {
+                println!("\nSelecting nodes for \"{intent}\":");
+            }
+            for (path, score) in &nodes {
+                match score {
+                    Some(score) => println!("  {score:.2}  {path}"),
+                    None => println!("  {path}"),
+                }
+            }
+        }
+        AuthorEvent::AttemptStarted {
+            provider,
+            attempt,
+            max_attempts,
+            node_paths,
+        } => {
+            println!(
+                "\n[{provider}] attempt {attempt}/{max_attempts} — nodes: {}",
+                node_paths.join(", ")
+            );
+        }
+        AuthorEvent::ProviderDeclined {
+            diagnostic,
+            elapsed_secs,
+        } => println!("  {diagnostic} ({elapsed_secs}s elapsed)"),
+        AuthorEvent::ProviderResponded {
+            provider,
+            elapsed_secs,
+        } => println!("  {provider} responded in {elapsed_secs}s"),
+        AuthorEvent::ModelResponseInvalid { diagnostic } => println!("  {diagnostic}"),
+        AuthorEvent::PlanWrapFailed { diagnostic } => println!("  {diagnostic}"),
+        AuthorEvent::AttemptFailed { diagnostic } => {
+            println!("  attempt failed:\n{}", indent(&diagnostic))
+        }
+    }
+}
 
 pub async fn do_intent(args: &[String]) -> std::io::Result<()> {
     let Some(root_arg) = args.first() else {
@@ -55,159 +336,40 @@ pub async fn do_intent(args: &[String]) -> std::io::Result<()> {
         return Ok(());
     }
 
-    println!("Loading {} ...", root.display());
-    let config = ProjectConfig::load(&root)?;
-    let (graph, _builder, files) = build_from_dir_with_config(&root, &config)?;
-    println!("  {files} file(s), {} nodes", graph.node_count());
-
-    let ctx = match build_authoring_context(&graph, &intent, pinned_node_paths.as_deref()) {
-        Ok(ctx) => ctx,
-        Err(SelectionError::NoMatches) => {
-            println!("\nNo nodes matched \"{intent}\"; nothing to author.");
-            return Ok(());
-        }
-        Err(SelectionError::UnknownPath(path)) => {
-            return Err(invalid_input(&format!(
-                "--nodes references a path not present in the graph: {path}"
-            )));
-        }
-    };
-    if pinned_node_paths.is_some() {
-        println!("\nUsing pinned nodes for \"{intent}\":");
-    } else {
-        println!("\nSelecting nodes for \"{intent}\":");
-    }
-    for selected in &ctx.nodes {
-        match selected.score {
-            Some(score) => println!("  {score:.2}  {}", selected.node.path),
-            None => println!("  {}", selected.node.path),
-        }
-    }
-    let node_paths = ctx.node_paths;
-    let node_context = ctx.node_context;
-    let schema = ctx.schema;
-
-    let base_commit = git_head_commit(&root)?;
     let router = aether_ai::default_router();
-    let candidates = router.candidates(TaskClass::Authoring);
-    if candidates.is_empty() {
-        return Err(std::io::Error::other(
-            "no provider is configured for authoring",
-        ));
-    }
-    let total_providers = candidates.len();
+    let result = author(
+        &root,
+        &intent,
+        pinned_node_paths.as_deref(),
+        dry,
+        max_repairs,
+        &router,
+        print_author_event,
+    )
+    .await;
 
-    let plan_id = generate_plan_id();
-
-    let mut calls: Vec<Value> = Vec::new();
-    let mut diagnostic = String::new();
-    let mut succeeded: Option<(String, String, usize, AuthoringRunResult)> = None;
-
-    'providers: for provider in &candidates {
-        for attempt in 0..=max_repairs {
-            println!(
-                "\n[{}] attempt {}/{} — nodes: {}",
-                provider.name(),
-                attempt + 1,
-                max_repairs + 1,
-                node_paths.join(", ")
-            );
-            let prompt = build_prompt(
-                &intent,
-                &node_context,
-                &node_paths,
-                &schema,
-                (attempt > 0).then_some(diagnostic.as_str()),
-            );
-            let started = std::time::Instant::now();
-            let completion = match provider.complete(prompt).await {
-                Ok(completion) => completion,
-                Err(error) => {
-                    diagnostic = format!("{} declined: {error}", provider.name());
-                    println!("  {diagnostic} ({}s elapsed)", started.elapsed().as_secs());
-                    // A decline is permanent for this provider (no key, no
-                    // host, or an unconditional refusal) — retrying the same
-                    // prompt against it won't help, so move on immediately
-                    // instead of burning the repair budget. A timeout is one
-                    // such decline: OllamaProvider now bounds every request
-                    // (OLLAMA_TIMEOUT_SECS), so a slow local model surfaces
-                    // here as an ordinary error instead of hanging forever.
-                    break;
-                }
-            };
-            println!(
-                "  {} responded in {}s",
-                provider.name(),
-                started.elapsed().as_secs()
-            );
-            calls.push(json!({
-                "provider": provider.name(),
-                "model": completion.model,
-                "tokens": completion.tokens
-            }));
-
-            let step_value: Value = match serde_json::from_str(&completion.text) {
-                Ok(value) => value,
-                Err(error) => {
-                    diagnostic = format!("model response was not valid JSON: {error}");
-                    println!("  {diagnostic}");
-                    continue;
-                }
-            };
-            let plan_value = match wrap_step_into_plan(
-                &step_value,
-                &node_paths,
-                &base_commit,
-                &intent,
-                &plan_id,
-            ) {
-                Ok(value) => value,
-                Err(error) => {
-                    diagnostic = error;
-                    println!("  {diagnostic}");
-                    continue;
-                }
-            };
-
-            let plan_path = write_temp_json(&plan_value, "plan")?;
-            let receipt_path =
-                write_temp_json(&json!({"schema_version": 1, "calls": calls}), "receipt")?;
-            let run_outcome = run_for_authoring(&root, &plan_path, dry, Some(&receipt_path));
-            let _ = std::fs::remove_file(&plan_path);
-            let _ = std::fs::remove_file(&receipt_path);
-            let result = run_outcome?;
-
-            if result.passed {
-                succeeded = Some((
-                    provider.name().to_string(),
-                    completion.model.clone(),
-                    attempt,
-                    result,
-                ));
-                break 'providers;
-            }
-            diagnostic = result.diagnostic;
-            println!("  attempt failed:\n{}", indent(&diagnostic));
+    match result {
+        Ok(AuthorOutcome::NoMatches) => {
+            println!("\nNo nodes matched \"{intent}\"; nothing to author.");
+            Ok(())
         }
-    }
-
-    match succeeded {
-        Some((provider_name, model, repairs, result)) => {
-            println!(
-                "\nplan authored by {provider_name} ({model}) after {repairs} repair attempt(s)"
-            );
-            if let Some(path) = &result.report_path {
+        Ok(AuthorOutcome::Authored {
+            provider,
+            model,
+            repairs,
+            report_path,
+            report_json,
+        }) => {
+            println!("\nplan authored by {provider} ({model}) after {repairs} repair attempt(s)");
+            if let Some(path) = &report_path {
                 println!("report: {}", path.display());
             }
-            if let Some(rendered) = &result.report_json {
+            if let Some(rendered) = &report_json {
                 println!("\nreport (dry run, not written to disk):\n{rendered}");
             }
             Ok(())
         }
-        None => Err(std::io::Error::other(format!(
-            "no provider produced a working plan for \"{intent}\" after trying \
-             {total_providers} provider(s); last diagnostic: {diagnostic}"
-        ))),
+        Err(error) => Err(error),
     }
 }
 

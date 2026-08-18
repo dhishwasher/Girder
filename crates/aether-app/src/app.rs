@@ -3,13 +3,15 @@
 use crate::graph_view::GraphViewState;
 use crate::panels;
 use crate::project::{
-    apply_reviewed_collaboration_projection, discover_collaboration_peers,
-    generate_collaboration_identity, generate_collaboration_secret,
-    inspect_collaboration_public_identity, join_collaboration, review_collaboration_projection,
+    apply_authored_guarantees, apply_reviewed_collaboration_projection, author, build_context_json,
+    discover_collaboration_peers, generate_collaboration_identity, generate_collaboration_secret,
+    inspect_collaboration_public_identity, join_collaboration, parse_plan,
+    review_collaboration_projection, run_for_authoring_with_plan, search_nodes_for_authoring,
     trust_collaboration_identity, trusted_collaboration_identities, AgentValidationOutcome,
-    CollaborationProjectionReview, DiscoveredPeer, ExtensionCommandRequest, ExtensionMutation,
-    ExtensionMutationOutcome, ExtensionMutationRequest, IdentitySummary, LiveSyncReport,
-    ProjectWorkspace, SyncImpact, TrustChange, ValidationReport,
+    AuthorEvent, AuthorOutcome, AuthoringRunResult, CollaborationProjectionReview, DiscoveredPeer,
+    ExtensionCommandRequest, ExtensionMutation, ExtensionMutationOutcome, ExtensionMutationRequest,
+    IdentitySummary, LiveSyncReport, ProjectWorkspace, SyncImpact, TrustChange, ValidationReport,
+    DEFAULT_MAX_REPAIRS,
 };
 use aether_agents::{MsgKind, Orchestrator, SwarmContext, SwarmMessage};
 use aether_debugger::{buggy_demo_program, python_tracer::PyTimeline, Timeline};
@@ -43,12 +45,42 @@ enum CollaborationProjectionOutcome {
 }
 type CollaborationProjectionReceiver =
     tokio::sync::oneshot::Receiver<std::io::Result<CollaborationProjectionOutcome>>;
+type AuthorSearchReceiver = tokio::sync::oneshot::Receiver<std::io::Result<Vec<AuthorSearchHit>>>;
+type AuthorRunReceiver = tokio::sync::oneshot::Receiver<std::io::Result<AuthorOutcome>>;
+type AuthorRunAuthoredReceiver =
+    tokio::sync::oneshot::Receiver<std::io::Result<AuthoringRunResult>>;
+type AuthorContextJsonReceiver = tokio::sync::oneshot::Receiver<std::io::Result<String>>;
+
+/// How many `AuthorEvent`s the Author tab's log keeps. A local-model repair
+/// loop runs indefinitely in principle (bounded only by provider count ×
+/// `max_repairs`), so unlike `transcript` (wholesale-replaced once per
+/// swarm run) this log is genuinely appended-to and needs its own cap.
+const AUTHOR_LOG_CAP: usize = 500;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RightPanel {
     Agents,
     Extensions,
     Collaboration,
+    Author,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum AuthorMode {
+    Local,
+    External,
+}
+
+/// One node search hit rendered as a checkbox in the Author tab, mapped
+/// down from `authoring_context::AuthoringContext` at search time — the
+/// panel only ever needs the path/score/selection, not the multi-KB JSON
+/// schema/source context selection also produces (an eventual Run
+/// re-derives all of that itself from the checked paths).
+#[derive(Debug, Clone)]
+pub(crate) struct AuthorSearchHit {
+    pub(crate) path: String,
+    pub(crate) score: Option<f32>,
+    pub(crate) selected: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -116,6 +148,24 @@ pub struct AetherApp {
     pub(crate) ripple_start: Option<Instant>,
     /// Byte offset to select after graph-to-editor navigation.
     pub(crate) editor_jump: Option<usize>,
+
+    // ── Author tab ───────────────────────────────────────────────────────────
+    pub(crate) author_intent: String,
+    pub(crate) author_search_results: Vec<AuthorSearchHit>,
+    author_search_rx: Option<AuthorSearchReceiver>,
+    pub(crate) author_mode: AuthorMode,
+    pub(crate) author_dry_run: bool,
+    pub(crate) author_max_repairs: usize,
+    pub(crate) author_log: std::collections::VecDeque<AuthorEvent>,
+    author_progress_rx: Option<tokio::sync::mpsc::UnboundedReceiver<AuthorEvent>>,
+    author_run_rx: Option<AuthorRunReceiver>,
+    pub(crate) author_pasted_plan: String,
+    pub(crate) author_authored_by: String,
+    author_run_authored_rx: Option<AuthorRunAuthoredReceiver>,
+    author_context_json_rx: Option<AuthorContextJsonReceiver>,
+    pub(crate) author_live_run_confirming: bool,
+    pub(crate) author_last_result: Option<String>,
+    pub(crate) author_last_error: Option<String>,
 
     // ── Python real tracer ────────────────────────────────────────────────────
     /// Path of the Python file the user wants to trace.
@@ -192,6 +242,22 @@ impl AetherApp {
             impact_nodes: HashMap::new(),
             ripple_start: None,
             editor_jump: None,
+            author_intent: String::new(),
+            author_search_results: Vec::new(),
+            author_search_rx: None,
+            author_mode: AuthorMode::Local,
+            author_dry_run: true,
+            author_max_repairs: DEFAULT_MAX_REPAIRS,
+            author_log: std::collections::VecDeque::new(),
+            author_progress_rx: None,
+            author_run_rx: None,
+            author_pasted_plan: String::new(),
+            author_authored_by: String::new(),
+            author_run_authored_rx: None,
+            author_context_json_rx: None,
+            author_live_run_confirming: false,
+            author_last_result: None,
+            author_last_error: None,
             py_file,
             py_steps: Vec::new(),
             py_trace_rx: None,
@@ -201,6 +267,10 @@ impl AetherApp {
     pub(crate) fn open_project(&mut self) {
         if self.extension_busy() {
             self.set_workspace_error("Wait for the extension operation before opening a project.");
+            return;
+        }
+        if self.author_busy() {
+            self.set_workspace_error("Wait for the authoring operation before opening a project.");
             return;
         }
         if self.workspace.has_pending_agent_changes() {
@@ -235,6 +305,14 @@ impl AetherApp {
                 self.collaboration_discovered_peers.clear();
                 self.collaboration_identity_review = None;
                 self.collaboration_trusted_identities.clear();
+                self.author_intent.clear();
+                self.author_search_results.clear();
+                self.author_log.clear();
+                self.author_pasted_plan.clear();
+                self.author_authored_by.clear();
+                self.author_live_run_confirming = false;
+                self.author_last_result = None;
+                self.author_last_error = None;
                 self.set_workspace_status(workspace_summary(&self.workspace));
             }
             Err(error) => self.set_workspace_error(format!("Open failed: {error}")),
@@ -271,6 +349,10 @@ impl AetherApp {
             self.set_workspace_error("Wait for the extension operation before reloading.");
             return;
         }
+        if self.author_busy() {
+            self.set_workspace_error("Wait for the authoring operation before reloading.");
+            return;
+        }
         match self.workspace.reload() {
             Ok(()) => {
                 self.py_file = active_python_path(&self.workspace).unwrap_or_default();
@@ -282,6 +364,11 @@ impl AetherApp {
                 self.collaboration_discovered_peers.clear();
                 self.collaboration_identity_review = None;
                 self.collaboration_trusted_identities.clear();
+                self.author_search_results.clear();
+                self.author_log.clear();
+                self.author_live_run_confirming = false;
+                self.author_last_result = None;
+                self.author_last_error = None;
                 self.set_workspace_status(workspace_summary(&self.workspace));
             }
             Err(error) => self.set_workspace_error(format!("Reload failed: {error}")),
@@ -411,6 +498,198 @@ impl AetherApp {
             let _ = tx.send(messages);
         });
         self.swarm_rx = Some(rx);
+    }
+
+    /// Runs the GUI equivalent of `--nodes`' search half: the same
+    /// `search_nodes_for_authoring` (built on `authoring_context::
+    /// build_authoring_context`, the exact function `bitcode do` and
+    /// `bitcode context` both call) against a graph rebuilt fresh from disk,
+    /// so what the checkboxes show is exactly what a subsequent Run will
+    /// search against. Runs on a plain OS thread (no `.await` anywhere in
+    /// this path), matching `start_collaboration_join`.
+    /// Read-only: never gated on `author_busy()`. A repeated click always
+    /// supersedes whatever search is still in flight — the previous
+    /// receiver is dropped, so an older, slower search can never overwrite
+    /// a newer one's results (the classic out-of-order-async-response
+    /// trap), and the button is never disabled for a reason unrelated to
+    /// searching itself.
+    pub(crate) fn run_author_search(&mut self) {
+        let intent = self.author_intent.trim().to_string();
+        if intent.is_empty() {
+            self.author_last_error = Some("Enter an intent before searching.".into());
+            return;
+        }
+        self.author_last_error = None;
+        self.author_last_result = None;
+        let root = self.workspace.root().to_path_buf();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        std::thread::spawn(move || {
+            let result = search_nodes_for_authoring(&root, &intent).map(|hits| {
+                // Only the top hit starts checked. gap #15's score floor
+                // exists specifically to shrink what the model can touch;
+                // defaulting every hit to checked (including runner-ups
+                // that only barely cleared NODE_SCORE_FLOOR_RATIO) worked
+                // against that on real intents — e.g. "make hello end with
+                // an exclamation mark" pulled in an unrelated debugger
+                // function as a legal edit target. The user opts more
+                // nodes in deliberately; they should never have to opt
+                // stray ones out.
+                hits.into_iter()
+                    .enumerate()
+                    .map(|(index, (path, score))| AuthorSearchHit {
+                        path,
+                        score,
+                        selected: index == 0,
+                    })
+                    .collect()
+            });
+            let _ = tx.send(result);
+        });
+        self.author_search_rx = Some(rx);
+    }
+
+    /// Mode 1 ("local model") Run: calls the exact same `author()` function
+    /// `bitcode do` calls, pinned to whatever search hits are currently
+    /// checked. A non-dry run requires clicking Run twice — the first click
+    /// only arms `author_live_run_confirming`, mirroring the
+    /// remove-extension confirm/cancel idiom, since a GUI button that
+    /// silently writes to the tree has no command line to review first.
+    pub(crate) fn run_author(&mut self) {
+        if self.author_write_busy() {
+            self.author_last_error = Some("Wait for the current authoring run to finish.".into());
+            return;
+        }
+        let intent = self.author_intent.trim().to_string();
+        if intent.is_empty() {
+            self.author_last_error = Some("Enter an intent before running.".into());
+            return;
+        }
+        let checked: Vec<String> = self
+            .author_search_results
+            .iter()
+            .filter(|hit| hit.selected)
+            .map(|hit| hit.path.clone())
+            .collect();
+        if checked.is_empty() {
+            self.author_last_error =
+                Some("Search and select at least one node before running.".into());
+            return;
+        }
+        if !self.author_dry_run && !self.author_live_run_confirming {
+            self.author_live_run_confirming = true;
+            return;
+        }
+        self.author_live_run_confirming = false;
+        self.author_last_error = None;
+        self.author_last_result = None;
+        self.author_log.clear();
+
+        let root = self.workspace.root().to_path_buf();
+        let dry = self.author_dry_run;
+        let max_repairs = self.author_max_repairs;
+        let router = self.router.clone();
+        let (progress_tx, progress_rx) = tokio::sync::mpsc::unbounded_channel();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.rt.spawn(async move {
+            let result = author(
+                &root,
+                &intent,
+                Some(&checked),
+                dry,
+                max_repairs,
+                &router,
+                move |event| {
+                    let _ = progress_tx.send(event);
+                },
+            )
+            .await;
+            let _ = tx.send(result);
+        });
+        self.author_progress_rx = Some(progress_rx);
+        self.author_run_rx = Some(rx);
+    }
+
+    /// Mode 2 ("external model") "Run authored": parses the pasted plan via
+    /// the exact same `planfile::parse_plan`, applies the exact same
+    /// `--authored` guarantees via `apply_authored_guarantees`, and executes
+    /// through `run_for_authoring_with_plan` — the same guarantee logic and
+    /// the same executor `plan run --authored` uses, just reached without a
+    /// temp file. Same confirm-before-live-run gate as Mode 1.
+    pub(crate) fn run_author_authored(&mut self) {
+        if self.author_write_busy() {
+            self.author_last_error = Some("Wait for the current authoring run to finish.".into());
+            return;
+        }
+        if self.author_pasted_plan.trim().is_empty() {
+            self.author_last_error = Some("Paste a plan before running.".into());
+            return;
+        }
+        if !self.author_dry_run && !self.author_live_run_confirming {
+            self.author_live_run_confirming = true;
+            return;
+        }
+        self.author_live_run_confirming = false;
+        self.author_last_error = None;
+        self.author_last_result = None;
+
+        let root = self.workspace.root().to_path_buf();
+        let dry = self.author_dry_run;
+        let pasted_plan = self.author_pasted_plan.clone();
+        let authored_by = {
+            let trimmed = self.author_authored_by.trim();
+            (!trimmed.is_empty()).then(|| trimmed.to_string())
+        };
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        std::thread::spawn(move || {
+            let result = (|| -> std::io::Result<AuthoringRunResult> {
+                let mut plan = parse_plan(&pasted_plan)?;
+                apply_authored_guarantees(&mut plan)?;
+                run_for_authoring_with_plan(&root, plan, dry, None, authored_by.as_deref())
+            })();
+            let _ = tx.send(result);
+        });
+        self.author_run_authored_rx = Some(rx);
+    }
+
+    /// Puts exactly what `bitcode context --json` would print onto the
+    /// clipboard, via the same `build_context_json` that command calls.
+    ///
+    /// Read-only: never gated on `author_busy()`. `checked`/`pinned` are
+    /// recomputed here, at click time, from `author_search_results` —
+    /// never cached from an earlier click or an earlier frame. Gating this
+    /// on any other in-flight author operation previously meant a click
+    /// while, say, a full-repo Search or a slow Run was still in flight got
+    /// silently dropped, and whatever was already on the clipboard (from an
+    /// earlier click, possibly with different checkboxes and a different
+    /// `plan_id`) was left untouched — indistinguishable from "the button
+    /// is serving a cached result". A repeated click here now always
+    /// supersedes: the previous receiver is dropped (its now-orphaned
+    /// thread's `tx.send` is simply ignored), so only the latest click's
+    /// result is ever applied to the clipboard.
+    pub(crate) fn copy_author_context_json(&mut self) {
+        let intent = self.author_intent.trim().to_string();
+        if intent.is_empty() {
+            self.author_last_error = Some("Enter an intent before copying context.".into());
+            return;
+        }
+        self.author_last_error = None;
+        let checked: Vec<String> = self
+            .author_search_results
+            .iter()
+            .filter(|hit| hit.selected)
+            .map(|hit| hit.path.clone())
+            .collect();
+        let pinned = (!checked.is_empty()).then_some(checked);
+        let root = self.workspace.root().to_path_buf();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        std::thread::spawn(move || {
+            let result = build_context_json(&root, &intent, pinned.as_deref()).and_then(|value| {
+                serde_json::to_string_pretty(&value)
+                    .map_err(|error| std::io::Error::other(error.to_string()))
+            });
+            let _ = tx.send(result);
+        });
+        self.author_context_json_rx = Some(rx);
     }
 
     pub(crate) fn commit_agent_changes(&mut self) {
@@ -611,6 +890,25 @@ impl AetherApp {
 
     pub(crate) fn collaboration_busy(&self) -> bool {
         self.collaboration_rx.is_some() || self.collaboration_projection_rx.is_some()
+    }
+
+    /// Used only to gate opening/reloading a project: swapping `workspace`
+    /// out from under any in-flight author background thread (which
+    /// captured the old root by value) would leave its eventual result
+    /// describing the wrong project.
+    pub(crate) fn author_busy(&self) -> bool {
+        self.author_search_rx.is_some()
+            || self.author_run_rx.is_some()
+            || self.author_run_authored_rx.is_some()
+            || self.author_context_json_rx.is_some()
+    }
+
+    /// Gates Run / Run-authored specifically: unlike Search or Copy Context
+    /// JSON (read-only, always safe to supersede), these two write to the
+    /// real tree when not dry, so two of them must never run concurrently
+    /// against the same project.
+    pub(crate) fn author_write_busy(&self) -> bool {
+        self.author_run_rx.is_some() || self.author_run_authored_rx.is_some()
     }
 
     fn collaboration_snapshot_ready(&self) -> std::io::Result<()> {
@@ -1560,6 +1858,143 @@ impl eframe::App for AetherApp {
                     self.set_workspace_error(
                         "Agent swarm stopped; graph changes were rolled back.",
                     );
+                }
+            }
+        }
+
+        // Poll the Author tab's background node search.
+        if let Some(rx) = self.author_search_rx.as_mut() {
+            match rx.try_recv() {
+                Ok(Ok(hits)) => {
+                    self.author_search_rx = None;
+                    self.author_search_results = hits;
+                }
+                Ok(Err(error)) => {
+                    self.author_search_rx = None;
+                    self.author_last_error = Some(format!("Search failed: {error}"));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                    ctx.request_repaint_after(std::time::Duration::from_millis(100));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                    self.author_search_rx = None;
+                    self.author_last_error = Some("Search stopped unexpectedly.".into());
+                }
+            }
+        }
+
+        // Drain the Author tab's local-model run progress into a capped
+        // log before checking whether the run itself has finished.
+        if let Some(rx) = self.author_progress_rx.as_mut() {
+            while let Ok(event) = rx.try_recv() {
+                if self.author_log.len() >= AUTHOR_LOG_CAP {
+                    self.author_log.pop_front();
+                }
+                self.author_log.push_back(event);
+            }
+        }
+        if let Some(rx) = self.author_run_rx.as_mut() {
+            match rx.try_recv() {
+                Ok(Ok(AuthorOutcome::NoMatches)) => {
+                    self.author_run_rx = None;
+                    self.author_progress_rx = None;
+                    self.author_last_result = None;
+                    self.author_last_error = Some("No nodes matched; nothing to author.".into());
+                }
+                Ok(Ok(AuthorOutcome::Authored {
+                    provider,
+                    model,
+                    repairs,
+                    report_path,
+                    report_json,
+                })) => {
+                    self.author_run_rx = None;
+                    self.author_progress_rx = None;
+                    self.author_last_error = None;
+                    let mut summary = format!(
+                        "plan authored by {provider} ({model}) after {repairs} repair attempt(s)"
+                    );
+                    if let Some(path) = &report_path {
+                        summary.push_str(&format!("\nreport: {}", path.display()));
+                    }
+                    if let Some(rendered) = &report_json {
+                        summary.push_str(&format!(
+                            "\nreport (dry run, not written to disk):\n{rendered}"
+                        ));
+                    }
+                    self.author_last_result = Some(summary);
+                }
+                Ok(Err(error)) => {
+                    self.author_run_rx = None;
+                    self.author_progress_rx = None;
+                    self.author_last_result = None;
+                    self.author_last_error = Some(error.to_string());
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                    ctx.request_repaint_after(std::time::Duration::from_millis(50));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                    self.author_run_rx = None;
+                    self.author_progress_rx = None;
+                    self.author_last_error = Some("Authoring run stopped unexpectedly.".into());
+                }
+            }
+        }
+
+        // Poll the Author tab's "Run authored" flow (Mode 2, external plan).
+        if let Some(rx) = self.author_run_authored_rx.as_mut() {
+            match rx.try_recv() {
+                Ok(Ok(result)) => {
+                    self.author_run_authored_rx = None;
+                    self.author_last_error = None;
+                    let mut summary = if result.passed {
+                        "authored plan passed".to_string()
+                    } else {
+                        format!("authored plan FAILED\n{}", result.diagnostic)
+                    };
+                    if let Some(path) = &result.report_path {
+                        summary.push_str(&format!("\nreport: {}", path.display()));
+                    }
+                    if let Some(rendered) = &result.report_json {
+                        summary.push_str(&format!(
+                            "\nreport (dry run, not written to disk):\n{rendered}"
+                        ));
+                    }
+                    self.author_last_result = Some(summary);
+                }
+                Ok(Err(error)) => {
+                    self.author_run_authored_rx = None;
+                    self.author_last_result = None;
+                    self.author_last_error = Some(error.to_string());
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                    ctx.request_repaint_after(std::time::Duration::from_millis(100));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                    self.author_run_authored_rx = None;
+                    self.author_last_error = Some("Authoring run stopped unexpectedly.".into());
+                }
+            }
+        }
+
+        // Poll the Author tab's "Copy context JSON" background build.
+        if let Some(rx) = self.author_context_json_rx.as_mut() {
+            match rx.try_recv() {
+                Ok(Ok(json)) => {
+                    self.author_context_json_rx = None;
+                    ctx.copy_text(json);
+                    self.author_last_error = None;
+                }
+                Ok(Err(error)) => {
+                    self.author_context_json_rx = None;
+                    self.author_last_error = Some(format!("Copy context JSON failed: {error}"));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                    ctx.request_repaint_after(std::time::Duration::from_millis(100));
+                }
+                Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                    self.author_context_json_rx = None;
+                    self.author_last_error = Some("Copy context JSON stopped unexpectedly.".into());
                 }
             }
         }

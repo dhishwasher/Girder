@@ -142,6 +142,36 @@ pub(crate) fn build_authoring_context(
     })
 }
 
+/// Fresh-from-disk node search for the GUI's Author tab, matching the CLI's
+/// own path from a root directory to a candidate list exactly: builds the
+/// graph from disk (not any live in-memory graph — so what the GUI's Search
+/// preview shows is exactly what an eventual [`super::author`] run would
+/// search against) and runs the same `TOP_K`/`NODE_SCORE_FLOOR_RATIO`
+/// selection `bitcode do` uses. Search never pins nodes, so "no matches" is
+/// this function's own legitimate empty result, not an error — unlike
+/// [`build_authoring_context`], which a pinned caller can fail with
+/// [`SelectionError::UnknownPath`].
+#[cfg(feature = "gui")]
+pub(crate) fn search_nodes_for_authoring(
+    root: &std::path::Path,
+    intent: &str,
+) -> std::io::Result<Vec<(String, Option<f32>)>> {
+    let config = crate::project::config::ProjectConfig::load(root)?;
+    let (graph, _builder, _files) =
+        crate::project::source::build_from_dir_with_config(root, &config)?;
+    match build_authoring_context(&graph, intent, None) {
+        Ok(ctx) => Ok(ctx
+            .nodes
+            .into_iter()
+            .map(|selected| (selected.node.path, selected.score))
+            .collect()),
+        Err(SelectionError::NoMatches) => Ok(Vec::new()),
+        Err(SelectionError::UnknownPath(path)) => {
+            unreachable!("search never pins nodes, so no path can be unknown: {path}")
+        }
+    }
+}
+
 /// A flat, discriminant-selected shape rather than a `oneOf` union:
 /// `tools/plan_executor_oracle.py`'s `authoring_plan_json_schema` avoids
 /// unions entirely (it builds a schema from one concrete example per fixed
@@ -451,6 +481,47 @@ mod tests {
             "crate::calc::greet".to_string(),
             "crate::calc::hello".to_string(),
         ]
+    }
+
+    #[cfg(feature = "gui")]
+    fn search_fixture_project(name: &str) -> std::path::PathBuf {
+        let root = std::env::temp_dir().join(format!(
+            "bitcode-authoring-context-search-{name}-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(
+            root.join("calc.rs"),
+            "pub fn greet() -> String {\n    \"hi\".to_string()\n}\n",
+        )
+        .unwrap();
+        root
+    }
+
+    #[cfg(feature = "gui")]
+    #[test]
+    fn search_nodes_for_authoring_finds_a_real_node_built_fresh_from_disk() {
+        let root = search_fixture_project("finds-a-node");
+        let hits = search_nodes_for_authoring(&root, "greet").unwrap();
+        assert!(
+            hits.iter().any(|(path, _)| path == "crate::calc::greet"),
+            "{hits:?}"
+        );
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[cfg(feature = "gui")]
+    #[test]
+    fn search_nodes_for_authoring_is_empty_not_an_error_on_no_matches() {
+        let root = search_fixture_project("no-matches");
+        let hits = search_nodes_for_authoring(
+            &root,
+            "nothing on this earth will match this intent string",
+        )
+        .unwrap();
+        assert!(hits.is_empty());
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     #[test]

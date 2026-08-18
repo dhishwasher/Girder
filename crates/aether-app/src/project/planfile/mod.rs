@@ -26,16 +26,24 @@ pub(crate) fn load_plan(path: &Path) -> std::io::Result<Plan> {
             format!("could not read plan file {}: {error}", path.display()),
         )
     })?;
-    let plan: Plan = serde_json::from_str(&text).map_err(|error| {
+    parse_plan(&text)
+}
+
+/// The parse/validate half of [`load_plan`], split out so a caller that
+/// already has plan JSON in memory (the GUI's "paste a plan back in" flow)
+/// can reach the same parsing and `Plan::validate()` this loader uses
+/// without writing a temp file first.
+pub(crate) fn parse_plan(text: &str) -> std::io::Result<Plan> {
+    let plan: Plan = serde_json::from_str(text).map_err(|error| {
         std::io::Error::new(
             std::io::ErrorKind::InvalidData,
-            format!("could not parse plan file {}: {error}", path.display()),
+            format!("could not parse plan: {error}"),
         )
     })?;
     plan.validate().map_err(|error| {
         std::io::Error::new(
             std::io::ErrorKind::InvalidData,
-            format!("invalid plan file {}: {error}", path.display()),
+            format!("invalid plan: {error}"),
         )
     })?;
     Ok(plan)
@@ -123,6 +131,71 @@ pub(crate) fn explain(plan_path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Applies the guarantees `--authored` promises to a plan written outside
+/// Bit Code, in place: force a clean revert on any failure, and close the
+/// vacuous-check hole by guaranteeing at least one real test verification.
+/// Also used, via [`run_for_authoring_with_plan`], by the GUI's "Run
+/// authored" flow for a pasted external plan — the same guarantees, the
+/// same function, so the two callers can never drift.
+pub(crate) fn apply_authored_guarantees(plan: &mut schema::Plan) -> std::io::Result<()> {
+    // A zero-step plan has nowhere to inject the mandatory check below —
+    // `steps.last_mut()` would silently no-op — and nothing else in this
+    // codebase rejects it: `Plan::validate()` has no `steps`
+    // non-emptiness check, `precondition::check_preconditions` and
+    // `executor::run_plan_v2` both just iterate `&plan.steps` and fall
+    // through to `RunOutcome::Passed` on zero iterations. Left unchecked,
+    // `--authored` would "pass" a plan that verified nothing at all, which
+    // is a worse hole than the one this flag exists to close. Fail closed
+    // instead.
+    if plan.steps.is_empty() {
+        return Err(std::io::Error::other(format!(
+            "plan {} has zero steps; --authored refuses to run a plan with nothing to verify",
+            plan.plan_id
+        )));
+    }
+    // The same harness guarantees `bitcode do` applies internally
+    // (`author::wrap_step_into_plan`) to a plan written outside Bit Code:
+    // force a clean revert on any failure, and close the vacuous-check
+    // hole by guaranteeing at least one real test verification — but only
+    // inject it if the plan doesn't already have one; unlike a local model
+    // (schema-forbidden from ever emitting `tests.impacted` itself), an
+    // external plan is free-form and may already carry a legitimate one.
+    plan.on_failure = schema::OnFailure::RollbackPlan;
+    let has_impacted_check = plan.steps.iter().any(|step| {
+        step.checks
+            .iter()
+            .any(|check| matches!(check, schema::Check::TestsImpacted { .. }))
+    });
+    if !has_impacted_check {
+        // Deliberately the *last* step only, not every step — a real
+        // decision, not an accident of `last_mut()`. The guarantee this
+        // exists to provide is "the tree, if this plan durably commits,
+        // passes its impacted tests" — a property of the plan's final
+        // cumulative state, not of every intermediate one. `run_plan_v2`
+        // stops at the first failing step, and `on_failure` is forced to
+        // `RollbackPlan` above, so nothing partial is ever durably
+        // committed regardless of where the check lands: either every
+        // step (including this injected one) passes and the full set of
+        // edits commits, or the first failure anywhere rolls the whole
+        // plan back to `base_commit`. Injecting per-step would enforce a
+        // *stronger* and often wrong property instead — that every
+        // intermediate step independently passes tests — which rejects
+        // legitimate staged edits by design (e.g. a rename split across
+        // two steps: step 1 renames the definition, step 2 updates the
+        // caller; running impacted tests after step 1 alone would see a
+        // stale caller and fail on an inconsistency the plan was always
+        // going to resolve by its next step). It would also run the
+        // impacted-test command once per step instead of once per plan,
+        // which is real cost for no additional guarantee on a plan that
+        // passes.
+        let last_step = plan.steps.last_mut().expect("checked non-empty above");
+        last_step.checks.push(schema::Check::TestsImpacted {
+            expect: schema::TestExpect::AllPass,
+        });
+    }
+    Ok(())
+}
+
 /// `bitcode plan run <plan.json> [--dry] [--authored [--authored-by <name>]]`
 /// — execute a plan step by step. Preconditions run against the real tree
 /// even in `--dry` mode; only the final real-tree commit is skipped when
@@ -148,62 +221,7 @@ pub(crate) fn run(
         .transpose()?;
 
     if authored {
-        // A zero-step plan has nowhere to inject the mandatory check below
-        // — `steps.last_mut()` would silently no-op — and nothing else in
-        // this codebase rejects it: `Plan::validate()` has no `steps`
-        // non-emptiness check, `precondition::check_preconditions` and
-        // `executor::run_plan_v2` both just iterate `&plan.steps` and fall
-        // through to `RunOutcome::Passed` on zero iterations. Left
-        // unchecked, `--authored` would "pass" a plan that verified
-        // nothing at all, which is a worse hole than the one this flag
-        // exists to close. Fail closed instead.
-        if plan.steps.is_empty() {
-            return Err(std::io::Error::other(format!(
-                "plan {} has zero steps; --authored refuses to run a plan with nothing to verify",
-                plan.plan_id
-            )));
-        }
-        // The same harness guarantees `bitcode do` applies internally
-        // (`author::wrap_step_into_plan`) to a plan written outside Bit
-        // Code: force a clean revert on any failure, and close the
-        // vacuous-check hole by guaranteeing at least one real test
-        // verification — but only inject it if the plan doesn't already
-        // have one; unlike a local model (schema-forbidden from ever
-        // emitting `tests.impacted` itself), an external plan is free-form
-        // and may already carry a legitimate one.
-        plan.on_failure = schema::OnFailure::RollbackPlan;
-        let has_impacted_check = plan.steps.iter().any(|step| {
-            step.checks
-                .iter()
-                .any(|check| matches!(check, schema::Check::TestsImpacted { .. }))
-        });
-        if !has_impacted_check {
-            // Deliberately the *last* step only, not every step — a real
-            // decision, not an accident of `last_mut()`. The guarantee this
-            // exists to provide is "the tree, if this plan durably commits,
-            // passes its impacted tests" — a property of the plan's final
-            // cumulative state, not of every intermediate one.
-            // `run_plan_v2` stops at the first failing step, and `on_failure`
-            // is forced to `RollbackPlan` above, so nothing partial is ever
-            // durably committed regardless of where the check lands: either
-            // every step (including this injected one) passes and the full
-            // set of edits commits, or the first failure anywhere rolls the
-            // whole plan back to `base_commit`. Injecting per-step would
-            // enforce a *stronger* and often wrong property instead — that
-            // every intermediate step independently passes tests — which
-            // rejects legitimate staged edits by design (e.g. a rename split
-            // across two steps: step 1 renames the definition, step 2
-            // updates the caller; running impacted tests after step 1 alone
-            // would see a stale caller and fail on an inconsistency the plan
-            // was always going to resolve by its next step). It would also
-            // run the impacted-test command once per step instead of once
-            // per plan, which is real cost for no additional guarantee on a
-            // plan that passes.
-            let last_step = plan.steps.last_mut().expect("checked non-empty above");
-            last_step.checks.push(schema::Check::TestsImpacted {
-                expect: schema::TestExpect::AllPass,
-            });
-        }
+        apply_authored_guarantees(&mut plan)?;
     }
 
     if let Err(failures) = precondition::check_preconditions(root, &plan)? {
@@ -299,7 +317,25 @@ pub(crate) fn run_for_authoring(
     dry: bool,
     authoring_receipt: Option<&Path>,
 ) -> std::io::Result<AuthoringRunResult> {
-    let plan = load_plan(plan_path)?;
+    run_for_authoring_with_plan(root, load_plan(plan_path)?, dry, authoring_receipt, None)
+}
+
+/// The body of [`run_for_authoring`], taking an already-loaded `Plan`
+/// directly instead of a path, and threading through an `authored_by` the
+/// report can record. Split out so the GUI's "Run authored" flow — a plan
+/// pasted into a text box and mutated in memory by
+/// [`apply_authored_guarantees`] — can reach the same execution path with
+/// no temp file and no re-parsing. `bitcode do`'s call site above (the sole
+/// path-based caller) always passes `None` for `authored_by`; it has no
+/// such concept, and its outcome is already named by `provider`/`model` in
+/// the success message.
+pub(crate) fn run_for_authoring_with_plan(
+    root: &Path,
+    plan: Plan,
+    dry: bool,
+    authoring_receipt: Option<&Path>,
+    authored_by: Option<&str>,
+) -> std::io::Result<AuthoringRunResult> {
     let authoring_calls = authoring_receipt
         .map(report::load_authoring_receipt)
         .transpose()?;
@@ -335,7 +371,8 @@ pub(crate) fn run_for_authoring(
         }
     }
 
-    let built_report = report::build_report(&plan, &result, dry, authoring_calls.as_deref(), None);
+    let built_report =
+        report::build_report(&plan, &result, dry, authoring_calls.as_deref(), authored_by);
     let (report_path, report_json) = if dry {
         let rendered = serde_json::to_string_pretty(&built_report)
             .map_err(|error| std::io::Error::other(error.to_string()))?;
@@ -528,6 +565,34 @@ mod tests {
             .is_some_and(|json| json.contains("\"passed\"")));
         assert!(!root.join(".bitcode/reports").exists());
         let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn run_for_authoring_with_plan_records_authored_by_and_needs_no_temp_file() {
+        // Mirrors the GUI's "Run authored" flow exactly: parse pasted plan
+        // JSON, apply the same guarantees `plan run --authored` applies,
+        // then execute — all without ever writing the plan to a temp file.
+        let root = temp_git_root("with-plan-authored-by");
+        let base_commit = init_git_repo(&root);
+        let mut plan = parse_plan(&format!(
+            r#"{{"plan_version":2,"plan_id":"with-plan-authored-by","intent":"i",
+                "base_commit":"{base_commit}",
+                "steps":[{{"id":"s1","checks":[{{"kind":"command","run":"true"}}]}}]}}"#
+        ))
+        .unwrap();
+        apply_authored_guarantees(&mut plan).unwrap();
+        assert_eq!(plan.on_failure, schema::OnFailure::RollbackPlan);
+
+        let result =
+            run_for_authoring_with_plan(&root, plan, false, None, Some("claude-sonnet-5")).unwrap();
+
+        assert!(result.passed, "{}", result.diagnostic);
+        let report_path = result.report_path.expect("non-dry run writes a report");
+        let written = std::fs::read_to_string(report_path).unwrap();
+        let report: serde_json::Value = serde_json::from_str(&written).unwrap();
+        assert_eq!(report["authored_by"], "claude-sonnet-5", "{written}");
+
         let _ = std::fs::remove_dir_all(&root);
     }
 

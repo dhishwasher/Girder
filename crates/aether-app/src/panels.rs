@@ -1,7 +1,8 @@
 //! The four resizable IDE panels, each a *projection* of shared state.
 
-use crate::app::{AetherApp, ExtensionPanelView, RightPanel};
+use crate::app::{AetherApp, AuthorMode, ExtensionPanelView, RightPanel};
 use crate::graph_view::{all_edge_kinds, all_node_kinds, GraphScope, ViewEdge, ViewNode};
+use crate::project::AuthorEvent;
 use aether_extensions::{
     Capability, CommandAction, Contribution, ExtensionState, PanelLocation, PanelView,
 };
@@ -542,6 +543,7 @@ pub fn agents_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
             RightPanel::Collaboration,
             "Collaboration",
         );
+        ui.selectable_value(&mut app.right_panel, RightPanel::Author, "Author");
     });
     ui.separator();
 
@@ -549,7 +551,211 @@ pub fn agents_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         RightPanel::Agents => agent_console(app, ui),
         RightPanel::Extensions => extensions_panel(app, ui),
         RightPanel::Collaboration => collaboration_panel(app, ui),
+        RightPanel::Author => author_panel(app, ui),
     }
+}
+
+/// Renders one [`AuthorEvent`] as it would print on the CLI (see
+/// `author::print_author_event`) — the panel and the CLI share the same
+/// event model, they just render it into different places.
+fn format_author_event(event: &AuthorEvent) -> String {
+    match event {
+        AuthorEvent::Loading { root } => format!("Loading {} ...", root.display()),
+        AuthorEvent::Loaded { files, node_count } => {
+            format!("  {files} file(s), {node_count} nodes")
+        }
+        AuthorEvent::NodesSelected {
+            pinned,
+            intent,
+            nodes,
+        } => {
+            let header = if *pinned {
+                format!("Using pinned nodes for \"{intent}\":")
+            } else {
+                format!("Selecting nodes for \"{intent}\":")
+            };
+            let mut lines = vec![header];
+            for (path, score) in nodes {
+                lines.push(match score {
+                    Some(score) => format!("  {score:.2}  {path}"),
+                    None => format!("  {path}"),
+                });
+            }
+            lines.join("\n")
+        }
+        AuthorEvent::AttemptStarted {
+            provider,
+            attempt,
+            max_attempts,
+            node_paths,
+        } => format!(
+            "[{provider}] attempt {attempt}/{max_attempts} — nodes: {}",
+            node_paths.join(", ")
+        ),
+        AuthorEvent::ProviderDeclined {
+            diagnostic,
+            elapsed_secs,
+        } => format!("  {diagnostic} ({elapsed_secs}s elapsed)"),
+        AuthorEvent::ProviderResponded {
+            provider,
+            elapsed_secs,
+        } => format!("  {provider} responded in {elapsed_secs}s"),
+        AuthorEvent::ModelResponseInvalid { diagnostic }
+        | AuthorEvent::PlanWrapFailed { diagnostic } => {
+            format!("  {diagnostic}")
+        }
+        AuthorEvent::AttemptFailed { diagnostic } => format!("  attempt failed:\n    {diagnostic}"),
+    }
+}
+
+/// Shared "are you sure" gate for a live (non-dry) Run / Run-authored click,
+/// mirroring the remove-extension confirm/cancel row
+/// (`extension_installed_panel`): a GUI button that silently writes to the
+/// tree has no command line to review first, so a non-dry run always takes
+/// a second, explicit click.
+fn author_run_button(
+    app: &mut AetherApp,
+    ui: &mut egui::Ui,
+    label: &str,
+    run: impl FnOnce(&mut AetherApp),
+) {
+    if app.author_live_run_confirming {
+        ui.horizontal(|ui| {
+            ui.colored_label(
+                Color32::from_rgb(0xF4, 0x87, 0x71),
+                "This writes to the working tree. Run for real?",
+            );
+            if ui.button("Confirm").clicked() {
+                run(app);
+            }
+            if ui.button("Cancel").clicked() {
+                app.author_live_run_confirming = false;
+            }
+        });
+    } else if ui
+        .add_enabled(!app.author_write_busy(), egui::Button::new(label))
+        .clicked()
+    {
+        run(app);
+    }
+}
+
+fn author_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
+    ui.heading("Author");
+    ui.label(
+        "Author a plan against the graph — locally via the router's providers, or externally by pasting a plan back in from a model that isn't wired in.",
+    );
+    ui.add_space(6.0);
+
+    ui.label("Intent");
+    ui.text_edit_multiline(&mut app.author_intent);
+
+    ui.horizontal(|ui| {
+        // Read-only and always safe to re-click: never gated on
+        // author_busy() (see `run_author_search`'s doc comment).
+        if ui.button("Search").clicked() {
+            app.run_author_search();
+        }
+        ui.label(format!("{} node(s) found", app.author_search_results.len()));
+    });
+    if !app.author_search_results.is_empty() {
+        egui::ScrollArea::vertical()
+            .id_salt("author_search_results")
+            .max_height(140.0)
+            .show(ui, |ui| {
+                for hit in &mut app.author_search_results {
+                    let label = match hit.score {
+                        Some(score) => format!("{score:.2}  {}", hit.path),
+                        None => hit.path.clone(),
+                    };
+                    ui.checkbox(&mut hit.selected, label);
+                }
+            });
+    }
+
+    ui.add_space(6.0);
+    ui.horizontal(|ui| {
+        ui.selectable_value(&mut app.author_mode, AuthorMode::Local, "Local model");
+        ui.selectable_value(&mut app.author_mode, AuthorMode::External, "External model");
+    });
+    if ui.checkbox(&mut app.author_dry_run, "Dry run").changed() {
+        app.author_live_run_confirming = false;
+    }
+    ui.separator();
+
+    match app.author_mode {
+        AuthorMode::Local => author_local_panel(app, ui),
+        AuthorMode::External => author_external_panel(app, ui),
+    }
+
+    if let Some(error) = app.author_last_error.clone() {
+        ui.add_space(6.0);
+        ui.colored_label(Color32::from_rgb(0xF4, 0x87, 0x71), error);
+    }
+    if let Some(result) = app.author_last_result.clone() {
+        ui.add_space(6.0);
+        ui.separator();
+        ui.strong("Result");
+        egui::ScrollArea::vertical()
+            .id_salt("author_result")
+            .max_height(200.0)
+            .show(ui, |ui| {
+                ui.monospace(result);
+            });
+    }
+}
+
+fn author_local_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
+    ui.horizontal(|ui| {
+        ui.label("Max repairs");
+        ui.add(egui::DragValue::new(&mut app.author_max_repairs).range(0..=10));
+    });
+
+    author_run_button(app, ui, "Run", AetherApp::run_author);
+
+    if !app.author_log.is_empty() {
+        ui.add_space(6.0);
+        ui.strong("Log");
+        egui::ScrollArea::vertical()
+            .id_salt("author_log")
+            .max_height(220.0)
+            .stick_to_bottom(true)
+            .show(ui, |ui| {
+                for event in &app.author_log {
+                    ui.monospace(format_author_event(event));
+                }
+            });
+    }
+}
+
+fn author_external_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
+    // Read-only and always safe to re-click: never gated on author_busy()
+    // (see `copy_author_context_json`'s doc comment).
+    if ui
+        .button("Copy context JSON")
+        .on_hover_text("Puts exactly what `bitcode context --json` would print onto the clipboard.")
+        .clicked()
+    {
+        app.copy_author_context_json();
+    }
+
+    ui.add_space(6.0);
+    ui.label("Paste a plan back in");
+    egui::ScrollArea::vertical()
+        .id_salt("author_pasted_plan")
+        .max_height(160.0)
+        .show(ui, |ui| {
+            ui.add(
+                egui::TextEdit::multiline(&mut app.author_pasted_plan)
+                    .desired_rows(8)
+                    .code_editor(),
+            );
+        });
+
+    ui.label("Authored by");
+    ui.text_edit_singleline(&mut app.author_authored_by);
+
+    author_run_button(app, ui, "Run authored", AetherApp::run_author_authored);
 }
 
 fn collaboration_panel(app: &mut AetherApp, ui: &mut egui::Ui) {

@@ -49,11 +49,23 @@ pub fn context(args: &[String]) -> std::io::Result<()> {
 fn build_output(root: &Path, args: &[String]) -> std::io::Result<Value> {
     let pinned_node_paths = parse_pinned_nodes(args)?;
     let intent = collect_words(args, &["--json"], &["--nodes"]);
+    build_context_json(root, &intent, pinned_node_paths.as_deref())
+}
 
+/// The body of `build_output`, taking an already-resolved intent and pinned
+/// node paths instead of raw CLI args. Split out so the GUI's "Copy context
+/// JSON" button can produce exactly the same object `bitcode context --json`
+/// prints without building a fake args vector — same node selection, same
+/// schema, same plan skeleton, no reimplementation.
+pub(crate) fn build_context_json(
+    root: &Path,
+    intent: &str,
+    pinned_node_paths: Option<&[String]>,
+) -> std::io::Result<Value> {
     let config = ProjectConfig::load(root)?;
     let (graph, _builder, _files) = build_from_dir_with_config(root, &config)?;
 
-    let ctx = match build_authoring_context(&graph, &intent, pinned_node_paths.as_deref()) {
+    let ctx = match build_authoring_context(&graph, intent, pinned_node_paths) {
         Ok(ctx) => ctx,
         Err(SelectionError::NoMatches) => {
             return Err(invalid_input(&format!("no nodes matched \"{intent}\"")));
@@ -77,7 +89,7 @@ fn build_output(root: &Path, args: &[String]) -> std::io::Result<Value> {
         // translation layer the way `bitcode do`'s local path has
         // (`author::convert_edit`/`convert_check`).
         "schema": plan_schema(&ctx.node_paths),
-        "plan_skeleton": plan_skeleton(&base_commit, &intent, &plan_id),
+        "plan_skeleton": plan_skeleton(&base_commit, intent, &plan_id),
     }))
 }
 
@@ -253,6 +265,83 @@ mod tests {
         assert_eq!(checks.len(), 1);
         assert_eq!(checks[0]["kind"], "tests.impacted");
         assert_eq!(checks[0]["expect"], "all_pass");
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// Same fixture shape as `fixture_project`, but with two distinct
+    /// functions so a test can pin either one and compare.
+    fn two_node_fixture_project(name: &str) -> PathBuf {
+        let root = std::env::temp_dir().join(format!(
+            "bitcode-context-cmd-fixture-{name}-{}-{}",
+            std::process::id(),
+            NEXT_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(
+            root.join("calc.rs"),
+            "pub fn greet() -> String {\n    \"hi\".to_string()\n}\n\npub fn hello() -> String {\n    \"hello\".to_string()\n}\n",
+        )
+        .unwrap();
+        git(&root, &["init", "--quiet"]);
+        git(&root, &["add", "calc.rs"]);
+        git(
+            &root,
+            &[
+                "-c",
+                "user.name=Bit Code Tests",
+                "-c",
+                "user.email=tests@bitcode.invalid",
+                "commit",
+                "--quiet",
+                "-m",
+                "base",
+            ],
+        );
+        root
+    }
+
+    // The GUI's "Copy context JSON" button (see `app.rs::copy_author_context_json`)
+    // recomputes `pinned_node_paths` from live checkbox state on every click
+    // and calls `build_context_json` directly — this pins that contract at
+    // the function boundary the GUI actually calls: two calls that differ
+    // only in which node is pinned must differ in `nodes` (obviously) and
+    // in `plan_skeleton.plan_id` (since a real second build was performed,
+    // not a cached one — `plan_id` embeds a fresh millisecond timestamp
+    // every call, so identical output across two different-selection calls
+    // is a caching/staleness bug, not a coincidence).
+    #[test]
+    fn build_context_json_with_different_pinned_nodes_differs_in_nodes_and_plan_id() {
+        let root = two_node_fixture_project("pinned-selection-differs");
+
+        let first = build_context_json(
+            &root,
+            "make hello end with an exclamation mark",
+            Some(&["crate::calc::greet".to_string()]),
+        )
+        .unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(2));
+        let second = build_context_json(
+            &root,
+            "make hello end with an exclamation mark",
+            Some(&["crate::calc::hello".to_string()]),
+        )
+        .unwrap();
+
+        assert_ne!(first["nodes"], second["nodes"], "{first} vs {second}");
+        assert_eq!(
+            first["nodes"].as_array().unwrap()[0]["path"],
+            "crate::calc::greet"
+        );
+        assert_eq!(
+            second["nodes"].as_array().unwrap()[0]["path"],
+            "crate::calc::hello"
+        );
+        assert_ne!(
+            first["plan_skeleton"]["plan_id"], second["plan_skeleton"]["plan_id"],
+            "two separate builds must never share a plan_id: {first} vs {second}"
+        );
 
         let _ = std::fs::remove_dir_all(&root);
     }

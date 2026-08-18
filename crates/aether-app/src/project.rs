@@ -46,6 +46,15 @@ pub(crate) use commands::{
     test_impact,
 };
 #[cfg(feature = "gui")]
+pub(crate) use commands::{
+    author, build_context_json, search_nodes_for_authoring, AuthorEvent, AuthorOutcome,
+    DEFAULT_MAX_REPAIRS,
+};
+#[cfg(feature = "gui")]
+pub(crate) use planfile::{
+    apply_authored_guarantees, parse_plan, run_for_authoring_with_plan, AuthoringRunResult,
+};
+#[cfg(feature = "gui")]
 pub(crate) use validation::{ValidationReport, ValidationStatus};
 #[cfg(feature = "gui")]
 pub(crate) use workspace::{

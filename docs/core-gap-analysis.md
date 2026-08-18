@@ -1,6 +1,6 @@
 # Core workflow gap analysis
 
-Last updated: 2026-08-15
+Last updated: 2026-08-18
 
 This is the prioritized, evidence-based comparison for Bit Code's core
 `analyze → navigate/search → edit/refactor → review impact → select tests →
@@ -909,6 +909,77 @@ as gap 11 rather than silently accepted.
     purpose today and start passing again only once someone re-runs the v3
     measurement for real, so the repository's own test suite states the gap
     rather than quietly tolerating it.
+
+20. **Closed — the GUI Author tab's read-only clipboard action could serve a
+    stale build, and its default node selection worked against gap 15's
+    score floor.** Found by manual click-through of the new Author tab
+    after `cargo test --workspace`, clippy `-D warnings` on default/
+    `live-providers`/`gui`, `cargo fmt`, and the Python suite had all passed
+    clean — none of those gates exercise clicking the actual buttons.
+    Two defects:
+    - **Copy Context JSON could serve a previous click's result.**
+      `copy_author_context_json` (`crates/aether-app/src/app.rs`) already
+      recomputed `checked`/`pinned` from live checkbox state on every call —
+      that was never wrong. The defect was the gate around it:
+      `pub(crate) fn author_busy()` OR'd together all four Author-tab
+      background operations (search, local-model run, run-authored, *and*
+      copy-context-json), so a click on "Copy context JSON" while any of
+      the other three was still in flight — most plausibly a Search or a
+      full-repository build taking longer than expected — was silently
+      dropped: the button stayed disabled, `copy_author_context_json` never
+      ran a second time, and the clipboard kept whatever an earlier click
+      had put there. Two unchecking/rechecking passes that both landed in
+      that window looked exactly like "the button is serving a cached
+      result rather than rebuilding" — including an identical
+      `plan_skeleton.plan_id`, which is only possible if the second click's
+      `build_context_json` call, and therefore its `generate_plan_id()`,
+      never actually ran. Fixed by no longer gating Search or Copy Context
+      JSON on `author_busy()` at all: both are read-only, so a repeated
+      click now always supersedes whatever is still in flight instead of
+      being swallowed — the previous `oneshot::Receiver` is simply dropped,
+      which makes the corresponding orphaned background thread's
+      `tx.send(...)` a no-op, so only the latest click's result is ever
+      applied. `author_busy()` itself is kept, but only for gating
+      `open_project`/`reload_project` (swapping the workspace root out from
+      under an in-flight background thread that captured the old root by
+      value). A new `author_write_busy()` — `author_run_rx.is_some() ||
+      author_run_authored_rx.is_some()` — gates Run and Run-authored
+      specifically, since those two, unlike Search/Copy, write to the real
+      tree and must never run concurrently against the same project.
+      Regression test:
+      `build_context_json_with_different_pinned_nodes_differs_in_nodes_and_plan_id`
+      in `crates/aether-app/src/project/commands/context_cmd.rs` calls
+      `build_context_json` twice with different pinned node sets and
+      asserts both `nodes` and `plan_skeleton.plan_id` differ between the
+      two calls — pinning the exact invariant the GUI's button depends on.
+    - **Search defaulted every hit to checked.** `run_author_search`
+      (`crates/aether-app/src/app.rs`) set `selected: true` on every result
+      from `search_nodes_for_authoring`. Gap 15 introduced `TOP_K = 3` and
+      `NODE_SCORE_FLOOR_RATIO = 0.5` specifically to shrink what a model can
+      touch after over-selection put unrelated nodes into the schema enum;
+      defaulting every search hit to checked reopened exactly that hole one
+      layer up; on the intent "make hello end with an exclamation mark" the
+      default selection included
+      `crate::crates::aether-debugger::src::interp::Interpreter<'a>::run`, an
+      unrelated Rust function in the debugger crate, as a legal edit target.
+      Fixed by defaulting only the top-scored hit (index 0 of
+      `search_nodes_for_authoring`'s best-first-sorted results, per
+      `select_nodes`'s existing doc comment and the `apply_score_floor`
+      tests that already assume that order) to checked; the user opts
+      additional nodes in deliberately instead of opting stray ones out.
+    Audited every other place in `author_panel` that reads `AetherApp`
+    state for the same class of defect (state captured earlier instead of
+    read live at click/build time): `run_author` (Mode 1 "Run") and
+    `run_author_authored` (Mode 2 "Run authored") both already recompute
+    `checked`/`intent`/`dry`/`max_repairs`/`pasted_plan`/`authored_by` fresh
+    at the top of the method on every call, and `author_run_button` (the
+    shared confirm/cancel button helper in `crates/aether-app/src/panels.rs`)
+    calls straight into whichever method was passed at click time with no
+    earlier capture — neither has the caching defect. Their `author_busy()`
+    (now `author_write_busy()`) gate is not the same class of bug: it is a
+    deliberate, necessary serialization against two authoring runs
+    concurrently writing to the same real tree, which Search and Copy
+    Context JSON have no equivalent of, since they only read.
 
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,

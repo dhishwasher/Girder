@@ -15,8 +15,14 @@ mod test_impact;
 
 pub(crate) use agents::{forge, swarm_plan};
 pub(crate) use author::do_intent;
+#[cfg(feature = "gui")]
+pub(crate) use author::{author, AuthorEvent, AuthorOutcome, DEFAULT_MAX_REPAIRS};
+#[cfg(feature = "gui")]
+pub(crate) use authoring_context::search_nodes_for_authoring;
 pub(crate) use collaboration::collaboration;
 pub(crate) use config::config;
+#[cfg(feature = "gui")]
+pub(crate) use context_cmd::build_context_json;
 pub(crate) use context_cmd::context;
 pub(crate) use dap::dap;
 pub(crate) use debug::debug;
