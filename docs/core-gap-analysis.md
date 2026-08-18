@@ -1157,10 +1157,10 @@ as gap 11 rather than silently accepted.
     against `sample-project/` both confirmed rejected with the documented
     error before this was called done.
 
-22. **P0 — open, not fixed here. `bitcode test-impact` returns zero tests
-    for changed functions that real, passing tests do reach, whenever the
-    reaching call is chained onto another call's result, and `--quiet`
-    cannot distinguish that false negative from "nothing changed."**
+22. **Closed — `bitcode test-impact` returned zero tests for changed
+    functions that real, passing tests do reach, whenever the reaching call
+    was chained onto another call's result, and `--quiet` could not
+    distinguish that false negative from "nothing changed."**
     Reproduced on a clean tree (`git status --short` showed only the
     pending AGENTS.md edit before this began):
     ```
@@ -1231,9 +1231,111 @@ as gap 11 rather than silently accepted.
     all. So the defect family ranges from missing edges to misattributed
     edges, not only "conservatively silent" ones.
 
-    **Not investigated:** whether the same call-chain shape reproduces in
-    the Python builder/extractor path, or whether it is Rust-specific —
-    everything above was Rust. Left open rather than assumed either way.
+    **Root cause, precisely, and the fix.** Every failing case above
+    bottoms out in one function, `qualifier_matches_owner`
+    (`crates/aether-builder/src/sync.rs`), reached through
+    `select_candidate`, via three separable mechanisms:
+    - *Generic-parameter corruption.* `qualifier_matches_owner` normalized
+      an owner's bare name via `owner.rsplit("::").next()` without first
+      stripping a generic parameter list, so `Interpreter<'a>` kept the
+      lifetime letter and normalized to `"interpretera"` — matching neither
+      `"interpreter"` nor its suffix. This broke *any* plain, unchained call
+      to a method on a generic type, independent of chaining; found while
+      diagnosing `Interpreter::new(&program)` itself, which has no chain at
+      all. Fixed with a new `owner_tail()` that strips a trailing `<...>`
+      before normalizing, applied to both `qualifier_matches_owner` and the
+      analogous `return_type_matches_owner`.
+    - *Chained-call qualifier corruption.* `callee_target`
+      (`crates/aether-builder/src/mapper.rs`) derived a call's qualifier by
+      finding the last `.`/`:` in the whole "function" field's raw source
+      text. For `Interpreter::new(&program).run_with_counts(None)`, chained
+      directly onto a constructor call with no `let` binding, that captured
+      the *entire* preceding call — including nested calls, struct
+      literals, and comments for deeper builder chains like `Program::new()
+      .function(Function {..}).stmt(..)` — as the "qualifier," which then
+      matched no real owner. Fixed with `rust_call_target_ref`/
+      `rust_chained_receiver_factory` (`mapper.rs`), which recover the
+      receiver from the actual `field_expression`/`call_expression` AST
+      nesting instead of text, recursing to arbitrary chain depth and
+      reusing the pre-existing `receiver_factory`/`resolve_factory_receiver`
+      machinery (built for `let x = Type::new(); x.method()`) unchanged.
+      This fix needed no `sync.rs` change at all.
+    - *Ambiguous suffix matching.* `qualifier_matches_owner`'s
+      `owner.ends_with(hint)` fallback let `PyTimeline` satisfy qualifier
+      `"Timeline"` by bare substring, so `only_candidate` saw two matches
+      for `Timeline::record` and returned `None` — a real, unambiguous call
+      read as ambiguous. Fixed by trying an exact match
+      (`qualifier_matches_owner_exactly`) first in `select_candidate`, only
+      widening to the suffix-inclusive check when nothing matches exactly.
+    - *Local-shadow misattribution, Rust only.* `call_with_probe`'s
+      `commit: impl Fn() -> i64` parameter collided by bare name with the
+      globally-unique `Widget::commit`, and `select_candidate`'s unqualified
+      "if this name is globally unique, assume it" fallback wrongly linked
+      them — turning a missing edge into a *wrong* one, gap 22's worst case.
+      Fixed by tracking each Rust function's own parameter names
+      (`rust_parameter_names`, independent of whether their type is
+      hintable, so it does not touch existing `ReceiverHint` behavior) and
+      failing closed — `None`, not a guess — whenever a bare callee name is
+      locally shadowed. **Deliberately not fixed: the equivalent Python
+      collision.** Investigating the real repo's own instance of this
+      exact mechanism —
+      `tools::authoring_task_check::call_with_probe`'s local `function`
+      variable wrongly linking to the unrelated Rust `Program::function` —
+      found it is genuinely Python-side (`tools/authoring_task_check.py:39`,
+      `function = namespace.get(function_name)`), and closing it generally
+      requires Python local-scope tracking this pass did not build. See
+      gap 23.
+
+    **Before/after, the real CLI, on the real repo.** The literal repro
+    command is a no-op — `\&` in a sed replacement is just an escaped
+    literal `&`, identical to what the file already had:
+    ```
+    sed -i 's/pub fn run_with_counts(&self/pub fn run_with_counts(\&self/' crates/aether-debugger/src/interp.rs
+    git diff --stat                   ->  (nothing)
+    bitcode review . --quiet          ->  (empty, exit 0)
+    bitcode test-impact . --quiet     ->  (empty, exit 0)
+    ```
+    With an actual edit (mirroring this gap's own original `// probe`
+    pattern), against the fixed binary on the fixed source:
+    ```
+    sed -i 's/pub fn run_with_counts(&self, intervention: Option<&Intervention>) -> (Trace, CallCounts) {/pub fn run_with_counts(\&self, intervention: Option<\&Intervention>) -> (Trace, CallCounts) { \/\/ probe/' crates/aether-debugger/src/interp.rs
+
+    bitcode review . --quiet
+      crate::crates::aether-debugger::src::interp
+      crate::crates::aether-debugger::src::interp::Interpreter<'a>::run_with_counts
+
+    bitcode test-impact . --quiet
+      ai_root_cause_returns_an_explanation
+      divergence_points_at_the_intervened_step
+      hot_functions_rank_by_execution_count
+      records_a_full_trace
+      what_if_branch_propagates_the_fix_forward
+      ... [67 more aether-app tests] ...
+    ```
+    Before the fix, this selected nothing (the byte-for-byte-empty output
+    documented above). After, it selects five `aether-debugger` tests — not
+    the four originally guessed; `ai_root_cause_returns_an_explanation` also
+    reaches `Timeline::record` and had been missed in the original
+    write-up — plus roughly 67 `aether-app` tests. That larger set is
+    correct, not over-selection: `bitcode query` on `run_with_counts` now
+    returns exactly `{run_with, Timeline::fork_what_if, Timeline::record}`,
+    no spurious extras, and `AetherApp::new` (`crates/aether-app/src/app.rs:204`)
+    and `smoke::run` (`crates/aether-app/src/smoke.rs:157`) both really call
+    `Timeline::record(buggy_demo_program())` in production code. Every test
+    that constructs an `AetherApp` genuinely had `run_with_counts` in its
+    blast radius the whole time; the fix simply stopped hiding it.
+
+    Four tests in `crates/aether-builder/src/lib.rs` pin these shapes:
+    `gap22_chained_call_resolves_to_its_real_caller`,
+    `gap22_chained_call_is_not_misattributed_to_an_unrelated_caller`,
+    `gap22_unchained_call_still_resolves_regression_guard`, and
+    `gap22_unchained_call_to_generic_type_method_resolves` for the
+    standalone generic-parameter case found along the way — plus a fifth,
+    `gap22_nested_argument_call_resolves_to_its_real_caller`, added
+    initially expecting a defect and left in, not ignored, once
+    investigation showed the nested-argument shape alone was never actually
+    broken: `Timeline::record(buggy_demo_program())`'s failure was the
+    ambiguous-suffix mechanism above, not argument nesting.
 
     **The `--quiet` ambiguity is real and measured, not inferred:** a
     clean tree with zero source changes and a tree with the
@@ -1252,22 +1354,113 @@ as gap 11 rather than silently accepted.
     triggering this investigation as 48,791 bytes of output — the opposite
     of the intended saving).
 
-    **Connection to the representative benchmark:**
-    `docs/core-representative-benchmark.md` reports perfect precision/
-    recall (1.000/1.000) on 40 declared call-edge cases across six real
-    repositories, and gap 7 above treats that as the corpus's first passing
-    observation. This gap is a real git-history change to Bit Code's own
-    source, not a preselected probe, and it lands on exactly the call shape
-    — a chained or nested-argument call — that a fluent/builder API
-    produces constantly and that the declared 40 cases evidently do not
-    exercise. Gap 11 already established that a declared-case benchmark can
-    read as 1.0 while a real dispatch shape (there, an untyped-fixture
-    polymorphic call) recalls 0; this is a second, independently discovered
-    instance of the same blind spot, now against Rust and against Bit
-    Code's own codebase rather than a third-party fixture, and touching
-    ordinary constructor-then-configure code that appears in this
-    repository's own production builders (`mapper.rs`), not only in test
-    helpers.
+    **The representative benchmark's blind spot, closed the same way it was
+    found.** `docs/core-representative-benchmark.md` reported perfect
+    precision/recall (1.000/1.000) on 40 declared call-edge cases and did
+    not catch any of the above — gap 11 was the identical failure mode (a
+    declared-case corpus that never contains a shape cannot fail on it).
+    Rather than add synthetic fixtures, three declared cases were added
+    from real code already inside the pinned archives:
+    `regexset-new-chained-builder-call`
+    (`RegexSet::new` -> `RegexSetBuilder::build`, regex's own
+    `RegexSetBuilder::new(exprs).build()` with no `let` binding — this
+    gap's case 1, verbatim, in a third-party crate) and
+    `from-slice-nested-argument-call` (`from_slice` ->
+    `SliceRead<'a>::new`, serde_json's own `from_trait(read::SliceRead
+    ::new(v))` — case 2's shape, and it exercises the generic-owner fix
+    too, since `SliceRead` is generic) both now measure true positives:
+    Rust's slice of the corpus is 13 TP, 4 TN, 0 FP, 0 FN, **1.000/1.000**
+    — the fix holds on real, previously-uncurated code, not only the unit
+    tests written against it. The third case,
+    `getchar-not-testing-isolation-mock`, is a declared *negative*:
+    Click's own `click.termui.getchar()` reassigns the module global
+    `_getchar` to `_termui_impl.getchar` under `global _getchar` and calls
+    that — it must never resolve to `click.testing.CliRunner.isolation`'s
+    unrelated, same-named nested mock function. It does anyway: this is a
+    real, reproducible instance of gap 22's misattribution mechanism on the
+    Python side, confirmed via `bitcode query` returning
+    `crate::click::termui::getchar` as `CliRunner::isolation::_getchar`'s
+    sole recorded caller, and it is deliberately not fixed (see gap 23).
+    Declaring it as a case rather than leaving it undeclared means the
+    benchmark now says so instead of staying silent: Python's slice is 20
+    TP, 5 TN, **1 FP**, 0 FN — micro precision 0.952381, macro precision
+    0.933333, recall still 1.000/1.000 (nothing became a false negative;
+    one specific, real edge is a false positive). Aggregate: 33 TP, 9 TN,
+    1 FP, 0 FN, micro precision 0.970588, macro precision 0.966667, recall
+    1.000/1.000, `beta_pass: false` — the precommitted policy requires zero
+    false positives and 1.0 precision, and this correctly fails it. The
+    numbers were not tuned to keep the old 1.0; a corpus that only ever
+    reads 1.0 was the actual lesson of gap 11 and, now, of this gap too.
+
+23. **P1 — open, deliberately not fixed: a Python local variable that
+    coincides by bare name with an unrelated, globally-unique function
+    elsewhere in the graph gets wrongly linked as that function's caller.**
+    Split out of gap 22, which fixed the identical mechanism for Rust
+    (`shadowed_by_local` in `crates/aether-builder/src/mapper.rs` and
+    `sync.rs`) but left the Python side open. Confirmed still present on
+    Bit Code's own repo today, after gap 22's fix: asking who calls
+    `crate::crates::aether-debugger::src::lang::Program::function` returns
+    three callers — `buggy_demo_program` and
+    `hot_functions_rank_by_execution_count`, both real (correctly restored
+    by gap 22's chain fix), and `crate::tools::authoring_task_check::call_with_probe`,
+    still wrong. Its source (`tools/authoring_task_check.py:31-40`):
+    ```python
+    def call_with_probe(namespace: dict[str, object], function_name: str, *, upper: bool) -> None:
+        ...
+        namespace["hello"] = hello_probe
+        function = namespace.get(function_name)
+        require(callable(function), f"{function_name} is not callable")
+        ...
+        require(function(name) == expected, f"{function_name} has wrong behavior")
+    ```
+    `function` is a local variable holding whatever callable
+    `namespace.get(function_name)` returned — nothing to do with Rust's
+    `Program::function` at all. The bare call `function(name)` is emitted
+    as an unqualified `CallRef`, and because `Program::function` is the
+    only graph node anywhere named `function`, `select_candidate`'s
+    unqualified-branch "globally unique -> assume it" fallback links them.
+    This is confirmed live in the representative benchmark too: the
+    `getchar-not-testing-isolation-mock` declared negative case added to
+    gap 22's closing entry above is the same mechanism on
+    `click.termui.getchar()`'s reassigned `_getchar` global, and it
+    measures as a real false positive, not a hypothetical one.
+
+    **The real repo's edge is very likely still wrong** — nothing in this
+    pass touched it — and the same risk applies anywhere a Python function
+    binds a local variable or parameter whose bare name happens to match
+    some unrelated, uniquely-named function or method elsewhere in a
+    project's graph.
+
+    **What closing it would require.** The Rust fix worked by collecting
+    each function's own parameter names (`rust_parameter_names`) — cheap,
+    because Rust requires every parameter to carry an explicit, locally-
+    complete type annotation, so the enclosing function's own AST node is
+    enough. Python has no such requirement: a name can be bound by a
+    parameter, a plain assignment (`function = namespace.get(...)`), a
+    `for` target, a `with`/`except` target, a comprehension variable, a
+    nested `def`/`class`, or an import, and any later reassignment or
+    nested scope can shadow or unshadow it mid-function. Suppressing the
+    "globally unique" fallback correctly needs real local-scope tracking —
+    walking a function body (and, transitively, whatever else it defines)
+    for every name it binds by any of those forms before deciding whether a
+    bare call's name is a local or a genuine reference to something else —
+    not a single-pass parameter list.
+
+    **Why this was scoped out of gap 22 rather than attempted.** Two
+    reasons, both from this pass's own findings, not caution in the
+    abstract. First, mapper.rs's Python extraction is explicitly a
+    "pragmatic extractor, not a full type checker" (its own doc comment);
+    building real scope tracking is a materially larger, riskier change
+    than gap 22's other three fixes, each of which stayed inside one
+    function or added one small, structurally-scoped helper. Second, gap 22
+    constraint 2 was explicit that guessing when ambiguous is worse than
+    staying silent — a wrong caller is a false positive that propagates
+    into rename, while a missing edge is a false negative that stays
+    contained. Attempting a fast, partial Python heuristic (e.g., only
+    tracking assignment targets, as this pass's own exploratory search
+    script did to find `getchar`) risks exactly that: correctly catching
+    some shadowing shapes while creating false confidence about the ones it
+    doesn't, which is worse than leaving the known gap declared and open.
 
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,

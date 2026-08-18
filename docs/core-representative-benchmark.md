@@ -2,7 +2,7 @@
 
 This benchmark measures a bounded fresh-graph analysis workflow on six pinned
 open-source repositories: three Rust crates and three Python source
-distributions. It is a reproducible beta gate for the declared corpus and 40
+distributions. It is a reproducible beta gate for the declared corpus and 43
 preselected call-edge probes. It is not a claim of general semantic accuracy,
 cold-cache performance, incremental-index performance, or representative
 affected-test accuracy.
@@ -17,6 +17,15 @@ or case-colliding paths, invalid UTF-8, and any file/count/byte/digest mismatch.
 Extraction occurs in a private temporary directory and never merges into an
 existing checkout.
 
+Three declared cases were added after gap 22 (docs/core-gap-analysis.md item
+22) found that a declared-case benchmark reading 1.0 says nothing about a
+call shape the declared cases never exercise: `regexset-new-chained-builder-call`
+and `from-slice-nested-argument-call` pin the two real chained/nested-argument
+shapes gap 22 fixed in Rust, and `getchar-not-testing-isolation-mock` is a
+declared-negative case pinning the real, still-open Python-side local/global
+name-shadow misattribution gap 22 explicitly left unfixed (see gap 23). All
+three are real code in the pinned archives, not synthetic fixtures.
+
 | Language | Repository | Source files | Physical lines |
 |---|---|---:|---:|
 | Rust | petgraph 0.6.5 | 79 | 27,797 |
@@ -27,7 +36,7 @@ existing checkout.
 | Python | Requests 2.34.2 | 35 | 11,526 |
 
 The corpus contains 526 checked source files, 7,048,034 source bytes, and
-214,120 physical lines. Its 31 positive and nine negative cases are declared
+214,120 physical lines. Its 33 positive and 10 negative cases are declared
 before execution. Both endpoints must exist in the exported graph; missing
 endpoints abort rather than becoming false negatives.
 
@@ -100,27 +109,56 @@ then exits unsuccessfully with the failed check ids.
 
 ## Result
 
-The first recorded observation
-([`core-representative-observation.json`](core-representative-observation.json))
-**passes** the precommitted policy: `beta_pass: true`, zero failed checks.
+The corpus's first observation, before gap 22 (docs/core-gap-analysis.md)
+added the three cases below, **passed** the precommitted policy on 40
+declared cases: `beta_pass: true`, zero failed checks, 1.000/1.000
+precision and recall throughout. It did not catch gap 22's chained-call,
+nested-argument, or Python local-shadow-misattribution defects, because no
+declared case exercised any of those shapes — the same failure mode gap 11
+established first. Gap 22 added three declared cases from real code already
+inside the pinned archives (not synthetic fixtures) to close that blind
+spot, and the corpus was re-measured
+([`core-representative-observation.json`](core-representative-observation.json)):
+`beta_pass: false`, driven entirely by one deliberately-declared, genuinely
+unfixed Python case — not tuned back to 1.0.
 
 | Repository | Median analyze | Max analyze | Max RSS | Semantic | Digests |
 |---|---:|---:|---:|---|---|
-| petgraph-0.6.5 | 2.0s | 2.4s | 50.6 MiB | 3 TP, 0 FP/FN | 1/1 |
-| serde_json-1.0.150 | 1.6s | 1.6s | 41.7 MiB | 4 TP, 0 FP/FN | 1/1 |
-| regex-1.12.4 | 0.5s | 0.6s | 19.6 MiB | 4 TP, 4 TN, 0 FP/FN | 1/1 |
-| click-8.4.1 | 3.9s | 4.2s | 47.6 MiB | 4 TP, 3 TN, 0 FP/FN | 1/1 |
-| pydantic-2.13.4 | 46.4s | 47.1s | 206.6 MiB | 3 TP, 1 TN, 0 FP/FN | 1/1 |
-| requests-2.34.2 | 2.4s | 2.5s | 28.5 MiB | 13 TP, 1 TN, 0 FP/FN | 1/1 |
+| petgraph-0.6.5 | 1.8s | 2.6s | 48.2 MiB | 3 TP, 0 FP/FN | 1/1 |
+| serde_json-1.0.150 | 1.3s | 1.3s | 38.8 MiB | 5 TP, 0 FP/FN | 1/1 |
+| regex-1.12.4 | 0.5s | 0.5s | 17.3 MiB | 5 TP, 4 TN, 0 FP/FN | 1/1 |
+| click-8.4.1 | 3.1s | 3.2s | 44.8 MiB | 4 TP, 3 TN, **1 FP**, 0 FN | 1/1 |
+| pydantic-2.13.4 | 38.0s | 40.0s | 201.8 MiB | 3 TP, 1 TN, 0 FP/FN | 1/1 |
+| requests-2.34.2 | 2.0s | 2.2s | 25.9 MiB | 13 TP, 1 TN, 0 FP/FN | 1/1 |
 
-Sum of medians: 56.8s (limit 180s). Every repository has exactly one unique
+`serde_json-1.0.150` (was 4 TP) and `regex-1.12.4` (was 4 TP) each gained one
+true positive: `from-slice-nested-argument-call` and
+`regexset-new-chained-builder-call`, both real chained/nested-argument call
+sites gap 22 fixed, both now resolving correctly — the fix holds on
+previously-uncurated third-party code, not only the unit tests written
+against it. `click-8.4.1`'s new false positive is
+`getchar-not-testing-isolation-mock`: `click.termui.getchar()`'s reassigned
+`_getchar` global gets wrongly linked to
+`click.testing.CliRunner.isolation`'s unrelated, same-named nested mock —
+a real instance of the Python-side misattribution gap 22 left open (gap 23),
+declared rather than left silent.
+
+By language: Rust is 13 TP, 4 TN, 0 FP, 0 FN — **1.000/1.000**, unchanged.
+Python is 20 TP, 5 TN, **1 FP**, 0 FN — micro precision 0.952381, macro
+precision 0.933333, recall still 1.000/1.000. Aggregate: 33 TP, 9 TN, 1 FP,
+0 FN — micro precision 0.970588, macro precision 0.966667, recall
+1.000/1.000. Sum of medians: 46.6s (limit 180s), inside every performance
+ceiling — only the semantic checks and, incidentally, worktree cleanliness
+at measurement time failed. Every repository still has exactly one unique
 artifact digest and one unique canonical semantic digest across the five
 runs — the determinism gate this benchmark exists to enforce (see "Make
-.aether serialization canonical" in the git history) passes cleanly.
+.aether serialization canonical" in the git history) still passes cleanly;
+determinism and precision/recall are independent properties, and this run
+shows the corpus can fail the second while holding the first perfectly.
 
 ## Claims that remain open
 
-This gate measures fresh graph creation and exact success on 40 curated call
+This gate measures fresh graph creation and exact success on 43 curated call
 edges. It does not close the following evidence gaps:
 
 - genuine cold-cache indexing;

@@ -88,6 +88,15 @@
         {
           "expected_present": true,
           "file": "src/de.rs",
+          "id": "from-slice-nested-argument-call",
+          "kind": "Calls",
+          "rationale": "from_slice's sole argument to from_trait is itself a call, read::SliceRead::new(v), on a generic type (gap 22 case 2: nested-argument call, and the generic-owner-normalization fix).",
+          "source": "crate::de::from_slice",
+          "target": "crate::read::SliceRead<'a>::new"
+        },
+        {
+          "expected_present": true,
+          "file": "src/de.rs",
           "id": "from-str-wrapper",
           "kind": "Calls",
           "rationale": "from_str delegates directly to the shared from_trait implementation.",
@@ -213,6 +222,15 @@
           "rationale": "The same type name in the string module must not capture the bytes receiver.",
           "source": "crate::regex::bytes::Regex::replace_all",
           "target": "crate::regex::string::Regex::replacen"
+        },
+        {
+          "expected_present": true,
+          "file": "src/regexset/bytes.rs",
+          "id": "regexset-new-chained-builder-call",
+          "kind": "Calls",
+          "rationale": "RegexSet::new chains .build() directly onto RegexSetBuilder::new(exprs) with no intermediate let binding (gap 22 case 1: chained-call qualifier resolution).",
+          "source": "crate::regexset::bytes::RegexSet::new",
+          "target": "crate::builders::RegexSetBuilder::build"
         }
       ],
       "sources": {
@@ -306,6 +324,15 @@
           "rationale": "The Context receiver must not resolve to CliRunner::invoke.",
           "source": "crate::click::core::Command::invoke",
           "target": "crate::click::testing::CliRunner::invoke"
+        },
+        {
+          "expected_present": false,
+          "file": "src/click/termui.py",
+          "id": "getchar-not-testing-isolation-mock",
+          "kind": "Calls",
+          "rationale": "getchar() reads the global _getchar (reassigned to _termui_impl.getchar under global _getchar) and must not resolve to CliRunner.isolation's unrelated same-named nested mock function (gap 22's still-open Python-side local/global-shadow misattribution, see gap 23).",
+          "source": "crate::click::termui::getchar",
+          "target": "crate::click::testing::CliRunner::isolation::_getchar"
         }
       ],
       "sources": {
