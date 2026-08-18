@@ -2866,16 +2866,12 @@ fn test_add() { assert_eq!(add(2, 3), 5); }
         assert!(calls.contains(&existing));
     }
 
-    // Gap 22 (docs/core-gap-analysis.md item 22): `bitcode test-impact`
-    // silently selects zero tests for changed functions that real tests do
-    // reach, because the underlying call resolver in `sync.rs` drops or
-    // misattributes certain call shapes. These four tests pin the defect as
-    // failing (or, for the fourth, passing) tests so a later fix has a
-    // concrete target. Do not remove `#[ignore]` from a case until the
-    // resolver actually produces the asserted edge.
+    // Gap 22 (docs/core-gap-analysis.md item 22): `bitcode test-impact` was
+    // silently selecting zero tests for changed functions that real tests do
+    // reach, because the call resolver in `sync.rs`/`mapper.rs` dropped or
+    // misattributed certain call shapes. These four tests pin the fix.
 
     #[test]
-    #[ignore = "gap 22 — remove this attribute when fixed"]
     fn gap22_chained_call_resolves_to_its_real_caller() {
         // Case 1: a method chained directly onto the result of a
         // constructor call, with no intermediate `let` binding — the exact
@@ -2952,7 +2948,6 @@ pub fn caller() -> i64 {
     }
 
     #[test]
-    #[ignore = "gap 22 — remove this attribute when fixed"]
     fn gap22_chained_call_is_not_misattributed_to_an_unrelated_caller() {
         // Case 3 (the worst case): case 1's chained call
         // (`Widget::new().commit()`) is dropped by the same mechanism as
@@ -3031,6 +3026,46 @@ pub fn caller() -> Program {
         assert!(
             callers.contains(&caller),
             "Program::new should record `caller` as a caller; got {callers:?}"
+        );
+    }
+
+    #[test]
+    fn gap22_unchained_call_to_generic_type_method_resolves() {
+        // Found while diagnosing case 1, not one of gap 22's original four
+        // shapes: a plain, *unchained* call to a method on a type with
+        // visible generic parameters — `Interpreter<'a>` in the real repo
+        // — failed independently of chaining. `qualifier_matches_owner`
+        // normalized the owner's generic-parameter text along with its
+        // name (`Interpreter<'a>` -> "interpretera" after stripping
+        // non-alphanumeric characters), which matches neither "interpreter"
+        // nor its suffix, so `Interpreter::new(&program)` never resolved
+        // even on its own, with no chain involved. Fixed by stripping a
+        // trailing `<...>` generic parameter list from the owner's bare
+        // name before normalizing (`owner_tail` in sync.rs), same as any
+        // other non-generic owner already was.
+        let src = r#"
+pub struct Interpreter<'a> {
+    program: &'a str,
+}
+impl<'a> Interpreter<'a> {
+    pub fn new(program: &'a str) -> Self {
+        Interpreter { program }
+    }
+}
+pub fn caller(program: &str) -> Interpreter<'_> {
+    Interpreter::new(program)
+}
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "src/lib.rs", src);
+
+        let caller = NodeId::from_path("crate::lib::caller");
+        let new_fn = NodeId::from_path("crate::lib::Interpreter<'a>::new");
+        let callers: Vec<_> = graph.callers(new_fn).into_iter().map(|n| n.id).collect();
+        assert!(
+            callers.contains(&caller),
+            "Interpreter::new should record `caller` as a caller; got {callers:?}"
         );
     }
 }

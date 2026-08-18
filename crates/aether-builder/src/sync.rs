@@ -244,12 +244,39 @@ fn qualifier_tail(qualifier: &str) -> &str {
         .trim()
 }
 
-fn qualifier_matches_owner(qualifier: &str, owner: &str) -> bool {
+/// An owner's bare type name for name-based matching: the last path segment
+/// with any generic parameter list (`<'a>`, `<T>`, ...) dropped first.
+/// Without stripping the generics before normalizing, `Interpreter<'a>`
+/// would keep the lifetime letter and normalize to `interpretera`, which
+/// matches neither `interpreter` nor its suffix — silently breaking
+/// resolution for every method on a generic type (gap 22).
+fn owner_tail(owner: &str) -> String {
+    let name = owner.rsplit("::").next().unwrap_or(owner);
+    let name = name.split('<').next().unwrap_or(name);
+    normalized_symbol(name)
+}
+
+/// The normalized hint a qualifier/receiver-type string carries, or `None`
+/// when it is too short or a self-reference to be useful evidence.
+fn qualifier_hint(qualifier: &str) -> Option<String> {
     let hint = normalized_symbol(qualifier_tail(qualifier));
-    if hint.len() < 3 || matches!(hint.as_str(), "self" | "cls") {
+    (hint.len() >= 3 && !matches!(hint.as_str(), "self" | "cls")).then_some(hint)
+}
+
+/// Exact match only: the qualifier's hint equals the owner's bare type name.
+/// An exact match is unambiguous evidence and must outrank any candidate
+/// that only satisfies the looser suffix check below, so callers try this
+/// first (gap 22: `Timeline` vs `PyTimeline` both satisfy the suffix check,
+/// but only `Timeline` is an exact match).
+fn qualifier_matches_owner_exactly(qualifier: &str, owner: &str) -> bool {
+    qualifier_hint(qualifier).is_some_and(|hint| owner_tail(owner) == hint)
+}
+
+fn qualifier_matches_owner(qualifier: &str, owner: &str) -> bool {
+    let Some(hint) = qualifier_hint(qualifier) else {
         return false;
-    }
-    let owner = normalized_symbol(owner.rsplit("::").next().unwrap_or(owner));
+    };
+    let owner = owner_tail(owner);
     owner == hint || owner.ends_with(&hint)
 }
 
@@ -343,7 +370,17 @@ fn select_candidate<'a>(
     qualifier: Option<&str>,
     receiver_type: Option<&str>,
     qualifier_owner_fallback: bool,
+    shadowed_by_local: bool,
 ) -> Option<&'a FunctionCandidate> {
+    // A bare call whose name is also a local parameter can never mean some
+    // unrelated same-named global function — Rust scoping always resolves
+    // it to the parameter instead, however tempting a same-spelled, even
+    // globally-unique, candidate looks below. Guessing here is exactly
+    // gap 22's misattribution: a wrong caller is worse than none, so fail
+    // closed rather than risk it.
+    if qualifier.is_none() && shadowed_by_local {
+        return None;
+    }
     if let Some(qualifier) = qualifier {
         if matches!(qualifier_tail(qualifier), "self" | "Self" | "cls") {
             only_candidate(
@@ -356,11 +393,21 @@ fn select_candidate<'a>(
                 return None;
             }
             let receiver_hint = receiver_type.unwrap_or(qualifier);
-            only_candidate(
-                candidates
-                    .iter()
-                    .filter(|candidate| qualifier_matches_owner(receiver_hint, &candidate.owner)),
-            )
+            // Try an exact owner-name match first: it is unambiguous even
+            // when another candidate's owner merely ends with the same
+            // hint (gap 22's `PyTimeline` colliding with `Timeline`). Only
+            // widen to the suffix-inclusive match when no candidate is an
+            // exact match.
+            only_candidate(candidates.iter().filter(|candidate| {
+                qualifier_matches_owner_exactly(receiver_hint, &candidate.owner)
+            }))
+            .or_else(|| {
+                only_candidate(
+                    candidates.iter().filter(|candidate| {
+                        qualifier_matches_owner(receiver_hint, &candidate.owner)
+                    }),
+                )
+            })
         }
     } else {
         only_candidate(candidates.iter().filter(|candidate| {
@@ -401,12 +448,17 @@ fn factory_candidate<'a>(
             factory.qualifier.as_deref(),
             factory.receiver_type.as_deref(),
             true,
+            // `CallTargetRef` describes a producer call already grounded in
+            // a real AST call node (via a `let` binding's hints-map entry
+            // or the chained-call walker), not a bare identifier that could
+            // itself be a shadowing local parameter, so this never applies.
+            false,
         )
     }
 }
 
 fn return_type_matches_owner(return_type: &str, owner: &str) -> bool {
-    let owner = normalized_symbol(owner.rsplit("::").next().unwrap_or(owner));
+    let owner = owner_tail(owner);
     return_type
         .split(|ch: char| !ch.is_ascii_alphanumeric() && ch != '_')
         .map(normalized_symbol)
@@ -806,6 +858,7 @@ impl GraphBuilder {
                                 call.qualifier.as_deref(),
                                 call.receiver_type.as_deref(),
                                 call.qualifier_owner_fallback,
+                                call.shadowed_by_local,
                             )
                         }
                     }

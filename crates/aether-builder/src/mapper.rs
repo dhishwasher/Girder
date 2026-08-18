@@ -127,6 +127,13 @@ pub struct CallRef {
     /// First argument when it is a plain string literal; lets resolution
     /// substitute one provable literal→parameter level for launch helpers.
     pub first_string_argument: Option<String>,
+    /// The bare callee name is also a parameter of the enclosing Rust
+    /// function. Rust's scoping rules mean a local binding always shadows
+    /// an outer-scope item of the same name, so a call like this can never
+    /// legitimately resolve to some unrelated global function elsewhere in
+    /// the graph, however tempting a same-spelled candidate looks — the
+    /// resolver must fail closed here rather than guess (gap 22).
+    pub shadowed_by_local: bool,
 }
 
 /// How a subprocess launch selects its argv route.
@@ -891,6 +898,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         context: &WalkContext<'src>,
         scope: (Option<&'src str>, Option<NodeId>),
         type_hints: &HashMap<String, ReceiverHint>,
+        locals: &HashSet<String>,
         python_scope: PythonResolutionScope<'_>,
         out: &mut BuildOutput,
     ) {
@@ -911,6 +919,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         let mut current = current_fn;
         let mut enclosing_type = current_type;
         let mut function_type_hints = None;
+        let mut function_locals = None;
         let mut function_type_aliases = None;
         let mut function_nullable_wrappers = None;
         let mut function_import_bindings = None;
@@ -944,6 +953,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 match lang {
                     Lang::Rust => {
                         function_type_hints = Some(rust_function_type_hints(node, source));
+                        function_locals = Some(rust_parameter_names(node, source));
                     }
                     Lang::Python => {
                         let bound_names = python_function_bound_names(node, source);
@@ -970,6 +980,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             }
         }
         let active_type_hints = function_type_hints.as_ref().unwrap_or(type_hints);
+        let active_locals = function_locals.as_ref().unwrap_or(locals);
         let entry_type_hints = matches!(lang, Lang::Python)
             .then(|| python_scope_entry_type_hints(node, active_type_hints, source))
             .flatten();
@@ -1018,10 +1029,25 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             {
                 let (receiver_type, receiver_factory, hint_allows_fallback) =
                     resolved_receiver_hint(qualifier.as_deref(), active_type_hints);
+                // A call chained directly onto another call's result has no
+                // local binding for `resolved_receiver_hint` to look up, so
+                // it falls through to this `(None, None, true)` case above.
+                // Recover the receiver from AST structure instead of
+                // leaving the call unresolved.
+                let receiver_factory = receiver_factory.or_else(|| {
+                    (matches!(lang, Lang::Rust) && receiver_type.is_none())
+                        .then(|| rust_chained_receiver_factory(node, source))
+                        .flatten()
+                });
                 let qualifier_owner_fallback = hint_allows_fallback
                     && qualifier.as_deref().is_none_or(|qualifier| {
                         python_qualifier_owner_fallback(lang, qualifier, active_import_bindings)
                     });
+                // A bare call whose name is also a parameter of this Rust
+                // function can never mean a distant same-named global: Rust
+                // scoping always resolves it to the parameter instead.
+                let shadowed_by_local =
+                    matches!(lang, Lang::Rust) && active_locals.contains(&callee);
                 // Emit unresolved; the project resolver picks the concrete callee.
                 out.calls.push(CallRef {
                     caller,
@@ -1038,6 +1064,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                     first_string_argument: matches!(lang, Lang::Rust)
                         .then(|| call_first_string_argument(node, source))
                         .flatten(),
+                    shadowed_by_local,
                 });
                 if let Some(target) = matches!(lang, Lang::Rust)
                     .then(|| rust_cargo_binary_target(node, source))
@@ -1054,6 +1081,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                         route: rust_launch_route(node, source),
                         route_guard: None,
                         first_string_argument: None,
+                        shadowed_by_local: false,
                     });
                 }
             }
@@ -1074,6 +1102,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                     {
                         let (receiver_type, receiver_factory, hint_allows_fallback) =
                             resolved_receiver_hint(qualifier.as_deref(), active_type_hints);
+                        let shadowed_by_local = active_locals.contains(&callee);
                         out.calls.push(CallRef {
                             caller,
                             callee,
@@ -1087,6 +1116,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                                 .then(|| rust_dispatch_guard(node, source))
                                 .flatten(),
                             first_string_argument,
+                            shadowed_by_local,
                         });
                     }
                 }
@@ -1138,6 +1168,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 context,
                 (enclosing_type, current),
                 child_type_hints,
+                active_locals,
                 PythonResolutionScope {
                     type_aliases: sequential_type_aliases,
                     nullable_wrappers: sequential_nullable_wrappers,
@@ -1199,6 +1230,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         &context,
         (None, None),
         &HashMap::new(),
+        &HashSet::new(),
         PythonResolutionScope {
             type_aliases: &python_aliases,
             nullable_wrappers: &python_nullable_wrappers,
@@ -2282,6 +2314,40 @@ fn python_following_type_hints(
     changed.then_some(updated)
 }
 
+/// Every plain identifier bound by this Rust function's own parameter list,
+/// independent of whether its type is one `rust_type_hint` can name. Used
+/// only to detect when a bare call's name is shadowed by a local parameter
+/// — deliberately not the richer `rust_function_type_hints` map, so this
+/// carries no information about a parameter's *type* and cannot change how
+/// any existing qualified-call resolution behaves.
+fn rust_parameter_names(function: TsNode, source: &str) -> HashSet<String> {
+    let mut names = HashSet::new();
+    let Some(parameters) = function.child_by_field_name("parameters") else {
+        return names;
+    };
+    let mut cursor = parameters.walk();
+    for parameter in parameters.named_children(&mut cursor) {
+        if parameter.kind() != "parameter" {
+            continue;
+        }
+        let Some(pattern) = parameter.child_by_field_name("pattern") else {
+            continue;
+        };
+        let binding = node_text(pattern, source)
+            .trim()
+            .trim_start_matches("mut ")
+            .trim_start_matches("ref ");
+        if !binding.is_empty()
+            && binding
+                .chars()
+                .all(|ch| ch == '_' || ch.is_ascii_alphanumeric())
+        {
+            names.insert(binding.to_string());
+        }
+    }
+    names
+}
+
 fn rust_function_type_hints(function: TsNode, source: &str) -> HashMap<String, ReceiverHint> {
     let mut hints = HashMap::new();
     if let Some(parameters) = function.child_by_field_name("parameters") {
@@ -2870,6 +2936,72 @@ fn callee_target(call: TsNode, source: &str) -> Option<(String, Option<String>)>
     } else {
         Some((last.to_string(), qualifier.filter(|q| !q.is_empty())))
     }
+}
+
+/// Describe a Rust call expression as a [`CallTargetRef`], resolving its own
+/// receiver chain by AST structure instead of `callee_target`'s text
+/// splitting. Used only for a call appearing in *receiver position* (case
+/// below), never for the call actually being emitted — that keeps using
+/// `callee_target` exactly as before, unchanged.
+///
+/// `callee_target` finds the qualifier by locating the last `.`/`:` in the
+/// whole "function" field's source text. That is correct for a leaf call
+/// (`Type::assoc_fn(args)`, `receiver.method(args)`) but wrong for a call
+/// chained directly onto another call's result with no `let` binding
+/// (`Interpreter::new(&program).run_with_counts(None)`): the field's text
+/// then includes the *entire* preceding call, so the extracted "qualifier"
+/// is raw call syntax, not a type name, and matches no real owner. This
+/// walks the `field_expression`/`call_expression` nesting directly, so a
+/// chain of any depth (`Program::new().function(f).stmt(s)`) bottoms out at
+/// the leftmost, non-chained call — where `callee_target` is already
+/// correct — instead of losing precision one link early.
+fn rust_call_target_ref(call: TsNode, source: &str) -> Option<CallTargetRef> {
+    let function = call.child_by_field_name("function")?;
+    if function.kind() == "field_expression" {
+        let receiver = unwrap_rust_expression(function.child_by_field_name("value")?);
+        let method = function.child_by_field_name("field")?;
+        let callee = node_text(method, source).to_string();
+        if receiver.kind() != "call_expression" {
+            // Not chained (`x.method()`); the existing qualifier/hints-map
+            // machinery already handles this shape correctly.
+            return None;
+        }
+        let receiver_factory = rust_call_target_ref(receiver, source).map(Box::new);
+        return Some(CallTargetRef {
+            callee,
+            qualifier: None,
+            receiver_type: None,
+            receiver_factory,
+            fallback_type: None,
+            fallback_factory: None,
+        });
+    }
+    let (callee, qualifier) = callee_target(call, source)?;
+    Some(CallTargetRef {
+        callee,
+        qualifier,
+        receiver_type: None,
+        receiver_factory: None,
+        fallback_type: None,
+        fallback_factory: None,
+    })
+}
+
+/// When `call` is chained directly onto the result of another call with no
+/// intermediate `let` binding, build the receiver's [`CallTargetRef`] from
+/// AST structure. Returns `None` for every other shape (plain receiver,
+/// already-annotated binding, unqualified call), leaving those to the
+/// existing `resolved_receiver_hint` path unchanged.
+fn rust_chained_receiver_factory(call: TsNode, source: &str) -> Option<CallTargetRef> {
+    let function = call.child_by_field_name("function")?;
+    if function.kind() != "field_expression" {
+        return None;
+    }
+    let receiver = unwrap_rust_expression(function.child_by_field_name("value")?);
+    if receiver.kind() != "call_expression" {
+        return None;
+    }
+    rust_call_target_ref(receiver, source)
 }
 
 /// Conservative fallback for call-like identifiers inside syntax tree regions
