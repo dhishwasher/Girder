@@ -856,27 +856,68 @@ as gap 11 rather than silently accepted.
     one test asserting almost nothing). The P1-P6 oracle was rerun against a
     release build of this fix and passed clean.
 
-18. **P2 — pre-existing, unrelated to this pass: the Python measurement-harness
-    suite's canonical-edit rename case fails against the live
-    `sample-project/calc.py`.**
+18. **Closed — the Python measurement-harness suite's canonical-edit checks
+    failed against a live-mutated `sample-project/calc.py`; the fixture was
+    wrong, not the harness.**
     `tools/test_authoring_task_check.py::test_all_eight_canonical_edits_pass_semantic_verification`
-    builds its fixture from whatever is currently on disk at
-    `sample-project/calc.py`, not a pinned snapshot. Commit `fe0f476`
+    reads whatever is currently on disk at `sample-project/calc.py` as its
+    `original` baseline (not a pinned snapshot) and mechanically applies each
+    of the eight canonical tasks' `match`/`replace` text edits
+    (`tools/plan_executor_oracle.py::authoring_edits`) to it before running
+    `tools/authoring_task_check.py`'s semantic checks. Commit `fe0f476`
     ("Uppercase greet's return value", 2026-08-15, authored externally via
     `bitcode context`/`plan run --authored` — the loop gap 17 above concerns)
-    permanently changed `greet`'s body from `return hello(name)` to `return
-    hello(name).upper()`. The `python-rename` canonical edit still assumes the
-    original body: it renames `greet` to `welcome_greeting` and then expects
-    the un-uppercased behavior (`upper=False`), but the live file already
-    uppercases, so the fixture fails with "welcome_greeting has wrong
-    behavior." Not caused by, or fixed as part of, this pass — `git log --
-    sample-project/calc.py` shows `fe0f476` predates every commit in this
-    pass — but it means the Python suite gate this pass's other commits were
-    checked against was not fully green for a reason those commits don't own.
-    Left open rather than silently worked around: closing it means either
-    pinning the fixture's baseline independent of the live file, or
-    reverting/adjusting `calc.py`, and either choice touches a file this pass
-    did not otherwise need to.
+    was a genuine, non-dry `plan run --authored` execution against that same
+    tracked file, permanently changing `greet`'s body from `return
+    hello(name)` to `return hello(name).upper()`. The `python-rename` task's
+    check still assumed the original body — rename `greet` to
+    `welcome_greeting`, then expect un-uppercased behavior (`upper=False`) —
+    so it failed with "welcome_greeting has wrong behavior" against the
+    drifted fixture.
+
+    **Root cause, not just the trigger:** the eight canonical tasks
+    (`docs/authoring-cost-policy.json`'s corpus) are each defined as an
+    independent one-step transformation of the *same pristine* starting
+    file — `python-replace` is literally "change `greet` so it returns
+    `hello(name).upper()`". A live, permanent uppercase of `greet` outside
+    the harness silently satisfies that task's precondition for free while
+    breaking every other task that assumes the original lowercase body.
+    Confirmed against
+    `git show fd74d3468b65fddce6e853103aa9368767a0c90d:sample-project/calc.py`
+    (the exact `clean source commit` `docs/authoring-cost.md`'s precommitted
+    corrected method cites) that `greet` was lowercase at measurement time,
+    and every `docs/authoring-cost*` commit predates `fe0f476` by a day —
+    the corpus really was measured against the pristine fixture `fe0f476`
+    later mutated out from under it. `docs/authoring-cost.md`'s own
+    Observation table records the graph arm's `python-replace` task as
+    **passed** — direct evidence a real uppercase transformation was
+    authored and verified starting from lowercase `greet`, which is only
+    possible if the fixture was still pristine at that time.
+
+    **Decision:** restore `sample-project/calc.py`'s `greet` to `return
+    hello(name)`, reverting `fe0f476`'s live mutation, rather than change
+    `tools/authoring_task_check.py`'s expectations. The corpus and its
+    already-measured, precommitted results depend on the pristine fixture;
+    changing the harness to match the drifted file would have silently
+    invalidated `docs/authoring-cost.md`'s Observation table (in particular
+    the one recorded `python-replace` pass) without changing the doc.
+
+    **This also explains a masked second symptom, now fixed by the same
+    change:** the failing test is a single unparameterized loop over all
+    eight cases with no `subTest`, so it stops at the *first* failure
+    (`python-rename`, second in iteration order) — `python-delete` and
+    `python-insert` were never reached in the reported failure.
+    `python-insert`'s check also asserts `greet` returns un-uppercased
+    (`call_with_probe(namespace, "greet", upper=False)` in
+    `authoring_task_check.py`), and `python-delete`'s mechanical `match`
+    text is a *prefix* of the drifted body (`"def greet(name):\n    return
+    hello(name)"` matches inside `"...hello(name).upper()"`), so deleting it
+    would have left a syntactically invalid stray `.upper()` behind — both
+    would have failed too, once reached. Restoring the pristine fixture
+    fixed all three at once, not only the one visibly reported:
+    `python3 -m pytest tools/test_authoring_task_check.py` now passes all 3
+    tests (all 8 canonical sub-cases), and the full `tools/` suite is fully
+    green (63 passed).
 
 19. **P1 — open measurement gap, made unmissable rather than fixed:
     `docs/authoring-cost-policy.json` is `graph-edit-authoring-cost-v3`
@@ -980,6 +1021,53 @@ as gap 11 rather than silently accepted.
     deliberate, necessary serialization against two authoring runs
     concurrently writing to the same real tree, which Search and Copy
     Context JSON have no equivalent of, since they only read.
+
+21. **P2 — open: `sample-project/` is both a live authoring demo target and a
+    pinned measurement fixture, sharing one tree with no guard that reliably
+    detects drift between the two roles.** Gap 18 above is the concrete
+    incident: `fe0f476`, a genuine (non-dry) `plan run --authored` execution
+    demonstrating external authoring against `sample-project/calc.py`, went
+    unnoticed by every gate for three days (2026-08-15 to 2026-08-18) because
+    nothing in the test suite or CI compares the live file against the
+    baseline the measurement corpus assumes. Every future `bitcode do` or
+    `plan run --authored` run against `sample-project` — including the ones
+    this same pass's Author tab GUI work makes easier to trigger by hand —
+    has the identical exposure: a real (non-dry) run permanently mutates the
+    same file `tools/authoring_task_check.py` and
+    `tools/plan_executor_oracle.py::authoring_target_node_source` treat as
+    pristine.
+
+    Worth recording precisely why the one guard that exists didn't catch
+    this: `authoring_target_node_source` already asserts
+    `projection.count(node_source) != 1` before trusting a hardcoded
+    expected node source against the live file — a drift guard that looks
+    purpose-built for exactly this. But it's a bare substring *count*, not a
+    boundary check, and `fe0f476`'s edit only *appended* `.upper()` after
+    the checked text; `"def greet(name):\n    return hello(name)"` is still
+    a literal prefix of `"def greet(name):\n    return
+    hello(name).upper()"`, so the count stayed exactly 1 and the guard
+    stayed silent. The guard catches an *interior* rewrite of the checked
+    span; it does not catch an appended suffix.
+
+    Not fixed here — this is a process/architecture decision, not a
+    one-line patch, and the immediate incident (gap 18) is closed by
+    restoring the fixture, not by hardening the guard. Candidate
+    mitigations, roughly cheapest first:
+    - Tighten `authoring_target_node_source`'s guard from a substring count
+      to an exact-boundary match (the checked span must be immediately
+      followed by whitespace/a statement boundary, not by arbitrary
+      trailing content), so an appended suffix like `.upper()` fails closed
+      instead of silently matching.
+    - Pin `tools/test_authoring_task_check.py` and
+      `authoring_target_node_source` to a specific commit (`git show
+      <pinned-commit>:path`) instead of reading the working tree, so the
+      measurement harness can no longer see a live demo mutation at all,
+      pristine or not.
+    - Stop demonstrating real (non-dry) `bitcode do`/`plan run --authored`
+      runs against the tracked `sample-project/` the harness depends on;
+      point demo instructions at a disposable clone or branch instead, so a
+      real authored change never lands in the same file the measurement
+      corpus is defined against.
 
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
