@@ -106,8 +106,11 @@ COMMANDS:
                               functions (auto-detected via git diff, or explicit
                               node paths). Pass --run to execute them immediately.
                               --quiet prints only the selected test names, one
-                              per line, suitable for `cargo test $(bitcode
-                              test-impact . --quiet)`.
+                              per line. An empty selection means nothing needs
+                              testing, not \"run everything\" — guard it:
+                              `T=$(bitcode test-impact . --quiet); if [ -n
+                              \"$T\" ]; then cargo test -- $T; else echo \"no
+                              impacted tests\"; fi`.
     collab <operation>        Exchange deterministic semantic-graph CRDT bundles.
                               Operations: init, status, fork, member, sync, merge,
                               compact, review, apply, materialize, secret,
