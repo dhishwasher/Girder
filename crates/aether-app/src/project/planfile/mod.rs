@@ -197,7 +197,24 @@ pub(crate) fn apply_authored_guarantees(
             .iter()
             .any(|check| matches!(check, schema::Check::TestsImpacted { .. }))
     });
-    if !has_impacted_check {
+    // Gap 24 (docs/core-gap-analysis.md item 24): `tests.impacted` is
+    // always vacuous for a node the last step's own `create` edit just
+    // introduced — it has no prior callers or tests, so injecting it here
+    // would silently pass while verifying nothing, exactly the hole this
+    // function exists to close. `Plan::validate()` (run inside `load_plan`,
+    // before this function ever sees the plan) already refuses to load a
+    // plan with a `create` edit and no `command` check in the same step, so
+    // skipping the injection here does not leave a create-only last step
+    // unverified — it just stops adding a check that would read as a safety
+    // net it isn't.
+    let last_step_creates = plan
+        .steps
+        .last()
+        .expect("checked non-empty above")
+        .edits
+        .iter()
+        .any(|edit| matches!(edit, schema::Edit::Create { .. }));
+    if !has_impacted_check && !last_step_creates {
         // Deliberately the *last* step only, not every step — a real
         // decision, not an accident of `last_mut()`. The guarantee this
         // exists to provide is "the tree, if this plan durably commits,
@@ -772,6 +789,48 @@ mod tests {
             step2_checks
                 .iter()
                 .any(|check| check["kind"] == "tests.impacted"),
+            "{written}"
+        );
+
+        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    // Gap 24 (docs/core-gap-analysis.md item 24): a create-only last step
+    // must already carry a real `command` check to pass `Plan::validate()`
+    // (enforced by `load_plan`, before this test's plan ever reaches
+    // `apply_authored_guarantees`) — injecting `tests.impacted` on top of
+    // that would still be vacuous for the node the step just created, and
+    // would read as a second, real safety net that isn't one. It must not
+    // be injected.
+    #[test]
+    fn run_with_authored_does_not_inject_the_vacuous_check_onto_a_create_only_last_step() {
+        let root = temp_git_root("authored-inject-skips-create");
+        let base_commit = init_git_repo(&root);
+        let path = write_plan(
+            "authored-inject-skips-create",
+            &format!(
+                r#"{{"plan_version":1,"plan_id":"authored-inject-skips-create","intent":"i",
+                    "base_commit":"{base_commit}",
+                    "steps":[{{"id":"s1",
+                        "edits":[{{"path":"new.rs","create":"pub fn brand_new() {{}}\n"}}],
+                        "checks":[{{"kind":"command","run":"true"}}]}}]}}"#
+            ),
+        );
+
+        assert!(run(&root, &path, false, None, true, None).is_ok());
+
+        let mut entries = std::fs::read_dir(root.join(".bitcode/reports")).unwrap();
+        let report_path = entries.next().unwrap().unwrap().path();
+        let written = std::fs::read_to_string(report_path).unwrap();
+        let report: serde_json::Value = serde_json::from_str(&written).unwrap();
+        let checks = report["steps"][0]["checks"].as_array().unwrap();
+        assert!(
+            checks.iter().all(|check| check["kind"] != "tests.impacted"),
+            "{written}"
+        );
+        assert!(
+            checks.iter().any(|check| check["kind"] == "command"),
             "{written}"
         );
 

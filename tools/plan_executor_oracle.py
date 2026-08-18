@@ -536,6 +536,7 @@ def p1_plan(case_id: str, base_commit: str) -> dict[str, Any]:
             {
                 "id": "create-source",
                 "edits": [{"path": "src/new_module.rs", "create": "pub fn fresh() {}\n"}],
+                "checks": [{"kind": "command", "run": "grep -q 'fn fresh' src/new_module.rs"}],
             },
             {
                 "id": "observe-created-node",
@@ -547,6 +548,7 @@ def p1_plan(case_id: str, base_commit: str) -> dict[str, Any]:
             {
                 "id": "create-dependency",
                 "edits": [{"path": "src/dep.rs", "create": "pub fn added_target() -> i64 { 3 }\n"}],
+                "checks": [{"kind": "command", "run": "grep -q 'added_target' src/dep.rs"}],
             },
             {
                 "id": "declare-dependency",

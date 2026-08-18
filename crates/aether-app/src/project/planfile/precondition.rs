@@ -353,6 +353,55 @@ mod tests {
         );
     }
 
+    // Gap 24 design note (docs/core-gap-analysis.md item 24): the real gate
+    // `plan run`/`plan validate` invoke — this function, not `apply_edit` in
+    // isolation — must dry-run a plan that creates a file in one step and
+    // graph-edits a node from that file in a later step end to end. It
+    // does, because the v2 branch above shares one `EditState` across every
+    // step's `apply_step_edits_v2` call, the same way `executor::run_plan_v2`
+    // does for the real run.
+    #[test]
+    fn create_then_graph_edit_in_a_later_step_passes_preconditions() {
+        let (dir, head) = init_repo("create-then-graph-edit");
+        let plan = Plan {
+            plan_version: 2,
+            plan_id: "create-then-graph-edit".into(),
+            intent: "create a file, then graph-edit the node it introduces".into(),
+            author: None,
+            base_commit: head,
+            on_failure: OnFailure::RollbackPlan,
+            steps: vec![
+                crate::project::planfile::schema::Step {
+                    id: "create-step".into(),
+                    description: String::new(),
+                    edits: vec![Edit::Create {
+                        path: "src/new.rs".into(),
+                        create: "pub fn brand_new() -> i32 { 1 }\n".into(),
+                    }],
+                    checks: Vec::new(),
+                },
+                crate::project::planfile::schema::Step {
+                    id: "edit-step".into(),
+                    description: String::new(),
+                    edits: vec![Edit::ReplaceNode {
+                        node: "crate::new::brand_new".into(),
+                        replacement: "pub fn brand_new() -> i32 { 222222 }".into(),
+                    }],
+                    checks: Vec::new(),
+                },
+            ],
+        };
+
+        let result = check_preconditions(&dir.0, &plan).unwrap();
+        assert!(
+            result.is_ok(),
+            "expected pass, got {:?}",
+            result
+                .err()
+                .map(|f| f.into_iter().map(|f| f.reason).collect::<Vec<_>>())
+        );
+    }
+
     #[test]
     fn match_count_mismatch_is_reported_precisely() {
         let (dir, head) = init_repo("match-mismatch");

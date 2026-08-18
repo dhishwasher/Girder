@@ -1462,6 +1462,105 @@ as gap 11 rather than silently accepted.
     some shadowing shapes while creating false confidence about the ones it
     doesn't, which is worse than leaving the known gap declared and open.
 
+24. **Closed — `tests.impacted` returns `passed: true` on an empty impact
+    set, indistinguishable from real verification, and two mandatory-check
+    injection points relied on it.** `run_tests_impacted`
+    (`crates/aether-app/src/project/planfile/checks/test_checks.rs`) reports
+    success with the detail `"no impacted tests for this step's changed
+    nodes"` whenever a step's changed nodes have zero impacted tests — a
+    property that is not a bug in itself (a step that genuinely touches
+    nothing test-relevant should pass), but is *always* true for a node a
+    `create` edit just introduced: it has no prior callers and no prior
+    tests by construction, so `graph.tests_for_nodes` on it is always empty.
+    A plan whose only edit is `{"path": ..., "create": ...}` and whose only
+    check is `tests.impacted` therefore already passed — verifying
+    nothing — **before this pass, with no new code required to trigger
+    it**: `Edit::Create` has been fully wired through `apply_edit`,
+    `apply_step_edits_v2`, `check_preconditions`, and rollback since before
+    this gap was found. This was shipped and exploitable, not introduced by
+    the work that closes it. Pinned as a fact about the raw executor in
+    `executor.rs::create_only_step_verified_only_by_tests_impacted_passes_while_verifying_nothing`,
+    which runs such a plan directly through `run_plan` (bypassing
+    `Plan::validate()`, exactly as every other test in that module already
+    does) and asserts both the overall `Passed` outcome and the check
+    detail proving zero tests ran — the same "pin the defect as a test
+    first" order gap 22 phase 1 used.
+
+    This is the third instance of a check that reads as verification and
+    isn't, not the first. Gap 16's near-miss (`measure_p6_ground_truth`'s
+    original `git write-tree` comparison) failed the same way one level
+    removed: bitcode never runs `git add`, so the tree hash is identical to
+    `base_commit` regardless of whether the working tree actually changed —
+    a vacuous ground-truth check caught only because the new case was run
+    against the real binary before being trusted. Gap 22 found the general
+    form of this instance directly: an empty `bitcode test-impact` selection
+    is indistinguishable from "nothing changed," and a bare `cargo test
+    $(bitcode test-impact . --quiet)` ran the entire suite instead of the
+    intended subset as a result. This gap is gap 22's exact phrase
+    ("indistinguishable from nothing changed") recurring in the mandatory-
+    check machinery itself: two different call sites both leaned on
+    `tests.impacted` as the property a model-authored or externally-authored
+    plan cannot skip, and neither could tell "verified" apart from "nothing
+    to verify" for a freshly created node.
+
+    Closed by extending `Plan::validate()`
+    (`crates/aether-app/src/project/planfile/schema.rs`) with the same
+    "this check would verify nothing" precedent already used for the
+    empty-expect-set superset/absent rule: any step containing an
+    `Edit::Create` must now contain at least one `Check::Command` in that
+    same step, or the plan is rejected at parse time — before any edit
+    runs, with no graph build required. Since `load_plan`/`parse_plan`
+    (`planfile/mod.rs`) already call `Plan::validate()` unconditionally,
+    this closes the hole for every caller (`plan run`, `plan run
+    --authored`, `plan validate`, and the GUI's paste-a-plan-back-in flow)
+    with one change, not three.
+
+    Two call sites push a `tests.impacted` check onto a plan the way
+    `Plan::validate()` can't see coming (a check added *after* validation
+    already ran): `apply_authored_guarantees` (`planfile/mod.rs`), which
+    injects onto the last step of any `--authored` plan lacking one, and
+    `author::wrap_step_into_plan`, which does the same unconditionally for
+    every `bitcode do` plan. Only the first is a live injection point for a
+    `create` edit. `wrap_step_into_plan` builds its edit from
+    `author::convert_edit`, which requires an `edit.node` field validated
+    against the offered `node_paths` (pre-existing graph nodes) before it
+    will produce anything — a `create` edit has no `node` field at all, so
+    the local `do` schema cannot structurally produce one; conditioning the
+    injection there would be dead code guarding a shape that can never
+    reach it, so `wrap_step_into_plan` is unchanged. `apply_authored_guarantees`
+    now skips the injection when the last step contains a `create` edit —
+    `Plan::validate()` already guarantees that step carries a real `command`
+    check by the time this function runs, so skipping the addition doesn't
+    leave anything unverified; it just stops adding a second check that
+    would read as a safety net it isn't. `bitcode context`'s `plan_skeleton`
+    was suspected as a third injection point during design but is not one:
+    it builds its envelope with `edits: []`, before the model has written
+    anything, so there is nothing yet to condition the injection on — the
+    real enforcement for that path is `apply_authored_guarantees`, exercised
+    at `plan run --authored` time once the model's edits actually exist.
+
+    Also pinned, ahead of anything relying on it: `EditState`'s span-safety
+    re-resolution already handles a node a `create` edit introduces earlier
+    in the same plan, in both the same step
+    (`edit::tests::a_node_created_earlier_in_the_same_step_can_be_graph_edited_in_that_step`)
+    and a later one
+    (`edit::tests::a_node_created_in_an_earlier_step_can_be_graph_edited_in_a_later_step`),
+    plus the real gate `plan run`/`plan validate` invoke end to end
+    (`precondition::tests::create_then_graph_edit_in_a_later_step_passes_preconditions`).
+    This was true by inspection before this pass (creating a file is just
+    another file touch to the same incremental-refresh machinery graph
+    edits already depend on) — these tests supply the proof that was
+    missing, not a mechanism change.
+
+    **Deliberately not fixed: the general case.** A step that edits an
+    already-existing node with genuinely zero callers and zero tests is
+    just as vacuous under `tests.impacted` as a freshly created one, and
+    `Plan::validate()` cannot detect it — telling "no callers" apart from
+    "some callers" requires the graph, and the design constraint for this
+    fix was rejecting at parse time with no graph build. Only the
+    guaranteed-always-vacuous case (a node that provably has no history
+    because it did not exist before this plan) is closed here.
+
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
 validated projection, and recoverable commit. That advantage is unproven until

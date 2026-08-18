@@ -705,6 +705,87 @@ mod tests {
         );
     }
 
+    // Gap 24 (docs/core-gap-analysis.md item 24): pins the vacuous-pass hole
+    // *before* `Plan::validate()` closes it, exactly as gap 22 phase 1 pinned
+    // its failure shapes before fixing them. `run_plan` itself never calls
+    // `Plan::validate()` — every test in this module builds a `Plan` directly
+    // and hands it straight to `run_plan`, the same way `check_preconditions`
+    // and `executor::run_plan` do internally — so this documents a fact about
+    // the raw executor, independent of the new validate() rule, and is
+    // expected to keep passing after that rule ships: the rule lives in
+    // `Plan::validate()`, enforced by `load_plan` before a plan file ever
+    // reaches this path, not in the executor itself.
+    #[test]
+    fn create_only_step_verified_only_by_tests_impacted_passes_while_verifying_nothing() {
+        let repository = TempDir::new("vacuous-create-only-pass");
+        std::fs::write(
+            repository.0.join("existing.rs"),
+            "pub fn untouched() -> i32 { 0 }\n",
+        )
+        .unwrap();
+        git(&repository.0, &["init", "--quiet"]);
+        git(&repository.0, &["add", "existing.rs"]);
+        git(
+            &repository.0,
+            &[
+                "-c",
+                "user.name=Bit Code Tests",
+                "-c",
+                "user.email=tests@bitcode.invalid",
+                "commit",
+                "--quiet",
+                "-m",
+                "base",
+            ],
+        );
+        let base_commit = git(&repository.0, &["rev-parse", "HEAD"]);
+        let plan: Plan = serde_json::from_value(serde_json::json!({
+            "plan_version": 1,
+            "plan_id": "vacuous-create-only-pass",
+            "intent": "pin the vacuous pass for a create-only step verified only by tests.impacted",
+            "base_commit": base_commit,
+            "on_failure": "rollback_plan",
+            "steps": [{
+                "id": "create-only",
+                "edits": [{
+                    "path": "new.rs",
+                    "create": "pub fn brand_new() -> i32 { 1 }\n"
+                }],
+                "checks": [{"kind": "tests.impacted", "expect": "all_pass"}]
+            }]
+        }))
+        .unwrap();
+
+        let result = run_plan(&repository.0, &ProjectConfig::default(), &plan, false).unwrap();
+
+        // The plan as a whole reports success...
+        assert!(
+            matches!(result.outcome, RunOutcome::Passed),
+            "{:?}",
+            result.outcome
+        );
+        assert_eq!(result.steps.len(), 1);
+        let step = &result.steps[0];
+        assert!(step.passed);
+        assert!(step.committed);
+        assert_eq!(step.checks.len(), 1);
+        let check = &step.checks[0];
+        assert_eq!(check.kind, "tests.impacted");
+        // ...but the one check that ran verified nothing: `brand_new` has no
+        // prior callers and no prior tests, so its impact set is empty and
+        // `run_tests_impacted` never executed a single test.
+        assert!(check.passed);
+        assert!(
+            check.detail.contains("no impacted tests"),
+            "{}",
+            check.detail
+        );
+        assert_eq!(
+            std::fs::read_to_string(repository.0.join("new.rs")).unwrap(),
+            "pub fn brand_new() -> i32 { 1 }\n"
+        );
+    }
+
     #[test]
     fn dry_overlay_replays_substitutions_creates_and_deletes() {
         let workspace = TempDir::new("overlay");

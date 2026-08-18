@@ -2764,6 +2764,10 @@ fn plan_run_dry_composes_three_steps_with_the_same_check_outcomes_as_real() {
               "edits": [{
                 "path": "src/new_module.rs",
                 "create": "pub fn fresh() -> i64 { 1 }\n"
+              }],
+              "checks": [{
+                "kind": "command",
+                "run": "grep -q '{ 1 }' src/new_module.rs"
               }]
             },
             {

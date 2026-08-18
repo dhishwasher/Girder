@@ -597,6 +597,39 @@ impl Plan {
                     ));
                 }
             }
+            // Gap 24 (docs/core-gap-analysis.md item 24): `tests.impacted`
+            // is structurally vacuous for a node a `create` edit just
+            // introduced — it has no prior callers and no prior tests, so
+            // `graph.tests_for_nodes` on it is always empty, and
+            // `run_tests_impacted` reports `passed: true` on an empty
+            // impact set. A step that creates a file therefore needs an
+            // explicit `command` check to be verified at all; reject it
+            // here, at parse time, before any edit runs and with no graph
+            // build required, on the same "this check would verify
+            // nothing" precedent as the empty-expect-set rule below.
+            if let Some((index, path)) =
+                step.edits
+                    .iter()
+                    .enumerate()
+                    .find_map(|(index, edit)| match edit {
+                        Edit::Create { path, .. } => Some((index, path)),
+                        _ => None,
+                    })
+            {
+                let has_command = step
+                    .checks
+                    .iter()
+                    .any(|check| matches!(check, Check::Command { .. }));
+                if !has_command {
+                    let step_id = &step.id;
+                    return Err(format!(
+                        "step {step_id:?}: edits[{index}] creates {path:?}, but the step has \
+                         no command check; tests.impacted is always vacuous for a node with no \
+                         prior callers or tests, so a creation step must be verified by an \
+                         explicit command in the same step"
+                    ));
+                }
+            }
             for (index, check) in step.checks.iter().enumerate() {
                 let invalid = match check {
                     Check::GraphCallersOf { expect, mode, .. }
@@ -904,6 +937,104 @@ mod tests {
         let error = serde_json::from_str::<Plan>(json).unwrap_err().to_string();
         assert!(error.contains("diagnose-malformed"), "{error}");
         assert!(error.contains("unknown_step_field"), "{error}");
+    }
+
+    #[test]
+    fn create_edit_without_a_command_check_is_rejected_as_unverified() {
+        let json = r#"{
+          "plan_version": 2,
+          "plan_id": "p",
+          "intent": "reject vacuous creation verification",
+          "base_commit": "abc",
+          "steps": [{
+            "id": "create-only",
+            "edits": [{"path": "src/new.rs", "create": "pub fn brand_new() {}\n"}],
+            "checks": [{"kind": "tests.impacted", "expect": "all_pass"}]
+          }]
+        }"#;
+        let plan: Plan = serde_json::from_str(json).unwrap();
+        let error = plan.validate().unwrap_err();
+        assert!(error.contains("create-only"), "{error}");
+        assert!(error.contains("src/new.rs"), "{error}");
+        assert!(error.contains("no command check"), "{error}");
+    }
+
+    #[test]
+    fn create_edit_with_no_checks_at_all_is_also_rejected() {
+        let json = r#"{
+          "plan_version": 1,
+          "plan_id": "p",
+          "intent": "reject an unverified creation with zero checks",
+          "base_commit": "abc",
+          "steps": [{
+            "id": "create-only",
+            "edits": [{"path": "src/new.rs", "create": "pub fn brand_new() {}\n"}]
+          }]
+        }"#;
+        let plan: Plan = serde_json::from_str(json).unwrap();
+        let error = plan.validate().unwrap_err();
+        assert!(error.contains("no command check"), "{error}");
+    }
+
+    #[test]
+    fn create_edit_with_a_command_check_in_the_same_step_is_accepted() {
+        let json = r#"{
+          "plan_version": 2,
+          "plan_id": "p",
+          "intent": "a real verification command closes the vacuity hole",
+          "base_commit": "abc",
+          "steps": [{
+            "id": "create-and-verify",
+            "edits": [{"path": "src/new.rs", "create": "pub fn brand_new() {}\n"}],
+            "checks": [
+              {"kind": "command", "run": "cargo build"},
+              {"kind": "tests.impacted", "expect": "all_pass"}
+            ]
+          }]
+        }"#;
+        let plan: Plan = serde_json::from_str(json).unwrap();
+        assert!(plan.validate().is_ok());
+    }
+
+    #[test]
+    fn a_command_check_in_a_different_step_does_not_satisfy_the_rule() {
+        let json = r#"{
+          "plan_version": 2,
+          "plan_id": "p",
+          "intent": "a command check elsewhere in the plan does not count",
+          "base_commit": "abc",
+          "steps": [
+            {
+              "id": "create-only",
+              "edits": [{"path": "src/new.rs", "create": "pub fn brand_new() {}\n"}],
+              "checks": [{"kind": "tests.impacted", "expect": "all_pass"}]
+            },
+            {
+              "id": "verify-elsewhere",
+              "checks": [{"kind": "command", "run": "cargo build"}]
+            }
+          ]
+        }"#;
+        let plan: Plan = serde_json::from_str(json).unwrap();
+        let error = plan.validate().unwrap_err();
+        assert!(error.contains("create-only"), "{error}");
+    }
+
+    #[test]
+    fn node_addressed_steps_are_unaffected_by_the_creation_verification_rule() {
+        let json = r#"{
+          "plan_version": 2,
+          "plan_id": "p",
+          "intent": "no create edit means the rule never fires",
+          "base_commit": "abc",
+          "steps": [{
+            "id": "rename-only",
+            "edits": [{"node": "crate::m::f", "rename_node": "g"}],
+            "checks": [{"kind": "tests.impacted", "expect": "all_pass"}]
+          }]
+        }"#;
+        let plan: Plan = serde_json::from_str(json).unwrap();
+        assert!(plan.validate().is_ok());
     }
 
     #[test]

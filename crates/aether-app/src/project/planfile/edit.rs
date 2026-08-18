@@ -1321,6 +1321,84 @@ mod tests {
         );
     }
 
+    // Gap 24 design note (docs/core-gap-analysis.md item 24, and the design
+    // discussion that preceded it): the span-safety rule re-resolves nodes
+    // after every edit, and `EditState::refresh_file` runs after a `create`
+    // edit exactly like it runs after any other text edit — so a node a
+    // `create` edit just introduced is already visible to `resolve_node` by
+    // the time a later graph-addressed edit looks for it, whether that edit
+    // is in the same step or a later one sharing the same `EditState`. These
+    // two tests pin that as proven behavior, not just established by
+    // inspection, ahead of anything (`bitcode new`) that would rely on it.
+    #[test]
+    fn a_node_created_earlier_in_the_same_step_can_be_graph_edited_in_that_step() {
+        let (dir, config) = v2_fixture("graph-create-then-edit-same-step", "src/lib.rs", "");
+        let edits = vec![
+            Edit::Create {
+                path: "src/new.rs".into(),
+                create: "pub fn brand_new() -> i32 { 1 }\n".into(),
+            },
+            Edit::ReplaceNode {
+                node: "crate::new::brand_new".into(),
+                replacement: "pub fn brand_new() -> i32 { 111111 }".into(),
+            },
+        ];
+        let mut state = EditState::default();
+        // Primed before the create edit runs, exactly as `executor::run_plan_v2`
+        // primes it whenever a step mixes any graph-addressed edit in with a
+        // create edit — so the create's `refresh_file` call updates this
+        // *live* graph incrementally, instead of the create simply landing on
+        // disk for a later fresh rebuild to discover (the scenario the
+        // "later step" test below exercises instead).
+        state.ensure_graph(&dir.0, &config).unwrap();
+        apply_step_edits_v2(&dir.0, &config, "create-then-edit", &edits, &mut state).unwrap();
+
+        assert_eq!(
+            std::fs::read_to_string(dir.0.join("src/new.rs")).unwrap(),
+            "pub fn brand_new() -> i32 { 111111 }\n"
+        );
+        assert!(state
+            .graph()
+            .unwrap()
+            .find_by_path("crate::new::brand_new")
+            .is_some());
+    }
+
+    #[test]
+    fn a_node_created_in_an_earlier_step_can_be_graph_edited_in_a_later_step() {
+        let (dir, config) = v2_fixture("graph-create-then-edit-later-step", "src/lib.rs", "");
+        let mut state = EditState::default();
+
+        apply_step_edits_v2(
+            &dir.0,
+            &config,
+            "create-step",
+            &[Edit::Create {
+                path: "src/new.rs".into(),
+                create: "pub fn brand_new() -> i32 { 1 }\n".into(),
+            }],
+            &mut state,
+        )
+        .unwrap();
+
+        apply_step_edits_v2(
+            &dir.0,
+            &config,
+            "edit-step",
+            &[Edit::ReplaceNode {
+                node: "crate::new::brand_new".into(),
+                replacement: "pub fn brand_new() -> i32 { 222222 }".into(),
+            }],
+            &mut state,
+        )
+        .unwrap();
+
+        assert_eq!(
+            std::fs::read_to_string(dir.0.join("src/new.rs")).unwrap(),
+            "pub fn brand_new() -> i32 { 222222 }\n"
+        );
+    }
+
     #[test]
     fn graph_re_resolution_handles_shared_utf8_prefix_bytes() {
         let (dir, config) = v2_fixture(
