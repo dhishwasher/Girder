@@ -1157,6 +1157,118 @@ as gap 11 rather than silently accepted.
     against `sample-project/` both confirmed rejected with the documented
     error before this was called done.
 
+22. **P0 — open, not fixed here. `bitcode test-impact` returns zero tests
+    for changed functions that real, passing tests do reach, whenever the
+    reaching call is chained onto another call's result, and `--quiet`
+    cannot distinguish that false negative from "nothing changed."**
+    Reproduced on a clean tree (`git status --short` showed only the
+    pending AGENTS.md edit before this began):
+    ```
+    sed -i 's/pub fn run(&self) -> Trace {/pub fn run(\&self) -> Trace { \/\/ probe/' crates/aether-debugger/src/interp.rs
+    bitcode review . --quiet
+      crate::crates::aether-debugger::src::interp
+      crate::crates::aether-debugger::src::interp::Interpreter<'a>::run
+    bitcode test-impact . --quiet
+      (0 bytes, exit 0)
+    ```
+    `review` resolves the changed node; `test-impact --quiet` prints
+    nothing. The non-`--quiet` form is more informative but still
+    conclusory: `Changed functions (1): ...Interpreter<'a>::run` /
+    `No tests found in the impact set. The changed functions have no test
+    coverage reachable via the call graph.`
+
+    **First check: is that specific claim true for `run()`?** Yes.
+    `bitcode query . "who calls ...Interpreter<'a>::run"` returns "has no
+    recorded callers," and a repo-wide `grep -rn "\.run()"` confirms no
+    call site anywhere in the workspace invokes it — `Timeline::record`
+    calls `Interpreter::new(&program).run_with_counts(None)`, a sibling
+    method, not `run`. So for `run()` alone, zero is the technically
+    correct selection and `--quiet`'s failure is only presentational.
+
+    **But probing an adjacent, definitely-covered method in the same impl
+    block exposes a real false negative, not a presentational one.**
+    `run_with_counts` is called by `run_with` (same file) and, separately,
+    by `Timeline::record` at `crates/aether-debugger/src/timeline.rs:34`
+    and `:72` — and `Timeline::record` is called directly, by name, from
+    all four `#[test]` functions in `crates/aether-debugger/src/lib.rs`
+    (`records_a_full_trace`, `what_if_branch_propagates_the_fix_forward`,
+    `divergence_points_at_the_intervened_step`,
+    `hot_functions_rank_by_execution_count`), which pass under
+    `cargo test -p aether-debugger`. Changing `run_with_counts` the same
+    way still selects zero tests, and both the quiet and non-quiet output
+    are byte-identical to the `run()` case — including the same "no test
+    coverage reachable via the call graph" claim, which is now false.
+    `bitcode query` confirms the mechanism: `Interpreter::new` and
+    `Timeline::record` themselves both report "has no recorded callers,"
+    even though both are called from real, non-test-fixture source.
+
+    **Not specific to a generic impl, not specific to aether-debugger.**
+    `Timeline` is not generic (`impl Timeline`, no `<'a>`), so the generic-
+    impl hypothesis is ruled out directly. Checking a third, unrelated
+    crate: `Node::with_language` (`crates/aether-graph/src/node.rs:107`,
+    non-generic) is chained onto `Node::new(...)` in production code at
+    `crates/aether-builder/src/mapper.rs:845` and is exercised by nearly
+    every builder test in the workspace — `bitcode query` still reports
+    "has no recorded callers." Same defect, third crate, no generics
+    involved, confirming `aether-builder::sync::resolve_calls` (project-
+    wide, one implementation per CLAUDE.md) is affected in general, not
+    only for aether-debugger.
+
+    **The common shape across every failing case is a call chained onto
+    another call's result, or a fully-qualified call whose argument is
+    itself a call.** `Interpreter::new(&program).run_with_counts(None)` and
+    `Node::new(...).with_language(...)` are both `Type::assoc_fn(args)
+    .method(args)` fluent chains. `Timeline::record(buggy_demo_program())`
+    is unchained but its sole argument is a call expression. By contrast,
+    `Program::new()` — leftmost, unchained, argument-free, in the same
+    `buggy_demo_program` function — resolves correctly to its real callers
+    via `bitcode query`. The calls chained after it in the same builder
+    expression fare worse than a false negative: `Program::stmt` (called
+    four times in `buggy_demo_program`) shows zero callers, and
+    `Program::function` (called twice in the same function) shows exactly
+    one recorded caller — `crate::tools::authoring_task_check::
+    call_with_probe`, an unrelated function, not `buggy_demo_program` at
+    all. So the defect family ranges from missing edges to misattributed
+    edges, not only "conservatively silent" ones.
+
+    **Not investigated:** whether the same call-chain shape reproduces in
+    the Python builder/extractor path, or whether it is Rust-specific —
+    everything above was Rust. Left open rather than assumed either way.
+
+    **The `--quiet` ambiguity is real and measured, not inferred:** a
+    clean tree with zero source changes and a tree with the
+    `run_with_counts` probe applied produce identical `bitcode test-impact
+    . --quiet` output — 0 bytes on stdout, exit code 0, in both cases.
+    Nothing in the guarded line AGENTS.md now specifies
+    (`T=$(bitcode test-impact . --quiet); if [ -n "$T" ]; then cargo test
+    $T; else echo "no impacted tests"; fi`) can tell "nothing changed" apart
+    from "something changed but the tool lost the covering test." Two
+    consequences follow directly, both already true today: an agent
+    following AGENTS.md's now-guarded instruction skips real verification
+    for a change like the `run_with_counts` probe above, believing nothing
+    needs testing; and before that guard existed, the same empty selection
+    fed into a bare `cargo test $(bitcode test-impact . --quiet)` ran the
+    entire suite instead of the intended subset (reported by the user
+    triggering this investigation as 48,791 bytes of output — the opposite
+    of the intended saving).
+
+    **Connection to the representative benchmark:**
+    `docs/core-representative-benchmark.md` reports perfect precision/
+    recall (1.000/1.000) on 40 declared call-edge cases across six real
+    repositories, and gap 7 above treats that as the corpus's first passing
+    observation. This gap is a real git-history change to Bit Code's own
+    source, not a preselected probe, and it lands on exactly the call shape
+    — a chained or nested-argument call — that a fluent/builder API
+    produces constantly and that the declared 40 cases evidently do not
+    exercise. Gap 11 already established that a declared-case benchmark can
+    read as 1.0 while a real dispatch shape (there, an untyped-fixture
+    polymorphic call) recalls 0; this is a second, independently discovered
+    instance of the same blind spot, now against Rust and against Bit
+    Code's own codebase rather than a third-party fixture, and touching
+    ordinary constructor-then-configure code that appears in this
+    repository's own production builders (`mapper.rs`), not only in test
+    helpers.
+
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
 validated projection, and recoverable commit. That advantage is unproven until
