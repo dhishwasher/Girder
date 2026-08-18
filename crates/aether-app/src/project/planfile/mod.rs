@@ -131,13 +131,44 @@ pub(crate) fn explain(plan_path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Refuses `root` if it is (or resolves to) `sample-project/`: that
+/// directory is a pinned baseline `tools/authoring_task_check.py` and
+/// `tools/plan_executor_oracle.py::authoring_target_node_source` read
+/// against a specific clean source commit, not a scratch target. A live
+/// authored write there — real, not the harness's own plain `plan run`
+/// invocations, which never pass `--authored` and are unaffected — is
+/// exactly what gap 18 in `docs/core-gap-analysis.md` recorded twice, three
+/// days apart, because the demo workflow had nowhere else to point.
+/// `demo-project/` exists for that instead. Read-only commands
+/// (`context`, `search`, `analyze`, `test-impact`) never call this and stay
+/// unaffected — this only guards the two things that write:
+/// [`apply_authored_guarantees`] (`plan run --authored`, and the GUI's "Run
+/// authored") and `author::author` in `project::commands` (`bitcode do`,
+/// and the GUI's local-model "Run").
+pub(crate) fn reject_measurement_fixture_root(root: &Path) -> std::io::Result<()> {
+    let canonical = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+    if canonical.file_name().and_then(|name| name.to_str()) == Some("sample-project") {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "sample-project/ is a pinned measurement fixture (see gap 18/21 in \
+             docs/core-gap-analysis.md) and refuses authored writes; run demos \
+             against demo-project/ instead",
+        ));
+    }
+    Ok(())
+}
+
 /// Applies the guarantees `--authored` promises to a plan written outside
 /// Bit Code, in place: force a clean revert on any failure, and close the
 /// vacuous-check hole by guaranteeing at least one real test verification.
 /// Also used, via [`run_for_authoring_with_plan`], by the GUI's "Run
 /// authored" flow for a pasted external plan — the same guarantees, the
 /// same function, so the two callers can never drift.
-pub(crate) fn apply_authored_guarantees(plan: &mut schema::Plan) -> std::io::Result<()> {
+pub(crate) fn apply_authored_guarantees(
+    root: &Path,
+    plan: &mut schema::Plan,
+) -> std::io::Result<()> {
+    reject_measurement_fixture_root(root)?;
     // A zero-step plan has nowhere to inject the mandatory check below —
     // `steps.last_mut()` would silently no-op — and nothing else in this
     // codebase rejects it: `Plan::validate()` has no `steps`
@@ -221,7 +252,7 @@ pub(crate) fn run(
         .transpose()?;
 
     if authored {
-        apply_authored_guarantees(&mut plan)?;
+        apply_authored_guarantees(root, &mut plan)?;
     }
 
     if let Err(failures) = precondition::check_preconditions(root, &plan)? {
@@ -445,6 +476,63 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 
+    #[test]
+    fn reject_measurement_fixture_root_rejects_a_directory_named_sample_project() {
+        let parent = std::env::temp_dir().join(format!(
+            "bitcode-planfile-mod-fixture-guard-{}-{}",
+            std::process::id(),
+            NEXT_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        let root = parent.join("sample-project");
+        std::fs::create_dir_all(&root).unwrap();
+
+        let error = reject_measurement_fixture_root(&root).unwrap_err();
+
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
+        assert!(error.to_string().contains("demo-project"), "{error}");
+        let _ = std::fs::remove_dir_all(&parent);
+    }
+
+    #[test]
+    fn reject_measurement_fixture_root_allows_other_directories() {
+        let root = std::env::temp_dir().join(format!(
+            "bitcode-planfile-mod-fixture-guard-allowed-{}-{}",
+            std::process::id(),
+            NEXT_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+
+        assert!(reject_measurement_fixture_root(&root).is_ok());
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn run_with_authored_rejects_sample_project_as_a_target() {
+        let parent = std::env::temp_dir().join(format!(
+            "bitcode-planfile-mod-authored-fixture-guard-{}-{}",
+            std::process::id(),
+            NEXT_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        let root = parent.join("sample-project");
+        std::fs::create_dir_all(&root).unwrap();
+        let base_commit = init_git_repo(&root);
+        let path = write_plan(
+            "authored-fixture-guard",
+            &format!(
+                r#"{{"plan_version":2,"plan_id":"p","intent":"i",
+                    "base_commit":"{base_commit}",
+                    "steps":[{{"id":"s1","checks":[{{"kind":"command","run":"true"}}]}}]}}"#
+            ),
+        );
+
+        let error = run(&root, &path, false, None, true, None).unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
+        assert!(error.to_string().contains("demo-project"), "{error}");
+
+        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_dir_all(&parent);
+    }
+
     fn temp_git_root(name: &str) -> std::path::PathBuf {
         let path = std::env::temp_dir().join(format!(
             "bitcode-planfile-mod-authoring-{name}-{}-{}",
@@ -581,7 +669,7 @@ mod tests {
                 "steps":[{{"id":"s1","checks":[{{"kind":"command","run":"true"}}]}}]}}"#
         ))
         .unwrap();
-        apply_authored_guarantees(&mut plan).unwrap();
+        apply_authored_guarantees(&root, &mut plan).unwrap();
         assert_eq!(plan.on_failure, schema::OnFailure::RollbackPlan);
 
         let result =

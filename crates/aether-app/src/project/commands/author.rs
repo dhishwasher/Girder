@@ -17,7 +17,9 @@ use super::authoring_context::{
 };
 use crate::project::config::ProjectConfig;
 use crate::project::git::git_head_commit;
-use crate::project::planfile::{run_for_authoring, AuthoringRunResult};
+use crate::project::planfile::{
+    reject_measurement_fixture_root, run_for_authoring, AuthoringRunResult,
+};
 use crate::project::source::build_from_dir_with_config;
 use aether_ai::{Prompt, TaskClass};
 use serde_json::{json, Value};
@@ -75,6 +77,7 @@ pub(crate) enum AuthorEvent {
 }
 
 /// The final result of an [`author`] run.
+#[derive(Debug)]
 pub(crate) enum AuthorOutcome {
     /// Node selection matched nothing; nothing was authored, and this is
     /// not an error (mirrors `do_intent`'s current `Ok(())` early return).
@@ -107,6 +110,7 @@ pub(crate) async fn author(
     router: &aether_ai::Router,
     mut on_progress: impl FnMut(AuthorEvent) + Send,
 ) -> std::io::Result<AuthorOutcome> {
+    reject_measurement_fixture_root(root)?;
     on_progress(AuthorEvent::Loading {
         root: root.to_path_buf(),
     });
@@ -645,6 +649,30 @@ mod tests {
             "crate::calc::greet".to_string(),
             "crate::calc::hello".to_string(),
         ]
+    }
+
+    #[tokio::test]
+    async fn author_rejects_sample_project_before_touching_the_provider_or_disk() {
+        // The path need not exist and no router candidate needs to work:
+        // reject_measurement_fixture_root runs before any file I/O or
+        // provider call, so this is a fast, fixture-free check that
+        // `bitcode do` (and the GUI's local-model Run, which calls this
+        // same function) refuses sample-project/ as a target.
+        let root = std::path::Path::new("/nonexistent/sample-project");
+        let router = aether_ai::default_router();
+        let result = author(
+            root,
+            "intent",
+            None,
+            true,
+            0,
+            &router,
+            |_event: AuthorEvent| {},
+        )
+        .await;
+        let error = result.unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
+        assert!(error.to_string().contains("demo-project"), "{error}");
     }
 
     #[test]

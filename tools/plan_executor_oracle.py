@@ -2182,11 +2182,49 @@ def authoring_target_node_source(case_id: str, repository: Path) -> str:
         node_source = "def greet(name):\n    return hello(name)"
     else:
         raise RuntimeError(f"unsupported authoring task: {case_id}")
-    if projection.count(node_source) != 1:
-        raise RuntimeError(f"authoring target Node.source drifted for {case_id}")
+    _require_isolated_occurrence(projection, node_source, case_id)
     if node_source == projection:
         raise RuntimeError(f"authoring target Node.source is the full {language} projection")
     return node_source
+
+
+def _require_isolated_occurrence(projection: str, node_source: str, case_id: str) -> None:
+    """Fail closed unless `node_source` occurs in `projection` exactly once,
+    starting at a line boundary (only indentation may precede it on its
+    line) and ending at a line boundary (immediately followed by a newline
+    or end of file, not more code on the same line).
+
+    A bare substring *count* is not enough: `fe0f476` (see gap 18/21 in
+    `docs/core-gap-analysis.md`) appended `.upper()` immediately after this
+    exact `python-replace` node_source. Since the pristine text is a
+    literal prefix of the drifted one, `projection.count(node_source)`
+    stayed exactly 1 and the drift guard that was supposed to catch this
+    stayed silent — it fails open on an append. Checking both line
+    boundaries catches that append (and an equivalent prepend glued onto
+    the same line) without rejecting the legitimate case of an indented
+    method inside an `impl` block, where the match is preceded by
+    indentation rather than a bare newline.
+    """
+    occurrences = [
+        index for index in range(len(projection)) if projection.startswith(node_source, index)
+    ]
+    if len(occurrences) != 1:
+        raise RuntimeError(f"authoring target Node.source drifted for {case_id}")
+    start = occurrences[0]
+    end = start + len(node_source)
+    line_start = projection.rfind("\n", 0, start) + 1
+    prefix_on_line = projection[line_start:start]
+    if prefix_on_line.strip(" \t") != "":
+        raise RuntimeError(
+            f"authoring target Node.source drifted for {case_id}: matched text does not "
+            f"start at a line boundary (preceded by {prefix_on_line!r} on the same line)"
+        )
+    after = projection[end] if end < len(projection) else None
+    if after is not None and after != "\n":
+        raise RuntimeError(
+            f"authoring target Node.source drifted for {case_id}: matched text is "
+            f"immediately followed by {after!r} instead of end of line/file"
+        )
 
 
 def authoring_progress_header(

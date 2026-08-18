@@ -287,6 +287,48 @@ class PlanExecutorOracleUnitTests(unittest.TestCase):
             },
         )
 
+    def test_authoring_target_node_source_rejects_an_appended_drifted_body(self):
+        # The exact append that got past the old substring-count guard:
+        # fe0f476 (gap 18/21 in docs/core-gap-analysis.md) turned
+        # "def greet(name):\n    return hello(name)" into
+        # "def greet(name):\n    return hello(name).upper()" — the pristine
+        # text stayed a literal prefix of the drifted one, so
+        # `projection.count(node_source)` was still exactly 1 and the old
+        # guard never fired. This must now raise.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "sample-project" / "calc.py"
+            target.parent.mkdir(parents=True)
+            target.write_text(
+                "def greet(name):\n"
+                "    return hello(name).upper()\n\n"
+                "def hello(name):\n"
+                "    return 'hello ' + name\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(RuntimeError, "drifted"):
+                authoring_target_node_source("python-replace", root)
+
+    def test_authoring_target_node_source_accepts_an_indented_impl_method(self):
+        # The boundary check must not reject the legitimate case it has to
+        # coexist with: a rust node_source that starts mid-line, preceded
+        # only by indentation (an impl block method), not a bare newline.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "crates" / "aether-debugger" / "src" / "trace.rs"
+            target.parent.mkdir(parents=True)
+            target.write_text(
+                "pub struct Trace;\n\n"
+                "impl Trace {\n"
+                "    pub fn final_env(&self) -> Env {\n"
+                "        self.steps.last().map(|s| s.env.clone()).unwrap_or_default()\n"
+                "    }\n"
+                "}\n",
+                encoding="utf-8",
+            )
+            source = authoring_target_node_source("rust-replace", root)
+            self.assertIn("pub fn final_env", source)
+
     def test_authoring_graph_context_never_contains_full_target_projection(self):
         root = Path(__file__).parents[1]
         for language in ("rust", "python"):

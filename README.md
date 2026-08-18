@@ -66,14 +66,16 @@ bitcode forge sample-project "add a subtract function"
 # Author a single graph-addressed plan step via a wired-in model (the
 # offline MockProvider by default) and execute it through the same
 # verified plan executor as `plan run` below, repairing from check
-# failures automatically:
-bitcode do sample-project "uppercase greet's return value"
+# failures automatically. Never point this — or `plan run --authored` —
+# at sample-project/: it is a pinned measurement fixture, not a demo
+# target, and both refuse it outright (see "Demo target" below):
+bitcode do demo-project "add an exclamation mark to the farewell"
 
 # Emit graph context, a real Plan Format v2 authoring schema, and a plan
 # skeleton as one JSON object — for pasting into any external chat model
 # that isn't wired in as a provider. See "External authoring" below for
 # the full loop from here to a verified, applied edit:
-bitcode context sample-project --nodes crate::calc::greet "uppercase greet's return value" --json
+bitcode context demo-project --nodes crate::greeter::farewell "add an exclamation mark to the farewell" --json
 
 # Validate/inspect/execute a plan file directly. `--authored` is for a plan
 # an external model wrote by hand (see "External authoring" below); without
@@ -364,8 +366,8 @@ verified graph edit. The loop:
 # 1. Emit graph context, a real Plan Format v2 authoring schema, and a plan
 #    skeleton (base_commit, on_failure, the mandatory tests.impacted check)
 #    as one JSON object:
-bitcode context sample-project --nodes crate::calc::greet \
-  "uppercase greet's return value" --json > context.json
+bitcode context demo-project --nodes crate::greeter::farewell \
+  "add an exclamation mark to the farewell" --json > context.json
 
 # 2. Paste context.json into any chat model. Ask it to fill in the plan
 #    skeleton's step (id, description, edits) so the step satisfies the
@@ -374,13 +376,15 @@ bitcode context sample-project --nodes crate::calc::greet \
 #    so a model that follows it produces a file that loads without
 #    translation.
 
-# 3. Run and verify it. --authored applies the same harness guarantees `do`
+# 3. Run and verify it. `plan run` has no project-directory argument — the
+#    root is always the current directory, so run this from inside
+#    demo-project/. --authored applies the same harness guarantees `do`
 #    applies internally to a model-authored plan: on_failure is forced to
 #    rollback_plan, a tests.impacted check is injected if the plan doesn't
 #    already carry one, and a zero-step plan is refused outright rather than
 #    passing vacuously. --authored-by <name> records who authored it in the
 #    written report:
-bitcode plan run plan.json --authored --authored-by claude-opus-5
+(cd demo-project && bitcode plan run ../plan.json --authored --authored-by claude-opus-5)
 ```
 
 A passing run applies the edit to the real tree and writes a report under
@@ -391,6 +395,31 @@ per edit/check kind, matching `planfile::schema`'s deserializer field for
 field) is what makes step 2 reliable — see gap 17 in
 [`docs/core-gap-analysis.md`](docs/core-gap-analysis.md) for the defect this
 closed and the round-trip test that proves it.
+
+### Demo target: `demo-project/`, never `sample-project/`
+
+`bitcode do` and `plan run --authored` both refuse `sample-project/` as a
+target outright, with an error naming `demo-project/` as the place to run
+instead:
+
+```
+$ bitcode do sample-project "uppercase greet's return value"
+error: sample-project/ is a pinned measurement fixture (see gap 18/21 in
+docs/core-gap-analysis.md) and refuses authored writes; run demos against
+demo-project/ instead
+```
+
+`sample-project/` is a pinned baseline `tools/authoring_task_check.py` and
+`tools/plan_executor_oracle.py` read against a specific clean source commit
+for the graph-addressed-authoring-cost measurement corpus, not a scratch
+target. A real (non-dry) authored write there mutates the same file the
+measurement harness depends on — this happened twice, three days apart, and
+cost a full day of debugging a broken referee before the fixture drift was
+found; see gap 18 in `docs/core-gap-analysis.md`. `demo-project/` exists so
+that never has to happen again: a small, disposable Python project nothing
+under `tools/` or `docs/` reads, safe for real (non-dry) authored writes.
+Read-only commands (`context`, `search`, `analyze`, `test-impact`) still work
+against `sample-project/` — only the two commands that write are refused.
 
 ### The pipeline demo
 
@@ -455,8 +484,9 @@ rolled back. **Commit** projects generated functions to the configured output
 file and persists the graph, while **Roll back** cancels validation and restores
 the pre-run graph without touching source files.
 
-The right workspace has separate **Agents** and **Extensions** views. Extensions
-contains Generate, Marketplace, and Installed tabs. Extension generation returns
+The right workspace has separate **Agents**, **Extensions**, **Collaboration**,
+and **Author** views. Extensions contains Generate, Marketplace, and Installed
+tabs. Extension generation returns
 a strict JSON recipe; installation stays disabled until the user reviews its
 exact SHA-256 digest, capabilities, contributions, projections, and full JSON.
 The marketplace searches bounded declarative catalogs, displays the catalog and
@@ -483,6 +513,37 @@ mode. Explicit rotation/removal remains available in the CLI.
 Separate Review and Apply controls keep remote graph-to-source projection
 explicit, consistency-checked, digest-bound, validated, and atomic. CLI `host`
 is the persistent serving surface.
+
+The **Author** view exposes both authoring paths from "External authoring"
+above without a terminal: type an intent, click **Search** to run the same
+concept search `bitcode do`/`context` use (only the top-scored hit starts
+checked — narrower than the CLI default on purpose, since gap 15 in
+`docs/core-gap-analysis.md` exists to shrink what a model can touch), and
+adjust the checkboxes to pin the exact nodes a plan may edit — the same
+`--nodes` a terminal invocation would otherwise require typing full paths
+for. **Local model** mode mirrors `bitcode do`: **Run** streams each
+provider attempt into a live log and shows pass/fail plus the report.
+**External model** mode mirrors `bitcode context` + `plan run --authored`:
+**Copy context JSON** puts exactly what the CLI command would print onto the
+clipboard, paste a model's plan response back in, and **Run authored**
+applies the same guarantees (forced `rollback_plan`, the mandatory
+`tests.impacted` check, zero-step refusal). A non-dry Run in either mode
+requires a second, explicit confirming click — a GUI button that silently
+writes to the tree has no command line to review first. Open `demo-project/`
+to try the full loop for real:
+
+```bash
+cargo run -p aether-app --features gui -- --gui demo-project
+```
+
+Then, in the Author tab: type "add an exclamation mark to the farewell",
+click Search, leave `crate::greeter::farewell` checked, and either click Run
+(Local model) or use Copy Context JSON / paste a plan back in / Run authored
+(External model) — Dry run stays checked by default in both, so nothing
+writes to the tree until it's unchecked and confirmed. Like `bitcode do`
+against a terminal, both refuse `sample-project/` outright; only
+`demo-project/` (or another project you point it at) accepts a real,
+non-dry Run.
 
 Installed records and their contribution nodes live in the semantic graph and
 survive source reconciliation. Enable/disable affects only contribution

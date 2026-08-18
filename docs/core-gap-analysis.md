@@ -1060,52 +1060,102 @@ as gap 11 rather than silently accepted.
     concurrently writing to the same real tree, which Search and Copy
     Context JSON have no equivalent of, since they only read.
 
-21. **P2 — open: `sample-project/` is both a live authoring demo target and a
+21. **Closed — `sample-project/` was both a live authoring demo target and a
     pinned measurement fixture, sharing one tree with no guard that reliably
-    detects drift between the two roles.** Gap 18 above is the concrete
-    incident: `fe0f476`, a genuine (non-dry) `plan run --authored` execution
-    demonstrating external authoring against `sample-project/calc.py`, went
-    unnoticed by every gate for three days (2026-08-15 to 2026-08-18) because
-    nothing in the test suite or CI compares the live file against the
-    baseline the measurement corpus assumes. Every future `bitcode do` or
-    `plan run --authored` run against `sample-project` — including the ones
-    this same pass's Author tab GUI work makes easier to trigger by hand —
-    has the identical exposure: a real (non-dry) run permanently mutates the
-    same file `tools/authoring_task_check.py` and
+    detects drift between the two roles. All three candidate mitigations
+    are now implemented.** Gap 18 above is the concrete incident, and it
+    happened twice: `fe0f476`/`44e7fae`, a genuine (non-dry) `plan run
+    --authored` execution demonstrating external authoring against
+    `sample-project/calc.py` and its paired test, went unnoticed by every
+    gate for three days (2026-08-15 to 2026-08-18) because nothing in the
+    test suite or CI compared the live files against the baseline the
+    measurement corpus assumes — and the first attempt at fixing it, hours
+    into this same pass, repeated the shape of the mistake by verifying
+    incompletely. Every future `bitcode do` or `plan run --authored` run
+    against `sample-project` — including from the Author tab GUI this pass
+    added, which makes triggering one easier than a terminal invocation
+    did — had the identical exposure: a real (non-dry) run permanently
+    mutates the same files `tools/authoring_task_check.py` and
     `tools/plan_executor_oracle.py::authoring_target_node_source` treat as
     pristine.
 
-    Worth recording precisely why the one guard that exists didn't catch
-    this: `authoring_target_node_source` already asserts
-    `projection.count(node_source) != 1` before trusting a hardcoded
-    expected node source against the live file — a drift guard that looks
-    purpose-built for exactly this. But it's a bare substring *count*, not a
-    boundary check, and `fe0f476`'s edit only *appended* `.upper()` after
-    the checked text; `"def greet(name):\n    return hello(name)"` is still
-    a literal prefix of `"def greet(name):\n    return
-    hello(name).upper()"`, so the count stayed exactly 1 and the guard
-    stayed silent. The guard catches an *interior* rewrite of the checked
-    span; it does not catch an appended suffix.
+    **1. Drift guard hardened (defense in depth).**
+    `authoring_target_node_source` asserted `projection.count(node_source)
+    != 1` before trusting a hardcoded expected node source against the live
+    file — a guard that looked purpose-built for exactly this, but is a
+    bare substring *count*, not a boundary check. `fe0f476`'s edit only
+    *appended* `.upper()` after the checked text; `"def greet(name):\n
+    return hello(name)"` stayed a literal prefix of `"def greet(name):\n
+    return hello(name).upper()"`, so the count stayed exactly 1 and the
+    guard stayed silent — it failed open on an append. Replaced with
+    `_require_isolated_occurrence` in `tools/plan_executor_oracle.py`: the
+    single occurrence must now also start at a line boundary (only
+    indentation may precede it on its line — needed so an indented `impl`
+    block method, like the Rust cases, still passes) and end at one
+    (immediately followed by a newline or end of file, not more code on the
+    same line). `test_authoring_target_node_source_rejects_an_appended_drifted_body`
+    in `tools/test_plan_executor_oracle.py` uses the exact `fe0f476` append
+    as the case it must now catch;
+    `test_authoring_target_node_source_accepts_an_indented_impl_method`
+    pins the case it must not reject.
 
-    Not fixed here — this is a process/architecture decision, not a
-    one-line patch, and the immediate incident (gap 18) is closed by
-    restoring the fixture, not by hardening the guard. Candidate
-    mitigations, roughly cheapest first:
-    - Tighten `authoring_target_node_source`'s guard from a substring count
-      to an exact-boundary match (the checked span must be immediately
-      followed by whitespace/a statement boundary, not by arbitrary
-      trailing content), so an appended suffix like `.upper()` fails closed
-      instead of silently matching.
-    - Pin `tools/test_authoring_task_check.py` and
-      `authoring_target_node_source` to a specific commit (`git show
-      <pinned-commit>:path`) instead of reading the working tree, so the
-      measurement harness can no longer see a live demo mutation at all,
-      pristine or not.
-    - Stop demonstrating real (non-dry) `bitcode do`/`plan run --authored`
-      runs against the tracked `sample-project/` the harness depends on;
-      point demo instructions at a disposable clone or branch instead, so a
-      real authored change never lands in the same file the measurement
-      corpus is defined against.
+    **2. The fixture refuses to be a target (the mitigation that actually
+    holds).** `reject_measurement_fixture_root` in
+    `crates/aether-app/src/project/planfile/mod.rs` rejects any root whose
+    canonical final path component is `sample-project`, naming
+    `demo-project/` in the error. It runs first inside
+    `apply_authored_guarantees` (so `plan run --authored`, and the GUI's
+    "Run authored", refuse it — one call site, shared by both since gap 20)
+    and first inside `author::author` (so `bitcode do`, and the GUI's
+    local-model Run, refuse it — the single function both already share).
+    Read-only commands (`context`, `search`, `analyze`, `test-impact`, plain
+    `plan run` without `--authored`) never call either function and stay
+    unaffected — confirmed the measurement harness itself never invokes
+    `--authored` or `bitcode do` at all (`grep` over `tools/*.py` for
+    `--authored`/`"do"` found nothing), so this closes the hole without
+    touching the harness's own real `plan run`/`plan validate` invocations.
+    Unlike the other two mitigations, this one does not depend on a person
+    remembering to point somewhere else — it fails closed by construction,
+    regardless of which entry point (CLI or GUI) is used.
+
+    **3. `demo-project/` exists as the disposable target.** A small Python
+    project (`demo-project/greeter.py` + `demo-project/test_greeter.py`,
+    real call edges so test-impact has something to traverse, tests that
+    pass) that nothing under `tools/` or `docs/` reads — confirmed with
+    `grep -rln "demo-project" tools/ docs/` before this closed, which found
+    nothing. `README.md`'s Quickstart, "External authoring", and a new "The
+    GUI" Author-tab walkthrough all point at it instead of
+    `sample-project/`; the two `sample-project`-authored examples that
+    mitigation 2 would otherwise have made literally broken to follow
+    (`bitcode do sample-project ...` and the `plan run --authored` loop)
+    were rewritten against `demo-project/`, and a new "Demo target" section
+    documents the refusal and why.
+
+    **Deliberately not implemented:** mitigation 2 is app-level, inside
+    `bitcode` itself — it stops `bitcode do`/`plan run --authored` from
+    writing to `sample-project/`, not a hand edit and `git commit` made
+    outside `bitcode` entirely, which remains as possible as it always was.
+    Mitigation 1 (the hardened drift guard) is the reason that residual
+    path is still covered: it protects the measurement harness even against
+    a drift that never went through `bitcode` at all, which is exactly why
+    it's real defense in depth and not redundant with mitigation 2. The
+    root check is also a plain final-path-component name match, not
+    hardened against deliberate circumvention (a symlink or a differently
+    named copy would bypass it) — sufficient for the ordinary mistake this
+    gap records twice, not designed as a security boundary against someone
+    trying to get around it on purpose.
+
+    **Verified the way the previous two fixes failed to:** the full Python
+    suite from the repository root with no path restriction
+    (`python3 -m pytest -q`) passes 68 of 68 (63 from before this pass, plus
+    3 real `demo-project` tests and 2 new drift-guard tests), and a real
+    authored dry run against `demo-project/` — `bitcode plan run
+    plan.json --authored --authored-by claude-sonnet-5 --dry` run from
+    inside `demo-project/`, targeting `crate::greeter::farewell` — passes
+    precondition checks, executes, and reports passed with no writes to the
+    real tree. `bitcode do sample-project ...` and `plan run --authored`
+    against `sample-project/` both confirmed rejected with the documented
+    error before this was called done.
 
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,

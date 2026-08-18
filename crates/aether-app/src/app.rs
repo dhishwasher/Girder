@@ -643,7 +643,7 @@ impl AetherApp {
         std::thread::spawn(move || {
             let result = (|| -> std::io::Result<AuthoringRunResult> {
                 let mut plan = parse_plan(&pasted_plan)?;
-                apply_authored_guarantees(&mut plan)?;
+                apply_authored_guarantees(&root, &mut plan)?;
                 run_for_authoring_with_plan(&root, plan, dry, None, authored_by.as_deref())
             })();
             let _ = tx.send(result);
