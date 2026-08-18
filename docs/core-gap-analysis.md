@@ -858,22 +858,26 @@ as gap 11 rather than silently accepted.
 
 18. **Closed — the Python measurement-harness suite's canonical-edit checks
     failed against a live-mutated `sample-project/calc.py`; the fixture was
-    wrong, not the harness.**
+    wrong, not the harness. Root cause was a matched two-commit pair, and an
+    incomplete first fix reported success by verifying only half of it.**
     `tools/test_authoring_task_check.py::test_all_eight_canonical_edits_pass_semantic_verification`
     reads whatever is currently on disk at `sample-project/calc.py` as its
     `original` baseline (not a pinned snapshot) and mechanically applies each
     of the eight canonical tasks' `match`/`replace` text edits
     (`tools/plan_executor_oracle.py::authoring_edits`) to it before running
-    `tools/authoring_task_check.py`'s semantic checks. Commit `fe0f476`
-    ("Uppercase greet's return value", 2026-08-15, authored externally via
-    `bitcode context`/`plan run --authored` — the loop gap 17 above concerns)
-    was a genuine, non-dry `plan run --authored` execution against that same
-    tracked file, permanently changing `greet`'s body from `return
-    hello(name)` to `return hello(name).upper()`. The `python-rename` task's
-    check still assumed the original body — rename `greet` to
-    `welcome_greeting`, then expect un-uppercased behavior (`upper=False`) —
-    so it failed with "welcome_greeting has wrong behavior" against the
-    drifted fixture.
+    `tools/authoring_task_check.py`'s semantic checks. Two commits from the
+    same live run drifted that fixture, three days apart from every other
+    commit in this pass: `fe0f476` ("Uppercase greet's return value",
+    2026-08-15, authored externally via `bitcode context`/`plan run
+    --authored` — the loop gap 17 above concerns) permanently changed
+    `greet`'s body from `return hello(name)` to `return
+    hello(name).upper()`, and `44e7fae` ("Add test for greet uppercase",
+    minutes later, same run) added `sample-project/test_calc.py` — a file
+    that did not exist before that commit — asserting the new uppercase
+    behavior. The `python-rename` task's check still assumed the original
+    body — rename `greet` to `welcome_greeting`, then expect un-uppercased
+    behavior (`upper=False`) — so it failed with "welcome_greeting has wrong
+    behavior" against the drifted fixture.
 
     **Root cause, not just the trigger:** the eight canonical tasks
     (`docs/authoring-cost-policy.json`'s corpus) are each defined as an
@@ -881,43 +885,77 @@ as gap 11 rather than silently accepted.
     file — `python-replace` is literally "change `greet` so it returns
     `hello(name).upper()`". A live, permanent uppercase of `greet` outside
     the harness silently satisfies that task's precondition for free while
-    breaking every other task that assumes the original lowercase body.
-    Confirmed against
+    breaking every other task that assumes the original lowercase body, and
+    a live, permanent test asserting the new behavior turns that drift into
+    a second, independent source of failure the moment the fixture is
+    corrected back. Confirmed against
     `git show fd74d3468b65fddce6e853103aa9368767a0c90d:sample-project/calc.py`
     (the exact `clean source commit` `docs/authoring-cost.md`'s precommitted
-    corrected method cites) that `greet` was lowercase at measurement time,
-    and every `docs/authoring-cost*` commit predates `fe0f476` by a day —
-    the corpus really was measured against the pristine fixture `fe0f476`
-    later mutated out from under it. `docs/authoring-cost.md`'s own
-    Observation table records the graph arm's `python-replace` task as
-    **passed** — direct evidence a real uppercase transformation was
-    authored and verified starting from lowercase `greet`, which is only
-    possible if the fixture was still pristine at that time.
+    corrected method cites) that `greet` was lowercase at measurement time
+    and that `sample-project/test_calc.py` did not exist at all at that
+    commit (`git show <commit>:sample-project/test_calc.py` — "exists on
+    disk, but not in" that commit), and every `docs/authoring-cost*` commit
+    predates `fe0f476`/`44e7fae` by a day — the corpus really was measured
+    against the pristine fixture both commits later mutated out from under
+    it. `docs/authoring-cost.md`'s own Observation table records the graph
+    arm's `python-replace` task as **passed** — direct evidence a real
+    uppercase transformation was authored and verified starting from
+    lowercase `greet`, which is only possible if the fixture was still
+    pristine at that time.
 
-    **Decision:** restore `sample-project/calc.py`'s `greet` to `return
-    hello(name)`, reverting `fe0f476`'s live mutation, rather than change
+    **Decision:** restore both files to their state at
+    `fd74d3468b65fddce6e853103aa9368767a0c90d` — `sample-project/calc.py`'s
+    `greet` back to `return hello(name)`, and `sample-project/test_calc.py`
+    deleted outright, since it never existed at that commit — reverting both
+    halves of the live run's drift rather than changing
     `tools/authoring_task_check.py`'s expectations. The corpus and its
     already-measured, precommitted results depend on the pristine fixture;
-    changing the harness to match the drifted file would have silently
+    changing the harness to match the drifted files would have silently
     invalidated `docs/authoring-cost.md`'s Observation table (in particular
     the one recorded `python-replace` pass) without changing the doc.
 
-    **This also explains a masked second symptom, now fixed by the same
-    change:** the failing test is a single unparameterized loop over all
-    eight cases with no `subTest`, so it stops at the *first* failure
-    (`python-rename`, second in iteration order) — `python-delete` and
-    `python-insert` were never reached in the reported failure.
-    `python-insert`'s check also asserts `greet` returns un-uppercased
+    **The first attempt at this fix (same pass, hours earlier) reverted only
+    `calc.py` and reported the gate as closed. It was incomplete, and the way
+    it was verified is why that went unnoticed:** the fix was checked by
+    re-running the one previously-failing test
+    (`tools/test_authoring_task_check.py`, plus `python3 -m pytest -q
+    tools`), which only exercises files under `tools/` — never
+    `sample-project/test_calc.py`, which pytest's default discovery from the
+    repository root does collect but a `tools`-scoped invocation does not.
+    `sample-project/test_calc.py::GreetTests::test_returns_uppercase` — the
+    other half of the same drift, added by `44e7fae` — kept asserting
+    uppercase against the now-reverted lowercase `greet` and failed on a
+    tree the gate had just reported clean. Confirmed reproducible with the
+    exact command a real authored run's declared checks would use together —
+    `python3 -m pytest -q sample-project tools/test_authoring_task_check.py`
+    — which shows `1 failed, 3 passed` against the fixture in that
+    intermediate state. The lesson generalizes past this one gap: verifying
+    a fixture-drift fix by re-running the test that happened to be reported
+    failing is not the same as verifying the fixture, and the correct check
+    is always the full suite from the repository root
+    (`python3 -m pytest -q`, no path restriction), not a scoped rerun of
+    whatever was already known to be broken.
+
+    **This also explains a masked third symptom, fixed by the same
+    `calc.py` change:** `tools/test_authoring_task_check.py`'s canonical-edit
+    test is a single unparameterized loop over all eight cases with no
+    `subTest`, so it stops at the *first* failure (`python-rename`, second
+    in iteration order) — `python-delete` and `python-insert` were never
+    reached in the originally reported failure. `python-insert`'s check also
+    asserts `greet` returns un-uppercased
     (`call_with_probe(namespace, "greet", upper=False)` in
     `authoring_task_check.py`), and `python-delete`'s mechanical `match`
     text is a *prefix* of the drifted body (`"def greet(name):\n    return
     hello(name)"` matches inside `"...hello(name).upper()"`), so deleting it
     would have left a syntactically invalid stray `.upper()` behind — both
-    would have failed too, once reached. Restoring the pristine fixture
-    fixed all three at once, not only the one visibly reported:
-    `python3 -m pytest tools/test_authoring_task_check.py` now passes all 3
-    tests (all 8 canonical sub-cases), and the full `tools/` suite is fully
-    green (63 passed).
+    would have failed too, once reached.
+
+    **Verified both ways this time:** the full Python suite from the
+    repository root (`python3 -m pytest -q`, no path restriction) passes 63
+    of 63 with both files restored, and the reproduction command above
+    (`python3 -m pytest -q sample-project tools/test_authoring_task_check.py`)
+    now collects 3 items (only `tools/test_authoring_task_check.py`'s —
+    `sample-project` has no test file left to collect) with 0 failures.
 
 19. **P1 — open measurement gap, made unmissable rather than fixed:
     `docs/authoring-cost-policy.json` is `graph-edit-authoring-cost-v3`
