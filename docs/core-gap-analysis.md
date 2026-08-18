@@ -1552,6 +1552,36 @@ as gap 11 rather than silently accepted.
     edits already depend on) — these tests supply the proof that was
     missing, not a mechanism change.
 
+    **The precommitted P1 corpus itself carried the vacuous pattern —
+    more evidence for this gap, not an inconvenience to fixing it.**
+    `tools/plan_executor_oracle.py::p1_plan`'s `created-node` case (step
+    `create-source`: `{"path": "src/new_module.rs", "create": "pub fn
+    fresh() {}\n"}`) and `cross-file-call` case (step `create-dependency`:
+    `{"path": "src/dep.rs", "create": "pub fn added_target() -> i64 { 3
+    }\n"}`) both had a `create` edit with zero checks on that step before
+    this pass — the exact shape gap 24 closes, sitting undetected in the
+    P1-P6 policy's own measurement fixtures the whole time `P1_dry_equals_real`
+    has been precommitted. `Plan::validate()`'s new rule rejects both as
+    written, so each step gained one `command` check
+    (`grep -q 'fn fresh' src/new_module.rs` and `grep -q 'added_target'
+    src/dep.rs` respectively) that asserts the created content landed.
+    `P1_dry_equals_real` measures whether a dry run's report matches a real
+    run's report; both added checks run against the disposable candidate
+    workspace identically in dry and real mode, before the dry/real branch
+    point in `executor.rs` diverges, so they cannot introduce a dry/real
+    asymmetry the property would need to tolerate — they add one more
+    check outcome, deterministic in both modes, not a source of drift. The
+    P1-P6 rerun after this change (`source_commit: bc3fdfd...`) confirms
+    the property is unweakened: `P1_dry_equals_real`'s precommitted mutant
+    is still killed (`outcome_mismatches=4` against
+    `max_outcome_mismatches=0`), and the full policy still reports `PASS`.
+    The finding underneath the fixture edit is the real one: a corpus
+    built to measure plan-executor correctness had, itself, been carrying
+    an unverified create-only step since it was written — the same
+    "a declared-case corpus that never contains a shape cannot fail on it"
+    lesson gap 22's benchmark-blind-spot closing entry already drew, now
+    recurring in the measurement harness rather than the benchmark.
+
     **Deliberately not fixed: the general case.** A step that edits an
     already-existing node with genuinely zero callers and zero tests is
     just as vacuous under `tests.impacted` as a freshly created one, and
