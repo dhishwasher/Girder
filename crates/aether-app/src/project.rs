@@ -42,7 +42,7 @@ pub(crate) use commands::extensions::{
 };
 pub(crate) use commands::{
     analyze, collaboration, config, context, dap, debug, do_intent, extensions, forge, inspect,
-    plan_explain, plan_run, plan_validate, query, refactor, review, search, swarm_plan,
+    new, plan_explain, plan_run, plan_validate, query, refactor, review, search, swarm_plan,
     test_impact,
 };
 #[cfg(feature = "gui")]

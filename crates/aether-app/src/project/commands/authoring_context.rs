@@ -421,6 +421,103 @@ pub(crate) fn plan_skeleton(base_commit: &str, intent: &str, plan_id: &str) -> V
     })
 }
 
+/// The `bitcode new` counterpart to [`plan_edit_schema`]: a plan step here
+/// can only create a file, never address an existing graph node, because
+/// there is no graph yet for `bitcode new`'s target to have nodes in. Kept
+/// as a one-branch `oneOf` for shape parity with `plan_edit_schema`'s
+/// discriminated union rather than a flat object, so a caller that expects
+/// "an edit is one of several shapes" doesn't need a special case for this
+/// one. `path` has no enum the way `plan_edit_schema`'s `node` does — the
+/// whole point is authoring a path that doesn't exist in the graph yet;
+/// `Edit::Create`'s own overwrite/escape checks in `edit.rs` are the real
+/// enforcement, exactly as they already are for any other caller of
+/// `Edit::Create`.
+pub(crate) fn creation_edit_schema() -> Value {
+    json!({
+        "type": "object",
+        "oneOf": [
+            {
+                "additionalProperties": false,
+                "required": ["path", "create"],
+                "properties": {
+                    "path": {"type": "string"},
+                    "create": {"type": "string"}
+                }
+            }
+        ]
+    })
+}
+
+/// The `bitcode new` counterpart to [`plan_schema`]: every edit is
+/// [`creation_edit_schema`] (a `create`, never a node-addressed op), and
+/// every check the schema allows is `command` — gap 24's rule (a step
+/// containing an `Edit::Create` must carry a `command` check in the same
+/// step; see `docs/core-gap-analysis.md` item 24 and
+/// `planfile::schema::Plan::validate`) is enforced here structurally
+/// (`checks` requires at least one item and `kind` has no value but
+/// `"command"`), not only discovered on rejection from `Plan::validate()`
+/// after a model has already committed to a wrong shape. `tests.impacted`
+/// is deliberately absent from the `kind` enum: it is always vacuous for a
+/// node a `create` edit just introduced (no prior callers, no prior
+/// tests), so offering it here would let a model reach for the exact
+/// vacuous-pass shape gap 24 closed.
+pub(crate) fn creation_plan_schema() -> Value {
+    json!({
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "edits", "checks"],
+        "properties": {
+            "id": {"type": "string"},
+            "description": {"type": "string"},
+            "edits": {
+                "type": "array",
+                "minItems": 1,
+                "items": creation_edit_schema()
+            },
+            "checks": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 3,
+                "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["kind", "run"],
+                    "properties": {
+                        "kind": {"type": "string", "enum": ["command"]},
+                        "run": {"type": "string", "minLength": 1},
+                        "expect_exit": {"type": "integer"}
+                    }
+                }
+            }
+        }
+    })
+}
+
+/// The `bitcode new` counterpart to [`plan_skeleton`]: same envelope
+/// shape, but `checks: []` instead of a pre-seeded `tests.impacted` —
+/// gap 24 established that check is always vacuous for a node a `create`
+/// edit just introduced, so seeding it here would be the exact "injecting
+/// a check known to be vacuous is worse than injecting nothing" mistake
+/// gap 24 closed at both of its other injection points. The model must
+/// supply its own real `command` check; [`creation_plan_schema`]'s
+/// `checks.minItems: 1` plus its `kind` enum of `["command"]` means it
+/// cannot skip this the way a vacuous default would otherwise let it.
+pub(crate) fn creation_plan_skeleton(base_commit: &str, intent: &str, plan_id: &str) -> Value {
+    json!({
+        "plan_version": 2,
+        "plan_id": plan_id,
+        "intent": intent,
+        "base_commit": base_commit,
+        "on_failure": "rollback_plan",
+        "steps": [{
+            "id": "step-1",
+            "description": "",
+            "edits": [],
+            "checks": []
+        }]
+    })
+}
+
 pub(crate) fn invalid_input(message: &str) -> std::io::Error {
     std::io::Error::new(std::io::ErrorKind::InvalidInput, message)
 }
@@ -614,6 +711,61 @@ mod tests {
         assert_eq!(checks.len(), 1);
         assert_eq!(checks[0]["kind"], "tests.impacted");
         assert_eq!(checks[0]["expect"], "all_pass");
+    }
+
+    #[test]
+    fn creation_edit_schema_offers_only_path_and_create_no_node_enum() {
+        let schema = creation_edit_schema();
+        let branch = &schema["oneOf"][0];
+        assert_eq!(branch["required"], serde_json::json!(["path", "create"]));
+        assert!(branch["properties"]["path"]["enum"].is_null());
+        assert!(!branch["properties"]
+            .as_object()
+            .unwrap()
+            .contains_key("node"));
+    }
+
+    #[test]
+    fn creation_plan_schema_requires_at_least_one_command_check() {
+        let schema = creation_plan_schema();
+        assert_eq!(schema["properties"]["checks"]["minItems"], 1);
+        assert_eq!(
+            schema["properties"]["checks"]["items"]["properties"]["kind"]["enum"],
+            serde_json::json!(["command"])
+        );
+        // tests.impacted must never appear as an offered kind here: it is
+        // always vacuous for a node a create edit just introduced (gap 24).
+        let allowed_kinds = schema["properties"]["checks"]["items"]["properties"]["kind"]["enum"]
+            .as_array()
+            .unwrap();
+        assert!(!allowed_kinds.iter().any(|kind| kind == "tests.impacted"));
+    }
+
+    #[test]
+    fn creation_plan_schema_edits_are_creation_edit_schema_only() {
+        let schema = creation_plan_schema();
+        assert_eq!(schema["properties"]["edits"]["minItems"], 1);
+        assert_eq!(
+            schema["properties"]["edits"]["items"],
+            creation_edit_schema()
+        );
+    }
+
+    #[test]
+    fn creation_plan_skeleton_has_empty_edits_and_no_pre_seeded_checks() {
+        let skeleton = creation_plan_skeleton("deadbeef", "make a greeter script", "new-test");
+        assert_eq!(skeleton["plan_version"], 2);
+        assert_eq!(skeleton["plan_id"], "new-test");
+        assert_eq!(skeleton["intent"], "make a greeter script");
+        assert_eq!(skeleton["base_commit"], "deadbeef");
+        assert_eq!(skeleton["on_failure"], "rollback_plan");
+        let steps = skeleton["steps"].as_array().unwrap();
+        assert_eq!(steps.len(), 1);
+        assert_eq!(steps[0]["edits"].as_array().unwrap().len(), 0);
+        // Unlike plan_skeleton, no check is pre-seeded: tests.impacted
+        // would be vacuous here, and injecting it would read as a safety
+        // net that isn't one (gap 24).
+        assert_eq!(steps[0]["checks"].as_array().unwrap().len(), 0);
     }
 
     #[test]

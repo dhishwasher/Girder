@@ -63,6 +63,21 @@ COMMANDS:
                               for pasting context into an external chat
                               model not wired in as a provider, then running
                               its plan with `plan run --authored`.
+    new <dir> \"<description>\" --language rust|python --json
+                              Read-only, context-shaped, for authoring a
+                              program that does not exist yet: project root,
+                              declared language, whatever files already
+                              exist, base_commit, and a schema/skeleton whose
+                              edits are `create` (never node-pinned — there
+                              is no graph to pin to). Every check the schema
+                              allows is `command`; no tests.impacted check is
+                              offered or pre-seeded, since it is always
+                              vacuous for a node a create edit just
+                              introduced. --language is required, never
+                              guessed. <dir> must already be a git repository
+                              with at least one commit. No model call, no
+                              network, no writes — run the resulting plan
+                              with `plan run --authored`, same as `context`.
     plan validate <plan.json>
                               Check a Bit Code plan file's preconditions
                               (clean worktree, HEAD == base_commit, edit
@@ -165,6 +180,7 @@ fn main() {
         Some("analyze") => report(project::analyze(&args[1..])),
         Some("search") => report(project::search(&args[1..])),
         Some("context") => report(project::context(&args[1..])),
+        Some("new") => report(project::new(&args[1..])),
         Some("swarm-plan") => {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             report(rt.block_on(project::swarm_plan(&args[1..])));
