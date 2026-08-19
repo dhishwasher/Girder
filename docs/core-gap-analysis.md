@@ -1620,6 +1620,36 @@ as gap 11 rather than silently accepted.
     guaranteed-always-vacuous case (a node that provably has no history
     because it did not exist before this plan) is closed here.
 
+25. **Closed — `candidate_commands_see_new_bytes_without_mutating_project`
+    failed once during a full-suite run and passed in isolation; investigated
+    as a possible fourth instance of gap 24's pattern, found to be a
+    different defect.** The test (`crates/aether-app/src/project/
+    validation.rs`) runs a trivial `sh -c "grep ... && printf ..."` inside a
+    candidate workspace and asserts the report passed. Its shared
+    `command_config` test helper set `validation.timeout_seconds = 2`.
+    Deliberately reproduced rather than dismissed as flaky: saturating both
+    of this VM's CPUs with four `yes >/dev/null &` processes (load average
+    ~5.6-6.1 on 2 cores) and re-running the test in a loop reliably failed it
+    3/3 times, each at 2.46-2.73s elapsed — just over the 2s budget.
+    `supervise` (`crates/aether-app/src/project/process.rs`) polls
+    `Instant::now()` wall-clock elapsed against the timeout; it has no way to
+    distinguish "the command is slow" from "the scheduler hasn't run this
+    process yet," so a 2s budget is a claim about host scheduling latency,
+    not about the command. Unlike gaps 16/22/24, this is not a check that
+    reads as verification and isn't — the assertion is real (candidate
+    writes are isolated, byte-for-byte, without mutating the project) and
+    correctly fails closed on a genuine `TimedOut`; the budget was simply
+    too tight for a resource-constrained, parallel-test-execution host to
+    guarantee. Fixed by widening `command_config`'s timeout from 2s to 30s
+    (the six tests sharing that helper all run millisecond-scale commands;
+    30s is headroom against scheduling delay, not against the commands
+    themselves). Re-ran the same reproduction — 15/15 passes under the same
+    induced contention, with observed elapsed times up to 11.35s, confirming
+    both that the mechanism was scheduling delay and that 30s covers it with
+    margin. `timed_out_command_is_terminated`, the one test that exercises
+    the real `TimedOut` path on purpose, sets its own explicit 1s override
+    against a `sleep 30` and is unaffected.
+
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
 validated projection, and recoverable commit. That advantage is unproven until

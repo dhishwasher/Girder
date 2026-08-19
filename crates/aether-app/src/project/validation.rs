@@ -745,7 +745,18 @@ mod tests {
         let mut config = ProjectConfig::default();
         config.validation.commands =
             vec![vec!["sh".to_string(), "-c".to_string(), script.to_string()]];
-        config.validation.timeout_seconds = 2;
+        // Deliberately generous, not tight: these commands (grep/printf/touch)
+        // finish in milliseconds when scheduled promptly, but `supervise`
+        // (crates/aether-app/src/project/process.rs) measures wall-clock
+        // Instant::now(), not CPU time, so a loaded machine can delay even a
+        // trivial `sh -c` past a tight budget without the command itself
+        // being slow. A 2s budget here reproducibly turned into a spurious
+        // TimedOut (and so a spurious test failure) under real contention
+        // from parallel test execution -- confirmed by forcing that
+        // contention and watching runs land at 2.5-2.8s. 30s leaves headroom
+        // no realistic scheduling delay should exceed, while still catching
+        // an actually-hung command well within `cargo test`'s own timeout.
+        config.validation.timeout_seconds = 30;
         config
     }
 
