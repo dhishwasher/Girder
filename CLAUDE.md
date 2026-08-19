@@ -126,3 +126,28 @@ The DAP adapter test is ignored in the default suite because it requires
 `python3 -m debugpy.adapter`. Run it explicitly with
 `cargo test -p aether-dap --test debugpy -- --ignored --nocapture` after
 installing `debugpy`.
+
+## Environment
+
+- This VM (ChromeOS Crostini, ~2.7 GB RAM) cannot sustain a parallel build.
+  Always build with `-j1` and never run a second `cargo` job concurrently —
+  a concurrent build has starved this VM before.
+- The toolchain and target dir live on
+  `/mnt/chromeos/removable/MOVESPEED`. `cargo install` **ignores
+  `CARGO_TARGET_DIR`**, so `--target-dir` must be passed explicitly on every
+  invocation, e.g. `cargo install --path crates/aether-app --target-dir
+  /mnt/chromeos/removable/MOVESPEED/aetherforge-install`.
+- Two `bitcode` binaries exist: the one `cargo install` places on
+  `~/.cargo/bin`, and the debug build under `target/debug/`. A stale
+  `~/.cargo/bin/bitcode` left on `PATH` from before a feature change has
+  silently invalidated verification before — rerun the `cargo install`
+  above after any feature work, and check `which bitcode` if a just-added
+  flag or command appears not to exist.
+- `sample-project/` is a pinned measurement fixture (enforced by
+  `reject_measurement_fixture_root`) and is refused for authored plan runs.
+  Use `demo-project/` for any live plan execution.
+- The unguarded `cargo test $(bitcode test-impact . --quiet)` form (broken
+  by cargo's single-positional-filter limit) was checked across this repo:
+  it appears only in `docs/core-gap-analysis.md`'s past-tense narrative
+  about the incident that found it, not as live guidance anywhere. `main.rs`
+  USAGE, this file, and `README.md` already use the guarded form.
