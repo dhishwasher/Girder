@@ -3197,6 +3197,101 @@ fn plan_run_graph_unresolved_check_via_the_real_resolver_prove_then_fix() {
 }
 
 #[test]
+fn plan_run_out_writes_the_full_transcript_and_prints_a_summary_line() {
+    let repo = TempRepo::new("plan-run-out");
+    repo.write("src/lib.rs", "fn old() {}\n");
+    repo.commit_all("baseline");
+    let head = repo.head();
+
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"rename","base_commit":"BASE_COMMIT",
+        "steps":[{"id":"s1","description":"rename","edits":[
+            {"path":"src/lib.rs","match":"fn old() {}\n","replace":"fn new() {}\n","occurrences":1}
+        ],"checks":[]}]}"#;
+    let plan_path = write_plan("run-out", &template.replace("BASE_COMMIT", &head));
+    let out_path = std::env::temp_dir().join(format!(
+        "bitcode-plan-run-out-transcript-{}-{}.txt",
+        std::process::id(),
+        NEXT_ID.fetch_add(1, Ordering::Relaxed)
+    ));
+
+    let output = run_plan_output(
+        &repo,
+        "run",
+        &plan_path,
+        &["--out", out_path.to_str().unwrap()],
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        output.status.success(),
+        "stdout:\n{stdout}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    // Stdout carries only the one summary line, not the per-step transcript.
+    assert!(stdout.contains("step(s) passed"), "{stdout}");
+    assert!(
+        stdout.contains(out_path.to_str().unwrap()),
+        "summary must name the --out path: {stdout}"
+    );
+    assert!(!stdout.contains("[s1]"), "{stdout}");
+
+    // The file carries the full transcript that used to go to stdout.
+    let transcript = std::fs::read_to_string(&out_path).unwrap();
+    assert!(transcript.contains("[s1] passed"), "{transcript}");
+    assert!(transcript.contains("report:"), "{transcript}");
+
+    let _ = std::fs::remove_file(&plan_path);
+    let _ = std::fs::remove_file(&out_path);
+}
+
+#[test]
+fn plan_run_reads_the_plan_from_stdin_with_a_bare_dash() {
+    use std::io::Write as _;
+    use std::process::Stdio;
+
+    let repo = TempRepo::new("plan-run-stdin");
+    repo.write("src/lib.rs", "fn old() {}\n");
+    repo.commit_all("baseline");
+    let head = repo.head();
+
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"rename","base_commit":"BASE_COMMIT",
+        "steps":[{"id":"s1","description":"rename","edits":[
+            {"path":"src/lib.rs","match":"fn old() {}\n","replace":"fn new() {}\n","occurrences":1}
+        ],"checks":[]}]}"#;
+    let plan_json = template.replace("BASE_COMMIT", &head);
+
+    let mut child = Command::new(env!("CARGO_BIN_EXE_bitcode"))
+        .args(["plan", "run", "-", "--dry"])
+        .current_dir(repo.path())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(plan_json.as_bytes())
+        .unwrap();
+    let output = child.wait_with_output().unwrap();
+
+    assert!(
+        output.status.success(),
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("dry run"), "{stdout}");
+    // A --dry run from stdin must still never touch the real tree.
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "fn old() {}\n"
+    );
+}
+
+#[test]
 fn plan_run_tests_impacted_check_runs_only_the_selected_tests_and_fails_on_a_break() {
     let repo = TempRepo::new("plan-run-tests-impacted");
     repo.write(

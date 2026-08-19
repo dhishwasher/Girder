@@ -25,7 +25,7 @@ pub fn plan_explain(args: &[String]) -> std::io::Result<()> {
 pub fn plan_run(args: &[String]) -> std::io::Result<()> {
     let Some(plan_path) = args.first() else {
         eprintln!(
-            "usage: bitcode plan run <plan.json> [--dry] [--out <path>] \
+            "usage: bitcode plan run <plan.json|-> [--dry] [--out <path>] \
              [--authoring-receipt <receipt.json>] [--authored [--authored-by <name>]]"
         );
         return Ok(());

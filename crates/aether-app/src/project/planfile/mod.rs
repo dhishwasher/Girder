@@ -265,7 +265,18 @@ pub(crate) fn run(
     authored_by: Option<&str>,
     out_path: Option<&Path>,
 ) -> std::io::Result<()> {
-    let mut plan = load_plan(plan_path)?;
+    // `-` reads the plan from stdin instead of a file — the GUI's
+    // Copy-context-JSON doesn't reach the ChromeOS clipboard and egui text
+    // boxes have no paste under Crostini, so a pasted plan piped in on the
+    // terminal is the more usable path. `parse_plan` already exists for a
+    // caller that has plan JSON in memory rather than on disk.
+    let mut plan = if plan_path == Path::new("-") {
+        let mut text = String::new();
+        std::io::Read::read_to_string(&mut std::io::stdin().lock(), &mut text)?;
+        parse_plan(&text)?
+    } else {
+        load_plan(plan_path)?
+    };
     let authoring_calls = authoring_receipt
         .map(report::load_authoring_receipt)
         .transpose()?;

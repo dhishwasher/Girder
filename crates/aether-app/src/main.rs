@@ -95,7 +95,7 @@ COMMANDS:
                               anything.
     plan explain <plan.json> Print a human-readable summary of a plan file.
                               No execution, no preconditions.
-    plan run <plan.json> [--dry] [--out <path>] [--authoring-receipt <receipt.json>]
+    plan run <plan.json|-> [--dry] [--out <path>] [--authoring-receipt <receipt.json>]
                               [--authored [--authored-by <name>]]
                               Execute a plan file step by step: apply edits
                               in a disposable copy, run each step's checks,
@@ -103,7 +103,10 @@ COMMANDS:
                               Writes a report to .bitcode/reports/. --dry
                               never writes to the real tree. --out writes the
                               full step/check transcript to <path> and prints
-                              a one-line summary to stdout instead. A versioned
+                              a one-line summary to stdout instead. `-` reads
+                              the plan from stdin instead of a file — useful
+                              for pasting a plan straight into the terminal.
+                              A versioned
                               authoring receipt adds model/token provenance to
                               the run report without changing Plan Format v1.
                               --authored applies the same harness guarantees
