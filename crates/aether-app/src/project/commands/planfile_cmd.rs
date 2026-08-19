@@ -25,12 +25,22 @@ pub fn plan_explain(args: &[String]) -> std::io::Result<()> {
 pub fn plan_run(args: &[String]) -> std::io::Result<()> {
     let Some(plan_path) = args.first() else {
         eprintln!(
-            "usage: bitcode plan run <plan.json> [--dry] [--authoring-receipt <receipt.json>] \
-             [--authored [--authored-by <name>]]"
+            "usage: bitcode plan run <plan.json> [--dry] [--out <path>] \
+             [--authoring-receipt <receipt.json>] [--authored [--authored-by <name>]]"
         );
         return Ok(());
     };
     let dry = args.iter().any(|arg| arg == "--dry");
+    let out_path = args
+        .windows(2)
+        .find(|window| window[0] == "--out")
+        .map(|window| Path::new(window[1].as_str()));
+    if args.iter().any(|arg| arg == "--out") && out_path.is_none() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "--out requires a path",
+        ));
+    }
     let authoring_receipt = args
         .windows(2)
         .find(|window| window[0] == "--authoring-receipt")
@@ -65,5 +75,6 @@ pub fn plan_run(args: &[String]) -> std::io::Result<()> {
         authoring_receipt,
         authored,
         authored_by,
+        out_path,
     )
 }

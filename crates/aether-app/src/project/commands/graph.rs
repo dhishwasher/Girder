@@ -1,7 +1,8 @@
 use crate::project::config::ProjectConfig;
+use crate::project::output_sink::{out, Sink};
 use crate::project::projection::project_rename;
 use crate::project::source::{build_from_dir, build_from_dir_with_config, save_graph};
-use crate::project::summary::print_summary;
+use crate::project::summary::{format_summary, print_summary};
 use aether_graph::SemanticGraph;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -9,28 +10,48 @@ use std::io::ErrorKind;
 use std::path::PathBuf;
 use std::time::Instant;
 
+const ANALYZE_USAGE: &str = "usage: bitcode analyze <dir> [--json] [--out <path>]";
+
 pub fn analyze(args: &[String]) -> std::io::Result<()> {
     let Some(root) = args.first() else {
-        return Err(invalid_input("usage: bitcode analyze <dir> [--json]"));
+        return Err(invalid_input(ANALYZE_USAGE));
     };
-    let json = match args.get(1..) {
-        Some([]) => false,
-        Some([flag]) if flag == "--json" => true,
-        _ => {
-            return Err(invalid_input("usage: bitcode analyze <dir> [--json]"));
+    let rest = args.get(1..).unwrap_or_default();
+    let mut json = false;
+    let mut out_path: Option<PathBuf> = None;
+    let mut index = 0;
+    while index < rest.len() {
+        match rest[index].as_str() {
+            "--json" => {
+                json = true;
+                index += 1;
+            }
+            "--out" => {
+                let Some(value) = rest.get(index + 1) else {
+                    return Err(invalid_input(ANALYZE_USAGE));
+                };
+                out_path = Some(PathBuf::from(value));
+                index += 2;
+            }
+            _ => return Err(invalid_input(ANALYZE_USAGE)),
         }
-    };
+    }
     let root = PathBuf::from(root);
+    let mut sink = if out_path.is_some() {
+        Sink::Buffer(String::new())
+    } else {
+        Sink::Stdout
+    };
     if !json {
-        println!("Analyzing {} ...", root.display());
+        out!(sink, "Analyzing {} ...", root.display());
     }
     let config = ProjectConfig::load(&root)?;
     let build_started = Instant::now();
     let (mut graph, _builder, source_files) = build_from_dir_with_config(&root, &config)?;
     let build_ms = elapsed_millis(build_started);
     if !json {
-        println!("  loaded {source_files} source file(s)");
-        print_summary(&graph);
+        out!(sink, "  loaded {source_files} source file(s)");
+        out!(sink, "{}", format_summary(&graph));
     }
 
     // Report inheritance relationships (Python class bases, Rust trait impls).
@@ -46,10 +67,10 @@ pub fn analyze(args: &[String]) -> std::io::Result<()> {
             let right = graph.get(*b).map(|n| n.path.clone()).unwrap_or_default();
             (left, right)
         });
-        println!("  inheritance: {} relationship(s):", inherits.len());
+        out!(sink, "  inheritance: {} relationship(s):", inherits.len());
         for (a, b, _) in &inherits {
             if let (Some(na), Some(nb)) = (graph.get(*a), graph.get(*b)) {
-                println!("    {}  ⊳  {}", na.path, nb.path);
+                out!(sink, "    {}  ⊳  {}", na.path, nb.path);
             }
         }
     }
@@ -60,7 +81,10 @@ pub fn analyze(args: &[String]) -> std::io::Result<()> {
     let linked = graph.compute_similarity_edges(0.6);
     let similarity_ms = elapsed_millis(similarity_started);
     if !json && linked > 0 {
-        println!("  similarity: {linked} likely-duplicate function pair(s):");
+        out!(
+            sink,
+            "  similarity: {linked} likely-duplicate function pair(s):"
+        );
         let mut similar: Vec<_> = graph
             .edges()
             .into_iter()
@@ -73,16 +97,16 @@ pub fn analyze(args: &[String]) -> std::io::Result<()> {
         });
         for (a, b, _) in similar {
             if let (Some(na), Some(nb)) = (graph.get(a), graph.get(b)) {
-                println!("    {}  ~  {}", na.path, nb.path);
+                out!(sink, "    {}  ~  {}", na.path, nb.path);
             }
         }
     }
 
     let save_started = Instant::now();
-    let out = save_graph(&root, &config, &graph)?;
+    let graph_path = save_graph(&root, &config, &graph)?;
     let save_ms = elapsed_millis(save_started);
     if json {
-        print_json(&AnalyzeJson {
+        let rendered = serde_json::to_string(&AnalyzeJson {
             schema_version: 1,
             source_files,
             nodes: graph.node_count(),
@@ -91,11 +115,24 @@ pub fn analyze(args: &[String]) -> std::io::Result<()> {
             build_ms,
             similarity_ms,
             save_ms,
-            graph_path: out.to_string_lossy().into_owned(),
-        })?;
+            graph_path: graph_path.to_string_lossy().into_owned(),
+        })
+        .map_err(|error| std::io::Error::other(format!("could not render JSON: {error}")))?;
+        out!(sink, "{rendered}");
     } else {
-        println!("  saved semantic graph -> {}", out.display());
+        out!(sink, "  saved semantic graph -> {}", graph_path.display());
     }
+
+    if let Sink::Buffer(_) = sink {
+        println!(
+            "analyze: {} node(s), {} edge(s), {linked} duplicate pair(s); graph saved -> {}; report -> {}",
+            graph.node_count(),
+            graph.edge_count(),
+            graph_path.display(),
+            out_path.as_ref().unwrap().display()
+        );
+    }
+    sink.finish(out_path.as_deref())?;
     Ok(())
 }
 

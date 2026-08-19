@@ -12,6 +12,7 @@ mod report;
 mod schema;
 
 use crate::project::config::ProjectConfig;
+use crate::project::output_sink::{out, Sink};
 use schema::Plan;
 use std::path::Path;
 
@@ -262,6 +263,7 @@ pub(crate) fn run(
     authoring_receipt: Option<&Path>,
     authored: bool,
     authored_by: Option<&str>,
+    out_path: Option<&Path>,
 ) -> std::io::Result<()> {
     let mut plan = load_plan(plan_path)?;
     let authoring_calls = authoring_receipt
@@ -272,15 +274,28 @@ pub(crate) fn run(
         apply_authored_guarantees(root, &mut plan)?;
     }
 
+    // `run()`'s printed output is depended on byte-for-byte by the P1-P5
+    // oracle, which drives `plan run` through the CLI — `Sink::Stdout`
+    // (the `out_path.is_none()` default) must stay byte-identical to the
+    // plain `println!` calls this replaced.
+    let mut sink = if out_path.is_some() {
+        Sink::Buffer(String::new())
+    } else {
+        Sink::Stdout
+    };
+
     if let Err(failures) = precondition::check_preconditions(root, &plan)? {
-        println!(
+        out!(
+            sink,
             "plan {} — {} precondition failure(s):",
             plan.plan_id,
             failures.len()
         );
         for failure in &failures {
-            println!("  ! {}", failure.reason);
+            out!(sink, "  ! {}", failure.reason);
         }
+        let summary = format!("{} precondition failure(s)", failures.len());
+        finish_run_summary(sink, out_path, &plan.plan_id, &summary, None)?;
         return Err(std::io::Error::other(format!(
             "{} precondition failure(s)",
             failures.len()
@@ -292,50 +307,130 @@ pub(crate) fn run(
 
     for step in &result.steps {
         let status = if step.passed { "passed" } else { "FAILED" };
-        println!("[{}] {status} — {} check(s)", step.id, step.checks.len());
+        out!(
+            sink,
+            "[{}] {status} — {} check(s)",
+            step.id,
+            step.checks.len()
+        );
         for check in &step.checks {
             let mark = if check.passed { "ok" } else { "FAIL" };
-            println!("    {mark} {}: {}", check.kind, check.detail);
+            out!(sink, "    {mark} {}: {}", check.kind, check.detail);
         }
     }
 
     let built_report =
         report::build_report(&plan, &result, dry, authoring_calls.as_deref(), authored_by);
+    let mut report_path: Option<std::path::PathBuf> = None;
     if dry {
         // A dry run must never write to the real tree, including the
         // report itself — print it instead of persisting it under
-        // `.bitcode/reports/`.
+        // `.bitcode/reports/`. `--out` is a diagnostic file the invoker
+        // explicitly asked for, not a plan-caused write, so it is exempt
+        // from this guarantee: it may still capture this same rendered text.
         let rendered = serde_json::to_string_pretty(&built_report)
             .map_err(|error| std::io::Error::other(error.to_string()))?;
-        println!("\nreport (dry run, not written to disk):\n{rendered}");
+        out!(sink, "\nreport (dry run, not written to disk):\n{rendered}");
     } else {
-        let report_path = report::write_report(root, &built_report)?;
-        println!("\nreport: {}", report_path.display());
+        let path = report::write_report(root, &built_report)?;
+        out!(sink, "\nreport: {}", path.display());
+        report_path = Some(path);
     }
+
+    let passed_count = result.steps.iter().filter(|s| s.passed).count();
+    let step_summary = format!("{passed_count}/{} step(s) passed", result.steps.len());
 
     match result.outcome {
         executor::RunOutcome::Passed => {
-            let suffix = if dry { " (dry run — real tree untouched)" } else { "" };
-            println!(
+            let suffix = if dry {
+                " (dry run — real tree untouched)"
+            } else {
+                ""
+            };
+            out!(
+                sink,
                 "plan {} — all {} step(s) passed{suffix}",
                 plan.plan_id,
                 result.steps.len()
             );
+            finish_run_summary(
+                sink,
+                out_path,
+                &plan.plan_id,
+                &step_summary,
+                report_path.as_deref(),
+            )?;
             Ok(())
         }
-        executor::RunOutcome::RolledBackStep { at_step } => Err(std::io::Error::other(format!(
-            "plan {} failed at step {at_step}; that step's edits were never committed to the real tree",
-            plan.plan_id
-        ))),
-        executor::RunOutcome::RolledBackPlan { at_step } => Err(std::io::Error::other(format!(
-            "plan {} failed at step {at_step}; rolled back to base_commit {}",
-            plan.plan_id, plan.base_commit
-        ))),
-        executor::RunOutcome::Stopped { at_step } => Err(std::io::Error::other(format!(
-            "plan {} stopped at step {at_step}; real tree left exactly as committed through the prior step",
-            plan.plan_id
-        ))),
+        executor::RunOutcome::RolledBackStep { at_step } => {
+            let summary = format!("{step_summary}, failed at step {at_step}");
+            finish_run_summary(
+                sink,
+                out_path,
+                &plan.plan_id,
+                &summary,
+                report_path.as_deref(),
+            )?;
+            Err(std::io::Error::other(format!(
+                "plan {} failed at step {at_step}; that step's edits were never committed to the real tree",
+                plan.plan_id
+            )))
+        }
+        executor::RunOutcome::RolledBackPlan { at_step } => {
+            let summary = format!("{step_summary}, failed at step {at_step}, rolled back");
+            finish_run_summary(
+                sink,
+                out_path,
+                &plan.plan_id,
+                &summary,
+                report_path.as_deref(),
+            )?;
+            Err(std::io::Error::other(format!(
+                "plan {} failed at step {at_step}; rolled back to base_commit {}",
+                plan.plan_id, plan.base_commit
+            )))
+        }
+        executor::RunOutcome::Stopped { at_step } => {
+            let summary = format!("{step_summary}, stopped at step {at_step}");
+            finish_run_summary(
+                sink,
+                out_path,
+                &plan.plan_id,
+                &summary,
+                report_path.as_deref(),
+            )?;
+            Err(std::io::Error::other(format!(
+                "plan {} stopped at step {at_step}; real tree left exactly as committed through the prior step",
+                plan.plan_id
+            )))
+        }
     }
+}
+
+/// Writes the buffered transcript to `out_path` (a no-op for `Sink::Stdout`)
+/// and, only when `--out` was given, prints one summary line to real stdout
+/// that makes failure visible without opening the file.
+fn finish_run_summary(
+    sink: Sink,
+    out_path: Option<&Path>,
+    plan_id: &str,
+    summary: &str,
+    report_path: Option<&Path>,
+) -> std::io::Result<()> {
+    if let (Sink::Buffer(_), Some(out_path)) = (&sink, out_path) {
+        match report_path {
+            Some(report_path) => println!(
+                "plan {plan_id}: {summary} -> transcript {}, report {}",
+                out_path.display(),
+                report_path.display()
+            ),
+            None => println!(
+                "plan {plan_id}: {summary} -> transcript {}",
+                out_path.display()
+            ),
+        }
+    }
+    sink.finish(out_path)
 }
 
 /// The result of one `run_for_authoring` attempt: enough to decide whether
@@ -542,7 +637,7 @@ mod tests {
             ),
         );
 
-        let error = run(&root, &path, false, None, true, None).unwrap_err();
+        let error = run(&root, &path, false, None, true, None, None).unwrap_err();
         assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
         assert!(error.to_string().contains("demo-project"), "{error}");
 
@@ -713,7 +808,7 @@ mod tests {
             ),
         );
 
-        let error = run(&root, &path, false, None, true, None).unwrap_err();
+        let error = run(&root, &path, false, None, true, None, None).unwrap_err();
         assert!(error.to_string().contains("zero steps"), "{error}");
 
         let _ = std::fs::remove_file(&path);
@@ -733,7 +828,7 @@ mod tests {
             ),
         );
 
-        assert!(run(&root, &path, false, None, true, None).is_ok());
+        assert!(run(&root, &path, false, None, true, None, None).is_ok());
 
         let mut entries = std::fs::read_dir(root.join(".bitcode/reports")).unwrap();
         let report_path = entries.next().unwrap().unwrap().path();
@@ -771,7 +866,7 @@ mod tests {
             ),
         );
 
-        assert!(run(&root, &path, false, None, true, None).is_ok());
+        assert!(run(&root, &path, false, None, true, None, None).is_ok());
 
         let mut entries = std::fs::read_dir(root.join(".bitcode/reports")).unwrap();
         let report_path = entries.next().unwrap().unwrap().path();
@@ -818,7 +913,7 @@ mod tests {
             ),
         );
 
-        assert!(run(&root, &path, false, None, true, None).is_ok());
+        assert!(run(&root, &path, false, None, true, None, None).is_ok());
 
         let mut entries = std::fs::read_dir(root.join(".bitcode/reports")).unwrap();
         let report_path = entries.next().unwrap().unwrap().path();
@@ -851,7 +946,7 @@ mod tests {
             ),
         );
 
-        let error = run(&root, &path, false, None, true, None).unwrap_err();
+        let error = run(&root, &path, false, None, true, None, None).unwrap_err();
         assert!(
             error.to_string().contains("rolled back to base_commit"),
             "{error}"
@@ -874,7 +969,16 @@ mod tests {
             ),
         );
 
-        assert!(run(&root, &path, false, None, true, Some("claude-sonnet-5")).is_ok());
+        assert!(run(
+            &root,
+            &path,
+            false,
+            None,
+            true,
+            Some("claude-sonnet-5"),
+            None
+        )
+        .is_ok());
 
         let mut entries = std::fs::read_dir(root.join(".bitcode/reports")).unwrap();
         let report_path = entries.next().unwrap().unwrap().path();

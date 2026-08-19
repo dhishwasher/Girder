@@ -26,9 +26,12 @@ COMMANDS:
     demo                      Run the headless end-to-end pipeline demo (default)
     config <dir> [--init]     Show the validated effective project configuration.
                               --init creates bitcode.toml without overwriting.
-    analyze <dir> [--json]    Build the semantic graph from a project directory,
+    analyze <dir> [--json] [--out <path>]
+                              Build the semantic graph from a project directory,
                               report likely duplicates, save the configured graph.
                               --json emits one bounded machine-readable summary.
+                              --out writes the full report to <path> and prints
+                              a one-line summary to stdout instead.
     search <dir> <query...>   Concept search: rank functions by relevance to a
                               natural-language query
     names <dir> <identifier> [--kind function|type|all] --json
@@ -92,13 +95,15 @@ COMMANDS:
                               anything.
     plan explain <plan.json> Print a human-readable summary of a plan file.
                               No execution, no preconditions.
-    plan run <plan.json> [--dry] [--authoring-receipt <receipt.json>]
+    plan run <plan.json> [--dry] [--out <path>] [--authoring-receipt <receipt.json>]
                               [--authored [--authored-by <name>]]
                               Execute a plan file step by step: apply edits
                               in a disposable copy, run each step's checks,
                               commit to the real tree only once they pass.
                               Writes a report to .bitcode/reports/. --dry
-                              never writes to the real tree. A versioned
+                              never writes to the real tree. --out writes the
+                              full step/check transcript to <path> and prints
+                              a one-line summary to stdout instead. A versioned
                               authoring receipt adds model/token provenance to
                               the run report without changing Plan Format v1.
                               --authored applies the same harness guarantees
@@ -117,16 +122,23 @@ COMMANDS:
     inspect <file.aether> [path|--json]
                               Load a saved graph; with a node path, show its
                               impact set. --json exports sorted exact graph records.
-    review <dir> [--since <ref>] [--quiet]
+    review <dir> [--since <ref>] [--quiet] [--out <path>]
                               Semantic code review vs a git ref (default: HEAD).
                               Shows added/modified/removed nodes + edges, impact
                               radius, and test coverage gaps — not text diffs.
                               --quiet prints only changed node paths, one per
                               line, and nothing when there are no changes.
-    test-impact <dir> [--run] [--quiet] [node::path...]
+                              --out writes the full report to <path> and prints
+                              a one-line summary to stdout instead; cannot be
+                              combined with --quiet.
+    test-impact <dir> [--run] [--quiet] [--out <path>] [node::path...]
                               Find the minimal set of tests that cover changed
                               functions (auto-detected via git diff, or explicit
                               node paths). Pass --run to execute them immediately.
+                              --out writes the impacted-test listing to <path>
+                              and prints a one-line summary to stdout instead
+                              — it cannot capture --run's live subprocess
+                              output, which always streams to the terminal.
                               --quiet prints only the selected test names, one
                               per line. An empty selection means nothing needs
                               testing, not \"run everything\" — guard it:

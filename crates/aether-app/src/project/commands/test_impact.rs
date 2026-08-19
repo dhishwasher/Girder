@@ -1,5 +1,6 @@
 use crate::project::config::{ConfiguredCommand, ProjectConfig};
 use crate::project::git::semantic_changed_impact;
+use crate::project::output_sink::{out, Sink};
 use crate::project::process::{run_streamed, BoundedStatus};
 use crate::project::source::build_from_dir_with_config;
 use aether_graph::NodeId;
@@ -10,21 +11,49 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
     let run = args.iter().any(|a| a == "--run");
     let quiet = args.iter().any(|a| a == "--quiet");
-    let explicit: Vec<&str> = args
-        .get(1..)
-        .unwrap_or_default()
-        .iter()
-        .filter(|a| *a != "--run" && *a != "--quiet")
-        .map(String::as_str)
-        .collect();
+    let out_path = args
+        .windows(2)
+        .find(|w| w[0] == "--out")
+        .map(|w| PathBuf::from(&w[1]));
+    let explicit: Vec<&str> = {
+        let mut words = Vec::new();
+        let mut skip_next = false;
+        for arg in args.get(1..).unwrap_or_default() {
+            if skip_next {
+                skip_next = false;
+                continue;
+            }
+            match arg.as_str() {
+                "--run" | "--quiet" => continue,
+                "--out" => {
+                    skip_next = true;
+                    continue;
+                }
+                other => words.push(other),
+            }
+        }
+        words
+    };
+
+    let mut sink = if out_path.is_some() {
+        Sink::Buffer(String::new())
+    } else {
+        Sink::Stdout
+    };
+    // `--out` cannot capture `--run`'s subprocess output: `run_streamed`
+    // inherits stdout/stderr for a live terminal, bypassing this sink by
+    // construction. `--out` still captures the impacted-test listing and
+    // commands; live `--run` output keeps streaming to the real terminal.
+    let mut run_outcome: Option<String> = None;
 
     if !quiet {
-        println!("Building semantic graph for {} ...", root.display());
+        out!(sink, "Building semantic graph for {} ...", root.display());
     }
     let config = ProjectConfig::load(&root)?;
     let (graph, _builder, files) = build_from_dir_with_config(&root, &config)?;
     if !quiet {
-        println!(
+        out!(
+            sink,
             "  {} file(s), {} nodes, {} edges",
             files,
             graph.node_count(),
@@ -41,12 +70,13 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
                 && impact.baseline_test_paths.is_empty()
             {
                 if !quiet {
-                    println!("  no semantic changes detected vs HEAD");
+                    out!(sink, "  no semantic changes detected vs HEAD");
                 }
+                finish_with_summary(sink, out_path.as_deref(), "0 impacted test(s)")?;
                 return Ok(());
             }
             if !impact.changed_files.is_empty() && !quiet {
-                println!("  changed files: {}", impact.changed_files.join(", "));
+                out!(sink, "  changed files: {}", impact.changed_files.join(", "));
             }
             baseline_test_paths = impact.baseline_test_paths;
             impact.origin_ids
@@ -76,22 +106,26 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
 
     if origin_ids.is_empty() && baseline_test_paths.is_empty() {
         if !quiet {
-            println!("  no functions found for the changed files");
+            out!(sink, "  no functions found for the changed files");
         }
+        finish_with_summary(sink, out_path.as_deref(), "0 impacted test(s)")?;
         return Ok(());
     }
 
     if !quiet {
         if !origin_ids.is_empty() {
-            println!("\nChanged functions ({}):", origin_ids.len());
+            out!(sink, "\nChanged functions ({}):", origin_ids.len());
             for id in &origin_ids {
                 if let Some(n) = graph.get(*id) {
-                    println!("  · {}", n.path);
+                    out!(sink, "  · {}", n.path);
                 }
             }
         } else {
-            println!("\nNo currently present changed functions.");
-            println!("  Removed functions were detected; using their baseline test coverage.");
+            out!(sink, "\nNo currently present changed functions.");
+            out!(
+                sink,
+                "  Removed functions were detected; using their baseline test coverage."
+            );
         }
     }
 
@@ -107,10 +141,17 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
 
     if test_ids.is_empty() {
         if !quiet {
-            println!("\nNo tests found in the impact set.");
-            println!("  The changed functions have no test coverage reachable via the call graph.");
-            println!("  Consider adding tests, or run the full suite to be safe.");
+            out!(sink, "\nNo tests found in the impact set.");
+            out!(
+                sink,
+                "  The changed functions have no test coverage reachable via the call graph."
+            );
+            out!(
+                sink,
+                "  Consider adding tests, or run the full suite to be safe."
+            );
         }
+        finish_with_summary(sink, out_path.as_deref(), "0 impacted test(s)")?;
         return Ok(());
     }
 
@@ -118,17 +159,17 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     let mut python_tests: Vec<String> = Vec::new();
 
     if !quiet {
-        println!("\nImpacted tests ({}):", test_ids.len());
+        out!(sink, "\nImpacted tests ({}):", test_ids.len());
     }
     for id in &test_ids {
         if let Some(n) = graph.get(*id) {
             if quiet {
                 match n.language.as_str() {
-                    "rust" | "python" => println!("{}", n.name),
+                    "rust" | "python" => out!(sink, "{}", n.name),
                     _ => {}
                 }
             } else {
-                println!("  ✓ {} ({})", n.path, n.language);
+                out!(sink, "  ✓ {} ({})", n.path, n.language);
             }
             match n.language.as_str() {
                 "rust" => rust_tests.push(n.name.clone()),
@@ -139,13 +180,13 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     }
 
     if !quiet {
-        println!("\nCommands to run impacted tests only:");
+        out!(sink, "\nCommands to run impacted tests only:");
     }
     let mut commands = Vec::new();
     for name in &rust_tests {
         if let Some(command) = config.rust_test_command(name) {
             if !quiet {
-                println!("  {}", command.display());
+                out!(sink, "  {}", command.display());
             }
             commands.push(("Rust", command));
         }
@@ -153,13 +194,13 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     if !python_tests.is_empty() {
         if let Some(command) = config.python_test_command(&python_tests.join(" or ")) {
             if !quiet {
-                println!("  {}", command.display());
+                out!(sink, "  {}", command.display());
             }
             commands.push(("Python", command));
         }
     }
     if commands.is_empty() && !quiet {
-        println!("  (test commands are disabled in bitcode.toml)");
+        out!(sink, "  (test commands are disabled in bitcode.toml)");
     }
 
     // A real set difference, not count arithmetic: selected ids that are not
@@ -170,7 +211,10 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
         .filter(|n| n.attr("is_test").is_some() && !selected.contains(&n.id))
         .count();
     if skipped > 0 && !quiet {
-        println!("\n  ({skipped} other test(s) not in impact set — skipped)");
+        out!(
+            sink,
+            "\n  ({skipped} other test(s) not in impact set — skipped)"
+        );
     }
 
     if run {
@@ -180,7 +224,7 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
             ));
         }
         if !quiet {
-            println!("\nRunning ...");
+            out!(sink, "\nRunning ...");
         }
         let mut failures = Vec::new();
         for (language, command) in &commands {
@@ -196,12 +240,39 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
                 ));
             }
         }
+        run_outcome = Some(if failures.is_empty() {
+            format!("{} passed", commands.len())
+        } else {
+            format!("FAILED: {}", failures.join("; "))
+        });
         if !failures.is_empty() {
+            let summary = format!(
+                "{} impacted test(s), {}",
+                test_ids.len(),
+                run_outcome.as_deref().unwrap_or_default()
+            );
+            finish_with_summary(sink, out_path.as_deref(), &summary)?;
             return Err(std::io::Error::other(failures.join("; ")));
         }
     }
 
+    let summary = match &run_outcome {
+        Some(outcome) => format!("{} impacted test(s), {outcome}", test_ids.len()),
+        None => format!("{} impacted test(s)", test_ids.len()),
+    };
+    finish_with_summary(sink, out_path.as_deref(), &summary)?;
     Ok(())
+}
+
+fn finish_with_summary(
+    sink: Sink,
+    out_path: Option<&std::path::Path>,
+    summary: &str,
+) -> std::io::Result<()> {
+    if let (Sink::Buffer(_), Some(path)) = (&sink, out_path) {
+        println!("test-impact: {summary} -> {}", path.display());
+    }
+    sink.finish(out_path)
 }
 
 /// Execute one configured test command with hard time and output bounds.
