@@ -1,57 +1,58 @@
 {
+  "schema_version": 1,
   "policy": "docs/context-with-tests-cost-policy.json",
-  "source_commit": "b38893b6c2600ebaae9c177404b7996a4e42079e",
+  "source_commit": "this commit (the per-node covering-test rule that replaced the flat cap of 3)",
   "per_node": [
     {
       "node": "crate::crates::aether-graph::src::query::SemanticGraph::query_by_kind",
-      "context_bytes": 6518,
+      "context_bytes": 6517,
       "covering_test_files": ["crates/aether-agents/src/lib.rs", "crates/aether-app/src/project/collaboration_projection.rs"],
       "covering_test_files_bytes": 39963,
-      "before_bytes": 46481,
-      "after_bytes": 39762,
-      "total_covering_tests": 195
+      "before_bytes": 46480,
+      "after_bytes": 7099,
+      "total_covering_tests": 202
     },
     {
       "node": "crate::crates::aether-graph::src::query::SemanticGraph::tests_for",
-      "context_bytes": 6878,
-      "covering_test_files": ["crates/aether-app/src/project/commands/author.rs", "crates/aether-app/src/project/commands/context_cmd.rs"],
-      "covering_test_files_bytes": 55750,
-      "before_bytes": 62628,
-      "after_bytes": 27163,
-      "total_covering_tests": 107
+      "context_bytes": 6877,
+      "covering_test_files": ["crates/aether-app/src/project/commands/author.rs", "crates/aether-app/src/project/commands/context_cmd.rs", "crates/aether-app/src/project/commands/new_cmd.rs"],
+      "covering_test_files_bytes": 73610,
+      "before_bytes": 80487,
+      "after_bytes": 27489,
+      "total_covering_tests": 109
     },
     {
       "node": "crate::crates::aether-app::src::project::git::git_worktree_clean",
-      "context_bytes": 6524,
+      "context_bytes": 6523,
       "covering_test_files": ["crates/aether-app/src/project/commands/author.rs", "crates/aether-app/src/project/planfile/mod.rs"],
-      "covering_test_files_bytes": 68969,
-      "before_bytes": 75493,
-      "after_bytes": 21863,
-      "total_covering_tests": 82
+      "covering_test_files_bytes": 72884,
+      "before_bytes": 79407,
+      "after_bytes": 22188,
+      "total_covering_tests": 84
     },
     {
       "node": "crate::crates::aether-graph::src::node::NodeId::from_path",
-      "context_bytes": 6634,
+      "context_bytes": 6633,
       "covering_test_files": ["crates/aether-agents/src/lib.rs"],
       "covering_test_files_bytes": 15809,
-      "before_bytes": 22443,
-      "after_bytes": 56053,
-      "total_covering_tests": 296
+      "before_bytes": 22442,
+      "after_bytes": 7131,
+      "total_covering_tests": 305
     },
     {
       "node": "crate::crates::aether-builder::src::sync::select_candidate",
-      "context_bytes": 8875,
+      "context_bytes": 8874,
       "covering_test_files": ["crates/aether-app/src/project/collaboration_projection.rs"],
       "covering_test_files_bytes": 24154,
-      "before_bytes": 33029,
-      "after_bytes": 40939,
-      "total_covering_tests": 193
+      "before_bytes": 33028,
+      "after_bytes": 9486,
+      "total_covering_tests": 200
     }
   ],
   "totals": {
-    "before_bytes": 240074,
-    "after_bytes": 185780,
-    "reduction_ratio": 0.226099
+    "before_bytes": 261844,
+    "after_bytes": 73393,
+    "reduction_ratio": 0.719707
   },
-  "policy_result": "FAIL"
+  "policy_result": "PASS"
 }

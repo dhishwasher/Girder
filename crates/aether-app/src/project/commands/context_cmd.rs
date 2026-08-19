@@ -77,12 +77,11 @@ pub(crate) fn build_context_json(
 
 /// Real body shared by both `build_context_json` (GUI, `--with-tests`
 /// always off) and the CLI's `build_output` (honors `--with-tests`). When
-/// `with_tests` is set, each selected node gets a `"tests"` object: full
-/// `{path, language, source}` context for at most 3 covering tests (reusing
-/// the same reachability `test-impact` uses via `graph.tests_for`), and
-/// `{"path": ...}`-only entries for the rest, so the payload cannot blow up
-/// on a heavily tested node. When unset, no extra graph traversal happens
-/// and no `"tests"` key is added — default `context` cost is unchanged.
+/// `with_tests` is set, each selected node gets a `"tests"` object built by
+/// [`covering_tests_entry`] from the node's full covering-test set (reusing
+/// the same reachability `test-impact` uses via `graph.tests_for`). When
+/// unset, no extra graph traversal happens and no `"tests"` key is added —
+/// default `context` cost is unchanged.
 fn build_context_json_inner(
     root: &Path,
     intent: &str,
@@ -106,26 +105,11 @@ fn build_context_json_inner(
 
     let mut node_context = ctx.node_context;
     if with_tests {
-        const MAX_FULL_TESTS: usize = 3;
         for (selected, entry) in ctx.nodes.iter().zip(node_context.iter_mut()) {
             let test_ids = graph.tests_for(selected.node.id);
-            let full: Vec<Value> = test_ids
-                .iter()
-                .take(MAX_FULL_TESTS)
-                .filter_map(|&id| graph.get(id))
-                .map(node_context_entry)
-                .collect();
-            let names_only: Vec<Value> = test_ids
-                .iter()
-                .skip(MAX_FULL_TESTS)
-                .filter_map(|&id| graph.get(id))
-                .map(|node| json!({"path": node.path}))
-                .collect();
+            let tests = covering_tests_entry(&graph, &test_ids);
             if let Some(object) = entry.as_object_mut() {
-                object.insert(
-                    "tests".to_string(),
-                    json!({"full": full, "names_only": names_only}),
-                );
+                object.insert("tests".to_string(), tests);
             }
         }
     }
@@ -144,6 +128,65 @@ fn build_context_json_inner(
         "schema": plan_schema(&ctx.node_paths),
         "plan_skeleton": plan_skeleton(&base_commit, intent, &plan_id),
     }))
+}
+
+/// Cap on how many covering tests ever get an entry (full source or a bare
+/// name) in a node's `"tests"` object, whichever branch of
+/// [`covering_tests_entry`] applies.
+const MAX_TEST_ENTRIES: usize = 3;
+
+/// A node's covering-test set is "small enough to narrow things down" (get
+/// full source) below this size, and "too broad to mean much" (names only)
+/// at or above it.
+///
+/// Picked from `docs/context-with-tests-cost-observation.json`'s 5-node
+/// sample, not guessed: sorted by `total_covering_tests` the sample is
+/// 82, 107, 193, 195, 296, and the widest gap sits between 107
+/// (`tests_for`, the largest node that measured a real win from seeing full
+/// test source) and 193 (`select_candidate`, the smaller of the two nodes
+/// whose covering set was so broad that listing it — even just names —
+/// outweighed the value of seeing any of it). 150 sits in that gap.
+const SMALL_COVERING_SET_CUTOFF: usize = 150;
+
+/// Builds a selected node's `"tests"` value from its full covering-test id
+/// list. Below [`SMALL_COVERING_SET_CUTOFF`], the set is small enough that
+/// seeing test bodies actually narrows down how the node is used: up to
+/// [`MAX_TEST_ENTRIES`] get full `{path, language, source}` context, the
+/// (still small) rest get `{"path": ...}` only. At or above the cutoff, a
+/// handful of arbitrary full bodies out of a hundred-plus reachable tests
+/// doesn't narrow anything down, and listing every one of them by name is
+/// exactly the cost blowup `--with-tests` measured on high-fan-in nodes
+/// (`docs/context-with-tests-cost.md`) — so only up to `MAX_TEST_ENTRIES`
+/// names are shown, and `total_covering_tests` carries the real count the
+/// truncated list can no longer convey.
+fn covering_tests_entry(
+    graph: &aether_graph::SemanticGraph,
+    test_ids: &[aether_graph::NodeId],
+) -> Value {
+    let total = test_ids.len();
+    if total < SMALL_COVERING_SET_CUTOFF {
+        let full: Vec<Value> = test_ids
+            .iter()
+            .take(MAX_TEST_ENTRIES)
+            .filter_map(|&id| graph.get(id))
+            .map(node_context_entry)
+            .collect();
+        let names_only: Vec<Value> = test_ids
+            .iter()
+            .skip(MAX_TEST_ENTRIES)
+            .filter_map(|&id| graph.get(id))
+            .map(|node| json!({"path": node.path}))
+            .collect();
+        json!({"full": full, "names_only": names_only, "total_covering_tests": total})
+    } else {
+        let names_only: Vec<Value> = test_ids
+            .iter()
+            .take(MAX_TEST_ENTRIES)
+            .filter_map(|&id| graph.get(id))
+            .map(|node| json!({"path": node.path}))
+            .collect();
+        json!({"full": [], "names_only": names_only, "total_covering_tests": total})
+    }
 }
 
 #[cfg(test)]
@@ -596,6 +639,66 @@ mod tests {
             );
             assert!(entry.get("path").is_some());
         }
+        assert_eq!(node["tests"]["total_covering_tests"], 5, "{node}");
         let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// Builds a graph with `count` bare test-marked nodes and returns their
+    /// ids in insertion order, for exercising `covering_tests_entry`
+    /// directly without paying for a real parsed project at that size.
+    fn synthetic_test_nodes(
+        graph: &mut aether_graph::SemanticGraph,
+        count: usize,
+    ) -> Vec<aether_graph::NodeId> {
+        (0..count)
+            .map(|i| {
+                let path = format!("crate::synthetic::test_{i}");
+                let node = aether_graph::Node::new(
+                    aether_graph::NodeKind::Function,
+                    format!("test_{i}"),
+                    &path,
+                )
+                .with_source(format!("fn test_{i}() {{}}"))
+                .with_language("rust");
+                let mut node = node;
+                node.set_attr("is_test", "true");
+                graph.upsert_node(node)
+            })
+            .collect()
+    }
+
+    #[test]
+    fn covering_tests_entry_shows_full_source_below_the_small_covering_set_cutoff() {
+        let mut graph = aether_graph::SemanticGraph::new();
+        let ids = synthetic_test_nodes(&mut graph, SMALL_COVERING_SET_CUTOFF - 1);
+        let tests = covering_tests_entry(&graph, &ids);
+        assert_eq!(tests["full"].as_array().unwrap().len(), MAX_TEST_ENTRIES);
+        assert_eq!(
+            tests["names_only"].as_array().unwrap().len(),
+            SMALL_COVERING_SET_CUTOFF - 1 - MAX_TEST_ENTRIES
+        );
+        assert_eq!(
+            tests["total_covering_tests"],
+            (SMALL_COVERING_SET_CUTOFF - 1) as u64
+        );
+    }
+
+    #[test]
+    fn covering_tests_entry_drops_full_source_and_caps_names_at_the_cutoff() {
+        let mut graph = aether_graph::SemanticGraph::new();
+        let ids = synthetic_test_nodes(&mut graph, SMALL_COVERING_SET_CUTOFF);
+        let tests = covering_tests_entry(&graph, &ids);
+        assert!(
+            tests["full"].as_array().unwrap().is_empty(),
+            "a covering set at the cutoff must not get full source: {tests}"
+        );
+        assert_eq!(
+            tests["names_only"].as_array().unwrap().len(),
+            MAX_TEST_ENTRIES
+        );
+        assert_eq!(
+            tests["total_covering_tests"], SMALL_COVERING_SET_CUTOFF as u64,
+            "the truncated names list must not be the only record of how many tests cover this node"
+        );
     }
 }
