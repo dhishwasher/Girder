@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "policy_id": "names-cost-v1",
+  "method": "byte-count comparison of two shell commands, run on a fixed identifier list at a pinned commit",
+  "source_commit": "b37731f218086c5d421cd8eae1534559659969e9",
+  "before_command_template": "grep -rn \"\\b<identifier>\\b\" --include=\"*.rs\" --include=\"*.py\" .",
+  "after_command_template": "bitcode names . <identifier> --json",
+  "rationale": {
+    "before": "The honest grep-based analog to what `names` replaces: an exact, word-boundary lookup across mixed Rust/Python source. Not `bitcode search`, which is substring over name+path and answers a different, noisier question.",
+    "after": "bitcode names' own stdout, the command this measurement exists to justify."
+  },
+  "identifiers": [
+    "build_from_dir_with_config",
+    "ProjectConfig",
+    "SemanticGraph",
+    "NodeId",
+    "invalid_input",
+    "git_worktree_clean",
+    "resolve_calls",
+    "tests_for",
+    "query_by_kind",
+    "select_candidate"
+  ],
+  "threshold": {
+    "metric": "aggregate byte reduction across all identifiers",
+    "min_reduction_ratio": 0.40
+  }
+}

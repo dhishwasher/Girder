@@ -1,0 +1,22 @@
+{
+  "policy": "docs/names-cost-policy.json",
+  "source_commit": "b37731f218086c5d421cd8eae1534559659969e9",
+  "per_identifier": [
+    {"identifier": "build_from_dir_with_config", "before_bytes": 3179, "after_bytes": 150},
+    {"identifier": "ProjectConfig", "before_bytes": 12573, "after_bytes": 133},
+    {"identifier": "SemanticGraph", "before_bytes": 30292, "after_bytes": 123},
+    {"identifier": "NodeId", "before_bytes": 51727, "after_bytes": 117},
+    {"identifier": "invalid_input", "before_bytes": 13985, "after_bytes": 1052},
+    {"identifier": "git_worktree_clean", "before_bytes": 331, "after_bytes": 139},
+    {"identifier": "resolve_calls", "before_bytes": 318, "after_bytes": 144},
+    {"identifier": "tests_for", "before_bytes": 5258, "after_bytes": 287},
+    {"identifier": "query_by_kind", "before_bytes": 2014, "after_bytes": 144},
+    {"identifier": "select_candidate", "before_bytes": 319, "after_bytes": 133}
+  ],
+  "totals": {
+    "before_bytes": 119996,
+    "after_bytes": 2422,
+    "reduction_ratio": 0.979816
+  },
+  "policy_result": "PASS"
+}
