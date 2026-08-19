@@ -3068,4 +3068,178 @@ pub fn caller(program: &str) -> Interpreter<'_> {
             "Interpreter::new should record `caller` as a caller; got {callers:?}"
         );
     }
+
+    // Gap 23 (docs/core-gap-analysis.md item 23): gap 22 fixed
+    // `select_candidate`'s "if this bare call's name is globally unique,
+    // assume that's what it means" fallback (sync.rs) misattributing a call
+    // to an unrelated global when the call site's own function has a local
+    // (parameter, assignment, for/with/except target, ...) of the same
+    // name — but only for Rust (`shadowed_by_local`, gated to
+    // `Lang::Rust` in mapper.rs). Python was deliberately left open: real
+    // scope tracking was needed, not attempted in that pass. These tests
+    // pin the CURRENT WRONG behavior first — do not remove `#[ignore]`
+    // from any of them until the Python-side fix (mapper.rs's
+    // `Lang::Python` arm assigning `function_locals = Some(bound_names)`,
+    // mirroring the Rust arm) actually lands.
+
+    #[test]
+    #[ignore = "gap 23 — remove this attribute when fixed"]
+    fn gap23_assigned_local_shadows_unrelated_global_function() {
+        // The confirmed live repro, minimized from this repo's own
+        // tools/authoring_task_check.py:31-40: `function =
+        // namespace.get(function_name)` binds a local named `function`,
+        // then calls it bare. An unrelated top-level `helper` exists
+        // elsewhere in the graph; today's fallback wrongly attributes
+        // `dispatch` as one of `helper`'s callers because `helper` happens
+        // to be the graph's only function named `helper` and Python's
+        // extractor never tracks that `dispatch` shadows the name locally.
+        let src = r#"
+def helper():
+    return 1
+
+def dispatch(namespace, name):
+    helper = namespace.get(name)
+    helper()
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "probe.py", src);
+
+        let dispatch = NodeId::from_path("crate::probe::dispatch");
+        let helper = NodeId::from_path("crate::probe::helper");
+        let callers: Vec<_> = graph.callers(helper).into_iter().map(|n| n.id).collect();
+        assert!(
+            callers.contains(&dispatch),
+            "pinning today's wrong behavior: dispatch's local `helper` bare \
+             call is misattributed to the unrelated global helper; got {callers:?}"
+        );
+    }
+
+    #[test]
+    #[ignore = "gap 23 — remove this attribute when fixed"]
+    fn gap23_for_loop_target_shadows_unrelated_global_function() {
+        // A `for` loop target binds the shadowing name, exercising
+        // `collect_python_statement_bound_names`'s `for_in_clause` handling.
+        let src = r#"
+def helper():
+    return 1
+
+def dispatch(candidates):
+    for helper in candidates:
+        helper()
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "probe.py", src);
+
+        let dispatch = NodeId::from_path("crate::probe::dispatch");
+        let helper = NodeId::from_path("crate::probe::helper");
+        let callers: Vec<_> = graph.callers(helper).into_iter().map(|n| n.id).collect();
+        assert!(
+            callers.contains(&dispatch),
+            "pinning today's wrong behavior: dispatch's for-loop-bound \
+             `helper` bare call is misattributed to the unrelated global \
+             helper; got {callers:?}"
+        );
+    }
+
+    #[test]
+    #[ignore = "gap 23 — remove this attribute when fixed"]
+    fn gap23_except_target_shadows_unrelated_global_function() {
+        // `except ... as helper:` binds the shadowing name, exercising
+        // `collect_python_statement_bound_names`'s `except_clause` handling.
+        let src = r#"
+def helper():
+    return 1
+
+def dispatch():
+    try:
+        risky()
+    except Exception as helper:
+        helper()
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "probe.py", src);
+
+        let dispatch = NodeId::from_path("crate::probe::dispatch");
+        let helper = NodeId::from_path("crate::probe::helper");
+        let callers: Vec<_> = graph.callers(helper).into_iter().map(|n| n.id).collect();
+        assert!(
+            callers.contains(&dispatch),
+            "pinning today's wrong behavior: dispatch's except-bound \
+             `helper` bare call is misattributed to the unrelated global \
+             helper; got {callers:?}"
+        );
+    }
+
+    #[test]
+    fn gap23_python_call_to_a_real_distinct_function_still_resolves() {
+        // NOT ignored: a genuinely distinct bare call (no local shadow
+        // anywhere in the caller) must keep resolving correctly, both
+        // before and after the fix — the regression guard that stops an
+        // eventual gap-23 fix from also dropping ordinary, unambiguous
+        // Python calls.
+        let src = r#"
+def helper():
+    return 1
+
+def dispatch():
+    return helper()
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "probe.py", src);
+
+        let dispatch = NodeId::from_path("crate::probe::dispatch");
+        let helper = NodeId::from_path("crate::probe::helper");
+        let callers: Vec<_> = graph.callers(helper).into_iter().map(|n| n.id).collect();
+        assert!(
+            callers.contains(&dispatch),
+            "an unshadowed bare call must still resolve; got {callers:?}"
+        );
+    }
+
+    #[test]
+    #[ignore = "gap 23 — remove this attribute when fixed"]
+    fn gap23_binding_later_in_function_body_still_suppresses_the_earlier_bare_call() {
+        // This pins POST-fix behavior, not today's — it is ignored for the
+        // same reason the three misattribution tests above are: before the
+        // Python-side fix lands, `shadowed_by_local` is never true for
+        // Python at all, so this bare call still (wrongly) resolves today.
+        // Once fixed, it documents an accepted, intentional trade-off
+        // rather than a defect: `python_function_bound_names` collects
+        // every name bound ANYWHERE in the function body, not just before
+        // the call site — a whole-function-body set, not a point-in-time
+        // one. This actually matches real Python's own scoping rule (a
+        // name assigned anywhere in a function is local for the *entire*
+        // function, which is why real Python would raise UnboundLocalError
+        // here, not call the global `helper`), so suppressing this edge is
+        // correct, not merely conservative — but it is still more
+        // conservative than Rust's parameter-list-only `shadowed_by_local`
+        // check, so it is pinned here explicitly rather than left as an
+        // implicit side effect someone could "fix" by accident.
+        let src = r#"
+def helper():
+    return 1
+
+def dispatch():
+    result = helper()
+    helper = "not a function anymore"
+    return result
+"#;
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_file(&mut graph, "probe.py", src);
+
+        let dispatch = NodeId::from_path("crate::probe::dispatch");
+        let helper = NodeId::from_path("crate::probe::helper");
+        let callers: Vec<_> = graph.callers(helper).into_iter().map(|n| n.id).collect();
+        assert!(
+            !callers.contains(&dispatch),
+            "a name reassigned later in the same function body is local for \
+             the whole function (matching real Python scoping) and must not \
+             resolve to the unrelated global; got {callers:?}"
+        );
+    }
 }
