@@ -31,6 +31,13 @@ COMMANDS:
                               --json emits one bounded machine-readable summary.
     search <dir> <query...>   Concept search: rank functions by relevance to a
                               natural-language query
+    names <dir> <identifier> [--kind function|type|all] --json
+                              Exact name match (not substring) across the
+                              workspace, returning [{path, language, kind}].
+                              `query` answers who-calls-X but not how many
+                              things are named X; `search` is substring, not
+                              exact. --kind filters to functions, types, or
+                              all (default).
     swarm-plan <dir> <intent...>
                               Preview what the swarm would build: runs the
                               graph-aware Planner, prints the multi-function
@@ -179,6 +186,7 @@ fn main() {
         Some("config") => report(project::config(&args[1..])),
         Some("analyze") => report(project::analyze(&args[1..])),
         Some("search") => report(project::search(&args[1..])),
+        Some("names") => report(project::names(&args[1..])),
         Some("context") => report(project::context(&args[1..])),
         Some("new") => report(project::new(&args[1..])),
         Some("swarm-plan") => {
