@@ -975,6 +975,17 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                                 && !bound_names.contains("isinstance")
                                 && bound_names.is_disjoint(local_types),
                         );
+                        // Gap 23: wire the same real Python scope tracking
+                        // (parameters, assignments, for/with/except
+                        // targets, comprehension variables, imports —
+                        // already computed above for type-hint scoping)
+                        // into shadow detection too, mirroring the Rust arm
+                        // above. Without this, `shadowed_by_local` below
+                        // was always false for Python, so a bare call
+                        // whose name collided with a local was never
+                        // guarded against sync.rs's "globally unique,
+                        // assume it" fallback.
+                        function_locals = Some(bound_names);
                     }
                 }
             }
@@ -1043,11 +1054,14 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                     && qualifier.as_deref().is_none_or(|qualifier| {
                         python_qualifier_owner_fallback(lang, qualifier, active_import_bindings)
                     });
-                // A bare call whose name is also a parameter of this Rust
-                // function can never mean a distant same-named global: Rust
-                // scoping always resolves it to the parameter instead.
+                // A bare call whose name is also a local (Rust: a
+                // parameter; Python: a parameter, assignment, for/with/
+                // except target, comprehension variable, or import — see
+                // `python_function_bound_names`) of this function can never
+                // mean a distant same-named global: real scoping always
+                // resolves it to the local instead.
                 let shadowed_by_local =
-                    matches!(lang, Lang::Rust) && active_locals.contains(&callee);
+                    matches!(lang, Lang::Rust | Lang::Python) && active_locals.contains(&callee);
                 // Emit unresolved; the project resolver picks the concrete callee.
                 out.calls.push(CallRef {
                     caller,
@@ -1342,9 +1356,17 @@ fn collect_python_statement_bound_names(root: TsNode, source: &str, names: &mut 
                 collect_python_target_names(alias, source, names);
             }
         }
-        "except_clause" => {
-            if let Some(name) = root.child_by_field_name("name") {
-                collect_python_target_names(name, source, names);
+        "except_clause" | "except_group_clause" => {
+            // No "name" field: `except E as helper:` parses as this clause
+            // containing an `as_pattern` node (`E as helper`) whose own
+            // "alias" field holds `helper` — same shape
+            // `collect_python_scope_entry_bound_names` already relies on
+            // for the entry-point-hint-invalidation case below.
+            if let Some(alias_pattern) = (0..root.named_child_count())
+                .filter_map(|index| root.named_child(index))
+                .find(|child| child.kind() == "as_pattern")
+            {
+                collect_python_target_names(alias_pattern, source, names);
             }
         }
         "case_clause" => {

@@ -3076,23 +3076,24 @@ pub fn caller(program: &str) -> Interpreter<'_> {
     // (parameter, assignment, for/with/except target, ...) of the same
     // name — but only for Rust (`shadowed_by_local`, gated to
     // `Lang::Rust` in mapper.rs). Python was deliberately left open: real
-    // scope tracking was needed, not attempted in that pass. These tests
-    // pin the CURRENT WRONG behavior first — do not remove `#[ignore]`
-    // from any of them until the Python-side fix (mapper.rs's
-    // `Lang::Python` arm assigning `function_locals = Some(bound_names)`,
-    // mirroring the Rust arm) actually lands.
+    // scope tracking was needed, not attempted in that pass. Fixed: the
+    // `Lang::Python` arm in mapper.rs now assigns
+    // `function_locals = Some(bound_names)` too, mirroring the Rust arm,
+    // so `shadowed_by_local` is no longer Rust-only. Assertions below were
+    // flipped from "pinning today's wrong behavior" to the real fixed
+    // behavior; `#[ignore]` removed.
 
     #[test]
-    #[ignore = "gap 23 — remove this attribute when fixed"]
     fn gap23_assigned_local_shadows_unrelated_global_function() {
         // The confirmed live repro, minimized from this repo's own
         // tools/authoring_task_check.py:31-40: `function =
         // namespace.get(function_name)` binds a local named `function`,
         // then calls it bare. An unrelated top-level `helper` exists
-        // elsewhere in the graph; today's fallback wrongly attributes
-        // `dispatch` as one of `helper`'s callers because `helper` happens
-        // to be the graph's only function named `helper` and Python's
-        // extractor never tracks that `dispatch` shadows the name locally.
+        // elsewhere in the graph; before the fix, the fallback wrongly
+        // attributed `dispatch` as one of `helper`'s callers because
+        // `helper` happened to be the graph's only function named `helper`
+        // and Python's extractor never tracked that `dispatch` shadows the
+        // name locally.
         let src = r#"
 def helper():
     return 1
@@ -3109,14 +3110,13 @@ def dispatch(namespace, name):
         let helper = NodeId::from_path("crate::probe::helper");
         let callers: Vec<_> = graph.callers(helper).into_iter().map(|n| n.id).collect();
         assert!(
-            callers.contains(&dispatch),
-            "pinning today's wrong behavior: dispatch's local `helper` bare \
-             call is misattributed to the unrelated global helper; got {callers:?}"
+            !callers.contains(&dispatch),
+            "dispatch's local `helper` bare call must not resolve to the \
+             unrelated global helper; got {callers:?}"
         );
     }
 
     #[test]
-    #[ignore = "gap 23 — remove this attribute when fixed"]
     fn gap23_for_loop_target_shadows_unrelated_global_function() {
         // A `for` loop target binds the shadowing name, exercising
         // `collect_python_statement_bound_names`'s `for_in_clause` handling.
@@ -3136,15 +3136,13 @@ def dispatch(candidates):
         let helper = NodeId::from_path("crate::probe::helper");
         let callers: Vec<_> = graph.callers(helper).into_iter().map(|n| n.id).collect();
         assert!(
-            callers.contains(&dispatch),
-            "pinning today's wrong behavior: dispatch's for-loop-bound \
-             `helper` bare call is misattributed to the unrelated global \
-             helper; got {callers:?}"
+            !callers.contains(&dispatch),
+            "dispatch's for-loop-bound `helper` bare call must not resolve \
+             to the unrelated global helper; got {callers:?}"
         );
     }
 
     #[test]
-    #[ignore = "gap 23 — remove this attribute when fixed"]
     fn gap23_except_target_shadows_unrelated_global_function() {
         // `except ... as helper:` binds the shadowing name, exercising
         // `collect_python_statement_bound_names`'s `except_clause` handling.
@@ -3166,10 +3164,9 @@ def dispatch():
         let helper = NodeId::from_path("crate::probe::helper");
         let callers: Vec<_> = graph.callers(helper).into_iter().map(|n| n.id).collect();
         assert!(
-            callers.contains(&dispatch),
-            "pinning today's wrong behavior: dispatch's except-bound \
-             `helper` bare call is misattributed to the unrelated global \
-             helper; got {callers:?}"
+            !callers.contains(&dispatch),
+            "dispatch's except-bound `helper` bare call must not resolve \
+             to the unrelated global helper; got {callers:?}"
         );
     }
 
@@ -3201,14 +3198,9 @@ def dispatch():
     }
 
     #[test]
-    #[ignore = "gap 23 — remove this attribute when fixed"]
     fn gap23_binding_later_in_function_body_still_suppresses_the_earlier_bare_call() {
-        // This pins POST-fix behavior, not today's — it is ignored for the
-        // same reason the three misattribution tests above are: before the
-        // Python-side fix lands, `shadowed_by_local` is never true for
-        // Python at all, so this bare call still (wrongly) resolves today.
-        // Once fixed, it documents an accepted, intentional trade-off
-        // rather than a defect: `python_function_bound_names` collects
+        // Documents an accepted, intentional trade-off rather than a
+        // defect: `python_function_bound_names` collects
         // every name bound ANYWHERE in the function body, not just before
         // the call site — a whole-function-body set, not a point-in-time
         // one. This actually matches real Python's own scoping rule (a
