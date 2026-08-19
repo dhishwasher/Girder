@@ -330,9 +330,18 @@
           "file": "src/click/termui.py",
           "id": "getchar-not-testing-isolation-mock",
           "kind": "Calls",
-          "rationale": "getchar() reads the global _getchar (reassigned to _termui_impl.getchar under global _getchar) and must not resolve to CliRunner.isolation's unrelated same-named nested mock function (gap 22's still-open Python-side local/global-shadow misattribution, see gap 23).",
+          "rationale": "getchar() reads the global _getchar (reassigned to _termui_impl.getchar under global _getchar) and must not resolve to CliRunner.isolation's unrelated same-named nested mock function (gap 22's Rust-only fix left this open for Python; closed by gap 23's Python local-scope tracking).",
           "source": "crate::click::termui::getchar",
           "target": "crate::click::testing::CliRunner::isolation::_getchar"
+        },
+        {
+          "expected_present": false,
+          "file": "tests/test_formatting.py",
+          "id": "option-loop-target-not-testing-decorators-option",
+          "kind": "Calls",
+          "rationale": "test_formatting_usage_error_help_hint's `for option in extra_options: option(foo)` binds `option` as a for-loop target; the bare call must not resolve to the unrelated click.decorators.option decorator factory it shadows by name -- gap 23's Python local-shadow misattribution via a for-loop target rather than a parameter.",
+          "source": "crate::tests::test_formatting::test_formatting_usage_error_help_hint",
+          "target": "crate::click::decorators::option"
         }
       ],
       "sources": {
@@ -397,6 +406,15 @@
           "rationale": "The AliasPath receiver must not resolve as recursive AliasChoices dispatch.",
           "source": "crate::pydantic::aliases::AliasChoices::convert_to_aliases",
           "target": "crate::pydantic::aliases::AliasChoices::convert_to_aliases"
+        },
+        {
+          "expected_present": false,
+          "file": "tests/test_construction.py",
+          "id": "copy-method-fixture-not-testing-fixture-function",
+          "kind": "Calls",
+          "rationale": "test_simple_copy's `copy_method` parameter is the pytest fixture's returned callable (deprecated_copy or a local new_copy_method closure), not the fixture function itself; the bare call `copy_method(m)` must not resolve to the module-level copy_method fixture function it shadows by name -- gap 23's Python local-shadow misattribution via a parameter binding.",
+          "source": "crate::tests::test_construction::test_simple_copy",
+          "target": "crate::tests::test_construction::copy_method"
         }
       ],
       "sources": {

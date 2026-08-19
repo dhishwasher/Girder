@@ -1392,18 +1392,38 @@ as gap 11 rather than silently accepted.
     numbers were not tuned to keep the old 1.0; a corpus that only ever
     reads 1.0 was the actual lesson of gap 11 and, now, of this gap too.
 
-23. **P1 — open, deliberately not fixed: a Python local variable that
-    coincides by bare name with an unrelated, globally-unique function
-    elsewhere in the graph gets wrongly linked as that function's caller.**
-    Split out of gap 22, which fixed the identical mechanism for Rust
-    (`shadowed_by_local` in `crates/aether-builder/src/mapper.rs` and
-    `sync.rs`) but left the Python side open. Confirmed still present on
-    Bit Code's own repo today, after gap 22's fix: asking who calls
-    `crate::crates::aether-debugger::src::lang::Program::function` returns
+23. **Closed — a Python local variable that coincides by bare name with an
+    unrelated, globally-unique function elsewhere in the graph gets wrongly
+    linked as that function's caller.** Split out of gap 22, which fixed
+    the identical mechanism for Rust (`shadowed_by_local` in
+    `crates/aether-builder/src/mapper.rs` and `sync.rs`) but left the
+    Python side open. mapper.rs's `Lang::Python` arm already computed real
+    scope tracking (`python_function_bound_names`: parameters,
+    assignments, `for`/`with`/`except` targets, comprehension variables,
+    imports) for type-hint/import/isinstance-narrowing scoping, but never
+    wired it into shadow detection — `function_locals` stayed unset for
+    Python, so `shadowed_by_local` was Rust-only. Fixed with a two-line
+    change: `function_locals = Some(bound_names)` in the Python arm, and
+    `shadowed_by_local` now checks `Lang::Rust | Lang::Python` instead of
+    Rust alone; `sync.rs`'s guard needed no change, since it was already
+    language-agnostic. A real bug in `collect_python_statement_bound_names`
+    surfaced while verifying the `except`-target case: its `except_clause`
+    branch looked for a `"name"` field that does not exist in this
+    grammar — `except E as x:` actually parses as an `except_clause`
+    containing an `as_pattern` node whose `"alias"` field holds `x`, the
+    same shape `collect_python_scope_entry_bound_names` (a separate,
+    pre-existing function) already handled correctly for its own purpose;
+    fixed alongside the main change.
+
+    Confirmed still present on Bit Code's own repo before this fix, after
+    gap 22's own fix: asking who calls
+    `crate::crates::aether-debugger::src::lang::Program::function` returned
     three callers — `buggy_demo_program` and
     `hot_functions_rank_by_execution_count`, both real (correctly restored
     by gap 22's chain fix), and `crate::tools::authoring_task_check::call_with_probe`,
-    still wrong. Its source (`tools/authoring_task_check.py:31-40`):
+    still wrong. **After this fix, the same query returns exactly the two
+    real callers** — `call_with_probe` is gone. Its source
+    (`tools/authoring_task_check.py:31-40`):
     ```python
     def call_with_probe(namespace: dict[str, object], function_name: str, *, upper: bool) -> None:
         ...
@@ -1419,19 +1439,23 @@ as gap 11 rather than silently accepted.
     as an unqualified `CallRef`, and because `Program::function` is the
     only graph node anywhere named `function`, `select_candidate`'s
     unqualified-branch "globally unique -> assume it" fallback links them.
-    This is confirmed live in the representative benchmark too: the
+    This was confirmed live in the representative benchmark too: the
     `getchar-not-testing-isolation-mock` declared negative case added to
     gap 22's closing entry above is the same mechanism on
     `click.termui.getchar()`'s reassigned `_getchar` global, and it
-    measures as a real false positive, not a hypothetical one.
+    measured as a real false positive before this fix. Two more real,
+    third-party declared cases were added closing this gap:
+    `option-loop-target-not-testing-decorators-option` (click, a
+    `for`-loop target rather than a plain assignment) and
+    `copy-method-fixture-not-testing-fixture-function` (pydantic, a
+    pytest-fixture parameter). All three — plus every pre-existing
+    declared case — now measure correctly: the representative corpus's
+    semantic aggregate is 0 false positives, 0 false negatives,
+    1.000/1.000 precision and recall for both Rust and Python. See
+    `docs/core-representative-observation.json` for the full recorded
+    result.
 
-    **The real repo's edge is very likely still wrong** — nothing in this
-    pass touched it — and the same risk applies anywhere a Python function
-    binds a local variable or parameter whose bare name happens to match
-    some unrelated, uniquely-named function or method elsewhere in a
-    project's graph.
-
-    **What closing it would require.** The Rust fix worked by collecting
+    **What closing it required.** The Rust fix worked by collecting
     each function's own parameter names (`rust_parameter_names`) — cheap,
     because Rust requires every parameter to carry an explicit, locally-
     complete type annotation, so the enclosing function's own AST node is
@@ -1461,6 +1485,11 @@ as gap 11 rather than silently accepted.
     script did to find `getchar`) risks exactly that: correctly catching
     some shadowing shapes while creating false confidence about the ones it
     doesn't, which is worse than leaving the known gap declared and open.
+    The eventual fix avoided that risk by construction: it reused the
+    already-complete `python_function_bound_names` scope walk built for
+    type-hint scoping (parameters, assignments, for/with/except targets,
+    comprehension variables, imports — every form named above), not a new
+    partial heuristic.
 
 24. **Closed — `tests.impacted` returns `passed: true` on an empty impact
     set, indistinguishable from real verification, and two mandatory-check
