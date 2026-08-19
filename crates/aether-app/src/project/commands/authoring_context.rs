@@ -113,6 +113,18 @@ pub(crate) struct AuthoringContext {
     pub(crate) schema: Value,
 }
 
+/// The `{path, language, source}` shape a model prompt embeds verbatim for
+/// one node. Shared by `node_context` above and `context --with-tests`'
+/// covering-test entries, so a test's context shape can never drift from a
+/// selected node's.
+pub(crate) fn node_context_entry(node: &aether_graph::Node) -> Value {
+    json!({
+        "path": node.path,
+        "language": node.language,
+        "source": node.source
+    })
+}
+
 pub(crate) fn build_authoring_context(
     graph: &aether_graph::SemanticGraph,
     intent: &str,
@@ -125,13 +137,7 @@ pub(crate) fn build_authoring_context(
         .collect();
     let node_context: Vec<Value> = nodes
         .iter()
-        .map(|selected| {
-            json!({
-                "path": selected.node.path,
-                "language": selected.node.language,
-                "source": selected.node.source
-            })
-        })
+        .map(|selected| node_context_entry(&selected.node))
         .collect();
     let schema = step_schema(&node_paths);
     Ok(AuthoringContext {

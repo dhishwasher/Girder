@@ -9,8 +9,8 @@
 //! that isn't wired in as a provider.
 
 use super::authoring_context::{
-    build_authoring_context, collect_words, generate_plan_id, invalid_input, parse_pinned_nodes,
-    plan_schema, plan_skeleton, SelectionError,
+    build_authoring_context, collect_words, generate_plan_id, invalid_input, node_context_entry,
+    parse_pinned_nodes, plan_schema, plan_skeleton, SelectionError,
 };
 use crate::project::config::ProjectConfig;
 use crate::project::git::git_head_commit;
@@ -18,8 +18,7 @@ use crate::project::source::build_from_dir_with_config;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
-const USAGE: &str =
-    "usage: bitcode context <dir> [--nodes <path>[,<path>...]] [\"<intent>\"] --json";
+const USAGE: &str = "usage: bitcode context <dir> [--nodes <path>[,<path>...]] [\"<intent>\"] --json [--with-tests]";
 
 pub fn context(args: &[String]) -> std::io::Result<()> {
     let Some(root_arg) = args.first() else {
@@ -48,19 +47,47 @@ pub fn context(args: &[String]) -> std::io::Result<()> {
 /// still prints exactly what this returns, unchanged.
 fn build_output(root: &Path, args: &[String]) -> std::io::Result<Value> {
     let pinned_node_paths = parse_pinned_nodes(args)?;
-    let intent = collect_words(args, &["--json"], &["--nodes"]);
-    build_context_json(root, &intent, pinned_node_paths.as_deref())
+    let intent = collect_words(args, &["--json", "--with-tests"], &["--nodes"]);
+    let pinned = pinned_node_paths.as_deref();
+    if args.iter().any(|arg| arg == "--with-tests") {
+        build_context_json_inner(root, &intent, pinned, true)
+    } else {
+        // Routes through the same `build_context_json` the GUI calls, so
+        // that function keeps a real, always-compiled (non-gui, non-test)
+        // caller instead of only test-module and gui-gated ones.
+        build_context_json(root, &intent, pinned)
+    }
 }
 
 /// The body of `build_output`, taking an already-resolved intent and pinned
 /// node paths instead of raw CLI args. Split out so the GUI's "Copy context
 /// JSON" button can produce exactly the same object `bitcode context --json`
 /// prints without building a fake args vector — same node selection, same
-/// schema, same plan skeleton, no reimplementation.
+/// schema, same plan skeleton, no reimplementation. Always builds without
+/// `--with-tests` (the GUI button doesn't expose that flag yet) — the CLI's
+/// `build_output` is the only caller that can request it, via
+/// `build_context_json_inner`.
 pub(crate) fn build_context_json(
     root: &Path,
     intent: &str,
     pinned_node_paths: Option<&[String]>,
+) -> std::io::Result<Value> {
+    build_context_json_inner(root, intent, pinned_node_paths, false)
+}
+
+/// Real body shared by both `build_context_json` (GUI, `--with-tests`
+/// always off) and the CLI's `build_output` (honors `--with-tests`). When
+/// `with_tests` is set, each selected node gets a `"tests"` object: full
+/// `{path, language, source}` context for at most 3 covering tests (reusing
+/// the same reachability `test-impact` uses via `graph.tests_for`), and
+/// `{"path": ...}`-only entries for the rest, so the payload cannot blow up
+/// on a heavily tested node. When unset, no extra graph traversal happens
+/// and no `"tests"` key is added — default `context` cost is unchanged.
+fn build_context_json_inner(
+    root: &Path,
+    intent: &str,
+    pinned_node_paths: Option<&[String]>,
+    with_tests: bool,
 ) -> std::io::Result<Value> {
     let config = ProjectConfig::load(root)?;
     let (graph, _builder, _files) = build_from_dir_with_config(root, &config)?;
@@ -77,12 +104,38 @@ pub(crate) fn build_context_json(
         }
     };
 
+    let mut node_context = ctx.node_context;
+    if with_tests {
+        const MAX_FULL_TESTS: usize = 3;
+        for (selected, entry) in ctx.nodes.iter().zip(node_context.iter_mut()) {
+            let test_ids = graph.tests_for(selected.node.id);
+            let full: Vec<Value> = test_ids
+                .iter()
+                .take(MAX_FULL_TESTS)
+                .filter_map(|&id| graph.get(id))
+                .map(node_context_entry)
+                .collect();
+            let names_only: Vec<Value> = test_ids
+                .iter()
+                .skip(MAX_FULL_TESTS)
+                .filter_map(|&id| graph.get(id))
+                .map(|node| json!({"path": node.path}))
+                .collect();
+            if let Some(object) = entry.as_object_mut() {
+                object.insert(
+                    "tests".to_string(),
+                    json!({"full": full, "names_only": names_only}),
+                );
+            }
+        }
+    }
+
     let base_commit = git_head_commit(root)?;
     let plan_id = generate_plan_id();
     Ok(json!({
         "intent": intent,
         "base_commit": base_commit,
-        "nodes": ctx.node_context,
+        "nodes": node_context,
         // Real Plan Format v2 (see `plan_schema`'s doc comment), not
         // `ctx.schema` — this JSON goes to an external model that writes a
         // plan file directly, straight into `load_plan`, with no
@@ -411,5 +464,138 @@ mod tests {
         assert_eq!(loaded.steps[0].edits.len(), 1);
         assert_eq!(loaded.steps[0].checks.len(), 1);
         let _ = std::fs::remove_file(&path);
+    }
+
+    /// A real git project with one function and one real `#[test]` that
+    /// calls it, so `graph.tests_for` has a genuine covering test to find.
+    fn fixture_project_with_one_covering_test(name: &str) -> PathBuf {
+        let root = std::env::temp_dir().join(format!(
+            "bitcode-context-cmd-fixture-{name}-{}-{}",
+            std::process::id(),
+            NEXT_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(
+            root.join("calc.rs"),
+            "pub fn greet() -> String {\n    \"hi\".to_string()\n}\n\n#[test]\nfn test_greet() {\n    assert_eq!(greet(), \"hi\");\n}\n",
+        )
+        .unwrap();
+        git(&root, &["init", "--quiet"]);
+        git(&root, &["add", "calc.rs"]);
+        git(
+            &root,
+            &[
+                "-c",
+                "user.name=Bit Code Tests",
+                "-c",
+                "user.email=tests@bitcode.invalid",
+                "commit",
+                "--quiet",
+                "-m",
+                "base",
+            ],
+        );
+        root
+    }
+
+    #[test]
+    fn without_with_tests_flag_no_tests_key_is_present() {
+        let root = fixture_project_with_one_covering_test("no-with-tests-flag");
+        let args = vec![
+            root.display().to_string(),
+            "--nodes".to_string(),
+            "crate::calc::greet".to_string(),
+            "--json".to_string(),
+        ];
+        let output = build_output(&root, &args).unwrap();
+        let node = &output["nodes"].as_array().unwrap()[0];
+        assert!(
+            node.get("tests").is_none(),
+            "no \"tests\" key must appear without --with-tests: {node}"
+        );
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn with_tests_flag_attaches_full_source_of_the_covering_test() {
+        let root = fixture_project_with_one_covering_test("with-tests-flag");
+        let args = vec![
+            root.display().to_string(),
+            "--nodes".to_string(),
+            "crate::calc::greet".to_string(),
+            "--json".to_string(),
+            "--with-tests".to_string(),
+        ];
+        let output = build_output(&root, &args).unwrap();
+        let node = &output["nodes"].as_array().unwrap()[0];
+        let full = node["tests"]["full"].as_array().unwrap();
+        assert_eq!(full.len(), 1, "{node}");
+        assert_eq!(full[0]["path"], "crate::calc::test_greet");
+        assert_eq!(full[0]["language"], "rust");
+        assert!(full[0]["source"]
+            .as_str()
+            .unwrap()
+            .contains("fn test_greet"));
+        assert!(node["tests"]["names_only"].as_array().unwrap().is_empty());
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn with_tests_flag_caps_full_source_at_three_and_names_only_beyond() {
+        let root = std::env::temp_dir().join(format!(
+            "bitcode-context-cmd-fixture-many-covering-tests-{}-{}",
+            std::process::id(),
+            NEXT_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        let mut source = String::from("pub fn greet() -> String {\n    \"hi\".to_string()\n}\n\n");
+        for i in 0..5 {
+            source.push_str(&format!(
+                "#[test]\nfn test_greet_{i}() {{\n    assert_eq!(greet(), \"hi\");\n}}\n\n"
+            ));
+        }
+        std::fs::write(root.join("calc.rs"), source).unwrap();
+        git(&root, &["init", "--quiet"]);
+        git(&root, &["add", "calc.rs"]);
+        git(
+            &root,
+            &[
+                "-c",
+                "user.name=Bit Code Tests",
+                "-c",
+                "user.email=tests@bitcode.invalid",
+                "commit",
+                "--quiet",
+                "-m",
+                "base",
+            ],
+        );
+
+        let args = vec![
+            root.display().to_string(),
+            "--nodes".to_string(),
+            "crate::calc::greet".to_string(),
+            "--json".to_string(),
+            "--with-tests".to_string(),
+        ];
+        let output = build_output(&root, &args).unwrap();
+        let node = &output["nodes"].as_array().unwrap()[0];
+        let full = node["tests"]["full"].as_array().unwrap();
+        let names_only = node["tests"]["names_only"].as_array().unwrap();
+        assert_eq!(full.len(), 3, "{node}");
+        assert_eq!(names_only.len(), 2, "{node}");
+        for entry in full {
+            assert!(entry["source"].as_str().unwrap().contains("fn test_greet"));
+        }
+        for entry in names_only {
+            assert!(
+                entry.get("source").is_none(),
+                "names_only entries must not carry source: {entry}"
+            );
+            assert!(entry.get("path").is_some());
+        }
+        let _ = std::fs::remove_dir_all(&root);
     }
 }
