@@ -647,6 +647,17 @@ fn author_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     );
     ui.add_space(6.0);
 
+    // Advisory only — shown before the Local/External mode split so it
+    // covers both Run and Run-authored regardless of which is chosen, and
+    // regardless of Dry run: never blocks either button.
+    if app.author_worktree_is_dirty() {
+        ui.colored_label(
+            Color32::from_rgb(0xE5, 0xC0, 0x7B),
+            "Working tree has uncommitted changes (advisory — Run will not be blocked).",
+        );
+        ui.add_space(4.0);
+    }
+
     ui.label("Intent");
     ui.text_edit_multiline(&mut app.author_intent);
 

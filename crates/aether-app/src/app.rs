@@ -166,6 +166,9 @@ pub struct AetherApp {
     pub(crate) author_live_run_confirming: bool,
     pub(crate) author_last_result: Option<String>,
     pub(crate) author_last_error: Option<String>,
+    /// Cached `git status --porcelain` result for the advisory dirty-worktree
+    /// warning in `author_panel`, so it doesn't shell out on every repaint.
+    author_worktree_dirty_cache: Option<(std::time::Instant, bool)>,
 
     // ── Python real tracer ────────────────────────────────────────────────────
     /// Path of the Python file the user wants to trace.
@@ -258,6 +261,7 @@ impl AetherApp {
             author_live_run_confirming: false,
             author_last_result: None,
             author_last_error: None,
+            author_worktree_dirty_cache: None,
             py_file,
             py_steps: Vec::new(),
             py_trace_rx: None,
@@ -548,6 +552,25 @@ impl AetherApp {
         self.author_search_rx = Some(rx);
     }
 
+    /// Advisory (never blocking) dirty-worktree check for the Author tab's
+    /// warning banner — cached for 2s so `author_panel` doesn't spawn `git
+    /// status` on every repaint. A `git status` failure (e.g. not a repo)
+    /// fails closed to `true`: show the advisory rather than silently hide
+    /// it, consistent with this codebase's other "guessing wrong is worse
+    /// than a false alarm" checks.
+    pub(crate) fn author_worktree_is_dirty(&mut self) -> bool {
+        const TTL: std::time::Duration = std::time::Duration::from_secs(2);
+        if let Some((checked_at, dirty)) = self.author_worktree_dirty_cache {
+            if checked_at.elapsed() < TTL {
+                return dirty;
+            }
+        }
+        let root = self.workspace.root().to_path_buf();
+        let dirty = !crate::project::git::git_worktree_clean(&root).unwrap_or(true);
+        self.author_worktree_dirty_cache = Some((std::time::Instant::now(), dirty));
+        dirty
+    }
+
     /// Mode 1 ("local model") Run: calls the exact same `author()` function
     /// `bitcode do` calls, pinned to whatever search hits are currently
     /// checked. A non-dry run requires clicking Run twice — the first click
@@ -583,6 +606,9 @@ impl AetherApp {
         self.author_last_error = None;
         self.author_last_result = None;
         self.author_log.clear();
+        if !self.author_dry_run {
+            self.author_worktree_dirty_cache = None;
+        }
 
         let root = self.workspace.root().to_path_buf();
         let dry = self.author_dry_run;
@@ -631,6 +657,9 @@ impl AetherApp {
         self.author_live_run_confirming = false;
         self.author_last_error = None;
         self.author_last_result = None;
+        if !self.author_dry_run {
+            self.author_worktree_dirty_cache = None;
+        }
 
         let root = self.workspace.root().to_path_buf();
         let dry = self.author_dry_run;

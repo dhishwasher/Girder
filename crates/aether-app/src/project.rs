@@ -6,7 +6,7 @@ mod collaboration_projection;
 mod collaboration_transport;
 mod commands;
 mod config;
-mod git;
+pub(crate) mod git;
 mod output_sink;
 mod planfile;
 mod process;
