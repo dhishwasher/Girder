@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "policy_id": "context-with-tests-cost-v1",
+  "method": "byte-count comparison of a two-step before workflow against one bitcode context --with-tests call, on a fixed node list at a pinned commit",
+  "source_commit": "b38893b6c2600ebaae9c177404b7996a4e42079e",
+  "before": "bitcode context <dir> --nodes <node> --json (no --with-tests) stdout bytes, plus the full byte size of every distinct source file containing one of that node's (at most 3, per the --with-tests cap) covering tests -- the two-step flow of getting context, then opening each covering test's file to see it.",
+  "after": "bitcode context <dir> --nodes <node> --json --with-tests stdout bytes, in one call.",
+  "nodes": [
+    "crate::crates::aether-graph::src::query::SemanticGraph::query_by_kind",
+    "crate::crates::aether-graph::src::query::SemanticGraph::tests_for",
+    "crate::crates::aether-app::src::project::git::git_worktree_clean",
+    "crate::crates::aether-graph::src::node::NodeId::from_path",
+    "crate::crates::aether-builder::src::sync::select_candidate"
+  ],
+  "threshold": {
+    "metric": "aggregate byte reduction across all nodes",
+    "min_reduction_ratio": 0.40
+  }
+}

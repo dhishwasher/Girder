@@ -1,0 +1,57 @@
+{
+  "policy": "docs/context-with-tests-cost-policy.json",
+  "source_commit": "b38893b6c2600ebaae9c177404b7996a4e42079e",
+  "per_node": [
+    {
+      "node": "crate::crates::aether-graph::src::query::SemanticGraph::query_by_kind",
+      "context_bytes": 6518,
+      "covering_test_files": ["crates/aether-agents/src/lib.rs", "crates/aether-app/src/project/collaboration_projection.rs"],
+      "covering_test_files_bytes": 39963,
+      "before_bytes": 46481,
+      "after_bytes": 39762,
+      "total_covering_tests": 195
+    },
+    {
+      "node": "crate::crates::aether-graph::src::query::SemanticGraph::tests_for",
+      "context_bytes": 6878,
+      "covering_test_files": ["crates/aether-app/src/project/commands/author.rs", "crates/aether-app/src/project/commands/context_cmd.rs"],
+      "covering_test_files_bytes": 55750,
+      "before_bytes": 62628,
+      "after_bytes": 27163,
+      "total_covering_tests": 107
+    },
+    {
+      "node": "crate::crates::aether-app::src::project::git::git_worktree_clean",
+      "context_bytes": 6524,
+      "covering_test_files": ["crates/aether-app/src/project/commands/author.rs", "crates/aether-app/src/project/planfile/mod.rs"],
+      "covering_test_files_bytes": 68969,
+      "before_bytes": 75493,
+      "after_bytes": 21863,
+      "total_covering_tests": 82
+    },
+    {
+      "node": "crate::crates::aether-graph::src::node::NodeId::from_path",
+      "context_bytes": 6634,
+      "covering_test_files": ["crates/aether-agents/src/lib.rs"],
+      "covering_test_files_bytes": 15809,
+      "before_bytes": 22443,
+      "after_bytes": 56053,
+      "total_covering_tests": 296
+    },
+    {
+      "node": "crate::crates::aether-builder::src::sync::select_candidate",
+      "context_bytes": 8875,
+      "covering_test_files": ["crates/aether-app/src/project/collaboration_projection.rs"],
+      "covering_test_files_bytes": 24154,
+      "before_bytes": 33029,
+      "after_bytes": 40939,
+      "total_covering_tests": 193
+    }
+  ],
+  "totals": {
+    "before_bytes": 240074,
+    "after_bytes": 185780,
+    "reduction_ratio": 0.226099
+  },
+  "policy_result": "FAIL"
+}
