@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # Install the Bit Code CLI (`bitcode`) from a GitHub release.
 #
-#   curl -fsSL https://raw.githubusercontent.com/dhishwasher/bit-code/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/dhishwasher/Bit-code/main/install.sh | sh
 #
 # Environment:
 #   BITCODE_VERSION   tag to install (default: latest release)
@@ -16,7 +16,7 @@
 # half-installed binary on PATH is worse than no binary.
 set -eu
 
-REPO="${BITCODE_REPO:-dhishwasher/bit-code}"
+REPO="${BITCODE_REPO:-dhishwasher/Bit-code}"
 BIN_DIR="${BITCODE_BIN_DIR:-$HOME/.local/bin}"
 
 die() {

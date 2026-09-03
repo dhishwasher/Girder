@@ -14,7 +14,7 @@ const { execFileSync } = require("child_process");
 
 const { binaryName, target, unsupportedMessage, vendoredPath } = require("./resolve");
 
-const REPO = process.env.BITCODE_REPO || "dhishwasher/bit-code";
+const REPO = process.env.BITCODE_REPO || "dhishwasher/Bit-code";
 const VERSION = process.env.BITCODE_VERSION || `v${require("./package.json").version}`;
 const BASE_URL =
   process.env.BITCODE_BASE_URL || `https://github.com/${REPO}/releases/download`;

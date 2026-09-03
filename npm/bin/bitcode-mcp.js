@@ -16,7 +16,7 @@ if (!binary) {
   process.stderr.write(
     "bitcode-mcp: no bitcode binary found.\n" +
       "The postinstall download may have been blocked. Install one with:\n" +
-      "  curl -fsSL https://raw.githubusercontent.com/dhishwasher/bit-code/main/install.sh | sh\n" +
+      "  curl -fsSL https://raw.githubusercontent.com/dhishwasher/Bit-code/main/install.sh | sh\n" +
       "or build from source:\n" +
       "  cargo install --path crates/aether-app\n"
   );

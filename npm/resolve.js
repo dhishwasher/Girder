@@ -28,7 +28,7 @@ function unsupportedMessage() {
     `No prebuilt bitcode binary for ${os.platform()}-${os.arch()}.\n` +
     `Supported: ${Object.keys(TARGETS).join(", ")}.\n` +
     "Build from source instead:\n" +
-    "  git clone https://github.com/dhishwasher/bit-code\n" +
+    "  git clone https://github.com/dhishwasher/Bit-code\n" +
     "  cargo install --path bit-code/crates/aether-app"
   );
 }
