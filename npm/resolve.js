@@ -28,7 +28,7 @@ function unsupportedMessage() {
     `No prebuilt bitcode binary for ${os.platform()}-${os.arch()}.\n` +
     `Supported: ${Object.keys(TARGETS).join(", ")}.\n` +
     "Build from source instead:\n" +
-    "  git clone https://github.com/dhishwasher/bit-code\n" +
+    "  git clone https://github.com/dhishwasher/Bit-code\n" +
     "  cargo install --path bit-code/crates/aether-app"
   );
 }
@@ -42,6 +42,10 @@ function vendoredPath() {
   return path.join(__dirname, "bin", binaryName());
 }
 
+// Set on the child so a shim can tell it was launched by another shim. See
+// `resolveBinary`.
+const REENTRY_ENV = "BITCODE_NPM_SHIM";
+
 /**
  * The binary to execute, or null if none is available.
  *
@@ -50,45 +54,75 @@ function vendoredPath() {
  * with install.sh, should not silently get an older vendored copy. It also
  * makes the wrapper work when the postinstall download was blocked by a
  * network policy but the tool is installed anyway.
+ *
+ * The exception is a shim launched by another shim, which must not consult
+ * PATH at all: whatever it found there is what launched us, so looking again
+ * returns the same answer forever. Going straight to the vendored binary
+ * terminates the chain with the right program rather than an error.
  */
 function resolveBinary() {
-  const onPath = fromPath();
-  if (onPath) {
-    return onPath;
+  if (process.env[REENTRY_ENV] !== "1") {
+    const onPath = fromPath();
+    if (onPath) {
+      return onPath;
+    }
   }
   const vendored = vendoredPath();
   return fs.existsSync(vendored) ? vendored : null;
 }
 
+/**
+ * Environment for the spawned child, marking that a shim is now in the chain.
+ */
+function childEnv() {
+  return { ...process.env, [REENTRY_ENV]: "1" };
+}
+
+function realpathOrResolve(candidate) {
+  try {
+    return fs.realpathSync(candidate);
+  } catch {
+    return path.resolve(candidate);
+  }
+}
+
 function fromPath() {
   const entries = (process.env.PATH || "").split(path.delimiter);
   const name = binaryName();
+  const ownBin = realpathOrResolve(path.join(__dirname, "bin"));
   for (const entry of entries) {
     if (!entry) {
       continue;
     }
-    // Skip this package's own bin directory: npx puts it on PATH, and the
-    // shim there is a JS file, not the real binary.
     const candidate = path.join(entry, name);
-    if (path.resolve(entry) === path.resolve(path.join(__dirname, "bin"))) {
-      continue;
-    }
     try {
       fs.accessSync(candidate, fs.constants.X_OK);
-      const stat = fs.statSync(candidate);
-      if (stat.isFile()) {
-        return candidate;
+      if (!fs.statSync(candidate).isFile()) {
+        continue;
       }
     } catch {
       // Not here; keep looking.
+      continue;
     }
+    // Judge the candidate by where it actually points, not by the PATH entry
+    // it was found under. `npm install -g bitcode-mcp` installs a `bitcode`
+    // symlink into a global bin directory that resolves back into this
+    // package, so spawning it is spawning ourselves — an unbounded chain of
+    // node processes. Comparing the PATH entry alone missed that, because the
+    // global bin directory is not this package's bin directory.
+    if (path.dirname(realpathOrResolve(candidate)) === ownBin) {
+      continue;
+    }
+    return candidate;
   }
   return null;
 }
 
 module.exports = {
+  REENTRY_ENV,
   TARGETS,
   binaryName,
+  childEnv,
   resolveBinary,
   target,
   unsupportedMessage,

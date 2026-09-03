@@ -49,6 +49,11 @@ jobs:
             tools.test_context_vs_read_cost \
             tools.test_bitcode_context_advisory_hook
 
+      # The npm wrapper is how agent hosts actually launch the MCP server, and
+      # it is the one shipped component with no Rust coverage at all.
+      - name: npm wrapper unit tests
+        run: node --test npm/test/*.test.js
+
       - name: Live provider feature compiles
         run: cargo check -p aether-ai --features live-providers
 

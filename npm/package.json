@@ -13,11 +13,11 @@
     "cursor",
     "context"
   ],
-  "homepage": "https://github.com/dhishwasher/bit-code#readme",
-  "bugs": "https://github.com/dhishwasher/bit-code/issues",
+  "homepage": "https://github.com/dhishwasher/Bit-code#readme",
+  "bugs": "https://github.com/dhishwasher/Bit-code/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dhishwasher/bit-code.git",
+    "url": "git+https://github.com/dhishwasher/Bit-code.git",
     "directory": "npm"
   },
   "license": "MIT OR Apache-2.0",
@@ -33,7 +33,8 @@
     "README.md"
   ],
   "scripts": {
-    "postinstall": "node install.js"
+    "postinstall": "node install.js",
+    "test": "node --test test/*.test.js"
   },
   "engines": {
     "node": ">=18"

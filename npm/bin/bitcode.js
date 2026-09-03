@@ -8,19 +8,22 @@
 // having installed it through npm should not mean you cannot reach that.
 
 const { spawn } = require("child_process");
-const { resolveBinary } = require("../resolve");
+const { childEnv, resolveBinary } = require("../resolve");
 
 const binary = resolveBinary();
 if (!binary) {
   process.stderr.write(
     "bitcode: no bitcode binary found.\n" +
       "The postinstall download may have been blocked. Install one with:\n" +
-      "  curl -fsSL https://raw.githubusercontent.com/dhishwasher/bit-code/main/install.sh | sh\n"
+      "  curl -fsSL https://raw.githubusercontent.com/dhishwasher/Bit-code/main/install.sh | sh\n"
   );
   process.exit(1);
 }
 
-const child = spawn(binary, process.argv.slice(2), { stdio: "inherit" });
+const child = spawn(binary, process.argv.slice(2), {
+  stdio: "inherit",
+  env: childEnv(),
+});
 
 child.on("error", (error) => {
   process.stderr.write(`bitcode: could not start ${binary}: ${error.message}\n`);
