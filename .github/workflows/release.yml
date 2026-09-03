@@ -24,8 +24,53 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # Runs before anything is built, because a version disagreement is fatal in
+  # a way that is invisible after the fact: npm/install.js derives its download
+  # URL from package.json's own version, so a package published as 0.1.0 from a
+  # v0.2.0 tag would fetch the wrong release's binaries — or 404 — on every
+  # install, while the release itself looks fine.
+  preflight:
+    name: Versions agree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare the tag against the source versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo_version="$(python3 -c 'import tomllib; print(tomllib.load(open("Cargo.toml","rb"))["workspace"]["package"]["version"])')"
+          npm_version="$(python3 -c 'import json; print(json.load(open("npm/package.json"))["version"])')"
+          echo "Cargo.toml:       $cargo_version"
+          echo "npm/package.json: $npm_version"
+
+          failed=""
+          if [ "$cargo_version" != "$npm_version" ]; then
+            echo "::error::Cargo.toml ($cargo_version) and npm/package.json ($npm_version) disagree"
+            failed=1
+          fi
+
+          # A manual dry run has no version to compare against, so only the
+          # two source files are checked in that case.
+          case "$GITHUB_REF" in
+            refs/tags/v*)
+              tag_version="${GITHUB_REF#refs/tags/v}"
+              echo "tag:              $tag_version"
+              if [ "$tag_version" != "$cargo_version" ]; then
+                echo "::error::tag v$tag_version does not match the source version $cargo_version"
+                failed=1
+              fi
+              ;;
+            *)
+              echo "not a tag; skipping the tag comparison"
+              ;;
+          esac
+
+          [ -z "$failed" ]
+
   build:
     name: ${{ matrix.target }}
+    needs: preflight
     runs-on: ${{ matrix.runner }}
     strategy:
       # One target failing should not hide whether the others are fine.
@@ -177,3 +222,42 @@ jobs:
           files: dist/*
           generate_release_notes: true
           fail_on_unmatched_files: true
+
+  # Strictly after the release exists: the package's postinstall downloads the
+  # binaries from it, so publishing to npm first would ship a version that
+  # cannot install until the release catches up.
+  npm:
+    name: Publish to npm
+    needs: publish
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
+      # Provenance: npm records, and displays, which workflow at which commit
+      # produced the tarball. Worth having for a package whose whole purpose is
+      # to be executed by someone else's coding agent.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Wrapper unit tests
+        run: node --test npm/test/*.test.js
+
+      - name: Publish
+        working-directory: npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::warning::NPM_TOKEN is not set, so nothing was published to npm."
+            echo "Add an npm automation token as the NPM_TOKEN repository secret,"
+            echo "then re-run this job. The GitHub release is already complete."
+            exit 0
+          fi
+          npm publish --provenance --access public
