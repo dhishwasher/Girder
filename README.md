@@ -726,3 +726,22 @@ web/mobile projections, and deeper tracing) is in `BLUEPRINT.md §9`.
 The measured table-stakes comparison, current correctness evidence, and
 prioritized open risks are maintained in
 [`docs/core-gap-analysis.md`](docs/core-gap-analysis.md).
+
+## License
+
+Dual-licensed under either of
+
+- [MIT](./LICENSE-MIT)
+- [Apache License, Version 2.0](./LICENSE-APACHE)
+
+at your option. This is the Rust ecosystem's standard pairing: MIT is short
+and permissive, Apache-2.0 adds an explicit patent grant that some
+organizations require. You may use whichever fits your situation, including
+commercially, with no obligation to share changes back.
+
+GitHub's sidebar detects only one of the two; the dual license above is
+authoritative.
+
+Contributions are accepted under the same two licenses. See
+[`CONTRIBUTING.md`](./CONTRIBUTING.md) — it asks for a DCO sign-off and does
+not ask you to assign copyright or sign a CLA.
