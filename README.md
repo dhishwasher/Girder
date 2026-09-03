@@ -12,7 +12,7 @@ of any existing editor. See [`BLUEPRINT.md`](./BLUEPRINT.md) for the full design
 A prebuilt binary, no Rust toolchain needed:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dhishwasher/bit-code/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/dhishwasher/Bit-code/main/install.sh | sh
 bitcode --version
 ```
 

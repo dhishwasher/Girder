@@ -52,9 +52,9 @@ of output rather than tokens** (no tokenizer was run):
 
 - `get_source` vs reading the whole file: **97.85% fewer bytes** across ten
   functions sampled by source-size decile, and cheaper on all ten.
-  ([method and honest limits](https://github.com/dhishwasher/bit-code/blob/main/docs/context-vs-read-cost.md))
+  ([method and honest limits](https://github.com/dhishwasher/Bit-code/blob/main/docs/context-vs-read-cost.md))
 - `find_definition` vs `grep`: **97.98% fewer bytes** across ten identifiers.
-  ([method](https://github.com/dhishwasher/bit-code/blob/main/docs/names-cost.md))
+  ([method](https://github.com/dhishwasher/Bit-code/blob/main/docs/names-cost.md))
 
 Both are single-repository measurements. The direction should hold anywhere,
 since it is driven by file size and by grep returning every mention rather than
