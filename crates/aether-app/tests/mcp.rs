@@ -387,6 +387,54 @@ fn a_modern_client_can_discover_without_the_legacy_handshake() {
     let _ = std::fs::remove_dir_all(&root);
 }
 
+/// The read-only guarantee, end to end. `impacted_tests` appends its node
+/// list to `test-impact`'s argv, and `test-impact` honours `--out` and
+/// `--run` wherever they appear there — so before those were refused, a
+/// tool annotated `readOnlyHint` would truncate any absolute path handed to
+/// it and execute the project's configured test commands. Asserted against
+/// the real binary because the damage is a real filesystem write.
+#[test]
+fn a_tool_argument_cannot_smuggle_an_option_that_writes_or_runs() {
+    let root = fixture("no-option-smuggling");
+    let victim = std::env::temp_dir().join(format!(
+        "bitcode-mcp-must-not-write-{}-{}.txt",
+        std::process::id(),
+        NEXT_ID.fetch_add(1, Ordering::Relaxed)
+    ));
+    std::fs::write(&victim, "PRE-EXISTING CONTENT").unwrap();
+
+    let mut session = Session::start(&root);
+    session.initialize();
+
+    let wrote = session.call_tool(
+        "impacted_tests",
+        json!({"nodes": ["--out", victim.to_str().unwrap()]}),
+    );
+    assert_eq!(
+        wrote["error"]["code"], -32602,
+        "an option-like node must be refused as bad params: {wrote}"
+    );
+    assert_eq!(
+        std::fs::read_to_string(&victim).unwrap(),
+        "PRE-EXISTING CONTENT",
+        "a read-only server overwrote {}",
+        victim.display()
+    );
+
+    let ran = session.call_tool("impacted_tests", json!({"nodes": ["--run"]}));
+    assert_eq!(ran["error"]["code"], -32602, "{ran}");
+
+    // A legitimate call on the same session must still work, so the guard
+    // is a rejection of these arguments and not of the tool.
+    let listed = session.call_tool("impacted_tests", json!({}));
+    assert_eq!(listed["result"]["isError"], false, "{listed}");
+
+    let (clean_exit, stderr) = session.finish();
+    assert!(clean_exit, "stderr: {stderr}");
+    let _ = std::fs::remove_file(&victim);
+    let _ = std::fs::remove_dir_all(&root);
+}
+
 /// A server that cannot resolve its root must fail at startup rather than
 /// accept a session and error on every call.
 #[test]
