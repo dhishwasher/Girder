@@ -50,6 +50,13 @@
 //! The project root is fixed when the server starts. No tool argument can
 //! redirect a call at another directory, so an agent cannot walk the
 //! filesystem through this server.
+//!
+//! Tool arguments are also data, never options. The subcommands behind
+//! these tools scan the whole of argv for their flags and honour no `--`
+//! marker, so a value beginning with `-` would reach them as an option:
+//! `nodes: ["--run"]` once ran the project's tests through `impacted_tests`
+//! and `nodes: ["--out", path]` once wrote a file. Every argument is
+//! refused if it starts with `-` — see [`reject_option_like`].
 
 use crate::project::process::{run_captured, BoundedStatus};
 use serde_json::{json, Map, Value};
@@ -648,9 +655,42 @@ fn error_response(id: Value, code: i64, message: &str) -> Value {
     })
 }
 
+/// Refuses a model-supplied value that a child command would read as an
+/// option instead of as data.
+///
+/// Every tool appends its arguments to a fixed subcommand, and those
+/// subcommands parse by scanning the whole of argv for known flags rather
+/// than by stopping at a `--` end-of-options marker. A value beginning with
+/// `-` is therefore not inert. Two reached past the read-only boundary this
+/// server advertises with `readOnlyHint`:
+///   * `impacted_tests` with `nodes: ["--run"]` became
+///     `test-impact --run`, which executes the project's configured test
+///     commands — arbitrary code execution.
+///   * `nodes: ["--out", "/path"]` became `test-impact --out /path`, which
+///     writes its listing there, truncating any existing file at any
+///     absolute path. `review_changes` with `since: "--out"` did the same
+///     with the following argument.
+///
+/// There is no marker to pass these scanners, so refusing the value is the
+/// fail-closed equivalent. Nothing legitimate is lost: node paths,
+/// identifiers, and git refs cannot begin with `-`. A natural-language
+/// field could, and gets a message that names the fix.
+fn reject_option_like(key: &str, value: &str) -> Result<(), String> {
+    if value.starts_with('-') {
+        return Err(format!(
+            "`{key}` must not start with '-' (got {value:?}). It is passed to a command that \
+             would read it as an option rather than as data; rephrase it without the leading dash."
+        ));
+    }
+    Ok(())
+}
+
 fn required_string<'a>(arguments: &'a Map<String, Value>, key: &str) -> Result<&'a str, String> {
     match arguments.get(key) {
-        Some(Value::String(value)) => Ok(value),
+        Some(Value::String(value)) => {
+            reject_option_like(key, value)?;
+            Ok(value)
+        }
         Some(_) => Err(format!("`{key}` must be a string")),
         None => Err(format!("`{key}` is required")),
     }
@@ -662,7 +702,10 @@ fn optional_string<'a>(
 ) -> Result<Option<&'a str>, String> {
     match arguments.get(key) {
         None | Some(Value::Null) => Ok(None),
-        Some(Value::String(value)) => Ok(Some(value)),
+        Some(Value::String(value)) => {
+            reject_option_like(key, value)?;
+            Ok(Some(value))
+        }
         Some(_) => Err(format!("`{key}` must be a string")),
     }
 }
@@ -684,7 +727,10 @@ fn optional_string_array(
         Some(Value::Array(items)) => items
             .iter()
             .map(|item| match item {
-                Value::String(value) => Ok(value.clone()),
+                Value::String(value) => {
+                    reject_option_like(key, value)?;
+                    Ok(value.clone())
+                }
                 _ => Err(format!("`{key}` must contain only strings")),
             })
             .collect::<Result<Vec<String>, String>>()
@@ -1001,6 +1047,95 @@ mod tests {
     fn impacted_tests_never_executes_the_tests() {
         let argv = argv_for("impacted_tests", json!({"nodes": ["crate::a::b"]})).unwrap();
         assert!(!argv.contains(&"--run".to_string()));
+    }
+
+    /// The node list is appended to `test-impact`'s argv, and `test-impact`
+    /// honours `--run` and `--out` wherever they appear in it. Before this
+    /// was refused, `nodes: ["--run"]` executed the project's configured
+    /// test commands and `nodes: ["--out", path]` wrote that path — through
+    /// a tool advertising `readOnlyHint`.
+    #[test]
+    fn impacted_tests_refuses_a_node_list_that_smuggles_an_option() {
+        for nodes in [
+            json!(["--run"]),
+            json!(["crate::a::b", "--run"]),
+            json!(["--out", "/tmp/written-by-a-read-only-server"]),
+        ] {
+            let error = argv_for("impacted_tests", json!({"nodes": nodes})).unwrap_err();
+            assert!(
+                error.contains("must not start with '-'"),
+                "{nodes} was accepted: {error}"
+            );
+        }
+    }
+
+    /// `review` finds `--out` by scanning pairs, so a `since` of `--out`
+    /// made the *next* argument the path it wrote to.
+    #[test]
+    fn review_changes_refuses_a_since_ref_that_smuggles_an_option() {
+        let error = argv_for("review_changes", json!({"since": "--out"})).unwrap_err();
+        assert!(error.contains("must not start with '-'"), "{error}");
+    }
+
+    /// The invariant, applied to every argument of every tool rather than
+    /// only the two that were exploitable: an argument is data, never an
+    /// option. `search_code` and `ask_codebase` pass their text to
+    /// commands that happen to parse no flags today, so they are covered
+    /// here to keep a flag added to either later from reopening this.
+    #[test]
+    fn every_tool_refuses_option_like_arguments() {
+        let cases = [
+            ("get_source", json!({"nodes": ["--out"]})),
+            ("get_source", json!({"intent": "--with-tests"})),
+            ("find_definition", json!({"name": "--json"})),
+            (
+                "find_definition",
+                json!({"name": "NodeId", "kind": "--out"}),
+            ),
+            ("search_code", json!({"query": "--json"})),
+            ("ask_codebase", json!({"question": "--json"})),
+            ("impacted_tests", json!({"nodes": ["--run"]})),
+            ("review_changes", json!({"since": "--out"})),
+        ];
+        let covered: std::collections::BTreeSet<&str> =
+            cases.iter().map(|(name, _)| *name).collect();
+        assert_eq!(
+            covered.len(),
+            TOOLS.len(),
+            "every tool needs a case here; missing: {:?}",
+            TOOLS
+                .iter()
+                .map(|tool| tool.name)
+                .filter(|name| !covered.contains(name))
+                .collect::<Vec<_>>()
+        );
+
+        for (name, arguments) in cases {
+            let error = argv_for(name, arguments.clone()).unwrap_err();
+            assert!(
+                error.contains("must not start with '-'"),
+                "{name} accepted {arguments}: {error}"
+            );
+        }
+    }
+
+    /// The guard must not reject the values these tools exist to carry: a
+    /// node path with `::`, a hyphenated crate segment, a git ref, and
+    /// prose containing a dash all have to keep working.
+    #[test]
+    fn ordinary_arguments_with_internal_dashes_still_pass() {
+        argv_for(
+            "get_source",
+            json!({"nodes": ["crate::crates::aether-graph::src::lib::tests_for"]}),
+        )
+        .unwrap();
+        argv_for("review_changes", json!({"since": "HEAD~1"})).unwrap();
+        argv_for("review_changes", json!({"since": "main-harden"})).unwrap();
+        argv_for(
+            "ask_codebase",
+            json!({"question": "what calls resolve_calls -- the project-wide one?"}),
+        )
+        .unwrap();
     }
 
     #[test]
