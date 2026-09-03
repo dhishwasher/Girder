@@ -273,6 +273,48 @@ jobs:
       - name: Wrapper unit tests
         run: node --test npm/test/*.test.js
 
+      # `preflight` only compares two text files (Cargo.toml and
+      # package.json) — it cannot see whether the binary actually built and
+      # published under those version numbers agrees with them. That gap is
+      # exactly how a real drift would ship silently: the source and the
+      # package manifest could match each other while the artifact a user's
+      # `npx` downloads reports something else. Downloading the real,
+      # just-published release asset (not a local build) and running
+      # `--version` on it is what closes that: it is the same file
+      # npm/install.js will hand to every installer.
+      - name: Verify the published artifact's version, not just the source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo_version="$(python3 -c 'import tomllib; print(tomllib.load(open("Cargo.toml","rb"))["workspace"]["package"]["version"])')"
+          npm_version="$(python3 -c 'import json; print(json.load(open("npm/package.json"))["version"])')"
+
+          tag="${GITHUB_REF#refs/tags/}"
+          asset="bitcode-x86_64-unknown-linux-gnu.tar.gz"
+          url="https://github.com/${{ github.repository }}/releases/download/${tag}/${asset}"
+
+          scratch="$(mktemp -d)"
+          curl -fsSL -o "$scratch/$asset" "$url"
+          tar -xf "$scratch/$asset" -C "$scratch"
+          chmod +x "$scratch/bitcode"
+
+          artifact_version="$("$scratch/bitcode" --version | awk '{print $2}')"
+
+          echo "Cargo.toml:                 $cargo_version"
+          echo "npm/package.json:           $npm_version"
+          echo "downloaded release artifact: $artifact_version"
+
+          failed=""
+          if [ "$cargo_version" != "$npm_version" ]; then
+            echo "::error::Cargo.toml ($cargo_version) and npm/package.json ($npm_version) disagree"
+            failed=1
+          fi
+          if [ "$cargo_version" != "$artifact_version" ]; then
+            echo "::error::the published release artifact reports version $artifact_version, which does not match Cargo.toml/npm ($cargo_version). Publishing to npm now would ship a version string that lies about which binary a user actually got."
+            failed=1
+          fi
+          [ -z "$failed" ]
+
       - name: Publish
         working-directory: npm
         env:
