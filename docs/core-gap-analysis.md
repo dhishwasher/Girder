@@ -1703,6 +1703,36 @@ as gap 11 rather than silently accepted.
     release asset and checks its own `--version` output against both source
     versions before publishing proceeds.
 
+27. **Open — description-based search (`get_source --intent`, `search_code`,
+    `bitcode search`) improved substantially but remains below the accuracy
+    threshold committed to before measuring it.** All three route through
+    `SemanticGraph::semantic_search`
+    (`crates/aether-graph/src/similarity.rs`), which was plain unweighted
+    Jaccard over `{name} {source}` tokens restricted to `Function` nodes — a
+    common token like "function" scored the same as a distinctive one like
+    "discover", and a query naming a struct's fields (the MCP `Tool`
+    definition) had no candidate node at all. Fixed with five changes
+    (IDF-weighted cosine scoring, a name/path-match boost, widening the
+    candidate scope to `Function ∪ Type`, excluding test-named nodes, and
+    stemming/camelCase-aware tokenization), each verified against a 31-item
+    precommitted corpus
+    (`docs/description-search-accuracy-policy.json`). Top-1 accuracy went
+    16.1% → 41.9%, top-5 25.8% → 77.4%
+    (`docs/description-search-accuracy-observation.json` vs
+    `-baseline-observation.json`), and both of the reproductions that
+    motivated the work now resolve correctly. This is short of the 0.75/0.90
+    threshold the policy committed to before measurement, so the policy
+    result is **FAIL** and stays FAIL in the committed observation file —
+    the threshold was not adjusted to match the result. `docs/
+    description-search-accuracy.md` records what worked and what didn't
+    (cross-crate name collisions on an identical function name, IDF
+    over-rewarding one rare token against two common ones, Python test
+    classes as `Type` nodes the test-name exclusion doesn't catch). The next
+    lever is the embedding backend this module has named as its EXTENSION
+    POINT since it was written; that was deliberately not attempted here, to
+    keep the offline, dependency-free guarantee this module (and the whole
+    default build) commits to.
+
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
 validated projection, and recoverable commit. That advantage is unproven until
