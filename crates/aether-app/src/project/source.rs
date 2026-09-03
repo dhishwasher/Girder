@@ -116,7 +116,9 @@ impl JournalLock {
             #[cfg(not(unix))]
             {
                 // No advisory directory locking on this platform; preserve
-                // the previous unlocked behavior.
+                // the previous unlocked behavior. `wait` only means
+                // something to `flock`, so it is unused here by design.
+                let _ = wait;
                 return Ok(Some(JournalLock { _dir: dir }));
             }
         }
@@ -143,11 +145,13 @@ fn journal_owner_is_alive(name: &std::ffi::OsStr) -> bool {
     if pid == 0 || pid == std::process::id() {
         return false;
     }
-    let Ok(pid) = libc::pid_t::try_from(pid) else {
-        return false;
-    };
     #[cfg(unix)]
     {
+        // `libc::pid_t` exists only on unix, so the narrowing belongs with
+        // the probe that needs it rather than above this cfg split.
+        let Ok(pid) = libc::pid_t::try_from(pid) else {
+            return false;
+        };
         // Signal 0 probes existence: EPERM still means the process exists.
         if unsafe { libc::kill(pid, 0) } == 0 {
             return true;
