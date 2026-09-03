@@ -8,7 +8,7 @@
 // having installed it through npm should not mean you cannot reach that.
 
 const { spawn } = require("child_process");
-const { resolveBinary } = require("../resolve");
+const { childEnv, resolveBinary } = require("../resolve");
 
 const binary = resolveBinary();
 if (!binary) {
@@ -20,7 +20,10 @@ if (!binary) {
   process.exit(1);
 }
 
-const child = spawn(binary, process.argv.slice(2), { stdio: "inherit" });
+const child = spawn(binary, process.argv.slice(2), {
+  stdio: "inherit",
+  env: childEnv(),
+});
 
 child.on("error", (error) => {
   process.stderr.write(`bitcode: could not start ${binary}: ${error.message}\n`);

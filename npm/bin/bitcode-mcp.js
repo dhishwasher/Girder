@@ -9,7 +9,7 @@
 // protocol stream itself.
 
 const { spawn } = require("child_process");
-const { resolveBinary, vendoredPath } = require("../resolve");
+const { childEnv, resolveBinary, vendoredPath } = require("../resolve");
 
 const binary = resolveBinary();
 if (!binary) {
@@ -38,7 +38,10 @@ process.stderr.write(
 const args = process.argv.slice(2);
 const forwarded = args.length > 0 ? args : ["."];
 
-const child = spawn(binary, ["mcp", ...forwarded], { stdio: "inherit" });
+const child = spawn(binary, ["mcp", ...forwarded], {
+  stdio: "inherit",
+  env: childEnv(),
+});
 
 child.on("error", (error) => {
   process.stderr.write(`bitcode-mcp: could not start ${binary}: ${error.message}\n`);
