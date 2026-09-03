@@ -9,9 +9,15 @@
 // protocol stream itself.
 
 const { spawn } = require("child_process");
-const { childEnv, resolveBinary, vendoredPath } = require("../resolve");
+const { childEnv, resolutionNotice, resolveBinary } = require("../resolve");
 
-const binary = resolveBinary();
+let binary;
+try {
+  binary = resolveBinary();
+} catch (error) {
+  process.stderr.write(`bitcode-mcp: ${error.message}\n`);
+  process.exit(1);
+}
 if (!binary) {
   process.stderr.write(
     "bitcode-mcp: no bitcode binary found.\n" +
@@ -27,11 +33,11 @@ if (!binary) {
 // over the version this package downloaded. That ordering is deliberate, but
 // it means `npx bitcode-mcp@X` can run a different build entirely, and
 // CLAUDE.md records a stale `~/.cargo/bin/bitcode` silently invalidating
-// verification here before. One stderr line makes the skew visible instead
+// verification here before. These stderr lines make the skew visible instead
 // of leaving `which bitcode` as the only way to notice.
-process.stderr.write(
-  `bitcode-mcp: using ${binary} (${binary === vendoredPath() ? "downloaded by this package" : "found on PATH, which takes precedence"})\n`
-);
+for (const line of resolutionNotice("bitcode-mcp", binary)) {
+  process.stderr.write(`${line}\n`);
+}
 
 // Default to the working directory the client launched us in, which is the
 // project the agent is working on.

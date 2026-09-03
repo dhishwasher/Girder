@@ -147,3 +147,63 @@ test("childEnv marks the chain so the next shim cannot loop", () => {
     assert.strictEqual(resolve.childEnv()[resolve.REENTRY_ENV], "1");
   });
 });
+
+test("BITCODE_FORCE_VENDORED=1 uses the vendored binary even with a real one on PATH", () => {
+  const { root, pkg } = makePackage();
+  const resolve = load(pkg);
+  const vendored = writeExecutable(path.join(pkg, "bin"), resolve.binaryName());
+  const dir = scratchDir(root, "usr-local-bin");
+  writeExecutable(dir, resolve.binaryName());
+  withEnv(
+    { PATH: dir, [resolve.REENTRY_ENV]: undefined, [resolve.FORCE_VENDORED_ENV]: "1" },
+    () => {
+      assert.strictEqual(resolve.resolveBinary(), vendored);
+    }
+  );
+});
+
+test("BITCODE_FORCE_VENDORED=1 fails loudly naming the missing vendored path", () => {
+  const { root, pkg } = makePackage();
+  const resolve = load(pkg);
+  const dir = scratchDir(root, "usr-local-bin");
+  writeExecutable(dir, resolve.binaryName());
+  const expected = resolve.vendoredPath();
+  withEnv(
+    { PATH: dir, [resolve.REENTRY_ENV]: undefined, [resolve.FORCE_VENDORED_ENV]: "1" },
+    () => {
+      assert.throws(
+        () => resolve.resolveBinary(),
+        (error) => error instanceof Error && error.message.includes(expected)
+      );
+    }
+  );
+});
+
+test("resolutionNotice is silent about a second binary when only the vendored one exists", () => {
+  const { pkg } = makePackage();
+  const resolve = load(pkg);
+  const vendored = writeExecutable(path.join(pkg, "bin"), resolve.binaryName());
+  const lines = resolve.resolutionNotice("bitcode-mcp", vendored);
+  assert.strictEqual(lines.length, 1);
+  assert.match(lines[0], /downloaded by this package/);
+});
+
+test("resolutionNotice names both paths and both --version outputs when PATH wins over an existing vendored copy", () => {
+  const { root, pkg } = makePackage();
+  const resolve = load(pkg);
+  const vendored = path.join(pkg, "bin", resolve.binaryName());
+  fs.writeFileSync(vendored, '#!/bin/sh\necho "bitcode 0.1.1"\n');
+  fs.chmodSync(vendored, 0o755);
+  const dir = scratchDir(root, "cargo-bin");
+  const onPath = path.join(dir, resolve.binaryName());
+  fs.writeFileSync(onPath, '#!/bin/sh\necho "bitcode 0.1.0"\n');
+  fs.chmodSync(onPath, 0o755);
+
+  const lines = resolve.resolutionNotice("bitcode-mcp", onPath);
+  assert.strictEqual(lines.length, 2);
+  assert.match(lines[0], /found on PATH, which takes precedence/);
+  assert.ok(lines[1].includes(onPath), "missing the PATH binary's path");
+  assert.ok(lines[1].includes(vendored), "missing the vendored binary's path");
+  assert.ok(lines[1].includes("bitcode 0.1.0"), "missing the PATH binary's --version output");
+  assert.ok(lines[1].includes("bitcode 0.1.1"), "missing the vendored binary's --version output");
+});

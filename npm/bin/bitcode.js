@@ -10,7 +10,13 @@
 const { spawn } = require("child_process");
 const { childEnv, resolveBinary } = require("../resolve");
 
-const binary = resolveBinary();
+let binary;
+try {
+  binary = resolveBinary();
+} catch (error) {
+  process.stderr.write(`bitcode: ${error.message}\n`);
+  process.exit(1);
+}
 if (!binary) {
   process.stderr.write(
     "bitcode: no bitcode binary found.\n" +
