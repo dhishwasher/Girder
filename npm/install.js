@@ -10,6 +10,7 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { createHash } = require("crypto");
 const { execFileSync } = require("child_process");
 
 const { binaryName, target, unsupportedMessage, vendoredPath } = require("./resolve");
@@ -36,6 +37,31 @@ async function download(url, destination) {
   return buffer;
 }
 
+/**
+ * Throw unless `bytes` matches the checksum published beside the asset.
+ *
+ * Every failure mode throws, which the caller turns into a discarded download
+ * rather than a failed install.
+ */
+async function verify(url, bytes) {
+  const response = await fetch(`${url}.sha256`, { redirect: "follow" });
+  if (!response.ok) {
+    throw new Error(
+      `no checksum at ${url}.sha256 (${response.status} ${response.statusText})`
+    );
+  }
+  const expected = (await response.text()).trim().split(/\s+/)[0] || "";
+  // A mirror can answer 200 with an error page, and calling that a mismatch
+  // would point the reader at their download instead of at their mirror.
+  if (!/^[0-9a-f]{64}$/i.test(expected)) {
+    throw new Error(`malformed checksum file at ${url}.sha256`);
+  }
+  const actual = createHash("sha256").update(bytes).digest("hex");
+  if (expected.toLowerCase() !== actual) {
+    throw new Error(`checksum mismatch (expected ${expected}, got ${actual})`);
+  }
+}
+
 async function main() {
   if (process.env.BITCODE_SKIP_DOWNLOAD === "1") {
     note("BITCODE_SKIP_DOWNLOAD=1; not downloading");
@@ -58,23 +84,18 @@ async function main() {
     const archive = path.join(scratch, asset);
     const bytes = await download(url, archive);
 
-    // Verify when the release publishes a checksum. A mismatch is fatal to
-    // this download; a missing checksum file is not, since older releases
-    // may not have one.
-    try {
-      const published = await fetch(`${url}.sha256`, { redirect: "follow" });
-      if (published.ok) {
-        const expected = (await published.text()).trim().split(/\s+/)[0];
-        const actual = require("crypto").createHash("sha256").update(bytes).digest("hex");
-        if (expected && expected !== actual) {
-          throw new Error(`checksum mismatch (expected ${expected}, got ${actual})`);
-        }
-      }
-    } catch (error) {
-      if (String(error.message).includes("checksum mismatch")) {
-        throw error;
-      }
-      note(`could not verify checksum: ${error.message}`);
+    // The release publishes a .sha256 beside every asset, so anything other
+    // than a match means these bytes are not the ones that were released —
+    // whether the checksum 404s, arrives malformed, or disagrees. All of
+    // those discard the download and fall back to PATH, because the one
+    // thing this must not do is install unverified bytes and then hand an
+    // agent the result. Verification used to be skipped whenever the
+    // checksum could not be fetched, which made a single blocked request
+    // enough to turn that guarantee off.
+    if (process.env.BITCODE_SKIP_CHECKSUM === "1") {
+      note(`BITCODE_SKIP_CHECKSUM=1, so ${asset} was not verified`);
+    } else {
+      await verify(url, bytes);
     }
 
     // bsdtar handles both .tar.gz and .zip, and ships with macOS and
