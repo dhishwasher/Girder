@@ -15,7 +15,7 @@ members = [
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-authors = ["Cory Maynard"]
+authors = ["Cory Robert Maynard"]
 repository = "https://github.com/dhishwasher/bit-code"
 
 # Shared dependency versions. Individual crates opt in via `workspace = true`.
