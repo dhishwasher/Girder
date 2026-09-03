@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "policy_id": "description-search-accuracy-v1",
+  "method": "top-1 and top-5 accuracy of `bitcode search <root> \"<description>\"` (the same `SemanticGraph::semantic_search` that backs `search_code` and `get_source --intent` over MCP) against a pinned corpus of (natural-language description, expected semantic path) pairs drawn from real nodes in this repository, run at a fixed commit",
+  "source_commit": "c24016bf904e61d321eed49932570cb6458dae9e",
+  "motivation": "`find_definition` with an exact symbol name works well, but `get_source --intent` and `search_code`/`bitcode search` -- the common case, since an agent usually has a description and not an exact semantic path -- return irrelevant nodes. Two reproductions: `get_source` with intent \"the function that builds the MCP discover response\" returns unrelated functions (aether-debugger's `Program::function`, aether-app's `render_function`) instead of `mcp::discover_result`; `bitcode search . \"static list of MCP tool definitions with names and schemas\"` scores every hit 0.07-0.09, indistinguishable from noise. Reading `crates/aether-graph/src/similarity.rs` confirms `semantic_search` is plain Jaccard over an unweighted token set built from `{name} {source}`, with no down-weighting of common tokens (e.g. \"function\", which appears in dozens of node bodies via `NodeKind::Function`) and no boost for a token matching the node's own name or path. Separately, `semantic_search` only ever considers `NodeKind::Function` nodes -- the `Tool` struct that is literally \"the MCP tool definitions with names and schemas\" (fields `name`, `description`, `schema`) is a `NodeKind::Type` node and was never a candidate answer, which is a real, independently-confirmed gap and not just a scoring artifact.",
+  "corpus": [
+    {
+      "description": "the function that builds the MCP discover response",
+      "expected_path": "crate::crates::aether-app::src::project::commands::mcp::discover_result",
+      "note": "required reproduction 1 from the task"
+    },
+    {
+      "description": "static list of MCP tool definitions with names and schemas",
+      "expected_path": "crate::crates::aether-app::src::project::commands::mcp::Tool",
+      "note": "required reproduction 2 from the task; the `TOOLS` static itself is not a graph node at all (no Const/Static NodeKind exists), so the `Tool` struct -- a NodeKind::Type node whose fields are literally `name`, `description`, `schema` -- is the closest node a competent human could expect and the reason semantic_search's Function-only scope had to change, not just its weighting"
+    },
+    {
+      "description": "saves the semantic graph to a file on disk",
+      "expected_path": "crate::crates::aether-graph::src::serialize::SemanticGraph::save"
+    },
+    {
+      "description": "loads a semantic graph back from a saved file",
+      "expected_path": "crate::crates::aether-graph::src::serialize::SemanticGraph::load"
+    },
+    {
+      "description": "resolves a partial or suffix name to the matching node id in the graph",
+      "expected_path": "crate::crates::aether-graph::src::knowledge::SemanticGraph::resolve"
+    },
+    {
+      "description": "forks a graph replica for a new collaborator, rejecting an actor that already exists in the history",
+      "expected_path": "crate::crates::aether-graph::src::collaboration::GraphReplica::fork"
+    },
+    {
+      "description": "decides whether a call expression should be skipped as noise during call resolution",
+      "expected_path": "crate::crates::aether-builder::src::mapper::is_call_noise"
+    },
+    {
+      "description": "chooses the entrypoint node project-wide call resolution should start walking from",
+      "expected_path": "crate::crates::aether-builder::src::sync::select_process_entrypoint"
+    },
+    {
+      "description": "detects which source language a file is written in from its extension",
+      "expected_path": "crate::crates::aether-builder::src::parser::Lang::from_path"
+    },
+    {
+      "description": "masks out macro contents so they are not misread as real Rust code",
+      "expected_path": "crate::crates::aether-builder::src::mapper::mask_rust_macro_non_code"
+    },
+    {
+      "description": "the Anthropic provider's chat completion implementation",
+      "expected_path": "crate::crates::aether-ai::src::anthropic::AnthropicProvider::complete"
+    },
+    {
+      "description": "builds an Anthropic provider by reading credentials from environment variables",
+      "expected_path": "crate::crates::aether-ai::src::anthropic::AnthropicProvider::from_env"
+    },
+    {
+      "description": "lists which AI providers can handle a given task class, falling back to a default provider",
+      "expected_path": "crate::crates::aether-ai::src::router::Router::candidates"
+    },
+    {
+      "description": "runs the multi-agent swarm orchestration loop",
+      "expected_path": "crate::crates::aether-agents::src::orchestrator::Orchestrator::run"
+    },
+    {
+      "description": "handles an incoming message for the coder agent",
+      "expected_path": "crate::crates::aether-agents::src::agents::coder::CoderAgent::handle"
+    },
+    {
+      "description": "finds where two branches of the debugger timeline first diverge",
+      "expected_path": "crate::crates::aether-debugger::src::timeline::Timeline::first_divergence"
+    },
+    {
+      "description": "applies an arithmetic or comparison operator to two interpreted values, guarding integer division by zero",
+      "expected_path": "crate::crates::aether-debugger::src::interp::apply_op"
+    },
+    {
+      "description": "builds a demo program containing an intentional bug for the debugger",
+      "expected_path": "crate::crates::aether-debugger::src::lib::buggy_demo_program"
+    },
+    {
+      "description": "sends the DAP initialize request to start a debug session",
+      "expected_path": "crate::crates::aether-dap::src::session::DebugSession::initialize"
+    },
+    {
+      "description": "encodes a DAP message into its wire content-length-prefixed frame",
+      "expected_path": "crate::crates::aether-dap::src::transport::encode"
+    },
+    {
+      "description": "launches a Python debug adapter subprocess",
+      "expected_path": "crate::crates::aether-dap::src::manager::DebugManager::launch_python"
+    },
+    {
+      "description": "joins a collaboration session hosted by a peer",
+      "expected_path": "crate::crates::aether-app::src::project::collaboration_discovery::join_peer"
+    },
+    {
+      "description": "resolves which directory validation checks should run against",
+      "expected_path": "crate::crates::aether-app::src::project::validation::validation_target_dir"
+    },
+    {
+      "description": "kicks off generating a new project extension, refusing to run while one is already busy or the workspace has unsaved changes",
+      "expected_path": "crate::crates::aether-app::src::app::AetherApp::generate_extension"
+    },
+    {
+      "description": "lists every edge kind the graph view UI can filter by",
+      "expected_path": "crate::crates::aether-app::src::graph_view::all_edge_kinds"
+    },
+    {
+      "description": "runs a subprocess with a wall-clock timeout and a hard cap on combined output bytes",
+      "expected_path": "crate::tools::harness_support::run_bounded"
+    },
+    {
+      "description": "computes the fraction of bytes saved by a smaller retrieval compared to a baseline byte count",
+      "expected_path": "crate::tools::context_vs_read_cost::reduction_ratio"
+    },
+    {
+      "description": "finds groups of files that have identical content",
+      "expected_path": "crate::demo-project::dupefinder::find_duplicates"
+    },
+    {
+      "description": "computes a content hash for a file",
+      "expected_path": "crate::demo-project::dupefinder::hash_file"
+    },
+    {
+      "description": "formats a greeting message for a given name",
+      "expected_path": "crate::demo-project::greeter::format_greeting"
+    },
+    {
+      "description": "squares a number",
+      "expected_path": "crate::sample-project::calc::ScientificCalculator::square"
+    }
+  ],
+  "threshold": {
+    "min_top1_accuracy": 0.75,
+    "min_top5_accuracy": 0.9,
+    "rationale": "Set before measuring the fixed implementation (the unweighted-Jaccard baseline is expected to score far below this -- it is reported for contrast but not gated). 0.75/0.90 is deliberately short of 1.0: some corpus descriptions (e.g. the Anthropic `complete` stub, or `resolve`'s partial-name matching) paraphrase intent in words that do not appear verbatim in the node's name, path, or body, and a token-overlap method -- even IDF-weighted with a name/path boost -- is not expected to win every one of those. The two required reproductions are corpus entries like any other, not a separate gate; the pass bar treats them as ordinary evidence."
+  },
+  "reported_but_not_gated": [
+    "baseline (pre-fix) top-1 and top-5 accuracy of the unweighted-Jaccard implementation, for contrast",
+    "per-item results: description, expected_path, ranked hits returned, rank of the expected path if present"
+  ]
+}

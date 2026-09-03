@@ -1,6 +1,6 @@
 {
   "name": "bitcode-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Semantic-graph MCP server for AI coding agents: read one function instead of a whole file, find a declaration without grep, and select only the tests a change can reach.",
   "keywords": [
     "mcp",

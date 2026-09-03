@@ -47,7 +47,8 @@ jobs:
             tools.test_core_representative_mutations \
             tools.test_plan_executor_oracle \
             tools.test_context_vs_read_cost \
-            tools.test_bitcode_context_advisory_hook
+            tools.test_bitcode_context_advisory_hook \
+            tools.test_description_search_accuracy
 
       # `curl … | sh` is the README's first install instruction, so install.sh
       # is how most people will obtain the tool. These run the real script

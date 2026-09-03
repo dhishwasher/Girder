@@ -382,10 +382,10 @@ Use `search_code` instead when you only know roughly what you are after.",
         name: "search_code",
         title: "Search for code by concept",
         description: "\
-Rank functions by relevance to a natural-language description, returning the \
-top matches as scores with node paths. Use this when you do not know the \
-name of what you want; use `find_definition` when you do. Feed the node \
-paths it returns to `get_source`.",
+Rank functions and types by relevance to a natural-language description, \
+returning the top matches as scores with node paths. Use this when you do \
+not know the name of what you want; use `find_definition` when you do. \
+Feed the node paths it returns to `get_source`.",
         schema: || {
             json!({
                 "type": "object",
