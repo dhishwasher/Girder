@@ -81,6 +81,26 @@ A `bitcode` found on PATH takes precedence over the downloaded copy, so a
 build from source or a newer release is never shadowed by an older vendored
 binary.
 
+## Validating a release
+
+On a machine that already has a `bitcode` on PATH — for example a developer's
+own machine, with a build installed via `cargo install`, or `install.sh` —
+`npx -y bitcode-mcp` does **not** test the published package. It downloads
+and checksum-verifies the correct binary, then runs the one already on PATH
+instead, because that ordering is deliberate (see above). The version an MCP
+client sees in `serverInfo.version` can then be the PATH binary's, not the
+package's.
+
+To actually exercise the vendored download, force it:
+
+```bash
+BITCODE_FORCE_VENDORED=1 npx -y bitcode-mcp .
+```
+
+This skips the PATH search entirely. If the postinstall download did not
+land a binary, it fails loudly naming the path it expected, rather than
+silently falling back to PATH the way a normal run does.
+
 ## License
 
 MIT OR Apache-2.0
