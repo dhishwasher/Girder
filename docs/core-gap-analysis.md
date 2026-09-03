@@ -1650,6 +1650,59 @@ as gap 11 rather than silently accepted.
     the real `TimedOut` path on purpose, sets its own explicit 1s override
     against a `sleep 30` and is unaffected.
 
+26. **Closed — `npx -y bitcode-mcp` on a clean directory reported
+    `serverInfo.version` 0.1.0 for a package published as 0.1.1, because the
+    check testing it was fooled by the tester's own machine.** `resolve.js`'s
+    `resolveBinary()` prefers a `bitcode` already on PATH over the binary the
+    postinstall just downloaded — deliberate, and unchanged by this: someone
+    with a source build or a newer `install.sh` copy should not be silently
+    shadowed by an older vendored download. The dev machine running the test
+    had exactly that: an older `bitcode` in `~/.cargo/bin` from
+    `cargo install --path crates/aether-app`, predating even `--version`
+    support. So `npx` downloaded and checksum-verified the correct 0.1.1
+    binary, then executed the stale local one instead and reported its
+    version. Source, tag, and release were all already correct — workspace
+    `Cargo.toml` is 0.1.1, `crates/aether-app/Cargo.toml` uses
+    `version.workspace = true`, `server_info()` in
+    `crates/aether-app/src/project/commands/mcp.rs` reads
+    `env!("CARGO_PKG_VERSION")`, and tag `v0.1.1` points at the commit that
+    released it — so nothing needed republishing. The defect was entirely in
+    what "run `npx` and check the version" was assumed to prove.
+
+    **Same failure class as gaps 16, 22, and 24: a check that reads as
+    verification and isn't.** Gap 16 was a plan-executor report claiming
+    `"committed": true` without checking git truth; gap 22 was
+    `test-impact --quiet` returning zero bytes indistinguishably for "nothing
+    changed" and "missed a real test"; gap 24 was `tests.impacted` returning
+    `passed: true` on an impact set that was empty by construction. Here, "I
+    ran `npx -y bitcode-mcp` and it worked" reads as end-to-end proof the
+    published package installs and runs correctly, but on any machine that
+    already has a `bitcode` on PATH — which describes every machine used to
+    develop this package — it proves nothing about the download at all. Every
+    prior "npx works" result in this repository's history was produced on
+    exactly such a machine and is therefore untrustworthy as evidence the
+    *published binary* runs; it only ever showed that *some* `bitcode` runs.
+
+    Fixed by making the ambiguity impossible to not notice, rather than by
+    reordering PATH-first resolution (which stays, for the reasons above).
+    `BITCODE_FORCE_VENDORED=1` skips the PATH search and requires the
+    downloaded binary, failing loudly with the missing path instead of
+    silently falling back, so a release can actually be exercised on a dev
+    machine (documented in npm/README.md's "Validating a release"). The
+    `bitcode-mcp` shim now also prints, on stderr only, both binaries' paths
+    and `--version` output whenever a PATH binary is chosen while a vendored
+    copy also exists, so the skew is visible without a separate `which
+    bitcode`. `npm/test/version.test.js` asserts the vendored binary's
+    `--version` and its MCP `serverInfo.version` both equal
+    `npm/package.json`'s version, so this class of drift fails a test rather
+    than requiring a human to notice a stray digit in a handshake log. And
+    `.github/workflows/release.yml`'s `preflight` job — which only ever
+    compared `Cargo.toml` against `npm/package.json`, two text files that can
+    agree with each other while the actual artifact disagrees with both — now
+    has a second gate in the `npm` job that downloads the real, just-published
+    release asset and checks its own `--version` output against both source
+    versions before publishing proceeds.
+
 Bit Code's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
 validated projection, and recoverable commit. That advantage is unproven until
