@@ -15,8 +15,10 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+# Least privilege by default. Only `publish` creates a release, and it
+# raises its own scope; the four build jobs never need to write.
 permissions:
-  contents: write
+  contents: read
 
 env:
   CARGO_TERM_COLOR: always
@@ -52,6 +54,23 @@ jobs:
         # for; live providers are an opt-in rebuild.
         run: cargo build --release --locked -p aether-app --target ${{ matrix.target }}
 
+      # `macos-latest` is Apple Silicon, so the Intel artifact is
+      # cross-compiled here and cannot execute without Rosetta 2 — which is
+      # not pre-installed on GitHub's arm64 macOS runners. Without this the
+      # verification step below dies with "bad CPU type in executable" and
+      # takes the whole release with it. The install is idempotent, and the
+      # arch test keeps this correct if the runner label ever points at an
+      # Intel image again.
+      - name: Install Rosetta 2 to run the Intel artifact
+        if: matrix.target == 'x86_64-apple-darwin'
+        shell: bash
+        run: |
+          if [ "$(uname -m)" = "arm64" ]; then
+            softwareupdate --install-rosetta --agree-to-license
+          else
+            echo "native x86_64 host; Rosetta is not needed"
+          fi
+
       # A binary that cannot answer `--version` is not shippable, and a
       # release that silently ships a broken MCP handshake is worse than no
       # release. Both are cheap to check here, on the exact artifact.
@@ -60,9 +79,27 @@ jobs:
         shell: bash
         run: |
           BIN="target/${{ matrix.target }}/release/bitcode"
-          # Cross-compiled macOS arm64 cannot execute on an x86 runner.
-          if [ "${{ matrix.target }}" = "aarch64-apple-darwin" ] && [ "$(uname -m)" != "arm64" ]; then
-            echo "skipping execution check: cross-compiled for arm64"
+          # Decide runnability from the artifact's arch against the host's,
+          # rather than from a hardcoded triple. The previous check named
+          # only `aarch64-apple-darwin` on an x86 host, which is the case
+          # that stopped happening when `macos-latest` became Apple
+          # Silicon, and missed the one that started: an Intel artifact on
+          # an arm64 host, which needs the Rosetta installed above.
+          case "$(uname -m)" in
+            arm64 | aarch64) host_arch="arm64" ;;
+            *) host_arch="x86_64" ;;
+          esac
+          case "${{ matrix.target }}" in
+            aarch64-*) target_arch="arm64" ;;
+            *) target_arch="x86_64" ;;
+          esac
+          # The only translation this workflow provides is Rosetta, which is
+          # macOS-only. Any other mismatch is skipped rather than failed,
+          # because a release should not die over the runner's architecture
+          # when the artifact itself is fine.
+          if [ "$target_arch" != "$host_arch" ] &&
+             ! { [ "$(uname -s)" = "Darwin" ] && [ "$target_arch" = "x86_64" ]; }; then
+            echo "skipping execution check: $target_arch artifact on a $host_arch $(uname -s) host"
             exit 0
           fi
           "$BIN" --version
@@ -117,6 +154,9 @@ jobs:
     name: Publish release
     needs: build
     runs-on: ubuntu-latest
+    # The only job that writes: creating the release and uploading assets.
+    permissions:
+      contents: write
     # Only a real tag publishes. A manual run stops after build, so the
     # pipeline can be exercised without creating a release.
     if: startsWith(github.ref, 'refs/tags/v')
