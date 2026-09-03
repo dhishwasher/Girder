@@ -75,6 +75,7 @@ Rust and Python.
 | `BITCODE_MCP_TIMEOUT_SECONDS` | Per-tool-call budget (default 120). Raise for very large repositories. |
 | `BITCODE_BASE_URL` | Download host for the postinstall binary, for an internal mirror or air-gapped network. |
 | `BITCODE_SKIP_DOWNLOAD` | Set to `1` to skip the postinstall download and use a `bitcode` already on PATH. |
+| `BITCODE_SKIP_CHECKSUM` | Set to `1` to install without verifying the download. Only for a mirror that does not carry the `.sha256` files. |
 
 A `bitcode` found on PATH takes precedence over the downloaded copy, so a
 build from source or a newer release is never shadowed by an older vendored
