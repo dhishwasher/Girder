@@ -65,14 +65,24 @@ are authoritative.
 ### Use Bit Code instead of reading files
 
 Before reading a file to understand a function, run:
-    bitcode context . --nodes <node::path> "<what you need>" --json
-That returns the function's source alone. Measured 41% fewer tokens than
-reading the file.
+    bitcode context . --nodes <node::path> --json --source-only
+That returns the selected node's `{path, language, source}` and nothing
+else. Measured 97.85% fewer bytes than reading the whole file, across ten
+nodes sampled by source-size decile, and cheaper on all ten
+(`docs/context-vs-read-cost.md`).
+
+Pass `--source-only` whenever you are *reading*. Without it, `context` also
+emits a Plan Format v2 schema and plan skeleton for authoring a plan — a
+fixed ~6 KB that made it *more expensive* than reading the file on 2 of
+those 10 nodes, and 15.6x the file for a small one. Bytes, not tokens; no
+tokenizer was run.
 
 To find the node path: bitcode search . "<description>"
 
 To see what changed: bitcode review . --quiet
-Not git diff. --quiet is 9 lines where the full output is 801.
+Not git diff. --quiet prints only changed node paths, one per line, where
+the full report adds impact radius and coverage for each. How much that
+saves depends entirely on the size of the diff, so there is no fixed ratio.
 
 To run tests:
     T=$(bitcode test-impact . --quiet); if [ -n "$T" ]; then cargo test -- $T; else echo "no impacted tests"; fi

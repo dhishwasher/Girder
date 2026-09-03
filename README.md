@@ -9,6 +9,15 @@ of any existing editor. See [`BLUEPRINT.md`](./BLUEPRINT.md) for the full design
 
 ## Install
 
+A prebuilt binary, no Rust toolchain needed:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dhishwasher/bit-code/main/install.sh | sh
+bitcode --version
+```
+
+Or from source:
+
 ```bash
 cargo install --path crates/aether-app
 bitcode --help
@@ -19,6 +28,70 @@ This builds the default headless profile and installs the `bitcode` binary to
 key is required — the default AI provider is an offline `MockProvider`. The GUI
 and live AI providers are opt-in Cargo features not included in a plain
 install; see [The GUI](#the-gui) and [Local-first AI](#local-first-ai) below.
+
+## Use it from an AI coding agent
+
+`bitcode mcp` serves the read-only graph commands over the
+[Model Context Protocol](https://modelcontextprotocol.io), so an agent can ask
+about your codebase instead of reading files into its context window.
+
+Claude Code:
+
+```bash
+claude mcp add bitcode -- npx -y bitcode-mcp .
+```
+
+Any MCP client config:
+
+```json
+{
+  "mcpServers": {
+    "bitcode": {
+      "command": "npx",
+      "args": ["-y", "bitcode-mcp", "."]
+    }
+  }
+}
+```
+
+With a binary already installed, `"command": "bitcode", "args": ["mcp", "."]`
+skips npm entirely.
+
+Six tools, all read-only:
+
+| Tool | What it answers |
+|---|---|
+| `get_source` | The source of specific functions, without the file around them. |
+| `find_definition` | Where an exact identifier is declared. Not a substring search. |
+| `search_code` | Which functions match a description, when you don't know the name. |
+| `ask_codebase` | Callers, callees, and blast radius, by graph traversal. |
+| `impacted_tests` | Only the tests that can reach what changed. |
+| `review_changes` | What changed in the working tree, as semantics rather than text. |
+
+### What that saves, and what it doesn't
+
+Two precommitted measurements, both counting **bytes of command output rather
+than tokens** (no tokenizer was run):
+
+- `get_source` against reading the whole file: **97.85% fewer bytes** across ten
+  functions sampled by source-size decile, cheaper on all ten
+  ([`docs/context-vs-read-cost.md`](./docs/context-vs-read-cost.md)).
+- `find_definition` against `grep`: **97.98% fewer bytes** across ten
+  identifiers ([`docs/names-cost.md`](./docs/names-cost.md)).
+
+Both are single-repository measurements. The direction is structural — files
+are much larger than the functions in them, and grep returns every mention
+where `find_definition` returns only declarations — but the exact percentages
+are not portable.
+
+`impacted_tests` is **advisory**. It over-selects unrelated tests, and it
+misses tests reached only through dynamic dispatch (measured: recall 0.000 on a
+polymorphic-dispatch case, [`docs/core-representative-mutations.md`](./docs/core-representative-mutations.md)).
+A full test run remains the authority before calling a change safe.
+
+The project root is fixed when the server starts, so no tool call can reach
+another directory. `BITCODE_MCP_TIMEOUT_SECONDS` (default 120) bounds each
+call; raise it for a very large repository.
 
 Everything below assumes `bitcode` is on your `PATH`. Building from a source
 checkout without installing works the same way with `cargo run -p aether-app --`
@@ -360,7 +433,18 @@ versions fail before project analysis starts.
 offline `MockProvider`) automatically. `bitcode context` and `plan run
 --authored` split that same workflow at the model boundary, so *any* chat
 model — one with no API integration in this codebase at all — can author a
-verified graph edit. The loop:
+verified graph edit.
+
+> **Reading, not authoring?** Add `--source-only`. The default output below
+> carries a Plan Format v2 schema and plan skeleton, which is a fixed ~6 KB
+> that a model authoring an edit needs and a model merely *reading* code does
+> not — it measured *more expensive* than reading the whole file on 2 of 10
+> nodes, and 15.6× the file for a small one. `--source-only` drops the
+> envelope and measured 97.85% cheaper than a file read across the same ten
+> nodes ([`docs/context-vs-read-cost.md`](./docs/context-vs-read-cost.md)).
+> It also needs no git repository, having no `base_commit` to pin.
+
+The authoring loop:
 
 ```bash
 # 1. Emit graph context, a real Plan Format v2 authoring schema, and a plan
@@ -598,9 +682,14 @@ time-travel debug) are real, tested, and runnable.
 The checked
 [Core Trustworthiness Measurement](docs/core-trustworthiness-measurement.md)
 compares affected-test selection with isolated runtime execution. Its bounded
-baseline currently measures Rust precision/recall at `0.667/1.000` and Python
-at `1.000/1.000`; these fixture results expose real gaps and are not a
-representative-repository superiority claim.
+baseline measures both Rust and Python precision/recall at `1.000/1.000`
+(the earlier `0.667` Rust precision defect is closed). That is a result on
+small fixtures, not a representative-repository superiority claim — and the
+counter-evidence is checked in alongside it: on a real dependency, a
+polymorphic-dispatch mutation measured recall `0.000`
+([`docs/core-representative-mutations.md`](docs/core-representative-mutations.md)),
+which is why test selection is documented as advisory rather than
+authoritative.
 
 Implemented features:
 

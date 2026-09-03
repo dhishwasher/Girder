@@ -45,7 +45,9 @@ jobs:
             tools.test_core_trustworthiness_oracle \
             tools.test_core_representative_benchmark \
             tools.test_core_representative_mutations \
-            tools.test_plan_executor_oracle
+            tools.test_plan_executor_oracle \
+            tools.test_context_vs_read_cost \
+            tools.test_bitcode_context_advisory_hook
 
       - name: Live provider feature compiles
         run: cargo check -p aether-ai --features live-providers

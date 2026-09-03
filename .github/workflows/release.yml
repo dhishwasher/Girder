@@ -1,0 +1,139 @@
+# Prebuilt binaries for a tagged release.
+#
+# Until this existed, installing Bit Code meant cloning the repository and
+# compiling it, which requires a Rust toolchain. That is a hard stop for most
+# of the people who would use `bitcode mcp` from a coding agent, since the
+# agent hosts (Claude Code, Cursor, Codex, Zed) are not Rust environments.
+#
+# Triggered by pushing a `v*` tag, or manually against any ref for a dry run.
+# The manual path builds and uploads workflow artifacts but publishes no
+# release, so the pipeline can be proven before a real version is cut.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      # One target failing should not hide whether the others are fine.
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+          - target: x86_64-apple-darwin
+            runner: macos-latest
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build release binary
+        # Default features only: the headless CLI and the MCP server. The GUI
+        # needs system graphics libraries and is not what a released binary is
+        # for; live providers are an opt-in rebuild.
+        run: cargo build --release --locked -p aether-app --target ${{ matrix.target }}
+
+      # A binary that cannot answer `--version` is not shippable, and a
+      # release that silently ships a broken MCP handshake is worse than no
+      # release. Both are cheap to check here, on the exact artifact.
+      - name: Verify the artifact runs (unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          BIN="target/${{ matrix.target }}/release/bitcode"
+          # Cross-compiled macOS arm64 cannot execute on an x86 runner.
+          if [ "${{ matrix.target }}" = "aarch64-apple-darwin" ] && [ "$(uname -m)" != "arm64" ]; then
+            echo "skipping execution check: cross-compiled for arm64"
+            exit 0
+          fi
+          "$BIN" --version
+          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
+            | "$BIN" mcp . > handshake.json
+          grep -q '"serverInfo"' handshake.json
+          grep -q '"protocolVersion":"2025-06-18"' handshake.json
+
+      - name: Verify the artifact runs (windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          BIN="target/${{ matrix.target }}/release/bitcode.exe"
+          "$BIN" --version
+          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
+            | "$BIN" mcp . > handshake.json
+          grep -q '"serverInfo"' handshake.json
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p dist
+          name="bitcode-${{ matrix.target }}"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp "target/${{ matrix.target }}/release/bitcode.exe" .
+            7z a "dist/${name}.zip" bitcode.exe LICENSE-MIT LICENSE-APACHE README.md
+          else
+            cp "target/${{ matrix.target }}/release/bitcode" .
+            tar czf "dist/${name}.tar.gz" bitcode LICENSE-MIT LICENSE-APACHE README.md
+          fi
+
+      # Checksums are generated per target rather than centrally so each one
+      # is computed on the machine that produced the artifact.
+      - name: Checksum
+        shell: bash
+        run: |
+          cd dist
+          for file in *; do
+            if command -v sha256sum > /dev/null; then
+              sha256sum "$file" > "$file.sha256"
+            else
+              shasum -a 256 "$file" > "$file.sha256"
+            fi
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bitcode-${{ matrix.target }}
+          path: dist/*
+
+  publish:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    # Only a real tag publishes. A manual run stops after build, so the
+    # pipeline can be exercised without creating a release.
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect
+        run: |
+          mkdir -p dist
+          find artifacts -type f -exec cp {} dist/ \;
+          ls -la dist
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true

@@ -1,0 +1,50 @@
+{
+  "name": "bitcode-mcp",
+  "version": "0.1.0",
+  "description": "Semantic-graph MCP server for AI coding agents: read one function instead of a whole file, find a declaration without grep, and select only the tests a change can reach.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "coding-agent",
+    "code-search",
+    "semantic-graph",
+    "claude",
+    "cursor",
+    "context"
+  ],
+  "homepage": "https://github.com/dhishwasher/bit-code#readme",
+  "bugs": "https://github.com/dhishwasher/bit-code/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dhishwasher/bit-code.git",
+    "directory": "npm"
+  },
+  "license": "MIT OR Apache-2.0",
+  "type": "commonjs",
+  "bin": {
+    "bitcode-mcp": "bin/bitcode-mcp.js",
+    "bitcode": "bin/bitcode.js"
+  },
+  "files": [
+    "bin/",
+    "install.js",
+    "resolve.js",
+    "README.md"
+  ],
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
+}

@@ -32,12 +32,15 @@ if not (file_path.endswith(".rs") or file_path.endswith(".py")):
     sys.exit(0)
 
 message = (
-    "Bit Code repo: prefer `bitcode context . --nodes <node::path> --json` "
-    "over Read for a single function's source (CLAUDE.md's \"Agent tooling: "
-    "use Bit Code's own CLI\" section) -- measured 41% fewer tokens than "
-    "reading the file. `bitcode query . \"<question>\"` covers callers/"
-    "callees instead of grepping. This is advisory only; the Read will "
-    "still proceed."
+    "Bit Code repo: prefer `bitcode context . --nodes <node::path> --json "
+    "--source-only` over Read for a single function's source (CLAUDE.md's "
+    "\"Agent tooling: use Bit Code's own CLI\" section) -- measured 97.85% "
+    "fewer bytes than reading the whole file across ten nodes, and cheaper "
+    "on all ten (docs/context-vs-read-cost.md). `--source-only` matters: "
+    "without it the same command also emits a plan-authoring schema, which "
+    "measured more expensive than reading the file on 2 of those 10. "
+    "`bitcode query . \"<question>\"` covers callers/callees instead of "
+    "grepping. This is advisory only; the Read will still proceed."
 )
 
 enforce = os.environ.get("BITCODE_HOOK_ENFORCE") == "1"

@@ -63,6 +63,7 @@ COMMANDS:
                               paths instead. --dry never writes to the real
                               tree.
     context <dir> [--nodes <path>[,<path>...]] [\"<intent>\"] --json
+              [--with-tests] [--source-only]
                               Read-only: the same node selection and
                               authoring JSON Schema `do` sends a model, plus
                               a plan skeleton (harness-owned fields and one
@@ -73,6 +74,17 @@ COMMANDS:
                               for pasting context into an external chat
                               model not wired in as a provider, then running
                               its plan with `plan run --authored`.
+                              --source-only drops the schema and plan
+                              skeleton, emitting just the selected nodes'
+                              {path, language, source}. Use it when reading
+                              rather than authoring: the authoring envelope
+                              is a fixed ~6 KB that measured *more*
+                              expensive than reading the whole file for
+                              small files, where --source-only measured
+                              97.85% cheaper across ten nodes and cheaper on
+                              all ten (docs/context-vs-read-cost.md). It
+                              also needs no git repository, since it has no
+                              base_commit to pin.
     new <dir> \"<description>\" --language rust|python --json
                               Read-only, context-shaped, for authoring a
                               program that does not exist yet: project root,
@@ -180,23 +192,44 @@ COMMANDS:
                               install <recipe.json> [--approve];
                               enable|disable|remove <extension-id>;
                               marketplace list|search|show|adapt.
+    mcp [dir]                 Serve the read-only graph commands to an AI
+                              coding agent over the Model Context Protocol
+                              on stdin/stdout. Exposes search, names, query,
+                              context (--source-only shape), review, and
+                              test-impact as MCP tools. No writes, no model
+                              calls, no network.
     --gui [dir]               Launch the native egui/wgpu window for a project
+    --version                 Show the version
     --help                    Show this help
 ";
 
 fn main() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "warn".into()),
-        )
-        .with_target(false)
-        .init();
-
     let args: Vec<String> = std::env::args().skip(1).collect();
     let cmd = args.first().map(String::as_str);
 
+    let filter =
+        tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "warn".into());
+    if cmd == Some("mcp") {
+        // `mcp` speaks JSON-RPC on stdout, where the default subscriber
+        // writes. One log line there desynchronizes the frame stream and the
+        // client drops the connection, so logs go to stderr for this command.
+        tracing_subscriber::fmt()
+            .with_env_filter(filter)
+            .with_target(false)
+            .with_writer(std::io::stderr)
+            .init();
+    } else {
+        tracing_subscriber::fmt()
+            .with_env_filter(filter)
+            .with_target(false)
+            .init();
+    }
+
     match cmd {
         Some("--help") | Some("-h") => println!("{USAGE}"),
+        Some("--version") | Some("-V") => {
+            println!("bitcode {}", env!("CARGO_PKG_VERSION"));
+        }
         Some("--gui") => launch_gui_or_fallback(args.get(1)),
         Some("config") => report(project::config(&args[1..])),
         Some("analyze") => report(project::analyze(&args[1..])),
@@ -234,6 +267,7 @@ fn main() {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             report(rt.block_on(project::dap(&args[1..])));
         }
+        Some("mcp") => report(project::mcp(&args[1..])),
         Some("query") => report(project::query(&args[1..])),
         Some("debug") => report(project::debug(&args[1..])),
         Some("extension") => {

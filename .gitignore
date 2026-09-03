@@ -9,3 +9,8 @@ project.aether
 __pycache__/
 **/*.rs.bk
 /target
+# The npm wrapper's postinstall downloads the binary next to its shims.
+npm/bin/bitcode
+npm/bin/bitcode.exe
+npm/node_modules/
+npm/*.tgz

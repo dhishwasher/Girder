@@ -18,7 +18,7 @@ use crate::project::source::build_from_dir_with_config;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
-const USAGE: &str = "usage: bitcode context <dir> [--nodes <path>[,<path>...]] [\"<intent>\"] --json [--with-tests]";
+const USAGE: &str = "usage: bitcode context <dir> [--nodes <path>[,<path>...]] [\"<intent>\"] --json [--with-tests] [--source-only]";
 
 pub fn context(args: &[String]) -> std::io::Result<()> {
     let Some(root_arg) = args.first() else {
@@ -47,9 +47,17 @@ pub fn context(args: &[String]) -> std::io::Result<()> {
 /// still prints exactly what this returns, unchanged.
 fn build_output(root: &Path, args: &[String]) -> std::io::Result<Value> {
     let pinned_node_paths = parse_pinned_nodes(args)?;
-    let intent = collect_words(args, &["--json", "--with-tests"], &["--nodes"]);
+    let intent = collect_words(
+        args,
+        &["--json", "--with-tests", "--source-only"],
+        &["--nodes"],
+    );
     let pinned = pinned_node_paths.as_deref();
-    if args.iter().any(|arg| arg == "--with-tests") {
+    let with_tests = args.iter().any(|arg| arg == "--with-tests");
+    if args.iter().any(|arg| arg == "--source-only") {
+        return build_source_only_json(root, &intent, pinned, with_tests);
+    }
+    if with_tests {
         build_context_json_inner(root, &intent, pinned, true)
     } else {
         // Routes through the same `build_context_json` the GUI calls, so
@@ -88,6 +96,40 @@ fn build_context_json_inner(
     pinned_node_paths: Option<&[String]>,
     with_tests: bool,
 ) -> std::io::Result<Value> {
+    let selection = select_nodes(root, intent, pinned_node_paths, with_tests)?;
+    let node_context = selection.node_context;
+
+    let base_commit = git_head_commit(root)?;
+    let plan_id = generate_plan_id();
+    Ok(json!({
+        "intent": intent,
+        "base_commit": base_commit,
+        "nodes": node_context,
+        // Real Plan Format v2 (see `plan_schema`'s doc comment), not
+        // `ctx.schema` — this JSON goes to an external model that writes a
+        // plan file directly, straight into `load_plan`, with no
+        // translation layer the way `bitcode do`'s local path has
+        // (`author::convert_edit`/`convert_check`).
+        "schema": plan_schema(&selection.node_paths),
+        "plan_skeleton": plan_skeleton(&base_commit, intent, &plan_id),
+    }))
+}
+
+/// The selected nodes, shared by the authoring output and `--source-only`.
+struct Selection {
+    node_context: Vec<Value>,
+    node_paths: Vec<String>,
+}
+
+/// Builds the graph and resolves `intent`/`--nodes` to node context entries.
+/// Both output modes select identically — `--source-only` changes what is
+/// wrapped around the selection, never which nodes are chosen.
+fn select_nodes(
+    root: &Path,
+    intent: &str,
+    pinned_node_paths: Option<&[String]>,
+    with_tests: bool,
+) -> std::io::Result<Selection> {
     let config = ProjectConfig::load(root)?;
     let (graph, _builder, _files) = build_from_dir_with_config(root, &config)?;
 
@@ -114,19 +156,38 @@ fn build_context_json_inner(
         }
     }
 
-    let base_commit = git_head_commit(root)?;
-    let plan_id = generate_plan_id();
+    Ok(Selection {
+        node_context,
+        node_paths: ctx.node_paths,
+    })
+}
+
+/// `--source-only`: the selected nodes' `{path, language, source}` and
+/// nothing else.
+///
+/// Default `context` output is shaped for *plan authoring* — it carries a
+/// Plan Format v2 JSON Schema and a plan skeleton so an external model can
+/// write a plan file. That envelope is a fixed cost paid on every call, and
+/// it dwarfs the payload for the common case: the median function in this
+/// repo is a few hundred bytes of source against several kilobytes of
+/// schema. When the caller only wants to *read* a function — an agent
+/// answering a question, not authoring an edit — the envelope is pure
+/// overhead, so this mode drops it.
+///
+/// Also skips `git_head_commit`: `base_commit` exists to pin a plan's
+/// preconditions, which retrieval has none of. Dropping it means
+/// `--source-only` works in a tree that is dirty, or not a git repository
+/// at all, where the authoring output legitimately cannot.
+fn build_source_only_json(
+    root: &Path,
+    intent: &str,
+    pinned_node_paths: Option<&[String]>,
+    with_tests: bool,
+) -> std::io::Result<Value> {
+    let selection = select_nodes(root, intent, pinned_node_paths, with_tests)?;
     Ok(json!({
         "intent": intent,
-        "base_commit": base_commit,
-        "nodes": node_context,
-        // Real Plan Format v2 (see `plan_schema`'s doc comment), not
-        // `ctx.schema` — this JSON goes to an external model that writes a
-        // plan file directly, straight into `load_plan`, with no
-        // translation layer the way `bitcode do`'s local path has
-        // (`author::convert_edit`/`convert_check`).
-        "schema": plan_schema(&ctx.node_paths),
-        "plan_skeleton": plan_skeleton(&base_commit, intent, &plan_id),
+        "nodes": selection.node_context,
     }))
 }
 
@@ -362,6 +423,120 @@ mod tests {
         assert_eq!(checks[0]["kind"], "tests.impacted");
         assert_eq!(checks[0]["expect"], "all_pass");
 
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn source_only_emits_just_intent_and_nodes() {
+        let root = fixture_project("source-only-keys");
+        let args = vec![
+            root.display().to_string(),
+            "--nodes".to_string(),
+            "crate::calc::greet".to_string(),
+            "--json".to_string(),
+            "--source-only".to_string(),
+        ];
+        let output = build_output(&root, &args).unwrap();
+
+        let object = output.as_object().unwrap();
+        let mut keys: Vec<&str> = object.keys().map(String::as_str).collect();
+        keys.sort_unstable();
+        assert_eq!(keys, vec!["intent", "nodes"]);
+
+        let nodes = output["nodes"].as_array().unwrap();
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0]["path"], "crate::calc::greet");
+        assert_eq!(nodes[0]["language"], "rust");
+        assert!(nodes[0]["source"].as_str().unwrap().contains("fn greet"));
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// The whole point of `--source-only`: the same selection costs strictly
+    /// fewer bytes than the authoring envelope, and the difference is the
+    /// schema and plan skeleton rather than any loss of node source.
+    #[test]
+    fn source_only_is_smaller_than_the_authoring_envelope_without_dropping_source() {
+        let root = fixture_project("source-only-smaller");
+        let mut args = vec![
+            root.display().to_string(),
+            "--nodes".to_string(),
+            "crate::calc::greet".to_string(),
+            "--json".to_string(),
+        ];
+        let authoring = build_output(&root, &args).unwrap();
+        args.push("--source-only".to_string());
+        let lean = build_output(&root, &args).unwrap();
+
+        assert_eq!(
+            lean["nodes"], authoring["nodes"],
+            "--source-only must not change the node payload, only the wrapper"
+        );
+        let lean_bytes = serde_json::to_string_pretty(&lean).unwrap().len();
+        let authoring_bytes = serde_json::to_string_pretty(&authoring).unwrap().len();
+        assert!(
+            lean_bytes < authoring_bytes,
+            "--source-only ({lean_bytes}B) must be smaller than authoring output ({authoring_bytes}B)"
+        );
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// `--source-only` skips `git_head_commit`, so unlike the authoring
+    /// output it must still work with no git repository at all.
+    #[test]
+    fn source_only_works_outside_a_git_repository() {
+        let root = std::env::temp_dir().join(format!(
+            "bitcode-context-cmd-fixture-no-git-{}-{}",
+            std::process::id(),
+            NEXT_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(
+            root.join("calc.rs"),
+            "pub fn greet() -> String {\n    \"hi\".to_string()\n}\n",
+        )
+        .unwrap();
+
+        let args = vec![
+            root.display().to_string(),
+            "--nodes".to_string(),
+            "crate::calc::greet".to_string(),
+            "--json".to_string(),
+            "--source-only".to_string(),
+        ];
+        let output = build_output(&root, &args).unwrap();
+        assert_eq!(output["nodes"].as_array().unwrap().len(), 1);
+
+        // The authoring output over the same non-repository tree is the
+        // contrast that makes the point: it needs a base_commit and fails.
+        let authoring_args: Vec<String> = args
+            .iter()
+            .filter(|arg| *arg != "--source-only")
+            .cloned()
+            .collect();
+        assert!(build_output(&root, &authoring_args).is_err());
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn source_only_composes_with_with_tests() {
+        let root = fixture_project_with_one_covering_test("source-only-with-tests");
+        let args = vec![
+            root.display().to_string(),
+            "--nodes".to_string(),
+            "crate::calc::greet".to_string(),
+            "--json".to_string(),
+            "--source-only".to_string(),
+            "--with-tests".to_string(),
+        ];
+        let output = build_output(&root, &args).unwrap();
+        let node = &output["nodes"].as_array().unwrap()[0];
+        let full = node["tests"]["full"].as_array().unwrap();
+        assert_eq!(full.len(), 1, "{node}");
+        assert_eq!(full[0]["path"], "crate::calc::test_greet");
         let _ = std::fs::remove_dir_all(&root);
     }
 

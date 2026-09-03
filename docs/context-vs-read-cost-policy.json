@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "policy_id": "context-vs-read-cost-v1",
+  "method": "byte-count comparison of three retrieval arms for the same function node, run on a fixed node list at a pinned commit",
+  "source_commit": "073c4eceb1a2b8ecf3f1e3b49a4d4bb1625cb890",
+  "motivation": "CLAUDE.md instructed agents to prefer `bitcode context` over reading a file, citing 'measured 41% fewer tokens'. That 41.0% figure is from docs/authoring-cost.md -- plan-authoring prompt tokens, text-addressed vs graph-addressed, 5 of 8 paired tasks, under a policy that FAILED overall. No measurement of `bitcode context` against reading a file existed. This policy measures the claim that was actually being made.",
+  "arms": {
+    "read": {
+      "command_template": "<read the whole file containing the node>",
+      "metric": "byte count of the file named by the node's `file` field in `bitcode inspect --json`",
+      "rationale": "What an agent's Read tool returns when it opens the file to see one function. The honest baseline for 'instead of reading the file'."
+    },
+    "context": {
+      "command_template": "bitcode context . --nodes <node::path> --json",
+      "metric": "raw stdout byte count",
+      "rationale": "The command CLAUDE.md actually told agents to run. Its output carries a Plan Format v2 JSON Schema and plan skeleton in addition to the node source."
+    },
+    "source_only": {
+      "command_template": "bitcode context . --nodes <node::path> --json --source-only",
+      "metric": "raw stdout byte count",
+      "rationale": "Retrieval without the authoring envelope: the selected nodes' {path, language, source} and nothing else. Added by this measurement because the `context` arm's fixed envelope was the suspected cost."
+    }
+  },
+  "node_selection": {
+    "rule": "Every Function node in the graph of this repository at source_commit, sorted by (source span bytes, node path), sampled at each 10th percentile: index floor(i * n / 10) for i in 0..10. Pinned explicitly below so the list cannot drift with the graph.",
+    "rationale": "Deciles by source size rather than hand-picked nodes: the envelope overhead this measurement is testing is a fixed cost, so it matters most for the small functions that make up most of a real codebase. The median Function node here is 549 bytes. Cherry-picking large functions would flatter the tool.",
+    "nodes": [
+      "crate::sample-project::calc::greet",
+      "crate::crates::aether-app::src::project::collaboration_discovery::collaboration_result",
+      "crate::crates::aether-app::src::project::source::read_project_bytes",
+      "crate::crates::aether-app::src::project::source::cargo_bin_targets_is_empty_without_a_readable_manifest",
+      "crate::tools::test_core_representative_benchmark::RepresentativeBenchmarkUnitTests::test_archive_path_validation_rejects_escape_and_platform_ambiguity",
+      "crate::crates::aether-dap::src::session::DebugSession::require_state",
+      "crate::crates::aether-dap::src::transport::multiple_frames_in_sequence",
+      "crate::crates::aether-graph::src::knowledge::SemanticGraph::ans_callees",
+      "crate::crates::aether-app::src::project::source::atomic_write",
+      "crate::tools::plan_executor_oracle::_require_isolated_occurrence"
+    ]
+  },
+  "threshold": {
+    "metric": "aggregate byte reduction of the source_only arm against the read arm, summed across all nodes",
+    "min_reduction_ratio": 0.4,
+    "rationale": "Matches the 40% bar already established in docs/authoring-cost.md and reused by docs/names-cost-policy.json."
+  },
+  "reported_but_not_gated": [
+    "aggregate byte reduction of the context arm against the read arm",
+    "per-node reduction for both arms, including any node where an arm is larger than reading the file"
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "policy_id": "context-vs-read-cost-v1",
+  "policy_source_commit": "073c4eceb1a2b8ecf3f1e3b49a4d4bb1625cb890",
+  "observed_commit": "073c4eceb1a2b8ecf3f1e3b49a4d4bb1625cb890",
+  "source_commit_matches": true,
+  "bitcode": "/workspace/target/debug/bitcode",
+  "summary": {
+    "nodes_measured": 10,
+    "read_bytes_total": 408137,
+    "context_bytes_total": 71557,
+    "source_only_bytes_total": 8765,
+    "context_reduction_ratio": 0.8246740677762614,
+    "source_only_reduction_ratio": 0.9785243680430836,
+    "min_reduction_ratio": 0.4,
+    "nodes_where_context_costs_more_than_reading": [
+      "crate::sample-project::calc::greet",
+      "crate::crates::aether-dap::src::transport::multiple_frames_in_sequence"
+    ],
+    "nodes_where_source_only_costs_more_than_reading": [],
+    "policy_result": "PASS"
+  },
+  "nodes": [
+    {
+      "node": "crate::sample-project::calc::greet",
+      "file": "sample-project/calc.py",
+      "read_bytes": 392,
+      "context_bytes": 6120,
+      "source_only_bytes": 188,
+      "context_reduction_ratio": -14.612244897959183,
+      "source_only_reduction_ratio": 0.5204081632653061
+    },
+    {
+      "node": "crate::crates::aether-app::src::project::collaboration_discovery::collaboration_result",
+      "file": "crates/aether-app/src/project/collaboration_discovery.rs",
+      "read_bytes": 26690,
+      "context_bytes": 6673,
+      "source_only_bytes": 325,
+      "context_reduction_ratio": 0.7499812663919071,
+      "source_only_reduction_ratio": 0.9878231547396028
+    },
+    {
+      "node": "crate::crates::aether-app::src::project::source::read_project_bytes",
+      "file": "crates/aether-app/src/project/source.rs",
+      "read_bytes": 66860,
+      "context_bytes": 6593,
+      "source_only_bytes": 397,
+      "context_reduction_ratio": 0.9013909661980257,
+      "source_only_reduction_ratio": 0.9940622195632666
+    },
+    {
+      "node": "crate::crates::aether-app::src::project::source::cargo_bin_targets_is_empty_without_a_readable_manifest",
+      "file": "crates/aether-app/src/project/source.rs",
+      "read_bytes": 66860,
+      "context_bytes": 7024,
+      "source_only_bytes": 540,
+      "context_reduction_ratio": 0.8949446604845946,
+      "source_only_reduction_ratio": 0.9919234220759796
+    },
+    {
+      "node": "crate::tools::test_core_representative_benchmark::RepresentativeBenchmarkUnitTests::test_archive_path_validation_rejects_escape_and_platform_ambiguity",
+      "file": "tools/test_core_representative_benchmark.py",
+      "read_bytes": 12328,
+      "context_bytes": 7560,
+      "source_only_bytes": 700,
+      "context_reduction_ratio": 0.3867618429591175,
+      "source_only_reduction_ratio": 0.9432186891628812
+    },
+    {
+      "node": "crate::crates::aether-dap::src::session::DebugSession::require_state",
+      "file": "crates/aether-dap/src/session.rs",
+      "read_bytes": 18884,
+      "context_bytes": 6949,
+      "source_only_bytes": 745,
+      "context_reduction_ratio": 0.6320165219233214,
+      "source_only_reduction_ratio": 0.96054861258208
+    },
+    {
+      "node": "crate::crates::aether-dap::src::transport::multiple_frames_in_sequence",
+      "file": "crates/aether-dap/src/transport.rs",
+      "read_bytes": 4136,
+      "context_bytes": 7171,
+      "source_only_bytes": 951,
+      "context_reduction_ratio": -0.7338007736943907,
+      "source_only_reduction_ratio": 0.7700676982591876
+    },
+    {
+      "node": "crate::crates::aether-graph::src::knowledge::SemanticGraph::ans_callees",
+      "file": "crates/aether-graph/src/knowledge.rs",
+      "read_bytes": 24749,
+      "context_bytes": 7389,
+      "source_only_bytes": 1161,
+      "context_reduction_ratio": 0.7014424825245464,
+      "source_only_reduction_ratio": 0.9530890136975231
+    },
+    {
+      "node": "crate::crates::aether-app::src::project::source::atomic_write",
+      "file": "crates/aether-app/src/project/source.rs",
+      "read_bytes": 66860,
+      "context_bytes": 7639,
+      "source_only_bytes": 1491,
+      "context_reduction_ratio": 0.8857463356266826,
+      "source_only_reduction_ratio": 0.9776996709542327
+    },
+    {
+      "node": "crate::tools::plan_executor_oracle::_require_isolated_occurrence",
+      "file": "tools/plan_executor_oracle.py",
+      "read_bytes": 120378,
+      "context_bytes": 8439,
+      "source_only_bytes": 2267,
+      "context_reduction_ratio": 0.9298958281413547,
+      "source_only_reduction_ratio": 0.9811676552193922
+    }
+  ]
+}
