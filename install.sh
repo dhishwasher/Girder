@@ -10,6 +10,8 @@
 #   BITCODE_BASE_URL  download host, for an internal mirror or an air-gapped
 #                     network that cannot reach github.com. Assets must sit at
 #                     <base>/<version>/<asset>.
+#   BITCODE_SKIP_CHECKSUM=1  install without verifying the download. Only for
+#                     a mirror that does not carry the .sha256 files.
 #
 # POSIX sh on purpose: this has to run under dash and busybox ash, not just
 # bash. Every failure exits non-zero with a message on stderr, because a
@@ -31,6 +33,20 @@ need() {
 need uname
 need mkdir
 need tar
+
+# The release publishes a .sha256 beside every asset, so verification is the
+# normal path and not a bonus. Resolve the hashing tool up front, next to the
+# other hard requirements, so a host that cannot verify says so before it
+# downloads anything rather than after.
+if [ "${BITCODE_SKIP_CHECKSUM:-}" != 1 ]; then
+    if command -v sha256sum > /dev/null 2>&1; then
+        sha256_of() { sha256sum "$1" | cut -d ' ' -f 1; }
+    elif command -v shasum > /dev/null 2>&1; then
+        sha256_of() { shasum -a 256 "$1" | cut -d ' ' -f 1; }
+    else
+        die "requires sha256sum or shasum to verify the download; install either one, or set BITCODE_SKIP_CHECKSUM=1 to install unverified"
+    fi
+fi
 
 if command -v curl > /dev/null 2>&1; then
     fetch() { curl -fsSL "$1"; }
@@ -86,24 +102,28 @@ trap "rm -rf '$tmp'" EXIT INT TERM
 echo "Downloading $asset ($version) ..." >&2
 fetch_to "$url" "$tmp/$asset" || die "download failed: $url"
 
-# Verify the checksum when the release publishes one and a tool exists to
-# check it. A corrupted download that still unpacks is the case worth
-# catching, so a present-but-mismatched checksum is fatal.
-if fetch_to "$url.sha256" "$tmp/$asset.sha256" 2> /dev/null; then
-    expected="$(cut -d ' ' -f 1 < "$tmp/$asset.sha256")"
-    if command -v sha256sum > /dev/null 2>&1; then
-        actual="$(sha256sum "$tmp/$asset" | cut -d ' ' -f 1)"
-    elif command -v shasum > /dev/null 2>&1; then
-        actual="$(shasum -a 256 "$tmp/$asset" | cut -d ' ' -f 1)"
-    else
-        actual=""
-        echo "warning: no sha256 tool; skipping checksum verification" >&2
-    fi
-    if [ -n "$actual" ] && [ "$actual" != "$expected" ]; then
-        die "checksum mismatch (expected $expected, got $actual)"
-    fi
+# This script is piped into a shell straight off the network, so the checksum
+# is the only thing that makes the download self-verifying. Every way of not
+# verifying it is therefore fatal unless the operator asked for that: a
+# checksum that will not fetch means a broken release, a mirror that carries
+# no .sha256, or someone interfering with that one request — and the third is
+# the case verification exists to catch. Warning and installing anyway, as
+# this did before, let a single blocked request silently downgrade any install
+# to unverified.
+if [ "${BITCODE_SKIP_CHECKSUM:-}" = 1 ]; then
+    echo "warning: BITCODE_SKIP_CHECKSUM=1, so $asset was not verified" >&2
 else
-    echo "warning: no published checksum for $asset; skipping verification" >&2
+    fetch_to "$url.sha256" "$tmp/$asset.sha256" 2> /dev/null || die "no checksum at $url.sha256; refusing to install $asset unverified (set BITCODE_SKIP_CHECKSUM=1 to override)"
+    expected="$(cut -d ' ' -f 1 < "$tmp/$asset.sha256")"
+    # A mirror can answer 200 with an error page. Reporting that as a mismatch
+    # would send the user looking at their download instead of their mirror,
+    # so require the shape of a checksum: 64 hex digits, nothing else.
+    case "$expected" in
+        *[!0-9a-fA-F]*) die "malformed checksum file at $url.sha256" ;;
+    esac
+    [ "${#expected}" -eq 64 ] || die "malformed checksum file at $url.sha256"
+    actual="$(sha256_of "$tmp/$asset")"
+    [ "$actual" = "$expected" ] || die "checksum mismatch for $asset (expected $expected, got $actual)"
 fi
 
 tar xzf "$tmp/$asset" -C "$tmp" || die "could not unpack $asset"

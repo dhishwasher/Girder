@@ -49,6 +49,12 @@ jobs:
             tools.test_context_vs_read_cost \
             tools.test_bitcode_context_advisory_hook
 
+      # `curl … | sh` is the README's first install instruction, so install.sh
+      # is how most people will obtain the tool. These run the real script
+      # against a synthetic release served from localhost.
+      - name: install.sh end-to-end tests
+        run: python3 -m unittest -v tools.test_install_sh
+
       # The npm wrapper is how agent hosts actually launch the MCP server, and
       # it is the one shipped component with no Rust coverage at all.
       - name: npm wrapper unit tests
