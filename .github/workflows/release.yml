@@ -8,6 +8,11 @@
 # Triggered by pushing a `v*` tag, or manually against any ref for a dry run.
 # The manual path builds and uploads workflow artifacts but publishes no
 # release, so the pipeline can be proven before a real version is cut.
+#
+# A dry run only proves the four build jobs. To exercise packaging and the
+# release upload as well, push a candidate tag — `v0.1.0-rc.1` — which marks
+# the GitHub release as a prerelease and skips npm. Once it is green, the real
+# tag runs the identical path with nothing left unproven.
 name: Release
 
 on:
@@ -32,10 +37,13 @@ jobs:
   preflight:
     name: Versions agree
     runs-on: ubuntu-latest
+    outputs:
+      prerelease: ${{ steps.versions.outputs.prerelease }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Compare the tag against the source versions
+        id: versions
         shell: bash
         run: |
           set -euo pipefail
@@ -52,11 +60,19 @@ jobs:
 
           # A manual dry run has no version to compare against, so only the
           # two source files are checked in that case.
+          prerelease=false
           case "$GITHUB_REF" in
             refs/tags/v*)
               tag_version="${GITHUB_REF#refs/tags/v}"
-              echo "tag:              $tag_version"
-              if [ "$tag_version" != "$cargo_version" ]; then
+              # A release candidate carries a suffix: v0.1.0-rc.1. Only the
+              # part before it is compared, so an rc still cannot drift from
+              # the version it is a candidate for.
+              core_version="${tag_version%%-*}"
+              if [ "$core_version" != "$tag_version" ]; then
+                prerelease=true
+              fi
+              echo "tag:              $tag_version (version $core_version, prerelease $prerelease)"
+              if [ "$core_version" != "$cargo_version" ]; then
                 echo "::error::tag v$tag_version does not match the source version $cargo_version"
                 failed=1
               fi
@@ -66,6 +82,7 @@ jobs:
               ;;
           esac
 
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
           [ -z "$failed" ]
 
   build:
@@ -197,7 +214,7 @@ jobs:
 
   publish:
     name: Publish release
-    needs: build
+    needs: [preflight, build]
     runs-on: ubuntu-latest
     # The only job that writes: creating the release and uploading assets.
     permissions:
@@ -222,15 +239,23 @@ jobs:
           files: dist/*
           generate_release_notes: true
           fail_on_unmatched_files: true
+          prerelease: ${{ needs.preflight.outputs.prerelease == 'true' }}
 
   # Strictly after the release exists: the package's postinstall downloads the
   # binaries from it, so publishing to npm first would ship a version that
   # cannot install until the release catches up.
+  #
+  # Skipped for a release candidate. npm/install.js derives its download URL
+  # from package.json's own version, so a package cut from v0.1.0-rc.1 would
+  # look for the v0.1.0 assets, which do not exist yet. A candidate is for
+  # proving the binary pipeline; npm publishes only on the real tag.
   npm:
     name: Publish to npm
-    needs: publish
+    needs: [preflight, publish]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') &&
+      needs.preflight.outputs.prerelease != 'true'
     permissions:
       contents: read
       # Provenance: npm records, and displays, which workflow at which commit
