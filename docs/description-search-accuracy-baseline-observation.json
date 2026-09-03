@@ -1,0 +1,654 @@
+{
+  "schema_version": 1,
+  "policy_id": "description-search-accuracy-v1",
+  "policy_source_commit": "c24016bf904e61d321eed49932570cb6458dae9e",
+  "observed_commit": "c24016bf904e61d321eed49932570cb6458dae9e",
+  "source_commit_matches": true,
+  "bitcode": "/tmp/claude-1000/-home-corymaynard370-Bit-code/a4a33d9e-f503-4d09-bcca-87c25efb5ab4/scratchpad/bitcode-baseline",
+  "summary": {
+    "items_measured": 31,
+    "top1_accuracy": 0.16129032258064516,
+    "top5_accuracy": 0.25806451612903225,
+    "top1_misses": [
+      "the function that builds the MCP discover response",
+      "static list of MCP tool definitions with names and schemas",
+      "saves the semantic graph to a file on disk",
+      "loads a semantic graph back from a saved file",
+      "resolves a partial or suffix name to the matching node id in the graph",
+      "chooses the entrypoint node project-wide call resolution should start walking from",
+      "detects which source language a file is written in from its extension",
+      "masks out macro contents so they are not misread as real Rust code",
+      "the Anthropic provider's chat completion implementation",
+      "builds an Anthropic provider by reading credentials from environment variables",
+      "lists which AI providers can handle a given task class, falling back to a default provider",
+      "runs the multi-agent swarm orchestration loop",
+      "handles an incoming message for the coder agent",
+      "builds a demo program containing an intentional bug for the debugger",
+      "sends the DAP initialize request to start a debug session",
+      "encodes a DAP message into its wire content-length-prefixed frame",
+      "launches a Python debug adapter subprocess",
+      "joins a collaboration session hosted by a peer",
+      "resolves which directory validation checks should run against",
+      "kicks off generating a new project extension, refusing to run while one is already busy or the workspace has unsaved changes",
+      "lists every edge kind the graph view UI can filter by",
+      "runs a subprocess with a wall-clock timeout and a hard cap on combined output bytes",
+      "computes the fraction of bytes saved by a smaller retrieval compared to a baseline byte count",
+      "finds groups of files that have identical content",
+      "computes a content hash for a file",
+      "squares a number"
+    ],
+    "top5_misses": [
+      "the function that builds the MCP discover response",
+      "static list of MCP tool definitions with names and schemas",
+      "saves the semantic graph to a file on disk",
+      "loads a semantic graph back from a saved file",
+      "resolves a partial or suffix name to the matching node id in the graph",
+      "chooses the entrypoint node project-wide call resolution should start walking from",
+      "detects which source language a file is written in from its extension",
+      "masks out macro contents so they are not misread as real Rust code",
+      "builds an Anthropic provider by reading credentials from environment variables",
+      "lists which AI providers can handle a given task class, falling back to a default provider",
+      "runs the multi-agent swarm orchestration loop",
+      "handles an incoming message for the coder agent",
+      "sends the DAP initialize request to start a debug session",
+      "launches a Python debug adapter subprocess",
+      "joins a collaboration session hosted by a peer",
+      "resolves which directory validation checks should run against",
+      "kicks off generating a new project extension, refusing to run while one is already busy or the workspace has unsaved changes",
+      "lists every edge kind the graph view UI can filter by",
+      "runs a subprocess with a wall-clock timeout and a hard cap on combined output bytes",
+      "computes the fraction of bytes saved by a smaller retrieval compared to a baseline byte count",
+      "finds groups of files that have identical content",
+      "computes a content hash for a file",
+      "squares a number"
+    ],
+    "gated": false,
+    "policy_result": "BASELINE"
+  },
+  "items": [
+    {
+      "description": "the function that builds the MCP discover response",
+      "expected_path": "crate::crates::aether-app::src::project::commands::mcp::discover_result",
+      "hits": [
+        "crate::tools::test_description_search_accuracy::ParseHitsTests::test_parses_score_and_path_per_line_in_order",
+        "crate::crates::aether-debugger::src::lang::Program::function",
+        "crate::crates::aether-app::src::project::projection::render_function",
+        "crate::crates::aether-app::src::project::commands::mcp::error_response",
+        "crate::crates::aether-ai::src::provider::Prompt::with_response_schema",
+        "crate::crates::aether-graph::src::refactor::fn_node",
+        "crate::crates::aether-app::src::project::collaboration_projection::is_source_kind",
+        "crate::crates::aether-builder::src::mapper::is_function_kind",
+        "crate::crates::aether-app::src::project::commands::mcp::ping_answers_empty",
+        "crate::crates::aether-ai::src::provider::Prompt::new"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "static list of MCP tool definitions with names and schemas",
+      "expected_path": "crate::crates::aether-app::src::project::commands::mcp::Tool",
+      "hits": [
+        "crate::crates::aether-debugger::src::interp::Interpreter<'a>::run",
+        "crate::crates::aether-ai::src::ollama::OllamaProvider::with_model",
+        "crate::sample-project::src::lib::sum_list",
+        "crate::crates::aether-ai::src::openai::OpenAiProvider::with_model",
+        "crate::crates::aether-graph::src::node::Node::with_language",
+        "crate::crates::aether-ai::src::gemini::GeminiProvider::with_model",
+        "crate::crates::aether-ai::src::openai::OpenAiProvider::with_endpoint",
+        "crate::sample-project::src::lib::main",
+        "crate::crates::aether-ai::src::anthropic::AnthropicProvider::with_model",
+        "crate::crates::aether-builder::src::parser::Lang::name"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "saves the semantic graph to a file on disk",
+      "expected_path": "crate::crates::aether-graph::src::serialize::SemanticGraph::save",
+      "hits": [
+        "crate::crates::aether-app::src::project::collaboration_projection::graph",
+        "crate::crates::aether-builder::src::sync::GraphBuilder::load_file",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::update_graph_file",
+        "crate::crates::aether-agents::src::orchestrator::SwarmContext::new",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::edge_count",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::node_count",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::graph",
+        "crate::crates::aether-app::src::project::collaboration_transport::TempDir::file",
+        "crate::crates::aether-builder::src::sync::GraphBuilder::load_files",
+        "crate::crates::aether-app::src::project::validation::HostMarker::drop"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "loads a semantic graph back from a saved file",
+      "expected_path": "crate::crates::aether-graph::src::serialize::SemanticGraph::load",
+      "hits": [
+        "crate::crates::aether-app::src::project::collaboration_projection::graph",
+        "crate::crates::aether-builder::src::sync::GraphBuilder::load_file",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::update_graph_file",
+        "crate::crates::aether-agents::src::orchestrator::SwarmContext::new",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::edge_count",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::node_count",
+        "crate::crates::aether-builder::src::sync::GraphBuilder::load_files",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::graph",
+        "crate::crates::aether-app::src::project::collaboration_transport::TempDir::file",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::extension_records"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "resolves a partial or suffix name to the matching node id in the graph",
+      "expected_path": "crate::crates::aether-graph::src::knowledge::SemanticGraph::resolve",
+      "hits": [
+        "crate::crates::aether-graph::src::lib::SemanticGraph::node_count",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::raw",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::remove_node",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::get",
+        "crate::crates::aether-app::src::project::planfile::schema::Edit::is_graph_addressed",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::get_mut",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::nodes",
+        "crate::crates::aether-app::src::project::planfile::checks::test_checks::tests_by_language",
+        "crate::crates::aether-app::src::project::planfile::checks::graph::resolve",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::reindex"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "forks a graph replica for a new collaborator, rejecting an actor that already exists in the history",
+      "expected_path": "crate::crates::aether-graph::src::collaboration::GraphReplica::fork",
+      "hits": [
+        "crate::crates::aether-graph::src::collaboration::GraphReplica::fork",
+        "crate::crates::aether-app::src::project::collaboration_identity::bundle",
+        "crate::crates::aether-graph::src::collaboration::GraphReplica::new",
+        "crate::crates::aether-app::src::project::commands::collaboration::version_string",
+        "crate::crates::aether-app::src::project::collaboration_discovery::local_bundle",
+        "crate::crates::aether-graph::src::collaboration::GraphReplica::actor",
+        "crate::crates::aether-app::src::project::collaboration_identity::SessionIdentity::actor",
+        "crate::crates::aether-graph::src::collaboration::GraphReplica::membership_history_contains",
+        "crate::crates::aether-graph::src::collaboration::ActorId::bootstrap",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::edge_count"
+      ],
+      "rank_of_expected": 1,
+      "top1_correct": true,
+      "top5_correct": true
+    },
+    {
+      "description": "decides whether a call expression should be skipped as noise during call resolution",
+      "expected_path": "crate::crates::aether-builder::src::mapper::is_call_noise",
+      "hits": [
+        "crate::crates::aether-builder::src::mapper::is_call_noise",
+        "crate::crates::aether-debugger::src::lang::call",
+        "crate::crates::aether-graph::src::knowledge::is_stop",
+        "crate::crates::aether-debugger::src::lib::buggy_demo_program",
+        "crate::crates::aether-builder::src::mapper::rust_chained_receiver_factory",
+        "crate::crates::aether-app::tests::mcp::Session::call_tool",
+        "crate::crates::aether-app::src::project::validation::ValidationStatus::label",
+        "crate::crates::aether-builder::src::lib::resolves_calls_across_files",
+        "crate::crates::aether-app::src::project::validation::ValidationReport::passed",
+        "crate::crates::aether-builder::src::parser::IncrementalParser::parse"
+      ],
+      "rank_of_expected": 1,
+      "top1_correct": true,
+      "top5_correct": true
+    },
+    {
+      "description": "chooses the entrypoint node project-wide call resolution should start walking from",
+      "expected_path": "crate::crates::aether-builder::src::sync::select_process_entrypoint",
+      "hits": [
+        "crate::crates::aether-builder::src::mapper::node_text",
+        "crate::crates::aether-builder::src::mapper::strip_call",
+        "crate::crates::aether-builder::src::mapper::span_of",
+        "crate::crates::aether-builder::src::highlight::spans",
+        "crate::crates::aether-app::src::project::commands::mcp::root",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::node_count",
+        "crate::crates::aether-debugger::src::lang::call",
+        "crate::crates::aether-app::src::project::config::GraphConfig::default",
+        "crate::crates::aether-app::tests::mcp::commands_with_no_results_say_so_explicitly",
+        "crate::crates::aether-app::src::project::validation::should_skip"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "detects which source language a file is written in from its extension",
+      "expected_path": "crate::crates::aether-builder::src::parser::Lang::from_path",
+      "hits": [
+        "crate::crates::aether-app::src::project::collaboration_projection::same_projection",
+        "crate::crates::aether-builder::src::sync::GraphBuilder::source_of",
+        "crate::crates::aether-graph::src::node::Node::new",
+        "crate::crates::aether-app::src::project::collaboration_projection::graph",
+        "crate::crates::aether-builder::src::sync::source_module",
+        "crate::crates::aether-builder::src::sync::GraphBuilder::load_file",
+        "crate::crates::aether-app::src::project::source::is_supported_source_path",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::active_language",
+        "crate::crates::aether-app::src::project::commands::authoring_context::node_context_entry",
+        "crate::crates::aether-app::src::project::workspace::ProjectFile::language"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "masks out macro contents so they are not misread as real Rust code",
+      "expected_path": "crate::crates::aether-builder::src::mapper::mask_rust_macro_non_code",
+      "hits": [
+        "crate::crates::aether-app::src::project::commands::mcp::malformed_json_is_a_parse_error_with_a_null_id",
+        "crate::crates::aether-app::src::project::commands::collaboration::secret",
+        "crate::crates::aether-app::src::project::commands::mcp::an_unknown_method_is_a_method_not_found_error",
+        "crate::crates::aether-app::src::project::planfile::checks::graph::node_exists_and_node_absent_are_exact_complements",
+        "crate::crates::aether-app::src::project::source::ProjectWrite::contents",
+        "crate::tools::test_core_trustworthiness_oracle::OracleUnitTests::test_fixture_sources_are_inert_in_the_bit_code_repository",
+        "crate::crates::aether-app::src::project::commands::mcp::failure",
+        "crate::crates::aether-builder::src::parser::Lang::name",
+        "crate::tools::authoring_task_check::compact_rust",
+        "crate::crates::aether-app::src::project::planfile::checks::test_checks::run_selected"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "the Anthropic provider's chat completion implementation",
+      "expected_path": "crate::crates::aether-ai::src::anthropic::AnthropicProvider::complete",
+      "hits": [
+        "crate::crates::aether-ai::src::anthropic::AnthropicProvider::name",
+        "crate::crates::aether-ai::src::anthropic::AnthropicProvider::complete",
+        "crate::crates::aether-app::src::project::planfile::report::is_local_provider",
+        "crate::crates::aether-ai::src::router::Router::with_fallback",
+        "crate::crates::aether-ai::src::ollama::OllamaProvider::endpoint",
+        "crate::crates::aether-ai::src::router::Router::complete",
+        "crate::crates::aether-ai::src::ollama::host_is_a_normalized_base_url",
+        "crate::crates::aether-ai::src::router::Router::local_only",
+        "crate::crates::aether-ai::src::ollama::with_timeout_secs_overrides_the_configured_value",
+        "crate::crates::aether-ai::src::mock::extension_generation_is_strict_json"
+      ],
+      "rank_of_expected": 2,
+      "top1_correct": false,
+      "top5_correct": true
+    },
+    {
+      "description": "builds an Anthropic provider by reading credentials from environment variables",
+      "expected_path": "crate::crates::aether-ai::src::anthropic::AnthropicProvider::from_env",
+      "hits": [
+        "crate::crates::aether-ai::src::anthropic::AnthropicProvider::name",
+        "crate::crates::aether-app::src::project::planfile::report::is_local_provider",
+        "crate::crates::aether-ai::src::router::Router::with_fallback",
+        "crate::crates::aether-ai::src::router::Router::local_only",
+        "crate::crates::aether-graph::src::knowledge::parse_explain_question",
+        "crate::crates::aether-ai::src::ollama::with_timeout_secs_overrides_the_configured_value",
+        "crate::crates::aether-ai::src::ollama::configured_provider",
+        "crate::crates::aether-ai::src::anthropic::AnthropicProvider::complete",
+        "crate::crates::aether-graph::src::knowledge::parse_impact_question",
+        "crate::crates::aether-ai::src::anthropic::AnthropicProvider::from_env"
+      ],
+      "rank_of_expected": 10,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "lists which AI providers can handle a given task class, falling back to a default provider",
+      "expected_path": "crate::crates::aether-ai::src::router::Router::candidates",
+      "hits": [
+        "crate::crates::aether-builder::src::sync::GraphBuilder::new",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::new",
+        "crate::crates::aether-ai::src::router::Router::new",
+        "crate::crates::aether-ai::src::ollama::configured_provider",
+        "crate::crates::aether-debugger::src::lang::Program::new",
+        "crate::crates::aether-app::src::project::planfile::schema::default_occurrences",
+        "crate::crates::aether-app::src::project::commands::mcp::initialize_falls_back_for_an_unknown_protocol_version",
+        "crate::crates::aether-ai::src::ollama::timeout_secs_falls_back_to_default_when_unset_zero_or_unparseable",
+        "crate::crates::aether-app::src::project::planfile::schema::default_timeout_secs",
+        "crate::crates::aether-app::src::project::planfile::schema::default_expect_exit"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "runs the multi-agent swarm orchestration loop",
+      "expected_path": "crate::crates::aether-agents::src::orchestrator::Orchestrator::run",
+      "hits": [
+        "crate::crates::aether-agents::src::orchestrator::Orchestrator::add_agent",
+        "crate::crates::aether-app::src::app::AetherApp::agent_validation_running",
+        "crate::crates::aether-app::src::app::AetherApp::cancel_agent_validation",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::agent_target",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::has_pending_agent_changes",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::agent_validation_report",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::agent_timeout",
+        "crate::crates::aether-app::src::app::AetherApp::drop",
+        "crate::crates::aether-app::src::project::workspace::pending_agent_error",
+        "crate::crates::aether-agents::src::orchestrator::Orchestrator::with_default_swarm"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "handles an incoming message for the coder agent",
+      "expected_path": "crate::crates::aether-agents::src::agents::coder::CoderAgent::handle",
+      "hits": [
+        "crate::crates::aether-agents::src::agents::coder::CoderAgent::role",
+        "crate::crates::aether-ai::src::provider::AiProvider::handles",
+        "crate::crates::aether-app::src::project::commands::mcp::failure",
+        "crate::crates::aether-ai::src::ollama::not_found_message_names_the_model_and_the_env_var",
+        "crate::crates::aether-extensions::src::lib::invalid",
+        "crate::crates::aether-app::tests::cli::TempRepo::commit_all",
+        "crate::crates::aether-dap::src::types::SourceBreakpoint::at_line",
+        "crate::tools::authoring_task_check::require",
+        "crate::crates::aether-agents::src::orchestrator::Orchestrator::add_agent",
+        "crate::crates::aether-app::src::project::planfile::edit::invalid"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "finds where two branches of the debugger timeline first diverge",
+      "expected_path": "crate::crates::aether-debugger::src::timeline::Timeline::first_divergence",
+      "hits": [
+        "crate::crates::aether-debugger::src::timeline::Timeline::first_divergence",
+        "crate::crates::aether-debugger::src::python_tracer::PyTimeline::branches",
+        "crate::crates::aether-debugger::src::timeline::Timeline::branches",
+        "crate::crates::aether-debugger::src::lib::divergence_points_at_the_intervened_step",
+        "crate::crates::aether-debugger::src::timeline::Timeline::branch",
+        "crate::crates::aether-debugger::src::timeline::Timeline::record",
+        "crate::crates::aether-debugger::src::python_tracer::PyTimeline::branch",
+        "crate::tools::test_description_search_accuracy::RankOfTests::test_first_hit_is_rank_one",
+        "crate::crates::aether-debugger::src::python_tracer::PyTimeline::first_divergence",
+        "crate::crates::aether-extensions::src::marketplace::search_is_ranked_and_deterministic"
+      ],
+      "rank_of_expected": 1,
+      "top1_correct": true,
+      "top5_correct": true
+    },
+    {
+      "description": "applies an arithmetic or comparison operator to two interpreted values, guarding integer division by zero",
+      "expected_path": "crate::crates::aether-debugger::src::interp::apply_op",
+      "hits": [
+        "crate::crates::aether-debugger::src::interp::apply_op",
+        "crate::tools::core_representative_benchmark::median",
+        "crate::crates::aether-app::src::project::planfile::edit::zero_when_absent",
+        "crate::tools::plan_executor_oracle::authoring_plan_json_schema::schema_for",
+        "crate::crates::aether-app::src::project::planfile::edit::empty_needle_counts_as_zero_not_infinite",
+        "crate::tools::test_description_search_accuracy::SummarizeTests::test_empty_corpus_is_refused_rather_than_dividing_by_zero",
+        "crate::tools::test_plan_executor_oracle::PlanExecutorOracleUnitTests::test_checked_policy_precommits_exact_zero_tolerance_corpus",
+        "crate::crates::aether-builder::src::sync::GraphBuilder::path_occurrences",
+        "crate::crates::aether-app::src::project::planfile::edit::counts_across_multiline_text",
+        "crate::crates::aether-graph::src::collaboration::validate_version"
+      ],
+      "rank_of_expected": 1,
+      "top1_correct": true,
+      "top5_correct": true
+    },
+    {
+      "description": "builds a demo program containing an intentional bug for the debugger",
+      "expected_path": "crate::crates::aether-debugger::src::lib::buggy_demo_program",
+      "hits": [
+        "crate::crates::aether-debugger::src::lang::Program::new",
+        "crate::crates::aether-debugger::src::interp::Interpreter<'a>::new",
+        "crate::crates::aether-debugger::src::lib::buggy_demo_program",
+        "crate::crates::aether-debugger::src::lib::records_a_full_trace",
+        "crate::crates::aether-debugger::src::lib::divergence_points_at_the_intervened_step",
+        "crate::crates::aether-app::tests::cli::default_config_toml",
+        "crate::crates::aether-debugger::src::lib::ai_root_cause_returns_an_explanation",
+        "crate::crates::aether-extensions::src::marketplace::search_is_ranked_and_deterministic",
+        "crate::tools::test_plan_executor_oracle::PlanExecutorOracleUnitTests::_authoring_source_path",
+        "crate::crates::aether-app::src::project::config::ConfiguredCommand::display"
+      ],
+      "rank_of_expected": 3,
+      "top1_correct": false,
+      "top5_correct": true
+    },
+    {
+      "description": "sends the DAP initialize request to start a debug session",
+      "expected_path": "crate::crates::aether-dap::src::session::DebugSession::initialize",
+      "hits": [
+        "crate::crates::aether-app::tests::mcp::diagnostics_go_to_stderr_and_never_into_the_frame_stream",
+        "crate::crates::aether-app::tests::mcp::Session::initialize",
+        "crate::crates::aether-dap::src::manager::DebugManager::session",
+        "crate::crates::aether-dap::src::manager::SessionId::fmt",
+        "crate::crates::aether-app::src::project::commands::mcp::initialize_falls_back_for_an_unknown_protocol_version",
+        "crate::crates::aether-app::src::graph_view::GraphViewState::request_fit",
+        "crate::crates::aether-builder::src::mapper::mask_rust_macro_non_code::token_boundary",
+        "crate::crates::aether-dap::src::manager::DebugManager::session_mut",
+        "crate::crates::aether-dap::src::manager::session_id_display",
+        "crate::crates::aether-app::src::project::commands::mcp::request"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "encodes a DAP message into its wire content-length-prefixed frame",
+      "expected_path": "crate::crates::aether-dap::src::transport::encode",
+      "hits": [
+        "crate::crates::aether-app::src::project::commands::mcp::tool_error",
+        "crate::crates::aether-app::src::project::commands::mcp::failure",
+        "crate::crates::aether-dap::src::transport::encode",
+        "crate::crates::aether-extensions::src::lib::invalid",
+        "crate::crates::aether-app::src::project::planfile::edit::invalid",
+        "crate::crates::aether-app::src::project::collaboration_transport::invalid_input",
+        "crate::crates::aether-app::src::project::config::invalid_config",
+        "crate::crates::aether-app::src::project::collaboration_identity::invalid_input",
+        "crate::crates::aether-app::src::project::collaboration_discovery::invalid_input",
+        "crate::crates::aether-app::src::project::commands::collaboration::invalid_input"
+      ],
+      "rank_of_expected": 3,
+      "top1_correct": false,
+      "top5_correct": true
+    },
+    {
+      "description": "launches a Python debug adapter subprocess",
+      "expected_path": "crate::crates::aether-dap::src::manager::DebugManager::launch_python",
+      "hits": [
+        "crate::crates::aether-builder::src::parser::Lang::name",
+        "crate::crates::aether-builder::src::parser::Lang::from_path",
+        "crate::crates::aether-builder::src::parser::Lang::ts_language",
+        "crate::crates::aether-builder::src::mapper::is_function_kind",
+        "crate::crates::aether-builder::src::mapper::python_statement_bound_names",
+        "crate::crates::aether-app::src::project::config::ProjectConfig::python_test_command",
+        "crate::crates::aether-dap::src::manager::DebugManager::launch_python",
+        "crate::crates::aether-builder::src::mapper::python_scoped_import_bindings",
+        "crate::crates::aether-dap::src::session::DebugSession::new",
+        "crate::crates::aether-builder::src::mapper::python_scoped_type_aliases"
+      ],
+      "rank_of_expected": 7,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "joins a collaboration session hosted by a peer",
+      "expected_path": "crate::crates::aether-app::src::project::collaboration_discovery::join_peer",
+      "hits": [
+        "crate::crates::aether-app::src::project::collaboration_transport::LiveSyncReport::peer_presence",
+        "crate::crates::aether-dap::src::manager::DebugManager::session",
+        "crate::crates::aether-dap::src::manager::SessionId::fmt",
+        "crate::crates::aether-app::src::project::collaboration_transport::ensure_session_members_active",
+        "crate::crates::aether-dap::src::manager::DebugManager::session_mut",
+        "crate::crates::aether-dap::src::manager::session_id_display",
+        "crate::crates::aether-app::src::project::collaboration_transport::LiveSyncReport::peer_identity_fingerprint",
+        "crate::crates::aether-app::src::project::collaboration_discovery::collaboration_result",
+        "crate::crates::aether-app::src::project::collaboration_transport::collaboration_result",
+        "crate::crates::aether-app::src::project::commands::collaboration::collaboration_result"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "resolves which directory validation checks should run against",
+      "expected_path": "crate::crates::aether-app::src::project::validation::validation_target_dir",
+      "hits": [
+        "crate::crates::aether-debugger::src::interp::Interpreter<'a>::run",
+        "crate::crates::aether-app::src::project::workspace::validate_pending",
+        "crate::crates::aether-extensions::src::marketplace::review_binding_rejects_changed_listing_intent",
+        "crate::crates::aether-app::src::project::planfile::report::passed_run",
+        "crate::crates::aether-debugger::src::interp::Interpreter<'a>::run_with",
+        "crate::crates::aether-graph::src::knowledge::is_stop",
+        "crate::crates::aether-app::src::project::commands::extensions::capability_label",
+        "crate::tools::core_representative_benchmark::evaluate_policy::minimum",
+        "crate::tools::core_representative_benchmark::evaluate_policy::maximum",
+        "crate::tools::test_bitcode_context_advisory_hook::BitcodeContextAdvisoryHookTests::test_enforce_stays_advisory_for_docs_directory"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "kicks off generating a new project extension, refusing to run while one is already busy or the workspace has unsaved changes",
+      "expected_path": "crate::crates::aether-app::src::app::AetherApp::generate_extension",
+      "hits": [
+        "crate::crates::aether-app::src::app::AetherApp::discard_active_changes",
+        "crate::crates::aether-app::src::app::AetherApp::start_extension_mutation",
+        "crate::crates::aether-app::src::app::AetherApp::collaboration_snapshot_ready",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::has_pending_agent_changes",
+        "crate::crates::aether-app::src::app::AetherApp::save_active_file",
+        "crate::crates::aether-app::src::app::AetherApp::author_write_busy",
+        "crate::crates::aether-app::src::project::workspace::dirty_buffer_blocks_navigation_and_reload",
+        "crate::crates::aether-app::src::project::workspace::agent_validation_rejects_config_changes",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::extension_mutation_request",
+        "crate::crates::aether-app::src::panels::extension_capability_label"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "lists every edge kind the graph view UI can filter by",
+      "expected_path": "crate::crates::aether-app::src::graph_view::all_edge_kinds",
+      "hits": [
+        "crate::crates::aether-graph::src::lib::SemanticGraph::clear_edges_of_kind",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::edge_count",
+        "crate::crates::aether-graph::src::edge::Edge::new",
+        "crate::crates::aether-graph::src::lib::SemanticGraph::raw",
+        "crate::crates::aether-graph::src::edge::Edge::with_weight",
+        "crate::crates::aether-graph::src::query::SemanticGraph::query_by_kind",
+        "crate::crates::aether-app::src::project::collaboration_projection::projection_edges",
+        "crate::crates::aether-app::src::project::planfile::checks::graph::edge_delta",
+        "crate::crates::aether-app::src::graph_view::GraphViewState::toggle_edge_kind",
+        "crate::crates::aether-app::src::graph_view::GraphViewState::edge_kind_enabled"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "runs a subprocess with a wall-clock timeout and a hard cap on combined output bytes",
+      "expected_path": "crate::tools::harness_support::run_bounded",
+      "hits": [
+        "crate::crates::aether-ai::src::ollama::OllamaProvider::with_timeout_secs",
+        "crate::crates::aether-app::src::project::config::ValidationConfig::default",
+        "crate::tools::plan_executor_oracle::run",
+        "crate::tools::test_plan_executor_oracle::PlanExecutorOracleUnitTests::test_bounded_runner_can_observe_expected_nonzero_status",
+        "crate::tools::harness_support::terminate_process_tree",
+        "crate::tools::core_representative_mutations::run",
+        "crate::tools::core_trustworthiness_oracle::run",
+        "crate::tools::test_core_trustworthiness_oracle::OracleUnitTests::test_runner_rejects_excessive_combined_output",
+        "crate::crates::aether-app::src::project::config::TestConfig::default",
+        "crate::crates::aether-ai::src::ollama::with_timeout_secs_overrides_the_configured_value"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "computes the fraction of bytes saved by a smaller retrieval compared to a baseline byte count",
+      "expected_path": "crate::tools::context_vs_read_cost::reduction_ratio",
+      "hits": [
+        "crate::crates::aether-app::src::project::planfile::executor::sha256_hex",
+        "crate::crates::aether-extensions::src::marketplace::sha256_hex",
+        "crate::crates::aether-builder::src::mapper::mask_rust_macro_non_code::raw_string_end",
+        "crate::crates::aether-graph::src::collaboration::attestation",
+        "crate::crates::aether-app::src::project::validation::stable_hash",
+        "crate::crates::aether-app::src::project::collaboration_identity::fingerprint",
+        "crate::crates::aether-builder::src::mapper::split_cfg_operands",
+        "crate::crates::aether-app::src::project::config::shell_quote",
+        "crate::crates::aether-builder::src::sync::whole_buffer_edit",
+        "crate::tools::plan_executor_oracle::valid_fingerprint_side"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "finds groups of files that have identical content",
+      "expected_path": "crate::demo-project::dupefinder::find_duplicates",
+      "hits": [
+        "crate::demo-project::test_dupefinder::FindDuplicatesTests::test_groups_files_with_identical_content",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::files",
+        "crate::crates::aether-extensions::src::marketplace::MarketplaceListing::digest",
+        "crate::crates::aether-builder::src::sync::GraphBuilder::source_of",
+        "crate::demo-project::test_dupefinder::HashFileTests::test_same_content_hashes_the_same",
+        "crate::crates::aether-app::src::project::commands::mcp::tool_text",
+        "crate::crates::aether-app::src::project::collaboration_projection::graph",
+        "crate::tools::test_context_vs_read_cost::ReductionRatioTests::test_identical_sizes_save_nothing",
+        "crate::crates::aether-app::src::project::planfile::checks::graph::graph_from",
+        "crate::crates::aether-app::src::project::planfile::checks::test_checks::graph_from"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "computes a content hash for a file",
+      "expected_path": "crate::demo-project::dupefinder::hash_file",
+      "hits": [
+        "crate::demo-project::test_dupefinder::HashFileTests::test_same_content_hashes_the_same",
+        "crate::crates::aether-extensions::src::marketplace::MarketplaceListing::digest",
+        "crate::crates::aether-app::src::project::collaboration_transport::TempDir::file",
+        "crate::crates::aether-app::src::project::validation::HostMarker::drop",
+        "crate::crates::aether-app::src::project::workspace::ProjectWorkspace::active_file",
+        "crate::crates::aether-builder::src::sync::GraphBuilder::source_of",
+        "crate::demo-project::dupefinder::find_duplicates",
+        "crate::crates::aether-app::tests::cli::TempRepo::remove",
+        "crate::crates::aether-app::src::project::commands::mcp::tool_text",
+        "crate::demo-project::dupefinder::hash_file"
+      ],
+      "rank_of_expected": 10,
+      "top1_correct": false,
+      "top5_correct": false
+    },
+    {
+      "description": "formats a greeting message for a given name",
+      "expected_path": "crate::demo-project::greeter::format_greeting",
+      "hits": [
+        "crate::demo-project::greeter::format_greeting",
+        "crate::demo-project::greeter::shout_greeting",
+        "crate::crates::aether-ai::src::mock::MockProvider::name",
+        "crate::sample-project::calc::hello",
+        "crate::demo-project::greeter::farewell",
+        "crate::crates::aether-ai::src::ollama::OllamaProvider::name",
+        "crate::crates::aether-ai::src::openai::OpenAiProvider::name",
+        "crate::sample-project::calc::greet",
+        "crate::crates::aether-ai::src::anthropic::AnthropicProvider::name",
+        "crate::crates::aether-ai::src::gemini::GeminiProvider::name"
+      ],
+      "rank_of_expected": 1,
+      "top1_correct": true,
+      "top5_correct": true
+    },
+    {
+      "description": "squares a number",
+      "expected_path": "crate::sample-project::calc::ScientificCalculator::square",
+      "hits": [
+        "crate::crates::aether-app::src::project::commands::authoring_context::step_schema_bounds_edits_to_the_number_of_offered_nodes",
+        "crate::crates::aether-ai::src::ollama::timeout_secs_falls_back_to_default_when_unset_zero_or_unparseable",
+        "crate::crates::aether-app::src::highlight::color",
+        "crate::crates::aether-app::src::project::commands::mcp::the_tool_timeout_is_overridable_but_never_unbounded",
+        "crate::crates::aether-builder::src::highlight::classify"
+      ],
+      "rank_of_expected": null,
+      "top1_correct": false,
+      "top5_correct": false
+    }
+  ]
+}
