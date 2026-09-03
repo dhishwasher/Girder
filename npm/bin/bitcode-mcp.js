@@ -9,7 +9,7 @@
 // protocol stream itself.
 
 const { spawn } = require("child_process");
-const { resolveBinary } = require("../resolve");
+const { resolveBinary, vendoredPath } = require("../resolve");
 
 const binary = resolveBinary();
 if (!binary) {
@@ -22,6 +22,16 @@ if (!binary) {
   );
   process.exit(1);
 }
+
+// Say which binary won, because `resolveBinary` prefers one already on PATH
+// over the version this package downloaded. That ordering is deliberate, but
+// it means `npx bitcode-mcp@X` can run a different build entirely, and
+// CLAUDE.md records a stale `~/.cargo/bin/bitcode` silently invalidating
+// verification here before. One stderr line makes the skew visible instead
+// of leaving `which bitcode` as the only way to notice.
+process.stderr.write(
+  `bitcode-mcp: using ${binary} (${binary === vendoredPath() ? "downloaded by this package" : "found on PATH, which takes precedence"})\n`
+);
 
 // Default to the working directory the client launched us in, which is the
 // project the agent is working on.
