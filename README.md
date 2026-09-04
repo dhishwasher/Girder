@@ -1,44 +1,55 @@
-# Bit Code
+# Girder
 
-Bit Code is a native Rust IDE prototype whose source of truth is a living
-semantic graph of your codebase. It combines graph-aware editing, a parallel
-agent workflow, semantic review/test impact, and time-travel debugging.
+**On this repository's committed ten-node measurement, `girder context
+--source-only` returned 8,765 bytes instead of 408,137 bytes from full-file
+reads: a 97.85% reduction.** This measures bytes, not tokens. See the
+[committed observation](./docs/context-vs-read-cost-observation.json).
 
-This repo is a runnable Rust prototype of that architecture. It is *not* a fork
-of any existing editor. See [`BLUEPRINT.md`](./BLUEPRINT.md) for the full design.
+Girder is a source-available semantic code intelligence tool and native Rust
+IDE. Its living code graph gives people and coding agents exact function
+source, definitions, call relationships, impact analysis, and verified editing
+workflows without making whole-file reads the default.
 
 ## Install
 
 A prebuilt binary, no Rust toolchain needed:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dhishwasher/Bit-code/main/install.sh | sh
-bitcode --version
+curl -fsSL https://raw.githubusercontent.com/dhishwasher/Girder/main/install.sh | sh
+girder --version
 ```
 
 Or from source:
 
 ```bash
 cargo install --path crates/aether-app
-bitcode --help
+girder --help
 ```
 
-This builds the default headless profile and installs the `bitcode` binary to
+This builds the default headless profile and installs the `girder` binary to
 `~/.cargo/bin` (make sure it's on your `PATH`). No GPU, display, network, or API
 key is required — the default AI provider is an offline `MockProvider`. The GUI
 and live AI providers are opt-in Cargo features not included in a plain
 install; see [The GUI](#the-gui) and [Local-first AI](#local-first-ai) below.
 
+## Search accuracy
+
+Exact-symbol lookup is Girder's strongest search path. Natural-language intent
+search is experimental: it reached **41.9% top-1** and **77.4% top-5** accuracy
+on the committed 31-item corpus, below the precommitted 75% and 90% thresholds.
+See the [observation](./docs/description-search-accuracy-observation.json) and
+[policy](./docs/description-search-accuracy-policy.json).
+
 ## Use it from an AI coding agent
 
-`bitcode mcp` serves the read-only graph commands over the
+`girder mcp` serves the read-only graph commands over the
 [Model Context Protocol](https://modelcontextprotocol.io), so an agent can ask
 about your codebase instead of reading files into its context window.
 
 Claude Code:
 
 ```bash
-claude mcp add bitcode -- npx -y bitcode-mcp .
+claude mcp add girder -- npx -y girder-mcp .
 ```
 
 Any MCP client config:
@@ -46,15 +57,15 @@ Any MCP client config:
 ```json
 {
   "mcpServers": {
-    "bitcode": {
+    "girder": {
       "command": "npx",
-      "args": ["-y", "bitcode-mcp", "."]
+      "args": ["-y", "girder-mcp", "."]
     }
   }
 }
 ```
 
-With a binary already installed, `"command": "bitcode", "args": ["mcp", "."]`
+With a binary already installed, `"command": "girder", "args": ["mcp", "."]`
 skips npm entirely.
 
 Six tools, all read-only:
@@ -90,18 +101,18 @@ polymorphic-dispatch case, [`docs/core-representative-mutations.md`](./docs/core
 A full test run remains the authority before calling a change safe.
 
 The project root is fixed when the server starts, so no tool call can reach
-another directory. `BITCODE_MCP_TIMEOUT_SECONDS` (default 120) bounds each
+another directory. `GIRDER_MCP_TIMEOUT_SECONDS` (default 120) bounds each
 call; raise it for a very large repository.
 
-Everything below assumes `bitcode` is on your `PATH`. Building from a source
+Everything below assumes `girder` is on your `PATH`. Building from a source
 checkout without installing works the same way with `cargo run -p aether-app --`
-in place of `bitcode`.
+in place of `girder`.
 
 ## Quickstart
 
 ```bash
 # Full end-to-end demo — no GPU, display, or API key required:
-bitcode
+girder
 
 # Run the test suite (graph, builder, AI router, agent swarm, debugger):
 cargo test --workspace
@@ -114,27 +125,27 @@ cargo test -p aether-dap --test debugpy -- --ignored
 
 ### Use it on a real project
 
-Bit Code is also a CLI that operates on actual directories:
+Girder is also a CLI that operates on actual directories:
 
 ```bash
 # Build the semantic graph from a project and save it as <dir>/project.aether:
-bitcode analyze sample-project
+girder analyze sample-project
 
 # Inspect a saved graph and a node's impact set:
-bitcode inspect sample-project/project.aether crate::lib::add
+girder inspect sample-project/project.aether crate::lib::add
 
 # Concept search: rank functions by relevance to a natural-language query:
-bitcode search sample-project "sum numbers in a list"
+girder search sample-project "sum numbers in a list"
 
 # Graph-semantic rename — follows Calls edges (not text search) and rewrites
 # only the real callers, then saves the updated graph:
-bitcode refactor sample-project rename crate::lib::add plus
+girder refactor sample-project rename crate::lib::add plus
 
 # Preview what the swarm would build — graph-aware Planner only, no code written:
-bitcode swarm-plan sample-project "add user authentication"
+girder swarm-plan sample-project "add user authentication"
 
 # Dispatch the agent swarm on a project with a natural-language intent:
-bitcode forge sample-project "add a subtract function"
+girder forge sample-project "add a subtract function"
 
 # Author a single graph-addressed plan step via a wired-in model (the
 # offline MockProvider by default) and execute it through the same
@@ -142,136 +153,136 @@ bitcode forge sample-project "add a subtract function"
 # failures automatically. Never point this — or `plan run --authored` —
 # at sample-project/: it is a pinned measurement fixture, not a demo
 # target, and both refuse it outright (see "Demo target" below):
-bitcode do demo-project "add an exclamation mark to the farewell"
+girder do demo-project "add an exclamation mark to the farewell"
 
 # Emit graph context, a real Plan Format v2 authoring schema, and a plan
 # skeleton as one JSON object — for pasting into any external chat model
 # that isn't wired in as a provider. See "External authoring" below for
 # the full loop from here to a verified, applied edit:
-bitcode context demo-project --nodes crate::greeter::farewell "add an exclamation mark to the farewell" --json
+girder context demo-project --nodes crate::greeter::farewell "add an exclamation mark to the farewell" --json
 
 # Validate/inspect/execute a plan file directly. `--authored` is for a plan
 # an external model wrote by hand (see "External authoring" below); without
 # it, `run` executes a plan exactly as authored (used internally by `do`):
-bitcode plan validate my-plan.json
-bitcode plan explain my-plan.json
-bitcode plan run my-plan.json --dry
+girder plan validate my-plan.json
+girder plan explain my-plan.json
+girder plan run my-plan.json --dry
 
 # Semantic code review vs HEAD (typed mutations, not text diffs):
-bitcode review sample-project --since HEAD~1
+girder review sample-project --since HEAD~1
 
 # Minimal test selection: find every test reachable from changed functions:
-bitcode test-impact sample-project --run
+girder test-impact sample-project --run
 
 # Knowledge-graph query — answer a question by traversing the semantic graph:
-bitcode query sample-project "what would break if I change add?"
-bitcode query sample-project "what calls sum_list?"
-bitcode query sample-project  # interactive REPL (reads stdin)
+girder query sample-project "what would break if I change add?"
+girder query sample-project "what calls sum_list?"
+girder query sample-project  # interactive REPL (reads stdin)
 
 # Start a graph-native collaboration history, give another replica its own actor,
 # record that replica's current source graph, and deterministically merge it:
-bitcode collab init sample-project alice alice.aetherc
-bitcode collab fork alice.aetherc bob bob.aetherc --approve
-bitcode collab sync sample-project bob.aetherc
-bitcode collab merge alice.aetherc bob.aetherc merged.aethercb
-bitcode collab materialize merged.aethercb merged.aether
+girder collab init sample-project alice alice.aetherc
+girder collab fork alice.aetherc bob bob.aetherc --approve
+girder collab sync sample-project bob.aetherc
+girder collab merge alice.aetherc bob.aetherc merged.aethercb
+girder collab materialize merged.aethercb merged.aether
 # Membership changes are causal operations and require explicit approval:
-bitcode collab member add alice.aetherc carol --approve
-bitcode collab member remove alice.aetherc carol --approve
+girder collab member add alice.aetherc carol --approve
+girder collab member remove alice.aetherc carol --approve
 
 # Or exchange deltas in a mutually authenticated live loopback session.
 # Secret contents are generated with private permissions and never printed.
 # Group-secret-only operation remains available as a migration mode:
-bitcode collab secret collaboration.secret
+girder collab secret collaboration.secret
 
 # Strict identity mode additionally pins each roster actor to an Ed25519 key.
 # Generate each actor's private/shareable-public pair, compare the printed
 # SHA-256 fingerprints out of band, and approve the exact peer fingerprint:
-bitcode collab identity generate alice.aetherc \
+girder collab identity generate alice.aetherc \
   alice.identity alice.identity.pub
-bitcode collab identity generate bob.aetherc \
+girder collab identity generate bob.aetherc \
   bob.identity bob.identity.pub
-bitcode collab identity show bob.identity.pub
-bitcode collab identity trust alice.trust \
+girder collab identity show bob.identity.pub
+girder collab identity trust alice.trust \
   bob.identity.pub --approve <bob-fingerprint>
-bitcode collab identity trust bob.trust \
+girder collab identity trust bob.trust \
   alice.identity.pub --approve <alice-fingerprint>
 # Sign existing local-authored history now (strict host/join also does this
 # in memory before exchange), then audit a fully attested bundle offline:
-bitcode collab identity attest alice.aetherc alice.identity
-bitcode collab identity attest bob.aetherc bob.identity
+girder collab identity attest alice.aetherc alice.identity
+girder collab identity attest bob.aetherc bob.identity
 
-bitcode collab host alice.aetherc 127.0.0.1:7331 \
+girder collab host alice.aetherc 127.0.0.1:7331 \
   --identity-file alice.identity --trust-store alice.trust \
   --secret-file collaboration.secret --discovery-dir .bitcode/peers \
   --presence "reviewing parser changes"
-bitcode collab discover bob.aetherc .bitcode/peers \
+girder collab discover bob.aetherc .bitcode/peers \
   --secret-file collaboration.secret
-bitcode collab join-peer bob.aetherc alice .bitcode/peers \
+girder collab join-peer bob.aetherc alice .bitcode/peers \
   --identity-file bob.identity --trust-store bob.trust \
   --secret-file collaboration.secret --presence "running transport tests"
 # An explicit address remains available when local discovery is not in use:
-bitcode collab join bob.aetherc 127.0.0.1:7331 \
+girder collab join bob.aetherc 127.0.0.1:7331 \
   --secret-file collaboration.secret \
   --identity-file bob.identity --trust-store bob.trust
 # Verify every retained non-bootstrap operation against the current local pins:
-bitcode collab identity verify \
+girder collab identity verify \
   alice.aetherc alice.identity alice.trust
 # To rotate your own key, first generate a new pair, then record a dual-signed
 # causal transition while both private keys are available. Peers can then rotate
 # their current pin before the next strict session:
-bitcode collab identity generate alice.aetherc \
+girder collab identity generate alice.aetherc \
   alice-new.identity alice-new.identity.pub
-bitcode collab identity rotate-local alice.aetherc \
+girder collab identity rotate-local alice.aetherc \
   alice.identity alice-new.identity \
   --from <old-alice-fingerprint> --approve <new-alice-fingerprint>
 # Peer trust rotation/removal also requires the exact reviewed fingerprints:
-bitcode collab identity rotate alice.trust \
+girder collab identity rotate alice.trust \
   bob-new.identity.pub --from <old-bob-fingerprint> --approve <new-bob-fingerprint>
-bitcode collab identity remove alice.trust bob \
+girder collab identity remove alice.trust bob \
   --approve <new-bob-fingerprint>
 # Successful sessions persist both peers' causal acknowledgements. Once every
 # active member has acknowledged superseded history, prune it conservatively:
-bitcode collab compact alice.aetherc
+girder collab compact alice.aetherc
 # Rebuild remote whole-file projections, show semantic/file changes and
 # conflicts, then explicitly validate and journal-commit the reviewed bytes:
-bitcode collab review sample-project alice.aetherc
-bitcode collab apply sample-project alice.aetherc --approve
+girder collab review sample-project alice.aetherc
+girder collab apply sample-project alice.aetherc --approve
 
 # Real Python execution tracer — records every variable at every line/call/return:
-bitcode debug script.py
-bitcode debug script.py --what-if x=10 at 2
+girder debug script.py
+girder debug script.py --what-if x=10 at 2
 
 # DAP adapter dry-run: resolve graph breakpoints without launching an adapter:
-bitcode dap script.py --dry-run
+girder dap script.py --dry-run
 
 # Generate and review an extension recipe without changing the project:
-bitcode extension sample-project generate "show call impact"
+girder extension sample-project generate "show call impact"
 
 # Grant the exact recipe digest/capabilities, then manage its lifecycle:
-bitcode extension sample-project generate "show call impact" --approve
-bitcode extension sample-project list
-bitcode extension sample-project disable dev.bitcode.generated.show-call-impact
-bitcode extension sample-project remove dev.bitcode.generated.show-call-impact
+girder extension sample-project generate "show call impact" --approve
+girder extension sample-project list
+girder extension sample-project disable dev.bitcode.generated.show-call-impact
+girder extension sample-project remove dev.bitcode.generated.show-call-impact
 
 # Install a hand-authored declarative recipe after the same explicit review:
-bitcode extension sample-project install recipe.json --approve
+girder extension sample-project install recipe.json --approve
 
 # Browse the built-in reviewed marketplace and inspect a listing:
-bitcode extension sample-project marketplace search impact
-bitcode extension sample-project marketplace show org.bitcode.impact-navigator
+girder extension sample-project marketplace search impact
+girder extension sample-project marketplace show org.bitcode.impact-navigator
 
 # Regenerate a reviewed intent for this project, preview its capability delta,
 # then explicitly approve the adapted recipe:
-bitcode extension sample-project marketplace adapt org.bitcode.impact-navigator
-bitcode extension sample-project marketplace adapt org.bitcode.impact-navigator --approve
+girder extension sample-project marketplace adapt org.bitcode.impact-navigator
+girder extension sample-project marketplace adapt org.bitcode.impact-navigator --approve
 
 # Portable catalogs use the same bounded parser and print a catalog fingerprint:
-bitcode extension sample-project marketplace list \
-  --catalog marketplace/bitcode-extensions.json
+girder extension sample-project marketplace list \
+  --catalog marketplace/girder-extensions.json
 
 # Full help:
-bitcode --help
+girder --help
 ```
 
 `analyze`/`forge` walk every `.rs`/`.py` file (skipping `target`, `.git`, …),
@@ -409,15 +420,15 @@ or bundle change forces another review.
 
 ### Project configuration
 
-Bit Code works without configuration. To materialize and inspect the validated
+Girder works without configuration. To materialize and inspect the validated
 defaults for a project:
 
 ```bash
-bitcode config sample-project --init
-bitcode config sample-project
+girder config sample-project --init
+girder config sample-project
 ```
 
-`bitcode.toml` controls source roots and ignore globs, symlink policy, graph
+`girder.toml` controls source roots and ignore globs, symlink policy, graph
 storage, structured impacted-test commands, the agent output module/file, and
 candidate-validation commands, timeouts, diagnostic limits, and copy budgets.
 Commands are argv arrays rather than interpolated shell strings. On Linux,
@@ -427,10 +438,10 @@ inside the disposable candidate copy. Invalid keys, escaping paths, broken
 globs, unsupported graph extensions, malformed commands, and unsupported config
 versions fail before project analysis starts.
 
-## External authoring: `bitcode context` + `plan run --authored`
+## External authoring: `girder context` + `plan run --authored`
 
-`bitcode do` drives a wired-in provider (OpenAI, Anthropic, Ollama, or the
-offline `MockProvider`) automatically. `bitcode context` and `plan run
+`girder do` drives a wired-in provider (OpenAI, Anthropic, Ollama, or the
+offline `MockProvider`) automatically. `girder context` and `plan run
 --authored` split that same workflow at the model boundary, so *any* chat
 model — one with no API integration in this codebase at all — can author a
 verified graph edit.
@@ -450,7 +461,7 @@ The authoring loop:
 # 1. Emit graph context, a real Plan Format v2 authoring schema, and a plan
 #    skeleton (base_commit, on_failure, the mandatory tests.impacted check)
 #    as one JSON object:
-bitcode context demo-project --nodes crate::greeter::farewell \
+girder context demo-project --nodes crate::greeter::farewell \
   "add an exclamation mark to the farewell" --json > context.json
 
 # 2. Paste context.json into any chat model. Ask it to fill in the plan
@@ -468,11 +479,11 @@ bitcode context demo-project --nodes crate::greeter::farewell \
 #    already carry one, and a zero-step plan is refused outright rather than
 #    passing vacuously. --authored-by <name> records who authored it in the
 #    written report:
-(cd demo-project && bitcode plan run ../plan.json --authored --authored-by claude-opus-5)
+(cd demo-project && girder plan run ../plan.json --authored --authored-by claude-opus-5)
 ```
 
 A passing run applies the edit to the real tree and writes a report under
-`.bitcode/reports/`; a failing check rolls the tree back to `base_commit`
+`.girder/reports/`; a failing check rolls the tree back to `base_commit`
 automatically, so a bad edit from an untrusted external model never lands
 half-applied. `plan_schema()`'s exact shape (a `oneOf` discriminated union
 per edit/check kind, matching `planfile::schema`'s deserializer field for
@@ -482,12 +493,12 @@ closed and the round-trip test that proves it.
 
 ### Demo target: `demo-project/`, never `sample-project/`
 
-`bitcode do` and `plan run --authored` both refuse `sample-project/` as a
+`girder do` and `plan run --authored` both refuse `sample-project/` as a
 target outright, with an error naming `demo-project/` as the place to run
 instead:
 
 ```
-$ bitcode do sample-project "uppercase greet's return value"
+$ girder do sample-project "uppercase greet's return value"
 error: sample-project/ is a pinned measurement fixture (see gap 18/21 in
 docs/core-gap-analysis.md) and refuses authored writes; run demos against
 demo-project/ instead
@@ -507,7 +518,7 @@ against `sample-project/` — only the two commands that write are refused.
 
 ### The pipeline demo
 
-`bitcode` (no args) walks the entire pipeline over stdout:
+`girder` (no args) walks the entire pipeline over stdout:
 
 1. **Builds a semantic graph** from source with tree-sitter (the graph is the
    source of truth; text is a projection).
@@ -532,7 +543,7 @@ against `sample-project/` — only the two commands that write are refused.
 | `aether-debugger` | Recording interpreter, execution trace, branching timeline, what-if + AI root-cause. |
 | `aether-dap` | Debug Adapter Protocol client/session layer with graph-aware breakpoint support. |
 | `aether-extensions` | Strict declarative recipes, digest-bound grants, graph-native lifecycle, bounded UI and project contributions. |
-| `aether-app` | The `bitcode` binary: every CLI subcommand, plus the egui/wgpu GUI behind feature `gui`. |
+| `aether-app` | The `girder` binary: every CLI subcommand, plus the egui/wgpu GUI behind feature `gui`. |
 
 ## The GUI
 
@@ -600,14 +611,14 @@ is the persistent serving surface.
 
 The **Author** view exposes both authoring paths from "External authoring"
 above without a terminal: type an intent, click **Search** to run the same
-concept search `bitcode do`/`context` use (only the top-scored hit starts
+concept search `girder do`/`context` use (only the top-scored hit starts
 checked — narrower than the CLI default on purpose, since gap 15 in
 `docs/core-gap-analysis.md` exists to shrink what a model can touch), and
 adjust the checkboxes to pin the exact nodes a plan may edit — the same
 `--nodes` a terminal invocation would otherwise require typing full paths
-for. **Local model** mode mirrors `bitcode do`: **Run** streams each
+for. **Local model** mode mirrors `girder do`: **Run** streams each
 provider attempt into a live log and shows pass/fail plus the report.
-**External model** mode mirrors `bitcode context` + `plan run --authored`:
+**External model** mode mirrors `girder context` + `plan run --authored`:
 **Copy context JSON** puts exactly what the CLI command would print onto the
 clipboard, paste a model's plan response back in, and **Run authored**
 applies the same guarantees (forced `rollback_plan`, the mandatory
@@ -624,7 +635,7 @@ Then, in the Author tab: type "add an exclamation mark to the farewell",
 click Search, leave `crate::greeter::farewell` checked, and either click Run
 (Local model) or use Copy Context JSON / paste a plan back in / Run authored
 (External model) — Dry run stays checked by default in both, so nothing
-writes to the tree until it's unchecked and confirmed. Like `bitcode do`
+writes to the tree until it's unchecked and confirmed. Like `girder do`
 against a terminal, both refuse `sample-project/` outright; only
 `demo-project/` (or another project you point it at) accepts a real,
 non-dry Run.
@@ -644,9 +655,7 @@ GPU — or a software Vulkan adapter (Mesa **lavapipe**) plus the usual X11 libs
 error and **falls back to the headless demo** automatically, so it never
 hard-fails. It has been verified headlessly under `Xvfb` + lavapipe:
 
-![Bit Code GUI](docs/bitcode-gui.png)
-
-> The **default headless build, all tests, and `bitcode`'s demo require none
+> The **default headless build, all tests, and `girder`'s demo require none
 > of this** — no GPU, display, or extra system libraries.
 
 ## Local-first AI
@@ -704,13 +713,13 @@ Implemented features:
 | Semantic review | Typed diff (added/modified/removed nodes + edges), impact radius, test gap report |
 | Minimal test selection | Call-graph reachability from changed functions, optional `--run` |
 | Graph collaboration | Deterministic operation-set CRDT, causal membership/deltas/tombstones, atomic RON/bincode bundles, roster-gated authenticated loopback host/join with optional downgrade-resistant pinned Ed25519 actor identities, private authenticated local discovery leases, all-member acknowledgement compaction, and reviewed whole-file source projection |
-| Project contract | Validated `bitcode.toml` for source scope, graph path, test runners, and agent output |
+| Project contract | Validated `girder.toml` for source scope, graph path, test runners, and agent output |
 | Source projection | GUI/CLI agent output and graph rename commit validated source plus graph through recoverable journaled transactions |
 | Candidate validation | Disposable project copy, optional bubblewrap isolation, Cargo build/tests, configured checks, cancellation/timeouts, bounded diagnostics, snapshot-bound commit gate |
 | DAP integration | Two-phase DAP launch, graph-node breakpoints, stop/stack inspection, and real `debugpy` coverage |
 | Declarative extensions | AI/JSON recipe generation, exact digest-bound approval, parameterized capabilities, graph-native records/contributions, GUI/CLI lifecycle, reversible validated projections |
 | Generative marketplace | Bounded portable catalogs, deterministic fingerprints/search, digest-bound reviews, project-aware regeneration, exact capability deltas, CLI and native browser |
-| External authoring | `bitcode context` emits graph context plus a real Plan Format v2 schema for any external chat model; `plan run --authored` re-enforces rollback/impacted-test guarantees on the result |
+| External authoring | `girder context` emits graph context plus a real Plan Format v2 schema for any external chat model; `plan run --authored` re-enforces rollback/impacted-test guarantees on the result |
 
 Optional DAP adapter smoke test:
 
