@@ -15,7 +15,7 @@ const GIT_TIMEOUT: Duration = Duration::from_secs(120);
 const GIT_MAX_OUTPUT_BYTES: usize = 16 * 1024 * 1024;
 
 fn git_timeout() -> Duration {
-    std::env::var("BITCODE_GIT_TIMEOUT_SECONDS")
+    std::env::var("GIRDER_GIT_TIMEOUT_SECONDS")
         .ok()
         .and_then(|value| value.parse::<u64>().ok())
         .filter(|seconds| *seconds > 0)
@@ -269,7 +269,7 @@ pub(crate) fn build_baseline_graph(root: &Path, git_ref: &str) -> std::io::Resul
     Ok(graph)
 }
 
-/// `bitcode test-impact <dir> [--run] [node::path...]`
+/// `girder test-impact <dir> [--run] [node::path...]`
 ///
 /// Finds the minimal set of tests that cover any changed (or specified) functions,
 /// using the call graph to determine reachability. Runs them if `--run` is passed.

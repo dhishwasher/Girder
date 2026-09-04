@@ -23,7 +23,7 @@ pub fn review(args: &[String]) -> std::io::Result<()> {
     if quiet && out_path.is_some() {
         return Err(std::io::Error::new(
             ErrorKind::InvalidInput,
-            "bitcode review: --out cannot be combined with --quiet",
+            "girder review: --out cannot be combined with --quiet",
         ));
     }
 

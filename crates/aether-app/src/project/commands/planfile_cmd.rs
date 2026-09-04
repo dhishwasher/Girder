@@ -1,4 +1,4 @@
-//! `bitcode plan validate|explain|run` — thin CLI-arg layer over
+//! `girder plan validate|explain|run` — thin CLI-arg layer over
 //! `crate::project::planfile`. Per the plan format spec, these subcommands
 //! take only a `<plan.json>` path (no project `<dir>` argument); the
 //! project root is the current working directory.
@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 
 pub fn plan_validate(args: &[String]) -> std::io::Result<()> {
     let Some(plan_path) = args.first() else {
-        eprintln!("usage: bitcode plan validate <plan.json>");
+        eprintln!("usage: girder plan validate <plan.json>");
         return Ok(());
     };
     planfile::validate(&PathBuf::from("."), Path::new(plan_path))
@@ -16,7 +16,7 @@ pub fn plan_validate(args: &[String]) -> std::io::Result<()> {
 
 pub fn plan_explain(args: &[String]) -> std::io::Result<()> {
     let Some(plan_path) = args.first() else {
-        eprintln!("usage: bitcode plan explain <plan.json>");
+        eprintln!("usage: girder plan explain <plan.json>");
         return Ok(());
     };
     planfile::explain(Path::new(plan_path))
@@ -25,7 +25,7 @@ pub fn plan_explain(args: &[String]) -> std::io::Result<()> {
 pub fn plan_run(args: &[String]) -> std::io::Result<()> {
     let Some(plan_path) = args.first() else {
         eprintln!(
-            "usage: bitcode plan run <plan.json|-> [--dry] [--out <path>] \
+            "usage: girder plan run <plan.json|-> [--dry] [--out <path>] \
              [--authoring-receipt <receipt.json>] [--authored [--authored-by <name>]]"
         );
         return Ok(());

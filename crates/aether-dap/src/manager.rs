@@ -1,6 +1,6 @@
 //! `DebugManager` — graph-aware façade over multiple debug sessions.
 //!
-//! The manager is the bridge between Bit Code's semantic graph and the DAP
+//! The manager is the bridge between Girder's semantic graph and the DAP
 //! layer. Its key value-adds over raw [`DebugSession`]:
 //!
 //! 1. **Node breakpoints**: translate a [`NodeId`] → `(file, line)` using the

@@ -1,4 +1,4 @@
-//! Serde structs for the Bit Code Plan Format v1/v2 JSON schema. Parsing is
+//! Serde structs for the Girder Plan Format v1/v2 JSON schema. Parsing is
 //! deliberately permissive about which check `kind`s exist (all documented
 //! kinds parse from Phase 1 onward) even though earlier phases only execute
 //! a subset — this avoids re-touching the schema every time a new check

@@ -2,7 +2,7 @@ pub fn debug(args: &[String]) -> std::io::Result<()> {
     use aether_debugger::python_tracer::PyTimeline;
 
     let Some(file) = args.first() else {
-        eprintln!("usage: bitcode debug <file.py> [--what-if <var>=<val> at <step>]");
+        eprintln!("usage: girder debug <file.py> [--what-if <var>=<val> at <step>]");
         return Ok(());
     };
 

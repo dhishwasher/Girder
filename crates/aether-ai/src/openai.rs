@@ -1,7 +1,7 @@
 //! OpenAI provider.
 //!
 //! Uses the Responses API (`POST /v1/responses`) in live builds. The default
-//! build stays offline and reports [`AiError::Unsupported`] so Bit Code falls
+//! build stays offline and reports [`AiError::Unsupported`] so Girder falls
 //! back to the deterministic mock.
 
 use crate::provider::{AiError, AiProvider, Completion, Prompt, TaskClass};
@@ -116,7 +116,7 @@ fn request_body(model: &str, prompt: &Prompt) -> serde_json::Value {
         body["text"] = serde_json::json!({
             "format": {
                 "type": "json_schema",
-                "name": "bitcode_plan_step",
+                "name": "girder_plan_step",
                 "schema": schema,
                 "strict": true,
             }

@@ -6,7 +6,7 @@ pub async fn dap(args: &[String]) -> std::io::Result<()> {
     let program = match args.first() {
         Some(p) => p.clone(),
         None => {
-            eprintln!("usage: bitcode dap <program> [--adapter python|rust|<path>] [--break-at <node::path>]");
+            eprintln!("usage: girder dap <program> [--adapter python|rust|<path>] [--break-at <node::path>]");
             return Ok(());
         }
     };

@@ -1,6 +1,6 @@
 //! # aether-graph
 //!
-//! The **living semantic knowledge graph** that is Bit Code's single source
+//! The **living semantic knowledge graph** that is Girder's single source
 //! of truth. Nodes are code concepts (functions, types, modules, …); edges are
 //! semantic relationships (calls, inherits, dataflow, impact, …). Source text is
 //! a *projection* derived from nodes — never the other way around.

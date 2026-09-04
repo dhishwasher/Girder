@@ -795,7 +795,7 @@ mod tests {
     impl TempDir {
         fn new(name: &str) -> Self {
             let path = std::env::temp_dir().join(format!(
-                "bitcode-planfile-edit-{name}-{}-{}",
+                "girder-planfile-edit-{name}-{}-{}",
                 std::process::id(),
                 NEXT_ID.fetch_add(1, Ordering::Relaxed)
             ));
@@ -1329,7 +1329,7 @@ mod tests {
     // the time a later graph-addressed edit looks for it, whether that edit
     // is in the same step or a later one sharing the same `EditState`. These
     // two tests pin that as proven behavior, not just established by
-    // inspection, ahead of anything (`bitcode new`) that would rely on it.
+    // inspection, ahead of anything (`girder new`) that would rely on it.
     #[test]
     fn a_node_created_earlier_in_the_same_step_can_be_graph_edited_in_that_step() {
         let (dir, config) = v2_fixture("graph-create-then-edit-same-step", "src/lib.rs", "");

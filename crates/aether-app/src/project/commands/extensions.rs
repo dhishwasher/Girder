@@ -186,7 +186,7 @@ pub(crate) async fn extensions(args: &[String]) -> std::io::Result<()> {
             if intent.trim().is_empty() {
                 return Err(std::io::Error::new(
                     std::io::ErrorKind::InvalidInput,
-                    "usage: bitcode extension <dir> generate <intent...> [--approve]",
+                    "usage: girder extension <dir> generate <intent...> [--approve]",
                 ));
             }
             let input = serde_json::json!({
@@ -225,7 +225,7 @@ pub(crate) async fn extensions(args: &[String]) -> std::io::Result<()> {
             let Some(recipe_path) = args.get(2) else {
                 return Err(std::io::Error::new(
                     std::io::ErrorKind::InvalidInput,
-                    "usage: bitcode extension <dir> install <recipe.json> [--approve]",
+                    "usage: girder extension <dir> install <recipe.json> [--approve]",
                 ));
             };
             let approve = args.iter().any(|argument| argument == "--approve");
@@ -449,7 +449,7 @@ fn required_listing<'a>(
 ) -> std::io::Result<&'a MarketplaceListing> {
     if positional.len() != 1 {
         return invalid_input(format!(
-            "usage: bitcode extension <dir> marketplace {operation} <listing-id> \
+            "usage: girder extension <dir> marketplace {operation} <listing-id> \
              [--catalog <catalog.json>]{}",
             if operation == "adapt" {
                 " [--approve]"
@@ -787,7 +787,7 @@ fn required_extension_id<'a>(args: &'a [String], operation: &str) -> std::io::Re
     args.get(2).map(String::as_str).ok_or_else(|| {
         std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
-            format!("usage: bitcode extension <dir> {operation} <extension-id>"),
+            format!("usage: girder extension <dir> {operation} <extension-id>"),
         )
     })
 }
@@ -805,7 +805,7 @@ fn invalid_input<T>(message: impl Into<String>) -> std::io::Result<T> {
 
 fn print_usage() {
     eprintln!(
-        "usage: bitcode extension <dir> \
+        "usage: girder extension <dir> \
          list|generate|install|enable|disable|remove|marketplace ..."
     );
 }

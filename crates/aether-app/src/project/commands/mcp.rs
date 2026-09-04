@@ -1,4 +1,4 @@
-//! `bitcode mcp [dir]` — serve the read-only graph commands to an AI coding
+//! `girder mcp [dir]` — serve the read-only graph commands to an AI coding
 //! agent over the Model Context Protocol on stdin/stdout.
 //!
 //! This is the integration surface that matters for a tool whose value is
@@ -80,12 +80,12 @@ const SUPPORTED_PROTOCOL_VERSIONS: &[&str] = &[
 /// server does support and let the client decide.
 const FALLBACK_PROTOCOL_VERSION: &str = "2025-06-18";
 
-const SERVER_NAME: &str = "bitcode";
+const SERVER_NAME: &str = "girder";
 
 /// Per-tool-call wall-clock budget. A cold graph build on a mid-size
 /// repository is seconds; `review` on this repo measured ~12s. 120s leaves
 /// room for a large repository without letting a wedged child hang an agent
-/// indefinitely. Override with `BITCODE_MCP_TIMEOUT_SECONDS`.
+/// indefinitely. Override with `GIRDER_MCP_TIMEOUT_SECONDS`.
 const DEFAULT_TOOL_TIMEOUT_SECONDS: u64 = 120;
 
 /// Hard cap on one tool call's captured output. `run_captured` kills the
@@ -114,7 +114,7 @@ pub fn mcp(args: &[String]) -> std::io::Result<()> {
 
     let executable = std::env::current_exe()?;
     eprintln!(
-        "bitcode MCP server on stdio: root {}, {} tools, read-only",
+        "girder MCP server on stdio: root {}, {} tools, read-only",
         root.display(),
         TOOLS.len()
     );
@@ -247,7 +247,7 @@ fn server_info() -> Value {
 /// agent reaching for Read and grep when a cheaper answer exists, which is
 /// the entire premise of these tools.
 const INSTRUCTIONS: &str = "\
-Bit Code answers questions about this repository from a semantic graph of it, \
+Girder answers questions about this repository from a semantic graph of it, \
 rather than by reading files. Prefer these tools over opening files or \
 grepping: `get_source` returns one function's source without the file around \
 it (measured 97.85% fewer bytes than reading the whole file across ten \
@@ -581,7 +581,7 @@ fn run_tool(executable: &Path, argv: &[String]) -> Value {
         Ok(captured) => captured,
         Err(error) => {
             return tool_error(format!(
-                "could not run `bitcode {}`: {error}",
+                "could not run `girder {}`: {error}",
                 argv.join(" ")
             ))
         }
@@ -607,20 +607,20 @@ fn run_tool(executable: &Path, argv: &[String]) -> Value {
             } else {
                 stderr
             };
-            tool_error(format!("`bitcode {}` failed: {}", argv.join(" "), detail.trim()))
+            tool_error(format!("`girder {}` failed: {}", argv.join(" "), detail.trim()))
         }
         BoundedStatus::TimedOut => tool_error(format!(
-            "`bitcode {}` exceeded its {}s budget and was terminated. Large repository, or narrow the request.",
+            "`girder {}` exceeded its {}s budget and was terminated. Large repository, or narrow the request.",
             argv.join(" "),
             tool_timeout().as_secs()
         )),
         BoundedStatus::OutputLimited => tool_error(format!(
-            "`bitcode {}` produced more than {} bytes and was terminated rather than truncated. Narrow the request.",
+            "`girder {}` produced more than {} bytes and was terminated rather than truncated. Narrow the request.",
             argv.join(" "),
             MAX_TOOL_OUTPUT_BYTES
         )),
         BoundedStatus::Cancelled => {
-            tool_error(format!("`bitcode {}` was cancelled", argv.join(" ")))
+            tool_error(format!("`girder {}` was cancelled", argv.join(" ")))
         }
     }
 }
@@ -628,7 +628,7 @@ fn run_tool(executable: &Path, argv: &[String]) -> Value {
 /// Per-call timeout, overridable for very large repositories. An unparseable
 /// or zero value falls back to the default rather than disabling the bound.
 fn tool_timeout() -> Duration {
-    let seconds = std::env::var("BITCODE_MCP_TIMEOUT_SECONDS")
+    let seconds = std::env::var("GIRDER_MCP_TIMEOUT_SECONDS")
         .ok()
         .and_then(|value| value.parse::<u64>().ok())
         .filter(|seconds| *seconds > 0)
@@ -748,7 +748,7 @@ mod tests {
     }
 
     fn executable() -> PathBuf {
-        PathBuf::from("/usr/bin/bitcode")
+        PathBuf::from("/usr/bin/girder")
     }
 
     fn request(method: &str, params: Value) -> String {
@@ -1190,7 +1190,7 @@ mod tests {
 
     #[test]
     fn a_missing_executable_is_reported_as_tool_content() {
-        let result = run_tool(Path::new("/nonexistent/bitcode"), &[]);
+        let result = run_tool(Path::new("/nonexistent/girder"), &[]);
         assert_eq!(result["isError"], true);
         assert!(result["content"][0]["text"]
             .as_str()
@@ -1207,12 +1207,12 @@ mod tests {
 
     #[test]
     fn the_tool_timeout_is_overridable_but_never_unbounded() {
-        let restore = std::env::var("BITCODE_MCP_TIMEOUT_SECONDS").ok();
+        let restore = std::env::var("GIRDER_MCP_TIMEOUT_SECONDS").ok();
         // SAFETY: single-threaded test process for this variable; restored below.
-        std::env::set_var("BITCODE_MCP_TIMEOUT_SECONDS", "7");
+        std::env::set_var("GIRDER_MCP_TIMEOUT_SECONDS", "7");
         assert_eq!(tool_timeout(), Duration::from_secs(7));
         for bogus in ["0", "-1", "not a number", ""] {
-            std::env::set_var("BITCODE_MCP_TIMEOUT_SECONDS", bogus);
+            std::env::set_var("GIRDER_MCP_TIMEOUT_SECONDS", bogus);
             assert_eq!(
                 tool_timeout(),
                 Duration::from_secs(DEFAULT_TOOL_TIMEOUT_SECONDS),
@@ -1220,8 +1220,8 @@ mod tests {
             );
         }
         match restore {
-            Some(value) => std::env::set_var("BITCODE_MCP_TIMEOUT_SECONDS", value),
-            None => std::env::remove_var("BITCODE_MCP_TIMEOUT_SECONDS"),
+            Some(value) => std::env::set_var("GIRDER_MCP_TIMEOUT_SECONDS", value),
+            None => std::env::remove_var("GIRDER_MCP_TIMEOUT_SECONDS"),
         }
     }
 }

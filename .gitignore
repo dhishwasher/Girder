@@ -1,6 +1,8 @@
 *.aetherb
 *.aether.bak
 .benchmark-cache/
+.girder/
+# Legacy metadata and collaboration state; retained for compatibility.
 .bitcode/
 .DS_Store
 # Generated project graphs (the .aether format is real output, not source)
@@ -10,6 +12,8 @@ __pycache__/
 **/*.rs.bk
 /target
 # The npm wrapper's postinstall downloads the binary next to its shims.
+npm/bin/girder
+npm/bin/girder.exe
 npm/bin/bitcode
 npm/bin/bitcode.exe
 npm/node_modules/

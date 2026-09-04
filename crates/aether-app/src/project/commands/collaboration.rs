@@ -14,30 +14,30 @@ use std::sync::Arc;
 
 const USAGE: &str = "\
 usage:
-  bitcode collab init <dir> <actor> <bundle>
-  bitcode collab status <bundle>
-  bitcode collab fork <bundle> <actor> <out> --approve
-  bitcode collab member add|remove <bundle> <actor> --approve
-  bitcode collab sync <dir> <bundle> [out]
-  bitcode collab merge <bundle> <peer> <out>
-  bitcode collab compact <bundle> [out]
-  bitcode collab review <dir> <bundle>
-  bitcode collab apply <dir> <bundle> --approve
-  bitcode collab materialize <bundle> <graph.aether>
-  bitcode collab secret <path>
-  bitcode collab identity generate <bundle> <private-key> <public-key>
-  bitcode collab identity show <public-key>
-  bitcode collab identity list <trust-store>
-  bitcode collab identity attest <bundle> <private-key>
-  bitcode collab identity verify <bundle> <private-key> <trust-store>
-  bitcode collab identity trust <trust-store> <public-key> --approve <fingerprint>
-  bitcode collab identity rotate <trust-store> <public-key> --from <old-fingerprint> --approve <new-fingerprint>
-  bitcode collab identity rotate-local <bundle> <old-private-key> <new-private-key> --from <old-fingerprint> --approve <new-fingerprint>
-  bitcode collab identity remove <trust-store> <actor> --approve <fingerprint>
-  bitcode collab host <bundle> <127.0.0.1:port> --secret-file <path> [--identity-file <path> --trust-store <path>] [--discovery-dir <path>] [--presence <status>] [--once] [--ready-file <path>]
-  bitcode collab discover <bundle> <directory> --secret-file <path>
-  bitcode collab join <bundle> <127.0.0.1:port> --secret-file <path> [--identity-file <path> --trust-store <path>] [--presence <status>] [out]
-  bitcode collab join-peer <bundle> <actor> <directory> --secret-file <path> [--identity-file <path> --trust-store <path>] [--presence <status>] [out]";
+  girder collab init <dir> <actor> <bundle>
+  girder collab status <bundle>
+  girder collab fork <bundle> <actor> <out> --approve
+  girder collab member add|remove <bundle> <actor> --approve
+  girder collab sync <dir> <bundle> [out]
+  girder collab merge <bundle> <peer> <out>
+  girder collab compact <bundle> [out]
+  girder collab review <dir> <bundle>
+  girder collab apply <dir> <bundle> --approve
+  girder collab materialize <bundle> <graph.aether>
+  girder collab secret <path>
+  girder collab identity generate <bundle> <private-key> <public-key>
+  girder collab identity show <public-key>
+  girder collab identity list <trust-store>
+  girder collab identity attest <bundle> <private-key>
+  girder collab identity verify <bundle> <private-key> <trust-store>
+  girder collab identity trust <trust-store> <public-key> --approve <fingerprint>
+  girder collab identity rotate <trust-store> <public-key> --from <old-fingerprint> --approve <new-fingerprint>
+  girder collab identity rotate-local <bundle> <old-private-key> <new-private-key> --from <old-fingerprint> --approve <new-fingerprint>
+  girder collab identity remove <trust-store> <actor> --approve <fingerprint>
+  girder collab host <bundle> <127.0.0.1:port> --secret-file <path> [--identity-file <path> --trust-store <path>] [--discovery-dir <path>] [--presence <status>] [--once] [--ready-file <path>]
+  girder collab discover <bundle> <directory> --secret-file <path>
+  girder collab join <bundle> <127.0.0.1:port> --secret-file <path> [--identity-file <path> --trust-store <path>] [--presence <status>] [out]
+  girder collab join-peer <bundle> <actor> <directory> --secret-file <path> [--identity-file <path> --trust-store <path>] [--presence <status>] [out]";
 
 pub fn collaboration(args: &[String]) -> std::io::Result<()> {
     match args.first().map(String::as_str) {

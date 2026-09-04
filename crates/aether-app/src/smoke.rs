@@ -1,6 +1,6 @@
 //! Headless end-to-end demo.
 //!
-//! Runs the whole Bit Code pipeline without a window so it works in CI and
+//! Runs the whole Girder pipeline without a window so it works in CI and
 //! on this display-less box, printing each stage to stdout:
 //!   1. Build the semantic graph from source (graph is the source of truth).
 //!   2. Run the parallel agent swarm on a natural-language intent; watch it
@@ -46,7 +46,7 @@ fn run() -> i64 {
 "#;
 
 pub async fn run() {
-    println!("\n=== Bit Code — headless pipeline demo ===\n");
+    println!("\n=== Girder — headless pipeline demo ===\n");
 
     // 1. Build the graph from source — two files, to show CROSS-FILE linking.
     let graph = Arc::new(Mutex::new(SemanticGraph::new()));

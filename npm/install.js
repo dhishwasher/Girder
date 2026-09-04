@@ -3,7 +3,7 @@
 // postinstall: fetch the release binary for this platform.
 //
 // Never fails the install. An MCP server that cannot download is recoverable
-// (the shim falls back to a `bitcode` already on PATH, and prints how to get
+// (the shim falls back to a `girder` already on PATH, and prints how to get
 // one), but a failed postinstall aborts `npx` entirely and leaves the user
 // with an error that names npm rather than the actual problem.
 
@@ -15,16 +15,16 @@ const { execFileSync } = require("child_process");
 
 const { binaryName, target, unsupportedMessage, vendoredPath } = require("./resolve");
 
-const REPO = process.env.BITCODE_REPO || "dhishwasher/Bit-code";
-const VERSION = process.env.BITCODE_VERSION || `v${require("./package.json").version}`;
+const REPO = process.env.GIRDER_REPO || "dhishwasher/Girder";
+const VERSION = process.env.GIRDER_VERSION || `v${require("./package.json").version}`;
 const BASE_URL =
-  process.env.BITCODE_BASE_URL || `https://github.com/${REPO}/releases/download`;
+  process.env.GIRDER_BASE_URL || `https://github.com/${REPO}/releases/download`;
 
 function note(message) {
   // stderr: stdout of the *server* is a protocol stream, and keeping all
   // wrapper output on stderr means no install message can ever be mistaken
   // for a JSON-RPC frame.
-  process.stderr.write(`bitcode-mcp: ${message}\n`);
+  process.stderr.write(`girder-mcp: ${message}\n`);
 }
 
 async function download(url, destination) {
@@ -63,8 +63,8 @@ async function verify(url, bytes) {
 }
 
 async function main() {
-  if (process.env.BITCODE_SKIP_DOWNLOAD === "1") {
-    note("BITCODE_SKIP_DOWNLOAD=1; not downloading");
+  if (process.env.GIRDER_SKIP_DOWNLOAD === "1") {
+    note("GIRDER_SKIP_DOWNLOAD=1; not downloading");
     return;
   }
 
@@ -75,10 +75,10 @@ async function main() {
   }
 
   const isWindows = os.platform() === "win32";
-  const asset = isWindows ? `bitcode-${triple}.zip` : `bitcode-${triple}.tar.gz`;
+  const asset = isWindows ? `girder-${triple}.zip` : `girder-${triple}.tar.gz`;
   const url = `${BASE_URL}/${VERSION}/${asset}`;
 
-  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "bitcode-mcp-"));
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "girder-mcp-"));
   try {
     note(`downloading ${asset} (${VERSION})`);
     const archive = path.join(scratch, asset);
@@ -92,8 +92,8 @@ async function main() {
     // agent the result. Verification used to be skipped whenever the
     // checksum could not be fetched, which made a single blocked request
     // enough to turn that guarantee off.
-    if (process.env.BITCODE_SKIP_CHECKSUM === "1") {
-      note(`BITCODE_SKIP_CHECKSUM=1, so ${asset} was not verified`);
+    if (process.env.GIRDER_SKIP_CHECKSUM === "1") {
+      note(`GIRDER_SKIP_CHECKSUM=1, so ${asset} was not verified`);
     } else {
       await verify(url, bytes);
     }
@@ -121,7 +121,7 @@ async function main() {
   } catch (error) {
     note(`could not install the prebuilt binary: ${error.message}`);
     note(
-      "Falling back to a `bitcode` on PATH. To install one:\n" +
+      "Falling back to a `girder` on PATH. To install one:\n" +
         "  curl -fsSL https://raw.githubusercontent.com/" +
         REPO +
         "/main/install.sh | sh"

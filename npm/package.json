@@ -1,5 +1,5 @@
 {
-  "name": "bitcode-mcp",
+  "name": "girder-mcp",
   "version": "0.1.2",
   "description": "Semantic-graph MCP server for AI coding agents: read one function instead of a whole file, find a declaration without grep, and select only the tests a change can reach.",
   "keywords": [
@@ -13,18 +13,18 @@
     "cursor",
     "context"
   ],
-  "homepage": "https://github.com/dhishwasher/Bit-code#readme",
-  "bugs": "https://github.com/dhishwasher/Bit-code/issues",
+  "homepage": "https://github.com/dhishwasher/Girder#readme",
+  "bugs": "https://github.com/dhishwasher/Girder/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dhishwasher/Bit-code.git",
+    "url": "git+https://github.com/dhishwasher/Girder.git",
     "directory": "npm"
   },
   "license": "BUSL-1.1",
   "type": "commonjs",
   "bin": {
-    "bitcode-mcp": "bin/bitcode-mcp.js",
-    "bitcode": "bin/bitcode.js"
+    "girder-mcp": "bin/girder-mcp.js",
+    "girder": "bin/girder.js"
   },
   "files": [
     "bin/",

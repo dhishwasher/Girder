@@ -1,6 +1,6 @@
-//! `bitcode names <dir> <identifier> [--kind function|type|all] --json` —
-//! exact name match across the workspace. `bitcode query` answers
-//! who-calls-X but cannot answer "how many things are named X"; `bitcode
+//! `girder names <dir> <identifier> [--kind function|type|all] --json` —
+//! exact name match across the workspace. `girder query` answers
+//! who-calls-X but cannot answer "how many things are named X"; `girder
 //! search` answers that only approximately (substring, over both name and
 //! path). This exists so an agent doesn't fall back to `grep` for an
 //! exact-name lookup.
@@ -12,7 +12,7 @@ use aether_graph::NodeKind;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
-const USAGE: &str = "usage: bitcode names <dir> <identifier> [--kind function|type|all] --json";
+const USAGE: &str = "usage: girder names <dir> <identifier> [--kind function|type|all] --json";
 
 pub fn names(args: &[String]) -> std::io::Result<()> {
     let Some(root_arg) = args.first() else {
@@ -28,7 +28,7 @@ pub fn names(args: &[String]) -> std::io::Result<()> {
     // pipeable JSON array, so there is no human-readable fallback to
     // silently produce instead.
     if !args.iter().any(|arg| arg == "--json") {
-        return Err(invalid_input("bitcode names requires --json"));
+        return Err(invalid_input("girder names requires --json"));
     }
 
     let root = PathBuf::from(root_arg);
@@ -109,7 +109,7 @@ mod tests {
     /// something real to distinguish.
     fn fixture_project(name: &str) -> PathBuf {
         let root = std::env::temp_dir().join(format!(
-            "bitcode-names-fixture-{name}-{}-{}",
+            "girder-names-fixture-{name}-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -126,9 +126,9 @@ mod tests {
             &root,
             &[
                 "-c",
-                "user.name=Bit Code Tests",
+                "user.name=Girder Tests",
                 "-c",
-                "user.email=tests@bitcode.invalid",
+                "user.email=tests@girder.invalid",
                 "commit",
                 "--quiet",
                 "-m",
@@ -235,9 +235,9 @@ mod tests {
             &root,
             &[
                 "-c",
-                "user.name=Bit Code Tests",
+                "user.name=Girder Tests",
                 "-c",
-                "user.email=tests@bitcode.invalid",
+                "user.email=tests@girder.invalid",
                 "commit",
                 "--quiet",
                 "-m",

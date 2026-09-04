@@ -1,8 +1,8 @@
 {
   "version": 1,
   "id": "org.bitcode.marketplace",
-  "name": "Bit Code Extension Catalog",
-  "description": "Reviewed declarative extension intents and reference recipes maintained with Bit Code.",
+  "name": "Girder Extension Catalog",
+  "description": "Reviewed declarative extension intents and reference recipes maintained with Girder.",
   "listings": [
     {
       "id": "org.bitcode.impact-navigator",

@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 static NEXT_VALIDATION: AtomicUsize = AtomicUsize::new(0);
-const VALIDATION_ROOT: &str = ".bitcode/validation";
+const VALIDATION_ROOT: &str = ".girder/validation";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ValidationPolicy {
@@ -146,7 +146,7 @@ fn validate_candidate_with_policy(
                 command: None,
                 status: ValidationStatus::Skipped,
                 duration: Duration::ZERO,
-                output: "disabled by bitcode.toml".to_string(),
+                output: "disabled by girder.toml".to_string(),
             }],
         });
     }
@@ -303,7 +303,7 @@ fn run_validation_command(
     let mut command = sandboxed_command(candidate, configured, target_dir.as_deref(), policy)?;
     command
         .current_dir(candidate)
-        .env("BITCODE_VALIDATION", "1")
+        .env("GIRDER_VALIDATION", "1")
         .env("PYTHONDONTWRITEBYTECODE", "1");
     if let Some(target) = &target_dir {
         command.env("CARGO_TARGET_DIR", target);
@@ -418,7 +418,7 @@ fn sandboxed_command(
         .arg("--chdir")
         .arg(candidate)
         .arg("--setenv")
-        .arg("BITCODE_VALIDATION")
+        .arg("GIRDER_VALIDATION")
         .arg("1");
     if policy.is_extension() {
         command.arg("--setenv").arg("HOME").arg("/tmp");
@@ -528,7 +528,7 @@ fn check_cancelled(cancel: &Arc<AtomicBool>) -> std::io::Result<()> {
     }
 }
 
-/// A disposable copy of the project tree under `.bitcode/validation/`,
+/// A disposable copy of the project tree under `.girder/validation/`,
 /// removed on `Drop`. `validate_candidate` uses this internally; the plan
 /// executor (`crate::project::planfile::executor`) also creates one
 /// directly per step, applies edits into it, and runs checks there before
@@ -557,7 +557,7 @@ impl CandidateWorkspace {
         ));
         let workspace = allocation.join("workspace");
         // A concurrent transaction cleanup or workspace drop may prune an
-        // empty `.bitcode` between these creations; retry once on ENOENT.
+        // empty `.girder` between these creations; retry once on ENOENT.
         let mut attempts = 0;
         loop {
             attempts += 1;
@@ -596,8 +596,8 @@ impl Drop for CandidateWorkspace {
         let _ = std::fs::remove_dir_all(&self.allocation);
         if let Some(validation_root) = self.allocation.parent() {
             let _ = std::fs::remove_dir(validation_root);
-            if let Some(bitcode) = validation_root.parent() {
-                let _ = std::fs::remove_dir(bitcode);
+            if let Some(girder) = validation_root.parent() {
+                let _ = std::fs::remove_dir(girder);
             }
         }
     }
@@ -700,7 +700,7 @@ fn should_skip(relative: &Path) -> bool {
         matches!(
             component.as_os_str().to_str(),
             Some(
-                ".git" | ".bitcode" | "target" | "node_modules" | ".venv" | "venv" | "__pycache__"
+                ".git" | ".girder" | "target" | "node_modules" | ".venv" | "venv" | "__pycache__"
             )
         )
     })
@@ -718,7 +718,7 @@ mod tests {
     impl TempProject {
         fn new(label: &str) -> Self {
             let path = std::env::temp_dir().join(format!(
-                "bitcode-validation-{label}-{}-{}",
+                "girder-validation-{label}-{}-{}",
                 std::process::id(),
                 NEXT_TEST.fetch_add(1, Ordering::Relaxed)
             ));
@@ -781,7 +781,7 @@ mod tests {
             "old\n"
         );
         assert!(!project.0.join("marker").exists());
-        assert!(!project.0.join(".bitcode").exists());
+        assert!(!project.0.join(".girder").exists());
     }
 
     #[test]
@@ -845,7 +845,7 @@ mod tests {
         project.write("src/lib.rs", "old\n");
         let escaped = std::env::current_dir()
             .unwrap()
-            .join(format!(".bitcode-validation-escape-{}", std::process::id()));
+            .join(format!(".girder-validation-escape-{}", std::process::id()));
         let _ = std::fs::remove_file(&escaped);
         let _cleanup = HostMarker(escaped.clone());
         let config = command_config(&format!("touch '{}'", escaped.display()));
@@ -959,7 +959,7 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(error.kind(), std::io::ErrorKind::StorageFull);
-        assert!(!project.0.join(".bitcode").exists());
+        assert!(!project.0.join(".girder").exists());
     }
 
     #[test]
@@ -1010,7 +1010,7 @@ mod tests {
         if bubblewrap_path().is_none() {
             return;
         }
-        const SECRET: &str = "BITCODE_EXTENSION_SECRET_TEST";
+        const SECRET: &str = "GIRDER_EXTENSION_SECRET_TEST";
         let project = TempProject::new("extension-secret-isolation");
         project.write("src/lib.rs", "pub fn example() {}\n");
         std::env::set_var(SECRET, "must-not-cross-sandbox");

@@ -1,14 +1,14 @@
-# `bitcode names` lookup cost
+# `girder names` lookup cost
 
 This measurement compares an exact-identifier lookup done via `grep` against
-the same lookup done via `bitcode names`. It records an observed outcome,
+the same lookup done via `girder names`. It records an observed outcome,
 not an architectural claim.
 
 ## Precommitted corrected method
 
 - Policy: `docs/names-cost-policy.json`.
 - Source commit: `b37731f218086c5d421cd8eae1534559659969e9` (the commit that
-  added `bitcode names`).
+  added `girder names`).
 - Ten identifiers, drawn from real exported functions/types already in this
   repo, fixed in the policy file before measurement: `build_from_dir_with_config`,
   `ProjectConfig`, `SemanticGraph`, `NodeId`, `invalid_input`,
@@ -16,9 +16,9 @@ not an architectural claim.
   `select_candidate`.
 - Before: `grep -rn "\b<identifier>\b" --include="*.rs" --include="*.py" .`
   — a word-boundary exact match, the honest analog to what `names` replaces.
-  Not `bitcode search`, which is substring over name and path and answers a
+  Not `girder search`, which is substring over name and path and answers a
   different, noisier question.
-- After: `bitcode names . <identifier> --json`.
+- After: `girder names . <identifier> --json`.
 - Metric: raw stdout byte count of each command, per identifier, summed.
 - Threshold: aggregate reduction ≥ 40%, matching the bar already established
   in `docs/authoring-cost.md`.
@@ -51,7 +51,7 @@ The policy result is **PASS** (97.98% ≥ 40%).
 
 ## Relationship to earlier controls
 
-This is the first cost measurement for `bitcode names`; there is no earlier
+This is the first cost measurement for `girder names`; there is no earlier
 control run to compare against. The precommitted method mirrors
 `docs/authoring-cost.md`'s structure (fixed inputs pinned before
 measurement, one raw observation file) for consistency with the one other

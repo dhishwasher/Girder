@@ -1,8 +1,8 @@
 # Prebuilt binaries for a tagged release.
 #
-# Until this existed, installing Bit Code meant cloning the repository and
+# Until this existed, installing Girder meant cloning the repository and
 # compiling it, which requires a Rust toolchain. That is a hard stop for most
-# of the people who would use `bitcode mcp` from a coding agent, since the
+# of the people who would use `girder mcp` from a coding agent, since the
 # agent hosts (Claude Code, Cursor, Codex, Zed) are not Rust environments.
 #
 # Triggered by pushing a `v*` tag, or manually against any ref for a dry run.
@@ -140,7 +140,7 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          BIN="target/${{ matrix.target }}/release/bitcode"
+          BIN="target/${{ matrix.target }}/release/girder"
           # Decide runnability from the artifact's arch against the host's,
           # rather than from a hardcoded triple. The previous check named
           # only `aarch64-apple-darwin` on an x86 host, which is the case
@@ -174,7 +174,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          BIN="target/${{ matrix.target }}/release/bitcode.exe"
+          BIN="target/${{ matrix.target }}/release/girder.exe"
           "$BIN" --version
           printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
             | "$BIN" mcp . > handshake.json
@@ -184,13 +184,13 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          name="bitcode-${{ matrix.target }}"
+          name="girder-${{ matrix.target }}"
           if [ "${{ runner.os }}" = "Windows" ]; then
-            cp "target/${{ matrix.target }}/release/bitcode.exe" .
-            7z a "dist/${name}.zip" bitcode.exe LICENSE README.md
+            cp "target/${{ matrix.target }}/release/girder.exe" .
+            7z a "dist/${name}.zip" girder.exe LICENSE README.md
           else
-            cp "target/${{ matrix.target }}/release/bitcode" .
-            tar czf "dist/${name}.tar.gz" bitcode LICENSE README.md
+            cp "target/${{ matrix.target }}/release/girder" .
+            tar czf "dist/${name}.tar.gz" girder LICENSE README.md
           fi
 
       # Checksums are generated per target rather than centrally so each one
@@ -209,7 +209,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: bitcode-${{ matrix.target }}
+          name: girder-${{ matrix.target }}
           path: dist/*
 
   publish:
@@ -290,15 +290,15 @@ jobs:
           npm_version="$(python3 -c 'import json; print(json.load(open("npm/package.json"))["version"])')"
 
           tag="${GITHUB_REF#refs/tags/}"
-          asset="bitcode-x86_64-unknown-linux-gnu.tar.gz"
+          asset="girder-x86_64-unknown-linux-gnu.tar.gz"
           url="https://github.com/${{ github.repository }}/releases/download/${tag}/${asset}"
 
           scratch="$(mktemp -d)"
           curl -fsSL -o "$scratch/$asset" "$url"
           tar -xf "$scratch/$asset" -C "$scratch"
-          chmod +x "$scratch/bitcode"
+          chmod +x "$scratch/girder"
 
-          artifact_version="$("$scratch/bitcode" --version | awk '{print $2}')"
+          artifact_version="$("$scratch/girder" --version | awk '{print $2}')"
 
           echo "Cargo.toml:                 $cargo_version"
           echo "npm/package.json:           $npm_version"

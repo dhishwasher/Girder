@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 
-// `npx -p bitcode-mcp bitcode <args...>` — the full Bit Code CLI.
+// `npx -p girder-mcp girder <args...>` — the full Girder CLI.
 //
 // The MCP server is the reason most people install this package, but the
 // same binary is the CLI (`analyze`, `search`, `review`, `test-impact`), and
@@ -14,14 +14,14 @@ let binary;
 try {
   binary = resolveBinary();
 } catch (error) {
-  process.stderr.write(`bitcode: ${error.message}\n`);
+  process.stderr.write(`girder: ${error.message}\n`);
   process.exit(1);
 }
 if (!binary) {
   process.stderr.write(
-    "bitcode: no bitcode binary found.\n" +
+    "girder: no girder binary found.\n" +
       "The postinstall download may have been blocked. Install one with:\n" +
-      "  curl -fsSL https://raw.githubusercontent.com/dhishwasher/Bit-code/main/install.sh | sh\n"
+      "  curl -fsSL https://raw.githubusercontent.com/dhishwasher/Girder/main/install.sh | sh\n"
   );
   process.exit(1);
 }
@@ -32,7 +32,7 @@ const child = spawn(binary, process.argv.slice(2), {
 });
 
 child.on("error", (error) => {
-  process.stderr.write(`bitcode: could not start ${binary}: ${error.message}\n`);
+  process.stderr.write(`girder: could not start ${binary}: ${error.message}\n`);
   process.exit(1);
 });
 

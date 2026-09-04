@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 static NEXT_TEMP_FILE: AtomicUsize = AtomicUsize::new(0);
-const TRANSACTION_ROOT: &str = ".bitcode/transactions";
+const TRANSACTION_ROOT: &str = ".girder/transactions";
 const TRANSACTION_MANIFEST: &str = "manifest.json";
 const TRANSACTION_COMMITTED: &str = "COMMITTED";
 
@@ -30,10 +30,10 @@ enum LockWait {
     NonBlock,
 }
 
-/// Advisory exclusive lock on the `.bitcode` directory file descriptor.
+/// Advisory exclusive lock on the `.girder` directory file descriptor.
 ///
 /// Locking the directory itself, rather than a file inside it, preserves the
-/// invariant that a completed commit removes `.bitcode` entirely. The held fd
+/// invariant that a completed commit removes `.girder` entirely. The held fd
 /// stays valid after unlink, so cleanup under the lock is safe; acquisition
 /// re-checks directory identity and retries because a lock on an unlinked
 /// inode excludes nobody.
@@ -42,16 +42,16 @@ struct JournalLock {
 }
 
 impl JournalLock {
-    /// Lock an existing `.bitcode` directory. `Ok(None)` when the directory
+    /// Lock an existing `.girder` directory. `Ok(None)` when the directory
     /// does not exist (nothing to recover) or, in `NonBlock` mode, when a
     /// writer currently holds the lock.
     fn acquire(root: &Path, wait: LockWait) -> std::io::Result<Option<Self>> {
         Self::acquire_inner(root, wait, false)
     }
 
-    /// Create `.bitcode/transactions` and take the exclusive lock, waiting
+    /// Create `.girder/transactions` and take the exclusive lock, waiting
     /// for any active writer. Keeping `transactions` present makes
-    /// `.bitcode` non-empty, so unlocked best-effort pruners cannot remove
+    /// `.girder` non-empty, so unlocked best-effort pruners cannot remove
     /// it during the commit critical section.
     fn create_and_acquire(root: &Path) -> std::io::Result<Self> {
         match Self::acquire_inner(root, LockWait::Block, true)? {
@@ -66,7 +66,7 @@ impl JournalLock {
     }
 
     fn acquire_inner(root: &Path, wait: LockWait, create: bool) -> std::io::Result<Option<Self>> {
-        let path = root.join(".bitcode");
+        let path = root.join(".girder");
         for _ in 0..5 {
             if create {
                 std::fs::create_dir_all(&path)?;
@@ -776,10 +776,10 @@ fn commit_project_writes_locked(
 }
 
 /// Crash injection for recovery testing: aborts the process at a named
-/// transaction transition when `BITCODE_FAULT_EXIT` names it. Inert unless
+/// transaction transition when `GIRDER_FAULT_EXIT` names it. Inert unless
 /// that variable is set, so production behavior is unchanged.
 fn maybe_fault_exit(point: &str) {
-    if std::env::var("BITCODE_FAULT_EXIT").is_ok_and(|value| value == point) {
+    if std::env::var("GIRDER_FAULT_EXIT").is_ok_and(|value| value == point) {
         std::process::exit(87);
     }
 }
@@ -962,8 +962,8 @@ fn cleanup_empty_transaction_roots(root: &Path) -> std::io::Result<()> {
             ) => {}
         Err(error) => return Err(error),
     }
-    let bitcode = root.join(".bitcode");
-    match std::fs::remove_dir(&bitcode) {
+    let girder = root.join(".girder");
+    match std::fs::remove_dir(&girder) {
         Ok(()) => {}
         Err(error)
             if matches!(
@@ -1013,9 +1013,9 @@ fn atomic_write(output: &Path, bytes: &[u8]) -> std::io::Result<()> {
     let file_name = output
         .file_name()
         .and_then(|name| name.to_str())
-        .unwrap_or("bitcode-output");
+        .unwrap_or("girder-output");
     let temp = parent.join(format!(
-        ".{file_name}.bitcode-{}-{}.tmp",
+        ".{file_name}.girder-{}-{}.tmp",
         std::process::id(),
         NEXT_TEMP_FILE.fetch_add(1, Ordering::Relaxed)
     ));
@@ -1152,7 +1152,7 @@ mod tests {
     impl TempDir {
         fn new(name: &str) -> Self {
             let path = std::env::temp_dir().join(format!(
-                "bitcode-source-{name}-{}-{}",
+                "girder-source-{name}-{}-{}",
                 std::process::id(),
                 NEXT_ID.fetch_add(1, Ordering::Relaxed)
             ));
@@ -1278,7 +1278,7 @@ mod tests {
     fn graph_save_creates_configured_parent_and_round_trips() {
         let dir = TempDir::new("graph-save");
         let mut config = ProjectConfig::default();
-        config.graph.path = ".bitcode/semantic.aether".into();
+        config.graph.path = ".girder/semantic.aether".into();
         let mut graph = SemanticGraph::new();
         graph.upsert_node(aether_graph::Node::new(
             aether_graph::NodeKind::Function,
@@ -1289,7 +1289,7 @@ mod tests {
         let output = save_graph(&dir.0, &config, &graph).unwrap();
         let loaded = SemanticGraph::load(&output).unwrap();
 
-        assert_eq!(output, dir.0.join(".bitcode/semantic.aether"));
+        assert_eq!(output, dir.0.join(".girder/semantic.aether"));
         assert!(loaded.find_by_path("crate::work").is_some());
     }
 
@@ -1333,7 +1333,7 @@ mod tests {
             std::fs::read(dir.0.join("project.aether")).unwrap(),
             b"graph\n"
         );
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
     }
 
     #[test]
@@ -1357,7 +1357,7 @@ mod tests {
         );
         assert!(!dir.0.join("remove.rs").exists());
         assert_eq!(std::fs::read(dir.0.join("keep.rs")).unwrap(), b"new\n");
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
     }
 
     #[test]
@@ -1377,7 +1377,7 @@ mod tests {
         assert_eq!(error.kind(), std::io::ErrorKind::AlreadyExists);
         assert_eq!(std::fs::read(dir.0.join("a.rs")).unwrap(), b"external\n");
         assert!(!dir.0.join("b.rs").exists());
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
     }
 
     #[test]
@@ -1419,7 +1419,7 @@ mod tests {
             b"original\n"
         );
         assert!(!dir.0.join("created.rs").exists());
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
     }
 
     #[test]
@@ -1448,7 +1448,7 @@ mod tests {
             std::fs::read(dir.0.join("deleted.rs")).unwrap(),
             b"original\n"
         );
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
     }
 
     #[test]
@@ -1594,7 +1594,7 @@ fn cli_route() {
 
         assert!(graph.find_by_path("crate::lib::original").is_some());
         assert!(graph.find_by_path("crate::lib::partial").is_none());
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
     }
 
     #[test]
@@ -1625,7 +1625,7 @@ fn cli_route() {
             std::fs::read(dir.0.join("file.rs")).unwrap(),
             b"committed\n"
         );
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
     }
 
     fn write_interrupted_journal(root: &Path, name: &str) {
@@ -1656,7 +1656,7 @@ fn cli_route() {
         std::fs::create_dir_all(dir.0.join(TRANSACTION_ROOT).join("interrupted")).unwrap();
 
         assert_eq!(recover_project_transactions(&dir.0).unwrap(), 1);
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
         // A second pass finds nothing: recovery is idempotent.
         assert_eq!(recover_project_transactions(&dir.0).unwrap(), 0);
     }
@@ -1727,7 +1727,7 @@ fn cli_route() {
             std::fs::read(dir.0.join("second.rs")).unwrap(),
             b"original two\n"
         );
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
         assert_eq!(recover_project_transactions(&dir.0).unwrap(), 0);
     }
 
@@ -1770,7 +1770,7 @@ fn cli_route() {
             b"original\n"
         );
         assert!(!dir.0.join("created.rs").exists());
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
         assert_eq!(recover_project_transactions(&dir.0).unwrap(), 0);
     }
 
@@ -1798,7 +1798,7 @@ fn cli_route() {
             std::fs::read(dir.0.join("existing.rs")).unwrap(),
             b"original\n"
         );
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
 
         let _ = writer.kill();
         let _ = writer.wait();
@@ -1817,7 +1817,7 @@ fn cli_route() {
             std::fs::read(dir.0.join("existing.rs")).unwrap(),
             b"original\n"
         );
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
     }
 
     #[test]
@@ -1838,7 +1838,7 @@ fn cli_route() {
             std::fs::read(dir.0.join("existing.rs")).unwrap(),
             b"original\n"
         );
-        assert!(!dir.0.join(".bitcode").exists());
+        assert!(!dir.0.join(".girder").exists());
     }
 
     #[test]

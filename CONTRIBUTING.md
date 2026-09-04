@@ -1,8 +1,8 @@
-# Contributing to Bit Code
+# Contributing to Girder
 
 ## Licensing of contributions
 
-Bit Code is source-available under the
+Girder is source-available under the
 [Business Source License 1.1](./LICENSE). Unless you state otherwise in
 writing, any contribution you intentionally submit for inclusion in this
 repository is offered under that same license, including its Additional Use

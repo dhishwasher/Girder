@@ -189,7 +189,7 @@ fn run_selected(
         return CheckOutcome {
             kind: kind.to_string(),
             passed: false,
-            detail: "test commands are not configured in bitcode.toml".to_string(),
+            detail: "test commands are not configured in girder.toml".to_string(),
         };
     }
     let failures = run_commands(workspace, config, &commands);

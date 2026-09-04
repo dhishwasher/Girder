@@ -728,7 +728,7 @@ mod tests {
     impl TempProject {
         fn new(name: &str) -> Self {
             let root = std::env::temp_dir().join(format!(
-                "bitcode-workspace-{name}-{}-{}",
+                "girder-workspace-{name}-{}-{}",
                 std::process::id(),
                 NEXT_ID.fetch_add(1, Ordering::Relaxed)
             ));
@@ -1054,7 +1054,7 @@ mod tests {
         workspace.begin_agent_transaction().unwrap();
         add_agent_function(&workspace, "generated");
         workspace.finish_agent_transaction().unwrap();
-        project.write("bitcode.toml", "# changed externally\n");
+        project.write("girder.toml", "# changed externally\n");
 
         let request = workspace.agent_validation_request().unwrap();
         let error = request.run(&Arc::new(AtomicBool::new(false))).unwrap_err();
@@ -1074,7 +1074,7 @@ mod tests {
         add_agent_function(&workspace, "generated");
         workspace.finish_agent_transaction().unwrap();
         validate_pending(&mut workspace);
-        project.write("bitcode.toml", "# changed externally\n");
+        project.write("girder.toml", "# changed externally\n");
 
         let error = workspace.commit_agent_changes().unwrap_err();
 

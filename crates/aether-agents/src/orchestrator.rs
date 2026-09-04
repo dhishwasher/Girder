@@ -71,7 +71,7 @@ impl Orchestrator {
 
     /// Run only the [`PlannerAgent`] for `intent` and return its messages.
     ///
-    /// Used by the `bitcode plan` CLI command to preview what the swarm
+    /// Used by the `girder plan` CLI command to preview what the swarm
     /// *would* build — graph context is gathered and fn specs are produced,
     /// but the Coder never runs and no code is written to the graph.
     pub async fn plan_only(&self, intent: &str) -> Vec<SwarmMessage> {
@@ -91,7 +91,7 @@ impl Orchestrator {
     /// Run only the [`QueryAgent`] for `question` and return the answer as a
     /// `Note` message (or an empty vec if the question cannot be parsed).
     ///
-    /// Used by `bitcode query` to answer knowledge-graph questions without
+    /// Used by `girder query` to answer knowledge-graph questions without
     /// touching the graph or running any code generation.
     pub async fn query_only(&self, question: &str) -> Vec<SwarmMessage> {
         use crate::agents::AgentResult;

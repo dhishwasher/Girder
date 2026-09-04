@@ -17,7 +17,7 @@ edition = "2021"
 license-file = "LICENSE"
 publish = false
 authors = ["Cory Robert Maynard"]
-repository = "https://github.com/dhishwasher/Bit-code"
+repository = "https://github.com/dhishwasher/Girder"
 
 # Shared dependency versions. Individual crates opt in via `workspace = true`.
 [workspace.dependencies]

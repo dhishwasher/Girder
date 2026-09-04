@@ -22,17 +22,17 @@ For each declared mutation, the harness:
    (`.benchmark-cache/core-representative-v1/`), `git init`s and commits a
    baseline;
 2. inserts a probe helper (writes the mutation's id to
-   `$BITCODE_ORACLE_PROBE` when called, mirroring the trustworthiness
+   `$GIRDER_ORACLE_PROBE` when called, mirroring the trustworthiness
    fixtures' `mark_probe()`) and a call to it as the first statement of the
-   declared target function — a source change large enough for Bit Code's
+   declared target function — a source change large enough for Girder's
    semantic diff to mark the function modified, small enough to be
    behavior-preserving;
-3. runs `bitcode test-impact <checkout>` once against a fresh mutated
+3. runs `girder test-impact <checkout>` once against a fresh mutated
    checkout for the static prediction;
 4. runs each declared test alone, in its own fresh identically-mutated
    checkout (`PYTHONPATH=src`, no install), and checks the probe file for
    dynamic ground truth;
-5. classifies each declared test as TP/FP/FN/TN by comparing Bit Code's
+5. classifies each declared test as TP/FP/FN/TN by comparing Girder's
    static selection (the test's own graph path present in the printed
    "Impacted tests" section) against the dynamic probe result.
 
@@ -60,7 +60,7 @@ Reproduce with:
 ```sh
 python3 -m unittest -v tools.test_core_representative_mutations
 python3 tools/core_representative_mutations.py \
-  --bitcode /mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/bitcode \
+  --girder /mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder \
   --offline --output docs/core-representative-mutations.json
 ```
 
@@ -79,7 +79,7 @@ untyped pytest fixture parameter, and the real call chain is
 self.invoke(ctx)`, where `self.invoke` is a **polymorphic dispatch** whose
 concrete target (`Command.invoke` vs `Group.invoke`) depends on which
 subclass `cli` was constructed as — not on syntax visible at any single call
-site. Bit Code's Rust/Python receiver-type inference (direct/dotted/quoted
+site. Girder's Rust/Python receiver-type inference (direct/dotted/quoted
 annotations, constructor assignments, bounded nullable unions; see
 `docs/core-gap-analysis.md`) has no mechanism for this: `runner`'s type is
 unknown, and `self.invoke` inside `Command.main` is an ordinary unqualified

@@ -3,7 +3,7 @@
 //! Agents don't talk to a model directly; they ask the [`Router`], which picks
 //! the best available provider for a task class and transparently falls back
 //! (e.g. a remote provider that's `Unsupported` because no key is set drops to
-//! the local mock). This is what makes Bit Code *local-first by default* yet
+//! the local mock). This is what makes Girder *local-first by default* yet
 //! able to escalate to frontier models when configured.
 
 use crate::provider::{AiError, AiProvider, Completion, Prompt, TaskClass};
@@ -50,7 +50,7 @@ impl Router {
 
     /// Resolve the ordered candidate list for a class (preferred first, then
     /// fallback), filtered to providers that `handles(class)`. Exposed so a
-    /// caller like `bitcode do` can walk providers one at a time itself
+    /// caller like `girder do` can walk providers one at a time itself
     /// (e.g. to run a repair loop against each before moving to the next),
     /// rather than only getting `complete`'s single resolved outcome.
     pub fn candidates(&self, class: TaskClass) -> Vec<Arc<dyn AiProvider>> {

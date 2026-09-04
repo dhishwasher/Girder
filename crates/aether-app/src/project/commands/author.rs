@@ -1,4 +1,4 @@
-//! `bitcode do <dir> "<intent...>" [--dry] [--max-repairs N] [--nodes
+//! `girder do <dir> "<intent...>" [--dry] [--max-repairs N] [--nodes
 //! <path>[,<path>...]]` — connects the plan executor to a model. Selects the
 //! graph nodes most relevant to the intent via the existing concept-search
 //! ranking (or, with `--nodes`, uses exactly the given paths and skips search
@@ -31,10 +31,10 @@ pub(crate) const DEFAULT_MAX_REPAIRS: usize = 2;
 static TEMP_FILE_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 const USAGE: &str =
-    "usage: bitcode do <dir> \"<intent...>\" [--dry] [--max-repairs N] [--nodes <path>[,<path>...]]";
+    "usage: girder do <dir> \"<intent...>\" [--dry] [--max-repairs N] [--nodes <path>[,<path>...]]";
 
 /// One observable step of an [`author`] run, emitted through its progress
-/// callback instead of printed directly, so `bitcode do` (which prints each
+/// callback instead of printed directly, so `girder do` (which prints each
 /// variant verbatim) and the GUI's Author tab (which streams each variant
 /// into a scrolling log) render the exact same authoring run without either
 /// side reimplementing node selection, prompting, or the repair loop.
@@ -94,7 +94,7 @@ pub(crate) enum AuthorOutcome {
 /// Selects nodes, asks the router for a grammar-constrained plan step, and
 /// executes it through `run_for_authoring`, repairing with check output up
 /// to `max_repairs` times before escalating to the next provider — this is
-/// the entire body of `bitcode do`, extracted so the GUI's Author tab can
+/// the entire body of `girder do`, extracted so the GUI's Author tab can
 /// call the exact same function instead of a second implementation.
 ///
 /// `on_progress` fires once per observable step; it must be `Send` because
@@ -264,7 +264,7 @@ pub(crate) async fn author(
     }
 }
 
-/// `bitcode do`'s progress callback: prints each [`AuthorEvent`] exactly as
+/// `girder do`'s progress callback: prints each [`AuthorEvent`] exactly as
 /// `do_intent` printed it before `author` was extracted.
 fn print_author_event(event: AuthorEvent) {
     match event {
@@ -391,7 +391,7 @@ fn indent(text: &str) -> String {
 fn write_temp_json(value: &Value, label: &str) -> std::io::Result<PathBuf> {
     let unique = TEMP_FILE_COUNTER.fetch_add(1, Ordering::Relaxed);
     let path = std::env::temp_dir().join(format!(
-        "bitcode-do-{label}-{}-{unique}.json",
+        "girder-do-{label}-{}-{unique}.json",
         std::process::id()
     ));
     let bytes = serde_json::to_vec_pretty(value)
@@ -407,7 +407,7 @@ fn build_prompt(
     schema: &Value,
     repair_diagnostic: Option<&str>,
 ) -> Prompt {
-    let system = "You are Bit Code's plan author. You may only edit the graph nodes shown to \
+    let system = "You are Girder's plan author. You may only edit the graph nodes shown to \
                   you; respond with JSON only, matching the supplied schema exactly."
         .to_string();
     let mut user = format!(
@@ -656,7 +656,7 @@ mod tests {
         // The path need not exist and no router candidate needs to work:
         // reject_measurement_fixture_root runs before any file I/O or
         // provider call, so this is a fast, fixture-free check that
-        // `bitcode do` (and the GUI's local-model Run, which calls this
+        // `girder do` (and the GUI's local-model Run, which calls this
         // same function) refuses sample-project/ as a target.
         let root = std::path::Path::new("/nonexistent/sample-project");
         let router = aether_ai::default_router();

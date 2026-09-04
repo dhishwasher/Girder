@@ -744,7 +744,7 @@ fn author_external_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     // (see `copy_author_context_json`'s doc comment).
     if ui
         .button("Copy context JSON")
-        .on_hover_text("Puts exactly what `bitcode context --json` would print onto the clipboard.")
+        .on_hover_text("Puts exactly what `girder context --json` would print onto the clipboard.")
         .clicked()
     {
         app.copy_author_context_json();

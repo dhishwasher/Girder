@@ -1,6 +1,6 @@
 //! Impact analysis: "if I change node X, what else is affected?"
 //!
-//! This powers Bit Code's real-time predictive impact panel. Because the
+//! This powers Girder's real-time predictive impact panel. Because the
 //! graph is the source of truth, impact is a graph reachability query rather
 //! than a fragile text/heuristic search.
 

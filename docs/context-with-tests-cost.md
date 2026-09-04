@@ -1,7 +1,7 @@
-# `bitcode context --with-tests` cost
+# `girder context --with-tests` cost
 
 This measurement compares the two-step "get context, then open each
-covering test's file" workflow against one `bitcode context --with-tests`
+covering test's file" workflow against one `girder context --with-tests`
 call. It records an observed outcome, not an architectural claim.
 
 ## Precommitted corrected method
@@ -13,11 +13,11 @@ call. It records an observed outcome, not an architectural claim.
   diversity across crates: `SemanticGraph::query_by_kind`,
   `SemanticGraph::tests_for`, `git_worktree_clean`, `NodeId::from_path`,
   `select_candidate`.
-- Before: `bitcode context <dir> --nodes <node> --json` (no `--with-tests`)
+- Before: `girder context <dir> --nodes <node> --json` (no `--with-tests`)
   stdout bytes, plus the full byte size of every distinct source file
   containing one of that node's (at most 3, matching the `--with-tests` cap)
   covering tests.
-- After: `bitcode context <dir> --nodes <node> --json --with-tests` stdout
+- After: `girder context <dir> --nodes <node> --json --with-tests` stdout
   bytes, in one call.
 - Threshold: aggregate reduction ≥ 40%, matching the bar carried over from
   `docs/authoring-cost.md` and used for `docs/names-cost.md`.

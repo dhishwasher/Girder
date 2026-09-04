@@ -12,7 +12,7 @@ struct TempRepo {
 impl TempRepo {
     fn new(name: &str) -> Self {
         let unique = format!(
-            "bitcode-cli-{name}-{}-{}-{}",
+            "girder-cli-{name}-{}-{}-{}",
             std::process::id(),
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
@@ -24,8 +24,8 @@ impl TempRepo {
         std::fs::create_dir_all(&root).unwrap();
         let repo = Self { root };
         repo.git(&["init"]);
-        repo.git(&["config", "user.email", "bitcode@example.invalid"]);
-        repo.git(&["config", "user.name", "Bit Code Test"]);
+        repo.git(&["config", "user.email", "girder@example.invalid"]);
+        repo.git(&["config", "user.name", "Girder Test"]);
         repo
     }
 
@@ -82,18 +82,18 @@ impl Drop for TempRepo {
     }
 }
 
-fn run_bitcode_output(args: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_bitcode"))
+fn run_girder_output(args: &[&str]) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_girder"))
         .args(args)
         .output()
         .unwrap()
 }
 
-fn run_bitcode(args: &[&str]) -> String {
-    let output = run_bitcode_output(args);
+fn run_girder(args: &[&str]) -> String {
+    let output = run_girder_output(args);
     assert!(
         output.status.success(),
-        "bitcode {:?} failed\nstdout:\n{}\nstderr:\n{}",
+        "girder {:?} failed\nstdout:\n{}\nstderr:\n{}",
         args,
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
@@ -120,7 +120,7 @@ pub fn caller() -> i64 { callee() }
 "#,
     );
 
-    let analyze = run_bitcode(&["analyze", repo.path().to_str().unwrap(), "--json"]);
+    let analyze = run_girder(&["analyze", repo.path().to_str().unwrap(), "--json"]);
     let summary: serde_json::Value = serde_json::from_str(&analyze).unwrap();
     assert_eq!(summary["schema_version"], 1);
     assert_eq!(summary["source_files"], 1);
@@ -141,7 +141,7 @@ pub fn caller() -> i64 { callee() }
     );
 
     let graph_path = repo.path().join("project.aether");
-    let exported = run_bitcode(&["inspect", graph_path.to_str().unwrap(), "--json"]);
+    let exported = run_girder(&["inspect", graph_path.to_str().unwrap(), "--json"]);
     let graph: serde_json::Value = serde_json::from_str(&exported).unwrap();
     assert_eq!(graph["schema_version"], 1);
     let nodes = graph["nodes"].as_array().unwrap();
@@ -184,7 +184,7 @@ pub fn caller() -> i64 { callee() }
 fn inspect_json_fails_closed_for_missing_or_corrupt_graphs() {
     let repo = TempRepo::new("graph-json-failure");
     let missing = repo.path().join("missing.aether");
-    let missing_output = run_bitcode_output(&["inspect", missing.to_str().unwrap(), "--json"]);
+    let missing_output = run_girder_output(&["inspect", missing.to_str().unwrap(), "--json"]);
     assert!(!missing_output.status.success());
     assert!(
         String::from_utf8_lossy(&missing_output.stderr).contains("could not load"),
@@ -194,7 +194,7 @@ fn inspect_json_fails_closed_for_missing_or_corrupt_graphs() {
 
     repo.write("corrupt.aether", "not a semantic graph\n");
     let corrupt = repo.path().join("corrupt.aether");
-    let corrupt_output = run_bitcode_output(&["inspect", corrupt.to_str().unwrap(), "--json"]);
+    let corrupt_output = run_girder_output(&["inspect", corrupt.to_str().unwrap(), "--json"]);
     assert!(!corrupt_output.status.success());
     assert!(
         String::from_utf8_lossy(&corrupt_output.stderr).contains("could not load"),
@@ -238,7 +238,7 @@ fn test_add() {
 "#,
     );
 
-    let stdout = run_bitcode(&["review", repo.path().to_str().unwrap(), "--since", "HEAD"]);
+    let stdout = run_girder(&["review", repo.path().to_str().unwrap(), "--since", "HEAD"]);
 
     assert!(stdout.contains("Semantic Review"), "{stdout}");
     assert!(stdout.contains("Added ["), "{stdout}");
@@ -269,7 +269,7 @@ fn test_obsolete() {
 
     repo.remove("src/obsolete.rs");
 
-    let stdout = run_bitcode(&["review", repo.path().to_str().unwrap(), "--since", "HEAD"]);
+    let stdout = run_girder(&["review", repo.path().to_str().unwrap(), "--since", "HEAD"]);
 
     assert!(stdout.contains("Removed ["), "{stdout}");
     assert!(stdout.contains("crate::obsolete::obsolete"), "{stdout}");
@@ -282,7 +282,7 @@ fn review_rejects_an_invalid_baseline_reference() {
     repo.write("src/lib.rs", "pub fn stable() -> i64 { 1 }\n");
     repo.commit_all("baseline");
 
-    let output = run_bitcode_output(&[
+    let output = run_girder_output(&[
         "review",
         repo.path().to_str().unwrap(),
         "--since",
@@ -305,7 +305,7 @@ fn review_preserves_leading_whitespace_in_a_nested_repository_root() {
     repo.write(" pkg/src/lib.rs", "pub fn value() -> i64 { 2 }\n");
     let nested = repo.path().join(" pkg");
 
-    let stdout = run_bitcode(&["review", nested.to_str().unwrap(), "--since", "HEAD"]);
+    let stdout = run_girder(&["review", nested.to_str().unwrap(), "--since", "HEAD"]);
 
     assert!(stdout.contains("Modified ["), "{stdout}");
     assert!(stdout.contains("crate::lib::value"), "{stdout}");
@@ -332,7 +332,7 @@ pub fn added(x: i64) -> i64 { add(x, 2) }
 "#,
     );
 
-    let stdout = run_bitcode(&[
+    let stdout = run_girder(&[
         "review",
         repo.path().to_str().unwrap(),
         "--since",
@@ -373,7 +373,7 @@ fn review_quiet_prints_nothing_when_there_are_no_semantic_changes() {
     repo.write("src/lib.rs", "pub fn stable() -> i64 { 1 }\n");
     repo.commit_all("baseline");
 
-    let output = run_bitcode_output(&[
+    let output = run_girder_output(&[
         "review",
         repo.path().to_str().unwrap(),
         "--since",
@@ -415,7 +415,7 @@ fn test_value() {
     repo.write("outside.rs", "pub fn outside() -> i64 { 2 }\n");
     let nested = repo.path().join("project");
 
-    let stdout = run_bitcode(&["test-impact", nested.to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", nested.to_str().unwrap()]);
 
     assert!(stdout.contains("changed files: src/lib.rs"), "{stdout}");
     assert!(!stdout.contains("outside.rs"), "{stdout}");
@@ -451,7 +451,7 @@ fn test_add() {
 "#,
     );
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(stdout.contains("Changed functions"), "{stdout}");
     assert!(stdout.contains("crate::lib::add"), "{stdout}");
@@ -492,7 +492,7 @@ fn unrelated_test() {{
     repo.commit_all("baseline");
     repo.write("src/lib.rs", &source(2));
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(stdout.contains("Impacted tests (1)"), "{stdout}");
     assert!(stdout.contains("crate::lib::selected_test"), "{stdout}");
@@ -524,7 +524,7 @@ fn test_fresh() {
 "#,
     );
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(stdout.contains("changed files: src/new.rs"), "{stdout}");
     assert!(stdout.contains("crate::new::fresh"), "{stdout}");
@@ -558,7 +558,7 @@ fn test_old_fn() {
 "#,
     );
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(
         stdout.contains("Removed functions were detected; using their baseline test coverage."),
@@ -605,7 +605,7 @@ fn provenance_test() {{
     repo.commit_all("baseline");
     repo.write("src/lib.rs", &source("let _changed = true;"));
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(
         stdout.contains("crate::lib::SessionIdentity::verify_selected_operation"),
@@ -655,7 +655,7 @@ fn provenance_test() {{
     repo.commit_all("baseline");
     repo.write("src/lib.rs", &source("let _changed = true;"));
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(
         stdout.contains("crate::lib::SessionIdentity::verify_selected_operation"),
@@ -703,7 +703,7 @@ fn provenance_test() {{
     repo.commit_all("baseline");
     repo.write("src/lib.rs", &source("let _changed = true;"));
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(
         stdout.contains("crate::lib::SessionIdentity::verify_selected_operation"),
@@ -752,7 +752,7 @@ fn provenance_test() {{
     repo.commit_all("baseline");
     repo.write("src/lib.rs", &source("let _changed = true;"));
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(
         stdout.contains("crate::lib::SessionIdentity::verify_selected_operation"),
@@ -805,7 +805,7 @@ def test_provenance():
     repo.commit_all("baseline");
     repo.write("models.py", &models("return 'changed'"));
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(
         stdout.contains("crate::models::SessionIdentity::inspect"),
@@ -901,7 +901,7 @@ def test_dotted_suffix():
     repo.commit_all("baseline");
     repo.write("models.py", &models("return 'changed'"));
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(
         stdout.contains("crate::models::SessionIdentity::inspect"),
@@ -974,7 +974,7 @@ def test_provenance():
     repo.commit_all("baseline");
     repo.write("models.py", &models("return 'changed'"));
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(
         stdout.contains("crate::models::SessionIdentity::inspect"),
@@ -1027,7 +1027,7 @@ def test_provenance():
     repo.commit_all("baseline");
     repo.write("models.py", &models("return 'changed'"));
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(
         stdout.contains("crate::models::SessionIdentity::inspect"),
@@ -1081,7 +1081,7 @@ fn unrelated_test() {
     repo.commit_all("baseline");
     repo.write("src/main.rs", &main("println!(\"changed\");"));
 
-    let stdout = run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
 
     assert!(stdout.contains("crate::main::dispatch"), "{stdout}");
     assert!(stdout.contains("Impacted tests (1)"), "{stdout}");
@@ -1104,7 +1104,7 @@ fn forge_projects_generated_functions_to_source_file() {
     let repo = TempRepo::new("forge-writeback");
     repo.write("src/lib.rs", "pub fn existing() -> i64 { 1 }\n");
 
-    let stdout = run_bitcode(&[
+    let stdout = run_girder(&[
         "forge",
         repo.path().to_str().unwrap(),
         "add user authentication",
@@ -1128,7 +1128,7 @@ fn forge_validation_failure_leaves_project_unchanged() {
     let repo = TempRepo::new("forge-validation-failure");
     repo.write("src/lib.rs", "pub fn existing() -> i64 { 1 }\n");
     repo.write(
-        "bitcode.toml",
+        "girder.toml",
         r#"
 version = 1
 
@@ -1137,7 +1137,7 @@ commands = [["sh", "-c", "printf validation-broke >&2; exit 9"]]
 "#,
     );
 
-    let output = run_bitcode_output(&[
+    let output = run_girder_output(&[
         "forge",
         repo.path().to_str().unwrap(),
         "add user authentication",
@@ -1151,7 +1151,7 @@ commands = [["sh", "-c", "printf validation-broke >&2; exit 9"]]
     assert!(stderr.contains("project was not modified"), "{stderr}");
     assert!(!repo.path().join("src/forge.rs").exists());
     assert!(!repo.path().join("project.aether").exists());
-    assert!(!repo.path().join(".bitcode").exists());
+    assert!(!repo.path().join(".girder").exists());
 }
 
 #[test]
@@ -1174,7 +1174,7 @@ pub fn sum_list(xs: &[i64]) -> i64 {
 "#,
     );
 
-    let stdout = run_bitcode(&[
+    let stdout = run_girder(&[
         "refactor",
         repo.path().to_str().unwrap(),
         "rename",
@@ -1201,8 +1201,8 @@ pub fn sum_list(xs: &[i64]) -> i64 {
 fn config_init_creates_a_valid_project_contract_without_overwriting() {
     let repo = TempRepo::new("config-init");
 
-    let stdout = run_bitcode(&["config", repo.path().to_str().unwrap(), "--init"]);
-    let config = std::fs::read_to_string(repo.path().join("bitcode.toml")).unwrap();
+    let stdout = run_girder(&["config", repo.path().to_str().unwrap(), "--init"]);
+    let config = std::fs::read_to_string(repo.path().join("girder.toml")).unwrap();
 
     assert!(stdout.contains("Created"), "{stdout}");
     assert!(stdout.contains("version = 1"), "{stdout}");
@@ -1214,7 +1214,7 @@ fn config_init_creates_a_valid_project_contract_without_overwriting() {
     assert!(config.contains("[validation]"), "{config}");
     assert!(config.contains("run_tests = true"), "{config}");
 
-    let output = run_bitcode_output(&["config", repo.path().to_str().unwrap(), "--init"]);
+    let output = run_girder_output(&["config", repo.path().to_str().unwrap(), "--init"]);
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("refusing to overwrite"), "{stderr}");
@@ -1227,7 +1227,7 @@ fn analyze_honors_configured_source_roots_and_excludes() {
     repo.write("src/generated.rs", "pub fn generated() -> i64 { 2 }\n");
     repo.write("examples/demo.rs", "pub fn outside_root() -> i64 { 3 }\n");
     repo.write(
-        "bitcode.toml",
+        "girder.toml",
         r#"
 version = 1
 
@@ -1237,7 +1237,7 @@ exclude = ["src/generated.rs"]
 "#,
     );
 
-    let stdout = run_bitcode(&["analyze", repo.path().to_str().unwrap()]);
+    let stdout = run_girder(&["analyze", repo.path().to_str().unwrap()]);
 
     assert!(stdout.contains("loaded 1 source file(s)"), "{stdout}");
     assert!(stdout.contains("1 functions"), "{stdout}");
@@ -1250,7 +1250,7 @@ fn source_read_failures_abort_analysis_without_replacing_the_durable_graph() {
     repo.write("src/other.rs", "pub fn readable() -> i64 { 2 }\n");
     repo.commit_all("baseline");
 
-    run_bitcode(&["analyze", repo.path().to_str().unwrap()]);
+    run_girder(&["analyze", repo.path().to_str().unwrap()]);
     let graph_path = repo.path().join("project.aether");
     let durable_before = std::fs::read(&graph_path).unwrap();
     repo.write_bytes("src/other.rs", b"pub fn unreadable() {}\n\xff\n");
@@ -1264,10 +1264,10 @@ fn source_read_failures_abort_analysis_without_replacing_the_durable_graph() {
             "crate::lib::stable",
         ],
     ] {
-        let output = run_bitcode_output(&args);
+        let output = run_girder_output(&args);
         assert!(
             !output.status.success(),
-            "bitcode {args:?} unexpectedly passed"
+            "girder {args:?} unexpectedly passed"
         );
         let stderr = String::from_utf8_lossy(&output.stderr);
         assert!(
@@ -1316,7 +1316,7 @@ fn unrelated_test() {
 "#,
     );
 
-    let output = run_bitcode_output(&["test-impact", repo.path().to_str().unwrap(), "--quiet"]);
+    let output = run_girder_output(&["test-impact", repo.path().to_str().unwrap(), "--quiet"]);
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert_eq!(stdout, "test_add\n", "{stdout}");
@@ -1351,7 +1351,7 @@ fn test_known() {
 "#,
     );
 
-    let output = run_bitcode_output(&[
+    let output = run_girder_output(&[
         "test-impact",
         repo.path().to_str().unwrap(),
         "crate::lib::known",
@@ -1370,7 +1370,7 @@ fn automatic_test_impact_rejects_a_non_git_project_explicitly() {
     std::fs::remove_dir_all(project.path().join(".git")).unwrap();
     project.write("src/lib.rs", "pub fn changed() -> i64 { 1 }\n");
 
-    let output = run_bitcode_output(&["test-impact", project.path().to_str().unwrap()]);
+    let output = run_girder_output(&["test-impact", project.path().to_str().unwrap()]);
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -1396,7 +1396,7 @@ fn test_add() {
 "#,
     );
     repo.write(
-        "bitcode.toml",
+        "girder.toml",
         r#"
 version = 1
 
@@ -1405,7 +1405,7 @@ rust = ["false", "{test}"]
 "#,
     );
 
-    let output = run_bitcode_output(&[
+    let output = run_girder_output(&[
         "test-impact",
         repo.path().to_str().unwrap(),
         "--run",
@@ -1436,10 +1436,10 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
     let merged = repo.path().join("merged.aethercb");
     let graph_path = repo.path().join("merged.aether");
 
-    let initialized = run_bitcode(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
+    let initialized = run_girder(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
     assert!(initialized.contains("actor alice"), "{initialized}");
     let before_invite = std::fs::read(&alice).unwrap();
-    let denied = run_bitcode_output(&[
+    let denied = run_girder_output(&[
         "collab",
         "fork",
         alice.to_str().unwrap(),
@@ -1449,7 +1449,7 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
     assert!(!denied.status.success());
     assert_eq!(std::fs::read(&alice).unwrap(), before_invite);
     assert!(!bob.exists());
-    run_bitcode(&[
+    run_girder(&[
         "collab",
         "fork",
         alice.to_str().unwrap(),
@@ -1459,7 +1459,7 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
     ]);
 
     repo.write("src/lib.rs", "pub fn run() -> i64 { 2 }\n");
-    let synchronized = run_bitcode(&["collab", "sync", root, bob.to_str().unwrap()]);
+    let synchronized = run_girder(&["collab", "sync", root, bob.to_str().unwrap()]);
     assert!(
         synchronized.contains("nodes: +2 -0; edges: +0 -0"),
         "{synchronized}"
@@ -1477,7 +1477,7 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
         )
         .unwrap();
     bob_replica.save(&bob).unwrap();
-    let merged_output = run_bitcode(&[
+    let merged_output = run_girder(&[
         "collab",
         "merge",
         alice.to_str().unwrap(),
@@ -1489,7 +1489,7 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
         merged_output.contains("ignored 1 unverified operation attestation"),
         "{merged_output}"
     );
-    run_bitcode(&[
+    run_girder(&[
         "collab",
         "materialize",
         merged.to_str().unwrap(),
@@ -1508,7 +1508,7 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
             .is_some(),
         "graph-owned durable nodes must survive collaboration init and sync"
     );
-    let status = run_bitcode(&["collab", "status", merged.to_str().unwrap()]);
+    let status = run_girder(&["collab", "status", merged.to_str().unwrap()]);
     assert!(status.contains("actor: alice"), "{status}");
     assert!(status.contains("operations:"), "{status}");
     assert!(status.contains("nodes:"), "{status}");
@@ -1525,7 +1525,7 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
 
 #[test]
 fn collaboration_membership_requires_approval_and_rolls_back_failed_invites() {
-    let help = run_bitcode(&["--help"]);
+    let help = run_girder(&["--help"]);
     assert!(help.contains("fork, member, sync"), "{help}");
     assert!(help.contains("discover, join, join-peer"), "{help}");
 
@@ -1534,9 +1534,9 @@ fn collaboration_membership_requires_approval_and_rolls_back_failed_invites() {
     let root = repo.path().to_str().unwrap();
     let alice = repo.path().join("alice.aetherc");
     let failed_fork = repo.path().join("missing").join("bob.aetherc");
-    run_bitcode(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
+    run_girder(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
 
-    let failed = run_bitcode_output(&[
+    let failed = run_girder_output(&[
         "collab",
         "fork",
         alice.to_str().unwrap(),
@@ -1551,7 +1551,7 @@ fn collaboration_membership_requires_approval_and_rolls_back_failed_invites() {
         .unwrap());
 
     let before_alias = std::fs::read(&alice).unwrap();
-    let alias = run_bitcode_output(&[
+    let alias = run_girder_output(&[
         "collab",
         "fork",
         alice.to_str().unwrap(),
@@ -1562,9 +1562,9 @@ fn collaboration_membership_requires_approval_and_rolls_back_failed_invites() {
     assert!(!alias.status.success());
     assert_eq!(std::fs::read(&alice).unwrap(), before_alias);
 
-    let denied = run_bitcode_output(&["collab", "member", "add", alice.to_str().unwrap(), "bob"]);
+    let denied = run_girder_output(&["collab", "member", "add", alice.to_str().unwrap(), "bob"]);
     assert!(!denied.status.success());
-    run_bitcode(&[
+    run_girder(&[
         "collab",
         "member",
         "add",
@@ -1578,7 +1578,7 @@ fn collaboration_membership_requires_approval_and_rolls_back_failed_invites() {
         .unwrap());
     assert!(replica.compact_acknowledged().is_err());
 
-    run_bitcode(&[
+    run_girder(&[
         "collab",
         "member",
         "remove",
@@ -1609,14 +1609,14 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
     let bob_identity = repo.path().join("bob.identity");
     let bob_public = repo.path().join("bob.identity.pub");
     let bob_trust = repo.path().join("bob.trust");
-    let secret_output = run_bitcode(&["collab", "secret", secret.to_str().unwrap()]);
+    let secret_output = run_girder(&["collab", "secret", secret.to_str().unwrap()]);
     assert!(
         secret_output.contains("contents not displayed"),
         "{secret_output}"
     );
 
-    run_bitcode(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
-    run_bitcode(&[
+    run_girder(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
+    run_girder(&[
         "collab",
         "fork",
         alice.to_str().unwrap(),
@@ -1625,8 +1625,8 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         "--approve",
     ]);
     repo.write("src/lib.rs", "pub fn run() -> i64 { 2 }\n");
-    run_bitcode(&["collab", "sync", root, bob.to_str().unwrap()]);
-    let alice_identity_output = run_bitcode(&[
+    run_girder(&["collab", "sync", root, bob.to_str().unwrap()]);
+    let alice_identity_output = run_girder(&[
         "collab",
         "identity",
         "generate",
@@ -1635,7 +1635,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         alice_public.to_str().unwrap(),
     ]);
     let alice_fingerprint = generated_identity_fingerprint(&alice_identity_output);
-    let bob_identity_output = run_bitcode(&[
+    let bob_identity_output = run_girder(&[
         "collab",
         "identity",
         "generate",
@@ -1644,9 +1644,9 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         bob_public.to_str().unwrap(),
     ]);
     let bob_fingerprint = generated_identity_fingerprint(&bob_identity_output);
-    let shown = run_bitcode(&["collab", "identity", "show", alice_public.to_str().unwrap()]);
+    let shown = run_girder(&["collab", "identity", "show", alice_public.to_str().unwrap()]);
     assert!(shown.contains(&alice_fingerprint), "{shown}");
-    let denied = run_bitcode_output(&[
+    let denied = run_girder_output(&[
         "collab",
         "identity",
         "trust",
@@ -1657,7 +1657,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
     ]);
     assert!(!denied.status.success());
     assert!(!alice_trust.exists());
-    run_bitcode(&[
+    run_girder(&[
         "collab",
         "identity",
         "trust",
@@ -1666,7 +1666,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         "--approve",
         &bob_fingerprint,
     ]);
-    run_bitcode(&[
+    run_girder(&[
         "collab",
         "identity",
         "trust",
@@ -1676,7 +1676,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         &alice_fingerprint,
     ]);
     for (bundle, private_key) in [(&alice, &alice_identity), (&bob, &bob_identity)] {
-        let attested = run_bitcode(&[
+        let attested = run_girder(&[
             "collab",
             "identity",
             "attest",
@@ -1686,7 +1686,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         assert!(attested.contains("new proof(s) added"), "{attested}");
     }
 
-    let mut host = Command::new(env!("CARGO_BIN_EXE_bitcode"))
+    let mut host = Command::new(env!("CARGO_BIN_EXE_girder"))
         .args([
             "collab",
             "host",
@@ -1741,7 +1741,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         );
     }
 
-    let discovered = run_bitcode(&[
+    let discovered = run_girder(&[
         "collab",
         "discover",
         bob.to_str().unwrap(),
@@ -1755,7 +1755,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
     );
     assert!(discovered.contains("alice at 127.0.0.1:"), "{discovered}");
 
-    let joined = run_bitcode(&[
+    let joined = run_girder(&[
         "collab",
         "join-peer",
         bob.to_str().unwrap(),
@@ -1806,7 +1806,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         (&alice, &alice_identity, &alice_trust),
         (&bob, &bob_identity, &bob_trust),
     ] {
-        let verified = run_bitcode(&[
+        let verified = run_girder(&[
             "collab",
             "identity",
             "verify",
@@ -1827,7 +1827,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
             .is_none(),
         "host discovery lease was not removed"
     );
-    let after = run_bitcode(&[
+    let after = run_girder(&[
         "collab",
         "discover",
         bob.to_str().unwrap(),
@@ -1842,7 +1842,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
 
     let bob_rotated_identity = repo.path().join("bob-rotated.identity");
     let bob_rotated_public = repo.path().join("bob-rotated.identity.pub");
-    let rotated = run_bitcode(&[
+    let rotated = run_girder(&[
         "collab",
         "identity",
         "generate",
@@ -1851,7 +1851,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         bob_rotated_public.to_str().unwrap(),
     ]);
     let rotated_fingerprint = generated_identity_fingerprint(&rotated);
-    let local_rotation = run_bitcode(&[
+    let local_rotation = run_girder(&[
         "collab",
         "identity",
         "rotate-local",
@@ -1867,7 +1867,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         local_rotation.contains("Recorded identity rotation for bob"),
         "{local_rotation}"
     );
-    let rotation = run_bitcode(&[
+    let rotation = run_girder(&[
         "collab",
         "identity",
         "rotate",
@@ -1879,10 +1879,10 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         &rotated_fingerprint,
     ]);
     assert!(rotation.contains("Rotated bob"), "{rotation}");
-    let trusted = run_bitcode(&["collab", "identity", "list", alice_trust.to_str().unwrap()]);
+    let trusted = run_girder(&["collab", "identity", "list", alice_trust.to_str().unwrap()]);
     assert!(trusted.contains(&rotated_fingerprint), "{trusted}");
     assert!(!trusted.contains(&bob_fingerprint), "{trusted}");
-    let removed = run_bitcode(&[
+    let removed = run_girder(&[
         "collab",
         "identity",
         "remove",
@@ -1892,7 +1892,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         &rotated_fingerprint,
     ]);
     assert!(removed.contains("Removed local trust for bob"), "{removed}");
-    let trusted = run_bitcode(&["collab", "identity", "list", alice_trust.to_str().unwrap()]);
+    let trusted = run_girder(&["collab", "identity", "list", alice_trust.to_str().unwrap()]);
     assert!(trusted.contains("  none"), "{trusted}");
 
     let alice_replica = aether_graph::GraphReplica::load(&alice).unwrap();
@@ -1904,7 +1904,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         bob_replica.materialize().unwrap().to_ron().unwrap()
     );
     let before = alice_replica.operation_count();
-    let compacted = run_bitcode(&["collab", "compact", alice.to_str().unwrap()]);
+    let compacted = run_girder(&["collab", "compact", alice.to_str().unwrap()]);
     assert!(compacted.contains("superseded operation"), "{compacted}");
     let alice_replica = aether_graph::GraphReplica::load(&alice).unwrap();
     assert!(alice_replica.operation_count() < before);
@@ -1912,7 +1912,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
         alice_replica.materialize().unwrap().to_ron().unwrap(),
         bob_replica.materialize().unwrap().to_ron().unwrap()
     );
-    let status = run_bitcode(&["collab", "status", alice.to_str().unwrap()]);
+    let status = run_girder(&["collab", "status", alice.to_str().unwrap()]);
     assert!(status.contains("compacted through:"), "{status}");
     assert!(
         status.contains("durable operation attestations:"),
@@ -1928,8 +1928,8 @@ fn collaboration_cli_reviews_and_applies_whole_file_projection() {
     let root = repo.path().to_str().unwrap();
     let alice = repo.path().join("alice.aetherc");
     let bob = repo.path().join("bob.aetherc");
-    run_bitcode(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
-    run_bitcode(&[
+    run_girder(&["collab", "init", root, "alice", alice.to_str().unwrap()]);
+    run_girder(&[
         "collab",
         "fork",
         alice.to_str().unwrap(),
@@ -1940,11 +1940,11 @@ fn collaboration_cli_reviews_and_applies_whole_file_projection() {
 
     repo.write("src/lib.rs", "pub fn value() -> i64 { 2 }\n");
     repo.write("src/new.rs", "pub fn added() {}\n");
-    run_bitcode(&["collab", "sync", root, bob.to_str().unwrap()]);
+    run_girder(&["collab", "sync", root, bob.to_str().unwrap()]);
     repo.write("src/lib.rs", "pub fn value() -> i64 { 1 }\n");
     repo.remove("src/new.rs");
 
-    let review = run_bitcode(&["collab", "review", root, bob.to_str().unwrap()]);
+    let review = run_girder(&["collab", "review", root, bob.to_str().unwrap()]);
     assert!(
         review.contains("Collaboration source-projection review"),
         "{review}"
@@ -1953,7 +1953,7 @@ fn collaboration_cli_reviews_and_applies_whole_file_projection() {
     assert!(review.contains("+ src/new.rs"), "{review}");
     assert!(review.contains("conflicts: none"), "{review}");
 
-    let denied = run_bitcode_output(&["collab", "apply", root, bob.to_str().unwrap()]);
+    let denied = run_girder_output(&["collab", "apply", root, bob.to_str().unwrap()]);
     assert!(!denied.status.success());
     assert_eq!(
         std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
@@ -1961,7 +1961,7 @@ fn collaboration_cli_reviews_and_applies_whole_file_projection() {
     );
     assert!(!repo.path().join("src/new.rs").exists());
 
-    let applied = run_bitcode(&["collab", "apply", root, bob.to_str().unwrap(), "--approve"]);
+    let applied = run_girder(&["collab", "apply", root, bob.to_str().unwrap(), "--approve"]);
     assert!(
         applied.contains("Committed 2 reviewed source projection"),
         "{applied}"
@@ -1984,12 +1984,12 @@ fn collaboration_apply_validation_failure_leaves_project_unchanged() {
     repo.write("src/lib.rs", "pub fn value() -> i64 { 1 }\n");
     let root = repo.path().to_str().unwrap();
     let bundle = repo.path().join("remote.aetherc");
-    run_bitcode(&["collab", "init", root, "remote", bundle.to_str().unwrap()]);
+    run_girder(&["collab", "init", root, "remote", bundle.to_str().unwrap()]);
     repo.write("src/lib.rs", "pub fn value() -> i64 { 2 }\n");
-    run_bitcode(&["collab", "sync", root, bundle.to_str().unwrap()]);
+    run_girder(&["collab", "sync", root, bundle.to_str().unwrap()]);
     repo.write("src/lib.rs", "pub fn value() -> i64 { 1 }\n");
     repo.write(
-        "bitcode.toml",
+        "girder.toml",
         r#"
 version = 1
 
@@ -1998,7 +1998,7 @@ commands = [["sh", "-c", "printf collaboration-validation-broke >&2; exit 9"]]
 "#,
     );
 
-    let output = run_bitcode_output(&[
+    let output = run_girder_output(&[
         "collab",
         "apply",
         root,
@@ -2027,13 +2027,13 @@ fn generated_extension_requires_approval_and_supports_lifecycle() {
     repo.write("src/lib.rs", "pub fn existing() {}\n");
     let root = repo.path().to_str().unwrap();
 
-    let preview = run_bitcode(&["extension", root, "generate", "show authentication impact"]);
+    let preview = run_girder(&["extension", root, "generate", "show authentication impact"]);
 
     assert!(preview.contains("Preview only"), "{preview}");
     assert!(preview.contains("read graph"), "{preview}");
     assert!(!repo.path().join("project.aether").exists());
 
-    let installed = run_bitcode(&[
+    let installed = run_girder(&[
         "extension",
         root,
         "generate",
@@ -2042,30 +2042,30 @@ fn generated_extension_requires_approval_and_supports_lifecycle() {
     ]);
     assert!(installed.contains("Installed and enabled"), "{installed}");
 
-    let listed = run_bitcode(&["extension", root, "list"]);
+    let listed = run_girder(&["extension", root, "list"]);
     assert!(
         listed.contains("dev.bitcode.generated.show-authentication-impact"),
         "{listed}"
     );
     assert!(listed.contains("Enabled"), "{listed}");
 
-    run_bitcode(&[
+    run_girder(&[
         "extension",
         root,
         "disable",
         "dev.bitcode.generated.show-authentication-impact",
     ]);
-    let listed = run_bitcode(&["extension", root, "list"]);
+    let listed = run_girder(&["extension", root, "list"]);
     assert!(listed.contains("Disabled"), "{listed}");
 
-    run_bitcode(&[
+    run_girder(&[
         "extension",
         root,
         "remove",
         "dev.bitcode.generated.show-authentication-impact",
     ]);
     assert_eq!(
-        run_bitcode(&["extension", root, "list"]).trim(),
+        run_girder(&["extension", root, "list"]).trim(),
         "No extensions installed."
     );
 }
@@ -2076,13 +2076,13 @@ fn marketplace_browse_adapt_and_approval_reuse_extension_security() {
     repo.write("src/lib.rs", "pub fn existing() {}\n");
     let root = repo.path().to_str().unwrap();
 
-    let listed = run_bitcode(&["extension", root, "marketplace", "search", "impact"]);
+    let listed = run_girder(&["extension", root, "marketplace", "search", "impact"]);
     assert!(listed.contains("catalog SHA-256:"), "{listed}");
     assert!(listed.contains("org.bitcode.impact-navigator"), "{listed}");
     assert!(listed.contains("org.bitcode.test-focus"), "{listed}");
     assert!(!listed.contains("org.bitcode.rust-check\t"), "{listed}");
 
-    let shown = run_bitcode(&[
+    let shown = run_girder(&[
         "extension",
         root,
         "marketplace",
@@ -2098,7 +2098,7 @@ fn marketplace_browse_adapt_and_approval_reuse_extension_security() {
         "{shown}"
     );
 
-    let preview = run_bitcode(&[
+    let preview = run_girder(&[
         "extension",
         root,
         "marketplace",
@@ -2110,7 +2110,7 @@ fn marketplace_browse_adapt_and_approval_reuse_extension_security() {
     assert!(preview.contains("Preview only"), "{preview}");
     assert!(!repo.path().join("project.aether").exists());
 
-    let installed = run_bitcode(&[
+    let installed = run_girder(&[
         "extension",
         root,
         "marketplace",
@@ -2119,7 +2119,7 @@ fn marketplace_browse_adapt_and_approval_reuse_extension_security() {
         "--approve",
     ]);
     assert!(installed.contains("Installed and enabled"), "{installed}");
-    let extensions = run_bitcode(&["extension", root, "list"]);
+    let extensions = run_girder(&["extension", root, "list"]);
     assert!(
         extensions.contains("org.bitcode.impact-navigator"),
         "{extensions}"
@@ -2171,7 +2171,7 @@ fn extension_project_projections_are_restored_on_remove() {
     let root = repo.path().to_str().unwrap();
     let recipe = repo.path().join("extension.json");
 
-    let installed = run_bitcode(&[
+    let installed = run_girder(&[
         "extension",
         root,
         "install",
@@ -2195,7 +2195,7 @@ fn extension_project_projections_are_restored_on_remove() {
     );
 
     repo.write("generated/created.md", "user edit\n");
-    let conflicted = run_bitcode_output(&["extension", root, "remove", "dev.bitcode.test.report"]);
+    let conflicted = run_girder_output(&["extension", root, "remove", "dev.bitcode.test.report"]);
     assert!(!conflicted.status.success());
     assert!(
         String::from_utf8_lossy(&conflicted.stderr).contains("changed on disk"),
@@ -2209,7 +2209,7 @@ fn extension_project_projections_are_restored_on_remove() {
     );
     repo.write("generated/created.md", "created\n");
 
-    run_bitcode(&["extension", root, "remove", "dev.bitcode.test.report"]);
+    run_girder(&["extension", root, "remove", "dev.bitcode.test.report"]);
 
     assert_eq!(
         std::fs::read_to_string(repo.path().join("generated/existing.md")).unwrap(),
@@ -2238,12 +2238,12 @@ fn concurrent_review_and_test_impact_produce_complete_output() {
     let root = repo.path().to_str().unwrap().to_owned();
     // Uncontended runs define the complete expected output; the graph build
     // is deterministic and neither command mutates project state.
-    let expected_review = run_bitcode(&["review", &root]);
-    let expected_impact = run_bitcode(&["test-impact", &root]);
+    let expected_review = run_girder(&["review", &root]);
+    let expected_impact = run_girder(&["test-impact", &root]);
 
     let spawn = |command: &'static str, root: String| {
         std::thread::spawn(move || {
-            Command::new(env!("CARGO_BIN_EXE_bitcode"))
+            Command::new(env!("CARGO_BIN_EXE_girder"))
                 .args([command, &root])
                 .output()
                 .unwrap()
@@ -2291,7 +2291,7 @@ fn test_impact_run_kills_a_timed_out_process_tree() {
         "pub fn add(a: i64, b: i64) -> i64 { a + b }\n\n#[test]\nfn test_add() { assert_eq!(add(2, 3), 5); }\n",
     );
     repo.write(
-        "bitcode.toml",
+        "girder.toml",
         r#"
 version = 1
 
@@ -2302,7 +2302,7 @@ run_timeout_seconds = 1
     );
 
     let started = Instant::now();
-    let output = run_bitcode_output(&[
+    let output = run_girder_output(&[
         "test-impact",
         repo.path().to_str().unwrap(),
         "--run",
@@ -2321,7 +2321,7 @@ run_timeout_seconds = 1
     );
 
     // The configured command's own background child (a grandchild of
-    // bitcode) must not survive the process-group kill.
+    // girder) must not survive the process-group kill.
     let grandchild = std::fs::read_to_string(repo.path().join("grandchild.pid"))
         .expect("runner wrote its grandchild pid before the kill");
     let grandchild = grandchild.trim().to_owned();
@@ -2352,7 +2352,7 @@ fn test_impact_run_kills_a_child_exceeding_the_output_budget() {
         "pub fn add(a: i64, b: i64) -> i64 { a + b }\n\n#[test]\nfn test_add() { assert_eq!(add(2, 3), 5); }\n",
     );
     repo.write(
-        "bitcode.toml",
+        "girder.toml",
         r#"
 version = 1
 
@@ -2363,7 +2363,7 @@ run_max_output_bytes = 4096
     );
 
     let started = Instant::now();
-    let output = run_bitcode_output(&[
+    let output = run_girder_output(&[
         "test-impact",
         repo.path().to_str().unwrap(),
         "--run",
@@ -2377,7 +2377,7 @@ run_max_output_bytes = 4096
         "stderr must classify the overflow:\n{stderr}"
     );
     assert!(started.elapsed() < Duration::from_secs(30));
-    // The tee stops retaining once the cap is hit, so bitcode's own stdout
+    // The tee stops retaining once the cap is hit, so girder's own stdout
     // stays bounded instead of relaying the flood.
     assert!(output.stdout.len() < 64 * 1024);
 }
@@ -2407,10 +2407,10 @@ fn analysis_classifies_a_hung_git_subprocess() {
     );
 
     let started = Instant::now();
-    let output = Command::new(env!("CARGO_BIN_EXE_bitcode"))
+    let output = Command::new(env!("CARGO_BIN_EXE_girder"))
         .args(["test-impact", repo.path().to_str().unwrap()])
         .env("PATH", path)
-        .env("BITCODE_GIT_TIMEOUT_SECONDS", "1")
+        .env("GIRDER_GIT_TIMEOUT_SECONDS", "1")
         .output()
         .unwrap();
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -2432,13 +2432,13 @@ fn crash_forge_at(point: &str) -> TempRepo {
     repo.write("src/lib.rs", "pub fn existing() -> i64 { 1 }\n");
     repo.commit_all("baseline");
 
-    let output = Command::new(env!("CARGO_BIN_EXE_bitcode"))
+    let output = Command::new(env!("CARGO_BIN_EXE_girder"))
         .args([
             "forge",
             repo.path().to_str().unwrap(),
             "add user authentication",
         ])
-        .env("BITCODE_FAULT_EXIT", point)
+        .env("GIRDER_FAULT_EXIT", point)
         .output()
         .unwrap();
     assert_eq!(
@@ -2449,14 +2449,14 @@ fn crash_forge_at(point: &str) -> TempRepo {
         String::from_utf8_lossy(&output.stderr)
     );
     assert!(
-        repo.path().join(".bitcode/transactions").exists(),
+        repo.path().join(".girder/transactions").exists(),
         "the crash must leave a journal behind"
     );
 
     // Any later analysis command triggers recovery of the dead journal.
-    run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    run_girder(&["test-impact", repo.path().to_str().unwrap()]);
     assert!(
-        !repo.path().join(".bitcode").exists(),
+        !repo.path().join(".girder").exists(),
         "recovery must clean the {point} journal"
     );
     repo
@@ -2498,13 +2498,13 @@ fn crash_after_committed_marker_keeps_all_new_state() {
     assert!(graph.node_count() > 0);
 }
 
-// --- Bit Code Plan Format v1/v2 -----------------------------------------
+// --- Girder Plan Format v1/v2 -----------------------------------------
 
 /// Plan files must never sit inside the project worktree — an untracked
 /// plan.json there would itself trip the "worktree clean" precondition.
 fn write_plan(name: &str, json: &str) -> PathBuf {
     let path = std::env::temp_dir().join(format!(
-        "bitcode-plan-{name}-{}-{}.json",
+        "girder-plan-{name}-{}-{}.json",
         std::process::id(),
         NEXT_ID.fetch_add(1, Ordering::Relaxed)
     ));
@@ -2515,7 +2515,7 @@ fn write_plan(name: &str, json: &str) -> PathBuf {
 fn run_plan_output(repo: &TempRepo, sub: &str, plan_path: &Path, extra: &[&str]) -> Output {
     let mut args = vec!["plan", sub, plan_path.to_str().unwrap()];
     args.extend_from_slice(extra);
-    Command::new(env!("CARGO_BIN_EXE_bitcode"))
+    Command::new(env!("CARGO_BIN_EXE_girder"))
         .args(args)
         .current_dir(repo.path())
         .output()
@@ -2579,7 +2579,7 @@ fn plan_v2_rename_updates_callers_and_requires_the_new_path_in_later_steps() {
     let source = std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap();
     assert!(source.contains("fn renamed() -> i64 { 2 }"), "{source}");
     assert!(source.contains("renamed() }"), "{source}");
-    let report = std::fs::read_dir(repo.path().join(".bitcode/reports"))
+    let report = std::fs::read_dir(repo.path().join(".girder/reports"))
         .unwrap()
         .next()
         .unwrap()
@@ -2810,7 +2810,7 @@ fn plan_run_dry_composes_three_steps_with_the_same_check_outcomes_as_real() {
     }
 
     fn written_report(repo: &TempRepo) -> serde_json::Value {
-        let reports = std::fs::read_dir(repo.path().join(".bitcode/reports"))
+        let reports = std::fs::read_dir(repo.path().join(".girder/reports"))
             .unwrap()
             .collect::<Result<Vec<_>, _>>()
             .unwrap();
@@ -2901,16 +2901,16 @@ fn plan_run_applies_edits_and_commits_to_the_real_tree_when_checks_pass() {
         "fn new() {}\n"
     );
     assert!(
-        !repo.path().join(".bitcode/transactions").exists(),
+        !repo.path().join(".girder/transactions").exists(),
         "a fully committed plan must not leave a transaction journal behind"
     );
     assert!(
-        !repo.path().join(".bitcode/validation").exists(),
+        !repo.path().join(".girder/validation").exists(),
         "a fully committed plan must not leave its disposable copy behind"
     );
     assert!(
-        repo.path().join(".bitcode/reports").is_dir(),
-        "a completed run must write its report under .bitcode/reports"
+        repo.path().join(".girder/reports").is_dir(),
+        "a completed run must write its report under .girder/reports"
     );
     let _ = std::fs::remove_file(&plan_path);
 }
@@ -2947,7 +2947,7 @@ fn plan_run_records_a_local_only_authoring_receipt() {
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     );
-    let reports = std::fs::read_dir(repo.path().join(".bitcode/reports"))
+    let reports = std::fs::read_dir(repo.path().join(".girder/reports"))
         .unwrap()
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
@@ -3057,18 +3057,18 @@ fn plan_run_rollback_plan_reverts_committed_edits_and_deletes_created_files() {
         "the committed step's created file must be deleted on rollback_plan"
     );
     // Every project file must be byte-identical to base_commit; the run's
-    // own report under `.bitcode/reports/` is expected to survive the
+    // own report under `.girder/reports/` is expected to survive the
     // rollback (it documents why the plan failed) and is the only allowed
     // untracked entry.
     let status = repo.git(&["status", "--porcelain"]);
     let stdout = String::from_utf8_lossy(&status.stdout);
     let unexpected: Vec<&str> = stdout
         .lines()
-        .filter(|line| !line.contains(".bitcode"))
+        .filter(|line| !line.contains(".girder"))
         .collect();
     assert!(
         unexpected.is_empty(),
-        "worktree must be byte-identical to base_commit outside of .bitcode/ after rollback_plan: {unexpected:?}"
+        "worktree must be byte-identical to base_commit outside of .girder/ after rollback_plan: {unexpected:?}"
     );
     let _ = std::fs::remove_file(&plan_path);
 }
@@ -3087,10 +3087,10 @@ fn plan_run_commit_inherits_the_journals_crash_recovery_for_free() {
         ],"checks":[]}]}"#;
     let plan_path = write_plan("run-fault", &template.replace("BASE_COMMIT", &head));
 
-    let output = Command::new(env!("CARGO_BIN_EXE_bitcode"))
+    let output = Command::new(env!("CARGO_BIN_EXE_girder"))
         .args(["plan", "run", plan_path.to_str().unwrap()])
         .current_dir(repo.path())
-        .env("BITCODE_FAULT_EXIT", "after-staging")
+        .env("GIRDER_FAULT_EXIT", "after-staging")
         .output()
         .unwrap();
     assert_eq!(
@@ -3102,15 +3102,15 @@ fn plan_run_commit_inherits_the_journals_crash_recovery_for_free() {
         String::from_utf8_lossy(&output.stderr)
     );
     assert!(
-        repo.path().join(".bitcode/transactions").exists(),
+        repo.path().join(".girder/transactions").exists(),
         "the crash must leave a journal behind"
     );
 
     // Any later analysis command triggers recovery of the dead journal —
     // the plan executor never reimplements journal recovery itself.
-    run_bitcode(&["test-impact", repo.path().to_str().unwrap()]);
+    run_girder(&["test-impact", repo.path().to_str().unwrap()]);
     assert!(
-        !repo.path().join(".bitcode").exists(),
+        !repo.path().join(".girder").exists(),
         "recovery must clean the crashed plan-run journal"
     );
     assert_eq!(
@@ -3209,7 +3209,7 @@ fn plan_run_out_writes_the_full_transcript_and_prints_a_summary_line() {
         ],"checks":[]}]}"#;
     let plan_path = write_plan("run-out", &template.replace("BASE_COMMIT", &head));
     let out_path = std::env::temp_dir().join(format!(
-        "bitcode-plan-run-out-transcript-{}-{}.txt",
+        "girder-plan-run-out-transcript-{}-{}.txt",
         std::process::id(),
         NEXT_ID.fetch_add(1, Ordering::Relaxed)
     ));
@@ -3260,7 +3260,7 @@ fn plan_run_reads_the_plan_from_stdin_with_a_bare_dash() {
         ],"checks":[]}]}"#;
     let plan_json = template.replace("BASE_COMMIT", &head);
 
-    let mut child = Command::new(env!("CARGO_BIN_EXE_bitcode"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_girder"))
         .args(["plan", "run", "-", "--dry"])
         .current_dir(repo.path())
         .stdin(Stdio::piped())
@@ -3308,7 +3308,7 @@ fn plan_run_tests_impacted_check_runs_only_the_selected_tests_and_fails_on_a_bre
              fn covers_broken() { assert_eq!(broken(), 1); }\n\
          }\n",
     );
-    repo.write("bitcode.toml", default_config_toml());
+    repo.write("girder.toml", default_config_toml());
     repo.commit_all("baseline");
     let head = repo.head();
 
@@ -3381,7 +3381,7 @@ fn plan_run_dry_never_touches_the_real_tree_but_reports_the_same_checks() {
         String::from_utf8_lossy(&status.stdout)
     );
     assert!(
-        !repo.path().join(".bitcode").exists(),
+        !repo.path().join(".girder").exists(),
         "a dry run must not leave a validation or journal directory behind"
     );
 

@@ -12,7 +12,7 @@ const MAX_LISTINGS: usize = 256;
 const MAX_REVIEWS_PER_LISTING: usize = 16;
 const MAX_TAGS_PER_LISTING: usize = 16;
 
-const BUILTIN_CATALOG_JSON: &str = include_str!("../../../marketplace/bitcode-extensions.json");
+const BUILTIN_CATALOG_JSON: &str = include_str!("../../../marketplace/girder-extensions.json");
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -326,7 +326,7 @@ pub fn builtin_catalog() -> Result<MarketplaceCatalog, ExtensionError> {
 }
 
 pub fn adaptation_system_prompt() -> &'static str {
-    r#"Return exactly one JSON object and no prose or markdown. Adapt the reviewed declarative Bit Code extension listing to the current project. Preserve the listing's intent and extension id. The reference recipe is context, not authorization. Request only capabilities necessary for the adapted recipe. Never emit executable plugin code. Supported recipe version is 1. Every contribution and projection must satisfy the recipe's declared capabilities. The result will be validated and shown with an exact capability delta before a human may approve its SHA-256 digest."#
+    r#"Return exactly one JSON object and no prose or markdown. Adapt the reviewed declarative Girder extension listing to the current project. Preserve the listing's intent and extension id. The reference recipe is context, not authorization. Request only capabilities necessary for the adapted recipe. Never emit executable plugin code. Supported recipe version is 1. Every contribution and projection must satisfy the recipe's declared capabilities. The result will be validated and shown with an exact capability delta before a human may approve its SHA-256 digest."#
 }
 
 pub fn marketplace_project_context(graph: &aether_graph::SemanticGraph) -> serde_json::Value {
@@ -453,7 +453,7 @@ mod tests {
         MarketplaceCatalog {
             version: CATALOG_VERSION,
             id: "org.bitcode.catalog".into(),
-            name: "Bit Code Catalog".into(),
+            name: "Girder Catalog".into(),
             description: "Reviewed declarative extension intents.".into(),
             listings: vec![listing()],
         }

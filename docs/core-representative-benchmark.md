@@ -46,16 +46,16 @@ For every repository, the harness creates one fresh private extraction. For
 every repetition against that verified extraction, it:
 
 1. inventories every configured source before measurement;
-2. deletes any prior graph, launches a private hash-verified Bit Code binary,
-   and runs `bitcode analyze <checkout> --json` with
+2. deletes any prior graph, launches a private hash-verified Girder binary,
+   and runs `girder analyze <checkout> --json` with
    `RAYON_NUM_THREADS=2`;
 3. records bounded wall time, child peak RSS from POSIX `wait4`, analysis phase
    times, graph size, and stdout/stderr hashes;
-4. exports the exact graph through `bitcode inspect <graph> --json`, checks
+4. exports the exact graph through `girder inspect <graph> --json`, checks
    node/edge counts, evaluates every declared edge, and hashes a canonical
    semantic representation; and
 5. re-inventories the source tree and verifies that neither the source nor the
-   private Bit Code executable changed.
+   private Girder executable changed.
 
 Each child has a hard timeout, a combined output cap, and POSIX process-group
 cleanup. Results are atomically replaced. The observation binds the source
@@ -98,7 +98,7 @@ run the harness from the repository root:
 ```sh
 python3 -m unittest -v tools.test_core_representative_benchmark
 python3 tools/core_representative_benchmark.py \
-  --bitcode /mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/bitcode \
+  --girder /mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder \
   --offline --evaluate-policy \
   --output docs/core-representative-observation.json
 ```

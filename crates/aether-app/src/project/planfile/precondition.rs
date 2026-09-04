@@ -235,7 +235,7 @@ mod tests {
     impl TempDir {
         fn new(name: &str) -> Self {
             let path = std::env::temp_dir().join(format!(
-                "bitcode-planfile-precondition-{name}-{}-{}",
+                "girder-planfile-precondition-{name}-{}-{}",
                 std::process::id(),
                 NEXT_ID.fetch_add(1, Ordering::Relaxed)
             ));
@@ -263,8 +263,8 @@ mod tests {
     fn init_repo(name: &str) -> (TempDir, String) {
         let dir = TempDir::new(name);
         dir.git(&["init", "-q"]);
-        dir.git(&["config", "user.email", "bitcode@example.invalid"]);
-        dir.git(&["config", "user.name", "Bit Code Test"]);
+        dir.git(&["config", "user.email", "girder@example.invalid"]);
+        dir.git(&["config", "user.name", "Girder Test"]);
         std::fs::write(dir.0.join("src.rs"), "fn old() {}\n").unwrap();
         dir.git(&["add", "."]);
         dir.git(&["commit", "-q", "-m", "init"]);

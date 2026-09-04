@@ -2,7 +2,7 @@
 
 Last updated: 2026-08-18
 
-This is the prioritized, evidence-based comparison for Bit Code's core
+This is the prioritized, evidence-based comparison for Girder's core
 `analyze → navigate/search → edit/refactor → review impact → select tests →
 validate → commit/rollback` workflow. It is not a feature checklist or a claim
 that graph-native behavior is automatically better. A gap remains open until a
@@ -10,14 +10,14 @@ reproducible repository fixture or benchmark proves otherwise.
 
 ## Competitive baseline
 
-| Area | Serious-environment baseline | Bit Code evidence | Priority and gap |
+| Area | Serious-environment baseline | Girder evidence | Priority and gap |
 |---|---|---|---|
 | Indexing and code intelligence | JetBrains project analysis builds an index for navigation, refactoring, inspections, and completion. Cursor uses Merkle-tree change detection and cached semantic chunks for incremental codebase indexing. | Rust/Python tree-sitter projections, cross-file call resolution, and incremental `update_file` reconciliation are implemented. No representative-repository indexing latency or memory benchmark is recorded yet. | **P0 evidence gap:** benchmark cold indexing, one-file updates, peak memory, and stale-edge removal on increasingly large repositories. |
 | Navigation and refactoring | VS Code exposes language-service navigation, cross-file rename, and refactor preview; JetBrains provides project-wide dependency analysis and language-aware refactoring. | Stable graph ids, typed callers/callees, impact traversal, and validated rename projection work for the supported Rust/Python subset. | **P0 correctness:** measure resolved/unresolved call edges and false edges. Close common language-semantic gaps before adding refactor kinds. |
-| Test discovery and coverage | VS Code's testing API supports framework discovery, execution, debugging, and dynamic coverage when supplied by an extension. | Bit Code selects graph-reachable tests and can run configured Rust/Python commands. Direct Rust test attributes are distinguished from `cfg(test)` wrappers; the checked function-execution oracle measures Rust precision/recall at `0.667/1.000` and Python at `1.000/1.000` on bounded fixtures. | **P0 correctness:** reconcile the remaining framework-inventory mismatch, improve CLI argument-route precision, and expand the oracle to representative repositories and implicit RAII/`Drop`. |
+| Test discovery and coverage | VS Code's testing API supports framework discovery, execution, debugging, and dynamic coverage when supplied by an extension. | Girder selects graph-reachable tests and can run configured Rust/Python commands. Direct Rust test attributes are distinguished from `cfg(test)` wrappers; the checked function-execution oracle measures Rust precision/recall at `0.667/1.000` and Python at `1.000/1.000` on bounded fixtures. | **P0 correctness:** reconcile the remaining framework-inventory mismatch, improve CLI argument-route precision, and expand the oracle to representative repositories and implicit RAII/`Drop`. |
 | Diagnostics and validation | JetBrains performs continuous file/project analysis; VS Code language services and tasks surface diagnostics while editing. | Candidate changes are conflict-checked and validated in a disposable project before a journaled commit. | **P1 responsiveness:** validation is strong at commit time, but edit-to-diagnostic latency and cancellation behavior are not benchmarked. |
-| Recovery | VS Code provides local file history and refactor preview. Mature IDEs preserve undo/local history across routine editing. | Bit Code uses baseline checks, durable backups, a transaction journal, startup recovery, and graph/source snapshot binding. | **Graph-native opportunity, still P0 to prove:** run a fault-injection matrix at every journal transition and verify all-old/all-new recovery. |
-| Agent autonomy | Cursor combines semantic codebase retrieval with agent editing. JetBrains and VS Code expose broad language tooling to AI integrations. | Bit Code agents plan from the graph and generated changes pass the same candidate validator and transaction boundary as manual graph edits. | **P1 evidence gap:** record patch acceptance, validation-failure detection, rollback success, and human rejection rates on real tasks. |
+| Recovery | VS Code provides local file history and refactor preview. Mature IDEs preserve undo/local history across routine editing. | Girder uses baseline checks, durable backups, a transaction journal, startup recovery, and graph/source snapshot binding. | **Graph-native opportunity, still P0 to prove:** run a fault-injection matrix at every journal transition and verify all-old/all-new recovery. |
+| Agent autonomy | Cursor combines semantic codebase retrieval with agent editing. JetBrains and VS Code expose broad language tooling to AI integrations. | Girder agents plan from the graph and generated changes pass the same candidate validator and transaction boundary as manual graph edits. | **P1 evidence gap:** record patch acceptance, validation-failure detection, rollback success, and human rejection rates on real tasks. |
 
 Official baseline references:
 
@@ -37,7 +37,7 @@ and review/test-impact falsely reported the verifier as uncovered.
 
 Acceptance evidence:
 
-- Before the fix, Bit Code reported zero callers and zero affected tests for
+- Before the fix, Girder reported zero callers and zero affected tests for
   `SessionIdentity::verify_delta_provenance`.
 - The focused Rust fixture now resolves `Some`, `Ok`, and `Err` consequence
   bindings to the correct generic argument even when another type has the same
@@ -46,7 +46,7 @@ Acceptance evidence:
   deleted.
 - The focused end-to-end repository selects exactly one true affected test:
   precision `1/1`, recall `1/1`.
-- On Bit Code itself, the missing
+- On Girder itself, the missing
   `apply_session_delta → verify_delta_provenance` edge is present and the direct
   tamper/unsigned-relay provenance test is selected. The current graph selects
   25 tests for that method, demonstrating that real-repository precision still
@@ -62,7 +62,7 @@ temporary repository.
 
 Acceptance evidence:
 
-- Before the fix, Bit Code reported three callers of `GraphBuilder::apply`,
+- Before the fix, Girder reported three callers of `GraphBuilder::apply`,
   including the unrelated
   `test_impact_follows_if_let_narrowed_receivers` fixture.
 - The scanner now masks normal, byte, raw, raw-byte, C-string, raw-C-string,
@@ -72,14 +72,14 @@ Acceptance evidence:
   literal/comment cases. A graph fixture retains its genuine macro-contained
   call, creates no edge for embedded Rust text, and removes the genuine edge
   after an incremental update.
-- On Bit Code itself, `GraphBuilder::apply` now has exactly its two real callers:
+- On Girder itself, `GraphBuilder::apply` now has exactly its two real callers:
   `load_file` and `update_file`. The unrelated fixture caller is absent.
 
 ### Match-arm receiver resolution
 
 Verified defect: `Some`/`Ok`/`Err` bindings in Rust `match` arms retained the
 outer wrapper's receiver hint. On a fixture with same-named methods on multiple
-types, Bit Code reported no callees for the `Option` arm and only one of the two
+types, Girder reported no callees for the `Option` arm and only one of the two
 required `Result` arm callees.
 
 Acceptance evidence:
@@ -214,8 +214,8 @@ Acceptance evidence:
 ### Cargo binary subprocess entrypoints
 
 Verified defect: Rust integration tests execute the compiled CLI through
-`Command::new(env!("CARGO_BIN_EXE_bitcode"))`, but the process boundary had no
-call edge to the binary's `main`. On Bit Code itself, `main` therefore had zero
+`Command::new(env!("CARGO_BIN_EXE_girder"))`, but the process boundary had no
+call edge to the binary's `main`. On Girder itself, `main` therefore had zero
 recorded callers and zero reachable tests despite its subprocess CLI suite.
 
 Acceptance evidence:
@@ -232,8 +232,8 @@ Acceptance evidence:
   propagation, and incremental stale-edge removal.
 - The end-to-end two-file fixture changes the binary's dispatch function and
   selects exactly its one subprocess test: precision `1/1`, recall `1/1`.
-- On Bit Code itself, `main` now has the two real launch callers
-  (`run_bitcode_output` and the direct live-collaboration test), and all 27 CLI
+- On Girder itself, `main` now has the two real launch callers
+  (`run_girder_output` and the direct live-collaboration test), and all 27 CLI
   tests are reachable. This closes the entrypoint false negative but remains
   deliberately broad: argument-specific dispatch routes are not yet modeled.
 - Custom `[[bin]] path` locations and dynamically constructed executable paths
@@ -269,7 +269,7 @@ Acceptance evidence:
 The checked oracle in
 [`core-trustworthiness-measurement.md`](core-trustworthiness-measurement.md)
 materializes one multi-file Rust fixture and one multi-file Python fixture into
-disposable Git repositories, applies a mutation, records Bit Code's selected
+disposable Git repositories, applies a mutation, records Girder's selected
 tests, and runs every test alone. A probe written only by the changed function
 provides the dynamic execution set.
 
@@ -279,7 +279,7 @@ and check the baseline with:
 ```sh
 python3 -m unittest -v tools.test_core_trustworthiness_oracle
 python3 tools/core_trustworthiness_oracle.py \
-  --bitcode /mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/bitcode
+  --girder /mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder
 ```
 
 Baseline:
@@ -303,7 +303,7 @@ Verified defect: Rust test discovery previously marked a function as a test
 when any directly preceding attribute's complete text contained `test`.
 Consequently, helpers compiled by `#[cfg(test)]`, conditional attributes such
 as `#[cfg_attr(...)]`, and unrelated attributes containing that substring
-inflated Bit Code's test universe even though Cargo did not list them as tests.
+inflated Girder's test universe even though Cargo did not list them as tests.
 
 Acceptance evidence:
 
@@ -315,7 +315,7 @@ Acceptance evidence:
   string containing `test`.
 - A disposable-Git CLI regression proves a `cfg(test)` helper that calls the
   changed function is absent from both the selected set and skipped count.
-- The strict Rust oracle fixture now includes such a helper. Cargo and Bit Code
+- The strict Rust oracle fixture now includes such a helper. Cargo and Girder
   still agree on its exact four-test universe, and the checked metrics remain
   `0.667/1.000` for Rust, `1.000/1.000` for Python, and `0.800/1.000` combined.
 - On this repository, self-impact now reports 296 tests (`88` impacted plus
@@ -359,7 +359,7 @@ Verified defects closed in the failure-safe benchmark foundation:
   enumerates exact framework ids, explicitly maps full graph ids, checks the
   complete inventory and one-test execution, uses a fresh checkout per dynamic
   test, kills POSIX process groups on timeout/output overflow, and executes a
-  private hash-verified Bit Code binary copy.
+  private hash-verified Girder binary copy.
 
 These changes fail closed but do not yet bound Git subprocess runtime/output or
 the product's configured `test-impact --run` child. Those remain required
@@ -367,22 +367,22 @@ failure-corpus gates before beta.
 
 ### Concurrent analysis workflow correctness
 
-Verified defect: launching `bitcode review .` and `bitcode test-impact .`
+Verified defect: launching `girder review .` and `girder test-impact .`
 concurrently against the same working tree produced incomplete output from
 both commands after their graph-building preambles. Two mechanisms were
 identified: every graph build ran destructive journal recovery over the
-shared `.bitcode/transactions` directory with no locking (one process could
-roll back another's in-flight commit or remove `.bitcode` mid-transaction),
+shared `.girder/transactions` directory with no locking (one process could
+roll back another's in-flight commit or remove `.girder` mid-transaction),
 and concurrent `git diff` invocations contended on `.git/index.lock` with
 fail-closed error handling.
 
 Acceptance evidence:
 
-- Writers hold an exclusive `flock` on the `.bitcode` directory file
+- Writers hold an exclusive `flock` on the `.girder` directory file
   descriptor for the entire commit critical section. Read-only analysis
   recovers non-blocking and never touches a journal whose owning process is
   alive; only dead-owner and abandoned journals are reclaimed. Directory-fd
-  locking preserves the invariant that a completed commit removes `.bitcode`
+  locking preserves the invariant that a completed commit removes `.girder`
   entirely, and acquisition re-checks inode identity so a lock on an
   unlinked directory is never trusted.
 - All Git subprocesses set `GIT_OPTIONAL_LOCKS=0`, eliminating opportunistic
@@ -411,7 +411,7 @@ Acceptance evidence:
   and a committed journal with interrupted cleanup (all-new). Each
   destructive row also asserts a second recovery pass is an idempotent
   no-op.
-- Real-crash proof through the actual binary: `BITCODE_FAULT_EXIT` aborts
+- Real-crash proof through the actual binary: `GIRDER_FAULT_EXIT` aborts
   `forge` at `after-staging`, `after-manifest`, `mid-apply`, and
   `pre-cleanup`; the four `crash_*` CLI regressions assert the process died
   at the injection point, a later analysis command recovers the journal, and
@@ -440,7 +440,7 @@ Acceptance evidence:
   `tests.run_max_output_bytes` (default 8 MiB). Regressions prove a
   timed-out runner's background grandchild is killed
   (`test_impact_run_kills_a_timed_out_process_tree`) and an overflowing
-  runner is killed with a classified error while bitcode's own output stays
+  runner is killed with a classified error while girder's own output stays
   bounded (`test_impact_run_kills_a_child_exceeding_the_output_budget`).
 - Remaining unbounded spawns are named residuals: the toy debugger's
   `python_tracer` and the DAP adapter launch (per-request timeout only).
@@ -522,7 +522,7 @@ as gap 11 rather than silently accepted.
    call-semantics closures" and "Representative dynamic comparison" above.
 6. **Closed — recoverability proof.** See "Transaction recoverability proof"
    above: a deterministic disk-state matrix over every journal transition
-   plus real `BITCODE_FAULT_EXIT` crash injection through the binary, with
+   plus real `GIRDER_FAULT_EXIT` crash injection through the binary, with
    all-old/all-new verification and idempotent re-recovery.
 7. **Closed (scoped) — representative repositories.** See
    `docs/core-representative-benchmark.md`'s "Result" section: the
@@ -600,7 +600,7 @@ as gap 11 rather than silently accepted.
    Its deliberately broken P4 binary removes the recreated tracked path and is
    killed by the policy with one dirty worktree, binding the claim to the
    defect rather than only to the three earlier rollback shapes.
-15. **P1 — first live-model `bitcode do` run: node over-selection, a truncated
+15. **P1 — first live-model `girder do` run: node over-selection, a truncated
    authoring response, and a repair prompt that didn't attribute failure to
    the node it named.** The first end-to-end run against a local
    `qwen2.5-coder:1.5b` produced 0/3 working plans, but the harness itself
@@ -615,12 +615,12 @@ as gap 11 rather than silently accepted.
      `crates/aether-app/src/project/commands/author.rs`: the default
      selection dropped from 5 to 3 (`TOP_K`); a named relative-score floor
      (`NODE_SCORE_FLOOR_RATIO = 0.5`) now discards any hit scoring below half
-     the top hit's score; and `bitcode do` gained `--nodes
+     the top hit's score; and `girder do` gained `--nodes
      <path>[,<path>...]` to bypass search entirely and pin exact node paths,
      which is what makes the command testable in isolation — the question
      "can the model do this job given only the right node?" is the one
      `docs/authoring-cost.md` already answered yes to, and there was
-     previously no way to ask it through `bitcode do` itself.
+     previously no way to ask it through `girder do` itself.
    - Attempt 1 failed with `EOF while parsing a string at line 22 column
      1216` — the response was truncated mid-string, not malformed. The
      `Prompt::new` default of 1024 `max_tokens` looked too low for a
@@ -647,7 +647,7 @@ as gap 11 rather than silently accepted.
    oracle behavior. The oracle was rerun after this pass and PASSed (every
    mutation case still killed; see
    [`plan-executor-observation.json`](plan-executor-observation.json)). A
-   live local-model rerun of `bitcode do` itself is what surfaced the
+   live local-model rerun of `girder do` itself is what surfaced the
    corrections below, so this gap stays open rather than closed.
 
    **Correction, same run, after measuring local throughput.** Timing the
@@ -671,7 +671,7 @@ as gap 11 rather than silently accepted.
      `parse_timeout_secs`, falling back on unset/zero/unparseable values). A
      timeout surfaces through the same `reqwest` error path every other
      transport failure already does — `AiError::Transport`, which
-     `bitcode do`'s attempt loop already treats as a decline and escalates
+     `girder do`'s attempt loop already treats as a decline and escalates
      past — so no new error-handling path was needed, only the missing
      deadline.
    - A further live attempt failed with "command check missing a
@@ -740,7 +740,7 @@ as gap 11 rather than silently accepted.
    `executor.rs`'s "only commit to the real tree" doc comment, dated to the
    executor's original 2026-08-10 commit, and via `rollback_to_base`'s use
    of `git_checkout_paths(root, &plan.base_commit, ...)`, which targets the
-   plan's original base commit directly and never depends on bitcode having
+   plan's original base commit directly and never depends on girder having
    made one of its own). Not a defect in the report or in `--authored`
    (confirmed identical behavior in an isolated worktree with `--authored`
    absent) — but auditing why the precommitted oracle would have passed a
@@ -764,7 +764,7 @@ as gap 11 rather than silently accepted.
    (`docs/plan-executor-policy.json`, `tools/plan_executor_oracle.py`):
    three cases (substitute/create/delete), each a plan expected to
    genuinely pass, run for real. Ground truth is file bytes read directly
-   from disk plus `git status --porcelain`; `.bitcode/reports` is read
+   from disk plus `git status --porcelain`; `.girder/reports` is read
    exactly once per case, solely to cross-check the report's own claim
    against the ground truth already established above it — that
    cross-check can add a violation but can never suppress one. Mutation-tested
@@ -782,7 +782,7 @@ as gap 11 rather than silently accepted.
    this gap is about.** The first version of `measure_p6_ground_truth`
    additionally compared `git write-tree` output against the base tree,
    mirroring `measure_p4`. It failed immediately against the *real,
-   correct* binary: `git write-tree` reads the index, and bitcode never
+   correct* binary: `git write-tree` reads the index, and girder never
    runs `git add`, so the written tree is identical to `base_commit`'s
    regardless of whether the working tree actually changed — a vacuous
    ground-truth check with exactly the shape of the defect this corpus
@@ -823,11 +823,11 @@ as gap 11 rather than silently accepted.
    case to `plan_version: 2`, a corpus change with its own consequences,
    not attempted here.
 
-17. **Closed — `bitcode context` emitted a schema `plan run` would reject.**
+17. **Closed — `girder context` emitted a schema `plan run` would reject.**
     `authoring_context::step_schema` is the flat, all-operation-fields-required
-    shape `bitcode do`'s local model uses, which `author::convert_edit`/
+    shape `girder do`'s local model uses, which `author::convert_edit`/
     `convert_check` translate into real Plan Format v2 before it ever reaches a
-    plan file. `bitcode context` handed that same schema, unfiltered, to an
+    plan file. `girder context` handed that same schema, unfiltered, to an
     external model that writes a plan file directly with no translation layer.
     Confirmed before any fix, with a test: a step built to satisfy the emitted
     schema exactly (`operation` plus all four operation fields; `run`/
@@ -845,7 +845,7 @@ as gap 11 rather than silently accepted.
     Fixed by adding `authoring_context::plan_schema()` — a discriminated-union
     (`oneOf`) shape matching `planfile::schema`'s actual `Edit`/`Check`
     deserializers exactly — and emitting that from `context_cmd::build_output`
-    instead of the flat local-authoring schema. `bitcode do`'s local path
+    instead of the flat local-authoring schema. `girder do`'s local path
     keeps `step_schema` unchanged; `author.rs` was not touched. A second test
     (`a_step_satisfying_plan_schema_round_trips_through_load_plan`) proves a
     step satisfying `plan_schema` loads successfully, closing the loop the
@@ -868,7 +868,7 @@ as gap 11 rather than silently accepted.
     `tools/authoring_task_check.py`'s semantic checks. Two commits from the
     same live run drifted that fixture, three days apart from every other
     commit in this pass: `fe0f476` ("Uppercase greet's return value",
-    2026-08-15, authored externally via `bitcode context`/`plan run
+    2026-08-15, authored externally via `girder context`/`plan run
     --authored` — the loop gap 17 above concerns) permanently changed
     `greet`'s body from `return hello(name)` to `return
     hello(name).upper()`, and `44e7fae` ("Add test for greet uppercase",
@@ -1071,7 +1071,7 @@ as gap 11 rather than silently accepted.
     test suite or CI compared the live files against the baseline the
     measurement corpus assumes — and the first attempt at fixing it, hours
     into this same pass, repeated the shape of the mistake by verifying
-    incompletely. Every future `bitcode do` or `plan run --authored` run
+    incompletely. Every future `girder do` or `plan run --authored` run
     against `sample-project` — including from the Author tab GUI this pass
     added, which makes triggering one easier than a terminal invocation
     did — had the identical exposure: a real (non-dry) run permanently
@@ -1106,12 +1106,12 @@ as gap 11 rather than silently accepted.
     `demo-project/` in the error. It runs first inside
     `apply_authored_guarantees` (so `plan run --authored`, and the GUI's
     "Run authored", refuse it — one call site, shared by both since gap 20)
-    and first inside `author::author` (so `bitcode do`, and the GUI's
+    and first inside `author::author` (so `girder do`, and the GUI's
     local-model Run, refuse it — the single function both already share).
     Read-only commands (`context`, `search`, `analyze`, `test-impact`, plain
     `plan run` without `--authored`) never call either function and stay
     unaffected — confirmed the measurement harness itself never invokes
-    `--authored` or `bitcode do` at all (`grep` over `tools/*.py` for
+    `--authored` or `girder do` at all (`grep` over `tools/*.py` for
     `--authored`/`"do"` found nothing), so this closes the hole without
     touching the harness's own real `plan run`/`plan validate` invocations.
     Unlike the other two mitigations, this one does not depend on a person
@@ -1127,17 +1127,17 @@ as gap 11 rather than silently accepted.
     GUI" Author-tab walkthrough all point at it instead of
     `sample-project/`; the two `sample-project`-authored examples that
     mitigation 2 would otherwise have made literally broken to follow
-    (`bitcode do sample-project ...` and the `plan run --authored` loop)
+    (`girder do sample-project ...` and the `plan run --authored` loop)
     were rewritten against `demo-project/`, and a new "Demo target" section
     documents the refusal and why.
 
     **Deliberately not implemented:** mitigation 2 is app-level, inside
-    `bitcode` itself — it stops `bitcode do`/`plan run --authored` from
+    `girder` itself — it stops `girder do`/`plan run --authored` from
     writing to `sample-project/`, not a hand edit and `git commit` made
-    outside `bitcode` entirely, which remains as possible as it always was.
+    outside `girder` entirely, which remains as possible as it always was.
     Mitigation 1 (the hardened drift guard) is the reason that residual
     path is still covered: it protects the measurement harness even against
-    a drift that never went through `bitcode` at all, which is exactly why
+    a drift that never went through `girder` at all, which is exactly why
     it's real defense in depth and not redundant with mitigation 2. The
     root check is also a plain final-path-component name match, not
     hardened against deliberate circumvention (a symlink or a differently
@@ -1149,15 +1149,15 @@ as gap 11 rather than silently accepted.
     suite from the repository root with no path restriction
     (`python3 -m pytest -q`) passes 68 of 68 (63 from before this pass, plus
     3 real `demo-project` tests and 2 new drift-guard tests), and a real
-    authored dry run against `demo-project/` — `bitcode plan run
+    authored dry run against `demo-project/` — `girder plan run
     plan.json --authored --authored-by claude-sonnet-5 --dry` run from
     inside `demo-project/`, targeting `crate::greeter::farewell` — passes
     precondition checks, executes, and reports passed with no writes to the
-    real tree. `bitcode do sample-project ...` and `plan run --authored`
+    real tree. `girder do sample-project ...` and `plan run --authored`
     against `sample-project/` both confirmed rejected with the documented
     error before this was called done.
 
-22. **Closed — `bitcode test-impact` returned zero tests for changed
+22. **Closed — `girder test-impact` returned zero tests for changed
     functions that real, passing tests do reach, whenever the reaching call
     was chained onto another call's result, and `--quiet` could not
     distinguish that false negative from "nothing changed."**
@@ -1165,10 +1165,10 @@ as gap 11 rather than silently accepted.
     pending AGENTS.md edit before this began):
     ```
     sed -i 's/pub fn run(&self) -> Trace {/pub fn run(\&self) -> Trace { \/\/ probe/' crates/aether-debugger/src/interp.rs
-    bitcode review . --quiet
+    girder review . --quiet
       crate::crates::aether-debugger::src::interp
       crate::crates::aether-debugger::src::interp::Interpreter<'a>::run
-    bitcode test-impact . --quiet
+    girder test-impact . --quiet
       (0 bytes, exit 0)
     ```
     `review` resolves the changed node; `test-impact --quiet` prints
@@ -1178,7 +1178,7 @@ as gap 11 rather than silently accepted.
     coverage reachable via the call graph.`
 
     **First check: is that specific claim true for `run()`?** Yes.
-    `bitcode query . "who calls ...Interpreter<'a>::run"` returns "has no
+    `girder query . "who calls ...Interpreter<'a>::run"` returns "has no
     recorded callers," and a repo-wide `grep -rn "\.run()"` confirms no
     call site anywhere in the workspace invokes it — `Timeline::record`
     calls `Interpreter::new(&program).run_with_counts(None)`, a sibling
@@ -1198,7 +1198,7 @@ as gap 11 rather than silently accepted.
     way still selects zero tests, and both the quiet and non-quiet output
     are byte-identical to the `run()` case — including the same "no test
     coverage reachable via the call graph" claim, which is now false.
-    `bitcode query` confirms the mechanism: `Interpreter::new` and
+    `girder query` confirms the mechanism: `Interpreter::new` and
     `Timeline::record` themselves both report "has no recorded callers,"
     even though both are called from real, non-test-fixture source.
 
@@ -1208,7 +1208,7 @@ as gap 11 rather than silently accepted.
     crate: `Node::with_language` (`crates/aether-graph/src/node.rs:107`,
     non-generic) is chained onto `Node::new(...)` in production code at
     `crates/aether-builder/src/mapper.rs:845` and is exercised by nearly
-    every builder test in the workspace — `bitcode query` still reports
+    every builder test in the workspace — `girder query` still reports
     "has no recorded callers." Same defect, third crate, no generics
     involved, confirming `aether-builder::sync::resolve_calls` (project-
     wide, one implementation per CLAUDE.md) is affected in general, not
@@ -1222,7 +1222,7 @@ as gap 11 rather than silently accepted.
     is unchained but its sole argument is a call expression. By contrast,
     `Program::new()` — leftmost, unchained, argument-free, in the same
     `buggy_demo_program` function — resolves correctly to its real callers
-    via `bitcode query`. The calls chained after it in the same builder
+    via `girder query`. The calls chained after it in the same builder
     expression fare worse than a false negative: `Program::stmt` (called
     four times in `buggy_demo_program`) shows zero callers, and
     `Program::function` (called twice in the same function) shows exactly
@@ -1292,19 +1292,19 @@ as gap 11 rather than silently accepted.
     ```
     sed -i 's/pub fn run_with_counts(&self/pub fn run_with_counts(\&self/' crates/aether-debugger/src/interp.rs
     git diff --stat                   ->  (nothing)
-    bitcode review . --quiet          ->  (empty, exit 0)
-    bitcode test-impact . --quiet     ->  (empty, exit 0)
+    girder review . --quiet          ->  (empty, exit 0)
+    girder test-impact . --quiet     ->  (empty, exit 0)
     ```
     With an actual edit (mirroring this gap's own original `// probe`
     pattern), against the fixed binary on the fixed source:
     ```
     sed -i 's/pub fn run_with_counts(&self, intervention: Option<&Intervention>) -> (Trace, CallCounts) {/pub fn run_with_counts(\&self, intervention: Option<\&Intervention>) -> (Trace, CallCounts) { \/\/ probe/' crates/aether-debugger/src/interp.rs
 
-    bitcode review . --quiet
+    girder review . --quiet
       crate::crates::aether-debugger::src::interp
       crate::crates::aether-debugger::src::interp::Interpreter<'a>::run_with_counts
 
-    bitcode test-impact . --quiet
+    girder test-impact . --quiet
       ai_root_cause_returns_an_explanation
       divergence_points_at_the_intervened_step
       hot_functions_rank_by_execution_count
@@ -1317,7 +1317,7 @@ as gap 11 rather than silently accepted.
     the four originally guessed; `ai_root_cause_returns_an_explanation` also
     reaches `Timeline::record` and had been missed in the original
     write-up — plus roughly 67 `aether-app` tests. That larger set is
-    correct, not over-selection: `bitcode query` on `run_with_counts` now
+    correct, not over-selection: `girder query` on `run_with_counts` now
     returns exactly `{run_with, Timeline::fork_what_if, Timeline::record}`,
     no spurious extras, and `AetherApp::new` (`crates/aether-app/src/app.rs:204`)
     and `smoke::run` (`crates/aether-app/src/smoke.rs:157`) both really call
@@ -1339,17 +1339,17 @@ as gap 11 rather than silently accepted.
 
     **The `--quiet` ambiguity is real and measured, not inferred:** a
     clean tree with zero source changes and a tree with the
-    `run_with_counts` probe applied produce identical `bitcode test-impact
+    `run_with_counts` probe applied produce identical `girder test-impact
     . --quiet` output — 0 bytes on stdout, exit code 0, in both cases.
     Nothing in the guarded line AGENTS.md now specifies
-    (`T=$(bitcode test-impact . --quiet); if [ -n "$T" ]; then cargo test
+    (`T=$(girder test-impact . --quiet); if [ -n "$T" ]; then cargo test
     $T; else echo "no impacted tests"; fi`) can tell "nothing changed" apart
     from "something changed but the tool lost the covering test." Two
     consequences follow directly, both already true today: an agent
     following AGENTS.md's now-guarded instruction skips real verification
     for a change like the `run_with_counts` probe above, believing nothing
     needs testing; and before that guard existed, the same empty selection
-    fed into a bare `cargo test $(bitcode test-impact . --quiet)` ran the
+    fed into a bare `cargo test $(girder test-impact . --quiet)` ran the
     entire suite instead of the intended subset (reported by the user
     triggering this investigation as 48,791 bytes of output — the opposite
     of the intended saving).
@@ -1378,7 +1378,7 @@ as gap 11 rather than silently accepted.
     that — it must never resolve to `click.testing.CliRunner.isolation`'s
     unrelated, same-named nested mock function. It does anyway: this is a
     real, reproducible instance of gap 22's misattribution mechanism on the
-    Python side, confirmed via `bitcode query` returning
+    Python side, confirmed via `girder query` returning
     `crate::click::termui::getchar` as `CliRunner::isolation::_getchar`'s
     sole recorded caller, and it is deliberately not fixed (see gap 23).
     Declaring it as a case rather than leaving it undeclared means the
@@ -1415,7 +1415,7 @@ as gap 11 rather than silently accepted.
     pre-existing function) already handled correctly for its own purpose;
     fixed alongside the main change.
 
-    Confirmed still present on Bit Code's own repo before this fix, after
+    Confirmed still present on Girder's own repo before this fix, after
     gap 22's own fix: asking who calls
     `crate::crates::aether-debugger::src::lang::Program::function` returned
     three callers — `buggy_demo_program` and
@@ -1518,13 +1518,13 @@ as gap 11 rather than silently accepted.
     This is the third instance of a check that reads as verification and
     isn't, not the first. Gap 16's near-miss (`measure_p6_ground_truth`'s
     original `git write-tree` comparison) failed the same way one level
-    removed: bitcode never runs `git add`, so the tree hash is identical to
+    removed: girder never runs `git add`, so the tree hash is identical to
     `base_commit` regardless of whether the working tree actually changed —
     a vacuous ground-truth check caught only because the new case was run
     against the real binary before being trusted. Gap 22 found the general
-    form of this instance directly: an empty `bitcode test-impact` selection
+    form of this instance directly: an empty `girder test-impact` selection
     is indistinguishable from "nothing changed," and a bare `cargo test
-    $(bitcode test-impact . --quiet)` ran the entire suite instead of the
+    $(girder test-impact . --quiet)` ran the entire suite instead of the
     intended subset as a result. This gap is gap 22's exact phrase
     ("indistinguishable from nothing changed") recurring in the mandatory-
     check machinery itself: two different call sites both leaned on
@@ -1549,7 +1549,7 @@ as gap 11 rather than silently accepted.
     already ran): `apply_authored_guarantees` (`planfile/mod.rs`), which
     injects onto the last step of any `--authored` plan lacking one, and
     `author::wrap_step_into_plan`, which does the same unconditionally for
-    every `bitcode do` plan. Only the first is a live injection point for a
+    every `girder do` plan. Only the first is a live injection point for a
     `create` edit. `wrap_step_into_plan` builds its edit from
     `author::convert_edit`, which requires an `edit.node` field validated
     against the offered `node_paths` (pre-existing graph nodes) before it
@@ -1561,7 +1561,7 @@ as gap 11 rather than silently accepted.
     `Plan::validate()` already guarantees that step carries a real `command`
     check by the time this function runs, so skipping the addition doesn't
     leave anything unverified; it just stops adding a second check that
-    would read as a safety net it isn't. `bitcode context`'s `plan_skeleton`
+    would read as a safety net it isn't. `girder context`'s `plan_skeleton`
     was suspected as a third injection point during design but is not one:
     it builds its envelope with `edits: []`, before the model has written
     anything, so there is nothing yet to condition the injection on — the
@@ -1650,14 +1650,14 @@ as gap 11 rather than silently accepted.
     the real `TimedOut` path on purpose, sets its own explicit 1s override
     against a `sleep 30` and is unaffected.
 
-26. **Closed — `npx -y bitcode-mcp` on a clean directory reported
+26. **Closed — `npx -y girder-mcp` on a clean directory reported
     `serverInfo.version` 0.1.0 for a package published as 0.1.1, because the
     check testing it was fooled by the tester's own machine.** `resolve.js`'s
-    `resolveBinary()` prefers a `bitcode` already on PATH over the binary the
+    `resolveBinary()` prefers a `girder` already on PATH over the binary the
     postinstall just downloaded — deliberate, and unchanged by this: someone
     with a source build or a newer `install.sh` copy should not be silently
     shadowed by an older vendored download. The dev machine running the test
-    had exactly that: an older `bitcode` in `~/.cargo/bin` from
+    had exactly that: an older `girder` in `~/.cargo/bin` from
     `cargo install --path crates/aether-app`, predating even `--version`
     support. So `npx` downloaded and checksum-verified the correct 0.1.1
     binary, then executed the stale local one instead and reported its
@@ -1675,24 +1675,24 @@ as gap 11 rather than silently accepted.
     `test-impact --quiet` returning zero bytes indistinguishably for "nothing
     changed" and "missed a real test"; gap 24 was `tests.impacted` returning
     `passed: true` on an impact set that was empty by construction. Here, "I
-    ran `npx -y bitcode-mcp` and it worked" reads as end-to-end proof the
+    ran `npx -y girder-mcp` and it worked" reads as end-to-end proof the
     published package installs and runs correctly, but on any machine that
-    already has a `bitcode` on PATH — which describes every machine used to
+    already has a `girder` on PATH — which describes every machine used to
     develop this package — it proves nothing about the download at all. Every
     prior "npx works" result in this repository's history was produced on
     exactly such a machine and is therefore untrustworthy as evidence the
-    *published binary* runs; it only ever showed that *some* `bitcode` runs.
+    *published binary* runs; it only ever showed that *some* `girder` runs.
 
     Fixed by making the ambiguity impossible to not notice, rather than by
     reordering PATH-first resolution (which stays, for the reasons above).
-    `BITCODE_FORCE_VENDORED=1` skips the PATH search and requires the
+    `GIRDER_FORCE_VENDORED=1` skips the PATH search and requires the
     downloaded binary, failing loudly with the missing path instead of
     silently falling back, so a release can actually be exercised on a dev
     machine (documented in npm/README.md's "Validating a release"). The
-    `bitcode-mcp` shim now also prints, on stderr only, both binaries' paths
+    `girder-mcp` shim now also prints, on stderr only, both binaries' paths
     and `--version` output whenever a PATH binary is chosen while a vendored
     copy also exists, so the skew is visible without a separate `which
-    bitcode`. `npm/test/version.test.js` asserts the vendored binary's
+    girder`. `npm/test/version.test.js` asserts the vendored binary's
     `--version` and its MCP `serverInfo.version` both equal
     `npm/package.json`'s version, so this class of drift fails a test rather
     than requiring a human to notice a stray digit in a handshake log. And
@@ -1704,7 +1704,7 @@ as gap 11 rather than silently accepted.
     versions before publishing proceeds.
 
 27. **Open — description-based search (`get_source --intent`, `search_code`,
-    `bitcode search`) improved substantially but remains below the accuracy
+    `girder search`) improved substantially but remains below the accuracy
     threshold committed to before measuring it.** All three route through
     `SemanticGraph::semantic_search`
     (`crates/aether-graph/src/similarity.rs`), which was plain unweighted
@@ -1733,7 +1733,7 @@ as gap 11 rather than silently accepted.
     keep the offline, dependency-free guarantee this module (and the whole
     default build) commits to.
 
-Bit Code's potential advantage is not generic semantic search. It is one local,
+Girder's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
 validated projection, and recoverable commit. That advantage is unproven until
 the P0 measurements above show better consequence prediction without hiding

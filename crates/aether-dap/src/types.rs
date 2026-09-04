@@ -1,6 +1,6 @@
 //! DAP protocol data types.
 //!
-//! Covers the subset of the [DAP specification][spec] used by Bit Code:
+//! Covers the subset of the [DAP specification][spec] used by Girder:
 //! capabilities negotiation, breakpoints, stack frames, scopes, variables,
 //! threads, and the most common events. Unknown fields are silently ignored
 //! via `#[serde(default)]` so the client stays forward-compatible.
@@ -32,9 +32,9 @@ pub struct InitializeArgs {
 impl Default for InitializeArgs {
     fn default() -> Self {
         Self {
-            client_id: "bitcode".to_string(),
-            client_name: "Bit Code".to_string(),
-            adapter_id: "bitcode".to_string(),
+            client_id: "girder".to_string(),
+            client_name: "Girder".to_string(),
+            adapter_id: "girder".to_string(),
             locale: "en-US".to_string(),
             lines_start_at1: true,
             columns_start_at1: true,
@@ -52,8 +52,8 @@ mod initialize_tests {
     #[test]
     fn initialize_uses_dap_acronym_field_names() {
         let value = serde_json::to_value(InitializeArgs::default()).unwrap();
-        assert_eq!(value["clientID"], "bitcode");
-        assert_eq!(value["adapterID"], "bitcode");
+        assert_eq!(value["clientID"], "girder");
+        assert_eq!(value["adapterID"], "girder");
         assert!(value.get("clientId").is_none());
         assert!(value.get("adapterId").is_none());
     }

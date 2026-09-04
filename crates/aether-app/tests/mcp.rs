@@ -1,4 +1,4 @@
-//! End-to-end `bitcode mcp` sessions over the real stdio transport.
+//! End-to-end `girder mcp` sessions over the real stdio transport.
 //!
 //! The unit tests in `mcp.rs` cover framing and argv construction in
 //! isolation. These drive the actual binary the way an MCP client does —
@@ -27,14 +27,14 @@ struct Session {
 
 impl Session {
     fn start(root: &Path) -> Self {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_bitcode"))
+        let mut child = Command::new(env!("CARGO_BIN_EXE_girder"))
             .arg("mcp")
             .arg(root)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .expect("spawn bitcode mcp");
+            .expect("spawn girder mcp");
         let stdin = child.stdin.take().unwrap();
         let stdout = BufReader::new(child.stdout.take().unwrap());
         Self {
@@ -82,7 +82,7 @@ impl Session {
             json!({
                 "protocolVersion": "2025-06-18",
                 "capabilities": {},
-                "clientInfo": {"name": "bitcode-integration-test", "version": "1.0"},
+                "clientInfo": {"name": "girder-integration-test", "version": "1.0"},
             }),
         );
         self.notify("notifications/initialized");
@@ -108,7 +108,7 @@ impl Session {
 /// nodes, a real call edge, and a real covering test to find.
 fn fixture(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!(
-        "bitcode-mcp-{name}-{}-{}-{}",
+        "girder-mcp-{name}-{}-{}-{}",
         std::process::id(),
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -138,8 +138,8 @@ fn fixture(name: &str) -> PathBuf {
         );
     };
     git(&["init", "--quiet"]);
-    git(&["config", "user.email", "bitcode@example.invalid"]);
-    git(&["config", "user.name", "Bit Code Test"]);
+    git(&["config", "user.email", "girder@example.invalid"]);
+    git(&["config", "user.name", "Girder Test"]);
     git(&["add", "."]);
     git(&["commit", "--quiet", "-m", "base"]);
     root
@@ -163,7 +163,7 @@ fn a_full_session_handshakes_lists_tools_and_answers_calls_in_order() {
 
     let initialized = session.initialize();
     assert_eq!(initialized["result"]["protocolVersion"], "2025-06-18");
-    assert_eq!(initialized["result"]["serverInfo"]["name"], "bitcode");
+    assert_eq!(initialized["result"]["serverInfo"]["name"], "girder");
     assert!(initialized["result"]["capabilities"]["tools"].is_object());
 
     let listed = session.request("tools/list", json!({}));
@@ -375,7 +375,7 @@ fn a_modern_client_can_discover_without_the_legacy_handshake() {
     );
     assert_eq!(
         discovered["result"]["_meta"]["io.modelcontextprotocol/serverInfo"]["name"],
-        "bitcode"
+        "girder"
     );
 
     // And tools must be callable with no `initialize` at all.
@@ -397,7 +397,7 @@ fn a_modern_client_can_discover_without_the_legacy_handshake() {
 fn a_tool_argument_cannot_smuggle_an_option_that_writes_or_runs() {
     let root = fixture("no-option-smuggling");
     let victim = std::env::temp_dir().join(format!(
-        "bitcode-mcp-must-not-write-{}-{}.txt",
+        "girder-mcp-must-not-write-{}-{}.txt",
         std::process::id(),
         NEXT_ID.fetch_add(1, Ordering::Relaxed)
     ));
@@ -439,7 +439,7 @@ fn a_tool_argument_cannot_smuggle_an_option_that_writes_or_runs() {
 /// accept a session and error on every call.
 #[test]
 fn a_nonexistent_root_fails_at_startup() {
-    let output = Command::new(env!("CARGO_BIN_EXE_bitcode"))
+    let output = Command::new(env!("CARGO_BIN_EXE_girder"))
         .arg("mcp")
         .arg("/nonexistent/definitely/not/here")
         .stdin(Stdio::null())

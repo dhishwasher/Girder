@@ -1,5 +1,5 @@
-//! Bit Code Plan Format v1/v2: an external author writes an exact, literal JSON
-//! plan (text edits plus verification checks) and Bit Code executes it
+//! Girder Plan Format v1/v2: an external author writes an exact, literal JSON
+//! plan (text edits plus verification checks) and Girder executes it
 //! deterministically — no inference, no fuzzy retries. See the plan file
 //! `now-create-a-plan-optimized-spark.md` in this repository's planning
 //! history for the full design rationale.
@@ -18,7 +18,7 @@ use std::path::Path;
 
 // pub(crate) rather than private: `context_cmd`'s tests round-trip
 // `authoring_context::plan_schema`-shaped steps through this exact loader
-// to prove the schema `bitcode context` emits to an external model is one
+// to prove the schema `girder context` emits to an external model is one
 // `load_plan` actually accepts (see gap in `docs/core-gap-analysis.md`).
 pub(crate) fn load_plan(path: &Path) -> std::io::Result<Plan> {
     let text = std::fs::read_to_string(path).map_err(|error| {
@@ -50,7 +50,7 @@ pub(crate) fn parse_plan(text: &str) -> std::io::Result<Plan> {
     Ok(plan)
 }
 
-/// `bitcode plan validate <plan.json>` — checks preconditions and match
+/// `girder plan validate <plan.json>` — checks preconditions and match
 /// counts only. Never writes a byte.
 pub(crate) fn validate(root: &Path, plan_path: &Path) -> std::io::Result<()> {
     let plan = load_plan(plan_path)?;
@@ -80,7 +80,7 @@ pub(crate) fn validate(root: &Path, plan_path: &Path) -> std::io::Result<()> {
     }
 }
 
-/// `bitcode plan explain <plan.json>` — a human-readable summary of what a
+/// `girder plan explain <plan.json>` — a human-readable summary of what a
 /// plan would do. No execution, no preconditions.
 pub(crate) fn explain(plan_path: &Path) -> std::io::Result<()> {
     let plan = load_plan(plan_path)?;
@@ -144,7 +144,7 @@ pub(crate) fn explain(plan_path: &Path) -> std::io::Result<()> {
 /// (`context`, `search`, `analyze`, `test-impact`) never call this and stay
 /// unaffected — this only guards the two things that write:
 /// [`apply_authored_guarantees`] (`plan run --authored`, and the GUI's "Run
-/// authored") and `author::author` in `project::commands` (`bitcode do`,
+/// authored") and `author::author` in `project::commands` (`girder do`,
 /// and the GUI's local-model "Run").
 pub(crate) fn reject_measurement_fixture_root(root: &Path) -> std::io::Result<()> {
     let canonical = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
@@ -160,7 +160,7 @@ pub(crate) fn reject_measurement_fixture_root(root: &Path) -> std::io::Result<()
 }
 
 /// Applies the guarantees `--authored` promises to a plan written outside
-/// Bit Code, in place: force a clean revert on any failure, and close the
+/// Girder, in place: force a clean revert on any failure, and close the
 /// vacuous-check hole by guaranteeing at least one real test verification.
 /// Also used, via [`run_for_authoring_with_plan`], by the GUI's "Run
 /// authored" flow for a pasted external plan — the same guarantees, the
@@ -185,8 +185,8 @@ pub(crate) fn apply_authored_guarantees(
             plan.plan_id
         )));
     }
-    // The same harness guarantees `bitcode do` applies internally
-    // (`author::wrap_step_into_plan`) to a plan written outside Bit Code:
+    // The same harness guarantees `girder do` applies internally
+    // (`author::wrap_step_into_plan`) to a plan written outside Girder:
     // force a clean revert on any failure, and close the vacuous-check
     // hole by guaranteeing at least one real test verification — but only
     // inject it if the plan doesn't already have one; unlike a local model
@@ -245,7 +245,7 @@ pub(crate) fn apply_authored_guarantees(
     Ok(())
 }
 
-/// `bitcode plan run <plan.json> [--dry] [--authored [--authored-by <name>]]`
+/// `girder plan run <plan.json> [--dry] [--authored [--authored-by <name>]]`
 /// — execute a plan step by step. Preconditions run against the real tree
 /// even in `--dry` mode; only the final real-tree commit is skipped when
 /// `dry` is set.
@@ -336,7 +336,7 @@ pub(crate) fn run(
     if dry {
         // A dry run must never write to the real tree, including the
         // report itself — print it instead of persisting it under
-        // `.bitcode/reports/`. `--out` is a diagnostic file the invoker
+        // `.girder/reports/`. `--out` is a diagnostic file the invoker
         // explicitly asked for, not a plan-caused write, so it is exempt
         // from this guarantee: it may still capture this same rendered text.
         let rendered = serde_json::to_string_pretty(&built_report)
@@ -445,7 +445,7 @@ fn finish_run_summary(
 }
 
 /// The result of one `run_for_authoring` attempt: enough to decide whether
-/// `bitcode do` should stop, and — when it should keep going — the same
+/// `girder do` should stop, and — when it should keep going — the same
 /// per-check pass/fail detail `run()` already prints, as data instead of
 /// stdout, for a repair prompt.
 ///
@@ -479,7 +479,7 @@ pub(crate) fn run_for_authoring(
 /// report can record. Split out so the GUI's "Run authored" flow — a plan
 /// pasted into a text box and mutated in memory by
 /// [`apply_authored_guarantees`] — can reach the same execution path with
-/// no temp file and no re-parsing. `bitcode do`'s call site above (the sole
+/// no temp file and no re-parsing. `girder do`'s call site above (the sole
 /// path-based caller) always passes `None` for `authored_by`; it has no
 /// such concept, and its outcome is already named by `provider`/`model` in
 /// the success message.
@@ -571,7 +571,7 @@ mod tests {
 
     fn write_plan(name: &str, json: &str) -> std::path::PathBuf {
         let path = std::env::temp_dir().join(format!(
-            "bitcode-planfile-mod-{name}-{}-{}.json",
+            "girder-planfile-mod-{name}-{}-{}.json",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -602,7 +602,7 @@ mod tests {
     #[test]
     fn reject_measurement_fixture_root_rejects_a_directory_named_sample_project() {
         let parent = std::env::temp_dir().join(format!(
-            "bitcode-planfile-mod-fixture-guard-{}-{}",
+            "girder-planfile-mod-fixture-guard-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -619,7 +619,7 @@ mod tests {
     #[test]
     fn reject_measurement_fixture_root_allows_other_directories() {
         let root = std::env::temp_dir().join(format!(
-            "bitcode-planfile-mod-fixture-guard-allowed-{}-{}",
+            "girder-planfile-mod-fixture-guard-allowed-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -632,7 +632,7 @@ mod tests {
     #[test]
     fn run_with_authored_rejects_sample_project_as_a_target() {
         let parent = std::env::temp_dir().join(format!(
-            "bitcode-planfile-mod-authored-fixture-guard-{}-{}",
+            "girder-planfile-mod-authored-fixture-guard-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -658,7 +658,7 @@ mod tests {
 
     fn temp_git_root(name: &str) -> std::path::PathBuf {
         let path = std::env::temp_dir().join(format!(
-            "bitcode-planfile-mod-authoring-{name}-{}-{}",
+            "girder-planfile-mod-authoring-{name}-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -690,9 +690,9 @@ mod tests {
             root,
             &[
                 "-c",
-                "user.name=Bit Code Tests",
+                "user.name=Girder Tests",
                 "-c",
-                "user.email=tests@bitcode.invalid",
+                "user.email=tests@girder.invalid",
                 "commit",
                 "--quiet",
                 "-m",
@@ -774,7 +774,7 @@ mod tests {
             .report_json
             .as_ref()
             .is_some_and(|json| json.contains("\"passed\"")));
-        assert!(!root.join(".bitcode/reports").exists());
+        assert!(!root.join(".girder/reports").exists());
         let _ = std::fs::remove_file(&path);
         let _ = std::fs::remove_dir_all(&root);
     }
@@ -841,7 +841,7 @@ mod tests {
 
         assert!(run(&root, &path, false, None, true, None, None).is_ok());
 
-        let mut entries = std::fs::read_dir(root.join(".bitcode/reports")).unwrap();
+        let mut entries = std::fs::read_dir(root.join(".girder/reports")).unwrap();
         let report_path = entries.next().unwrap().unwrap().path();
         let written = std::fs::read_to_string(report_path).unwrap();
         let report: serde_json::Value = serde_json::from_str(&written).unwrap();
@@ -879,7 +879,7 @@ mod tests {
 
         assert!(run(&root, &path, false, None, true, None, None).is_ok());
 
-        let mut entries = std::fs::read_dir(root.join(".bitcode/reports")).unwrap();
+        let mut entries = std::fs::read_dir(root.join(".girder/reports")).unwrap();
         let report_path = entries.next().unwrap().unwrap().path();
         let written = std::fs::read_to_string(report_path).unwrap();
         let report: serde_json::Value = serde_json::from_str(&written).unwrap();
@@ -926,7 +926,7 @@ mod tests {
 
         assert!(run(&root, &path, false, None, true, None, None).is_ok());
 
-        let mut entries = std::fs::read_dir(root.join(".bitcode/reports")).unwrap();
+        let mut entries = std::fs::read_dir(root.join(".girder/reports")).unwrap();
         let report_path = entries.next().unwrap().unwrap().path();
         let written = std::fs::read_to_string(report_path).unwrap();
         let report: serde_json::Value = serde_json::from_str(&written).unwrap();
@@ -991,7 +991,7 @@ mod tests {
         )
         .is_ok());
 
-        let mut entries = std::fs::read_dir(root.join(".bitcode/reports")).unwrap();
+        let mut entries = std::fs::read_dir(root.join(".girder/reports")).unwrap();
         let report_path = entries.next().unwrap().unwrap().path();
         let written = std::fs::read_to_string(report_path).unwrap();
         let report: serde_json::Value = serde_json::from_str(&written).unwrap();

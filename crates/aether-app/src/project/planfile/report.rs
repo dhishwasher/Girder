@@ -1,7 +1,7 @@
 //! The plan run report: a JSON document stating exactly what changed and
-//! what was proven, written unconditionally to `.bitcode/reports/` — a
-//! natural sibling of the existing `.bitcode/transactions/` and
-//! `.bitcode/validation/` directories. `detail` on each check carries the
+//! what was proven, written unconditionally to `.girder/reports/` — a
+//! natural sibling of the existing `.girder/transactions/` and
+//! `.girder/validation/` directories. `detail` on each check carries the
 //! precise mismatch text (e.g. a `graph.callers_of` failure's expected vs.
 //! actual path lists) that a plan's author reads to write the next plan.
 
@@ -58,7 +58,7 @@ pub(crate) struct PlanReport {
     /// externally authoring model's name, so a report (and git history)
     /// distinguishes a locally-authored plan from a remotely-authored one.
     /// Absent (not merely null) for every other run, so this field never
-    /// appears in a report `bitcode do`/plain `plan run` produces.
+    /// appears in a report `girder do`/plain `plan run` produces.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) authored_by: Option<String>,
 }
@@ -253,7 +253,7 @@ pub(crate) fn write_report(root: &Path, report: &PlanReport) -> std::io::Result<
         .unwrap_or_default()
         .as_millis();
     let relative = format!(
-        ".bitcode/reports/{}-{}-{timestamp}.json",
+        ".girder/reports/{}-{}-{timestamp}.json",
         sanitize_for_filename(&report.plan_id),
         std::process::id()
     );
@@ -298,7 +298,7 @@ mod tests {
 
     fn temp_root(name: &str) -> PathBuf {
         let path = std::env::temp_dir().join(format!(
-            "bitcode-planfile-report-{name}-{}-{}",
+            "girder-planfile-report-{name}-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));

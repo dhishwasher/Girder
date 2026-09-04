@@ -2,7 +2,7 @@
 
 use tree_sitter::{Language, Parser, Tree};
 
-/// Languages Bit Code can currently project into the graph.
+/// Languages Girder can currently project into the graph.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Lang {
     Rust,

@@ -4,7 +4,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Component, Path, PathBuf};
 
-pub(crate) const CONFIG_FILE: &str = "bitcode.toml";
+pub(crate) const CONFIG_FILE: &str = "girder.toml";
 const CONFIG_VERSION: u32 = 1;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

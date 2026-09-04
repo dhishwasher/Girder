@@ -26,16 +26,16 @@ function target() {
 /** Human-readable reason this platform has no prebuilt binary. */
 function unsupportedMessage() {
   return (
-    `No prebuilt bitcode binary for ${os.platform()}-${os.arch()}.\n` +
+    `No prebuilt girder binary for ${os.platform()}-${os.arch()}.\n` +
     `Supported: ${Object.keys(TARGETS).join(", ")}.\n` +
     "Build from source instead:\n" +
-    "  git clone https://github.com/dhishwasher/Bit-code\n" +
+    "  git clone https://github.com/dhishwasher/Girder\n" +
     "  cargo install --path bit-code/crates/aether-app"
   );
 }
 
 function binaryName() {
-  return os.platform() === "win32" ? "bitcode.exe" : "bitcode";
+  return os.platform() === "win32" ? "girder.exe" : "girder";
 }
 
 /** Where postinstall puts the downloaded binary. */
@@ -45,13 +45,13 @@ function vendoredPath() {
 
 // Set on the child so a shim can tell it was launched by another shim. See
 // `resolveBinary`.
-const REENTRY_ENV = "BITCODE_NPM_SHIM";
+const REENTRY_ENV = "GIRDER_NPM_SHIM";
 
 // Set to "1" to skip the PATH search entirely and require the binary this
 // package downloaded. Release validation otherwise silently exercises
-// whatever `bitcode` a developer happens to have on PATH instead of the
+// whatever `girder` a developer happens to have on PATH instead of the
 // package under test — see "Validating a release" in npm/README.md.
-const FORCE_VENDORED_ENV = "BITCODE_FORCE_VENDORED";
+const FORCE_VENDORED_ENV = "GIRDER_FORCE_VENDORED";
 
 /**
  * The binary to execute, or null if none is available.
@@ -67,8 +67,8 @@ const FORCE_VENDORED_ENV = "BITCODE_FORCE_VENDORED";
  * returns the same answer forever. Going straight to the vendored binary
  * terminates the chain with the right program rather than an error.
  *
- * `BITCODE_FORCE_VENDORED=1` overrides both: it exists so that testing the
- * published package on a machine that already has a `bitcode` on PATH (any
+ * `GIRDER_FORCE_VENDORED=1` overrides both: it exists so that testing the
+ * published package on a machine that already has a `girder` on PATH (any
  * developer's machine, generally) actually tests the vendored download
  * instead of silently re-testing whatever is on PATH. It throws rather than
  * falling back, because a silent fallback here would defeat the point.
@@ -110,8 +110,8 @@ function versionOf(binaryPath) {
  * A stderr line naming which binary won and why, plus — when a PATH binary
  * was chosen and a vendored one also exists — a second line naming both
  * paths and both `--version` outputs, so a version skew like the one in
- * CLAUDE.md (a stale `~/.cargo/bin/bitcode` silently shadowing a freshly
- * downloaded release) is visible without running `which bitcode` by hand.
+ * CLAUDE.md (a stale `~/.cargo/bin/girder` silently shadowing a freshly
+ * downloaded release) is visible without running `which girder` by hand.
  * Returns lines rather than writing them, so callers keep control of which
  * stream they land on (always stderr — stdout is the JSON-RPC stream).
  */
@@ -167,7 +167,7 @@ function fromPath() {
       continue;
     }
     // Judge the candidate by where it actually points, not by the PATH entry
-    // it was found under. `npm install -g bitcode-mcp` installs a `bitcode`
+    // it was found under. `npm install -g girder-mcp` installs a `girder`
     // symlink into a global bin directory that resolves back into this
     // package, so spawning it is spawning ourselves — an unbounded chain of
     // node processes. Comparing the PATH entry alone missed that, because the

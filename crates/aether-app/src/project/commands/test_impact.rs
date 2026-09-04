@@ -200,7 +200,7 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
         }
     }
     if commands.is_empty() && !quiet {
-        out!(sink, "  (test commands are disabled in bitcode.toml)");
+        out!(sink, "  (test commands are disabled in girder.toml)");
     }
 
     // A real set difference, not count arithmetic: selected ids that are not

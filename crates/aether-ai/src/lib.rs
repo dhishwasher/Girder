@@ -1,6 +1,6 @@
 //! # aether-ai
 //!
-//! Bit Code's pluggable AI layer. One [`AiProvider`] trait; a deterministic
+//! Girder's pluggable AI layer. One [`AiProvider`] trait; a deterministic
 //! offline [`MockProvider`] that is always available; implemented OpenAI,
 //! Anthropic, and local Ollama providers behind the `live-providers` feature;
 //! and compile-clean extension-point structs for Google Gemini and xAI Grok. The

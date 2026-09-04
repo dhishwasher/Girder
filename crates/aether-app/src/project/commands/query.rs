@@ -23,7 +23,7 @@ pub fn query(args: &[String]) -> std::io::Result<()> {
 
     if question_words.is_empty() {
         // Interactive REPL.
-        println!("Bit Code Knowledge Query REPL");
+        println!("Girder Knowledge Query REPL");
         println!("  Type a question about your codebase, or 'exit' to quit.\n");
         use std::io::BufRead;
         let stdin = std::io::stdin();

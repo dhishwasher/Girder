@@ -6,7 +6,7 @@ license-file.workspace = true
 publish.workspace = true
 
 [[bin]]
-name = "bitcode"
+name = "girder"
 path = "src/main.rs"
 
 [features]

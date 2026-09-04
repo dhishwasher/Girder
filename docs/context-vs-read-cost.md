@@ -1,8 +1,8 @@
-# `bitcode context` vs reading the file
+# `girder context` vs reading the file
 
 This measurement compares retrieving one function's source three ways:
-reading the whole file it lives in, running `bitcode context`, and running
-`bitcode context --source-only`. It records an observed outcome, not an
+reading the whole file it lives in, running `girder context`, and running
+`girder context --source-only`. It records an observed outcome, not an
 architectural claim.
 
 ## Why this measurement exists
@@ -10,22 +10,22 @@ architectural claim.
 `CLAUDE.md` instructed agents:
 
 > Before reading a file to understand a function, run:
-> `bitcode context . --nodes <node::path> "<what you need>" --json`
+> `girder context . --nodes <node::path> "<what you need>" --json`
 > That returns the function's source alone. Measured 41% fewer tokens than
 > reading the file.
 
 Both sentences were wrong.
 
-`bitcode context` does not return the function's source alone — it returns
+`girder context` does not return the function's source alone — it returns
 the source *plus* a Plan Format v2 JSON Schema and a plan skeleton, because
 its purpose is to let an external model author a plan. And the 41% figure
 is from `docs/authoring-cost.md`, which measured something else entirely:
 plan-authoring prompt tokens, text-addressed vs graph-addressed, on 5 of 8
 paired tasks, under a policy whose overall result was **FAIL**. No
-measurement of `bitcode context` against a file read existed.
+measurement of `girder context` against a file read existed.
 
 That claim was also injected into every agent session by
-`.claude/hooks/bitcode_context_advisory.py`, so an unmeasured number was
+`.claude/hooks/girder_context_advisory.py`, so an unmeasured number was
 being asserted to a model thousands of times.
 
 ## Precommitted method
@@ -44,8 +44,8 @@ being asserted to a model thousands of times.
 - Three arms, all measured in bytes:
   - **read** — byte count of the file containing the node, which is what an
     agent's Read tool returns when it opens a file to see one function.
-  - **context** — `bitcode context . --nodes <path> --json` stdout.
-  - **source_only** — `bitcode context . --nodes <path> --json --source-only`
+  - **context** — `girder context . --nodes <path> --json` stdout.
+  - **source_only** — `girder context . --nodes <path> --json --source-only`
     stdout. This mode was added by this measurement: it emits the selected
     nodes' `{path, language, source}` and drops the authoring envelope.
 - Threshold: aggregate reduction of the **source_only** arm against **read**
@@ -77,7 +77,7 @@ The policy result is **PASS** (97.85% ≥ 40%).
 97.85% in aggregate and by at least 52% on every individual node. That is
 the honest version of the claim `CLAUDE.md` was making.
 
-**`bitcode context` is not.** It costs *more* than reading the file on 2 of
+**`girder context` is not.** It costs *more* than reading the file on 2 of
 the 10 nodes, and the failure mode is severe: retrieving a 39-byte function
 from a 392-byte file costs 6,120 bytes, **15.6× the entire file**. The
 `context` arm's output never drops below roughly 6.1 KB no matter how small
@@ -121,7 +121,7 @@ harness:
 
 ```bash
 cargo build -p aether-app
-python3 tools/context_vs_read_cost.py --bitcode target/debug/bitcode \
+python3 tools/context_vs_read_cost.py --girder target/debug/girder \
     --output docs/context-vs-read-cost-observation.json
 ```
 

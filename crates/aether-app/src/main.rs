@@ -1,4 +1,4 @@
-//! Bit Code entry point.
+//! Girder entry point.
 //!
 //! Default (`cargo run -p aether-app`) runs the headless end-to-end demo — it
 //! needs no display, GPU, or API key. The full egui/wgpu GUI is compiled in with
@@ -17,15 +17,15 @@ mod highlight;
 mod panels;
 
 const USAGE: &str = "\
-Bit Code
+Girder
 
 USAGE:
-    bitcode [COMMAND]
+    girder [COMMAND]
 
 COMMANDS:
     demo                      Run the headless end-to-end pipeline demo (default)
     config <dir> [--init]     Show the validated effective project configuration.
-                              --init creates bitcode.toml without overwriting.
+                              --init creates girder.toml without overwriting.
     analyze <dir> [--json] [--out <path>]
                               Build the semantic graph from a project directory,
                               report likely duplicates, save the configured graph.
@@ -101,7 +101,7 @@ COMMANDS:
                               network, no writes — run the resulting plan
                               with `plan run --authored`, same as `context`.
     plan validate <plan.json>
-                              Check a Bit Code plan file's preconditions
+                              Check a Girder plan file's preconditions
                               (clean worktree, HEAD == base_commit, edit
                               paths, exact match counts) without writing
                               anything.
@@ -112,7 +112,7 @@ COMMANDS:
                               Execute a plan file step by step: apply edits
                               in a disposable copy, run each step's checks,
                               commit to the real tree only once they pass.
-                              Writes a report to .bitcode/reports/. --dry
+                              Writes a report to .girder/reports/. --dry
                               never writes to the real tree. --out writes the
                               full step/check transcript to <path> and prints
                               a one-line summary to stdout instead. `-` reads
@@ -123,7 +123,7 @@ COMMANDS:
                               the run report without changing Plan Format v1.
                               --authored applies the same harness guarantees
                               `do` applies internally to a plan written
-                              outside Bit Code: on_failure is forced to
+                              outside Girder: on_failure is forced to
                               rollback_plan and a mandatory tests.impacted
                               check is injected if the plan doesn't already
                               have one. A zero-step plan is refused outright
@@ -157,7 +157,7 @@ COMMANDS:
                               --quiet prints only the selected test names, one
                               per line. An empty selection means nothing needs
                               testing, not \"run everything\" — guard it:
-                              `T=$(bitcode test-impact . --quiet); if [ -n
+                              `T=$(girder test-impact . --quiet); if [ -n
                               \"$T\" ]; then cargo test -- $T; else echo \"no
                               impacted tests\"; fi`.
     collab <operation>        Exchange deterministic semantic-graph CRDT bundles.
@@ -228,7 +228,7 @@ fn main() {
     match cmd {
         Some("--help") | Some("-h") => println!("{USAGE}"),
         Some("--version") | Some("-V") => {
-            println!("bitcode {}", env!("CARGO_PKG_VERSION"));
+            println!("girder {}", env!("CARGO_PKG_VERSION"));
         }
         Some("--gui") => launch_gui_or_fallback(args.get(1)),
         Some("config") => report(project::config(&args[1..])),
@@ -246,7 +246,7 @@ fn main() {
             Some("explain") => report(project::plan_explain(&args[2..])),
             Some("run") => report(project::plan_run(&args[2..])),
             _ => {
-                eprintln!("usage: bitcode plan <validate|explain|run> <plan.json> [--dry]\n");
+                eprintln!("usage: girder plan <validate|explain|run> <plan.json> [--dry]\n");
                 println!("{USAGE}");
             }
         },

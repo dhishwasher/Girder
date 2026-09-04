@@ -1,5 +1,5 @@
-//! `bitcode context <dir> [--nodes <path>[,<path>...]] ["<intent>"] --json`
-//! — read-only: builds the graph, selects nodes exactly as `bitcode do`
+//! `girder context <dir> [--nodes <path>[,<path>...]] ["<intent>"] --json`
+//! — read-only: builds the graph, selects nodes exactly as `girder do`
 //! would (same [`TOP_K`](super::authoring_context::TOP_K)/
 //! [`NODE_SCORE_FLOOR_RATIO`](super::authoring_context::NODE_SCORE_FLOOR_RATIO)),
 //! and prints the same `{path, language, source}` node context and a real
@@ -18,7 +18,7 @@ use crate::project::source::build_from_dir_with_config;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
-const USAGE: &str = "usage: bitcode context <dir> [--nodes <path>[,<path>...]] [\"<intent>\"] --json [--with-tests] [--source-only]";
+const USAGE: &str = "usage: girder context <dir> [--nodes <path>[,<path>...]] [\"<intent>\"] --json [--with-tests] [--source-only]";
 
 pub fn context(args: &[String]) -> std::io::Result<()> {
     let Some(root_arg) = args.first() else {
@@ -31,7 +31,7 @@ pub fn context(args: &[String]) -> std::io::Result<()> {
     // emit exactly one pipeable/pasteable JSON object, so there is no
     // human-readable fallback to silently produce instead.
     if !args.iter().any(|arg| arg == "--json") {
-        return Err(invalid_input("bitcode context requires --json"));
+        return Err(invalid_input("girder context requires --json"));
     }
 
     let output = build_output(&root, args)?;
@@ -69,7 +69,7 @@ fn build_output(root: &Path, args: &[String]) -> std::io::Result<Value> {
 
 /// The body of `build_output`, taking an already-resolved intent and pinned
 /// node paths instead of raw CLI args. Split out so the GUI's "Copy context
-/// JSON" button can produce exactly the same object `bitcode context --json`
+/// JSON" button can produce exactly the same object `girder context --json`
 /// prints without building a fake args vector — same node selection, same
 /// schema, same plan skeleton, no reimplementation. Always builds without
 /// `--with-tests` (the GUI button doesn't expose that flag yet) — the CLI's
@@ -108,7 +108,7 @@ fn build_context_json_inner(
         // Real Plan Format v2 (see `plan_schema`'s doc comment), not
         // `ctx.schema` — this JSON goes to an external model that writes a
         // plan file directly, straight into `load_plan`, with no
-        // translation layer the way `bitcode do`'s local path has
+        // translation layer the way `girder do`'s local path has
         // (`author::convert_edit`/`convert_check`).
         "schema": plan_schema(&selection.node_paths),
         "plan_skeleton": plan_skeleton(&base_commit, intent, &plan_id),
@@ -259,7 +259,7 @@ mod tests {
 
     fn write_temp_plan(name: &str, plan: &Value) -> PathBuf {
         let path = std::env::temp_dir().join(format!(
-            "bitcode-context-cmd-{name}-{}-{}.json",
+            "girder-context-cmd-{name}-{}-{}.json",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -297,7 +297,7 @@ mod tests {
     /// node selection) without a model, a network, or any writes.
     fn fixture_project(name: &str) -> PathBuf {
         let root = std::env::temp_dir().join(format!(
-            "bitcode-context-cmd-fixture-{name}-{}-{}",
+            "girder-context-cmd-fixture-{name}-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -314,9 +314,9 @@ mod tests {
             &root,
             &[
                 "-c",
-                "user.name=Bit Code Tests",
+                "user.name=Girder Tests",
                 "-c",
-                "user.email=tests@bitcode.invalid",
+                "user.email=tests@girder.invalid",
                 "commit",
                 "--quiet",
                 "-m",
@@ -487,7 +487,7 @@ mod tests {
     #[test]
     fn source_only_works_outside_a_git_repository() {
         let root = std::env::temp_dir().join(format!(
-            "bitcode-context-cmd-fixture-no-git-{}-{}",
+            "girder-context-cmd-fixture-no-git-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -544,7 +544,7 @@ mod tests {
     /// functions so a test can pin either one and compare.
     fn two_node_fixture_project(name: &str) -> PathBuf {
         let root = std::env::temp_dir().join(format!(
-            "bitcode-context-cmd-fixture-{name}-{}-{}",
+            "girder-context-cmd-fixture-{name}-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -561,9 +561,9 @@ mod tests {
             &root,
             &[
                 "-c",
-                "user.name=Bit Code Tests",
+                "user.name=Girder Tests",
                 "-c",
-                "user.email=tests@bitcode.invalid",
+                "user.email=tests@girder.invalid",
                 "commit",
                 "--quiet",
                 "-m",
@@ -617,8 +617,8 @@ mod tests {
         let _ = std::fs::remove_dir_all(&root);
     }
 
-    // The bug this closes: `bitcode context` used to hand an external model
-    // `authoring_context::step_schema` — the flat shape `bitcode do`'s local
+    // The bug this closes: `girder context` used to hand an external model
+    // `authoring_context::step_schema` — the flat shape `girder do`'s local
     // path translates via `convert_edit`/`convert_check` before it ever
     // reaches a plan file. An external model has no such translation layer;
     // its output goes straight to `load_plan`. This test proves a step
@@ -688,7 +688,7 @@ mod tests {
     /// calls it, so `graph.tests_for` has a genuine covering test to find.
     fn fixture_project_with_one_covering_test(name: &str) -> PathBuf {
         let root = std::env::temp_dir().join(format!(
-            "bitcode-context-cmd-fixture-{name}-{}-{}",
+            "girder-context-cmd-fixture-{name}-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -705,9 +705,9 @@ mod tests {
             &root,
             &[
                 "-c",
-                "user.name=Bit Code Tests",
+                "user.name=Girder Tests",
                 "-c",
-                "user.email=tests@bitcode.invalid",
+                "user.email=tests@girder.invalid",
                 "commit",
                 "--quiet",
                 "-m",
@@ -762,7 +762,7 @@ mod tests {
     #[test]
     fn with_tests_flag_caps_full_source_at_three_and_names_only_beyond() {
         let root = std::env::temp_dir().join(format!(
-            "bitcode-context-cmd-fixture-many-covering-tests-{}-{}",
+            "girder-context-cmd-fixture-many-covering-tests-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -781,9 +781,9 @@ mod tests {
             &root,
             &[
                 "-c",
-                "user.name=Bit Code Tests",
+                "user.name=Girder Tests",
                 "-c",
-                "user.email=tests@bitcode.invalid",
+                "user.email=tests@girder.invalid",
                 "commit",
                 "--quiet",
                 "-m",

@@ -1,4 +1,4 @@
-//! `bitcode new <dir> "<description>" --language rust|python --json` —
+//! `girder new <dir> "<description>" --language rust|python --json` —
 //! read-only, `context`-shaped context for authoring a program that does
 //! not exist yet: project root, declared language, whatever files already
 //! exist, the real `base_commit`, and a schema/skeleton whose edits are
@@ -9,7 +9,7 @@
 //! Unlike `context`, this command never builds or searches the semantic
 //! graph: `context`/`do` pin a model to an enum of nodes already present
 //! in the graph, and there is no such enum here — the whole point of
-//! `bitcode new` is authoring a path the graph doesn't know about yet.
+//! `girder new` is authoring a path the graph doesn't know about yet.
 //! `--language` is required, not guessed: a `create` edit's content only
 //! ever becomes graph-editable later if it is Rust or Python (the two
 //! languages `aether-builder` parses), so the model needs to be told
@@ -25,7 +25,7 @@ use crate::project::source::collect_project_files_with_config;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
-const USAGE: &str = "usage: bitcode new <dir> \"<description>\" --language rust|python --json";
+const USAGE: &str = "usage: girder new <dir> \"<description>\" --language rust|python --json";
 
 pub fn new(args: &[String]) -> std::io::Result<()> {
     let Some(root_arg) = args.first() else {
@@ -37,7 +37,7 @@ pub fn new(args: &[String]) -> std::io::Result<()> {
     // `--json` is the only output mode implemented, same as `context`: this
     // command exists to emit exactly one pipeable/pasteable JSON object.
     if !args.iter().any(|arg| arg == "--json") {
-        return Err(invalid_input("bitcode new requires --json"));
+        return Err(invalid_input("girder new requires --json"));
     }
 
     let output = build_output(&root, args)?;
@@ -69,11 +69,11 @@ fn parse_language(args: &[String]) -> std::io::Result<String> {
         Some("rust") => Ok("rust".to_string()),
         Some("python") => Ok("python".to_string()),
         Some(other) => Err(invalid_input(&format!(
-            "--language {other:?} is not supported; bitcode new requires \
+            "--language {other:?} is not supported; girder new requires \
              --language rust or --language python"
         ))),
         None => Err(invalid_input(
-            "bitcode new requires --language rust or --language python (not guessed \
+            "girder new requires --language rust or --language python (not guessed \
              from an empty or ambiguous directory)",
         )),
     }
@@ -93,7 +93,7 @@ pub(crate) fn build_new_json(root: &Path, intent: &str, language: &str) -> std::
 
     let base_commit = git_head_commit(root).map_err(|error| {
         invalid_input(&format!(
-            "bitcode new requires {} to be a git repository with at least one commit \
+            "girder new requires {} to be a git repository with at least one commit \
              (a plan's base_commit needs a resolvable HEAD); run `git init && git commit \
              --allow-empty -m init` first: {error}",
             root.display()
@@ -133,10 +133,10 @@ mod tests {
     }
 
     /// An empty git repository (one commit, no tracked files) — the shape
-    /// `bitcode new` targets: a project that does not exist yet.
+    /// `girder new` targets: a project that does not exist yet.
     fn empty_repo(name: &str) -> PathBuf {
         let root = std::env::temp_dir().join(format!(
-            "bitcode-new-cmd-{name}-{}-{}",
+            "girder-new-cmd-{name}-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -147,9 +147,9 @@ mod tests {
             &root,
             &[
                 "-c",
-                "user.name=Bit Code Tests",
+                "user.name=Girder Tests",
                 "-c",
-                "user.email=tests@bitcode.invalid",
+                "user.email=tests@girder.invalid",
                 "commit",
                 "--quiet",
                 "--allow-empty",
@@ -170,9 +170,9 @@ mod tests {
             &root,
             &[
                 "-c",
-                "user.name=Bit Code Tests",
+                "user.name=Girder Tests",
                 "-c",
-                "user.email=tests@bitcode.invalid",
+                "user.email=tests@girder.invalid",
                 "commit",
                 "--quiet",
                 "-m",
@@ -228,7 +228,7 @@ mod tests {
     #[test]
     fn a_directory_with_no_commits_gets_a_clear_error_not_a_downstream_git_failure() {
         let root = std::env::temp_dir().join(format!(
-            "bitcode-new-cmd-no-commits-{}-{}",
+            "girder-new-cmd-no-commits-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));
@@ -330,7 +330,7 @@ mod tests {
             "steps": [step]
         });
         let plan_path = std::env::temp_dir().join(format!(
-            "bitcode-new-cmd-schema-round-trip-{}-{}.json",
+            "girder-new-cmd-schema-round-trip-{}-{}.json",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));

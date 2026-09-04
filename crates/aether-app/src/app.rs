@@ -506,8 +506,8 @@ impl AetherApp {
 
     /// Runs the GUI equivalent of `--nodes`' search half: the same
     /// `search_nodes_for_authoring` (built on `authoring_context::
-    /// build_authoring_context`, the exact function `bitcode do` and
-    /// `bitcode context` both call) against a graph rebuilt fresh from disk,
+    /// build_authoring_context`, the exact function `girder do` and
+    /// `girder context` both call) against a graph rebuilt fresh from disk,
     /// so what the checkboxes show is exactly what a subsequent Run will
     /// search against. Runs on a plain OS thread (no `.await` anywhere in
     /// this path), matching `start_collaboration_join`.
@@ -572,7 +572,7 @@ impl AetherApp {
     }
 
     /// Mode 1 ("local model") Run: calls the exact same `author()` function
-    /// `bitcode do` calls, pinned to whatever search hits are currently
+    /// `girder do` calls, pinned to whatever search hits are currently
     /// checked. A non-dry run requires clicking Run twice — the first click
     /// only arms `author_live_run_confirming`, mirroring the
     /// remove-extension confirm/cancel idiom, since a GUI button that
@@ -680,7 +680,7 @@ impl AetherApp {
         self.author_run_authored_rx = Some(rx);
     }
 
-    /// Puts exactly what `bitcode context --json` would print onto the
+    /// Puts exactly what `girder context --json` would print onto the
     /// clipboard, via the same `build_context_json` that command calls.
     ///
     /// Read-only: never gated on `author_busy()`. `checked`/`pinned` are
@@ -2030,7 +2030,7 @@ impl eframe::App for AetherApp {
 
         egui::TopBottomPanel::top("title").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.heading("Bit Code");
+                ui.heading("Girder");
                 ui.separator();
                 let (n, e) = {
                     let g = self.workspace.graph().lock().unwrap();
@@ -2160,7 +2160,7 @@ pub fn launch(initial_root: Option<PathBuf>) -> eframe::Result<()> {
         ..Default::default()
     };
     eframe::run_native(
-        "Bit Code",
+        "Girder",
         native_options,
         Box::new(move |cc| Ok(Box::new(AetherApp::new(cc, &initial_root)?))),
     )

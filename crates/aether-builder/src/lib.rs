@@ -2866,7 +2866,7 @@ fn test_add() { assert_eq!(add(2, 3), 5); }
         assert!(calls.contains(&existing));
     }
 
-    // Gap 22 (docs/core-gap-analysis.md item 22): `bitcode test-impact` was
+    // Gap 22 (docs/core-gap-analysis.md item 22): `girder test-impact` was
     // silently selecting zero tests for changed functions that real tests do
     // reach, because the call resolver in `sync.rs`/`mapper.rs` dropped or
     // misattributed certain call shapes. These four tests pin the fix.

@@ -1,6 +1,6 @@
 "use strict";
 
-// End-to-end tests for bin/bitcode-mcp.js's observability line.
+// End-to-end tests for bin/girder-mcp.js's observability line.
 //
 // The one thing that must never happen is wrapper output landing on stdout:
 // stdout is the JSON-RPC stream an MCP client parses frame by frame, so any
@@ -17,13 +17,13 @@ const { spawn } = require("node:child_process");
 const SOURCE = path.join(__dirname, "..");
 
 function makePackage() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "bitcode-shim-test-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "girder-shim-test-"));
   const pkg = path.join(root, "package");
   fs.mkdirSync(path.join(pkg, "bin"), { recursive: true });
   fs.copyFileSync(path.join(SOURCE, "resolve.js"), path.join(pkg, "resolve.js"));
   fs.copyFileSync(
-    path.join(SOURCE, "bin", "bitcode-mcp.js"),
-    path.join(pkg, "bin", "bitcode-mcp.js")
+    path.join(SOURCE, "bin", "girder-mcp.js"),
+    path.join(pkg, "bin", "girder-mcp.js")
   );
   return { root, pkg };
 }
@@ -35,18 +35,18 @@ function scratchDir(root, name) {
 }
 
 /**
- * A stand-in for the real `bitcode` binary: on `--version` it prints a
+ * A stand-in for the real `girder` binary: on `--version` it prints a
  * version line, and on `mcp <dir>` it prints one fixed line that stands in
  * for the JSON-RPC stream, so the test can check that line survives the
  * wrapper byte-for-byte.
  */
-function writeFakeBitcode(dir, name, version) {
-  const file = path.join(dir, "bitcode");
+function writeFakeGirder(dir, name, version) {
+  const file = path.join(dir, "girder");
   const marker = `${name}-mcp-output`;
   fs.writeFileSync(
     file,
     "#!/bin/sh\n" +
-      `if [ "$1" = "--version" ]; then printf 'bitcode %s\\n' "${version}"; exit 0; fi\n` +
+      `if [ "$1" = "--version" ]; then printf 'girder %s\\n' "${version}"; exit 0; fi\n` +
       `printf '%s' '${marker}'\n`
   );
   fs.chmodSync(file, 0o755);
@@ -54,7 +54,7 @@ function writeFakeBitcode(dir, name, version) {
 }
 
 function run(pkg, pathDir) {
-  const child = spawn(process.execPath, [path.join(pkg, "bin", "bitcode-mcp.js"), "."], {
+  const child = spawn(process.execPath, [path.join(pkg, "bin", "girder-mcp.js"), "."], {
     cwd: pkg,
     env: { ...process.env, PATH: pathDir },
   });
@@ -78,9 +78,9 @@ test(
   async () => {
     const { root, pkg } = makePackage();
     try {
-      const vendored = writeFakeBitcode(path.join(pkg, "bin"), "vendored", "0.1.1");
+      const vendored = writeFakeGirder(path.join(pkg, "bin"), "vendored", "0.1.1");
       const onPathDir = scratchDir(root, "cargo-bin");
-      const onPath = writeFakeBitcode(onPathDir, "on-path", "0.1.0");
+      const onPath = writeFakeGirder(onPathDir, "on-path", "0.1.0");
 
       const { stdout, stderr } = await run(pkg, onPathDir);
 
@@ -89,13 +89,13 @@ test(
         onPath.marker,
         "stdout must be byte-identical to what the resolved binary wrote"
       );
-      assert.doesNotMatch(stdout.toString("utf8"), /bitcode-mcp:/, "wrapper text leaked onto stdout");
+      assert.doesNotMatch(stdout.toString("utf8"), /girder-mcp:/, "wrapper text leaked onto stdout");
 
       assert.match(stderr, /using/);
       assert.ok(stderr.includes(onPath.file), "stderr is missing the PATH binary's path");
       assert.ok(stderr.includes(vendored.file), "stderr is missing the vendored binary's path");
-      assert.ok(stderr.includes("bitcode 0.1.0"), "stderr is missing the PATH binary's --version output");
-      assert.ok(stderr.includes("bitcode 0.1.1"), "stderr is missing the vendored binary's --version output");
+      assert.ok(stderr.includes("girder 0.1.0"), "stderr is missing the PATH binary's --version output");
+      assert.ok(stderr.includes("girder 0.1.1"), "stderr is missing the vendored binary's --version output");
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
@@ -105,7 +105,7 @@ test(
 test("when only the vendored binary exists, stderr says nothing about a second binary", async () => {
   const { root, pkg } = makePackage();
   try {
-    writeFakeBitcode(path.join(pkg, "bin"), "vendored", "0.1.1");
+    writeFakeGirder(path.join(pkg, "bin"), "vendored", "0.1.1");
     const emptyPathDir = scratchDir(root, "empty-bin");
 
     const { stdout, stderr } = await run(pkg, emptyPathDir);

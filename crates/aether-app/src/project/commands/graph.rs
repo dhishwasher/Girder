@@ -10,7 +10,7 @@ use std::io::ErrorKind;
 use std::path::PathBuf;
 use std::time::Instant;
 
-const ANALYZE_USAGE: &str = "usage: bitcode analyze <dir> [--json] [--out <path>]";
+const ANALYZE_USAGE: &str = "usage: girder analyze <dir> [--json] [--out <path>]";
 
 pub fn analyze(args: &[String]) -> std::io::Result<()> {
     let Some(root) = args.first() else {
@@ -153,12 +153,12 @@ fn elapsed_millis(started: Instant) -> u64 {
     started.elapsed().as_millis().try_into().unwrap_or(u64::MAX)
 }
 
-/// `bitcode search <dir> <query...>` — concept search over the codebase.
+/// `girder search <dir> <query...>` — concept search over the codebase.
 pub fn search(args: &[String]) -> std::io::Result<()> {
     let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
     let query = args.get(1..).map(|rest| rest.join(" ")).unwrap_or_default();
     if query.trim().is_empty() {
-        eprintln!("usage: bitcode search <dir> <query...>");
+        eprintln!("usage: girder search <dir> <query...>");
         return Ok(());
     }
     let (graph, _builder, _files) = build_from_dir(&root)?;
@@ -175,7 +175,7 @@ pub fn search(args: &[String]) -> std::io::Result<()> {
     Ok(())
 }
 
-/// `bitcode plan <dir> <intent...>`
+/// `girder plan <dir> <intent...>`
 ///
 /// Runs only the graph-aware Planner against the project, printing the full
 /// feature specification (what functions would be built, why, and what context
@@ -183,12 +183,12 @@ pub fn search(args: &[String]) -> std::io::Result<()> {
 pub fn inspect(args: &[String]) -> std::io::Result<()> {
     let Some(file) = args.first() else {
         return Err(invalid_input(
-            "usage: bitcode inspect <file.aether> [node::path|--json]",
+            "usage: girder inspect <file.aether> [node::path|--json]",
         ));
     };
     if args.len() > 2 {
         return Err(invalid_input(
-            "usage: bitcode inspect <file.aether> [node::path|--json]",
+            "usage: girder inspect <file.aether> [node::path|--json]",
         ));
     }
     let graph = SemanticGraph::load(file)
@@ -338,7 +338,7 @@ fn invalid_input(message: &str) -> std::io::Error {
     std::io::Error::new(ErrorKind::InvalidInput, message)
 }
 
-/// `bitcode refactor <dir> rename <node::path> <new_name>` — semantic rename
+/// `girder refactor <dir> rename <node::path> <new_name>` — semantic rename
 /// across the graph (follows `Calls` edges, not text search), then persist.
 pub fn refactor(args: &[String]) -> std::io::Result<()> {
     let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
@@ -346,7 +346,7 @@ pub fn refactor(args: &[String]) -> std::io::Result<()> {
     let target = args.get(2);
     let new_name = args.get(3);
     let (Some("rename"), Some(target), Some(new_name)) = (op, target, new_name) else {
-        eprintln!("usage: bitcode refactor <dir> rename <node::path> <new_name>");
+        eprintln!("usage: girder refactor <dir> rename <node::path> <new_name>");
         return Ok(());
     };
 

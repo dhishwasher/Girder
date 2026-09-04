@@ -18,7 +18,7 @@ pub enum TaskClass {
     Quick,
     /// Strict declarative extension-recipe generation.
     Extension,
-    /// Graph-addressed plan authoring for `bitcode do`. Routed local-first
+    /// Graph-addressed plan authoring for `girder do`. Routed local-first
     /// (unlike `Planning`) because it is the task the authoring-cost
     /// measurement in `docs/authoring-cost.md` is about.
     Authoring,
@@ -38,7 +38,7 @@ pub struct Prompt {
     /// A JSON Schema the response must satisfy, when the provider is able to
     /// grammar-constrain decoding to it (Ollama's `/api/chat` `format`,
     /// OpenAI's structured outputs). `None` — the default — is the only
-    /// value any caller passed before `bitcode do` existed, so no existing
+    /// value any caller passed before `girder do` existed, so no existing
     /// provider behavior changes unless a caller opts in.
     pub response_schema: Option<serde_json::Value>,
 }

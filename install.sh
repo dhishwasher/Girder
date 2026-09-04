@@ -1,16 +1,16 @@
 #!/usr/bin/env sh
-# Install the Bit Code CLI (`bitcode`) from a GitHub release.
+# Install the Girder CLI (`girder`) from a GitHub release.
 #
-#   curl -fsSL https://raw.githubusercontent.com/dhishwasher/Bit-code/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/dhishwasher/Girder/main/install.sh | sh
 #
 # Environment:
-#   BITCODE_VERSION   tag to install (default: latest release)
-#   BITCODE_BIN_DIR   install directory (default: ~/.local/bin)
-#   BITCODE_REPO      owner/name to download from
-#   BITCODE_BASE_URL  download host, for an internal mirror or an air-gapped
+#   GIRDER_VERSION   tag to install (default: latest release)
+#   GIRDER_BIN_DIR   install directory (default: ~/.local/bin)
+#   GIRDER_REPO      owner/name to download from
+#   GIRDER_BASE_URL  download host, for an internal mirror or an air-gapped
 #                     network that cannot reach github.com. Assets must sit at
 #                     <base>/<version>/<asset>.
-#   BITCODE_SKIP_CHECKSUM=1  install without verifying the download. Only for
+#   GIRDER_SKIP_CHECKSUM=1  install without verifying the download. Only for
 #                     a mirror that does not carry the .sha256 files.
 #
 # POSIX sh on purpose: this has to run under dash and busybox ash, not just
@@ -18,8 +18,8 @@
 # half-installed binary on PATH is worse than no binary.
 set -eu
 
-REPO="${BITCODE_REPO:-dhishwasher/Bit-code}"
-BIN_DIR="${BITCODE_BIN_DIR:-$HOME/.local/bin}"
+REPO="${GIRDER_REPO:-dhishwasher/Girder}"
+BIN_DIR="${GIRDER_BIN_DIR:-$HOME/.local/bin}"
 
 die() {
     echo "install.sh: $*" >&2
@@ -38,13 +38,13 @@ need tar
 # normal path and not a bonus. Resolve the hashing tool up front, next to the
 # other hard requirements, so a host that cannot verify says so before it
 # downloads anything rather than after.
-if [ "${BITCODE_SKIP_CHECKSUM:-}" != 1 ]; then
+if [ "${GIRDER_SKIP_CHECKSUM:-}" != 1 ]; then
     if command -v sha256sum > /dev/null 2>&1; then
         sha256_of() { sha256sum "$1" | cut -d ' ' -f 1; }
     elif command -v shasum > /dev/null 2>&1; then
         sha256_of() { shasum -a 256 "$1" | cut -d ' ' -f 1; }
     else
-        die "requires sha256sum or shasum to verify the download; install either one, or set BITCODE_SKIP_CHECKSUM=1 to install unverified"
+        die "requires sha256sum or shasum to verify the download; install either one, or set GIRDER_SKIP_CHECKSUM=1 to install unverified"
     fi
 fi
 
@@ -77,7 +77,7 @@ if [ "$os_part" = "unknown-linux-gnu" ] && [ "$arch_part" = "aarch64" ]; then
 fi
 target="${arch_part}-${os_part}"
 
-version="${BITCODE_VERSION:-}"
+version="${GIRDER_VERSION:-}"
 if [ -z "$version" ]; then
     echo "Resolving latest release of $REPO ..." >&2
     # Deliberately no jq dependency.
@@ -88,11 +88,11 @@ if [ -z "$version" ]; then
             | head -n 1 \
             | cut -d '"' -f 4
     )" || true
-    [ -n "$version" ] || die "could not resolve the latest release; set BITCODE_VERSION=vX.Y.Z"
+    [ -n "$version" ] || die "could not resolve the latest release; set GIRDER_VERSION=vX.Y.Z"
 fi
 
-asset="bitcode-${target}.tar.gz"
-base_url="${BITCODE_BASE_URL:-https://github.com/$REPO/releases/download}"
+asset="girder-${target}.tar.gz"
+base_url="${GIRDER_BASE_URL:-https://github.com/$REPO/releases/download}"
 url="$base_url/$version/$asset"
 
 tmp="$(mktemp -d)"
@@ -110,10 +110,10 @@ fetch_to "$url" "$tmp/$asset" || die "download failed: $url"
 # the case verification exists to catch. Warning and installing anyway, as
 # this did before, let a single blocked request silently downgrade any install
 # to unverified.
-if [ "${BITCODE_SKIP_CHECKSUM:-}" = 1 ]; then
-    echo "warning: BITCODE_SKIP_CHECKSUM=1, so $asset was not verified" >&2
+if [ "${GIRDER_SKIP_CHECKSUM:-}" = 1 ]; then
+    echo "warning: GIRDER_SKIP_CHECKSUM=1, so $asset was not verified" >&2
 else
-    fetch_to "$url.sha256" "$tmp/$asset.sha256" 2> /dev/null || die "no checksum at $url.sha256; refusing to install $asset unverified (set BITCODE_SKIP_CHECKSUM=1 to override)"
+    fetch_to "$url.sha256" "$tmp/$asset.sha256" 2> /dev/null || die "no checksum at $url.sha256; refusing to install $asset unverified (set GIRDER_SKIP_CHECKSUM=1 to override)"
     expected="$(cut -d ' ' -f 1 < "$tmp/$asset.sha256")"
     # A mirror can answer 200 with an error page. Reporting that as a mismatch
     # would send the user looking at their download instead of their mirror,
@@ -127,16 +127,16 @@ else
 fi
 
 tar xzf "$tmp/$asset" -C "$tmp" || die "could not unpack $asset"
-[ -f "$tmp/bitcode" ] || die "archive did not contain a bitcode binary"
+[ -f "$tmp/girder" ] || die "archive did not contain a girder binary"
 
 mkdir -p "$BIN_DIR"
 # Install via a temporary name and rename, so an interrupted copy can never
 # leave a truncated executable where a working one used to be.
-cp "$tmp/bitcode" "$BIN_DIR/.bitcode.incoming"
-chmod +x "$BIN_DIR/.bitcode.incoming"
-mv "$BIN_DIR/.bitcode.incoming" "$BIN_DIR/bitcode"
+cp "$tmp/girder" "$BIN_DIR/.girder.incoming"
+chmod +x "$BIN_DIR/.girder.incoming"
+mv "$BIN_DIR/.girder.incoming" "$BIN_DIR/girder"
 
-echo "Installed $("$BIN_DIR/bitcode" --version) to $BIN_DIR/bitcode" >&2
+echo "Installed $("$BIN_DIR/girder" --version) to $BIN_DIR/girder" >&2
 
 case ":$PATH:" in
     *":$BIN_DIR:"*) ;;
@@ -151,11 +151,11 @@ cat >&2 <<'NEXT'
 
 Next: point your coding agent at it. For Claude Code:
 
-  claude mcp add bitcode -- bitcode mcp .
+  claude mcp add girder -- girder mcp .
 
 Or add to any MCP client's config:
 
-  {"mcpServers": {"bitcode": {"command": "bitcode", "args": ["mcp", "."]}}}
+  {"mcpServers": {"girder": {"command": "girder", "args": ["mcp", "."]}}}
 
-Then `bitcode analyze .` to see the graph it builds.
+Then `girder analyze .` to see the graph it builds.
 NEXT

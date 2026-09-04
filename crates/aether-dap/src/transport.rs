@@ -1,7 +1,7 @@
 //! DAP wire framing: `Content-Length: N\r\n\r\n<json>`.
 //!
 //! The protocol is identical to LSP framing. Every message is preceded by
-//! HTTP-style headers terminated by a blank line; the only header Bit Code
+//! HTTP-style headers terminated by a blank line; the only header Girder
 //! reads or writes is `Content-Length`.
 
 use crate::DapError;
@@ -66,7 +66,7 @@ mod tests {
             "seq": 1,
             "type": "request",
             "command": "initialize",
-            "arguments": { "clientID": "bitcode" }
+            "arguments": { "clientID": "girder" }
         });
 
         let frame = encode(&msg).unwrap();

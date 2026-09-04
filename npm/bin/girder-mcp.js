@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 
-// `npx bitcode-mcp [dir]` — start the Bit Code MCP server on stdio.
+// `npx girder-mcp [dir]` — start the Girder MCP server on stdio.
 //
 // This is the entry point an MCP client config points at. It execs the real
 // binary with `mcp` prepended, so the client's stdin/stdout are handed
@@ -15,14 +15,14 @@ let binary;
 try {
   binary = resolveBinary();
 } catch (error) {
-  process.stderr.write(`bitcode-mcp: ${error.message}\n`);
+  process.stderr.write(`girder-mcp: ${error.message}\n`);
   process.exit(1);
 }
 if (!binary) {
   process.stderr.write(
-    "bitcode-mcp: no bitcode binary found.\n" +
+    "girder-mcp: no girder binary found.\n" +
       "The postinstall download may have been blocked. Install one with:\n" +
-      "  curl -fsSL https://raw.githubusercontent.com/dhishwasher/Bit-code/main/install.sh | sh\n" +
+      "  curl -fsSL https://raw.githubusercontent.com/dhishwasher/Girder/main/install.sh | sh\n" +
       "or build from source:\n" +
       "  cargo install --path crates/aether-app\n"
   );
@@ -31,11 +31,11 @@ if (!binary) {
 
 // Say which binary won, because `resolveBinary` prefers one already on PATH
 // over the version this package downloaded. That ordering is deliberate, but
-// it means `npx bitcode-mcp@X` can run a different build entirely, and
-// CLAUDE.md records a stale `~/.cargo/bin/bitcode` silently invalidating
+// it means `npx girder-mcp@X` can run a different build entirely, and
+// CLAUDE.md records a stale `~/.cargo/bin/girder` silently invalidating
 // verification here before. These stderr lines make the skew visible instead
-// of leaving `which bitcode` as the only way to notice.
-for (const line of resolutionNotice("bitcode-mcp", binary)) {
+// of leaving `which girder` as the only way to notice.
+for (const line of resolutionNotice("girder-mcp", binary)) {
   process.stderr.write(`${line}\n`);
 }
 
@@ -50,7 +50,7 @@ const child = spawn(binary, ["mcp", ...forwarded], {
 });
 
 child.on("error", (error) => {
-  process.stderr.write(`bitcode-mcp: could not start ${binary}: ${error.message}\n`);
+  process.stderr.write(`girder-mcp: could not start ${binary}: ${error.message}\n`);
   process.exit(1);
 });
 

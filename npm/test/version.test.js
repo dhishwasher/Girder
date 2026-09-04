@@ -1,10 +1,10 @@
 "use strict";
 
 // Confirms the vendored binary actually reports the version npm thinks it
-// shipped: both `bitcode --version` and the MCP handshake's
+// shipped: both `girder --version` and the MCP handshake's
 // `serverInfo.version` must equal npm/package.json's version.
 //
-// This is the check that was missing when `npx -y bitcode-mcp` reported
+// This is the check that was missing when `npx -y girder-mcp` reported
 // serverInfo.version 0.1.0 for a package published as 0.1.1 (the binary
 // executed was a stale one from PATH, not a version mismatch in what was
 // vendored) — see gap 26 in docs/core-gap-analysis.md. Resolving *which*
@@ -13,7 +13,7 @@
 // package that vendored it.
 //
 // Looks for a binary in this order:
-//   1. BITCODE_TEST_BIN — an explicit path, for CI or local runs where the
+//   1. GIRDER_TEST_BIN — an explicit path, for CI or local runs where the
 //      binary under test isn't at the postinstall destination.
 //   2. The vendored path a real postinstall would have populated.
 // Skipped (not failed) when neither exists, the same way install.test.js
@@ -31,8 +31,8 @@ const { vendoredPath } = require("../resolve");
 const packageVersion = require("../package.json").version;
 
 function findBinary() {
-  if (process.env.BITCODE_TEST_BIN) {
-    return process.env.BITCODE_TEST_BIN;
+  if (process.env.GIRDER_TEST_BIN) {
+    return process.env.GIRDER_TEST_BIN;
   }
   const vendored = vendoredPath();
   return fs.existsSync(vendored) ? vendored : null;
@@ -41,13 +41,13 @@ function findBinary() {
 const binary = findBinary();
 const skip = binary
   ? false
-  : "no vendored binary found; set BITCODE_TEST_BIN or run the postinstall first";
+  : "no vendored binary found; set GIRDER_TEST_BIN or run the postinstall first";
 
 test("the vendored binary's --version matches npm/package.json", { skip }, () => {
   const output = execFileSync(binary, ["--version"], { encoding: "utf8" }).trim();
   assert.strictEqual(
     output,
-    `bitcode ${packageVersion}`,
+    `girder ${packageVersion}`,
     `binary reports a different version than npm/package.json (${packageVersion})`
   );
 });

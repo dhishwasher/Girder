@@ -29,7 +29,7 @@ observed outcome, not an architectural claim.
   complete pinned target-file projection.
 - Every generated plan had to retain a declared task-specific semantic check.
   Success required `plan validate`, a real `plan run` (including that declared
-  check), and `bitcode test-impact . --run --quiet` to pass. The semantic checks
+  check), and `girder test-impact . --run --quiet` to pass. The semantic checks
   execute Python behavior and verify the requested Rust API/source semantics.
   Regression tests prove that a differently spelled but behaviorally
   equivalent Python edit passes and a behavior-changing edit fails. No

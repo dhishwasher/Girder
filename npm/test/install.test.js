@@ -2,7 +2,7 @@
 
 // End-to-end tests for the postinstall download.
 //
-// This is the path an agent host takes when it runs `npx bitcode-mcp`, so the
+// This is the path an agent host takes when it runs `npx girder-mcp`, so the
 // bytes it lands are the bytes that end up executing. The cases that matter
 // are the ones where verification cannot be completed: none of them may
 // install anything, and none of them may fail the install either, because
@@ -37,7 +37,7 @@ const SUPPORTED = Boolean(target()) && haveTar();
 
 /** A throwaway copy of the package, so the download lands somewhere disposable. */
 function makePackage() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "bitcode-install-test-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "girder-install-test-"));
   const pkg = path.join(root, "package");
   fs.mkdirSync(pkg, { recursive: true });
   for (const file of ["resolve.js", "install.js", "package.json"]) {
@@ -50,7 +50,7 @@ function makePackage() {
 function releaseArchive(root) {
   const staging = fs.mkdtempSync(path.join(root, "staging-"));
   const name = binaryName();
-  fs.writeFileSync(path.join(staging, name), "#!/bin/sh\necho 'bitcode 9.9.9'\n");
+  fs.writeFileSync(path.join(staging, name), "#!/bin/sh\necho 'girder 9.9.9'\n");
   fs.chmodSync(path.join(staging, name), 0o755);
   const archive = path.join(root, "asset.tar.gz");
   execFileSync("tar", ["czf", archive, "-C", staging, name]);
@@ -100,9 +100,9 @@ function run(pkg, baseUrl, env = {}) {
     cwd: pkg,
     env: {
       ...process.env,
-      BITCODE_BASE_URL: baseUrl,
-      BITCODE_VERSION: VERSION,
-      BITCODE_SKIP_CHECKSUM: "",
+      GIRDER_BASE_URL: baseUrl,
+      GIRDER_VERSION: VERSION,
+      GIRDER_SKIP_CHECKSUM: "",
       ...env,
     },
   });
@@ -123,8 +123,8 @@ async function postinstall({ checksum = "match", archive, env = {} } = {}) {
   const { root, pkg } = makePackage();
   const asset =
     os.platform() === "win32"
-      ? `bitcode-${target()}.zip`
-      : `bitcode-${target()}.tar.gz`;
+      ? `girder-${target()}.zip`
+      : `girder-${target()}.tar.gz`;
   const bytes = archive === undefined ? releaseArchive(root) : archive;
   const server = serve(asset, bytes, checksum);
   await new Promise((resolve) => server.once("listening", resolve));
@@ -190,7 +190,7 @@ test("a checksum file that is not a checksum is called malformed", { skip: !SUPP
 test("the skip flag is the only way to install unverified", { skip: !SUPPORTED }, async () => {
   const { result, installed, cleanup } = await postinstall({
     checksum: null,
-    env: { BITCODE_SKIP_CHECKSUM: "1" },
+    env: { GIRDER_SKIP_CHECKSUM: "1" },
   });
   assertCleanExit(result);
   assert.ok(fs.existsSync(installed), `nothing installed: ${result.stderr}`);
@@ -202,13 +202,13 @@ test("a failed download still falls back rather than failing", { skip: !SUPPORTE
   const { result, installed, cleanup } = await postinstall({ archive: null, checksum: null });
   assertCleanExit(result);
   assert.ok(!fs.existsSync(installed));
-  assert.match(result.stderr, /Falling back to a `bitcode` on PATH/);
+  assert.match(result.stderr, /Falling back to a `girder` on PATH/);
   cleanup();
 });
 
-test("BITCODE_SKIP_DOWNLOAD=1 downloads nothing", { skip: !SUPPORTED }, async () => {
+test("GIRDER_SKIP_DOWNLOAD=1 downloads nothing", { skip: !SUPPORTED }, async () => {
   const { result, installed, cleanup } = await postinstall({
-    env: { BITCODE_SKIP_DOWNLOAD: "1" },
+    env: { GIRDER_SKIP_DOWNLOAD: "1" },
   });
   assertCleanExit(result);
   assert.ok(!fs.existsSync(installed));

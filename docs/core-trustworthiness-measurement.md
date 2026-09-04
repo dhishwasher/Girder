@@ -1,30 +1,30 @@
 # Core Trustworthiness Measurement
 
 This milestone establishes a checked, reproducible function-execution oracle
-for Bit Code's affected-test selection. It does not claim representative-repo
+for Girder's affected-test selection. It does not claim representative-repo
 coverage or general superiority.
 
 ## What is measured
 
 The committed Rust and Python templates are materialized into disposable Git
 repositories. The runner commits each baseline, applies one source mutation,
-and asks the exact supplied Bit Code binary for `test-impact`.
+and asks the exact supplied Girder binary for `test-impact`.
 
 Every test is then executed alone in a fresh materialized checkout with
-`BITCODE_ORACLE_PROBE` pointing at a checkout-local fresh file. Only the changed
+`GIRDER_ORACLE_PROBE` pointing at a checkout-local fresh file. Only the changed
 function/method writes that probe, so the resulting set is direct runtime
 evidence that a test executed changed code. This is a function-level dynamic
 coverage oracle, not line or branch coverage.
 
-The runner preserves Bit Code's full graph test paths and maps them explicitly
+The runner preserves Girder's full graph test paths and maps them explicitly
 to framework test ids, so equal leaf names in different modules/classes cannot
 collapse. Cargo and `unittest` independently enumerate the runnable tests; that
-inventory must exactly equal the declared universe and Bit Code's impacted plus
+inventory must exactly equal the declared universe and Girder's impacted plus
 skipped counts. Each isolated command must report that exactly one requested
 test ran. Every child command has a timeout and a combined stdout/stderr limit;
 on POSIX, members of its newly spawned process group are killed, and tests prove
 that inherited-group descendants do not survive either failure path. The
-supplied Bit Code executable is copied privately, made read/execute-only, and
+supplied Girder executable is copied privately, made read/execute-only, and
 SHA-256 checked before and after the measurement so a build cannot replace the
 program under test mid-run.
 
@@ -33,7 +33,7 @@ Artifacts:
 - `tools/core_trustworthiness_oracle.py` — end-to-end runner and baseline check.
 - `tools/test_core_trustworthiness_oracle.py` — parser/metric unit tests.
 - `fixtures/core-trustworthiness/` — inert `.txt` source templates, excluded
-  from Bit Code's own source graph until materialized in a temporary project.
+  from Girder's own source graph until materialized in a temporary project.
 - `docs/core-trustworthiness-baseline.json` — machine-checked expected sets and
   metrics.
 
@@ -65,10 +65,10 @@ CARGO_TARGET_DIR=/mnt/chromeos/removable/MOVESPEED/aetherforge-target \
 CARGO_INCREMENTAL=0 RUSTFLAGS=-Dwarnings \
 PATH=/mnt/chromeos/removable/MOVESPEED/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin:/usr/local/bin:/usr/bin:/bin \
 python3 tools/core_trustworthiness_oracle.py \
-  --bitcode /mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/bitcode
+  --girder /mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder
 ```
 
-Add `--verbose` to include Bit Code's raw `test-impact` output. A result that
+Add `--verbose` to include Girder's raw `test-impact` output. A result that
 differs from the checked JSON baseline exits unsuccessfully and prints both
 expected and actual data. Per-command limits default to 120 seconds and 1 MiB;
 use `--command-timeout-seconds` and `--max-command-output-bytes` to lower them
@@ -86,7 +86,7 @@ Rust:
 
 - Runtime-executed changed code: `rust_direct_selected`, `rust_cli_selected`,
   `rust_custom_bin_selected`, `rust_raii_drop_selected`.
-- Bit Code selects exactly these four and correctly excludes
+- Girder selects exactly these four and correctly excludes
   `rust_cli_unrelated`/`rust_unrelated`. Argument-specific route modeling
   (failure-closed: any unprovable evidence leaves resolution unchanged)
   closed the prior `0.667` precision defect —
@@ -103,7 +103,7 @@ Python:
 
 - Runtime-executed changed code: `test_python_direct_selected`,
   `test_python_optional_selected`, `test_python_cross_module_selected`.
-- Bit Code selects exactly these three and correctly excludes
+- Girder selects exactly these three and correctly excludes
   `test_python_decoy`/`test_python_third_party_decoy`.
 - Nullable annotations provide a receiver owner only when exactly one
   non-null type remains. PEP 604, parenthesized, and forward-string forms are
@@ -117,7 +117,7 @@ Python:
   correctly. `test_python_third_party_decoy` extends the same-named-method
   disambiguation from two competing owners to three.
 
-## Bit Code dogfood assessment
+## Girder dogfood assessment
 
 Useful output:
 
@@ -144,7 +144,7 @@ Incorrect or incomplete output:
   fixture is deliberately executed with standard-library `unittest`; the oracle
   does not assume the emitted `pytest -k` command establishes coverage.
 - Self-review labels the end-to-end runner functions uncovered even though the
-  checked oracle command executes `main`, fixture initialization, Bit Code
+  checked oracle command executes `main`, fixture initialization, Girder
   invocation, dynamic test execution, metric calculation, rendering, and
   baseline comparison. This coverage-attribution gap is unchanged by this
   milestone and remains open.
@@ -155,7 +155,7 @@ Incorrect or incomplete output:
   than an unexplained overcount: reconciling graph paths against Cargo test
   ids (accounting for the already-documented `mod`-flattening path-naming
   residual — an integration-test binary or a custom-named nested `mod`
-  produces a Bit Code path that doesn't textually match Cargo's own
+  produces a Girder path that doesn't textually match Cargo's own
   module-qualified id, though both name the same real test) matches 312 of
   322 graph identities to a real, distinct Cargo test 1:1. The remaining 10
   are exactly the deliberately fail-open `#[cfg(feature = "...")]` tests (2

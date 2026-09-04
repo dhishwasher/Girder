@@ -1,7 +1,7 @@
-//! Declarative, permission-bound extensions for Bit Code.
+//! Declarative, permission-bound extensions for Girder.
 //!
 //! Extension recipes are data, not dynamically loaded code. A model may propose
-//! a recipe, but Bit Code validates every field and requires an exact,
+//! a recipe, but Girder validates every field and requires an exact,
 //! digest-bound capability grant before the recipe can enter the semantic graph.
 
 use aether_graph::{Edge, EdgeKind, Node, NodeId, NodeKind, SemanticGraph};
@@ -568,7 +568,7 @@ pub fn find_record(
 }
 
 pub fn generation_system_prompt() -> &'static str {
-    r#"Return exactly one JSON object and no prose or markdown. Build a declarative Bit Code extension recipe with version 1. Extensions are data, never executable plugin code. Use a lowercase reverse-domain id. Request only capabilities that are necessary. Supported capability kinds: read_graph; write_graph with namespaces; read_project with paths; write_project with paths; run_validation with programs; network with hosts; contribute_ui. Supported contributions are panel and command. Panel views are markdown, graph_query, or file. Command actions are ask_graph, open_file, or run_validation. Project projections require an explicitly matching write_project path. Keep the recipe minimal and bounded."#
+    r#"Return exactly one JSON object and no prose or markdown. Build a declarative Girder extension recipe with version 1. Extensions are data, never executable plugin code. Use a lowercase reverse-domain id. Request only capabilities that are necessary. Supported capability kinds: read_graph; write_graph with namespaces; read_project with paths; write_project with paths; run_validation with programs; network with hosts; contribute_ui. Supported contributions are panel and command. Panel views are markdown, graph_query, or file. Command actions are ask_graph, open_file, or run_validation. Project projections require an explicitly matching write_project path. Keep the recipe minimal and bounded."#
 }
 
 pub fn content_digest(contents: &[u8]) -> String {
@@ -840,16 +840,19 @@ fn validate_relative_path(label: &str, value: &str) -> Result<(), ExtensionError
     if path.components().any(|component| {
         matches!(
             component,
-            Component::Normal(value) if value == ".git" || value == ".bitcode"
+            Component::Normal(value)
+                if value == ".git" || value == ".girder" || value == ".bitcode"
         )
-    }) || path.file_name().is_some_and(|name| name == "bitcode.toml")
+    }) || path
+        .file_name()
+        .is_some_and(|name| name == "girder.toml" || name == "bitcode.toml")
         || matches!(
             path.extension().and_then(|extension| extension.to_str()),
             Some("aether" | "aetherb")
         )
     {
         return invalid(format!(
-            "{label} must not target source-control or Bit Code metadata"
+            "{label} must not target source-control or Girder metadata"
         ));
     }
     Ok(())
@@ -1012,6 +1015,8 @@ mod tests {
     fn project_metadata_paths_are_rejected() {
         for path in [
             ".git/hooks/pre-commit",
+            ".girder/transactions/state",
+            "girder.toml",
             ".bitcode/transactions/state",
             "bitcode.toml",
             "project.aether",

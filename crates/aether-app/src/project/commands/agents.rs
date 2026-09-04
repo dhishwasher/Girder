@@ -14,7 +14,7 @@ pub async fn swarm_plan(args: &[String]) -> std::io::Result<()> {
     let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
     let intent = args.get(1..).map(|rest| rest.join(" ")).unwrap_or_default();
     if intent.trim().is_empty() {
-        eprintln!("usage: bitcode swarm-plan <dir> <intent...>");
+        eprintln!("usage: girder swarm-plan <dir> <intent...>");
         return Ok(());
     }
 
@@ -54,7 +54,7 @@ pub async fn swarm_plan(args: &[String]) -> std::io::Result<()> {
                 println!("  {}. fn {} — {}", i + 1, spec.name, spec.description);
             }
             println!(
-                "\n(Run `bitcode forge {dir} {intent}` to build this feature.)",
+                "\n(Run `girder forge {dir} {intent}` to build this feature.)",
                 dir = root.display(),
                 intent = intent
             );
@@ -66,13 +66,13 @@ pub async fn swarm_plan(args: &[String]) -> std::io::Result<()> {
     Ok(())
 }
 
-/// `bitcode forge <dir> <intent...>` — load the project, dispatch the agent
+/// `girder forge <dir> <intent...>` — load the project, dispatch the agent
 /// swarm on a natural-language intent, persist the updated graph.
 pub async fn forge(args: &[String]) -> std::io::Result<()> {
     let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
     let intent = args.get(1..).map(|rest| rest.join(" ")).unwrap_or_default();
     if intent.trim().is_empty() {
-        eprintln!("usage: bitcode forge <dir> <intent...>");
+        eprintln!("usage: girder forge <dir> <intent...>");
         return Ok(());
     }
 

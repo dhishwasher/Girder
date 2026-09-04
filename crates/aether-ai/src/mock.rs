@@ -1,6 +1,6 @@
 //! A deterministic, offline provider.
 //!
-//! This is the default so Bit Code's agent swarm and demo run with **no API
+//! This is the default so Girder's agent swarm and demo run with **no API
 //! key and no network**. It is intentionally simple but not a no-op: it produces
 //! structured, plausible output per task class (a plan, a Rust function, a test)
 //! so the end-to-end pipeline — intent → plan → code → test → graph mutation —
@@ -217,7 +217,7 @@ impl AiProvider for MockProvider {
         // Mock is an offline stand-in, not a model: it cannot actually
         // author a plan that satisfies an arbitrary JSON Schema, and
         // fabricating one that merely *parses* would let a default build
-        // silently "succeed" at `bitcode do` without ever running a real
+        // silently "succeed" at `girder do` without ever running a real
         // model — exactly the false-pass this repo's measurement discipline
         // (see docs/authoring-cost.md) exists to prevent. Decline instead,
         // so the router's next candidate (or a clear final error) is what

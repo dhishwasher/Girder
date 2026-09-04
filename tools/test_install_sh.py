@@ -1,12 +1,12 @@
 """End-to-end tests for `install.sh`, the primary documented install path.
 
 The README's first code block is `curl … | sh`, so this script is how most
-people will ever obtain Bit Code, and nothing exercised it. These tests serve
+people will ever obtain Girder, and nothing exercised it. These tests serve
 a synthetic release from localhost and run the real script against it, which
 covers the parts that only exist at runtime: the checksum gate, and the
 promise that a failed install leaves no binary behind.
 
-`BITCODE_BASE_URL` is what makes this possible without touching the network —
+`GIRDER_BASE_URL` is what makes this possible without touching the network —
 it exists so downloads can be pointed at a mirror, and a local HTTP server is
 a mirror.
 """
@@ -27,9 +27,9 @@ from pathlib import Path
 
 INSTALL_SH = Path(__file__).parents[1] / "install.sh"
 VERSION = "v9.9.9"
-# What the fake binary prints, so the final `bitcode --version` line proves the
+# What the fake binary prints, so the final `girder --version` line proves the
 # thing that got installed is the thing that was served.
-VERSION_OUTPUT = "bitcode 9.9.9"
+VERSION_OUTPUT = "girder 9.9.9"
 
 
 def host_target() -> str | None:
@@ -77,14 +77,14 @@ def tarball(members: dict[str, tuple[str, int]]) -> bytes:
 
 
 def release_archive() -> bytes:
-    """A stand-in for a published asset: an executable `bitcode` plus its license.
+    """A stand-in for a published asset: an executable `girder` plus its license.
 
-    The binary is a shell script because install.sh runs `bitcode --version`
+    The binary is a shell script because install.sh runs `girder --version`
     to report what it installed, so the artifact has to actually execute.
     """
     return tarball(
         {
-            "bitcode": (f"#!/bin/sh\necho '{VERSION_OUTPUT}'\n", 0o755),
+            "girder": (f"#!/bin/sh\necho '{VERSION_OUTPUT}'\n", 0o755),
             "LICENSE": ("Business Source License 1.1", 0o644),
         }
     )
@@ -96,9 +96,9 @@ def release_archive() -> bytes:
 )
 class InstallShTests(unittest.TestCase):
     def setUp(self):
-        self.root = Path(tempfile.mkdtemp(prefix="bitcode-install-test-"))
+        self.root = Path(tempfile.mkdtemp(prefix="girder-install-test-"))
         self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
-        self.asset = f"bitcode-{host_target()}.tar.gz"
+        self.asset = f"girder-{host_target()}.tar.gz"
         # The layout install.sh expects: <base>/<version>/<asset>.
         self.served = self.root / "served" / VERSION
         self.served.mkdir(parents=True)
@@ -134,12 +134,12 @@ class InstallShTests(unittest.TestCase):
     def install(self, **env_overrides) -> subprocess.CompletedProcess:
         env = {
             **os.environ,
-            "BITCODE_BASE_URL": self.base_url,
-            "BITCODE_VERSION": VERSION,
-            "BITCODE_BIN_DIR": str(self.bin_dir),
+            "GIRDER_BASE_URL": self.base_url,
+            "GIRDER_VERSION": VERSION,
+            "GIRDER_BIN_DIR": str(self.bin_dir),
             "HOME": str(self.root),
         }
-        env.pop("BITCODE_SKIP_CHECKSUM", None)
+        env.pop("GIRDER_SKIP_CHECKSUM", None)
         env.update(env_overrides)
         return subprocess.run(
             ["sh", str(INSTALL_SH)],
@@ -152,18 +152,18 @@ class InstallShTests(unittest.TestCase):
     def assertNothingInstalled(self, result):
         self.assertNotEqual(result.returncode, 0, f"expected failure: {result.stderr}")
         self.assertFalse(
-            (self.bin_dir / "bitcode").exists(),
+            (self.bin_dir / "girder").exists(),
             f"a failed install left a binary behind: {result.stderr}",
         )
         # The staging name is an implementation detail of the atomic install,
         # but leaving one behind would mean a half-written file survived.
-        self.assertFalse((self.bin_dir / ".bitcode.incoming").exists(), result.stderr)
+        self.assertFalse((self.bin_dir / ".girder.incoming").exists(), result.stderr)
 
     def test_installs_a_verified_release(self):
         self.publish()
         result = self.install()
         self.assertEqual(result.returncode, 0, result.stderr)
-        installed = self.bin_dir / "bitcode"
+        installed = self.bin_dir / "girder"
         self.assertTrue(installed.exists(), result.stderr)
         self.assertTrue(os.access(installed, os.X_OK), "installed binary is not executable")
         self.assertIn(VERSION_OUTPUT, result.stderr)
@@ -196,29 +196,29 @@ class InstallShTests(unittest.TestCase):
 
     def test_skip_checksum_is_the_only_way_to_install_unverified(self):
         self.publish(checksum=None)
-        result = self.install(BITCODE_SKIP_CHECKSUM="1")
+        result = self.install(GIRDER_SKIP_CHECKSUM="1")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue((self.bin_dir / "bitcode").exists(), result.stderr)
+        self.assertTrue((self.bin_dir / "girder").exists(), result.stderr)
         self.assertIn("not verified", result.stderr)
 
     def test_a_failed_install_does_not_disturb_an_existing_binary(self):
         # The reason the script stages under a temporary name: a working
         # binary already on PATH must survive a bad download.
         self.bin_dir.mkdir(parents=True)
-        existing = self.bin_dir / "bitcode"
-        existing.write_text("#!/bin/sh\necho 'bitcode 0.0.1'\n")
+        existing = self.bin_dir / "girder"
+        existing.write_text("#!/bin/sh\necho 'girder 0.0.1'\n")
         existing.chmod(0o755)
 
         self.publish(checksum=f"{'0' * 64}  {self.asset}\n")
         result = self.install()
         self.assertNotEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(existing.read_text(), "#!/bin/sh\necho 'bitcode 0.0.1'\n")
+        self.assertEqual(existing.read_text(), "#!/bin/sh\necho 'girder 0.0.1'\n")
 
     def test_an_archive_without_a_binary_is_fatal(self):
         self.publish(archive=tarball({"LICENSE": ("Business Source License 1.1", 0o644)}))
         result = self.install()
         self.assertNothingInstalled(result)
-        self.assertIn("bitcode binary", result.stderr)
+        self.assertIn("girder binary", result.stderr)
 
     def test_a_missing_asset_is_fatal(self):
         result = self.install()

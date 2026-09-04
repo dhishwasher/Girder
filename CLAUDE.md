@@ -4,7 +4,7 @@ Guidance for working in this repository.
 
 ## What this is
 
-**Bit Code** — a native Rust IDE prototype built on three pillars:
+**Girder** — a native Rust IDE prototype built on three pillars:
 1. A **living semantic graph** as the source of truth (not files).
 2. A **parallel AI agent swarm** that mutates the graph.
 3. A **time-travel & branching debugger**.
@@ -27,7 +27,7 @@ full design and `README.md` for usage.
   timeline + what-if.
 - `crates/aether-dap` — Debug Adapter Protocol client/session layer and
   graph-aware breakpoint support.
-- `crates/aether-app` — the `bitcode` binary: CLI (`analyze`/`search`/
+- `crates/aether-app` — the `girder` binary: CLI (`analyze`/`search`/
   `forge`/`inspect`/`demo`) + headless smoke + egui GUI (`--features gui`).
 
 ## Common commands
@@ -42,7 +42,7 @@ cargo check -p aether-ai --features live-providers
 cargo test -p aether-dap --test debugpy -- --ignored
 ```
 
-## Agent tooling: use Bit Code's own CLI
+## Agent tooling: use Girder's own CLI
 
 *(moved here from `AGENTS.md` so it carries project-instruction weight)*
 
@@ -52,20 +52,20 @@ cargo test -p aether-dap --test debugpy -- --ignored
 - Pipe clippy and fmt through `tail -5`.
 - Long-running jobs: redirect to a log file and wait once. Do not poll
   repeatedly — each poll re-sends the entire context for zero new information.
-- Select tests with `bitcode test-impact . --quiet` before invoking cargo.
-- Use `bitcode query` for call relationships instead of grep or reading files.
-- Always pass `--quiet` to `bitcode review` and `bitcode test-impact`.
+- Select tests with `girder test-impact . --quiet` before invoking cargo.
+- Use `girder query` for call relationships instead of grep or reading files.
+- Always pass `--quiet` to `girder review` and `girder test-impact`.
 
 ### Authority
 
-Bit Code's coverage output is advisory only. It routinely reports tested paths
+Girder's coverage output is advisory only. It routinely reports tested paths
 as uncovered and over-selects unrelated tests. Cargo and the mutation oracle
 are authoritative.
 
-### Use Bit Code instead of reading files
+### Use Girder instead of reading files
 
 Before reading a file to understand a function, run:
-    bitcode context . --nodes <node::path> --json --source-only
+    girder context . --nodes <node::path> --json --source-only
 That returns the selected node's `{path, language, source}` and nothing
 else. Measured 97.85% fewer bytes than reading the whole file, across ten
 nodes sampled by source-size decile, and cheaper on all ten
@@ -77,20 +77,20 @@ fixed ~6 KB that made it *more expensive* than reading the file on 2 of
 those 10 nodes, and 15.6x the file for a small one. Bytes, not tokens; no
 tokenizer was run.
 
-To find the node path: bitcode search . "<description>"
+To find the node path: girder search . "<description>"
 
-To see what changed: bitcode review . --quiet
+To see what changed: girder review . --quiet
 Not git diff. --quiet prints only changed node paths, one per line, where
 the full report adds impact radius and coverage for each. How much that
 saves depends entirely on the size of the diff, so there is no fixed ratio.
 
 To run tests:
-    T=$(bitcode test-impact . --quiet); if [ -n "$T" ]; then cargo test -- $T; else echo "no impacted tests"; fi
+    T=$(girder test-impact . --quiet); if [ -n "$T" ]; then cargo test -- $T; else echo "no impacted tests"; fi
 Not the full suite. Runs only tests reachable from what changed.
 The guard matters: an empty selection means nothing needs testing, and a bare
 `cargo test $(...)` would run everything instead.
 
-To answer a question about the codebase: bitcode query . "<question>"
+To answer a question about the codebase: girder query . "<question>"
 No file reading required.
 
 ## Conventions & invariants
@@ -147,16 +147,16 @@ installing `debugpy`.
   `CARGO_TARGET_DIR`**, so `--target-dir` must be passed explicitly on every
   invocation, e.g. `cargo install --path crates/aether-app --target-dir
   /mnt/chromeos/removable/MOVESPEED/aetherforge-install`.
-- Two `bitcode` binaries exist: the one `cargo install` places on
+- Two `girder` binaries exist: the one `cargo install` places on
   `~/.cargo/bin`, and the debug build under `target/debug/`. A stale
-  `~/.cargo/bin/bitcode` left on `PATH` from before a feature change has
+  `~/.cargo/bin/girder` left on `PATH` from before a feature change has
   silently invalidated verification before — rerun the `cargo install`
-  above after any feature work, and check `which bitcode` if a just-added
+  above after any feature work, and check `which girder` if a just-added
   flag or command appears not to exist.
 - `sample-project/` is a pinned measurement fixture (enforced by
   `reject_measurement_fixture_root`) and is refused for authored plan runs.
   Use `demo-project/` for any live plan execution.
-- The unguarded `cargo test $(bitcode test-impact . --quiet)` form (broken
+- The unguarded `cargo test $(girder test-impact . --quiet)` form (broken
   by cargo's single-positional-filter limit) was checked across this repo:
   it appears only in `docs/core-gap-analysis.md`'s past-tense narrative
   about the incident that found it, not as live guidance anywhere. `main.rs`

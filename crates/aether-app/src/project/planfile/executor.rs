@@ -189,7 +189,7 @@ pub(crate) fn run_plan(
         // Drop the disposable copy before the real-tree commit: a crash
         // inside `commit_project_writes` (fault injection, or a real
         // crash) exits via `std::process::exit`, which never runs `Drop` —
-        // if the copy were still alive at that point, its `.bitcode/
+        // if the copy were still alive at that point, its `.girder/
         // validation/...` directory would leak forever.
         drop(candidate);
 
@@ -614,7 +614,7 @@ mod tests {
     impl TempDir {
         fn new(name: &str) -> Self {
             let path = std::env::temp_dir().join(format!(
-                "bitcode-planfile-executor-{name}-{}-{}",
+                "girder-planfile-executor-{name}-{}-{}",
                 std::process::id(),
                 NEXT_ID.fetch_add(1, Ordering::Relaxed)
             ));
@@ -656,9 +656,9 @@ mod tests {
             &repository.0,
             &[
                 "-c",
-                "user.name=Bit Code Tests",
+                "user.name=Girder Tests",
                 "-c",
-                "user.email=tests@bitcode.invalid",
+                "user.email=tests@girder.invalid",
                 "commit",
                 "--quiet",
                 "-m",
@@ -729,9 +729,9 @@ mod tests {
             &repository.0,
             &[
                 "-c",
-                "user.name=Bit Code Tests",
+                "user.name=Girder Tests",
                 "-c",
-                "user.email=tests@bitcode.invalid",
+                "user.email=tests@girder.invalid",
                 "commit",
                 "--quiet",
                 "-m",

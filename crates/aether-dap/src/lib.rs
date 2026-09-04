@@ -1,10 +1,10 @@
 //! # aether-dap
 //!
 //! **Debug Adapter Protocol** client, session management, and graph integration
-//! for Bit Code.
+//! for Girder.
 //!
 //! The [Debug Adapter Protocol][dap] (DAP) is the language-agnostic JSON-RPC
-//! protocol used by VS Code to talk to external debuggers. Bit Code speaks
+//! protocol used by VS Code to talk to external debuggers. Girder speaks
 //! DAP as a *client* to any adapter the user installs:
 //!
 //! - **Python**: `python -m debugpy.adapter`

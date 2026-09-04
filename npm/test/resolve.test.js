@@ -2,8 +2,8 @@
 
 // Unit tests for the npm wrapper's binary resolution.
 //
-// The case that matters most is the third one: `npm install -g bitcode-mcp`
-// puts a `bitcode` symlink on PATH that points back into this package, and
+// The case that matters most is the third one: `npm install -g girder-mcp`
+// puts a `girder` symlink on PATH that points back into this package, and
 // resolving to it means the shim spawns itself without bound.
 
 const test = require("node:test");
@@ -21,11 +21,11 @@ const SOURCE = path.join(__dirname, "..");
  * install, and executability is what the PATH scan tests for.
  */
 function makePackage() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "bitcode-npm-test-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "girder-npm-test-"));
   const pkg = path.join(root, "package");
   fs.mkdirSync(path.join(pkg, "bin"), { recursive: true });
   fs.copyFileSync(path.join(SOURCE, "resolve.js"), path.join(pkg, "resolve.js"));
-  for (const script of ["bitcode.js", "bitcode-mcp.js"]) {
+  for (const script of ["girder.js", "girder-mcp.js"]) {
     const destination = path.join(pkg, "bin", script);
     fs.copyFileSync(path.join(SOURCE, "bin", script), destination);
     fs.chmodSync(destination, 0o755);
@@ -45,7 +45,7 @@ function scratchDir(root, name) {
   return dir;
 }
 
-/** An executable stub standing in for a real, native `bitcode`. */
+/** An executable stub standing in for a real, native `girder`. */
 function writeExecutable(dir, name) {
   const file = path.join(dir, name);
   fs.writeFileSync(file, "#!/bin/sh\nexit 0\n");
@@ -97,11 +97,11 @@ test("prefers a real binary found on PATH", () => {
 test("a global-install symlink pointing back into this package is not resolved", () => {
   const { root, pkg } = makePackage();
   const resolve = load(pkg);
-  // What `npm install -g bitcode-mcp` leaves behind: a `bitcode` entry in a
+  // What `npm install -g girder-mcp` leaves behind: a `girder` entry in a
   // global bin directory that is really this package's own JS shim.
   const globalBin = scratchDir(root, "global-bin");
   fs.symlinkSync(
-    path.join(pkg, "bin", "bitcode.js"),
+    path.join(pkg, "bin", "girder.js"),
     path.join(globalBin, resolve.binaryName())
   );
   withEnv({ PATH: globalBin, [resolve.REENTRY_ENV]: undefined }, () => {
@@ -118,7 +118,7 @@ test("skips this package's own shim but still finds a real binary behind it", ()
   const resolve = load(pkg);
   const globalBin = scratchDir(root, "global-bin");
   fs.symlinkSync(
-    path.join(pkg, "bin", "bitcode.js"),
+    path.join(pkg, "bin", "girder.js"),
     path.join(globalBin, resolve.binaryName())
   );
   const realDir = scratchDir(root, "cargo-bin");
@@ -148,7 +148,7 @@ test("childEnv marks the chain so the next shim cannot loop", () => {
   });
 });
 
-test("BITCODE_FORCE_VENDORED=1 uses the vendored binary even with a real one on PATH", () => {
+test("GIRDER_FORCE_VENDORED=1 uses the vendored binary even with a real one on PATH", () => {
   const { root, pkg } = makePackage();
   const resolve = load(pkg);
   const vendored = writeExecutable(path.join(pkg, "bin"), resolve.binaryName());
@@ -162,7 +162,7 @@ test("BITCODE_FORCE_VENDORED=1 uses the vendored binary even with a real one on 
   );
 });
 
-test("BITCODE_FORCE_VENDORED=1 fails loudly naming the missing vendored path", () => {
+test("GIRDER_FORCE_VENDORED=1 fails loudly naming the missing vendored path", () => {
   const { root, pkg } = makePackage();
   const resolve = load(pkg);
   const dir = scratchDir(root, "usr-local-bin");
@@ -183,7 +183,7 @@ test("resolutionNotice is silent about a second binary when only the vendored on
   const { pkg } = makePackage();
   const resolve = load(pkg);
   const vendored = writeExecutable(path.join(pkg, "bin"), resolve.binaryName());
-  const lines = resolve.resolutionNotice("bitcode-mcp", vendored);
+  const lines = resolve.resolutionNotice("girder-mcp", vendored);
   assert.strictEqual(lines.length, 1);
   assert.match(lines[0], /downloaded by this package/);
 });
@@ -192,18 +192,18 @@ test("resolutionNotice names both paths and both --version outputs when PATH win
   const { root, pkg } = makePackage();
   const resolve = load(pkg);
   const vendored = path.join(pkg, "bin", resolve.binaryName());
-  fs.writeFileSync(vendored, '#!/bin/sh\necho "bitcode 0.1.1"\n');
+  fs.writeFileSync(vendored, '#!/bin/sh\necho "girder 0.1.1"\n');
   fs.chmodSync(vendored, 0o755);
   const dir = scratchDir(root, "cargo-bin");
   const onPath = path.join(dir, resolve.binaryName());
-  fs.writeFileSync(onPath, '#!/bin/sh\necho "bitcode 0.1.0"\n');
+  fs.writeFileSync(onPath, '#!/bin/sh\necho "girder 0.1.0"\n');
   fs.chmodSync(onPath, 0o755);
 
-  const lines = resolve.resolutionNotice("bitcode-mcp", onPath);
+  const lines = resolve.resolutionNotice("girder-mcp", onPath);
   assert.strictEqual(lines.length, 2);
   assert.match(lines[0], /found on PATH, which takes precedence/);
   assert.ok(lines[1].includes(onPath), "missing the PATH binary's path");
   assert.ok(lines[1].includes(vendored), "missing the vendored binary's path");
-  assert.ok(lines[1].includes("bitcode 0.1.0"), "missing the PATH binary's --version output");
-  assert.ok(lines[1].includes("bitcode 0.1.1"), "missing the vendored binary's --version output");
+  assert.ok(lines[1].includes("girder 0.1.0"), "missing the PATH binary's --version output");
+  assert.ok(lines[1].includes("girder 0.1.1"), "missing the vendored binary's --version output");
 });

@@ -69,7 +69,7 @@ mod tests {
 
     fn temp_dir() -> std::path::PathBuf {
         let path = std::env::temp_dir().join(format!(
-            "bitcode-planfile-command-check-{}-{}",
+            "girder-planfile-command-check-{}-{}",
             std::process::id(),
             NEXT_ID.fetch_add(1, Ordering::Relaxed)
         ));

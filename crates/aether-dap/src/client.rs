@@ -195,7 +195,7 @@ mod tests {
             "seq": 1u64,
             "type": "request",
             "command": "initialize",
-            "arguments": {"clientID": "bitcode"}
+            "arguments": {"clientID": "girder"}
         });
         let frame = encode(&request).unwrap();
         let mut reader = tokio::io::BufReader::new(frame.as_slice());

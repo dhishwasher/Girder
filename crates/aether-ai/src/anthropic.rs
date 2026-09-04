@@ -110,7 +110,7 @@ impl AiProvider for AnthropicProvider {
         // "tool", ...}` with an `input_schema`, then reading the answer off
         // a `tool_use` content block instead of a `text` block) — a
         // different response-parsing path, deferred until a caller actually
-        // needs Anthropic in the loop. `bitcode do` still lists Anthropic in
+        // needs Anthropic in the loop. `girder do` still lists Anthropic in
         // its provider chain; it just gets a best-effort free-text
         // completion here rather than a grammar-guaranteed one, same as
         // before this field existed.

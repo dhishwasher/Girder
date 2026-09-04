@@ -1,5 +1,5 @@
-//! Context assembly shared by `bitcode do` ([`super::author`]) and
-//! `bitcode context` ([`super::context_cmd`]): node selection, the
+//! Context assembly shared by `girder do` ([`super::author`]) and
+//! `girder context` ([`super::context_cmd`]): node selection, the
 //! `{path, language, source}` context a model sees, and the authoring JSON
 //! Schema that constrains a legal plan step for those nodes.
 //!
@@ -42,7 +42,7 @@ pub(crate) enum SelectionError {
     UnknownPath(String),
 }
 
-/// Node selection shared by `bitcode do` and `bitcode context`: `--nodes`
+/// Node selection shared by `girder do` and `girder context`: `--nodes`
 /// pins exact paths (fails closed on any path not present in the graph);
 /// otherwise concept search with [`TOP_K`] and [`NODE_SCORE_FLOOR_RATIO`].
 /// No I/O beyond graph lookups and no printing — callers own their own
@@ -153,7 +153,7 @@ pub(crate) fn build_authoring_context(
 /// graph from disk (not any live in-memory graph — so what the GUI's Search
 /// preview shows is exactly what an eventual [`super::author`] run would
 /// search against) and runs the same `TOP_K`/`NODE_SCORE_FLOOR_RATIO`
-/// selection `bitcode do` uses. Search never pins nodes, so "no matches" is
+/// selection `girder do` uses. Search never pins nodes, so "no matches" is
 /// this function's own legitimate empty result, not an error — unlike
 /// [`build_authoring_context`], which a pinned caller can fail with
 /// [`SelectionError::UnknownPath`].
@@ -187,7 +187,7 @@ pub(crate) fn search_nodes_for_authoring(
 /// every operation field is present and required; only the one named by
 /// `operation` is read back out (in `author::convert_edit`/`convert_check`
 /// for a local model's response — an external model gets this schema
-/// unfiltered via `bitcode context`).
+/// unfiltered via `girder context`).
 pub(crate) fn step_schema(node_paths: &[String]) -> Value {
     let max_edits = node_paths.len().clamp(1, 3);
     json!({
@@ -278,7 +278,7 @@ fn check_schema(node_paths: &[String]) -> Value {
 
 /// Real Plan Format v2 step shape (see `planfile::schema`) — unlike
 /// [`step_schema`]'s flat shape (translated by `author::convert_edit`/
-/// `convert_check` before it ever reaches a plan file), `bitcode context`
+/// `convert_check` before it ever reaches a plan file), `girder context`
 /// hands this to an external model that writes a plan file directly, with
 /// no translation layer, straight into `load_plan`. So this describes
 /// exactly what `load_plan` accepts: an edit is `oneOf` the one
@@ -404,7 +404,7 @@ pub(crate) fn generate_plan_id() -> String {
     format!("do-{millis}-{}", std::process::id())
 }
 
-/// The envelope `bitcode context` hands an external model to fill in:
+/// The envelope `girder context` hands an external model to fill in:
 /// harness-owned fields plus one placeholder step with empty edits and the
 /// mandatory `tests.impacted` check already present. The external model
 /// fills in only `id`, `description`, and `edits` — exactly the "creative
@@ -427,9 +427,9 @@ pub(crate) fn plan_skeleton(base_commit: &str, intent: &str, plan_id: &str) -> V
     })
 }
 
-/// The `bitcode new` counterpart to [`plan_edit_schema`]: a plan step here
+/// The `girder new` counterpart to [`plan_edit_schema`]: a plan step here
 /// can only create a file, never address an existing graph node, because
-/// there is no graph yet for `bitcode new`'s target to have nodes in. Kept
+/// there is no graph yet for `girder new`'s target to have nodes in. Kept
 /// as a one-branch `oneOf` for shape parity with `plan_edit_schema`'s
 /// discriminated union rather than a flat object, so a caller that expects
 /// "an edit is one of several shapes" doesn't need a special case for this
@@ -454,7 +454,7 @@ pub(crate) fn creation_edit_schema() -> Value {
     })
 }
 
-/// The `bitcode new` counterpart to [`plan_schema`]: every edit is
+/// The `girder new` counterpart to [`plan_schema`]: every edit is
 /// [`creation_edit_schema`] (a `create`, never a node-addressed op), and
 /// every check the schema allows is `command` — gap 24's rule (a step
 /// containing an `Edit::Create` must carry a `command` check in the same
@@ -499,7 +499,7 @@ pub(crate) fn creation_plan_schema() -> Value {
     })
 }
 
-/// The `bitcode new` counterpart to [`plan_skeleton`]: same envelope
+/// The `girder new` counterpart to [`plan_skeleton`]: same envelope
 /// shape, but `checks: []` instead of a pre-seeded `tests.impacted` —
 /// gap 24 established that check is always vacuous for a node a `create`
 /// edit just introduced, so seeding it here would be the exact "injecting
@@ -528,8 +528,8 @@ pub(crate) fn invalid_input(message: &str) -> std::io::Error {
     std::io::Error::new(std::io::ErrorKind::InvalidInput, message)
 }
 
-/// Parse `--nodes <path>[,<path>...]`, shared by `bitcode do` and
-/// `bitcode context`.
+/// Parse `--nodes <path>[,<path>...]`, shared by `girder do` and
+/// `girder context`.
 pub(crate) fn parse_pinned_nodes(args: &[String]) -> std::io::Result<Option<Vec<String>>> {
     let nodes_value = args.windows(2).find(|window| window[0] == "--nodes");
     if args.iter().any(|arg| arg == "--nodes") && nodes_value.is_none() {
@@ -589,7 +589,7 @@ mod tests {
     #[cfg(feature = "gui")]
     fn search_fixture_project(name: &str) -> std::path::PathBuf {
         let root = std::env::temp_dir().join(format!(
-            "bitcode-authoring-context-search-{name}-{}",
+            "girder-authoring-context-search-{name}-{}",
             std::process::id()
         ));
         let _ = std::fs::remove_dir_all(&root);
