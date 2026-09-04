@@ -187,10 +187,10 @@ jobs:
           name="bitcode-${{ matrix.target }}"
           if [ "${{ runner.os }}" = "Windows" ]; then
             cp "target/${{ matrix.target }}/release/bitcode.exe" .
-            7z a "dist/${name}.zip" bitcode.exe LICENSE-MIT LICENSE-APACHE README.md
+            7z a "dist/${name}.zip" bitcode.exe LICENSE README.md
           else
             cp "target/${{ matrix.target }}/release/bitcode" .
-            tar czf "dist/${name}.tar.gz" bitcode LICENSE-MIT LICENSE-APACHE README.md
+            tar czf "dist/${name}.tar.gz" bitcode LICENSE README.md
           fi
 
       # Checksums are generated per target rather than centrally so each one

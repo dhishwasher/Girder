@@ -103,4 +103,11 @@ silently falling back to PATH the way a normal run does.
 
 ## License
 
-MIT OR Apache-2.0
+Girder is **source-available** under the
+[Business Source License 1.1](https://github.com/dhishwasher/Bit-code/blob/main/LICENSE).
+The source is public and free to read, use, modify, and run, including inside
+a company. The only restriction is that you may not offer Girder itself to
+third parties as a competing hosted or managed service whose primary value is
+Girder's functionality.
+
+On September 4, 2030, the license converts to the Apache License, Version 2.0.

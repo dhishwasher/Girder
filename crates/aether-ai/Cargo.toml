@@ -2,7 +2,8 @@
 name = "aether-ai"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license-file.workspace = true
+publish.workspace = true
 
 [features]
 # Off by default so the workspace builds and the demo runs with no network /

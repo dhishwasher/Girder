@@ -729,19 +729,12 @@ prioritized open risks are maintained in
 
 ## License
 
-Dual-licensed under either of
+Girder is **source-available** under the [Business Source License 1.1](./LICENSE).
+The source is public and free to read, use, modify, and run, including inside
+a company. The only restriction is that you may not offer Girder itself to
+third parties as a competing hosted or managed service whose primary value is
+Girder's functionality.
 
-- [MIT](./LICENSE-MIT)
-- [Apache License, Version 2.0](./LICENSE-APACHE)
-
-at your option. This is the Rust ecosystem's standard pairing: MIT is short
-and permissive, Apache-2.0 adds an explicit patent grant that some
-organizations require. You may use whichever fits your situation, including
-commercially, with no obligation to share changes back.
-
-GitHub's sidebar detects only one of the two; the dual license above is
-authoritative.
-
-Contributions are accepted under the same two licenses. See
-[`CONTRIBUTING.md`](./CONTRIBUTING.md) — it asks for a DCO sign-off and does
-not ask you to assign copyright or sign a CLA.
+On September 4, 2030, the license converts to the Apache License, Version 2.0.
+See [`LICENSE`](./LICENSE) for the authoritative terms and
+[`CONTRIBUTING.md`](./CONTRIBUTING.md) for contribution terms.

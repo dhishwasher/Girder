@@ -20,7 +20,7 @@
     "url": "git+https://github.com/dhishwasher/Bit-code.git",
     "directory": "npm"
   },
-  "license": "MIT OR Apache-2.0",
+  "license": "BUSL-1.1",
   "type": "commonjs",
   "bin": {
     "bitcode-mcp": "bin/bitcode-mcp.js",

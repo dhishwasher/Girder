@@ -77,7 +77,7 @@ def tarball(members: dict[str, tuple[str, int]]) -> bytes:
 
 
 def release_archive() -> bytes:
-    """A stand-in for a published asset: an executable `bitcode` plus licenses.
+    """A stand-in for a published asset: an executable `bitcode` plus its license.
 
     The binary is a shell script because install.sh runs `bitcode --version`
     to report what it installed, so the artifact has to actually execute.
@@ -85,8 +85,7 @@ def release_archive() -> bytes:
     return tarball(
         {
             "bitcode": (f"#!/bin/sh\necho '{VERSION_OUTPUT}'\n", 0o755),
-            "LICENSE-MIT": ("MIT", 0o644),
-            "LICENSE-APACHE": ("Apache-2.0", 0o644),
+            "LICENSE": ("Business Source License 1.1", 0o644),
         }
     )
 
@@ -216,7 +215,7 @@ class InstallShTests(unittest.TestCase):
         self.assertEqual(existing.read_text(), "#!/bin/sh\necho 'bitcode 0.0.1'\n")
 
     def test_an_archive_without_a_binary_is_fatal(self):
-        self.publish(archive=tarball({"LICENSE-MIT": ("MIT", 0o644)}))
+        self.publish(archive=tarball({"LICENSE": ("Business Source License 1.1", 0o644)}))
         result = self.install()
         self.assertNothingInstalled(result)
         self.assertIn("bitcode binary", result.stderr)

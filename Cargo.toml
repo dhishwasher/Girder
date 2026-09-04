@@ -14,7 +14,8 @@ members = [
 [workspace.package]
 version = "0.1.2"
 edition = "2021"
-license = "MIT OR Apache-2.0"
+license-file = "LICENSE"
+publish = false
 authors = ["Cory Robert Maynard"]
 repository = "https://github.com/dhishwasher/Bit-code"
 

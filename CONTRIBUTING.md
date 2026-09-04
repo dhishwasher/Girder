@@ -2,14 +2,12 @@
 
 ## Licensing of contributions
 
-Bit Code is dual-licensed under [MIT](./LICENSE-MIT) or
-[Apache-2.0](./LICENSE-APACHE), at the user's option — the Rust ecosystem's
-standard pairing.
-
-Unless you state otherwise in writing, any contribution you intentionally
-submit for inclusion in this repository is offered under those same two
-licenses, with no additional terms or conditions. This is the Apache-2.0
-section 5 default, restated here so it is explicit rather than implied.
+Bit Code is source-available under the
+[Business Source License 1.1](./LICENSE). Unless you state otherwise in
+writing, any contribution you intentionally submit for inclusion in this
+repository is offered under that same license, including its Additional Use
+Grant, Change Date, and Change License, with no additional terms or
+conditions.
 
 Please sign off your commits under the
 [Developer Certificate of Origin](https://developercertificate.org/) (DCO):
