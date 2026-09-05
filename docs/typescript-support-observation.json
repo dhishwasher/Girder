@@ -1,0 +1,1711 @@
+{
+  "assessment": {
+    "checks": [
+      {
+        "actual": 0,
+        "id": "semantic.aggregate.false_positives",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "id": "semantic.aggregate.false_negatives",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.aggregate.micro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.aggregate.micro_recall",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.aggregate.macro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.aggregate.macro_recall",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "id": "semantic.typescript.false_positives",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "id": "semantic.typescript.false_negatives",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.typescript.micro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.typescript.micro_recall",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.typescript.macro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.typescript.macro_recall",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 3099,
+        "id": "performance.zod-3.23.8.wall_max_ms",
+        "maximum": 30000,
+        "passed": true
+      },
+      {
+        "actual": 2821,
+        "id": "performance.zod-3.23.8.wall_median_ms",
+        "maximum": 15000,
+        "passed": true
+      },
+      {
+        "actual": 50396,
+        "id": "performance.zod-3.23.8.peak_rss_max_kib",
+        "maximum": 131072,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.zod-3.23.8.artifact_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.zod-3.23.8.semantic_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.zod-3.23.8.unique_node_edge_count_pairs",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 2594660,
+        "id": "performance.zod-3.23.8.run_1.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 176,
+        "id": "performance.zod-3.23.8.run_1.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 2594660,
+        "id": "performance.zod-3.23.8.run_2.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 175,
+        "id": "performance.zod-3.23.8.run_2.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 2594660,
+        "id": "performance.zod-3.23.8.run_3.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 133,
+        "id": "performance.zod-3.23.8.run_3.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 2594660,
+        "id": "performance.zod-3.23.8.run_4.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 173,
+        "id": "performance.zod-3.23.8.run_4.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 2594660,
+        "id": "performance.zod-3.23.8.run_5.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 136,
+        "id": "performance.zod-3.23.8.run_5.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 1973,
+        "id": "performance.type-fest-4.26.1.wall_max_ms",
+        "maximum": 30000,
+        "passed": true
+      },
+      {
+        "actual": 1883,
+        "id": "performance.type-fest-4.26.1.wall_median_ms",
+        "maximum": 15000,
+        "passed": true
+      },
+      {
+        "actual": 23916,
+        "id": "performance.type-fest-4.26.1.peak_rss_max_kib",
+        "maximum": 131072,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.type-fest-4.26.1.artifact_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.type-fest-4.26.1.semantic_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.type-fest-4.26.1.unique_node_edge_count_pairs",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 944136,
+        "id": "performance.type-fest-4.26.1.run_1.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 299,
+        "id": "performance.type-fest-4.26.1.run_1.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 944136,
+        "id": "performance.type-fest-4.26.1.run_2.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 75,
+        "id": "performance.type-fest-4.26.1.run_2.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 944136,
+        "id": "performance.type-fest-4.26.1.run_3.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 80,
+        "id": "performance.type-fest-4.26.1.run_3.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 944136,
+        "id": "performance.type-fest-4.26.1.run_4.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 74,
+        "id": "performance.type-fest-4.26.1.run_4.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 944136,
+        "id": "performance.type-fest-4.26.1.run_5.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 41,
+        "id": "performance.type-fest-4.26.1.run_5.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 4704,
+        "id": "performance.sum_of_repository_medians_ms",
+        "maximum": 180000,
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  "host": {
+    "machine": "x86_64",
+    "python": "3.11.2",
+    "release": "6.6.135-09383-g1140e4f27e24",
+    "system": "Linux"
+  },
+  "implementation_commit": "7a52a2756f52d722be7ee0e3e55e3d0547b431cc",
+  "kind": "typescript-support-observation",
+  "policy_sha256": "e95dbea78c64594786408c87e8de4c5a4e44d775dcdefb9c6426dbfa00fe4590",
+  "repositories": [
+    {
+      "artifact": {
+        "bytes": 586431,
+        "format": "tar.gz",
+        "root": "zod-3.23.8",
+        "sha256": "ecd3ac7eb5bac88202b1146c308c8bbd48e63fc64d6d7f14b5577dde5da02c48",
+        "url": "https://github.com/colinhacks/zod/archive/refs/tags/v3.23.8.tar.gz",
+        "version": "3.23.8"
+      },
+      "id": "zod-3.23.8",
+      "language": "typescript",
+      "role": "mid-size-library",
+      "runs": [
+        {
+          "graph": {
+            "artifact_bytes": 2594660,
+            "artifact_sha256": "cae4d696d67b73ec68f0e6635ab7ed19fa08e0a9ffc9d08ae22e0b72f5a7a017",
+            "canonical_semantic_sha256": "c3e6ff19fa4b8a83aa9c6826f183feca0a72ccf6d34cd93f4bbd77c473ac5de2",
+            "edges": 3348,
+            "edges_by_kind": {
+              "Calls": 416,
+              "Contains": 2750,
+              "Inherits": 182
+            },
+            "nodes": 2914
+          },
+          "inspect_wall_ms": 176,
+          "ordinal": 1,
+          "peak_rss_kib": 50356,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::processCreateParams",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-arrow-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::handleResult",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-class",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-interface",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::RefinementCtx",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodRawShape",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-contains-method",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types::ZodType",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType::safeParse",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ZodString",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "interface-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ZodStringDef",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodTypeDef",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-implementation",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ParseInputLazyPath",
+              "source_endpoint_present": true,
+              "target": "crate::helpers::parseUtil::ParseInput",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::types::ZodType::safeParse",
+              "source_endpoint_present": true,
+              "target": "crate::types::handleResult",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "named-import-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::types::ZodString::_parse",
+              "source_endpoint_present": true,
+              "target": "crate::helpers::parseUtil::addIssueToContext",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "named-import-not-duplicate-tree",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::types::ZodString::_parse",
+              "source_endpoint_present": true,
+              "target": "crate::deno::lib::helpers::parseUtil::addIssueToContext",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "jest-test-discovery",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::__tests__::base.test",
+              "source_endpoint_present": true,
+              "target": "crate::__tests__::base.test::type guard",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "jest-test-not-unrelated-title",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::__tests__::base.test",
+              "source_endpoint_present": true,
+              "target": "crate::__tests__::base.test::not a real test",
+              "target_endpoint_present": false
+            }
+          ],
+          "source_manifest_after_sha256": "a8fc1683c9305317f458fea5e7f9523deec9cf55e30888e72431aa34dc8e637e",
+          "wall_ms": 3099
+        },
+        {
+          "graph": {
+            "artifact_bytes": 2594660,
+            "artifact_sha256": "cae4d696d67b73ec68f0e6635ab7ed19fa08e0a9ffc9d08ae22e0b72f5a7a017",
+            "canonical_semantic_sha256": "c3e6ff19fa4b8a83aa9c6826f183feca0a72ccf6d34cd93f4bbd77c473ac5de2",
+            "edges": 3348,
+            "edges_by_kind": {
+              "Calls": 416,
+              "Contains": 2750,
+              "Inherits": 182
+            },
+            "nodes": 2914
+          },
+          "inspect_wall_ms": 175,
+          "ordinal": 2,
+          "peak_rss_kib": 50392,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::processCreateParams",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-arrow-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::handleResult",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-class",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-interface",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::RefinementCtx",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodRawShape",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-contains-method",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types::ZodType",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType::safeParse",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ZodString",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "interface-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ZodStringDef",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodTypeDef",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-implementation",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ParseInputLazyPath",
+              "source_endpoint_present": true,
+              "target": "crate::helpers::parseUtil::ParseInput",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::types::ZodType::safeParse",
+              "source_endpoint_present": true,
+              "target": "crate::types::handleResult",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "named-import-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::types::ZodString::_parse",
+              "source_endpoint_present": true,
+              "target": "crate::helpers::parseUtil::addIssueToContext",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "named-import-not-duplicate-tree",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::types::ZodString::_parse",
+              "source_endpoint_present": true,
+              "target": "crate::deno::lib::helpers::parseUtil::addIssueToContext",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "jest-test-discovery",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::__tests__::base.test",
+              "source_endpoint_present": true,
+              "target": "crate::__tests__::base.test::type guard",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "jest-test-not-unrelated-title",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::__tests__::base.test",
+              "source_endpoint_present": true,
+              "target": "crate::__tests__::base.test::not a real test",
+              "target_endpoint_present": false
+            }
+          ],
+          "source_manifest_after_sha256": "a8fc1683c9305317f458fea5e7f9523deec9cf55e30888e72431aa34dc8e637e",
+          "wall_ms": 2704
+        },
+        {
+          "graph": {
+            "artifact_bytes": 2594660,
+            "artifact_sha256": "cae4d696d67b73ec68f0e6635ab7ed19fa08e0a9ffc9d08ae22e0b72f5a7a017",
+            "canonical_semantic_sha256": "c3e6ff19fa4b8a83aa9c6826f183feca0a72ccf6d34cd93f4bbd77c473ac5de2",
+            "edges": 3348,
+            "edges_by_kind": {
+              "Calls": 416,
+              "Contains": 2750,
+              "Inherits": 182
+            },
+            "nodes": 2914
+          },
+          "inspect_wall_ms": 133,
+          "ordinal": 3,
+          "peak_rss_kib": 50396,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::processCreateParams",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-arrow-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::handleResult",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-class",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-interface",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::RefinementCtx",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodRawShape",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-contains-method",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types::ZodType",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType::safeParse",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ZodString",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "interface-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ZodStringDef",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodTypeDef",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-implementation",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ParseInputLazyPath",
+              "source_endpoint_present": true,
+              "target": "crate::helpers::parseUtil::ParseInput",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::types::ZodType::safeParse",
+              "source_endpoint_present": true,
+              "target": "crate::types::handleResult",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "named-import-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::types::ZodString::_parse",
+              "source_endpoint_present": true,
+              "target": "crate::helpers::parseUtil::addIssueToContext",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "named-import-not-duplicate-tree",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::types::ZodString::_parse",
+              "source_endpoint_present": true,
+              "target": "crate::deno::lib::helpers::parseUtil::addIssueToContext",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "jest-test-discovery",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::__tests__::base.test",
+              "source_endpoint_present": true,
+              "target": "crate::__tests__::base.test::type guard",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "jest-test-not-unrelated-title",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::__tests__::base.test",
+              "source_endpoint_present": true,
+              "target": "crate::__tests__::base.test::not a real test",
+              "target_endpoint_present": false
+            }
+          ],
+          "source_manifest_after_sha256": "a8fc1683c9305317f458fea5e7f9523deec9cf55e30888e72431aa34dc8e637e",
+          "wall_ms": 2595
+        },
+        {
+          "graph": {
+            "artifact_bytes": 2594660,
+            "artifact_sha256": "cae4d696d67b73ec68f0e6635ab7ed19fa08e0a9ffc9d08ae22e0b72f5a7a017",
+            "canonical_semantic_sha256": "c3e6ff19fa4b8a83aa9c6826f183feca0a72ccf6d34cd93f4bbd77c473ac5de2",
+            "edges": 3348,
+            "edges_by_kind": {
+              "Calls": 416,
+              "Contains": 2750,
+              "Inherits": 182
+            },
+            "nodes": 2914
+          },
+          "inspect_wall_ms": 173,
+          "ordinal": 4,
+          "peak_rss_kib": 50324,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::processCreateParams",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-arrow-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::handleResult",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-class",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-interface",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::RefinementCtx",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodRawShape",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-contains-method",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types::ZodType",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType::safeParse",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ZodString",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "interface-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ZodStringDef",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodTypeDef",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-implementation",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ParseInputLazyPath",
+              "source_endpoint_present": true,
+              "target": "crate::helpers::parseUtil::ParseInput",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::types::ZodType::safeParse",
+              "source_endpoint_present": true,
+              "target": "crate::types::handleResult",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "named-import-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::types::ZodString::_parse",
+              "source_endpoint_present": true,
+              "target": "crate::helpers::parseUtil::addIssueToContext",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "named-import-not-duplicate-tree",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::types::ZodString::_parse",
+              "source_endpoint_present": true,
+              "target": "crate::deno::lib::helpers::parseUtil::addIssueToContext",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "jest-test-discovery",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::__tests__::base.test",
+              "source_endpoint_present": true,
+              "target": "crate::__tests__::base.test::type guard",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "jest-test-not-unrelated-title",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::__tests__::base.test",
+              "source_endpoint_present": true,
+              "target": "crate::__tests__::base.test::not a real test",
+              "target_endpoint_present": false
+            }
+          ],
+          "source_manifest_after_sha256": "a8fc1683c9305317f458fea5e7f9523deec9cf55e30888e72431aa34dc8e637e",
+          "wall_ms": 2821
+        },
+        {
+          "graph": {
+            "artifact_bytes": 2594660,
+            "artifact_sha256": "cae4d696d67b73ec68f0e6635ab7ed19fa08e0a9ffc9d08ae22e0b72f5a7a017",
+            "canonical_semantic_sha256": "c3e6ff19fa4b8a83aa9c6826f183feca0a72ccf6d34cd93f4bbd77c473ac5de2",
+            "edges": 3348,
+            "edges_by_kind": {
+              "Calls": 416,
+              "Contains": 2750,
+              "Inherits": 182
+            },
+            "nodes": 2914
+          },
+          "inspect_wall_ms": 136,
+          "ordinal": 5,
+          "peak_rss_kib": 50304,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::processCreateParams",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-arrow-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::handleResult",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-class",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-interface",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::RefinementCtx",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-contains-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodRawShape",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-contains-method",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::types::ZodType",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType::safeParse",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ZodString",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodType",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "interface-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ZodStringDef",
+              "source_endpoint_present": true,
+              "target": "crate::types::ZodTypeDef",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "class-implementation",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::types::ParseInputLazyPath",
+              "source_endpoint_present": true,
+              "target": "crate::helpers::parseUtil::ParseInput",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::types::ZodType::safeParse",
+              "source_endpoint_present": true,
+              "target": "crate::types::handleResult",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "named-import-cross-file-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::types::ZodString::_parse",
+              "source_endpoint_present": true,
+              "target": "crate::helpers::parseUtil::addIssueToContext",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "named-import-not-duplicate-tree",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::types::ZodString::_parse",
+              "source_endpoint_present": true,
+              "target": "crate::deno::lib::helpers::parseUtil::addIssueToContext",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "jest-test-discovery",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::__tests__::base.test",
+              "source_endpoint_present": true,
+              "target": "crate::__tests__::base.test::type guard",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "jest-test-not-unrelated-title",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::__tests__::base.test",
+              "source_endpoint_present": true,
+              "target": "crate::__tests__::base.test::not a real test",
+              "target_endpoint_present": false
+            }
+          ],
+          "source_manifest_after_sha256": "a8fc1683c9305317f458fea5e7f9523deec9cf55e30888e72431aa34dc8e637e",
+          "wall_ms": 2851
+        }
+      ],
+      "source_inventory": {
+        "bytes": 937060,
+        "files": 165,
+        "manifest_sha256": "a8fc1683c9305317f458fea5e7f9523deec9cf55e30888e72431aa34dc8e637e",
+        "physical_lines": 30448
+      },
+      "summary": {
+        "artifact_unique_digests": 1,
+        "peak_rss_max_kib": 50396,
+        "peak_rss_median_kib": 50356,
+        "semantic": {
+          "fn": 0,
+          "fp": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tn": 2,
+          "tp": 12
+        },
+        "semantic_unique_digests": 1,
+        "unique_node_edge_count_pairs": 1,
+        "wall_max_ms": 3099,
+        "wall_median_ms": 2821
+      }
+    },
+    {
+      "artifact": {
+        "bytes": 1086277,
+        "format": "tar.gz",
+        "root": "type-fest-4.26.1",
+        "sha256": "41acbfd36aafc8bbfd774846462e8af7e3e62a7bdb59ddc7fa6684d7eb726735",
+        "url": "https://github.com/sindresorhus/type-fest/archive/refs/tags/v4.26.1.tar.gz",
+        "version": "4.26.1"
+      },
+      "id": "type-fest-4.26.1",
+      "language": "typescript",
+      "role": "heavy-type-level-code",
+      "runs": [
+        {
+          "graph": {
+            "artifact_bytes": 944136,
+            "artifact_sha256": "abed2b2dbaf3ce0497b82a9f669bed6127fcf1ccaa87edba5906c57cba89d4f6",
+            "canonical_semantic_sha256": "9b10867d5507826a8eefb028b1475cca9cc2bda143088c316781de4bb6b2f07e",
+            "edges": 880,
+            "edges_by_kind": {
+              "Calls": 2,
+              "Contains": 872,
+              "Inherits": 6
+            },
+            "nodes": 1182
+          },
+          "inspect_wall_ms": 299,
+          "ordinal": 1,
+          "peak_rss_kib": 23672,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "declaration-file-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::conditional-keys",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::ConditionalKeys",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "deep-generic-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeep",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "object-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeepOptions",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "private-helper-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeepRecordProperty",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "type-alias-not-wrong-module",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::ConditionalKeys",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "type-alias-not-import-binding",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::source::conditional-keys",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::IfNever",
+              "target_endpoint_present": false
+            }
+          ],
+          "source_manifest_after_sha256": "edf4fdac702a7b952a6c28b34ca1b60568002505755e0773fbade6f3a018397d",
+          "wall_ms": 1519
+        },
+        {
+          "graph": {
+            "artifact_bytes": 944136,
+            "artifact_sha256": "abed2b2dbaf3ce0497b82a9f669bed6127fcf1ccaa87edba5906c57cba89d4f6",
+            "canonical_semantic_sha256": "9b10867d5507826a8eefb028b1475cca9cc2bda143088c316781de4bb6b2f07e",
+            "edges": 880,
+            "edges_by_kind": {
+              "Calls": 2,
+              "Contains": 872,
+              "Inherits": 6
+            },
+            "nodes": 1182
+          },
+          "inspect_wall_ms": 75,
+          "ordinal": 2,
+          "peak_rss_kib": 23916,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "declaration-file-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::conditional-keys",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::ConditionalKeys",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "deep-generic-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeep",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "object-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeepOptions",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "private-helper-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeepRecordProperty",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "type-alias-not-wrong-module",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::ConditionalKeys",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "type-alias-not-import-binding",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::source::conditional-keys",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::IfNever",
+              "target_endpoint_present": false
+            }
+          ],
+          "source_manifest_after_sha256": "edf4fdac702a7b952a6c28b34ca1b60568002505755e0773fbade6f3a018397d",
+          "wall_ms": 1973
+        },
+        {
+          "graph": {
+            "artifact_bytes": 944136,
+            "artifact_sha256": "abed2b2dbaf3ce0497b82a9f669bed6127fcf1ccaa87edba5906c57cba89d4f6",
+            "canonical_semantic_sha256": "9b10867d5507826a8eefb028b1475cca9cc2bda143088c316781de4bb6b2f07e",
+            "edges": 880,
+            "edges_by_kind": {
+              "Calls": 2,
+              "Contains": 872,
+              "Inherits": 6
+            },
+            "nodes": 1182
+          },
+          "inspect_wall_ms": 80,
+          "ordinal": 3,
+          "peak_rss_kib": 23916,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "declaration-file-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::conditional-keys",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::ConditionalKeys",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "deep-generic-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeep",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "object-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeepOptions",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "private-helper-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeepRecordProperty",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "type-alias-not-wrong-module",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::ConditionalKeys",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "type-alias-not-import-binding",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::source::conditional-keys",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::IfNever",
+              "target_endpoint_present": false
+            }
+          ],
+          "source_manifest_after_sha256": "edf4fdac702a7b952a6c28b34ca1b60568002505755e0773fbade6f3a018397d",
+          "wall_ms": 1597
+        },
+        {
+          "graph": {
+            "artifact_bytes": 944136,
+            "artifact_sha256": "abed2b2dbaf3ce0497b82a9f669bed6127fcf1ccaa87edba5906c57cba89d4f6",
+            "canonical_semantic_sha256": "9b10867d5507826a8eefb028b1475cca9cc2bda143088c316781de4bb6b2f07e",
+            "edges": 880,
+            "edges_by_kind": {
+              "Calls": 2,
+              "Contains": 872,
+              "Inherits": 6
+            },
+            "nodes": 1182
+          },
+          "inspect_wall_ms": 74,
+          "ordinal": 4,
+          "peak_rss_kib": 23912,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "declaration-file-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::conditional-keys",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::ConditionalKeys",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "deep-generic-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeep",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "object-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeepOptions",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "private-helper-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeepRecordProperty",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "type-alias-not-wrong-module",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::ConditionalKeys",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "type-alias-not-import-binding",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::source::conditional-keys",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::IfNever",
+              "target_endpoint_present": false
+            }
+          ],
+          "source_manifest_after_sha256": "edf4fdac702a7b952a6c28b34ca1b60568002505755e0773fbade6f3a018397d",
+          "wall_ms": 1889
+        },
+        {
+          "graph": {
+            "artifact_bytes": 944136,
+            "artifact_sha256": "abed2b2dbaf3ce0497b82a9f669bed6127fcf1ccaa87edba5906c57cba89d4f6",
+            "canonical_semantic_sha256": "9b10867d5507826a8eefb028b1475cca9cc2bda143088c316781de4bb6b2f07e",
+            "edges": 880,
+            "edges_by_kind": {
+              "Calls": 2,
+              "Contains": 872,
+              "Inherits": 6
+            },
+            "nodes": 1182
+          },
+          "inspect_wall_ms": 41,
+          "ordinal": 5,
+          "peak_rss_kib": 23916,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "declaration-file-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::conditional-keys",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::ConditionalKeys",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "deep-generic-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeep",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "object-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeepOptions",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "private-helper-type-alias",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::merge-deep::MergeDeepRecordProperty",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "type-alias-not-wrong-module",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::source::merge-deep",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::ConditionalKeys",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "type-alias-not-import-binding",
+              "kind": "Contains",
+              "observed_present": false,
+              "source": "crate::source::conditional-keys",
+              "source_endpoint_present": true,
+              "target": "crate::source::conditional-keys::IfNever",
+              "target_endpoint_present": false
+            }
+          ],
+          "source_manifest_after_sha256": "edf4fdac702a7b952a6c28b34ca1b60568002505755e0773fbade6f3a018397d",
+          "wall_ms": 1883
+        }
+      ],
+      "source_inventory": {
+        "bytes": 569050,
+        "files": 310,
+        "manifest_sha256": "edf4fdac702a7b952a6c28b34ca1b60568002505755e0773fbade6f3a018397d",
+        "physical_lines": 18952
+      },
+      "summary": {
+        "artifact_unique_digests": 1,
+        "peak_rss_max_kib": 23916,
+        "peak_rss_median_kib": 23916,
+        "semantic": {
+          "fn": 0,
+          "fp": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tn": 2,
+          "tp": 4
+        },
+        "semantic_unique_digests": 1,
+        "unique_node_edge_count_pairs": 1,
+        "wall_max_ms": 1973,
+        "wall_median_ms": 1883
+      }
+    }
+  ],
+  "run_definition": {
+    "offline": true,
+    "rayon_threads": 2,
+    "runs_per_repository": 5
+  },
+  "schema_version": 1,
+  "semantic_summary": {
+    "aggregate": {
+      "fn": 0,
+      "fp": 0,
+      "macro_precision": 1.0,
+      "macro_recall": 1.0,
+      "micro_precision": 1.0,
+      "micro_recall": 1.0,
+      "tn": 4,
+      "tp": 16
+    },
+    "languages": {
+      "typescript": {
+        "fn": 0,
+        "fp": 0,
+        "macro_precision": 1.0,
+        "macro_recall": 1.0,
+        "micro_precision": 1.0,
+        "micro_recall": 1.0,
+        "tn": 4,
+        "tp": 16
+      }
+    }
+  },
+  "suite_id": "typescript-support-v1",
+  "tool": {
+    "driver": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/examples/typescript_corpus",
+    "driver_sha256": "c7ff0b4011bc17e923daec057b6f164e8eb8c1dd9f9fe6ea31f959352171d0d3",
+    "inspector": "target/debug/girder",
+    "inspector_sha256": "20aff4f729751d904d6dafee7fe5d29767ae9ba38336c87cc474cc4310a6942e"
+  }
+}
