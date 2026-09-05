@@ -3,11 +3,10 @@
 use crate::graph_view::GraphViewState;
 use crate::gui::context_menus::ContextMenuState;
 use crate::gui::file_tree::FileTreeState;
-use crate::gui::status_bar::{self, CursorPosition};
+use crate::gui::status_bar::CursorPosition;
 use crate::gui::tabs::{self, EditorTabs};
-use crate::gui::theme::{self, PALETTE, SPACING};
+use crate::gui::theme;
 use crate::gui::workbench::{self, WorkbenchMode};
-use crate::panels;
 use crate::project::{
     apply_authored_guarantees, apply_reviewed_collaboration_projection, author, build_context_json,
     discover_collaboration_peers, generate_collaboration_identity, generate_collaboration_secret,
@@ -2042,122 +2041,7 @@ impl eframe::App for AetherApp {
             }
         }
 
-        egui::TopBottomPanel::top("title").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                ui.heading("Girder");
-                ui.separator();
-                let (n, e) = {
-                    let g = self.workspace.graph().lock().unwrap();
-                    (g.node_count(), g.edge_count())
-                };
-                ui.label(format!("semantic graph: {n} nodes · {e} edges"));
-                ui.separator();
-                workbench::mode_switcher(ui, &mut self.workbench_mode);
-                if self.workspace.is_dirty() {
-                    ui.colored_label(PALETTE.warning, "modified");
-                }
-                if self.workspace.has_pending_agent_changes() {
-                    ui.colored_label(PALETTE.success, "agent changes pending");
-                }
-            });
-            ui.horizontal(|ui| {
-                ui.label("Project");
-                let extension_busy = self.extension_busy();
-                ui.add_enabled(
-                    !extension_busy,
-                    egui::TextEdit::singleline(&mut self.project_path_input).desired_width(320.0),
-                );
-                if ui
-                    .add_enabled(!extension_busy, egui::Button::new("Open"))
-                    .on_hover_text("Open project directory")
-                    .clicked()
-                {
-                    self.open_project();
-                }
-                let has_file = self.workspace.active_file().is_some();
-                let pending_agents = self.workspace.has_pending_agent_changes();
-                if ui
-                    .add_enabled(
-                        has_file && self.workspace.is_dirty() && !pending_agents && !extension_busy,
-                        egui::Button::new("Save"),
-                    )
-                    .on_hover_text("Save source and semantic graph")
-                    .clicked()
-                {
-                    self.save_active_file();
-                }
-                if ui
-                    .add_enabled(
-                        has_file && self.workspace.is_dirty() && !pending_agents && !extension_busy,
-                        egui::Button::new("Discard"),
-                    )
-                    .on_hover_text("Discard unsaved editor changes")
-                    .clicked()
-                {
-                    self.discard_active_changes();
-                }
-                if ui
-                    .add_enabled(
-                        !self.workspace.is_dirty()
-                            && !pending_agents
-                            && self.swarm_rx.is_none()
-                            && !extension_busy,
-                        egui::Button::new("Reload"),
-                    )
-                    .on_hover_text("Re-index project from disk")
-                    .clicked()
-                {
-                    self.reload_project();
-                }
-                ui.separator();
-                if self.workspace_status_is_error {
-                    ui.colored_label(PALETTE.error, &self.workspace_status);
-                } else {
-                    ui.label(&self.workspace_status);
-                }
-            });
-        });
-
-        let available_width = ctx.available_rect().width();
-        let workspace_max = (available_width * 0.40).clamp(300.0, 520.0);
-        let agents_max = (available_width * 0.32).clamp(240.0, 440.0);
-
-        egui::SidePanel::left("workspace")
-            .resizable(true)
-            .default_width(360.0)
-            .min_width(240.0)
-            .max_width(workspace_max)
-            .show(ctx, |ui| panels::workspace_panel(self, ui));
-
-        egui::SidePanel::right("agents")
-            .resizable(true)
-            .default_width(320.0)
-            .min_width(240.0)
-            .max_width(agents_max)
-            .show(ctx, |ui| panels::agents_panel(self, ui));
-
-        let node_count = self.workspace.graph().lock().unwrap().node_count();
-        egui::TopBottomPanel::bottom("status_bar")
-            .exact_height(SPACING.xl + SPACING.xs)
-            .show(ctx, |ui| {
-                status_bar::show(
-                    ui,
-                    self.editor_tabs.active_path(),
-                    self.editor_cursor,
-                    self.file_tree.is_indexing(),
-                    node_count,
-                );
-            });
-
-        egui::TopBottomPanel::bottom("debugger")
-            .resizable(true)
-            .default_height(200.0)
-            .show(ctx, |ui| panels::debugger_panel(self, ui));
-
-        egui::CentralPanel::default().show(ctx, |ui| match self.workbench_mode {
-            WorkbenchMode::Editor => panels::editor_panel(self, ui),
-            WorkbenchMode::Graph => panels::graph_panel(self, ui),
-        });
+        workbench::show_panels(self, ctx);
         self.show_context_dialogs(ctx);
     }
 }

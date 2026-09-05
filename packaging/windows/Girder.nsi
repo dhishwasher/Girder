@@ -19,6 +19,9 @@ ${UnStrRep}
 !ifndef LICENSE_PATH
   !error "LICENSE_PATH must be provided to makensis"
 !endif
+!ifndef FONT_LICENSE_PATH
+  !error "FONT_LICENSE_PATH must be provided to makensis"
+!endif
 !ifndef OUTPUT_PATH
   !error "OUTPUT_PATH must be provided to makensis"
 !endif
@@ -88,12 +91,13 @@ Section "Girder" SEC_GIRDER
   File "/oname=girder.exe" "${BINARY_PATH}"
   File "/oname=icon.ico" "${ICON_PATH}"
   File "/oname=LICENSE" "${LICENSE_PATH}"
+  File "/oname=DejaVuSansMono-LICENSE.txt" "${FONT_LICENSE_PATH}"
 
   WriteRegStr HKCU "${APP_REG_KEY}" "InstallDir" "$INSTDIR"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
   CreateDirectory "$SMPROGRAMS\Girder"
-  CreateShortcut "$SMPROGRAMS\Girder\Girder.lnk" "$INSTDIR\girder.exe" "" "$INSTDIR\icon.ico"
+  CreateShortcut "$SMPROGRAMS\Girder\Girder.lnk" "$INSTDIR\girder.exe" "--gui" "$INSTDIR\icon.ico"
 
   WriteRegStr HKCU "${UNINSTALL_REG_KEY}" "DisplayName" "Girder"
   WriteRegStr HKCU "${UNINSTALL_REG_KEY}" "DisplayVersion" "${VERSION}"
@@ -117,6 +121,7 @@ Section "Uninstall"
   Delete "$INSTDIR\girder.exe"
   Delete "$INSTDIR\icon.ico"
   Delete "$INSTDIR\LICENSE"
+  Delete "$INSTDIR\DejaVuSansMono-LICENSE.txt"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
 

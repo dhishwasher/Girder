@@ -195,6 +195,12 @@ jobs:
             tar czf "dist/${name}.tar.gz" girder LICENSE README.md
           fi
 
+      # The archives above retain their headless CLI. The desktop installer
+      # additionally needs the GUI compiled into its binary.
+      - name: Build Windows desktop binary
+        if: runner.os == 'Windows'
+        run: cargo build --release --locked -p aether-app --features gui --target ${{ matrix.target }}
+
       - name: Ensure NSIS is available
         if: runner.os == 'Windows'
         shell: pwsh
@@ -220,6 +226,7 @@ jobs:
             "/DBINARY_PATH=$repo_root/target/${{ matrix.target }}/release/girder.exe" \
             "/DICON_PATH=$repo_root/assets/icon.ico" \
             "/DLICENSE_PATH=$repo_root/LICENSE" \
+            "/DFONT_LICENSE_PATH=$repo_root/assets/fonts/DejaVuSansMono-LICENSE.txt" \
             "/DOUTPUT_PATH=$repo_root/$installer" \
             packaging/windows/Girder.nsi
           test -s "$installer"

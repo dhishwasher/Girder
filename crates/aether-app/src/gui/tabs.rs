@@ -361,6 +361,7 @@ impl AetherApp {
 
         self.py_file = active_python_path(&self.workspace).unwrap_or_default();
         self.py_steps.clear();
+        self.workbench_mode = crate::gui::workbench::WorkbenchMode::Editor;
         let verb = if preview { "Previewing" } else { "Opened" };
         self.set_workspace_status(format!("{verb} {relative}"));
     }

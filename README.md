@@ -38,6 +38,8 @@ Each Windows release also includes `Girder-<version>-setup.exe`. It installs
 for the current user under `%LOCALAPPDATA%\Programs\Girder`, adds Girder to the
 user `PATH`, creates a Start Menu shortcut, and does not request administrator
 access. Open a new terminal after installation so it sees the updated `PATH`.
+The installer includes the desktop GUI, and its Start Menu shortcut opens it.
+The archives and npm installation continue to provide the headless CLI.
 
 The installer is **not code-signed yet**, so Windows SmartScreen will warn on
 first run. After downloading the installer from the GitHub release, double-click
