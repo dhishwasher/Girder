@@ -95,7 +95,7 @@ impl ContextMenuState {
                         let valid = valid_file_name(new_name);
                         if !valid {
                             ui.colored_label(
-                                egui::Color32::LIGHT_RED,
+                                crate::gui::theme::PALETTE.error,
                                 "Use one non-empty file or directory name.",
                             );
                         }
@@ -131,7 +131,7 @@ impl ContextMenuState {
                             if *is_dir { "directory" } else { "file" }
                         ));
                         ui.colored_label(
-                            egui::Color32::LIGHT_RED,
+                            crate::gui::theme::PALETTE.error,
                             "This cannot be undone by Girder.",
                         );
                         ui.horizontal(|ui| {
@@ -139,7 +139,10 @@ impl ContextMenuState {
                                 keep_open = false;
                             }
                             if ui
-                                .add(egui::Button::new("Delete").fill(egui::Color32::DARK_RED))
+                                .add(
+                                    egui::Button::new("Delete")
+                                        .fill(crate::gui::theme::PALETTE.impact_secondary),
+                                )
                                 .clicked()
                             {
                                 confirmed = Some(ConfirmedFileOperation::Delete {

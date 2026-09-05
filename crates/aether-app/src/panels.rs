@@ -5,39 +5,15 @@ use crate::graph_view::{all_edge_kinds, all_node_kinds, GraphScope, ViewEdge, Vi
 use crate::gui::context_menus::{self, EditorMenuAction};
 use crate::gui::file_tree::{self, FileTreeAction};
 use crate::gui::tabs;
+use crate::gui::theme::{self, edge_color, node_color, PALETTE, RADII};
 use crate::project::AuthorEvent;
 use aether_extensions::{
     Capability, CommandAction, Contribution, ExtensionState, PanelLocation, PanelView,
 };
 use aether_graph::{EdgeKind, NodeKind};
-use egui::{Align2, Color32, FontId, Rect, Sense, Stroke};
+use egui::{Align2, Rect, Sense, Stroke};
 
-fn node_color(kind: NodeKind) -> Color32 {
-    match kind {
-        NodeKind::Module => Color32::from_rgb(0x56, 0x9C, 0xD6),
-        NodeKind::Function => Color32::from_rgb(0xDC, 0xDC, 0xAA),
-        NodeKind::Type => Color32::from_rgb(0x4E, 0xC9, 0xB0),
-        NodeKind::Field => Color32::from_rgb(0x9C, 0xDC, 0xFE),
-        NodeKind::Concept => Color32::from_rgb(0xC5, 0x86, 0xC0),
-        NodeKind::Dependency => Color32::from_rgb(0x80, 0x80, 0x80),
-        NodeKind::Extension => Color32::from_rgb(0xD7, 0xBA, 0x7D),
-        NodeKind::ExtensionContribution => Color32::from_rgb(0xB5, 0xCE, 0xA8),
-    }
-}
-
-fn edge_color(kind: EdgeKind) -> Color32 {
-    match kind {
-        EdgeKind::Calls => Color32::from_rgb(0xDC, 0xDC, 0xAA),
-        EdgeKind::Inherits => Color32::from_rgb(0x4E, 0xC9, 0xB0),
-        EdgeKind::DataFlow => Color32::from_rgb(0x56, 0x9C, 0xD6),
-        EdgeKind::Contains => Color32::from_rgb(0x55, 0x55, 0x55),
-        EdgeKind::SemanticSimilar => Color32::from_rgb(0xC5, 0x86, 0xC0),
-        EdgeKind::Impacts => Color32::from_rgb(0xCE, 0x91, 0x78),
-        EdgeKind::Contributes => Color32::from_rgb(0xD7, 0xBA, 0x7D),
-    }
-}
-
-/// Left panel: project navigation plus a view of the live semantic graph.
+/// Left panel: project navigation. The graph is a separate workbench mode.
 pub fn workspace_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     let active = app.editor_tabs.active_path().map(str::to_string);
     match file_tree::show(&mut app.file_tree, ui, active.as_deref()) {
@@ -46,14 +22,9 @@ pub fn workspace_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         Some(FileTreeAction::Menu(action)) => app.handle_file_menu_action(action, ui.ctx()),
         None => {}
     }
-
-    ui.separator();
-    egui::CollapsingHeader::new("Graph")
-        .default_open(false)
-        .show(ui, |ui| graph_panel(app, ui));
 }
 
-fn graph_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
+pub fn graph_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     let (nodes, edges) = {
         let graph = app.workspace.graph().lock().unwrap();
         let nodes: Vec<ViewNode> = graph
@@ -160,11 +131,11 @@ fn graph_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     );
     let (response, painter) = ui.allocate_painter(size, Sense::click_and_drag());
     let rect = response.rect;
-    painter.rect_filled(rect, 2.0, Color32::from_rgb(0x17, 0x19, 0x1D));
+    painter.rect_filled(rect, RADII.small, PALETTE.background);
     painter.rect_stroke(
         rect,
-        2.0,
-        Stroke::new(1.0_f32, Color32::from_rgb(0x35, 0x38, 0x40)),
+        RADII.small,
+        Stroke::new(1.0_f32, PALETTE.border),
         egui::StrokeKind::Inside,
     );
     app.graph_view.fit_if_requested(rect, &visible);
@@ -211,7 +182,7 @@ fn graph_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
                 .is_some_and(|selected| selected == edge.from || selected == edge.to);
             let color = if in_blast && ripple_t < 1.0 {
                 let alpha = ((1.0 - ripple_t) * 180.0) as u8;
-                Color32::from_rgba_unmultiplied(0xFF, 0xA0, 0x30, alpha)
+                theme::with_alpha(PALETTE.impact, alpha)
             } else if selected_edge {
                 edge_color(edge.kind).gamma_multiply(1.3)
             } else {
@@ -260,13 +231,13 @@ fn graph_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
                 if let Some(&distance) = app.impact_nodes.get(&node.id) {
                     let distance_factor = 1.0 / (1.0 + distance as f32 * 0.6);
                     let intensity = (1.0 - ripple_t) * distance_factor;
-                    let (red, green, blue) = if distance == 0 {
-                        (0xFF, 0x8C, 0x00u8)
+                    let ring_color = if distance == 0 {
+                        PALETTE.impact
                     } else {
-                        (0xDC, 0x4A, 0x2A)
+                        PALETTE.impact_secondary
                     };
                     let alpha = (intensity * 255.0).clamp(0.0, 255.0) as u8;
-                    let ring = Color32::from_rgba_unmultiplied(red, green, blue, alpha);
+                    let ring = theme::with_alpha(ring_color, alpha);
                     painter.circle_stroke(
                         position,
                         6.0 + intensity * 12.0,
@@ -278,11 +249,7 @@ fn graph_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
             let selected = app.graph_view.selected == Some(node.id);
             let is_hovered = hovered == Some(node.id);
             if selected {
-                painter.circle_stroke(
-                    position,
-                    10.0,
-                    Stroke::new(2.0_f32, Color32::from_rgb(0xF2, 0xF2, 0xF2)),
-                );
+                painter.circle_stroke(position, 10.0, Stroke::new(2.0_f32, PALETTE.text_strong));
             }
             painter.circle_filled(
                 position,
@@ -295,9 +262,9 @@ fn graph_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
                 || !app.graph_view.search.trim().is_empty()
                 || app.graph_view.zoom() >= 0.68;
             if show_label {
-                let font = FontId::proportional(if selected { 12.0 } else { 10.5 });
+                let font = theme::graph_label_font(selected);
                 let text_color = if selected {
-                    Color32::WHITE
+                    PALETTE.text_strong
                 } else {
                     ui.visuals().text_color()
                 };
@@ -346,7 +313,7 @@ fn graph_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
             rect.center(),
             Align2::CENTER_CENTER,
             "No matching graph nodes",
-            FontId::proportional(12.0),
+            theme::graph_label_font(true),
             ui.visuals().weak_text_color(),
         );
     }
@@ -451,13 +418,13 @@ pub fn editor_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
         ui.monospace(&file);
         if app.workspace.is_dirty() {
-            ui.colored_label(Color32::from_rgb(0xE5, 0xC0, 0x7B), "modified");
+            ui.colored_label(PALETTE.warning, "modified");
         }
     });
     ui.separator();
 
     let mut layouter = |ui: &egui::Ui, text: &str, wrap_width: f32| {
-        let mut job = crate::highlight::layout(text, language, FontId::monospace(13.0));
+        let mut job = crate::highlight::layout(text, language, theme::editor_font());
         job.wrap.max_width = wrap_width;
         ui.fonts(|f| f.layout_job(job))
     };
@@ -532,6 +499,13 @@ pub fn editor_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         app.sync_code_to_graph();
         app.editor_tabs.set_dirty(&file, app.workspace.is_dirty());
     }
+    let cursor_char = output
+        .state
+        .cursor
+        .char_range()
+        .map_or(0, |range| range.primary.index);
+    app.editor_cursor
+        .update(app.workspace.buffer(), cursor_char);
 }
 
 /// Right panel: the agent swarm console.
@@ -623,7 +597,7 @@ fn author_run_button(
     if app.author_live_run_confirming {
         ui.horizontal(|ui| {
             ui.colored_label(
-                Color32::from_rgb(0xF4, 0x87, 0x71),
+                PALETTE.error,
                 "This writes to the working tree. Run for real?",
             );
             if ui.button("Confirm").clicked() {
@@ -653,7 +627,7 @@ fn author_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     // regardless of Dry run: never blocks either button.
     if app.author_worktree_is_dirty() {
         ui.colored_label(
-            Color32::from_rgb(0xE5, 0xC0, 0x7B),
+            PALETTE.warning,
             "Working tree has uncommitted changes (advisory — Run will not be blocked).",
         );
         ui.add_space(4.0);
@@ -702,7 +676,7 @@ fn author_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
 
     if let Some(error) = app.author_last_error.clone() {
         ui.add_space(6.0);
-        ui.colored_label(Color32::from_rgb(0xF4, 0x87, 0x71), error);
+        ui.colored_label(PALETTE.error, error);
     }
     if let Some(result) = app.author_last_result.clone() {
         ui.add_space(6.0);
@@ -1083,9 +1057,9 @@ fn agent_console(app: &mut AetherApp, ui: &mut egui::Ui) {
                                 crate::project::ValidationStatus::Passed
                                     | crate::project::ValidationStatus::Skipped
                             ) {
-                                Color32::from_rgb(0x4E, 0xC9, 0xB0)
+                                PALETTE.success
                             } else {
-                                Color32::from_rgb(0xF4, 0x87, 0x71)
+                                PALETTE.error
                             };
                             ui.horizontal_wrapped(|ui| {
                                 ui.colored_label(color, step.status.label());
@@ -1118,7 +1092,7 @@ fn agent_console(app: &mut AetherApp, ui: &mut egui::Ui) {
                 ui.horizontal_wrapped(|ui| {
                     ui.strong(format!("[{who}]"));
                     if is_spec || is_built {
-                        ui.colored_label(Color32::from_rgb(0x4E, 0xC9, 0xB0), body);
+                        ui.colored_label(PALETTE.success, body);
                     } else {
                         ui.label(body);
                     }
@@ -1225,7 +1199,7 @@ fn extension_generate_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
             match source.capability_delta(&recipe) {
                 Ok(delta) if delta.is_empty() => {
                     ui.colored_label(
-                        Color32::from_rgb(0x4E, 0xC9, 0xB0),
+                        PALETTE.success,
                         "Capability scope unchanged from reviewed reference",
                     );
                 }
@@ -1233,7 +1207,7 @@ fn extension_generate_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
                     ui.strong("Capability changes from reviewed reference");
                     for capability in delta.added {
                         ui.colored_label(
-                            Color32::from_rgb(0xF4, 0x87, 0x71),
+                            PALETTE.error,
                             format!("+ {}", extension_capability_label(&capability)),
                         );
                     }
@@ -1243,7 +1217,7 @@ fn extension_generate_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
                 }
                 Err(error) => {
                     ui.colored_label(
-                        Color32::from_rgb(0xF4, 0x87, 0x71),
+                        PALETTE.error,
                         format!("Invalid marketplace adaptation: {error}"),
                     );
                 }
@@ -1255,10 +1229,7 @@ fn extension_generate_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         ui.monospace(&recipe.id);
         match recipe.digest() {
             Ok(digest) => ui.monospace(format!("SHA-256 {digest}")),
-            Err(error) => ui.colored_label(
-                Color32::from_rgb(0xF4, 0x87, 0x71),
-                format!("Invalid recipe: {error}"),
-            ),
+            Err(error) => ui.colored_label(PALETTE.error, format!("Invalid recipe: {error}")),
         };
         ui.label("Requested capabilities");
         if recipe.capabilities.is_empty() {
@@ -1282,7 +1253,7 @@ fn extension_generate_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
                         ui.monospace(json);
                     }
                     Err(error) => {
-                        ui.colored_label(Color32::from_rgb(0xF4, 0x87, 0x71), error.to_string());
+                        ui.colored_label(PALETTE.error, error.to_string());
                     }
                 });
         });
@@ -1325,10 +1296,7 @@ fn extension_marketplace_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         }
     });
     if let Err(error) = catalog_digest {
-        ui.colored_label(
-            Color32::from_rgb(0xF4, 0x87, 0x71),
-            format!("Invalid catalog: {error}"),
-        );
+        ui.colored_label(PALETTE.error, format!("Invalid catalog: {error}"));
         return;
     }
 
@@ -1336,7 +1304,7 @@ fn extension_marketplace_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         Ok(records) => records,
         Err(error) => {
             ui.colored_label(
-                Color32::from_rgb(0xF4, 0x87, 0x71),
+                PALETTE.error,
                 format!("Could not read installed extensions: {error}"),
             );
             return;
@@ -1349,10 +1317,7 @@ fn extension_marketplace_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
                 installed.insert(record.recipe.id);
             }
             Err(error) => {
-                ui.colored_label(
-                    Color32::from_rgb(0xF4, 0x87, 0x71),
-                    format!("Corrupt extension record: {error}"),
-                );
+                ui.colored_label(PALETTE.error, format!("Corrupt extension record: {error}"));
                 return;
             }
         }
@@ -1401,10 +1366,7 @@ fn extension_marketplace_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
                             ui.monospace(json);
                         }
                         Err(error) => {
-                            ui.colored_label(
-                                Color32::from_rgb(0xF4, 0x87, 0x71),
-                                error.to_string(),
-                            );
+                            ui.colored_label(PALETTE.error, error.to_string());
                         }
                     }
                 });
@@ -1435,10 +1397,7 @@ fn extension_installed_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     let records = match app.workspace.extension_records() {
         Ok(records) => records,
         Err(error) => {
-            ui.colored_label(
-                Color32::from_rgb(0xF4, 0x87, 0x71),
-                format!("Could not read extensions: {error}"),
-            );
+            ui.colored_label(PALETTE.error, format!("Could not read extensions: {error}"));
             return;
         }
     };
@@ -1451,10 +1410,7 @@ fn extension_installed_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         let record = match record {
             Ok(record) => record,
             Err(error) => {
-                ui.colored_label(
-                    Color32::from_rgb(0xF4, 0x87, 0x71),
-                    format!("Corrupt extension record: {error}"),
-                );
+                ui.colored_label(PALETTE.error, format!("Corrupt extension record: {error}"));
                 continue;
             }
         };
@@ -1492,10 +1448,7 @@ fn extension_installed_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
                     app.extension_remove_confirmation.as_deref() == Some(extension_id.as_str());
                 if confirming {
                     ui.horizontal(|ui| {
-                        ui.colored_label(
-                            Color32::from_rgb(0xF4, 0x87, 0x71),
-                            "Restore projections and remove?",
-                        );
+                        ui.colored_label(PALETTE.error, "Restore projections and remove?");
                         if ui.add_enabled(!busy, egui::Button::new("Remove")).clicked() {
                             pending = Some(PendingExtensionAction::Remove(extension_id.clone()));
                         }
@@ -1582,10 +1535,7 @@ fn render_extension_contributions(
                     PanelView::File { path } => {
                         match app.workspace.read_extension_file(path) {
                             Ok(contents) => ui.monospace(contents),
-                            Err(error) => ui.colored_label(
-                                Color32::from_rgb(0xF4, 0x87, 0x71),
-                                error.to_string(),
-                            ),
+                            Err(error) => ui.colored_label(PALETTE.error, error.to_string()),
                         };
                     }
                 };
@@ -1678,7 +1628,7 @@ pub fn debugger_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
                 for (seq, desc, intervened) in &app.py_steps {
                     let text = format!("step {seq:4}: {desc}");
                     if *intervened {
-                        ui.colored_label(Color32::from_rgb(0xFF, 0xA0, 0x30), text);
+                        ui.colored_label(PALETTE.impact, text);
                     } else {
                         ui.monospace(text);
                     }
@@ -1723,7 +1673,7 @@ pub fn debugger_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
             for step in &branch.trace.steps {
                 let text = format!("step {}: {}", step.seq, step.description);
                 if step.intervened {
-                    ui.colored_label(Color32::from_rgb(0xDC, 0xDC, 0xAA), text);
+                    ui.colored_label(PALETTE.syntax_function, text);
                 } else {
                     ui.label(text);
                 }

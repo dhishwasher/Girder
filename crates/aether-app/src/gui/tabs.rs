@@ -458,7 +458,7 @@ pub(crate) fn show(state: &mut EditorTabs, ui: &mut egui::Ui) -> Option<TabActio
         });
 
     if let Some(error) = state.persistence_error() {
-        ui.colored_label(egui::Color32::LIGHT_RED, error);
+        ui.colored_label(crate::gui::theme::PALETTE.error, error);
     }
     action
 }

@@ -3,7 +3,10 @@
 use crate::graph_view::GraphViewState;
 use crate::gui::context_menus::ContextMenuState;
 use crate::gui::file_tree::FileTreeState;
+use crate::gui::status_bar::{self, CursorPosition};
 use crate::gui::tabs::{self, EditorTabs};
+use crate::gui::theme::{self, PALETTE, SPACING};
+use crate::gui::workbench::{self, WorkbenchMode};
 use crate::panels;
 use crate::project::{
     apply_authored_guarantees, apply_reviewed_collaboration_projection, author, build_context_json,
@@ -103,6 +106,8 @@ pub struct AetherApp {
     pub(crate) file_tree: FileTreeState,
     pub(crate) editor_tabs: EditorTabs,
     pub(crate) context_menus: ContextMenuState,
+    pub(crate) editor_cursor: CursorPosition,
+    pub(crate) workbench_mode: WorkbenchMode,
     pub(crate) graph_view: GraphViewState,
     pub(crate) workspace_status: String,
     pub(crate) workspace_status_is_error: bool,
@@ -189,7 +194,7 @@ impl AetherApp {
         cc: &eframe::CreationContext<'_>,
         initial_root: impl AsRef<Path>,
     ) -> std::io::Result<Self> {
-        cc.egui_ctx.set_visuals(egui::Visuals::dark());
+        theme::install(&cc.egui_ctx);
 
         let mut workspace = ProjectWorkspace::open(initial_root)?;
         let marketplace_catalog =
@@ -208,6 +213,8 @@ impl AetherApp {
             file_tree,
             editor_tabs,
             context_menus: ContextMenuState::default(),
+            editor_cursor: CursorPosition::default(),
+            workbench_mode: WorkbenchMode::default(),
             graph_view: GraphViewState::default(),
             workspace_status,
             workspace_status_is_error: false,
@@ -2044,14 +2051,13 @@ impl eframe::App for AetherApp {
                     (g.node_count(), g.edge_count())
                 };
                 ui.label(format!("semantic graph: {n} nodes · {e} edges"));
+                ui.separator();
+                workbench::mode_switcher(ui, &mut self.workbench_mode);
                 if self.workspace.is_dirty() {
-                    ui.colored_label(egui::Color32::from_rgb(0xE5, 0xC0, 0x7B), "modified");
+                    ui.colored_label(PALETTE.warning, "modified");
                 }
                 if self.workspace.has_pending_agent_changes() {
-                    ui.colored_label(
-                        egui::Color32::from_rgb(0x4E, 0xC9, 0xB0),
-                        "agent changes pending",
-                    );
+                    ui.colored_label(PALETTE.success, "agent changes pending");
                 }
             });
             ui.horizontal(|ui| {
@@ -2105,10 +2111,7 @@ impl eframe::App for AetherApp {
                 }
                 ui.separator();
                 if self.workspace_status_is_error {
-                    ui.colored_label(
-                        egui::Color32::from_rgb(0xF4, 0x87, 0x71),
-                        &self.workspace_status,
-                    );
+                    ui.colored_label(PALETTE.error, &self.workspace_status);
                 } else {
                     ui.label(&self.workspace_status);
                 }
@@ -2133,12 +2136,28 @@ impl eframe::App for AetherApp {
             .max_width(agents_max)
             .show(ctx, |ui| panels::agents_panel(self, ui));
 
+        let node_count = self.workspace.graph().lock().unwrap().node_count();
+        egui::TopBottomPanel::bottom("status_bar")
+            .exact_height(SPACING.xl + SPACING.xs)
+            .show(ctx, |ui| {
+                status_bar::show(
+                    ui,
+                    self.editor_tabs.active_path(),
+                    self.editor_cursor,
+                    self.file_tree.is_indexing(),
+                    node_count,
+                );
+            });
+
         egui::TopBottomPanel::bottom("debugger")
             .resizable(true)
             .default_height(200.0)
             .show(ctx, |ui| panels::debugger_panel(self, ui));
 
-        egui::CentralPanel::default().show(ctx, |ui| panels::editor_panel(self, ui));
+        egui::CentralPanel::default().show(ctx, |ui| match self.workbench_mode {
+            WorkbenchMode::Editor => panels::editor_panel(self, ui),
+            WorkbenchMode::Graph => panels::graph_panel(self, ui),
+        });
         self.show_context_dialogs(ctx);
     }
 }

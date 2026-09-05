@@ -70,6 +70,10 @@ impl FileTreeState {
         }
     }
 
+    pub(crate) fn is_indexing(&self) -> bool {
+        self.pending_scans > 0
+    }
+
     fn poll_scans(&mut self) {
         loop {
             match self.scan_rx.try_recv() {
@@ -266,7 +270,10 @@ pub(crate) fn show(
         });
 
     if let Some(error) = &state.last_error {
-        ui.colored_label(egui::Color32::LIGHT_RED, format!("Explorer: {error}"));
+        ui.colored_label(
+            crate::gui::theme::PALETTE.error,
+            format!("Explorer: {error}"),
+        );
     }
     action
 }
