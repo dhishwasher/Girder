@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "policy_id": "typescript-support-v1",
+  "method": "five bounded fresh-graph analyses of each pinned TypeScript repository, checking declared graph edges against the resulting artifact and recording determinism, wall clock, and peak RSS",
+  "policy_baseline_commit": "251685e3ba8caf3fd13b7e18c324e74f8d928b23",
+  "corpus": [
+    {
+      "id": "zod-3.23.8",
+      "role": "mid-size-library",
+      "language": "typescript",
+      "artifact": {
+        "bytes": 586431,
+        "format": "tar.gz",
+        "root": "zod-3.23.8",
+        "sha256": "ecd3ac7eb5bac88202b1146c308c8bbd48e63fc64d6d7f14b5577dde5da02c48",
+        "url": "https://github.com/colinhacks/zod/archive/refs/tags/v3.23.8.tar.gz",
+        "version": "3.23.8"
+      },
+      "license": {
+        "files": [
+          "LICENSE"
+        ],
+        "spdx": "MIT"
+      },
+      "sources": {
+        "bytes": 937060,
+        "extensions": [
+          ".ts",
+          ".tsx"
+        ],
+        "files": 165,
+        "manifest_sha256": "a8fc1683c9305317f458fea5e7f9523deec9cf55e30888e72431aa34dc8e637e",
+        "physical_lines": 30448
+      },
+      "semantic_cases": [
+        {
+          "expected_present": true,
+          "file": "src/types.ts",
+          "id": "module-contains-function",
+          "kind": "Contains",
+          "rationale": "A named TypeScript function must be represented as a Function node in its module.",
+          "source": "crate::types",
+          "target": "crate::types::processCreateParams"
+        },
+        {
+          "expected_present": true,
+          "file": "src/types.ts",
+          "id": "module-contains-arrow-function",
+          "kind": "Contains",
+          "rationale": "A const-bound arrow function must be represented as a Function node using the binding name.",
+          "source": "crate::types",
+          "target": "crate::types::handleResult"
+        },
+        {
+          "expected_present": true,
+          "file": "src/types.ts",
+          "id": "module-contains-class",
+          "kind": "Contains",
+          "rationale": "A TypeScript class must be represented as a Type node.",
+          "source": "crate::types",
+          "target": "crate::types::ZodType"
+        },
+        {
+          "expected_present": true,
+          "file": "src/types.ts",
+          "id": "module-contains-interface",
+          "kind": "Contains",
+          "rationale": "A TypeScript interface must be represented as a Type node.",
+          "source": "crate::types",
+          "target": "crate::types::RefinementCtx"
+        },
+        {
+          "expected_present": true,
+          "file": "src/types.ts",
+          "id": "module-contains-type-alias",
+          "kind": "Contains",
+          "rationale": "A TypeScript type alias must be represented as a Type node.",
+          "source": "crate::types",
+          "target": "crate::types::ZodRawShape"
+        },
+        {
+          "expected_present": true,
+          "file": "src/types.ts",
+          "id": "class-contains-method",
+          "kind": "Contains",
+          "rationale": "A class method must be scoped below its class.",
+          "source": "crate::types::ZodType",
+          "target": "crate::types::ZodType::safeParse"
+        },
+        {
+          "expected_present": true,
+          "file": "src/types.ts",
+          "id": "class-inheritance",
+          "kind": "Inherits",
+          "rationale": "A generic class extends clause must resolve to the base class.",
+          "source": "crate::types::ZodString",
+          "target": "crate::types::ZodType"
+        },
+        {
+          "expected_present": true,
+          "file": "src/types.ts",
+          "id": "interface-inheritance",
+          "kind": "Inherits",
+          "rationale": "An interface extends clause must resolve to the base interface.",
+          "source": "crate::types::ZodStringDef",
+          "target": "crate::types::ZodTypeDef"
+        },
+        {
+          "expected_present": true,
+          "file": "src/types.ts",
+          "id": "class-implementation",
+          "kind": "Inherits",
+          "rationale": "A class implements clause uses the shared Inherits edge to its interface.",
+          "source": "crate::types::ParseInputLazyPath",
+          "target": "crate::helpers::parseUtil::ParseInput"
+        },
+        {
+          "expected_present": true,
+          "file": "src/types.ts",
+          "id": "same-file-call",
+          "kind": "Calls",
+          "rationale": "A method call to a module-local arrow function must resolve.",
+          "source": "crate::types::ZodType::safeParse",
+          "target": "crate::types::handleResult"
+        },
+        {
+          "expected_present": true,
+          "file": "src/types.ts",
+          "id": "named-import-cross-file-call",
+          "kind": "Calls",
+          "rationale": "A call through a named ES import must resolve to the imported function.",
+          "source": "crate::types::ZodString::_parse",
+          "target": "crate::helpers::parseUtil::addIssueToContext"
+        },
+        {
+          "expected_present": false,
+          "file": "src/types.ts",
+          "id": "named-import-not-duplicate-tree",
+          "kind": "Calls",
+          "rationale": "The relative named import in src must not resolve to the duplicate deno implementation.",
+          "source": "crate::types::ZodString::_parse",
+          "target": "crate::deno::lib::helpers::parseUtil::addIssueToContext"
+        },
+        {
+          "expected_present": true,
+          "file": "src/__tests__/base.test.ts",
+          "id": "jest-test-discovery",
+          "kind": "Contains",
+          "rationale": "A Jest test callback must be represented as an is_test Function node under its source module.",
+          "source": "crate::__tests__::base.test",
+          "target": "crate::__tests__::base.test::type guard"
+        },
+        {
+          "expected_present": false,
+          "file": "src/__tests__/base.test.ts",
+          "id": "jest-test-not-unrelated-title",
+          "kind": "Contains",
+          "rationale": "Test discovery must not invent a title that is not present in the file.",
+          "source": "crate::__tests__::base.test",
+          "target": "crate::__tests__::base.test::not a real test"
+        }
+      ]
+    },
+    {
+      "id": "type-fest-4.26.1",
+      "role": "heavy-type-level-code",
+      "language": "typescript",
+      "artifact": {
+        "bytes": 1086277,
+        "format": "tar.gz",
+        "root": "type-fest-4.26.1",
+        "sha256": "41acbfd36aafc8bbfd774846462e8af7e3e62a7bdb59ddc7fa6684d7eb726735",
+        "url": "https://github.com/sindresorhus/type-fest/archive/refs/tags/v4.26.1.tar.gz",
+        "version": "4.26.1"
+      },
+      "license": {
+        "files": [
+          "license-mit",
+          "license-cc0"
+        ],
+        "spdx": "MIT OR CC0-1.0"
+      },
+      "sources": {
+        "bytes": 569050,
+        "extensions": [
+          ".ts",
+          ".tsx"
+        ],
+        "files": 310,
+        "manifest_sha256": "edf4fdac702a7b952a6c28b34ca1b60568002505755e0773fbade6f3a018397d",
+        "physical_lines": 18952
+      },
+      "semantic_cases": [
+        {
+          "expected_present": true,
+          "file": "source/conditional-keys.d.ts",
+          "id": "declaration-file-type-alias",
+          "kind": "Contains",
+          "rationale": "A top-level exported type alias in a declaration file must remain retrievable even though ambient declaration semantics are an extension point.",
+          "source": "crate::source::conditional-keys",
+          "target": "crate::source::conditional-keys::ConditionalKeys"
+        },
+        {
+          "expected_present": true,
+          "file": "source/merge-deep.d.ts",
+          "id": "deep-generic-type-alias",
+          "kind": "Contains",
+          "rationale": "A deeply generic conditional type alias must be represented as a Type node.",
+          "source": "crate::source::merge-deep",
+          "target": "crate::source::merge-deep::MergeDeep"
+        },
+        {
+          "expected_present": true,
+          "file": "source/merge-deep.d.ts",
+          "id": "object-type-alias",
+          "kind": "Contains",
+          "rationale": "An exported object-shaped type alias must be represented without requiring runtime code.",
+          "source": "crate::source::merge-deep",
+          "target": "crate::source::merge-deep::MergeDeepOptions"
+        },
+        {
+          "expected_present": true,
+          "file": "source/merge-deep.d.ts",
+          "id": "private-helper-type-alias",
+          "kind": "Contains",
+          "rationale": "Non-exported helper aliases are graph definitions too.",
+          "source": "crate::source::merge-deep",
+          "target": "crate::source::merge-deep::MergeDeepRecordProperty"
+        },
+        {
+          "expected_present": false,
+          "file": "source/merge-deep.d.ts",
+          "id": "type-alias-not-wrong-module",
+          "kind": "Contains",
+          "rationale": "A same-project type from another module must not be attached to merge-deep.",
+          "source": "crate::source::merge-deep",
+          "target": "crate::source::conditional-keys::ConditionalKeys"
+        },
+        {
+          "expected_present": false,
+          "file": "source/conditional-keys.d.ts",
+          "id": "type-alias-not-import-binding",
+          "kind": "Contains",
+          "rationale": "A type-only import binding must not be misclassified as a local type definition.",
+          "source": "crate::source::conditional-keys",
+          "target": "crate::source::conditional-keys::IfNever"
+        }
+      ]
+    }
+  ],
+  "determinism": {
+    "artifact_unique_digests_max": 1,
+    "semantic_unique_digests_max": 1,
+    "unique_node_edge_count_pairs_max": 1
+  },
+  "eligibility": {
+    "rayon_threads": 2,
+    "runs_per_repository": 5
+  },
+  "performance": {
+    "default": {
+      "analyze_max_ms": 30000,
+      "analyze_median_max_ms": 15000,
+      "rss_max_kib": 131072
+    },
+    "graph_artifact_max_bytes": 33554432,
+    "inspect_max_ms": 5000,
+    "sum_of_repository_medians_max_ms": 180000
+  },
+  "semantic": {
+    "false_negatives_max": 0,
+    "false_positives_max": 0,
+    "macro_precision_min": 1.0,
+    "macro_recall_min": 1.0,
+    "micro_precision_min": 1.0,
+    "micro_recall_min": 1.0
+  },
+  "pass_threshold": "all determinism, semantic, wall-clock, peak-RSS, graph-size, and inspect-time limits must pass",
+  "reported_but_not_gated": [
+    "per-run node count, edge count, artifact digest, semantic digest, analyze wall clock, inspect wall clock, and peak RSS",
+    "per-case expected and observed presence with true-positive, true-negative, false-positive, or false-negative classification",
+    "source file count, aggregate bytes, physical lines, and source-manifest digest after extraction"
+  ]
+}
