@@ -44,3 +44,6 @@ tracing-subscriber = { workspace = true }
 
 eframe = { workspace = true, optional = true }
 egui = { workspace = true, optional = true }
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = { version = "0.1.31", default-features = false }

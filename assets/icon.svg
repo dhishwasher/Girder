@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Girder application icon</title>
+  <desc id="desc">A cyan structural frame with white crossed braces on a dark rounded square.</desc>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="#111827"/>
+  <path fill="#38bdf8" d="M96 128h48v256H96zM368 128h48v256h-48z"/>
+  <path fill="#f8fafc" d="m145 157 34-29 188 227-34 29zm188-29 34 29-188 227-34-29z"/>
+  <rect x="72" y="80" width="368" height="72" rx="20" fill="#38bdf8"/>
+  <rect x="72" y="360" width="368" height="72" rx="20" fill="#38bdf8"/>
+</svg>

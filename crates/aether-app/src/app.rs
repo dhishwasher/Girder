@@ -2155,8 +2155,12 @@ pub fn launch(initial_root: Option<PathBuf>) -> eframe::Result<()> {
         .map(Ok)
         .unwrap_or_else(std::env::current_dir)
         .map_err(|error| eframe::Error::AppCreation(Box::new(error)))?;
+    let icon = eframe::icon_data::from_png_bytes(include_bytes!("../../../assets/icon-256.png"))
+        .expect("bundled Girder icon must be a valid PNG");
     let native_options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([1280.0, 800.0]),
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([1280.0, 800.0])
+            .with_icon(icon),
         ..Default::default()
     };
     eframe::run_native(
