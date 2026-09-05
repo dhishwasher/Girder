@@ -39,6 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       prerelease: ${{ steps.versions.outputs.prerelease }}
+      version: ${{ steps.versions.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
@@ -49,6 +50,7 @@ jobs:
           set -euo pipefail
           cargo_version="$(python3 -c 'import tomllib; print(tomllib.load(open("Cargo.toml","rb"))["workspace"]["package"]["version"])')"
           npm_version="$(python3 -c 'import json; print(json.load(open("npm/package.json"))["version"])')"
+          echo "version=$cargo_version" >> "$GITHUB_OUTPUT"
           echo "Cargo.toml:       $cargo_version"
           echo "npm/package.json: $npm_version"
 
@@ -114,7 +116,7 @@ jobs:
         # Default features only: the headless CLI and the MCP server. The GUI
         # needs system graphics libraries and is not what a released binary is
         # for; live providers are an opt-in rebuild.
-        run: cargo build --release --locked -p aether-app --target ${{ matrix.target }}
+        run: cargo build --release --locked --workspace --target ${{ matrix.target }}
 
       # `macos-latest` is Apple Silicon, so the Intel artifact is
       # cross-compiled here and cannot execute without Rosetta 2 — which is
@@ -192,6 +194,36 @@ jobs:
             cp "target/${{ matrix.target }}/release/girder" .
             tar czf "dist/${name}.tar.gz" girder LICENSE README.md
           fi
+
+      - name: Ensure NSIS is available
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+            choco install nsis --yes --no-progress
+          }
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+            throw "makensis is unavailable after installing NSIS"
+          }
+          makensis /VERSION
+
+      - name: Build per-user Windows installer
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo_root="$(pwd -W)"
+          version="${{ needs.preflight.outputs.version }}"
+          installer="dist/Girder-${version}-setup.exe"
+          makensis \
+            "/DVERSION=$version" \
+            "/DBINARY_PATH=$repo_root/target/${{ matrix.target }}/release/girder.exe" \
+            "/DICON_PATH=$repo_root/assets/icon.ico" \
+            "/DLICENSE_PATH=$repo_root/LICENSE" \
+            "/DOUTPUT_PATH=$repo_root/$installer" \
+            packaging/windows/Girder.nsi
+          test -s "$installer"
+          echo "produced $installer"
 
       # Checksums are generated per target rather than centrally so each one
       # is computed on the machine that produced the artifact.

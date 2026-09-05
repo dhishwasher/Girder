@@ -32,6 +32,19 @@ key is required — the default AI provider is an offline `MockProvider`. The GU
 and live AI providers are opt-in Cargo features not included in a plain
 install; see [The GUI](#the-gui) and [Local-first AI](#local-first-ai) below.
 
+### Windows installer
+
+Each Windows release also includes `Girder-<version>-setup.exe`. It installs
+for the current user under `%LOCALAPPDATA%\Programs\Girder`, adds Girder to the
+user `PATH`, creates a Start Menu shortcut, and does not request administrator
+access. Open a new terminal after installation so it sees the updated `PATH`.
+
+The installer is **not code-signed yet**, so Windows SmartScreen will warn on
+first run. After downloading the installer from the GitHub release, double-click
+it, choose **More info** on the “Windows protected your PC” dialog, verify that
+the app is Girder and the publisher is shown as unknown, then choose **Run
+anyway**. If those details do not match, cancel instead.
+
 ## Search accuracy
 
 Exact-symbol lookup is Girder's strongest search path. Natural-language intent
