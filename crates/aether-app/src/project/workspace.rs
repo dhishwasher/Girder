@@ -32,6 +32,7 @@ pub(crate) struct ProjectFile {
 }
 
 impl ProjectFile {
+    #[cfg(test)]
     pub(crate) fn relative(&self) -> &str {
         &self.relative
     }

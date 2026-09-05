@@ -1,6 +1,7 @@
 //! The egui/eframe application shell: state + window bootstrap + panel layout.
 
 use crate::graph_view::GraphViewState;
+use crate::gui::file_tree::FileTreeState;
 use crate::panels;
 use crate::project::{
     apply_authored_guarantees, apply_reviewed_collaboration_projection, author, build_context_json,
@@ -97,7 +98,7 @@ pub struct AetherApp {
     pub(crate) router: aether_ai::Router,
     pub(crate) workspace: ProjectWorkspace,
     pub(crate) project_path_input: String,
-    pub(crate) file_filter: String,
+    pub(crate) file_tree: FileTreeState,
     pub(crate) graph_view: GraphViewState,
     pub(crate) workspace_status: String,
     pub(crate) workspace_status_is_error: bool,
@@ -192,13 +193,14 @@ impl AetherApp {
         let project_path_input = workspace.root().display().to_string();
         let workspace_status = workspace_summary(&workspace);
         let py_file = active_python_path(&workspace).unwrap_or_default();
+        let file_tree = FileTreeState::new(workspace.root().to_path_buf());
 
         Ok(AetherApp {
             rt: tokio::runtime::Runtime::new().expect("tokio runtime"),
             router: aether_ai::default_router(),
             workspace,
             project_path_input,
-            file_filter: String::new(),
+            file_tree,
             graph_view: GraphViewState::default(),
             workspace_status,
             workspace_status_is_error: false,
@@ -293,7 +295,7 @@ impl AetherApp {
             Ok(workspace) => {
                 self.workspace = workspace;
                 self.project_path_input = self.workspace.root().display().to_string();
-                self.file_filter.clear();
+                self.file_tree = FileTreeState::new(self.workspace.root().to_path_buf());
                 self.graph_view.reset_for_project();
                 self.transcript.clear();
                 self.impact_nodes.clear();
@@ -391,6 +393,13 @@ impl AetherApp {
                 self.set_workspace_status(format!("Opened {relative}"));
             }
             Err(error) => self.set_workspace_error(format!("File switch failed: {error}")),
+        }
+    }
+
+    pub(crate) fn preview_file(&mut self, relative: &str) {
+        self.select_file(relative);
+        if !self.workspace_status_is_error {
+            self.set_workspace_status(format!("Previewing {relative}"));
         }
     }
 
@@ -1662,6 +1671,8 @@ impl eframe::App for AetherApp {
                     match ProjectWorkspace::open(root) {
                         Ok(workspace) => {
                             self.workspace = workspace;
+                            self.file_tree =
+                                FileTreeState::new(self.workspace.root().to_path_buf());
                             self.py_file = active_python_path(&self.workspace).unwrap_or_default();
                             self.graph_view.reset_for_project();
                             self.collaboration_status = summary;

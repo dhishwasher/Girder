@@ -2,6 +2,7 @@
 
 use crate::app::{AetherApp, AuthorMode, ExtensionPanelView, RightPanel};
 use crate::graph_view::{all_edge_kinds, all_node_kinds, GraphScope, ViewEdge, ViewNode};
+use crate::gui::file_tree::{self, FileTreeAction};
 use crate::project::AuthorEvent;
 use aether_extensions::{
     Capability, CommandAction, Contribution, ExtensionState, PanelLocation, PanelView,
@@ -36,56 +37,17 @@ fn edge_color(kind: EdgeKind) -> Color32 {
 
 /// Left panel: project navigation plus a view of the live semantic graph.
 pub fn workspace_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
-    ui.horizontal(|ui| {
-        ui.strong("Explorer");
-        ui.label(format!("{} files", app.workspace.files().len()));
-    });
-    ui.add(
-        egui::TextEdit::singleline(&mut app.file_filter)
-            .desired_width(f32::INFINITY)
-            .hint_text("Filter files"),
-    );
-
-    let filter = app.file_filter.trim().to_ascii_lowercase();
     let active = app.workspace.active_file().map(str::to_string);
-    let files: Vec<(String, &'static str)> = app
-        .workspace
-        .files()
-        .iter()
-        .filter(|file| filter.is_empty() || file.relative().to_ascii_lowercase().contains(&filter))
-        .map(|file| {
-            let language = match file.language() {
-                aether_builder::Lang::Rust => "RS",
-                aether_builder::Lang::Python => "PY",
-            };
-            (file.relative().to_string(), language)
-        })
-        .collect();
-
-    let explorer_height = if app.graph_view.selected.is_some() {
-        100.0
-    } else {
-        (ui.available_height() * 0.30).clamp(100.0, 220.0)
-    };
-    egui::ScrollArea::vertical()
-        .id_salt("project_files")
-        .max_height(explorer_height)
-        .show(ui, |ui| {
-            for (relative, language) in files {
-                ui.horizontal(|ui| {
-                    ui.monospace(language);
-                    if ui
-                        .selectable_label(active.as_deref() == Some(relative.as_str()), &relative)
-                        .clicked()
-                    {
-                        app.select_file(&relative);
-                    }
-                });
-            }
-        });
+    match file_tree::show(&mut app.file_tree, ui, active.as_deref()) {
+        Some(FileTreeAction::Preview(relative)) => app.preview_file(&relative),
+        Some(FileTreeAction::Open(relative)) => app.select_file(&relative),
+        None => {}
+    }
 
     ui.separator();
-    graph_panel(app, ui);
+    egui::CollapsingHeader::new("Graph")
+        .default_open(false)
+        .show(ui, |ui| graph_panel(app, ui));
 }
 
 fn graph_panel(app: &mut AetherApp, ui: &mut egui::Ui) {

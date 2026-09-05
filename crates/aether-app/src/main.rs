@@ -12,6 +12,8 @@ mod app;
 #[cfg(feature = "gui")]
 mod graph_view;
 #[cfg(feature = "gui")]
+mod gui;
+#[cfg(feature = "gui")]
 mod highlight;
 #[cfg(feature = "gui")]
 mod panels;
