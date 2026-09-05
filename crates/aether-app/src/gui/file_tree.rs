@@ -3,7 +3,7 @@ use ignore::WalkBuilder;
 use std::collections::BTreeMap;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::{self, Receiver, Sender, TryRecvError};
+use std::sync::mpsc::{self, Receiver, Sender};
 use std::time::Duration;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -75,30 +75,25 @@ impl FileTreeState {
     }
 
     fn poll_scans(&mut self) {
-        loop {
-            match self.scan_rx.try_recv() {
-                Ok(message) => {
-                    self.pending_scans = self.pending_scans.saturating_sub(1);
-                    match message.result {
-                        Ok(children) => {
-                            for child in children.iter().filter(|child| child.is_dir) {
-                                self.directories.entry(child.relative.clone()).or_default();
-                            }
-                            if let Some(directory) = self.directories.get_mut(&message.relative) {
-                                directory.children = children;
-                                directory.loaded = true;
-                                directory.loading = false;
-                            }
-                        }
-                        Err(error) => {
-                            if let Some(directory) = self.directories.get_mut(&message.relative) {
-                                directory.loading = false;
-                            }
-                            self.last_error = Some(error.to_string());
-                        }
+        while let Ok(message) = self.scan_rx.try_recv() {
+            self.pending_scans = self.pending_scans.saturating_sub(1);
+            match message.result {
+                Ok(children) => {
+                    for child in children.iter().filter(|child| child.is_dir) {
+                        self.directories.entry(child.relative.clone()).or_default();
+                    }
+                    if let Some(directory) = self.directories.get_mut(&message.relative) {
+                        directory.children = children;
+                        directory.loaded = true;
+                        directory.loading = false;
                     }
                 }
-                Err(TryRecvError::Empty | TryRecvError::Disconnected) => break,
+                Err(error) => {
+                    if let Some(directory) = self.directories.get_mut(&message.relative) {
+                        directory.loading = false;
+                    }
+                    self.last_error = Some(error.to_string());
+                }
             }
         }
     }
