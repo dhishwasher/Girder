@@ -1,3 +1,4 @@
+use crate::gui::context_menus::{self, FileMenuAction};
 use ignore::WalkBuilder;
 use std::collections::BTreeMap;
 use std::io;
@@ -28,6 +29,7 @@ struct ScanResult {
 pub(crate) enum FileTreeAction {
     Preview(String),
     Open(String),
+    Menu(FileMenuAction),
 }
 
 pub(crate) struct FileTreeState {
@@ -158,6 +160,7 @@ impl FileTreeState {
                 let expanded = directory.is_some_and(|directory| directory.expanded);
                 let loading = directory.is_some_and(|directory| directory.loading);
                 let mut toggle = false;
+                let mut menu_action = None;
                 ui.horizontal(|ui| {
                     ui.add_space(depth as f32 * 12.0);
                     let marker = if loading {
@@ -167,14 +170,23 @@ impl FileTreeState {
                     } else {
                         "▸"
                     };
-                    if ui
+                    let response = ui
                         .selectable_label(false, format!("{marker} {name}"))
-                        .on_hover_text(&normalized)
-                        .clicked()
-                    {
+                        .on_hover_text(&normalized);
+                    if response.clicked() {
                         toggle = true;
                     }
+                    menu_action = context_menus::file_entry_menu(&response, &normalized, true);
                 });
+                if let Some(menu) = menu_action {
+                    if matches!(menu, FileMenuAction::Open { .. }) {
+                        if !expanded {
+                            self.toggle_directory(&entry.relative);
+                        }
+                    } else {
+                        action = Some(FileTreeAction::Menu(menu));
+                    }
+                }
                 if toggle {
                     self.toggle_directory(&entry.relative);
                 }
@@ -201,7 +213,12 @@ impl FileTreeState {
                 let response = ui
                     .selectable_label(active == Some(normalized.as_str()), label)
                     .on_hover_text(&normalized);
-                if response.double_clicked() {
+                if let Some(menu) = context_menus::file_entry_menu(&response, &normalized, false) {
+                    action = Some(match menu {
+                        FileMenuAction::Open { path, .. } => FileTreeAction::Open(path),
+                        menu => FileTreeAction::Menu(menu),
+                    });
+                } else if response.double_clicked() {
                     self.previewed = None;
                     action = Some(FileTreeAction::Open(normalized.clone()));
                 } else if response.clicked() {

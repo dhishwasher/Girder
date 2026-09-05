@@ -1,6 +1,7 @@
 //! The egui/eframe application shell: state + window bootstrap + panel layout.
 
 use crate::graph_view::GraphViewState;
+use crate::gui::context_menus::ContextMenuState;
 use crate::gui::file_tree::FileTreeState;
 use crate::gui::tabs::{self, EditorTabs};
 use crate::panels;
@@ -101,6 +102,7 @@ pub struct AetherApp {
     pub(crate) project_path_input: String,
     pub(crate) file_tree: FileTreeState,
     pub(crate) editor_tabs: EditorTabs,
+    pub(crate) context_menus: ContextMenuState,
     pub(crate) graph_view: GraphViewState,
     pub(crate) workspace_status: String,
     pub(crate) workspace_status_is_error: bool,
@@ -205,6 +207,7 @@ impl AetherApp {
             project_path_input,
             file_tree,
             editor_tabs,
+            context_menus: ContextMenuState::default(),
             graph_view: GraphViewState::default(),
             workspace_status,
             workspace_status_is_error: false,
@@ -2136,6 +2139,7 @@ impl eframe::App for AetherApp {
             .show(ctx, |ui| panels::debugger_panel(self, ui));
 
         egui::CentralPanel::default().show(ctx, |ui| panels::editor_panel(self, ui));
+        self.show_context_dialogs(ctx);
     }
 }
 

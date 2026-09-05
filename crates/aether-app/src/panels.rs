@@ -2,6 +2,7 @@
 
 use crate::app::{AetherApp, AuthorMode, ExtensionPanelView, RightPanel};
 use crate::graph_view::{all_edge_kinds, all_node_kinds, GraphScope, ViewEdge, ViewNode};
+use crate::gui::context_menus::{self, EditorMenuAction};
 use crate::gui::file_tree::{self, FileTreeAction};
 use crate::gui::tabs;
 use crate::project::AuthorEvent;
@@ -42,6 +43,7 @@ pub fn workspace_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     match file_tree::show(&mut app.file_tree, ui, active.as_deref()) {
         Some(FileTreeAction::Preview(relative)) => app.preview_file(&relative),
         Some(FileTreeAction::Open(relative)) => app.select_file(&relative),
+        Some(FileTreeAction::Menu(action)) => app.handle_file_menu_action(action, ui.ctx()),
         None => {}
     }
 
@@ -464,7 +466,7 @@ pub fn editor_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         && app.swarm_rx.is_none()
         && !app.extension_busy();
     let editor_jump = app.editor_jump.take();
-    let output = egui::ScrollArea::vertical()
+    let mut output = egui::ScrollArea::vertical()
         .show(ui, |ui| {
             ui.add_enabled_ui(editable, |ui| {
                 let mut output = egui::TextEdit::multiline(app.workspace.buffer_mut())
@@ -498,7 +500,34 @@ pub fn editor_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
         })
         .inner;
 
-    if output.response.changed() {
+    let cursor_range = output.state.cursor.char_range();
+    let cursor_char = cursor_range.map_or(0, |range| range.primary.index);
+    let has_selection = cursor_range.is_some_and(|range| range.primary != range.secondary);
+    let menu_action = context_menus::editor_menu(&output.response, has_selection);
+    let mut changed = output.response.changed();
+    if let Some(action) = menu_action {
+        if matches!(
+            action,
+            EditorMenuAction::Cut
+                | EditorMenuAction::Copy
+                | EditorMenuAction::Paste
+                | EditorMenuAction::SelectAll
+        ) {
+            match context_menus::apply_text_action(
+                action,
+                &mut output,
+                app.workspace.buffer_mut(),
+                ui.ctx(),
+            ) {
+                Ok(text_changed) => changed |= text_changed,
+                Err(error) => app.set_workspace_error(error),
+            }
+        } else {
+            app.handle_editor_semantic_action(action, cursor_char, ui.ctx());
+        }
+    }
+
+    if changed {
         // Editor → graph: re-parse and diff the edit into the source of truth.
         app.sync_code_to_graph();
         app.editor_tabs.set_dirty(&file, app.workspace.is_dirty());

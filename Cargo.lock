@@ -60,6 +60,7 @@ dependencies = [
  "aether-debugger",
  "aether-extensions",
  "aether-graph",
+ "arboard",
  "eframe",
  "egui",
  "getrandom 0.3.4",

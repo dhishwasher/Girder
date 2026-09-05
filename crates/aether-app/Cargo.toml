@@ -15,7 +15,7 @@ path = "src/main.rs"
 # the `--headless` smoke demo, which exercises every subsystem over stdout.
 # Enable the real egui/wgpu window with `--features gui`.
 default = []
-gui = ["dep:eframe", "dep:egui"]
+gui = ["dep:arboard", "dep:eframe", "dep:egui"]
 # Opt in to the real HTTP-backed OpenAI and Anthropic providers. With this
 # enabled, configured API keys let the router use live models before falling
 # back to the offline mock.
@@ -43,6 +43,7 @@ ring = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
+arboard = { workspace = true, optional = true }
 eframe = { workspace = true, optional = true }
 egui = { workspace = true, optional = true }
 
