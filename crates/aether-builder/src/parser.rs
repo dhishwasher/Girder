@@ -7,6 +7,8 @@ use tree_sitter::{Language, Parser, Tree};
 pub enum Lang {
     Rust,
     Python,
+    TypeScript,
+    Tsx,
 }
 
 impl Lang {
@@ -15,6 +17,8 @@ impl Lang {
         match path.rsplit('.').next() {
             Some("rs") => Some(Lang::Rust),
             Some("py") => Some(Lang::Python),
+            Some("ts" | "mts" | "cts") => Some(Lang::TypeScript),
+            Some("tsx") => Some(Lang::Tsx),
             _ => None,
         }
     }
@@ -23,13 +27,20 @@ impl Lang {
         match self {
             Lang::Rust => "rust",
             Lang::Python => "python",
+            Lang::TypeScript | Lang::Tsx => "typescript",
         }
+    }
+
+    pub fn is_typescript(self) -> bool {
+        matches!(self, Lang::TypeScript | Lang::Tsx)
     }
 
     fn ts_language(self) -> Language {
         match self {
             Lang::Rust => tree_sitter_rust::language(),
             Lang::Python => tree_sitter_python::language(),
+            Lang::TypeScript => tree_sitter_typescript::language_typescript(),
+            Lang::Tsx => tree_sitter_typescript::language_tsx(),
         }
     }
 }

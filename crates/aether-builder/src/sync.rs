@@ -147,7 +147,19 @@ fn follow_reexports(start: String, reexports: &HashMap<String, Vec<String>>) -> 
             return None;
         }
         match reexports.get(&current) {
-            None => return Some(current),
+            None => {
+                let Some((module, symbol)) = current.rsplit_once("::") else {
+                    return Some(current);
+                };
+                let wildcard = format!("{module}::*");
+                match reexports.get(&wildcard) {
+                    Some(targets) if targets.len() == 1 => {
+                        current = format!("{}::{symbol}", targets[0]);
+                    }
+                    Some(_) => return None,
+                    None => return Some(current),
+                }
+            }
             Some(targets) if targets.len() == 1 => current.clone_from(&targets[0]),
             Some(_) => return None,
         }
@@ -173,8 +185,12 @@ fn resolve_local_call_alias(
         .iter()
         .filter(|import| import.local == callee)
         .filter_map(|import| {
-            normalize_rust_import_target(file, &module, &import.target)
-                .map(|target| (target, last_path_segment(&import.target) != callee))
+            normalize_rust_import_target(file, &module, &import.target).map(|target| {
+                (
+                    target,
+                    import.exact || last_path_segment(&import.target) != callee,
+                )
+            })
         })
         .collect::<Vec<_>>();
     targets.sort();
@@ -196,6 +212,7 @@ fn resolve_local_call_alias(
 
 fn resolve_qualified_reexport(
     file: &str,
+    state: &FileState,
     qualifier: &str,
     callee: &str,
     reexports: &HashMap<String, Vec<String>>,
@@ -208,6 +225,22 @@ fn resolve_qualified_reexport(
         return AliasResolution::NotAliased;
     }
     let module = rust_module_path_for(file);
+    let mut exact_targets = state
+        .rust_imports
+        .iter()
+        .filter(|import| import.exact && import.local == qualifier)
+        .filter_map(|import| normalize_rust_import_target(file, &module, &import.target))
+        .filter_map(|target| follow_reexports(target, reexports))
+        .map(|target| format!("{target}::{callee}"))
+        .filter_map(|target| follow_reexports(target, reexports))
+        .collect::<Vec<_>>();
+    exact_targets.sort();
+    exact_targets.dedup();
+    match exact_targets.as_slice() {
+        [target] => return AliasResolution::Resolved(target.clone()),
+        [] => {}
+        _ => return AliasResolution::Ambiguous,
+    }
     let Some(initial) =
         normalize_rust_import_target(file, &module, &format!("{qualifier}::{callee}"))
     else {
@@ -832,7 +865,7 @@ impl GraphBuilder {
                 let alias = match call.qualifier.as_deref() {
                     None => resolve_local_call_alias(file, state, &call.callee, &reexports),
                     Some(qualifier) => {
-                        resolve_qualified_reexport(file, qualifier, &call.callee, &reexports)
+                        resolve_qualified_reexport(file, state, qualifier, &call.callee, &reexports)
                     }
                 };
                 let chosen = match alias {
@@ -982,9 +1015,23 @@ impl GraphBuilder {
                 .push((module_of(&n.path), n.id));
         }
 
+        let reexports = reexport_index(&self.files);
         let mut added: HashSet<(NodeId, NodeId)> = HashSet::new();
         for state in self.files.values() {
             for inh in &state.inherits {
+                if inh.base.starts_with("crate::") {
+                    let Some(target) = follow_reexports(inh.base.clone(), &reexports) else {
+                        continue;
+                    };
+                    let base_id = NodeId::from_path(&target);
+                    if base_id != inh.sub
+                        && graph.contains(base_id)
+                        && added.insert((inh.sub, base_id))
+                    {
+                        let _ = graph.add_edge(inh.sub, base_id, Edge::new(EdgeKind::Inherits));
+                    }
+                    continue;
+                }
                 let sub_module = match graph.get(inh.sub) {
                     Some(node) => module_of(&node.path),
                     None => continue,

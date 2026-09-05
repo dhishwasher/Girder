@@ -11,6 +11,8 @@ use aether_graph::{Edge, EdgeKind, Node, NodeId, NodeKind, Span};
 use std::collections::{HashMap, HashSet};
 use tree_sitter::{Node as TsNode, Tree};
 
+mod typescript;
+
 /// A callable used to infer the type of a local binding from its return type.
 ///
 /// `let plan = make_plan()?; plan.commit()` records `make_plan` here so the
@@ -163,6 +165,9 @@ pub struct RustImportRef {
     pub local: String,
     pub target: String,
     pub is_reexport: bool,
+    /// TypeScript imports are already normalized to an exact semantic path.
+    /// Rust imports retain their existing contextual normalization behavior.
+    pub exact: bool,
 }
 
 /// Everything extracted from a single file: nodes to upsert, non-call edges to
@@ -196,7 +201,11 @@ impl BuildOutput {
 ///   `app/main.py`       -> `crate::app::main`
 /// A leading `src/` (or `./`) is dropped; remaining path segments become `::`.
 pub fn module_path_for(file: &str) -> String {
-    let no_ext = file.rsplit_once('.').map(|(head, _)| head).unwrap_or(file);
+    let no_ext = [".d.ts", ".d.mts", ".d.cts"]
+        .iter()
+        .find_map(|extension| file.strip_suffix(extension))
+        .or_else(|| file.rsplit_once('.').map(|(head, _)| head))
+        .unwrap_or(file);
     let mut parts: Vec<&str> = no_ext
         .split(['/', '\\'])
         .filter(|p| !p.is_empty() && *p != ".")
@@ -212,6 +221,9 @@ pub fn module_path_for(file: &str) -> String {
 
 /// Extract a [`BuildOutput`] from a parsed tree.
 pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput {
+    if lang.is_typescript() {
+        return typescript::extract(tree, source, file, lang);
+    }
     let module = module_path_for(file);
     let mut out = BuildOutput::default();
 
@@ -272,6 +284,7 @@ fn is_function_kind(lang: Lang, kind: &str) -> bool {
     match lang {
         Lang::Rust => kind == "function_item",
         Lang::Python => kind == "function_definition",
+        Lang::TypeScript | Lang::Tsx => false,
     }
 }
 
@@ -323,6 +336,7 @@ fn is_test_fn(
             has_test_attribute
         }
         Lang::Python => python_test_file(file) && name.starts_with("test"),
+        Lang::TypeScript | Lang::Tsx => false,
     }
 }
 
@@ -444,6 +458,7 @@ fn is_type_kind(lang: Lang, kind: &str) -> bool {
     match lang {
         Lang::Rust => matches!(kind, "struct_item" | "enum_item" | "trait_item"),
         Lang::Python => kind == "class_definition",
+        Lang::TypeScript | Lang::Tsx => false,
     }
 }
 
@@ -694,6 +709,7 @@ fn extract_supertypes(
                 }
             }
         }
+        Lang::TypeScript | Lang::Tsx => {}
     }
 }
 
@@ -760,6 +776,7 @@ fn collect_rust_imports(root: TsNode, source: &str, out: &mut BuildOutput) {
                         local: local.to_string(),
                         target,
                         is_reexport,
+                        exact: false,
                     });
                 }
             }
@@ -772,6 +789,7 @@ fn collect_rust_imports(root: TsNode, source: &str, out: &mut BuildOutput) {
                         local: local.to_string(),
                         target,
                         is_reexport,
+                        exact: false,
                     });
                 }
             }
@@ -839,6 +857,7 @@ fn extract_fields(
             Lang::Rust => descendant.kind() == "field_declaration",
             // For Python we treat assignments in the class body as fields.
             Lang::Python => descendant.kind() == "assignment",
+            Lang::TypeScript | Lang::Tsx => false,
         };
         if !is_field {
             continue;
@@ -987,6 +1006,9 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                         // assume it" fallback.
                         function_locals = Some(bound_names);
                     }
+                    Lang::TypeScript | Lang::Tsx => {
+                        unreachable!("TypeScript call extraction is handled by mapper::typescript")
+                    }
                 }
             }
         }
@@ -1022,6 +1044,9 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 )
             }
             Lang::Python => None,
+            Lang::TypeScript | Lang::Tsx => {
+                unreachable!("TypeScript call extraction is handled by mapper::typescript")
+            }
         };
         let narrowed_scope = match node.kind() {
             "if_expression" | "if_statement" => node.child_by_field_name("consequence"),
@@ -1033,6 +1058,9 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         let call_kind = match lang {
             Lang::Rust => "call_expression",
             Lang::Python => "call",
+            Lang::TypeScript | Lang::Tsx => {
+                unreachable!("TypeScript call extraction is handled by mapper::typescript")
+            }
         };
         if node.kind() == call_kind {
             if let (Some(caller), Some((callee, qualifier))) =
@@ -1208,6 +1236,9 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                     source,
                 ),
                 Lang::Python => None,
+                Lang::TypeScript | Lang::Tsx => {
+                    unreachable!("TypeScript call extraction is handled by mapper::typescript")
+                }
             };
             if let Some(hints) = following {
                 following_type_hints = Some(hints);
@@ -3412,26 +3443,31 @@ fn local_only() {
                     local: "alpha".into(),
                     target: "crate::alpha".into(),
                     is_reexport: true,
+                    exact: false,
                 },
                 RustImportRef {
                     local: "delta".into(),
                     target: "crate::alpha::nested::delta".into(),
                     is_reexport: true,
+                    exact: false,
                 },
                 RustImportRef {
                     local: "gamma".into(),
                     target: "crate::alpha::beta".into(),
                     is_reexport: true,
+                    exact: false,
                 },
                 RustImportRef {
                     local: "theta".into(),
                     target: "super::theta".into(),
                     is_reexport: false,
+                    exact: false,
                 },
                 RustImportRef {
                     local: "zeta".into(),
                     target: "crate::alpha::nested::epsilon".into(),
                     is_reexport: true,
+                    exact: false,
                 },
             ]
         );

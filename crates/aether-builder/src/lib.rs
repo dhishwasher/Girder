@@ -49,6 +49,7 @@ pub fn callee_identifier_spans(source: &str, file: &str, name: &str) -> Vec<(usi
     let call_kind = match language {
         Lang::Rust => "call_expression",
         Lang::Python => "call",
+        Lang::TypeScript | Lang::Tsx => "call_expression",
     };
     let mut spans = Vec::new();
     let mut stack = vec![tree.root_node()];
@@ -90,6 +91,12 @@ pub fn has_leading_declaration_metadata(source: &str, file: &str, start: usize) 
                     | "trait_item"
                     | "function_definition"
                     | "class_definition"
+                    | "function_declaration"
+                    | "generator_function_declaration"
+                    | "class_declaration"
+                    | "abstract_class_declaration"
+                    | "interface_declaration"
+                    | "type_alias_declaration"
             )
         {
             if language == Lang::Python
@@ -124,6 +131,13 @@ pub fn has_leading_declaration_metadata(source: &str, file: &str, start: usize) 
                     }
                     previous = sibling.prev_sibling();
                 }
+            }
+            if language.is_typescript()
+                && node
+                    .children(&mut node.walk())
+                    .any(|child| child.kind() == "decorator")
+            {
+                return true;
             }
             return false;
         }
