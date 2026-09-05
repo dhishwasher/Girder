@@ -699,9 +699,7 @@ fn should_skip(relative: &Path) -> bool {
     relative.components().any(|component| {
         matches!(
             component.as_os_str().to_str(),
-            Some(
-                ".git" | ".girder" | "target" | "node_modules" | ".venv" | "venv" | "__pycache__"
-            )
+            Some(".git" | ".girder" | "target" | "node_modules" | ".venv" | "venv" | "__pycache__")
         )
     })
 }
