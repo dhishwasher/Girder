@@ -241,7 +241,6 @@ impl ProjectWorkspace {
             .map(ProjectFile::language)
     }
 
-    #[cfg(test)]
     pub(crate) fn buffer(&self) -> &str {
         &self.buffer
     }

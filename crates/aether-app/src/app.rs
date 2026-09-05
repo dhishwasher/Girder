@@ -2,6 +2,7 @@
 
 use crate::graph_view::GraphViewState;
 use crate::gui::file_tree::FileTreeState;
+use crate::gui::tabs::{self, EditorTabs};
 use crate::panels;
 use crate::project::{
     apply_authored_guarantees, apply_reviewed_collaboration_projection, author, build_context_json,
@@ -99,6 +100,7 @@ pub struct AetherApp {
     pub(crate) workspace: ProjectWorkspace,
     pub(crate) project_path_input: String,
     pub(crate) file_tree: FileTreeState,
+    pub(crate) editor_tabs: EditorTabs,
     pub(crate) graph_view: GraphViewState,
     pub(crate) workspace_status: String,
     pub(crate) workspace_status_is_error: bool,
@@ -187,10 +189,11 @@ impl AetherApp {
     ) -> std::io::Result<Self> {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
 
-        let workspace = ProjectWorkspace::open(initial_root)?;
+        let mut workspace = ProjectWorkspace::open(initial_root)?;
         let marketplace_catalog =
             builtin_catalog().map_err(|error| std::io::Error::other(error.to_string()))?;
         let project_path_input = workspace.root().display().to_string();
+        let editor_tabs = EditorTabs::for_workspace(&mut workspace);
         let workspace_status = workspace_summary(&workspace);
         let py_file = active_python_path(&workspace).unwrap_or_default();
         let file_tree = FileTreeState::new(workspace.root().to_path_buf());
@@ -201,6 +204,7 @@ impl AetherApp {
             workspace,
             project_path_input,
             file_tree,
+            editor_tabs,
             graph_view: GraphViewState::default(),
             workspace_status,
             workspace_status_is_error: false,
@@ -285,9 +289,9 @@ impl AetherApp {
             );
             return;
         }
-        if self.workspace.is_dirty() {
+        if self.workspace.is_dirty() || self.editor_tabs.has_dirty() {
             self.set_workspace_error(
-                "Save or discard the active file before opening another project.",
+                "Save or discard every modified tab before opening another project.",
             );
             return;
         }
@@ -296,6 +300,7 @@ impl AetherApp {
                 self.workspace = workspace;
                 self.project_path_input = self.workspace.root().display().to_string();
                 self.file_tree = FileTreeState::new(self.workspace.root().to_path_buf());
+                self.editor_tabs = EditorTabs::for_workspace(&mut self.workspace);
                 self.graph_view.reset_for_project();
                 self.transcript.clear();
                 self.impact_nodes.clear();
@@ -331,7 +336,12 @@ impl AetherApp {
             return;
         }
         match self.workspace.save() {
-            Ok(path) => self.set_workspace_status(format!("Saved {}", path.display())),
+            Ok(path) => {
+                if let Some(active) = self.workspace.active_file() {
+                    self.editor_tabs.set_dirty(active, false);
+                }
+                self.set_workspace_status(format!("Saved {}", path.display()));
+            }
             Err(error) => self.set_workspace_error(format!("Save failed: {error}")),
         }
     }
@@ -344,6 +354,9 @@ impl AetherApp {
         match self.workspace.discard_changes() {
             Ok(impact) => {
                 self.apply_sync_impact(impact);
+                if let Some(active) = self.workspace.active_file() {
+                    self.editor_tabs.set_dirty(active, false);
+                }
                 self.set_workspace_status("Discarded unsaved editor changes.");
             }
             Err(error) => self.set_workspace_error(format!("Discard failed: {error}")),
@@ -381,28 +394,6 @@ impl AetherApp {
         }
     }
 
-    pub(crate) fn select_file(&mut self, relative: &str) {
-        if self.extension_mutation_rx.is_some() {
-            self.set_workspace_error("Wait for the extension change before opening a file.");
-            return;
-        }
-        match self.workspace.select_file(relative) {
-            Ok(()) => {
-                self.py_file = active_python_path(&self.workspace).unwrap_or_default();
-                self.py_steps.clear();
-                self.set_workspace_status(format!("Opened {relative}"));
-            }
-            Err(error) => self.set_workspace_error(format!("File switch failed: {error}")),
-        }
-    }
-
-    pub(crate) fn preview_file(&mut self, relative: &str) {
-        self.select_file(relative);
-        if !self.workspace_status_is_error {
-            self.set_workspace_status(format!("Previewing {relative}"));
-        }
-    }
-
     pub(crate) fn navigate_to_graph_node(&mut self, id: NodeId) {
         let target = {
             let graph = self.workspace.graph().lock().unwrap();
@@ -421,12 +412,10 @@ impl AetherApp {
             self.set_workspace_error("The selected graph node has no source projection.");
             return;
         };
-        match self.workspace.select_file(&file) {
-            Ok(()) => {
-                self.editor_jump = Some(start_byte);
-                self.set_workspace_status(format!("Opened {path} at {file}:{row}"));
-            }
-            Err(error) => self.set_workspace_error(format!("Graph navigation failed: {error}")),
+        self.select_file(&file);
+        if self.workspace.active_file() == Some(file.as_str()) {
+            self.editor_jump = Some(start_byte);
+            self.set_workspace_status(format!("Opened {path} at {file}:{row}"));
         }
     }
 
@@ -1545,19 +1534,19 @@ impl AetherApp {
         self.agent_validation_rx = None;
     }
 
-    fn apply_sync_impact(&mut self, impact: SyncImpact) {
+    pub(crate) fn apply_sync_impact(&mut self, impact: SyncImpact) {
         if !impact.nodes.is_empty() {
             self.impact_nodes = impact.nodes;
             self.ripple_start = Some(Instant::now());
         }
     }
 
-    fn set_workspace_status(&mut self, message: impl Into<String>) {
+    pub(crate) fn set_workspace_status(&mut self, message: impl Into<String>) {
         self.workspace_status = message.into();
         self.workspace_status_is_error = false;
     }
 
-    fn set_workspace_error(&mut self, message: impl Into<String>) {
+    pub(crate) fn set_workspace_error(&mut self, message: impl Into<String>) {
         self.workspace_status = message.into();
         self.workspace_status_is_error = true;
     }
@@ -1605,6 +1594,9 @@ impl Drop for AetherApp {
 
 impl eframe::App for AetherApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if let Some(action) = tabs::keyboard_action(ctx) {
+            self.handle_tab_action(action);
+        }
         if ctx.input_mut(|input| input.consume_key(egui::Modifiers::COMMAND, egui::Key::S)) {
             self.save_active_file();
         }
@@ -1673,6 +1665,7 @@ impl eframe::App for AetherApp {
                             self.workspace = workspace;
                             self.file_tree =
                                 FileTreeState::new(self.workspace.root().to_path_buf());
+                            self.editor_tabs = EditorTabs::for_workspace(&mut self.workspace);
                             self.py_file = active_python_path(&self.workspace).unwrap_or_default();
                             self.graph_view.reset_for_project();
                             self.collaboration_status = summary;
@@ -2155,7 +2148,7 @@ fn workspace_summary(workspace: &ProjectWorkspace) -> String {
     )
 }
 
-fn active_python_path(workspace: &ProjectWorkspace) -> Option<String> {
+pub(crate) fn active_python_path(workspace: &ProjectWorkspace) -> Option<String> {
     let file = workspace.active_file()?;
     (file.ends_with(".py")).then(|| workspace.root().join(file).display().to_string())
 }

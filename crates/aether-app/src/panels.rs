@@ -3,6 +3,7 @@
 use crate::app::{AetherApp, AuthorMode, ExtensionPanelView, RightPanel};
 use crate::graph_view::{all_edge_kinds, all_node_kinds, GraphScope, ViewEdge, ViewNode};
 use crate::gui::file_tree::{self, FileTreeAction};
+use crate::gui::tabs;
 use crate::project::AuthorEvent;
 use aether_extensions::{
     Capability, CommandAction, Contribution, ExtensionState, PanelLocation, PanelView,
@@ -37,7 +38,7 @@ fn edge_color(kind: EdgeKind) -> Color32 {
 
 /// Left panel: project navigation plus a view of the live semantic graph.
 pub fn workspace_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
-    let active = app.workspace.active_file().map(str::to_string);
+    let active = app.editor_tabs.active_path().map(str::to_string);
     match file_tree::show(&mut app.file_tree, ui, active.as_deref()) {
         Some(FileTreeAction::Preview(relative)) => app.preview_file(&relative),
         Some(FileTreeAction::Open(relative)) => app.select_file(&relative),
@@ -427,10 +428,18 @@ fn edge_kind_label(kind: EdgeKind) -> &'static str {
 /// Center panel: the code editor projection with tree-sitter highlighting.
 /// Edits are folded straight back into the graph (bidirectional sync).
 pub fn editor_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
-    let Some(file) = app.workspace.active_file().map(str::to_string) else {
-        ui.heading("Code");
+    if let Some(active) = app.workspace.active_file().map(str::to_string) {
+        app.editor_tabs.set_dirty(&active, app.workspace.is_dirty());
+    }
+    if let Some(action) = tabs::show(&mut app.editor_tabs, ui) {
+        app.handle_tab_action(action);
+    }
+    ui.separator();
+
+    let Some(file) = app.editor_tabs.active_path().map(str::to_string) else {
+        ui.heading("No open editors");
         ui.separator();
-        ui.label("No supported source files were found in this project.");
+        ui.label("Choose a file in Explorer to preview or open it.");
         return;
     };
     let Some(language) = app.workspace.active_language() else {
@@ -438,7 +447,7 @@ pub fn editor_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     };
 
     ui.horizontal(|ui| {
-        ui.heading(&file);
+        ui.monospace(&file);
         if app.workspace.is_dirty() {
             ui.colored_label(Color32::from_rgb(0xE5, 0xC0, 0x7B), "modified");
         }
@@ -492,6 +501,7 @@ pub fn editor_panel(app: &mut AetherApp, ui: &mut egui::Ui) {
     if output.response.changed() {
         // Editor → graph: re-parse and diff the edit into the source of truth.
         app.sync_code_to_graph();
+        app.editor_tabs.set_dirty(&file, app.workspace.is_dirty());
     }
 }
 
