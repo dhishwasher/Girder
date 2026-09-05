@@ -1,4 +1,4 @@
-"""Demo module for the Author tab / bitcode do walkthrough.
+"""Demo module for the Author tab / girder do walkthrough.
 
 This project exists so a real (non-dry) authored run has somewhere safe to
 write: it is disposable and read by nothing under tools/ or docs/, unlike
