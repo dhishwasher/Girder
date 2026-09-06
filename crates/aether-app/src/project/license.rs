@@ -10,6 +10,15 @@ const PUBLIC_KEY: [u8; 32] = [
     213, 185, 210, 5, 112, 139, 39, 37, 191, 208, 116,
 ];
 
+// Integration tests exercise paid commands through the real debug binary. The
+// corresponding test private key was discarded; release binaries do not
+// compile this public key and cannot accept the signed test token.
+#[cfg(debug_assertions)]
+const TEST_PUBLIC_KEY: [u8; 32] = [
+    238, 120, 27, 233, 235, 199, 95, 108, 249, 72, 106, 23, 150, 253, 220, 77, 102, 213, 196, 138,
+    164, 55, 173, 138, 132, 196, 192, 84, 226, 112, 198, 36,
+];
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum Tier {
     Free,
@@ -79,8 +88,31 @@ pub(crate) fn current_tier() -> Result<Tier, LicenseError> {
         .map_err(LicenseError::Rejected)
 }
 
+pub(crate) fn require_paid(tool: &str) -> io::Result<()> {
+    let alternative =
+        "Free alternative: `get_source` and `find_definition` still answer exact-symbol questions.";
+    match current_tier() {
+        Ok(Tier::Paid) => Ok(()),
+        Ok(Tier::Free) => Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            format!("The `{tool}` tool needs a paid Girder license. {alternative}"),
+        )),
+        Err(error) => Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            format!(
+                "The `{tool}` tool needs a valid paid Girder license, but the configured key was rejected: {error}. {alternative}"
+            ),
+        )),
+    }
+}
+
 pub(crate) fn verify_key(key: &str) -> Result<Tier, LicenseRejection> {
-    verify_key_with_public_key(key, &PUBLIC_KEY)
+    let result = verify_key_with_public_key(key, &PUBLIC_KEY);
+    #[cfg(debug_assertions)]
+    if result == Err(LicenseRejection::BadSignature) {
+        return verify_key_with_public_key(key, &TEST_PUBLIC_KEY);
+    }
+    result
 }
 
 pub(crate) fn unsigned_key(issued_on: &str, tier: &str) -> Result<String, LicenseRejection> {

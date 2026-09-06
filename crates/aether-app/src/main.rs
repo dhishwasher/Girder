@@ -239,6 +239,10 @@ fn main() {
             .init();
     }
 
+    if let Some(tool) = paid_tool_for_command(cmd) {
+        report(project::require_paid(tool));
+    }
+
     match cmd {
         Some("--help") | Some("-h") => println!("{USAGE}"),
         Some("--version") | Some("-V") => {
@@ -294,6 +298,14 @@ fn main() {
             eprintln!("unknown command: {other}\n");
             println!("{USAGE}");
         }
+    }
+}
+
+fn paid_tool_for_command(command: Option<&str>) -> Option<&'static str> {
+    match command {
+        Some("orient") => Some("orient"),
+        Some("test-impact") => Some("impacted_tests"),
+        _ => None,
     }
 }
 

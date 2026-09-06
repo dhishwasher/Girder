@@ -27,14 +27,31 @@ struct Session {
 
 impl Session {
     fn start(root: &Path) -> Self {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_girder"))
+        Self::start_with_license(root, true)
+    }
+
+    fn start_unlicensed(root: &Path) -> Self {
+        Self::start_with_license(root, false)
+    }
+
+    fn start_with_license(root: &Path, licensed: bool) -> Self {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_girder"));
+        command
             .arg("mcp")
             .arg(root)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .expect("spawn girder mcp");
+            .stderr(Stdio::piped());
+        if licensed {
+            command.env("GIRDER_LICENSE_KEY", TEST_LICENSE_KEY);
+        } else {
+            command
+                .env_remove("GIRDER_LICENSE_KEY")
+                .env("XDG_CONFIG_HOME", root)
+                .env("APPDATA", root)
+                .env("HOME", root);
+        }
+        let mut child = command.spawn().expect("spawn girder mcp");
         let stdin = child.stdin.take().unwrap();
         let stdout = BufReader::new(child.stdout.take().unwrap());
         Self {
@@ -102,6 +119,32 @@ impl Session {
             String::from_utf8_lossy(&output.stderr).into_owned(),
         )
     }
+}
+
+#[test]
+fn unlicensed_paid_tool_is_a_readable_normal_tool_result() {
+    let root = fixture("license-gate");
+    let mut session = Session::start_unlicensed(&root);
+    session.initialize();
+
+    let response = session.call_tool("orient", json!({"nodes": ["crate::sample::answer"]}));
+    assert_eq!(response["result"]["isError"], true, "{response}");
+    let text = response["result"]["content"][0]["text"]
+        .as_str()
+        .expect("license failure must be readable text");
+    assert!(
+        text.contains("`orient` tool needs a paid Girder license"),
+        "{text}"
+    );
+    assert!(
+        text.contains("`get_source` and `find_definition`"),
+        "{text}"
+    );
+    assert_eq!(session.request("ping", json!({}))["result"], json!({}));
+
+    let (clean_exit, stderr) = session.finish();
+    assert!(clean_exit, "stderr: {stderr}");
+    let _ = std::fs::remove_dir_all(&root);
 }
 
 /// A git repository with two functions and a test, so the graph has real
@@ -453,3 +496,4 @@ fn a_nonexistent_root_fails_at_startup() {
         String::from_utf8_lossy(&output.stderr)
     );
 }
+const TEST_LICENSE_KEY: &str = "girder-v1.2026-09-06.paid.c3a189213567f3aced881143c0d600df36c162252ff026ee6a6377a85959215b90ca7ea51e2eb474d3e8ca4e60b09648994a1e6513772393dcde1b4e7752bd02";

@@ -82,11 +82,39 @@ impl Drop for TempRepo {
     }
 }
 
+const TEST_LICENSE_KEY: &str = "girder-v1.2026-09-06.paid.c3a189213567f3aced881143c0d600df36c162252ff026ee6a6377a85959215b90ca7ea51e2eb474d3e8ca4e60b09648994a1e6513772393dcde1b4e7752bd02";
+
 fn run_girder_output(args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_girder"))
         .args(args)
+        .env("GIRDER_LICENSE_KEY", TEST_LICENSE_KEY)
         .output()
         .unwrap()
+}
+
+#[test]
+fn paid_cli_commands_require_a_license_and_offer_free_alternatives() {
+    let isolated = TempRepo::new("unlicensed-paid-commands");
+    for (command, tool) in [("orient", "orient"), ("test-impact", "impacted_tests")] {
+        let output = Command::new(env!("CARGO_BIN_EXE_girder"))
+            .args([command, isolated.path().to_str().unwrap()])
+            .env_remove("GIRDER_LICENSE_KEY")
+            .env("XDG_CONFIG_HOME", isolated.path())
+            .env("APPDATA", isolated.path())
+            .env("HOME", isolated.path())
+            .output()
+            .unwrap();
+        assert!(!output.status.success(), "{command} unexpectedly succeeded");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains(&format!("`{tool}` tool needs a paid Girder license")),
+            "{stderr}"
+        );
+        assert!(
+            stderr.contains("`get_source` and `find_definition`"),
+            "{stderr}"
+        );
+    }
 }
 
 fn run_girder(args: &[&str]) -> String {

@@ -52,6 +52,7 @@ pub(crate) use commands::{
     author, build_context_json, search_nodes_for_authoring, AuthorEvent, AuthorOutcome,
     DEFAULT_MAX_REPAIRS,
 };
+pub(crate) use license::require_paid;
 #[cfg(feature = "gui")]
 pub(crate) use planfile::{
     apply_authored_guarantees, parse_plan, run_for_authoring_with_plan, AuthoringRunResult,

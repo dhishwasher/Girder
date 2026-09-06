@@ -449,6 +449,7 @@ that do not exist). Prefer it over grepping for call sites.",
         name: "impacted_tests",
         title: "List tests affected by a change",
         description: "\
+Paid license required. \
 Name only the tests that can reach the functions that changed, detected from \
 the git diff or from explicit node paths. One test name per line, ready to \
 pass to a test runner. An empty result means nothing needs testing — it does \
@@ -521,6 +522,7 @@ someone else just made. Coverage gaps it reports are advisory.",
         name: "orient",
         title: "Orient at a node in one call",
         description: "\
+Paid license required. \
 Answer \"what am I about to touch and what does it reach\" for one starting \
 point in a single round trip: its source, direct callers and callees (to \
 `depth`, default 1, capped at 2), the tests that cover it, and its impact \
@@ -919,9 +921,12 @@ mod tests {
         assert_eq!(tools.len(), TOOLS.len());
         for tool in tools {
             let name = tool["name"].as_str().unwrap();
-            assert!(
-                !tool["description"].as_str().unwrap().is_empty(),
-                "{name} needs a description"
+            let description = tool["description"].as_str().unwrap();
+            assert!(!description.is_empty(), "{name} needs a description");
+            assert_eq!(
+                description.starts_with("Paid license required."),
+                matches!(name, "orient" | "impacted_tests"),
+                "only paid tools should advertise the license requirement: {name}"
             );
             assert_eq!(tool["inputSchema"]["type"], "object", "{name}");
             assert_eq!(
