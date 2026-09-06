@@ -1,5 +1,56 @@
 # The `orient` MCP tool
 
+## Post-fix update (2026-09-06)
+
+The original measurement below (`docs/orient-tool-observation.json`, kept
+committed as the record of what it found) disclosed two defects. Both are
+now fixed, and the corpus was rerun exactly once against the fixed binary;
+that rerun is committed separately as
+`docs/orient-tool-observation-post-fix.json` so both the original FAIL and
+the post-fix result are on record side by side.
+
+1. **`test-impact --quiet` dropped non-Rust/Python test names.** The
+   `--quiet` name-print loop in `test_impact.rs` matched only
+   `"rust" | "python"`, even though the test-node set it was printing from
+   (`SemanticGraph::tests_for`/`tests_for_nodes`) already carries no
+   language filter — so a Go (or any future-language) test's name was
+   silently dropped from `--quiet` output and from the `--run` command-
+   building loop, while `orient`'s own `tests` section, built on the same
+   language-agnostic query, reported it correctly. Fixed by removing the
+   language filter from the print loop entirely (every id already came
+   from the language-agnostic query, so gating print on a fixed language
+   list could only ever drop names) and by wiring the already-configurable
+   `go_test_command` into the `--run` command-building loop, which it had
+   never been connected to. **Result: `websocket-writejson`'s correctness
+   check, the one gated failure in the original run, now passes — 37 of 37
+   gated checks pass, up from 36 of 37.**
+2. **`orient`'s confidence heuristic never flagged a wrong intent
+   resolution.** It compared a resolved node's score against an absolute
+   floor (`LOW_CONFIDENCE_SCORE_FLOOR = 0.12`) only. All three intent-task
+   misses in the corpus scored 0.27–0.39 — comfortably above that floor —
+   so every one was reported `"confidence": "high"`, a confidently wrong
+   answer that costs an agent more than an honestly unsure one. Fixed by
+   adding a second, relative signal: when more than one candidate survives
+   `authoring_context`'s `NODE_SCORE_FLOOR_RATIO` cut (the search did not
+   narrow to a single best answer), the resolution is now flagged
+   `"confidence": "low"` regardless of its absolute score, with
+   `"unsure": true` and a `"candidates"` list of every surviving
+   `{path, score}` pair attached. **Result: all three intent tasks
+   (`intent-shortest-path`, `intent-mock-filesystem-read`,
+   `intent-serialize-value-to-string`) are now correctly flagged
+   `"confidence": "low"`.** They still resolve to the wrong node — this fix
+   is about honesty, not accuracy. Intent search's top-1 resolution
+   accuracy is unchanged and out of scope here (see
+   `description-search-accuracy-v1`); resolving these three correctly is
+   not what this fix claims. The fix is also known to over-flag: it will
+   mark some correct intent resolutions low-confidence too, whenever their
+   runner-up is close enough to survive the same floor. That trade-off was
+   accepted rather than tuned away, because the alternative is missing the
+   resolutions that are actually wrong — see Honest limits below.
+
+Everything from here down is the original, unmodified record of what the
+first run found.
+
 ## Why this measurement exists
 
 Girder's MCP server exposed six single-purpose tools (`get_source`,

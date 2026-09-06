@@ -119,17 +119,21 @@ A full test run remains the authority before calling a change safe.
 `orient` bundles what `get_source` + `ask_codebase` (callers, callees, and
 impact) + `impacted_tests` otherwise answer across 5-6 separate calls into
 one. On a 15-task corpus spanning ten pinned repositories, that one call used
-**fewer aggregate bytes than the chain it replaces** (45,986 vs 101,283,
-a 0.45 ratio) while cutting 78 round trips to 15 — one per task — and 36 of
-37 gated checks passed. The one failure is real and disclosed: it exposes
-that `impacted_tests --quiet` silently drops non-Rust/Python test names,
-which `orient`'s own test-coverage section does not. Its natural-language
-`intent` input inherits `search_code`'s accuracy — all three intent tasks in
-this corpus resolved to the wrong node, and `orient`'s own confidence
-heuristic did not catch any of the three. See
-[`docs/orient-tool.md`](./docs/orient-tool.md) and the committed
-[policy](./docs/orient-tool-policy.json) /
-[observation](./docs/orient-tool-observation.json).
+**fewer aggregate bytes than the chain it replaces** (48,814 vs 101,302,
+a 0.48 ratio) while cutting 78 round trips to 15 — one per task — and, after
+two disclosed defects were fixed, **37 of 37 gated checks pass**. The first
+run found `impacted_tests --quiet` silently dropping non-Rust/Python test
+names (`orient`'s own test-coverage section did not share the bug, which is
+how it was found); that filter is now removed. Its natural-language `intent`
+input still inherits `search_code`'s accuracy — all three intent tasks in
+this corpus resolved to the wrong node, unchanged and out of scope for this
+fix — but `orient`'s confidence heuristic, which originally caught none of
+the three, now flags all three `"confidence": "low"` with candidate scores
+attached, at the cost of also flagging some correct resolutions when a
+runner-up is close. See [`docs/orient-tool.md`](./docs/orient-tool.md) and
+the committed [policy](./docs/orient-tool-policy.json) /
+[original observation](./docs/orient-tool-observation.json) /
+[post-fix observation](./docs/orient-tool-observation-post-fix.json).
 
 The project root is fixed when the server starts, so no tool call can reach
 another directory. `GIRDER_MCP_TIMEOUT_SECONDS` (default 120) bounds each
