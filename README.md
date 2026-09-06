@@ -778,11 +778,17 @@ prioritized open risks are maintained in
 
 ## License
 
-Girder is **source-available** under the [Business Source License 1.1](./LICENSE).
-The source is public and free to read, use, modify, and run, including inside
-a company. The only restriction is that you may not offer Girder itself to
-third parties as a competing hosted or managed service whose primary value is
-Girder's functionality.
+Girder is **source-available**, not open source, under the
+[Business Source License 1.1](./LICENSE).
+
+The free tier is genuinely free and permanent: it has no expiry and requires no
+account. For a single repository it includes `get_source`, `find_definition`,
+`search_code`, `ask_codebase`, and `review_changes`. The `orient` and
+`impacted_tests` tools require a paid license.
+
+Licenses are signed keys verified locally by the Girder binary. The binary
+never phones home, makes no network call for licensing, and works fully offline
+in both tiers.
 
 On September 4, 2030, the license converts to the Apache License, Version 2.0.
 See [`LICENSE`](./LICENSE) for the authoritative terms and
