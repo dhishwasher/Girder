@@ -83,7 +83,7 @@ Any MCP client config:
 With a binary already installed, `"command": "girder", "args": ["mcp", "."]`
 skips npm entirely.
 
-Six tools, all read-only:
+Seven tools, all read-only:
 
 | Tool | What it answers |
 |---|---|
@@ -93,6 +93,7 @@ Six tools, all read-only:
 | `ask_codebase` | Callers, callees, and blast radius, by graph traversal. |
 | `impacted_tests` | Only the tests that can reach what changed. |
 | `review_changes` | What changed in the working tree, as semantics rather than text. |
+| `orient` | Source, callers, callees, tests, and impact for one node, in one call. |
 
 ### What that saves, and what it doesn't
 
@@ -114,6 +115,21 @@ are not portable.
 misses tests reached only through dynamic dispatch (measured: recall 0.000 on a
 polymorphic-dispatch case, [`docs/core-representative-mutations.md`](./docs/core-representative-mutations.md)).
 A full test run remains the authority before calling a change safe.
+
+`orient` bundles what `get_source` + `ask_codebase` (callers, callees, and
+impact) + `impacted_tests` otherwise answer across 5-6 separate calls into
+one. On a 15-task corpus spanning ten pinned repositories, that one call used
+**fewer aggregate bytes than the chain it replaces** (45,986 vs 101,283,
+a 0.45 ratio) while cutting 78 round trips to 15 — one per task — and 36 of
+37 gated checks passed. The one failure is real and disclosed: it exposes
+that `impacted_tests --quiet` silently drops non-Rust/Python test names,
+which `orient`'s own test-coverage section does not. Its natural-language
+`intent` input inherits `search_code`'s accuracy — all three intent tasks in
+this corpus resolved to the wrong node, and `orient`'s own confidence
+heuristic did not catch any of the three. See
+[`docs/orient-tool.md`](./docs/orient-tool.md) and the committed
+[policy](./docs/orient-tool-policy.json) /
+[observation](./docs/orient-tool-observation.json).
 
 The project root is fixed when the server starts, so no tool call can reach
 another directory. `GIRDER_MCP_TIMEOUT_SECONDS` (default 120) bounds each
