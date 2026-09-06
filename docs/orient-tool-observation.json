@@ -1,0 +1,962 @@
+{
+  "schema_version": 1,
+  "suite_id": "orient-tool-v1",
+  "kind": "orient-tool-observation",
+  "policy_baseline_commit": "ca53bc5c6d22e0d90ef6b1de113f680c23756608",
+  "girder": "/home/corymaynard370/Bit-code/target/debug/girder",
+  "tasks": [
+    {
+      "id": "petgraph-dijkstra",
+      "starting_point": {
+        "kind": "symbol",
+        "value": "crate::algo::dijkstra::dijkstra"
+      },
+      "round_trips_baseline": 5,
+      "round_trips_composite": 1,
+      "baseline_bytes": 3185,
+      "composite_bytes": 3175,
+      "byte_ratio": 0.9968602825745683,
+      "baseline_calls": [
+        {
+          "tool": "get_source",
+          "bytes": 1835
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 443
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 315
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 69
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 523
+        }
+      ],
+      "orient_resolved_path": "crate::algo::dijkstra::dijkstra",
+      "orient_confidence": null,
+      "orient_score": null,
+      "comparable": true,
+      "correctness": true
+    },
+    {
+      "id": "serde_json-from_slice",
+      "starting_point": {
+        "kind": "symbol",
+        "value": "crate::de::from_slice"
+      },
+      "round_trips_baseline": 5,
+      "round_trips_composite": 1,
+      "baseline_bytes": 983,
+      "composite_bytes": 821,
+      "byte_ratio": 0.8351983723296033,
+      "baseline_calls": [
+        {
+          "tool": "get_source",
+          "bytes": 266
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 214
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 274
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 0
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 229
+        }
+      ],
+      "orient_resolved_path": "crate::de::from_slice",
+      "orient_confidence": null,
+      "orient_score": null,
+      "comparable": true,
+      "correctness": true
+    },
+    {
+      "id": "regex-string-replace",
+      "starting_point": {
+        "kind": "symbol",
+        "value": "crate::regex::string::Regex::replace"
+      },
+      "round_trips_baseline": 5,
+      "round_trips_composite": 1,
+      "baseline_bytes": 1058,
+      "composite_bytes": 840,
+      "byte_ratio": 0.7939508506616257,
+      "baseline_calls": [
+        {
+          "tool": "get_source",
+          "bytes": 314
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 230
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 269
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 0
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 245
+        }
+      ],
+      "orient_resolved_path": "crate::regex::string::Regex::replace",
+      "orient_confidence": null,
+      "orient_score": null,
+      "comparable": true,
+      "correctness": true
+    },
+    {
+      "id": "click-command-invoke",
+      "starting_point": {
+        "kind": "symbol",
+        "value": "crate::click::core::Command::invoke"
+      },
+      "round_trips_baseline": 5,
+      "round_trips_composite": 1,
+      "baseline_bytes": 33515,
+      "composite_bytes": 7890,
+      "byte_ratio": 0.23541697747277338,
+      "baseline_calls": [
+        {
+          "tool": "get_source",
+          "bytes": 764
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 262
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 349
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 8811
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 23329
+        }
+      ],
+      "orient_resolved_path": "crate::click::core::Command::invoke",
+      "orient_confidence": null,
+      "orient_score": null,
+      "comparable": true,
+      "correctness": true
+    },
+    {
+      "id": "click-parser-parse_args",
+      "starting_point": {
+        "kind": "symbol",
+        "value": "crate::click::parser::_OptionParser::parse_args"
+      },
+      "round_trips_baseline": 5,
+      "round_trips_composite": 1,
+      "baseline_bytes": 36766,
+      "composite_bytes": 8111,
+      "byte_ratio": 0.2206114344775064,
+      "baseline_calls": [
+        {
+          "tool": "get_source",
+          "bytes": 969
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 292
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 381
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 9337
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 25787
+        }
+      ],
+      "orient_resolved_path": "crate::click::parser::_OptionParser::parse_args",
+      "orient_confidence": null,
+      "orient_score": null,
+      "comparable": true,
+      "correctness": true
+    },
+    {
+      "id": "pydantic-alias-generator",
+      "starting_point": {
+        "kind": "symbol",
+        "value": "crate::pydantic::aliases::AliasGenerator::generate_aliases"
+      },
+      "round_trips_baseline": 5,
+      "round_trips_composite": 1,
+      "baseline_bytes": 1777,
+      "composite_bytes": 1394,
+      "byte_ratio": 0.7844682048396173,
+      "baseline_calls": [
+        {
+          "tool": "get_source",
+          "bytes": 848
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 285
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 344
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 0
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 300
+        }
+      ],
+      "orient_resolved_path": "crate::pydantic::aliases::AliasGenerator::generate_aliases",
+      "orient_confidence": null,
+      "orient_score": null,
+      "comparable": true,
+      "correctness": true
+    },
+    {
+      "id": "requests-get-wrapper",
+      "starting_point": {
+        "kind": "symbol",
+        "value": "crate::requests::api::get"
+      },
+      "round_trips_baseline": 5,
+      "round_trips_composite": 1,
+      "baseline_bytes": 1386,
+      "composite_bytes": 1210,
+      "byte_ratio": 0.873015873015873,
+      "baseline_calls": [
+        {
+          "tool": "get_source",
+          "bytes": 692
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 216
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 247
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 0
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 231
+        }
+      ],
+      "orient_resolved_path": "crate::requests::api::get",
+      "orient_confidence": null,
+      "orient_score": null,
+      "comparable": true,
+      "correctness": true
+    },
+    {
+      "id": "requests-session-prepare_request",
+      "starting_point": {
+        "kind": "symbol",
+        "value": "crate::requests::sessions::Session::prepare_request"
+      },
+      "round_trips_baseline": 5,
+      "round_trips_composite": 1,
+      "baseline_bytes": 9031,
+      "composite_bytes": 10218,
+      "byte_ratio": 1.1314361643228878,
+      "baseline_calls": [
+        {
+          "tool": "get_source",
+          "bytes": 1878
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 1401
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 549
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 1189
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 4014
+        }
+      ],
+      "orient_resolved_path": "crate::requests::sessions::Session::prepare_request",
+      "orient_confidence": null,
+      "orient_score": null,
+      "comparable": true,
+      "correctness": true
+    },
+    {
+      "id": "zod-safeparse",
+      "starting_point": {
+        "kind": "symbol",
+        "value": "crate::types::ZodType::safeParse"
+      },
+      "round_trips_baseline": 5,
+      "round_trips_composite": 1,
+      "baseline_bytes": 1745,
+      "composite_bytes": 1605,
+      "byte_ratio": 0.9197707736389685,
+      "baseline_calls": [
+        {
+          "tool": "get_source",
+          "bytes": 706
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 328
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 329
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 0
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 382
+        }
+      ],
+      "orient_resolved_path": "crate::types::ZodType::safeParse",
+      "orient_confidence": null,
+      "orient_score": null,
+      "comparable": true,
+      "correctness": true
+    },
+    {
+      "id": "type-fest-merge-deep",
+      "starting_point": {
+        "kind": "symbol",
+        "value": "crate::source::merge-deep::MergeDeep"
+      },
+      "round_trips_baseline": 5,
+      "round_trips_composite": 1,
+      "baseline_bytes": 1022,
+      "composite_bytes": 814,
+      "byte_ratio": 0.7964774951076321,
+      "baseline_calls": [
+        {
+          "tool": "get_source",
+          "bytes": 347
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 240
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 212
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 0
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 223
+        }
+      ],
+      "orient_resolved_path": "crate::source::merge-deep::MergeDeep",
+      "orient_confidence": null,
+      "orient_score": null,
+      "comparable": true,
+      "correctness": true
+    },
+    {
+      "id": "afero-readfile",
+      "starting_point": {
+        "kind": "symbol",
+        "value": "crate::Afero::ReadFile"
+      },
+      "round_trips_baseline": 5,
+      "round_trips_composite": 1,
+      "baseline_bytes": 869,
+      "composite_bytes": 732,
+      "byte_ratio": 0.8423475258918297,
+      "baseline_calls": [
+        {
+          "tool": "get_source",
+          "bytes": 228
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 203
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 220
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 0
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 218
+        }
+      ],
+      "orient_resolved_path": "crate::Afero::ReadFile",
+      "orient_confidence": null,
+      "orient_score": null,
+      "comparable": true,
+      "correctness": true
+    },
+    {
+      "id": "websocket-writejson",
+      "starting_point": {
+        "kind": "symbol",
+        "value": "crate::Conn::WriteJSON"
+      },
+      "round_trips_baseline": 5,
+      "round_trips_composite": 1,
+      "baseline_bytes": 1134,
+      "composite_bytes": 1053,
+      "byte_ratio": 0.9285714285714286,
+      "baseline_calls": [
+        {
+          "tool": "get_source",
+          "bytes": 379
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 225
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 233
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 0
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 297
+        }
+      ],
+      "orient_resolved_path": "crate::Conn::WriteJSON",
+      "orient_confidence": null,
+      "orient_score": null,
+      "comparable": true,
+      "correctness": false,
+      "correctness_detail": {
+        "callers": {
+          "orient": [
+            "crate::WriteJSON"
+          ],
+          "baseline": [
+            "crate::WriteJSON"
+          ],
+          "orient_count": 1,
+          "truncated": false
+        },
+        "callees": {
+          "orient": [
+            "crate::Conn::NextWriter"
+          ],
+          "baseline": [
+            "crate::Conn::NextWriter"
+          ],
+          "orient_count": 1,
+          "truncated": false
+        },
+        "impact": {
+          "orient": [
+            "crate::TestDeprecatedJSON",
+            "crate::WriteJSON"
+          ],
+          "baseline": [
+            "crate::TestDeprecatedJSON",
+            "crate::WriteJSON"
+          ],
+          "orient_count": 2,
+          "truncated": false
+        },
+        "tests": {
+          "orient": [
+            "TestDeprecatedJSON"
+          ],
+          "baseline": [],
+          "orient_count": 1,
+          "truncated": false
+        }
+      }
+    },
+    {
+      "id": "intent-shortest-path",
+      "starting_point": {
+        "kind": "intent",
+        "value": "compute the shortest path between two nodes"
+      },
+      "round_trips_baseline": 6,
+      "round_trips_composite": 1,
+      "baseline_bytes": 3807,
+      "composite_bytes": 3867,
+      "byte_ratio": 1.0157604412923562,
+      "baseline_calls": [
+        {
+          "tool": "search_code",
+          "bytes": 622
+        },
+        {
+          "tool": "get_source",
+          "bytes": 1835
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 443
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 315
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 69
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 523
+        }
+      ],
+      "orient_resolved_path": "crate::benches::k_shortest_path::k_shortest_path_bench",
+      "orient_confidence": "high",
+      "orient_score": 0.3264845311641693,
+      "comparable": false,
+      "intended_path": "crate::algo::dijkstra::dijkstra",
+      "resolution_matches_intended": false,
+      "correctness": null,
+      "correctness_note": "not applicable: orient resolved a different node than the baseline's hardcoded intended node, so their outputs are not comparable"
+    },
+    {
+      "id": "intent-mock-filesystem-read",
+      "starting_point": {
+        "kind": "intent",
+        "value": "read a file from the in-memory filesystem"
+      },
+      "round_trips_baseline": 6,
+      "round_trips_composite": 1,
+      "baseline_bytes": 1301,
+      "composite_bytes": 2048,
+      "byte_ratio": 1.574173712528824,
+      "baseline_calls": [
+        {
+          "tool": "search_code",
+          "bytes": 432
+        },
+        {
+          "tool": "get_source",
+          "bytes": 228
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 203
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 220
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 0
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 218
+        }
+      ],
+      "orient_resolved_path": "crate::sftpfs::File::Read",
+      "orient_confidence": "high",
+      "orient_score": 0.27148690819740295,
+      "comparable": false,
+      "intended_path": "crate::Afero::ReadFile",
+      "resolution_matches_intended": false,
+      "correctness": null,
+      "correctness_note": "not applicable: orient resolved a different node than the baseline's hardcoded intended node, so their outputs are not comparable"
+    },
+    {
+      "id": "intent-serialize-value-to-string",
+      "starting_point": {
+        "kind": "intent",
+        "value": "serialize a value to a JSON string"
+      },
+      "round_trips_baseline": 6,
+      "round_trips_composite": 1,
+      "baseline_bytes": 3704,
+      "composite_bytes": 2208,
+      "byte_ratio": 0.5961123110151187,
+      "baseline_calls": [
+        {
+          "tool": "search_code",
+          "bytes": 578
+        },
+        {
+          "tool": "get_source",
+          "bytes": 393
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 448
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 234
+        },
+        {
+          "tool": "impacted_tests",
+          "bytes": 428
+        },
+        {
+          "tool": "ask_codebase",
+          "bytes": 1623
+        }
+      ],
+      "orient_resolved_path": "crate::raw::RawValue::serialize",
+      "orient_confidence": "high",
+      "orient_score": 0.389597088098526,
+      "comparable": false,
+      "intended_path": "crate::ser::to_string",
+      "resolution_matches_intended": false,
+      "correctness": null,
+      "correctness_note": "not applicable: orient resolved a different node than the baseline's hardcoded intended node, so their outputs are not comparable"
+    }
+  ],
+  "assessment": {
+    "checks": [
+      {
+        "id": "petgraph-dijkstra.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "petgraph-dijkstra.byte_ratio",
+        "actual": 0.9968602825745683,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "petgraph-dijkstra.correctness",
+        "actual": true,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "serde_json-from_slice.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "serde_json-from_slice.byte_ratio",
+        "actual": 0.8351983723296033,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "serde_json-from_slice.correctness",
+        "actual": true,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "regex-string-replace.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "regex-string-replace.byte_ratio",
+        "actual": 0.7939508506616257,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "regex-string-replace.correctness",
+        "actual": true,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "click-command-invoke.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "click-command-invoke.byte_ratio",
+        "actual": 0.23541697747277338,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "click-command-invoke.correctness",
+        "actual": true,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "click-parser-parse_args.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "click-parser-parse_args.byte_ratio",
+        "actual": 0.2206114344775064,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "click-parser-parse_args.correctness",
+        "actual": true,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "pydantic-alias-generator.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "pydantic-alias-generator.byte_ratio",
+        "actual": 0.7844682048396173,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "pydantic-alias-generator.correctness",
+        "actual": true,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "requests-get-wrapper.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "requests-get-wrapper.byte_ratio",
+        "actual": 0.873015873015873,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "requests-get-wrapper.correctness",
+        "actual": true,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "requests-session-prepare_request.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "requests-session-prepare_request.byte_ratio",
+        "actual": 1.1314361643228878,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "requests-session-prepare_request.correctness",
+        "actual": true,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "zod-safeparse.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "zod-safeparse.byte_ratio",
+        "actual": 0.9197707736389685,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "zod-safeparse.correctness",
+        "actual": true,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "type-fest-merge-deep.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "type-fest-merge-deep.byte_ratio",
+        "actual": 0.7964774951076321,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "type-fest-merge-deep.correctness",
+        "actual": true,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "afero-readfile.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "afero-readfile.byte_ratio",
+        "actual": 0.8423475258918297,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": false
+      },
+      {
+        "id": "afero-readfile.correctness",
+        "actual": true,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "websocket-writejson.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "websocket-writejson.byte_ratio",
+        "actual": 0.9285714285714286,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": false
+      },
+      {
+        "id": "websocket-writejson.correctness",
+        "actual": false,
+        "passed": false,
+        "gated": true
+      },
+      {
+        "id": "intent-shortest-path.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "intent-shortest-path.byte_ratio",
+        "actual": 1.0157604412923562,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": false
+      },
+      {
+        "id": "intent-shortest-path.correctness",
+        "actual": "not_applicable",
+        "passed": true,
+        "gated": false
+      },
+      {
+        "id": "intent-mock-filesystem-read.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "intent-mock-filesystem-read.byte_ratio",
+        "actual": 1.574173712528824,
+        "maximum": 1.2,
+        "passed": false,
+        "gated": false
+      },
+      {
+        "id": "intent-mock-filesystem-read.correctness",
+        "actual": "not_applicable",
+        "passed": true,
+        "gated": false
+      },
+      {
+        "id": "intent-serialize-value-to-string.round_trips",
+        "actual": 1,
+        "maximum": 1,
+        "passed": true,
+        "gated": true
+      },
+      {
+        "id": "intent-serialize-value-to-string.byte_ratio",
+        "actual": 0.5961123110151187,
+        "maximum": 1.2,
+        "passed": true,
+        "gated": false
+      },
+      {
+        "id": "intent-serialize-value-to-string.correctness",
+        "actual": "not_applicable",
+        "passed": true,
+        "gated": false
+      }
+    ],
+    "passed": false
+  }
+}
