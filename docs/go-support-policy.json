@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "policy_id": "go-support-v1",
+  "method": "five bounded fresh-graph analyses of each pinned Go repository, checking declared graph edges and test-node attributes against the resulting artifact and recording determinism, wall clock, and peak RSS",
+  "policy_baseline_commit": "f9d41256693fe419708c182b31ac0a7087e842fd",
+  "corpus": [
+    {
+      "id": "afero-1.11.0",
+      "role": "mid-size-interface-heavy-library",
+      "language": "go",
+      "artifact": {
+        "bytes": 89257,
+        "format": "tar.gz",
+        "root": "afero-1.11.0",
+        "sha256": "f83f67c4a03d8bba2b7fe1a496e848b2b1b7d97d0b951d85d2b401e7488a4ed4",
+        "url": "https://github.com/spf13/afero/archive/refs/tags/v1.11.0.tar.gz",
+        "version": "1.11.0"
+      },
+      "license": {
+        "files": [
+          "LICENSE.txt"
+        ],
+        "spdx": "Apache-2.0"
+      },
+      "sources": {
+        "bytes": 295836,
+        "extensions": [
+          ".go"
+        ],
+        "files": 55,
+        "manifest_sha256": "bac2e9d107aadbbf72380c3d3a7f82527c9145719576cd31925d4f65e5a6c1db",
+        "physical_lines": 12544
+      },
+      "semantic_cases": [
+        {
+          "expected_present": true,
+          "file": "ioutil.go",
+          "id": "package-contains-function",
+          "kind": "Contains",
+          "rationale": "A package-level Go function must be represented as a Function node in the directory-addressed package module.",
+          "source": "crate",
+          "target": "crate::ReadFile"
+        },
+        {
+          "expected_present": true,
+          "file": "afero.go",
+          "id": "package-contains-struct",
+          "kind": "Contains",
+          "rationale": "A Go struct must be represented as a Type node.",
+          "source": "crate",
+          "target": "crate::Afero"
+        },
+        {
+          "expected_present": true,
+          "file": "afero.go",
+          "id": "package-contains-interface",
+          "kind": "Contains",
+          "rationale": "A Go interface must be represented as a Type node.",
+          "source": "crate",
+          "target": "crate::Fs"
+        },
+        {
+          "expected_present": true,
+          "file": "unionFile.go",
+          "id": "package-contains-named-type",
+          "kind": "Contains",
+          "rationale": "A named function type must remain a retrievable Type node rather than being mistaken for a function declaration.",
+          "source": "crate",
+          "target": "crate::DirsMerger"
+        },
+        {
+          "expected_present": true,
+          "file": "util.go",
+          "id": "package-contains-constant",
+          "kind": "Contains",
+          "rationale": "A package constant must be represented in the graph under its package module.",
+          "source": "crate",
+          "target": "crate::FilePathSeparator"
+        },
+        {
+          "expected_present": true,
+          "file": "ioutil.go",
+          "id": "method-scoped-under-receiver",
+          "kind": "Contains",
+          "rationale": "A method must be scoped below the receiver type, not the source file.",
+          "source": "crate::Afero",
+          "target": "crate::Afero::ReadFile"
+        },
+        {
+          "expected_present": true,
+          "file": "mem/file.go",
+          "id": "value-receiver-method",
+          "kind": "Contains",
+          "rationale": "The value-receiver method must normalize to the File receiver type.",
+          "source": "crate::mem::File",
+          "target": "crate::mem::File::Data"
+        },
+        {
+          "expected_present": true,
+          "file": "mem/file.go",
+          "id": "pointer-receiver-method-same-type",
+          "kind": "Contains",
+          "rationale": "A pointer-receiver method on the same File type must coexist at its own semantic path without colliding with the value-receiver method.",
+          "source": "crate::mem::File",
+          "target": "crate::mem::File::Open"
+        },
+        {
+          "expected_present": true,
+          "file": "ioutil.go",
+          "id": "same-package-call",
+          "kind": "Calls",
+          "rationale": "The Afero convenience method must resolve its unqualified call to the package-level ReadFile function.",
+          "source": "crate::Afero::ReadFile",
+          "target": "crate::ReadFile"
+        },
+        {
+          "expected_present": true,
+          "file": "memmap.go",
+          "id": "cross-package-call-through-import-path",
+          "kind": "Calls",
+          "rationale": "The mem alias must resolve through go.mod's github.com/spf13/afero module path to the internal mem package.",
+          "source": "crate::MemMapFs::Create",
+          "target": "crate::mem::CreateFile"
+        },
+        {
+          "expected_present": true,
+          "file": "mem/file.go",
+          "id": "embedded-struct-inheritance",
+          "kind": "Inherits",
+          "rationale": "Embedding FileData in FileInfo must use the shared Inherits edge.",
+          "source": "crate::mem::FileInfo",
+          "target": "crate::mem::FileData"
+        },
+        {
+          "expected_present": true,
+          "file": "symlink.go",
+          "id": "embedded-interface-inheritance",
+          "kind": "Inherits",
+          "rationale": "Embedding Lstater in Symlinker must use the shared Inherits edge.",
+          "source": "crate::Symlinker",
+          "target": "crate::Lstater"
+        },
+        {
+          "expected_present": true,
+          "file": "basepath.go",
+          "id": "embedded-interface-method-call",
+          "kind": "Calls",
+          "rationale": "BasePathFile.Name must resolve f.File.Name to the explicitly embedded File interface method.",
+          "source": "crate::BasePathFile::Name",
+          "target": "crate::File::Name"
+        },
+        {
+          "expected_present": false,
+          "file": "basepath.go",
+          "id": "embedded-method-not-wrong-receiver",
+          "kind": "Calls",
+          "rationale": "The call through BasePathFile's embedded File interface must not resolve to the same-named method on BasePathFs.",
+          "source": "crate::BasePathFile::Name",
+          "target": "crate::BasePathFs::Name"
+        },
+        {
+          "expected_present": true,
+          "file": "util_test.go",
+          "id": "test-function-discovery",
+          "kind": "IsTest",
+          "rationale": "TestDirExists in a _test.go file must carry the is_test attribute.",
+          "source": "crate::TestDirExists",
+          "target": "crate::TestDirExists"
+        },
+        {
+          "expected_present": false,
+          "file": "util_test.go",
+          "id": "test-helper-not-discovered",
+          "kind": "IsTest",
+          "rationale": "A helper in a _test.go file whose name does not follow a Go test convention must not carry is_test.",
+          "source": "crate::createZeroSizedFileInTempDir",
+          "target": "crate::createZeroSizedFileInTempDir"
+        }
+      ]
+    },
+    {
+      "id": "websocket-1.5.3",
+      "role": "concurrency-and-struct-methods",
+      "language": "go",
+      "artifact": {
+        "bytes": 54884,
+        "format": "tar.gz",
+        "root": "websocket-1.5.3",
+        "sha256": "707f217e9a46c516c289b71c45a4e51b11b5e0fcec54c1fbfecde47b8a001799",
+        "url": "https://github.com/gorilla/websocket/archive/refs/tags/v1.5.3.tar.gz",
+        "version": "1.5.3"
+      },
+      "license": {
+        "files": [
+          "LICENSE"
+        ],
+        "spdx": "BSD-2-Clause"
+      },
+      "sources": {
+        "bytes": 193505,
+        "extensions": [
+          ".go"
+        ],
+        "files": 35,
+        "manifest_sha256": "a8d7ea6d7e62bfe5633b36487e100c6a83303ce2163674af455ea266e9b8cae8",
+        "physical_lines": 7337
+      },
+      "semantic_cases": [
+        {
+          "expected_present": true,
+          "file": "conn.go",
+          "id": "concurrent-connection-struct",
+          "kind": "Contains",
+          "rationale": "The concurrency-heavy Conn struct must be represented as a Type node.",
+          "source": "crate",
+          "target": "crate::Conn"
+        },
+        {
+          "expected_present": true,
+          "file": "conn.go",
+          "id": "connection-method-scope",
+          "kind": "Contains",
+          "rationale": "WriteMessage must be scoped below Conn rather than the file or package.",
+          "source": "crate::Conn",
+          "target": "crate::Conn::WriteMessage"
+        },
+        {
+          "expected_present": true,
+          "file": "json.go",
+          "id": "same-package-receiver-call",
+          "kind": "Calls",
+          "rationale": "Conn.WriteJSON must resolve c.NextWriter to the method on the same receiver type.",
+          "source": "crate::Conn::WriteJSON",
+          "target": "crate::Conn::NextWriter"
+        },
+        {
+          "expected_present": true,
+          "file": "examples/chat/client.go",
+          "id": "module-import-cross-package-call",
+          "kind": "Calls",
+          "rationale": "The websocket import must resolve through go.mod to the root package rather than through the local alias text alone.",
+          "source": "crate::examples::chat::Client::readPump",
+          "target": "crate::IsUnexpectedCloseError"
+        },
+        {
+          "expected_present": true,
+          "file": "examples/chat/main.go",
+          "id": "same-directory-package-call",
+          "kind": "Calls",
+          "rationale": "The chat main function must resolve serveHome within its own directory-addressed package.",
+          "source": "crate::examples::chat::main",
+          "target": "crate::examples::chat::serveHome"
+        },
+        {
+          "expected_present": false,
+          "file": "examples/chat/main.go",
+          "id": "same-name-different-package-negative",
+          "kind": "Calls",
+          "rationale": "The unqualified chat serveHome call must not resolve to the same-named function in the filewatch package.",
+          "source": "crate::examples::chat::main",
+          "target": "crate::examples::filewatch::serveHome"
+        },
+        {
+          "expected_present": false,
+          "file": "server.go",
+          "id": "function-field-shadow-not-method",
+          "kind": "Calls",
+          "rationale": "u.Error is a function-typed field and must not spuriously resolve to the same-named HandshakeError method while function-typed fields remain an explicit extension point.",
+          "source": "crate::Upgrader::returnError",
+          "target": "crate::HandshakeError::Error"
+        },
+        {
+          "expected_present": true,
+          "file": "json_test.go",
+          "id": "test-discovery",
+          "kind": "IsTest",
+          "rationale": "TestJSON in a _test.go file must carry the is_test attribute.",
+          "source": "crate::TestJSON",
+          "target": "crate::TestJSON"
+        },
+        {
+          "expected_present": true,
+          "file": "mask_test.go",
+          "id": "benchmark-discovery",
+          "kind": "IsTest",
+          "rationale": "BenchmarkMaskBytes in a _test.go file must carry the is_test attribute.",
+          "source": "crate::BenchmarkMaskBytes",
+          "target": "crate::BenchmarkMaskBytes"
+        },
+        {
+          "expected_present": true,
+          "file": "example_test.go",
+          "id": "example-discovery",
+          "kind": "IsTest",
+          "rationale": "ExampleIsUnexpectedCloseError in a _test.go file must carry the is_test attribute.",
+          "source": "crate::ExampleIsUnexpectedCloseError",
+          "target": "crate::ExampleIsUnexpectedCloseError"
+        },
+        {
+          "expected_present": false,
+          "file": "example_test.go",
+          "id": "example-helper-not-discovered",
+          "kind": "IsTest",
+          "rationale": "processMessage is a helper in a _test.go file and must not carry is_test.",
+          "source": "crate::processMessage",
+          "target": "crate::processMessage"
+        }
+      ]
+    }
+  ],
+  "determinism": {
+    "artifact_unique_digests_max": 1,
+    "semantic_unique_digests_max": 1,
+    "unique_node_edge_count_pairs_max": 1
+  },
+  "eligibility": {
+    "rayon_threads": 2,
+    "runs_per_repository": 5
+  },
+  "performance": {
+    "default": {
+      "analyze_max_ms": 30000,
+      "analyze_median_max_ms": 15000,
+      "rss_max_kib": 131072
+    },
+    "graph_artifact_max_bytes": 33554432,
+    "inspect_max_ms": 5000,
+    "sum_of_repository_medians_max_ms": 180000
+  },
+  "semantic": {
+    "false_negatives_max": 0,
+    "false_positives_max": 0,
+    "macro_precision_min": 1.0,
+    "macro_recall_min": 1.0,
+    "micro_precision_min": 1.0,
+    "micro_recall_min": 1.0
+  },
+  "pass_threshold": "all determinism, semantic, wall-clock, peak-RSS, graph-size, and inspect-time limits must pass",
+  "reported_but_not_gated": [
+    "per-run node count, edge count, artifact digest, semantic digest, analyze wall clock, inspect wall clock, and peak RSS",
+    "per-case expected and observed presence with true-positive, true-negative, false-positive, or false-negative classification",
+    "source file count, aggregate bytes, physical lines, and source-manifest digest after extraction"
+  ]
+}
