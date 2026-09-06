@@ -4,7 +4,7 @@ use aether_graph::{EdgeKind, NodeId, NodeKind, SemanticGraph};
 fn has_edge(graph: &SemanticGraph, from: &str, to: &str, kind: EdgeKind) -> bool {
     let from = NodeId::from_path(from);
     let to = NodeId::from_path(to);
-    graph.edges().iter().any(|edge| *edge == (from, to, kind))
+    graph.edges().contains(&(from, to, kind))
 }
 
 #[test]
