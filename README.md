@@ -300,9 +300,13 @@ girder extension sample-project marketplace list \
 girder --help
 ```
 
-`analyze`/`forge` walk every `.rs`/`.py` file (skipping `target`, `.git`, …),
+`analyze`/`forge` walk every `.rs`, `.py`, `.ts`, `.tsx`, `.mts`, and `.cts` file
+(skipping `target`, `.git`, …),
 build the graph with directory-aware module paths, resolve free and
 receiver-qualified method calls across files, and persist the `.aether` graph.
+Supported languages are Rust, Python, and TypeScript. TypeScript's core graph
+surface is measured and gated, but remains less mature than Rust and Python;
+see the [honest support boundary and results](docs/typescript-support.md).
 Rust module-scope imports retain renamed symbol identity across bounded public
 re-export chains, including crate-root and `mod.rs` facades, so collisions are
 resolved by exact path while ambiguous or cyclic aliases stay unlinked.
@@ -566,7 +570,8 @@ against `sample-project/` — only the two commands that write are refused.
 cargo run -p aether-app --features gui -- --gui sample-project
 ```
 
-The native workspace opens a configured project, indexes its Rust/Python source,
+The native workspace opens a configured project, indexes its Rust, Python, and
+TypeScript source,
 provides file navigation and language-aware editing, folds edits into the graph,
 and reconciles those fresh projections with the durable graph. Agent summaries,
 graph-owned nodes, and inferred relationships survive reopen and editor refresh

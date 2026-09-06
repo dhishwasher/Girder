@@ -242,7 +242,7 @@ pub(crate) fn is_supported_source_path(path: &str) -> bool {
         Path::new(path)
             .extension()
             .and_then(|extension| extension.to_str()),
-        Some("rs") | Some("py")
+        Some("rs") | Some("py") | Some("ts") | Some("tsx") | Some("mts") | Some("cts")
     )
 }
 
@@ -1174,6 +1174,14 @@ mod tests {
         std::fs::create_dir_all(dir.0.join("src")).unwrap();
         std::fs::create_dir_all(dir.0.join("vendor")).unwrap();
         std::fs::write(dir.0.join("src/lib.rs"), "fn keep() {}\n").unwrap();
+        std::fs::write(dir.0.join("src/main.ts"), "export const keep = 1;\n").unwrap();
+        std::fs::write(
+            dir.0.join("src/view.tsx"),
+            "export const View = () => <div />;\n",
+        )
+        .unwrap();
+        std::fs::write(dir.0.join("src/esm.mts"), "export const keep = 2;\n").unwrap();
+        std::fs::write(dir.0.join("src/common.cts"), "export const keep = 3;\n").unwrap();
         std::fs::write(dir.0.join("src/legacy.js"), "function keep() {}\n").unwrap();
         std::fs::write(dir.0.join("src/generated.rs"), "fn skip() {}\n").unwrap();
         std::fs::write(dir.0.join("vendor/third_party.rs"), "fn vendor() {}\n").unwrap();
@@ -1188,7 +1196,13 @@ mod tests {
                 .iter()
                 .map(|(_, relative)| relative.as_str())
                 .collect::<Vec<_>>(),
-            ["src/lib.rs"]
+            [
+                "src/common.cts",
+                "src/esm.mts",
+                "src/lib.rs",
+                "src/main.ts",
+                "src/view.tsx"
+            ]
         );
         assert_eq!(
             collect_project_files_with_config(&dir.0, &config)
@@ -1196,7 +1210,14 @@ mod tests {
                 .into_iter()
                 .map(|(_, relative)| relative)
                 .collect::<Vec<_>>(),
-            vec!["src/legacy.js".to_string(), "src/lib.rs".to_string()]
+            vec![
+                "src/common.cts".to_string(),
+                "src/esm.mts".to_string(),
+                "src/legacy.js".to_string(),
+                "src/lib.rs".to_string(),
+                "src/main.ts".to_string(),
+                "src/view.tsx".to_string(),
+            ]
         );
     }
 

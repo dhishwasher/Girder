@@ -45,6 +45,7 @@ jobs:
             tools.test_core_trustworthiness_oracle \
             tools.test_core_representative_benchmark \
             tools.test_core_representative_mutations \
+            tools.test_typescript_support_benchmark \
             tools.test_plan_executor_oracle \
             tools.test_context_vs_read_cost \
             tools.test_girder_context_advisory_hook \
