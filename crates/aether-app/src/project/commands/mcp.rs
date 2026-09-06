@@ -517,6 +517,75 @@ someone else just made. Coverage gaps it reports are advisory.",
             Ok(argv)
         },
     },
+    Tool {
+        name: "orient",
+        title: "Orient at a node in one call",
+        description: "\
+Answer \"what am I about to touch and what does it reach\" for one starting \
+point in a single round trip: its source, direct callers and callees (to \
+`depth`, default 1, capped at 2), the tests that cover it, and its impact \
+set — everything `get_source` + `ask_codebase` (callers, callees, and \
+impact questions) + `impacted_tests` would answer across several separate \
+calls, bundled into one. Prefer this over chaining those tools when \
+orienting in unfamiliar code. Pin `nodes` when you know the exact path; use \
+`intent` only when you do not, and check the returned `confidence` — a \
+`\"low\"` value means the match is a guess (natural-language search on this \
+codebase resolves correctly only part of the time, see \
+docs/description-search-accuracy.md), not a verified answer, and \
+`find_definition` or `search_code` first is the safer path. Large \
+caller/callee/test/impact sections report a true count and are capped \
+rather than silently dropped.",
+        schema: || {
+            json!({
+                "type": "object",
+                "properties": {
+                    "nodes": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Exact node paths to orient at. Use find_definition or search_code to discover them."
+                    },
+                    "intent": {
+                        "type": "string",
+                        "description": "Natural-language description of the code to orient at, used only when `nodes` is omitted. A low-confidence resolution is flagged in the response, not hidden."
+                    },
+                    "depth": {
+                        "type": "integer",
+                        "description": "Hops of callers/callees to report beyond the immediate ones. Defaults to 1. Capped at 2."
+                    }
+                },
+                "additionalProperties": false
+            })
+        },
+        argv: |arguments, root| {
+            let mut argv = vec![
+                "orient".to_string(),
+                root.to_string(),
+                "--json".to_string(),
+            ];
+            let nodes = optional_string_array(arguments, "nodes")?;
+            let intent = optional_string(arguments, "intent")?;
+            match (nodes.as_deref(), intent) {
+                (Some(nodes), _) if !nodes.is_empty() => {
+                    argv.push("--nodes".to_string());
+                    argv.push(nodes.join(","));
+                }
+                (_, Some(intent)) if !intent.trim().is_empty() => {
+                    argv.push(intent.to_string());
+                }
+                _ => {
+                    return Err(
+                        "provide `nodes` (exact node paths) or `intent` (a description)"
+                            .to_string(),
+                    )
+                }
+            }
+            if let Some(depth) = optional_u32(arguments, "depth")? {
+                argv.push("--depth".to_string());
+                argv.push(depth.to_string());
+            }
+            Ok(argv)
+        },
+    },
 ];
 
 fn describe_tool(tool: &Tool) -> Value {
@@ -715,6 +784,22 @@ fn optional_bool(arguments: &Map<String, Value>, key: &str) -> Result<Option<boo
         None | Some(Value::Null) => Ok(None),
         Some(Value::Bool(value)) => Ok(Some(*value)),
         Some(_) => Err(format!("`{key}` must be a boolean")),
+    }
+}
+
+/// A non-negative integer argument. Unlike the string accessors above, this
+/// never needs [`reject_option_like`]: a JSON number can't carry a leading
+/// `-` in its argv rendering the way a string can, since it is only ever
+/// formatted from a validated `u32`.
+fn optional_u32(arguments: &Map<String, Value>, key: &str) -> Result<Option<u32>, String> {
+    match arguments.get(key) {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::Number(number)) => number
+            .as_u64()
+            .and_then(|value| u32::try_from(value).ok())
+            .map(Some)
+            .ok_or_else(|| format!("`{key}` must be a non-negative integer")),
+        Some(_) => Err(format!("`{key}` must be a non-negative integer")),
     }
 }
 
@@ -1083,6 +1168,63 @@ mod tests {
     /// commands that happen to parse no flags today, so they are covered
     /// here to keep a flag added to either later from reopening this.
     #[test]
+    fn orient_pins_exact_nodes_as_a_comma_separated_list() {
+        let argv = argv_for("orient", json!({"nodes": ["crate::a::b", "crate::c::d"]})).unwrap();
+        assert_eq!(
+            argv,
+            vec![
+                "orient",
+                "/tmp/project",
+                "--json",
+                "--nodes",
+                "crate::a::b,crate::c::d"
+            ]
+        );
+    }
+
+    #[test]
+    fn orient_falls_back_to_intent_when_no_nodes_are_pinned() {
+        let argv = argv_for("orient", json!({"intent": "parse a config file"})).unwrap();
+        assert_eq!(
+            argv,
+            vec!["orient", "/tmp/project", "--json", "parse a config file"]
+        );
+    }
+
+    #[test]
+    fn orient_requires_some_selection() {
+        let error = argv_for("orient", json!({})).unwrap_err();
+        assert!(error.contains("nodes") && error.contains("intent"), "{error}");
+    }
+
+    #[test]
+    fn orient_passes_depth_when_provided() {
+        let argv = argv_for(
+            "orient",
+            json!({"nodes": ["crate::a::b"], "depth": 2}),
+        )
+        .unwrap();
+        assert_eq!(
+            argv,
+            vec![
+                "orient",
+                "/tmp/project",
+                "--json",
+                "--nodes",
+                "crate::a::b",
+                "--depth",
+                "2"
+            ]
+        );
+    }
+
+    #[test]
+    fn orient_rejects_a_negative_depth() {
+        let error = argv_for("orient", json!({"nodes": ["crate::a::b"], "depth": -1})).unwrap_err();
+        assert!(error.contains("non-negative"), "{error}");
+    }
+
+    #[test]
     fn every_tool_refuses_option_like_arguments() {
         let cases = [
             ("get_source", json!({"nodes": ["--out"]})),
@@ -1096,6 +1238,7 @@ mod tests {
             ("ask_codebase", json!({"question": "--json"})),
             ("impacted_tests", json!({"nodes": ["--run"]})),
             ("review_changes", json!({"since": "--out"})),
+            ("orient", json!({"nodes": ["--out"]})),
         ];
         let covered: std::collections::BTreeSet<&str> =
             cases.iter().map(|(name, _)| *name).collect();
@@ -1171,6 +1314,7 @@ mod tests {
             ("ask_codebase", json!({"question": "what calls x?"})),
             ("impacted_tests", json!({})),
             ("review_changes", json!({})),
+            ("orient", json!({"nodes": ["crate::a::b"]})),
         ];
         assert_eq!(arguments.len(), TOOLS.len(), "every tool needs a case here");
         for (name, argument) in arguments {

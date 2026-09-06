@@ -87,6 +87,18 @@ COMMANDS:
                               all ten (docs/context-vs-read-cost.md). It
                               also needs no git repository, since it has no
                               base_commit to pin.
+    orient <dir> [--nodes <path>[,<path>...]] [\"<intent>\"] [--depth N] --json
+                              Read-only composite orientation: the same node
+                              selection as `context`, plus that node's direct
+                              callers/callees (to --depth, default 1, capped
+                              at 2), the tests that cover it, and its impact
+                              set, as one JSON object. Answers what `context`
+                              + `query` (callers) + `query` (callees) +
+                              `test-impact` + `query` (impact) would answer
+                              separately, in one call. Large fan-out sections
+                              report a count and are capped, never silently
+                              dropped. An --nodes selection carries no score;
+                              an intent selection reports `confidence`.
     new <dir> \"<description>\" --language rust|python --json
                               Read-only, context-shaped, for authoring a
                               program that does not exist yet: project root,
@@ -197,9 +209,9 @@ COMMANDS:
     mcp [dir]                 Serve the read-only graph commands to an AI
                               coding agent over the Model Context Protocol
                               on stdin/stdout. Exposes search, names, query,
-                              context (--source-only shape), review, and
-                              test-impact as MCP tools. No writes, no model
-                              calls, no network.
+                              context (--source-only shape), review,
+                              test-impact, and orient as MCP tools. No
+                              writes, no model calls, no network.
     --gui [dir]               Launch the native egui/wgpu window for a project
     --version                 Show the version
     --help                    Show this help
@@ -264,6 +276,7 @@ fn main() {
         Some("inspect") => report(project::inspect(&args[1..])),
         Some("review") => report(project::review(&args[1..])),
         Some("test-impact") => report(project::test_impact(&args[1..])),
+        Some("orient") => report(project::orient(&args[1..])),
         Some("collab") => report(project::collaboration(&args[1..])),
         Some("dap") => {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
