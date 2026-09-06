@@ -253,10 +253,6 @@ impl ProjectConfig {
         render_command(self.tests.python.as_deref()?, "{filter}", filter)
     }
 
-    // EXTENSION POINT: test_impact.rs's `run` path only builds commands for
-    // "rust"/"python" test nodes (mirroring its `--quiet` name filter); Go
-    // test execution is configurable here but not yet wired into that loop.
-    #[allow(dead_code)]
     pub(crate) fn go_test_command(&self, filter: &str) -> Option<ConfiguredCommand> {
         render_command(self.tests.go.as_deref()?, "{filter}", filter)
     }

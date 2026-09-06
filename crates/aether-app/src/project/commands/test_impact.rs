@@ -157,6 +157,7 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
 
     let mut rust_tests: Vec<String> = Vec::new();
     let mut python_tests: Vec<String> = Vec::new();
+    let mut go_tests: Vec<String> = Vec::new();
 
     if !quiet {
         out!(sink, "\nImpacted tests ({}):", test_ids.len());
@@ -164,16 +165,19 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     for id in &test_ids {
         if let Some(n) = graph.get(*id) {
             if quiet {
-                match n.language.as_str() {
-                    "rust" | "python" => out!(sink, "{}", n.name),
-                    _ => {}
-                }
+                // Every id here already came from `tests_for`/`tests_for_nodes`,
+                // which identify test nodes by the `is_test` attribute with no
+                // language filter — printing must not narrow that set back
+                // down, or a language the graph already recognizes as tested
+                // goes silently missing from `--quiet` output.
+                out!(sink, "{}", n.name);
             } else {
                 out!(sink, "  ✓ {} ({})", n.path, n.language);
             }
             match n.language.as_str() {
                 "rust" => rust_tests.push(n.name.clone()),
                 "python" => python_tests.push(n.name.clone()),
+                "go" => go_tests.push(n.name.clone()),
                 _ => {}
             }
         }
@@ -197,6 +201,14 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
                 out!(sink, "  {}", command.display());
             }
             commands.push(("Python", command));
+        }
+    }
+    if !go_tests.is_empty() {
+        if let Some(command) = config.go_test_command(&go_tests.join("|")) {
+            if !quiet {
+                out!(sink, "  {}", command.display());
+            }
+            commands.push(("Go", command));
         }
     }
     if commands.is_empty() && !quiet {

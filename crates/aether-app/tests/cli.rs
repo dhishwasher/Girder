@@ -1337,6 +1337,59 @@ fn unrelated_test() {
 }
 
 #[test]
+fn test_impact_quiet_includes_go_test_names_and_builds_its_run_command() {
+    let repo = TempRepo::new("test-impact-go");
+    repo.write("go.mod", "module example.com/sample\n\ngo 1.21\n");
+    repo.write(
+        "add.go",
+        r#"
+package sample
+
+func Add(a, b int) int {
+    return a + b
+}
+"#,
+    );
+    repo.write(
+        "add_test.go",
+        r#"
+package sample
+
+import "testing"
+
+func TestAdd(t *testing.T) {
+    if Add(2, 3) != 5 {
+        t.Fatal("wrong sum")
+    }
+}
+"#,
+    );
+    repo.commit_all("baseline");
+
+    repo.write(
+        "add.go",
+        r#"
+package sample
+
+func Add(a, b int) int {
+    return a + b + 0
+}
+"#,
+    );
+
+    let output = run_girder_output(&["test-impact", repo.path().to_str().unwrap(), "--quiet"]);
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert_eq!(stdout, "TestAdd\n", "{stdout}");
+
+    let full = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
+    assert!(
+        full.contains("go test") && full.contains("TestAdd"),
+        "expected a built `go test` command naming TestAdd, got:\n{full}"
+    );
+}
+
+#[test]
 fn test_impact_rejects_every_unknown_explicit_node() {
     let repo = TempRepo::new("test-impact-unknown-node");
     repo.write(
