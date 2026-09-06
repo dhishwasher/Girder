@@ -11,6 +11,7 @@ project.aether
 __pycache__/
 **/*.rs.bk
 /target
+/LICENSE_KEYGEN.md
 # The npm wrapper's postinstall downloads the binary next to its shims.
 npm/bin/girder
 npm/bin/girder.exe
