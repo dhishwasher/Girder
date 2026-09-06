@@ -180,6 +180,7 @@ fn a_full_session_handshakes_lists_tools_and_answers_calls_in_order() {
             "find_definition",
             "get_source",
             "impacted_tests",
+            "orient",
             "review_changes",
             "search_code"
         ]
