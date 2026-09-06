@@ -45,9 +45,19 @@ fn run(mut args: impl Iterator<Item = String>) -> Result<(), String> {
 
     let issued_on = utc_date(SystemTime::now())?;
     let unsigned = license::unsigned_key(&issued_on, &tier).map_err(|error| error.to_string())?;
-    let signature = license::encode_signature(pair.sign(unsigned.as_bytes()).as_ref());
+    let signature = encode_signature(pair.sign(unsigned.as_bytes()).as_ref());
     println!("{unsigned}.{signature}");
     Ok(())
+}
+
+fn encode_signature(signature: &[u8]) -> String {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    let mut encoded = String::with_capacity(signature.len() * 2);
+    for byte in signature {
+        encoded.push(HEX[usize::from(byte >> 4)] as char);
+        encoded.push(HEX[usize::from(byte & 0x0f)] as char);
+    }
+    encoded
 }
 
 fn usage(reason: &str) -> String {

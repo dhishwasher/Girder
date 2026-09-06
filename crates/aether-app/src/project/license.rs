@@ -122,7 +122,8 @@ pub(crate) fn unsigned_key(issued_on: &str, tier: &str) -> Result<String, Licens
     Ok(format!("{KEY_PREFIX}.{issued_on}.{tier}"))
 }
 
-pub(crate) fn encode_signature(signature: &[u8]) -> String {
+#[cfg(test)]
+fn encode_signature(signature: &[u8]) -> String {
     const HEX: &[u8; 16] = b"0123456789abcdef";
     let mut encoded = String::with_capacity(signature.len() * 2);
     for byte in signature {
