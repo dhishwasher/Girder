@@ -52,6 +52,12 @@ const MAX_DEPTH: u32 = 2;
 /// 0.17 top-hit score `docs/core-gap-analysis.md` gap #15 recorded as a real
 /// match, with 0.05-0.09 recorded as noise on that same run — the same
 /// evidence `NODE_SCORE_FLOOR_RATIO`'s doc comment cites.
+///
+/// This floor alone is not sufficient: `docs/orient-tool-observation.json`
+/// recorded all three intent-task misses with scores of 0.27-0.39, well
+/// above it, so a wrong top-1 sailed through as `"confidence": "high"`. See
+/// [`orient_one`]'s ambiguity check below for the second, relative signal
+/// that catches those.
 const LOW_CONFIDENCE_SCORE_FLOOR: f32 = 0.12;
 
 pub fn orient(args: &[String]) -> std::io::Result<()> {
@@ -96,10 +102,24 @@ fn build_output(root: &Path, args: &[String]) -> std::io::Result<Value> {
         }
     };
 
+    // Every scored (intent-resolved) candidate that survived
+    // `NODE_SCORE_FLOOR_RATIO`'s cut, in the order `select_nodes` returned
+    // them. Pinned (`--nodes`) selections never carry a score, so this stays
+    // empty for them and the ambiguity check in `orient_one` never fires.
+    let candidates: Vec<Value> = ctx
+        .nodes
+        .iter()
+        .filter_map(|selected| {
+            selected
+                .score
+                .map(|score| json!({"path": selected.node.path, "score": score}))
+        })
+        .collect();
+
     let nodes: Vec<Value> = ctx
         .nodes
         .iter()
-        .map(|selected| orient_one(&graph, selected, depth_applied))
+        .map(|selected| orient_one(&graph, selected, depth_applied, &candidates))
         .collect();
 
     Ok(json!({
@@ -124,7 +144,23 @@ fn parse_depth(args: &[String]) -> std::io::Result<(u32, u32)> {
 /// One selected node's full orientation entry: source plus every section a
 /// chained `get_source` + `ask_codebase` (callers/callees/impact) +
 /// `impacted_tests` call sequence would answer.
-fn orient_one(graph: &SemanticGraph, selected: &SelectedNode, depth: u32) -> Value {
+///
+/// `candidates` is every scored candidate `build_output` selected for this
+/// intent (this node included), each as `{"path", "score"}`. More than one
+/// surviving `NODE_SCORE_FLOOR_RATIO`'s cut means the search did not narrow
+/// to a single best answer — a stronger "don't trust this" signal than this
+/// node's own absolute score, which the three intent-task misses in
+/// `docs/orient-tool-observation.json` showed can sit well above
+/// [`LOW_CONFIDENCE_SCORE_FLOOR`] while still being wrong. When either signal
+/// fires, `confidence` is `"low"`, `unsure` is `true`, and `candidates` is
+/// attached so the caller sees what else was in contention instead of one
+/// node presented as if it were verified.
+fn orient_one(
+    graph: &SemanticGraph,
+    selected: &SelectedNode,
+    depth: u32,
+    candidates: &[Value],
+) -> Value {
     let node = &selected.node;
     let id = node.id;
 
@@ -154,16 +190,19 @@ fn orient_one(graph: &SemanticGraph, selected: &SelectedNode, depth: u32) -> Val
     });
 
     if let Some(score) = selected.score {
+        let ambiguous = candidates.len() > 1;
+        let confidence = if ambiguous || score < LOW_CONFIDENCE_SCORE_FLOOR {
+            "low"
+        } else {
+            "high"
+        };
         if let Some(object) = entry.as_object_mut() {
             object.insert("score".to_string(), json!(score));
-            object.insert(
-                "confidence".to_string(),
-                json!(if score < LOW_CONFIDENCE_SCORE_FLOOR {
-                    "low"
-                } else {
-                    "high"
-                }),
-            );
+            object.insert("confidence".to_string(), json!(confidence));
+            if confidence == "low" {
+                object.insert("unsure".to_string(), json!(true));
+                object.insert("candidates".to_string(), json!(candidates));
+            }
         }
     }
 
@@ -443,6 +482,82 @@ mod tests {
             error.to_string().contains("crate::nonexistent::path"),
             "{error}"
         );
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// A well-separated single candidate (score above the floor, no
+    /// runner-up) must still be reported as a plain, confident answer — the
+    /// ambiguity check must not fire just because intent search was used.
+    #[test]
+    fn a_single_well_separated_candidate_is_confident() {
+        let root = fixture_project("confident-intent");
+        let config = ProjectConfig::load(&root).unwrap();
+        let (graph, _builder, _files) = build_from_dir_with_config(&root, &config).unwrap();
+        let node = graph.find_by_path("crate::calc::add").unwrap().clone();
+        let selected = SelectedNode {
+            node,
+            score: Some(0.9),
+        };
+        let candidates = vec![json!({"path": "crate::calc::add", "score": 0.9})];
+
+        let entry = orient_one(&graph, &selected, 1, &candidates);
+
+        assert_eq!(entry["confidence"], "high");
+        assert!(entry.get("unsure").is_none(), "{entry}");
+        assert!(entry.get("candidates").is_none(), "{entry}");
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// Reproduces the shape of `docs/orient-tool-observation.json`'s three
+    /// intent-task misses: a top hit (0.33, well above
+    /// `LOW_CONFIDENCE_SCORE_FLOOR`) with a close runner-up that survived
+    /// `NODE_SCORE_FLOOR_RATIO`'s cut. The old absolute-floor-only heuristic
+    /// reported these as `"confidence": "high"`; the fix must flag them low
+    /// and hand back what else was in contention.
+    #[test]
+    fn an_ambiguous_intent_resolution_is_flagged_low_confidence_with_candidates() {
+        let root = fixture_project("ambiguous-intent");
+        let config = ProjectConfig::load(&root).unwrap();
+        let (graph, _builder, _files) = build_from_dir_with_config(&root, &config).unwrap();
+        let node = graph.find_by_path("crate::calc::add").unwrap().clone();
+        let selected = SelectedNode {
+            node,
+            score: Some(0.33),
+        };
+        let candidates = vec![
+            json!({"path": "crate::calc::add", "score": 0.33}),
+            json!({"path": "crate::calc::caller", "score": 0.30}),
+        ];
+
+        let entry = orient_one(&graph, &selected, 1, &candidates);
+
+        assert_eq!(entry["confidence"], "low");
+        assert_eq!(entry["unsure"], true);
+        let listed = entry["candidates"].as_array().unwrap();
+        assert_eq!(listed.len(), 2, "{entry}");
+        assert_eq!(listed[0]["path"], "crate::calc::add");
+        assert_eq!(listed[1]["path"], "crate::calc::caller");
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// Exact-path (`--nodes`) resolution must stay exactly as it was:
+    /// `score`/`confidence`/`unsure`/`candidates` are all absent, regardless
+    /// of how many other candidates a concurrent intent search might have
+    /// found, because a pinned node was never scored against any.
+    #[test]
+    fn exact_path_resolution_never_reports_confidence_fields() {
+        let root = fixture_project("exact-path-unaffected");
+        let args = vec![
+            root.display().to_string(),
+            "--nodes".to_string(),
+            "crate::calc::add".to_string(),
+            "--json".to_string(),
+        ];
+        let output = build_output(&root, &args).unwrap();
+        let node = &output["nodes"].as_array().unwrap()[0];
+        for field in ["score", "confidence", "unsure", "candidates"] {
+            assert!(node.get(field).is_none(), "{field} present: {node}");
+        }
         let _ = std::fs::remove_dir_all(&root);
     }
 }
