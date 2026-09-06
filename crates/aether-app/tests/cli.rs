@@ -2326,6 +2326,7 @@ fn concurrent_review_and_test_impact_produce_complete_output() {
         std::thread::spawn(move || {
             Command::new(env!("CARGO_BIN_EXE_girder"))
                 .args([command, &root])
+                .env("GIRDER_LICENSE_KEY", TEST_LICENSE_KEY)
                 .output()
                 .unwrap()
         })
@@ -2492,6 +2493,7 @@ fn analysis_classifies_a_hung_git_subprocess() {
         .args(["test-impact", repo.path().to_str().unwrap()])
         .env("PATH", path)
         .env("GIRDER_GIT_TIMEOUT_SECONDS", "1")
+        .env("GIRDER_LICENSE_KEY", TEST_LICENSE_KEY)
         .output()
         .unwrap();
     let stderr = String::from_utf8_lossy(&output.stderr);
