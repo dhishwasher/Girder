@@ -7,6 +7,7 @@ mod collaboration_transport;
 mod commands;
 mod config;
 pub(crate) mod git;
+mod license;
 mod output_sink;
 mod planfile;
 mod process;
