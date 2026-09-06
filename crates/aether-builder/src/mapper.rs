@@ -11,6 +11,7 @@ use aether_graph::{Edge, EdgeKind, Node, NodeId, NodeKind, Span};
 use std::collections::{HashMap, HashSet};
 use tree_sitter::{Node as TsNode, Tree};
 
+mod go;
 mod typescript;
 
 /// A callable used to infer the type of a local binding from its return type.
@@ -224,6 +225,9 @@ pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput
     if lang.is_typescript() {
         return typescript::extract(tree, source, file, lang);
     }
+    if lang == Lang::Go {
+        return go::extract(tree, source, file, lang);
+    }
     let module = module_path_for(file);
     let mut out = BuildOutput::default();
 
@@ -284,7 +288,7 @@ fn is_function_kind(lang: Lang, kind: &str) -> bool {
     match lang {
         Lang::Rust => kind == "function_item",
         Lang::Python => kind == "function_definition",
-        Lang::TypeScript | Lang::Tsx => false,
+        Lang::TypeScript | Lang::Tsx | Lang::Go => false,
     }
 }
 
@@ -336,7 +340,7 @@ fn is_test_fn(
             has_test_attribute
         }
         Lang::Python => python_test_file(file) && name.starts_with("test"),
-        Lang::TypeScript | Lang::Tsx => false,
+        Lang::TypeScript | Lang::Tsx | Lang::Go => false,
     }
 }
 
@@ -458,7 +462,7 @@ fn is_type_kind(lang: Lang, kind: &str) -> bool {
     match lang {
         Lang::Rust => matches!(kind, "struct_item" | "enum_item" | "trait_item"),
         Lang::Python => kind == "class_definition",
-        Lang::TypeScript | Lang::Tsx => false,
+        Lang::TypeScript | Lang::Tsx | Lang::Go => false,
     }
 }
 
@@ -709,7 +713,7 @@ fn extract_supertypes(
                 }
             }
         }
-        Lang::TypeScript | Lang::Tsx => {}
+        Lang::TypeScript | Lang::Tsx | Lang::Go => {}
     }
 }
 
@@ -857,7 +861,7 @@ fn extract_fields(
             Lang::Rust => descendant.kind() == "field_declaration",
             // For Python we treat assignments in the class body as fields.
             Lang::Python => descendant.kind() == "assignment",
-            Lang::TypeScript | Lang::Tsx => false,
+            Lang::TypeScript | Lang::Tsx | Lang::Go => false,
         };
         if !is_field {
             continue;
@@ -1006,8 +1010,8 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                         // assume it" fallback.
                         function_locals = Some(bound_names);
                     }
-                    Lang::TypeScript | Lang::Tsx => {
-                        unreachable!("TypeScript call extraction is handled by mapper::typescript")
+                    Lang::TypeScript | Lang::Tsx | Lang::Go => {
+                        unreachable!("dedicated call extraction is handled by a language mapper")
                     }
                 }
             }
@@ -1044,8 +1048,8 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                 )
             }
             Lang::Python => None,
-            Lang::TypeScript | Lang::Tsx => {
-                unreachable!("TypeScript call extraction is handled by mapper::typescript")
+            Lang::TypeScript | Lang::Tsx | Lang::Go => {
+                unreachable!("dedicated call extraction is handled by a language mapper")
             }
         };
         let narrowed_scope = match node.kind() {
@@ -1058,8 +1062,8 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         let call_kind = match lang {
             Lang::Rust => "call_expression",
             Lang::Python => "call",
-            Lang::TypeScript | Lang::Tsx => {
-                unreachable!("TypeScript call extraction is handled by mapper::typescript")
+            Lang::TypeScript | Lang::Tsx | Lang::Go => {
+                unreachable!("dedicated call extraction is handled by a language mapper")
             }
         };
         if node.kind() == call_kind {
@@ -1236,8 +1240,8 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
                     source,
                 ),
                 Lang::Python => None,
-                Lang::TypeScript | Lang::Tsx => {
-                    unreachable!("TypeScript call extraction is handled by mapper::typescript")
+                Lang::TypeScript | Lang::Tsx | Lang::Go => {
+                    unreachable!("dedicated call extraction is handled by a language mapper")
                 }
             };
             if let Some(hints) = following {

@@ -37,6 +37,7 @@ pub(crate) struct GraphConfig {
 pub(crate) struct TestConfig {
     pub(crate) rust: Option<Vec<String>>,
     pub(crate) python: Option<Vec<String>>,
+    pub(crate) go: Option<Vec<String>>,
     /// Hard wall-clock budget for each `test-impact --run` child.
     pub(crate) run_timeout_seconds: u64,
     /// Hard cap on bytes a `--run` child may stream before it is killed.
@@ -130,6 +131,12 @@ impl Default for TestConfig {
             ),
             python: Some(
                 ["pytest", "-k", "{filter}"]
+                    .into_iter()
+                    .map(str::to_string)
+                    .collect(),
+            ),
+            go: Some(
+                ["go", "test", "./...", "-run", "{filter}"]
                     .into_iter()
                     .map(str::to_string)
                     .collect(),
@@ -244,6 +251,10 @@ impl ProjectConfig {
 
     pub(crate) fn python_test_command(&self, filter: &str) -> Option<ConfiguredCommand> {
         render_command(self.tests.python.as_deref()?, "{filter}", filter)
+    }
+
+    pub(crate) fn go_test_command(&self, filter: &str) -> Option<ConfiguredCommand> {
+        render_command(self.tests.go.as_deref()?, "{filter}", filter)
     }
 
     fn validate(&self) -> std::io::Result<()> {

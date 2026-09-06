@@ -9,6 +9,7 @@ pub enum Lang {
     Python,
     TypeScript,
     Tsx,
+    Go,
 }
 
 impl Lang {
@@ -19,6 +20,7 @@ impl Lang {
             Some("py") => Some(Lang::Python),
             Some("ts" | "mts" | "cts") => Some(Lang::TypeScript),
             Some("tsx") => Some(Lang::Tsx),
+            Some("go") => Some(Lang::Go),
             _ => None,
         }
     }
@@ -28,6 +30,7 @@ impl Lang {
             Lang::Rust => "rust",
             Lang::Python => "python",
             Lang::TypeScript | Lang::Tsx => "typescript",
+            Lang::Go => "go",
         }
     }
 
@@ -41,6 +44,7 @@ impl Lang {
             Lang::Python => tree_sitter_python::language(),
             Lang::TypeScript => tree_sitter_typescript::language_typescript(),
             Lang::Tsx => tree_sitter_typescript::language_tsx(),
+            Lang::Go => tree_sitter_go::language(),
         }
     }
 }

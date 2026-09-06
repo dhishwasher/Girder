@@ -49,7 +49,7 @@ pub fn callee_identifier_spans(source: &str, file: &str, name: &str) -> Vec<(usi
     let call_kind = match language {
         Lang::Rust => "call_expression",
         Lang::Python => "call",
-        Lang::TypeScript | Lang::Tsx => "call_expression",
+        Lang::TypeScript | Lang::Tsx | Lang::Go => "call_expression",
     };
     let mut spans = Vec::new();
     let mut stack = vec![tree.root_node()];
@@ -97,6 +97,8 @@ pub fn has_leading_declaration_metadata(source: &str, file: &str, start: usize) 
                     | "abstract_class_declaration"
                     | "interface_declaration"
                     | "type_alias_declaration"
+                    | "method_declaration"
+                    | "type_spec"
             )
         {
             if language == Lang::Python

@@ -242,8 +242,29 @@ pub(crate) fn is_supported_source_path(path: &str) -> bool {
         Path::new(path)
             .extension()
             .and_then(|extension| extension.to_str()),
-        Some("rs") | Some("py") | Some("ts") | Some("tsx") | Some("mts") | Some("cts")
+        Some("rs") | Some("py") | Some("ts") | Some("tsx") | Some("mts") | Some("cts") | Some("go")
     )
+}
+
+fn read_go_module_path(root: &Path) -> std::io::Result<Option<String>> {
+    let path = root.join("go.mod");
+    let source = match std::fs::read_to_string(&path) {
+        Ok(source) => source,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => {
+            return Err(std::io::Error::new(
+                error.kind(),
+                format!("failed to read {}: {error}", path.display()),
+            ))
+        }
+    };
+    Ok(source.lines().find_map(|line| {
+        line.trim()
+            .strip_prefix("module ")
+            .map(str::trim)
+            .filter(|module| !module.is_empty())
+            .map(str::to_string)
+    }))
 }
 
 pub(crate) fn is_configured_source_path(
@@ -459,6 +480,7 @@ pub(crate) fn build_from_dir_with_config(
     let mut graph = SemanticGraph::new();
     let mut builder = GraphBuilder::new();
     builder.set_bin_targets(cargo_bin_targets(root));
+    builder.set_go_module_path(read_go_module_path(root)?);
     let sources = collect_sources_with_config(root, config)?;
     let mut contents = Vec::with_capacity(sources.len());
     for (absolute, relative) in &sources {
@@ -1174,6 +1196,7 @@ mod tests {
         std::fs::create_dir_all(dir.0.join("src")).unwrap();
         std::fs::create_dir_all(dir.0.join("vendor")).unwrap();
         std::fs::write(dir.0.join("src/lib.rs"), "fn keep() {}\n").unwrap();
+        std::fs::write(dir.0.join("src/main.go"), "package main\nfunc keep() {}\n").unwrap();
         std::fs::write(dir.0.join("src/main.ts"), "export const keep = 1;\n").unwrap();
         std::fs::write(
             dir.0.join("src/view.tsx"),
@@ -1200,6 +1223,7 @@ mod tests {
                 "src/common.cts",
                 "src/esm.mts",
                 "src/lib.rs",
+                "src/main.go",
                 "src/main.ts",
                 "src/view.tsx"
             ]
@@ -1215,9 +1239,24 @@ mod tests {
                 "src/esm.mts".to_string(),
                 "src/legacy.js".to_string(),
                 "src/lib.rs".to_string(),
+                "src/main.go".to_string(),
                 "src/main.ts".to_string(),
                 "src/view.tsx".to_string(),
             ]
+        );
+    }
+
+    #[test]
+    fn reads_the_project_module_path_from_go_mod() {
+        let dir = TempDir::new("go-module");
+        std::fs::write(
+            dir.0.join("go.mod"),
+            "module example.com/project\n\ngo 1.22\n",
+        )
+        .unwrap();
+        assert_eq!(
+            read_go_module_path(&dir.0).unwrap().as_deref(),
+            Some("example.com/project")
         );
     }
 

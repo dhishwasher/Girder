@@ -47,6 +47,7 @@ tree-sitter = "0.22"
 tree-sitter-rust = "0.21"
 tree-sitter-python = "0.21"
 tree-sitter-typescript = "0.21.2"
+tree-sitter-go = "0.21.2"
 # UI. GPU-accelerated egui via wgpu, with the Linux windowing backends enabled.
 # CI type-checks the `gui` feature on stable Rust. Running the window still needs
 # a GPU or software Vulkan adapter plus the usual platform windowing libraries.

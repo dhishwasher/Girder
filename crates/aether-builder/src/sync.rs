@@ -42,8 +42,11 @@ fn module_of(path: &str) -> String {
     }
 }
 
-fn source_module(file: Option<&str>, path: &str) -> String {
-    file.map(module_path_for).unwrap_or_else(|| module_of(path))
+fn source_module(file: Option<&str>, path: &str, declared: Option<&str>) -> String {
+    declared
+        .map(str::to_string)
+        .or_else(|| file.map(module_path_for))
+        .unwrap_or_else(|| module_of(path))
 }
 
 const MAX_REEXPORT_DEPTH: usize = 16;
@@ -114,6 +117,39 @@ fn normalize_rust_import_target(file: &str, module: &str, target: &str) -> Optio
     Some(resolved.join("::"))
 }
 
+fn normalize_go_import_target(target: &str, go_module_path: Option<&str>) -> Option<String> {
+    let import_path = target.strip_prefix("go-import:")?;
+    let module_path = go_module_path?;
+    if import_path == module_path {
+        return Some("crate".to_string());
+    }
+    let relative = import_path.strip_prefix(module_path)?.strip_prefix('/')?;
+    (!relative.is_empty()).then(|| format!("crate::{}", relative.replace('/', "::")))
+}
+
+fn normalize_import_target(
+    file: &str,
+    module: &str,
+    target: &str,
+    go_module_path: Option<&str>,
+) -> Option<String> {
+    if target.starts_with("go-import:") {
+        normalize_go_import_target(target, go_module_path)
+    } else {
+        normalize_rust_import_target(file, module, target)
+    }
+}
+
+fn normalize_receiver_type(
+    receiver_type: Option<&str>,
+    go_module_path: Option<&str>,
+) -> Option<String> {
+    let receiver_type = receiver_type?;
+    let encoded = receiver_type.strip_prefix("go-type:")?;
+    let (import, name) = encoded.rsplit_once("::")?;
+    normalize_go_import_target(import, go_module_path).map(|module| format!("{module}::{name}"))
+}
+
 fn reexport_index(files: &HashMap<String, FileState>) -> HashMap<String, Vec<String>> {
     let mut index: HashMap<String, Vec<String>> = HashMap::new();
     for (file, state) in files {
@@ -178,6 +214,7 @@ fn resolve_local_call_alias(
     state: &FileState,
     callee: &str,
     reexports: &HashMap<String, Vec<String>>,
+    go_module_path: Option<&str>,
 ) -> AliasResolution {
     let module = rust_module_path_for(file);
     let mut targets = state
@@ -185,7 +222,7 @@ fn resolve_local_call_alias(
         .iter()
         .filter(|import| import.local == callee)
         .filter_map(|import| {
-            normalize_rust_import_target(file, &module, &import.target).map(|target| {
+            normalize_import_target(file, &module, &import.target, go_module_path).map(|target| {
                 (
                     target,
                     import.exact || last_path_segment(&import.target) != callee,
@@ -216,6 +253,7 @@ fn resolve_qualified_reexport(
     qualifier: &str,
     callee: &str,
     reexports: &HashMap<String, Vec<String>>,
+    go_module_path: Option<&str>,
 ) -> AliasResolution {
     if qualifier.contains('.')
         || qualifier
@@ -229,7 +267,7 @@ fn resolve_qualified_reexport(
         .rust_imports
         .iter()
         .filter(|import| import.exact && import.local == qualifier)
-        .filter_map(|import| normalize_rust_import_target(file, &module, &import.target))
+        .filter_map(|import| normalize_import_target(file, &module, &import.target, go_module_path))
         .filter_map(|target| follow_reexports(target, reexports))
         .map(|target| format!("{target}::{callee}"))
         .filter_map(|target| follow_reexports(target, reexports))
@@ -240,6 +278,13 @@ fn resolve_qualified_reexport(
         [target] => return AliasResolution::Resolved(target.clone()),
         [] => {}
         _ => return AliasResolution::Ambiguous,
+    }
+    if state
+        .rust_imports
+        .iter()
+        .any(|import| import.exact && import.local == qualifier)
+    {
+        return AliasResolution::Ambiguous;
     }
     let Some(initial) =
         normalize_rust_import_target(file, &module, &format!("{qualifier}::{callee}"))
@@ -426,6 +471,15 @@ fn select_candidate<'a>(
                 return None;
             }
             let receiver_hint = receiver_type.unwrap_or(qualifier);
+            if receiver_hint.contains("::") {
+                if let Some(exact) = only_candidate(
+                    candidates
+                        .iter()
+                        .filter(|candidate| candidate.owner == receiver_hint),
+                ) {
+                    return Some(exact);
+                }
+            }
             // Try an exact owner-name match first: it is unambiguous even
             // when another candidate's owner merely ends with the same
             // hint (gap 22's `PyTimeline` colliding with `Timeline`). Only
@@ -642,6 +696,10 @@ pub struct GraphBuilder {
     /// custom `path` still links its exact `main` rather than staying
     /// unresolved.
     bin_targets: HashMap<String, String>,
+    /// The import path declared by a project-root go.mod. Go extractors retain
+    /// import strings verbatim; project-wide resolution maps only imports below
+    /// this module to Girder's directory-addressed `crate::...` paths.
+    go_module_path: Option<String>,
 }
 
 impl GraphBuilder {
@@ -654,6 +712,10 @@ impl GraphBuilder {
     /// set targets; call again after a manifest change.
     pub fn set_bin_targets(&mut self, bin_targets: HashMap<String, String>) {
         self.bin_targets = bin_targets;
+    }
+
+    pub fn set_go_module_path(&mut self, go_module_path: Option<String>) {
+        self.go_module_path = go_module_path;
     }
 
     /// Initial load of a file. Full parse + extract + insert.
@@ -774,7 +836,11 @@ impl GraphBuilder {
                 .push(FunctionCandidate {
                     path: n.path.clone(),
                     file: n.file.clone(),
-                    source_module: source_module(n.file.as_deref(), &n.path),
+                    source_module: source_module(
+                        n.file.as_deref(),
+                        &n.path,
+                        n.attr("source_module"),
+                    ),
                     owner: module_of(&n.path),
                     id: n.id,
                     return_type: n.attr("return_type").map(str::to_string),
@@ -826,7 +892,7 @@ impl GraphBuilder {
             for call in &state.calls {
                 let (caller_source_module, caller_owner) = match graph.get(call.caller) {
                     Some(node) => (
-                        source_module(node.file.as_deref(), &node.path),
+                        source_module(node.file.as_deref(), &node.path, node.attr("source_module")),
                         module_of(&node.path),
                     ),
                     None => continue,
@@ -863,10 +929,21 @@ impl GraphBuilder {
                     continue;
                 }
                 let alias = match call.qualifier.as_deref() {
-                    None => resolve_local_call_alias(file, state, &call.callee, &reexports),
-                    Some(qualifier) => {
-                        resolve_qualified_reexport(file, state, qualifier, &call.callee, &reexports)
-                    }
+                    None => resolve_local_call_alias(
+                        file,
+                        state,
+                        &call.callee,
+                        &reexports,
+                        self.go_module_path.as_deref(),
+                    ),
+                    Some(qualifier) => resolve_qualified_reexport(
+                        file,
+                        state,
+                        qualifier,
+                        &call.callee,
+                        &reexports,
+                        self.go_module_path.as_deref(),
+                    ),
                 };
                 let chosen = match alias {
                     AliasResolution::Resolved(target) => select_exact_path(&target, &by_name),
@@ -884,12 +961,18 @@ impl GraphBuilder {
                                 &caller_owner,
                             )
                         } else {
+                            let normalized_receiver = normalize_receiver_type(
+                                call.receiver_type.as_deref(),
+                                self.go_module_path.as_deref(),
+                            );
                             select_candidate(
                                 candidates,
                                 &caller_source_module,
                                 &caller_owner,
                                 call.qualifier.as_deref(),
-                                call.receiver_type.as_deref(),
+                                normalized_receiver
+                                    .as_deref()
+                                    .or(call.receiver_type.as_deref()),
                                 call.qualifier_owner_fallback,
                                 call.shadowed_by_local,
                             )
