@@ -1,0 +1,2107 @@
+{
+  "assessment": {
+    "checks": [
+      {
+        "actual": 0,
+        "id": "semantic.aggregate.missing_endpoints",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "id": "semantic.aggregate.false_positives",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "semantic.aggregate.false_negatives",
+        "maximum": 0,
+        "passed": false
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.aggregate.micro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 0.954545,
+        "id": "semantic.aggregate.micro_recall",
+        "minimum": 1.0,
+        "passed": false
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.aggregate.macro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 0.9375,
+        "id": "semantic.aggregate.macro_recall",
+        "minimum": 1.0,
+        "passed": false
+      },
+      {
+        "actual": 0,
+        "id": "semantic.go.missing_endpoints",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "id": "semantic.go.false_positives",
+        "maximum": 0,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "semantic.go.false_negatives",
+        "maximum": 0,
+        "passed": false
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.go.micro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 0.954545,
+        "id": "semantic.go.micro_recall",
+        "minimum": 1.0,
+        "passed": false
+      },
+      {
+        "actual": 1.0,
+        "id": "semantic.go.macro_precision",
+        "minimum": 1.0,
+        "passed": true
+      },
+      {
+        "actual": 0.9375,
+        "id": "semantic.go.macro_recall",
+        "minimum": 1.0,
+        "passed": false
+      },
+      {
+        "actual": 1428,
+        "id": "performance.afero-1.11.0.wall_max_ms",
+        "maximum": 30000,
+        "passed": true
+      },
+      {
+        "actual": 1320,
+        "id": "performance.afero-1.11.0.wall_median_ms",
+        "maximum": 15000,
+        "passed": true
+      },
+      {
+        "actual": 18176,
+        "id": "performance.afero-1.11.0.peak_rss_max_kib",
+        "maximum": 131072,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.afero-1.11.0.artifact_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.afero-1.11.0.semantic_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.afero-1.11.0.unique_node_edge_count_pairs",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 514852,
+        "id": "performance.afero-1.11.0.run_1.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 345,
+        "id": "performance.afero-1.11.0.run_1.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 514852,
+        "id": "performance.afero-1.11.0.run_2.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 141,
+        "id": "performance.afero-1.11.0.run_2.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 514852,
+        "id": "performance.afero-1.11.0.run_3.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 293,
+        "id": "performance.afero-1.11.0.run_3.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 514852,
+        "id": "performance.afero-1.11.0.run_4.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 210,
+        "id": "performance.afero-1.11.0.run_4.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 514852,
+        "id": "performance.afero-1.11.0.run_5.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 213,
+        "id": "performance.afero-1.11.0.run_5.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 1070,
+        "id": "performance.websocket-1.5.3.wall_max_ms",
+        "maximum": 30000,
+        "passed": true
+      },
+      {
+        "actual": 904,
+        "id": "performance.websocket-1.5.3.wall_median_ms",
+        "maximum": 15000,
+        "passed": true
+      },
+      {
+        "actual": 11136,
+        "id": "performance.websocket-1.5.3.peak_rss_max_kib",
+        "maximum": 131072,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.websocket-1.5.3.artifact_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.websocket-1.5.3.semantic_unique_digests",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "id": "determinism.websocket-1.5.3.unique_node_edge_count_pairs",
+        "maximum": 1,
+        "passed": true
+      },
+      {
+        "actual": 290071,
+        "id": "performance.websocket-1.5.3.run_1.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 164,
+        "id": "performance.websocket-1.5.3.run_1.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 290071,
+        "id": "performance.websocket-1.5.3.run_2.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 176,
+        "id": "performance.websocket-1.5.3.run_2.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 290071,
+        "id": "performance.websocket-1.5.3.run_3.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 172,
+        "id": "performance.websocket-1.5.3.run_3.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 290071,
+        "id": "performance.websocket-1.5.3.run_4.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 236,
+        "id": "performance.websocket-1.5.3.run_4.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 290071,
+        "id": "performance.websocket-1.5.3.run_5.artifact_bytes",
+        "maximum": 33554432,
+        "passed": true
+      },
+      {
+        "actual": 146,
+        "id": "performance.websocket-1.5.3.run_5.inspect_ms",
+        "maximum": 5000,
+        "passed": true
+      },
+      {
+        "actual": 2224,
+        "id": "performance.sum_of_repository_medians_ms",
+        "maximum": 180000,
+        "passed": true
+      }
+    ],
+    "passed": false
+  },
+  "host": {
+    "machine": "x86_64",
+    "python": "3.11.2",
+    "release": "6.6.135-09383-g1140e4f27e24",
+    "system": "Linux"
+  },
+  "implementation_commit": "c0af96ae997812eaa2ec5dbdc4d0a4d47bfef97a",
+  "kind": "go-support-observation",
+  "policy_sha256": "2f3fbda5ab81df67097042fa705d29c43c2f3ff15cd9fd31fd46749881f19c50",
+  "repositories": [
+    {
+      "artifact": {
+        "bytes": 89257,
+        "format": "tar.gz",
+        "root": "afero-1.11.0",
+        "sha256": "f83f67c4a03d8bba2b7fe1a496e848b2b1b7d97d0b951d85d2b401e7488a4ed4",
+        "url": "https://github.com/spf13/afero/archive/refs/tags/v1.11.0.tar.gz",
+        "version": "1.11.0"
+      },
+      "id": "afero-1.11.0",
+      "language": "go",
+      "role": "mid-size-interface-heavy-library",
+      "runs": [
+        {
+          "graph": {
+            "artifact_bytes": 514852,
+            "artifact_sha256": "393b4fb0996c4f7c6dd5bd10902158e8ec5186cab51e65203658abc88b1fc44b",
+            "canonical_semantic_sha256": "128bbbe986f26c6f54c16bd65b3dcd037c830fde56ea41418d5568a24431e851",
+            "edges": 1603,
+            "edges_by_kind": {
+              "Calls": 746,
+              "Contains": 849,
+              "Inherits": 8
+            },
+            "nodes": 856
+          },
+          "inspect_wall_ms": 345,
+          "ordinal": 1,
+          "peak_rss_kib": 18048,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-struct",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Afero",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-interface",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Fs",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-named-type",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::DirsMerger",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-constant",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::FilePathSeparator",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "method-scoped-under-receiver",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::Afero",
+              "source_endpoint_present": true,
+              "target": "crate::Afero::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "value-receiver-method",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::mem::File",
+              "source_endpoint_present": true,
+              "target": "crate::mem::File::Data",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "pointer-receiver-method-same-type",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::mem::File",
+              "source_endpoint_present": true,
+              "target": "crate::mem::File::Open",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-package-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::Afero::ReadFile",
+              "source_endpoint_present": true,
+              "target": "crate::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "cross-package-call-through-import-path",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::MemMapFs::Create",
+              "source_endpoint_present": true,
+              "target": "crate::mem::CreateFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-struct-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::mem::FileInfo",
+              "source_endpoint_present": true,
+              "target": "crate::mem::FileData",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-interface-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::Symlinker",
+              "source_endpoint_present": true,
+              "target": "crate::Lstater",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-interface-method-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::BasePathFile::Name",
+              "source_endpoint_present": true,
+              "target": "crate::File::Name",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "embedded-method-not-wrong-receiver",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::BasePathFile::Name",
+              "source_endpoint_present": true,
+              "target": "crate::BasePathFs::Name",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "test-function-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::TestDirExists",
+              "source_endpoint_present": true,
+              "target": "crate::TestDirExists",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "test-helper-not-discovered",
+              "kind": "IsTest",
+              "observed_present": false,
+              "source": "crate::createZeroSizedFileInTempDir",
+              "source_endpoint_present": true,
+              "target": "crate::createZeroSizedFileInTempDir",
+              "target_endpoint_present": true
+            }
+          ],
+          "source_manifest_after_sha256": "bac2e9d107aadbbf72380c3d3a7f82527c9145719576cd31925d4f65e5a6c1db",
+          "wall_ms": 1328
+        },
+        {
+          "graph": {
+            "artifact_bytes": 514852,
+            "artifact_sha256": "393b4fb0996c4f7c6dd5bd10902158e8ec5186cab51e65203658abc88b1fc44b",
+            "canonical_semantic_sha256": "128bbbe986f26c6f54c16bd65b3dcd037c830fde56ea41418d5568a24431e851",
+            "edges": 1603,
+            "edges_by_kind": {
+              "Calls": 746,
+              "Contains": 849,
+              "Inherits": 8
+            },
+            "nodes": 856
+          },
+          "inspect_wall_ms": 141,
+          "ordinal": 2,
+          "peak_rss_kib": 17760,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-struct",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Afero",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-interface",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Fs",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-named-type",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::DirsMerger",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-constant",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::FilePathSeparator",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "method-scoped-under-receiver",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::Afero",
+              "source_endpoint_present": true,
+              "target": "crate::Afero::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "value-receiver-method",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::mem::File",
+              "source_endpoint_present": true,
+              "target": "crate::mem::File::Data",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "pointer-receiver-method-same-type",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::mem::File",
+              "source_endpoint_present": true,
+              "target": "crate::mem::File::Open",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-package-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::Afero::ReadFile",
+              "source_endpoint_present": true,
+              "target": "crate::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "cross-package-call-through-import-path",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::MemMapFs::Create",
+              "source_endpoint_present": true,
+              "target": "crate::mem::CreateFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-struct-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::mem::FileInfo",
+              "source_endpoint_present": true,
+              "target": "crate::mem::FileData",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-interface-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::Symlinker",
+              "source_endpoint_present": true,
+              "target": "crate::Lstater",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-interface-method-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::BasePathFile::Name",
+              "source_endpoint_present": true,
+              "target": "crate::File::Name",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "embedded-method-not-wrong-receiver",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::BasePathFile::Name",
+              "source_endpoint_present": true,
+              "target": "crate::BasePathFs::Name",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "test-function-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::TestDirExists",
+              "source_endpoint_present": true,
+              "target": "crate::TestDirExists",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "test-helper-not-discovered",
+              "kind": "IsTest",
+              "observed_present": false,
+              "source": "crate::createZeroSizedFileInTempDir",
+              "source_endpoint_present": true,
+              "target": "crate::createZeroSizedFileInTempDir",
+              "target_endpoint_present": true
+            }
+          ],
+          "source_manifest_after_sha256": "bac2e9d107aadbbf72380c3d3a7f82527c9145719576cd31925d4f65e5a6c1db",
+          "wall_ms": 1228
+        },
+        {
+          "graph": {
+            "artifact_bytes": 514852,
+            "artifact_sha256": "393b4fb0996c4f7c6dd5bd10902158e8ec5186cab51e65203658abc88b1fc44b",
+            "canonical_semantic_sha256": "128bbbe986f26c6f54c16bd65b3dcd037c830fde56ea41418d5568a24431e851",
+            "edges": 1603,
+            "edges_by_kind": {
+              "Calls": 746,
+              "Contains": 849,
+              "Inherits": 8
+            },
+            "nodes": 856
+          },
+          "inspect_wall_ms": 293,
+          "ordinal": 3,
+          "peak_rss_kib": 18176,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-struct",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Afero",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-interface",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Fs",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-named-type",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::DirsMerger",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-constant",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::FilePathSeparator",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "method-scoped-under-receiver",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::Afero",
+              "source_endpoint_present": true,
+              "target": "crate::Afero::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "value-receiver-method",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::mem::File",
+              "source_endpoint_present": true,
+              "target": "crate::mem::File::Data",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "pointer-receiver-method-same-type",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::mem::File",
+              "source_endpoint_present": true,
+              "target": "crate::mem::File::Open",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-package-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::Afero::ReadFile",
+              "source_endpoint_present": true,
+              "target": "crate::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "cross-package-call-through-import-path",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::MemMapFs::Create",
+              "source_endpoint_present": true,
+              "target": "crate::mem::CreateFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-struct-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::mem::FileInfo",
+              "source_endpoint_present": true,
+              "target": "crate::mem::FileData",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-interface-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::Symlinker",
+              "source_endpoint_present": true,
+              "target": "crate::Lstater",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-interface-method-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::BasePathFile::Name",
+              "source_endpoint_present": true,
+              "target": "crate::File::Name",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "embedded-method-not-wrong-receiver",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::BasePathFile::Name",
+              "source_endpoint_present": true,
+              "target": "crate::BasePathFs::Name",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "test-function-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::TestDirExists",
+              "source_endpoint_present": true,
+              "target": "crate::TestDirExists",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "test-helper-not-discovered",
+              "kind": "IsTest",
+              "observed_present": false,
+              "source": "crate::createZeroSizedFileInTempDir",
+              "source_endpoint_present": true,
+              "target": "crate::createZeroSizedFileInTempDir",
+              "target_endpoint_present": true
+            }
+          ],
+          "source_manifest_after_sha256": "bac2e9d107aadbbf72380c3d3a7f82527c9145719576cd31925d4f65e5a6c1db",
+          "wall_ms": 1320
+        },
+        {
+          "graph": {
+            "artifact_bytes": 514852,
+            "artifact_sha256": "393b4fb0996c4f7c6dd5bd10902158e8ec5186cab51e65203658abc88b1fc44b",
+            "canonical_semantic_sha256": "128bbbe986f26c6f54c16bd65b3dcd037c830fde56ea41418d5568a24431e851",
+            "edges": 1603,
+            "edges_by_kind": {
+              "Calls": 746,
+              "Contains": 849,
+              "Inherits": 8
+            },
+            "nodes": 856
+          },
+          "inspect_wall_ms": 210,
+          "ordinal": 4,
+          "peak_rss_kib": 18048,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-struct",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Afero",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-interface",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Fs",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-named-type",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::DirsMerger",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-constant",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::FilePathSeparator",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "method-scoped-under-receiver",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::Afero",
+              "source_endpoint_present": true,
+              "target": "crate::Afero::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "value-receiver-method",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::mem::File",
+              "source_endpoint_present": true,
+              "target": "crate::mem::File::Data",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "pointer-receiver-method-same-type",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::mem::File",
+              "source_endpoint_present": true,
+              "target": "crate::mem::File::Open",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-package-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::Afero::ReadFile",
+              "source_endpoint_present": true,
+              "target": "crate::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "cross-package-call-through-import-path",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::MemMapFs::Create",
+              "source_endpoint_present": true,
+              "target": "crate::mem::CreateFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-struct-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::mem::FileInfo",
+              "source_endpoint_present": true,
+              "target": "crate::mem::FileData",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-interface-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::Symlinker",
+              "source_endpoint_present": true,
+              "target": "crate::Lstater",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-interface-method-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::BasePathFile::Name",
+              "source_endpoint_present": true,
+              "target": "crate::File::Name",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "embedded-method-not-wrong-receiver",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::BasePathFile::Name",
+              "source_endpoint_present": true,
+              "target": "crate::BasePathFs::Name",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "test-function-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::TestDirExists",
+              "source_endpoint_present": true,
+              "target": "crate::TestDirExists",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "test-helper-not-discovered",
+              "kind": "IsTest",
+              "observed_present": false,
+              "source": "crate::createZeroSizedFileInTempDir",
+              "source_endpoint_present": true,
+              "target": "crate::createZeroSizedFileInTempDir",
+              "target_endpoint_present": true
+            }
+          ],
+          "source_manifest_after_sha256": "bac2e9d107aadbbf72380c3d3a7f82527c9145719576cd31925d4f65e5a6c1db",
+          "wall_ms": 1428
+        },
+        {
+          "graph": {
+            "artifact_bytes": 514852,
+            "artifact_sha256": "393b4fb0996c4f7c6dd5bd10902158e8ec5186cab51e65203658abc88b1fc44b",
+            "canonical_semantic_sha256": "128bbbe986f26c6f54c16bd65b3dcd037c830fde56ea41418d5568a24431e851",
+            "edges": 1603,
+            "edges_by_kind": {
+              "Calls": 746,
+              "Contains": 849,
+              "Inherits": 8
+            },
+            "nodes": 856
+          },
+          "inspect_wall_ms": 213,
+          "ordinal": 5,
+          "peak_rss_kib": 17972,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-function",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-struct",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Afero",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-interface",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Fs",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-named-type",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::DirsMerger",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "package-contains-constant",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::FilePathSeparator",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "method-scoped-under-receiver",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::Afero",
+              "source_endpoint_present": true,
+              "target": "crate::Afero::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "value-receiver-method",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::mem::File",
+              "source_endpoint_present": true,
+              "target": "crate::mem::File::Data",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "pointer-receiver-method-same-type",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::mem::File",
+              "source_endpoint_present": true,
+              "target": "crate::mem::File::Open",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-package-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::Afero::ReadFile",
+              "source_endpoint_present": true,
+              "target": "crate::ReadFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "cross-package-call-through-import-path",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::MemMapFs::Create",
+              "source_endpoint_present": true,
+              "target": "crate::mem::CreateFile",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-struct-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::mem::FileInfo",
+              "source_endpoint_present": true,
+              "target": "crate::mem::FileData",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-interface-inheritance",
+              "kind": "Inherits",
+              "observed_present": true,
+              "source": "crate::Symlinker",
+              "source_endpoint_present": true,
+              "target": "crate::Lstater",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "embedded-interface-method-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::BasePathFile::Name",
+              "source_endpoint_present": true,
+              "target": "crate::File::Name",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "embedded-method-not-wrong-receiver",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::BasePathFile::Name",
+              "source_endpoint_present": true,
+              "target": "crate::BasePathFs::Name",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "test-function-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::TestDirExists",
+              "source_endpoint_present": true,
+              "target": "crate::TestDirExists",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "test-helper-not-discovered",
+              "kind": "IsTest",
+              "observed_present": false,
+              "source": "crate::createZeroSizedFileInTempDir",
+              "source_endpoint_present": true,
+              "target": "crate::createZeroSizedFileInTempDir",
+              "target_endpoint_present": true
+            }
+          ],
+          "source_manifest_after_sha256": "bac2e9d107aadbbf72380c3d3a7f82527c9145719576cd31925d4f65e5a6c1db",
+          "wall_ms": 1212
+        }
+      ],
+      "source_inventory": {
+        "bytes": 295836,
+        "files": 55,
+        "manifest_sha256": "bac2e9d107aadbbf72380c3d3a7f82527c9145719576cd31925d4f65e5a6c1db",
+        "physical_lines": 12544
+      },
+      "summary": {
+        "artifact_unique_digests": 1,
+        "peak_rss_max_kib": 18176,
+        "peak_rss_median_kib": 18048,
+        "semantic": {
+          "fn": 0,
+          "fp": 0,
+          "missing_endpoints": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tn": 2,
+          "tp": 14
+        },
+        "semantic_unique_digests": 1,
+        "unique_node_edge_count_pairs": 1,
+        "wall_max_ms": 1428,
+        "wall_median_ms": 1320
+      }
+    },
+    {
+      "artifact": {
+        "bytes": 54884,
+        "format": "tar.gz",
+        "root": "websocket-1.5.3",
+        "sha256": "707f217e9a46c516c289b71c45a4e51b11b5e0fcec54c1fbfecde47b8a001799",
+        "url": "https://github.com/gorilla/websocket/archive/refs/tags/v1.5.3.tar.gz",
+        "version": "1.5.3"
+      },
+      "id": "websocket-1.5.3",
+      "language": "go",
+      "role": "concurrency-and-struct-methods",
+      "runs": [
+        {
+          "graph": {
+            "artifact_bytes": 290071,
+            "artifact_sha256": "e6048f559b9b10666b064ff43382f5156176b9cc30e4e74640a751d08c3ac6b3",
+            "canonical_semantic_sha256": "ad280b8296623a4739242135296871d3d0b784454b91226050f0d3b7fdae5975",
+            "edges": 758,
+            "edges_by_kind": {
+              "Calls": 259,
+              "Contains": 499
+            },
+            "nodes": 505
+          },
+          "inspect_wall_ms": 164,
+          "ordinal": 1,
+          "peak_rss_kib": 11008,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "concurrent-connection-struct",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Conn",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "connection-method-scope",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::Conn",
+              "source_endpoint_present": true,
+              "target": "crate::Conn::WriteMessage",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-package-receiver-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::Conn::WriteJSON",
+              "source_endpoint_present": true,
+              "target": "crate::Conn::NextWriter",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-import-cross-package-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::examples::chat::Client::readPump",
+              "source_endpoint_present": true,
+              "target": "crate::IsUnexpectedCloseError",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "fn",
+              "expected_present": true,
+              "id": "same-directory-package-call",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::examples::chat::main",
+              "source_endpoint_present": true,
+              "target": "crate::examples::chat::serveHome",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "same-name-different-package-negative",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::examples::chat::main",
+              "source_endpoint_present": true,
+              "target": "crate::examples::filewatch::serveHome",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "function-field-shadow-not-method",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::Upgrader::returnError",
+              "source_endpoint_present": true,
+              "target": "crate::HandshakeError::Error",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "test-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::TestJSON",
+              "source_endpoint_present": true,
+              "target": "crate::TestJSON",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "benchmark-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::BenchmarkMaskBytes",
+              "source_endpoint_present": true,
+              "target": "crate::BenchmarkMaskBytes",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "example-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::ExampleIsUnexpectedCloseError",
+              "source_endpoint_present": true,
+              "target": "crate::ExampleIsUnexpectedCloseError",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "example-helper-not-discovered",
+              "kind": "IsTest",
+              "observed_present": false,
+              "source": "crate::processMessage",
+              "source_endpoint_present": true,
+              "target": "crate::processMessage",
+              "target_endpoint_present": true
+            }
+          ],
+          "source_manifest_after_sha256": "a8d7ea6d7e62bfe5633b36487e100c6a83303ce2163674af455ea266e9b8cae8",
+          "wall_ms": 904
+        },
+        {
+          "graph": {
+            "artifact_bytes": 290071,
+            "artifact_sha256": "e6048f559b9b10666b064ff43382f5156176b9cc30e4e74640a751d08c3ac6b3",
+            "canonical_semantic_sha256": "ad280b8296623a4739242135296871d3d0b784454b91226050f0d3b7fdae5975",
+            "edges": 758,
+            "edges_by_kind": {
+              "Calls": 259,
+              "Contains": 499
+            },
+            "nodes": 505
+          },
+          "inspect_wall_ms": 176,
+          "ordinal": 2,
+          "peak_rss_kib": 11008,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "concurrent-connection-struct",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Conn",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "connection-method-scope",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::Conn",
+              "source_endpoint_present": true,
+              "target": "crate::Conn::WriteMessage",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-package-receiver-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::Conn::WriteJSON",
+              "source_endpoint_present": true,
+              "target": "crate::Conn::NextWriter",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-import-cross-package-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::examples::chat::Client::readPump",
+              "source_endpoint_present": true,
+              "target": "crate::IsUnexpectedCloseError",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "fn",
+              "expected_present": true,
+              "id": "same-directory-package-call",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::examples::chat::main",
+              "source_endpoint_present": true,
+              "target": "crate::examples::chat::serveHome",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "same-name-different-package-negative",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::examples::chat::main",
+              "source_endpoint_present": true,
+              "target": "crate::examples::filewatch::serveHome",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "function-field-shadow-not-method",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::Upgrader::returnError",
+              "source_endpoint_present": true,
+              "target": "crate::HandshakeError::Error",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "test-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::TestJSON",
+              "source_endpoint_present": true,
+              "target": "crate::TestJSON",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "benchmark-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::BenchmarkMaskBytes",
+              "source_endpoint_present": true,
+              "target": "crate::BenchmarkMaskBytes",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "example-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::ExampleIsUnexpectedCloseError",
+              "source_endpoint_present": true,
+              "target": "crate::ExampleIsUnexpectedCloseError",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "example-helper-not-discovered",
+              "kind": "IsTest",
+              "observed_present": false,
+              "source": "crate::processMessage",
+              "source_endpoint_present": true,
+              "target": "crate::processMessage",
+              "target_endpoint_present": true
+            }
+          ],
+          "source_manifest_after_sha256": "a8d7ea6d7e62bfe5633b36487e100c6a83303ce2163674af455ea266e9b8cae8",
+          "wall_ms": 787
+        },
+        {
+          "graph": {
+            "artifact_bytes": 290071,
+            "artifact_sha256": "e6048f559b9b10666b064ff43382f5156176b9cc30e4e74640a751d08c3ac6b3",
+            "canonical_semantic_sha256": "ad280b8296623a4739242135296871d3d0b784454b91226050f0d3b7fdae5975",
+            "edges": 758,
+            "edges_by_kind": {
+              "Calls": 259,
+              "Contains": 499
+            },
+            "nodes": 505
+          },
+          "inspect_wall_ms": 172,
+          "ordinal": 3,
+          "peak_rss_kib": 11136,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "concurrent-connection-struct",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Conn",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "connection-method-scope",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::Conn",
+              "source_endpoint_present": true,
+              "target": "crate::Conn::WriteMessage",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-package-receiver-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::Conn::WriteJSON",
+              "source_endpoint_present": true,
+              "target": "crate::Conn::NextWriter",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-import-cross-package-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::examples::chat::Client::readPump",
+              "source_endpoint_present": true,
+              "target": "crate::IsUnexpectedCloseError",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "fn",
+              "expected_present": true,
+              "id": "same-directory-package-call",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::examples::chat::main",
+              "source_endpoint_present": true,
+              "target": "crate::examples::chat::serveHome",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "same-name-different-package-negative",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::examples::chat::main",
+              "source_endpoint_present": true,
+              "target": "crate::examples::filewatch::serveHome",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "function-field-shadow-not-method",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::Upgrader::returnError",
+              "source_endpoint_present": true,
+              "target": "crate::HandshakeError::Error",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "test-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::TestJSON",
+              "source_endpoint_present": true,
+              "target": "crate::TestJSON",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "benchmark-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::BenchmarkMaskBytes",
+              "source_endpoint_present": true,
+              "target": "crate::BenchmarkMaskBytes",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "example-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::ExampleIsUnexpectedCloseError",
+              "source_endpoint_present": true,
+              "target": "crate::ExampleIsUnexpectedCloseError",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "example-helper-not-discovered",
+              "kind": "IsTest",
+              "observed_present": false,
+              "source": "crate::processMessage",
+              "source_endpoint_present": true,
+              "target": "crate::processMessage",
+              "target_endpoint_present": true
+            }
+          ],
+          "source_manifest_after_sha256": "a8d7ea6d7e62bfe5633b36487e100c6a83303ce2163674af455ea266e9b8cae8",
+          "wall_ms": 826
+        },
+        {
+          "graph": {
+            "artifact_bytes": 290071,
+            "artifact_sha256": "e6048f559b9b10666b064ff43382f5156176b9cc30e4e74640a751d08c3ac6b3",
+            "canonical_semantic_sha256": "ad280b8296623a4739242135296871d3d0b784454b91226050f0d3b7fdae5975",
+            "edges": 758,
+            "edges_by_kind": {
+              "Calls": 259,
+              "Contains": 499
+            },
+            "nodes": 505
+          },
+          "inspect_wall_ms": 236,
+          "ordinal": 4,
+          "peak_rss_kib": 11008,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "concurrent-connection-struct",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Conn",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "connection-method-scope",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::Conn",
+              "source_endpoint_present": true,
+              "target": "crate::Conn::WriteMessage",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-package-receiver-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::Conn::WriteJSON",
+              "source_endpoint_present": true,
+              "target": "crate::Conn::NextWriter",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-import-cross-package-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::examples::chat::Client::readPump",
+              "source_endpoint_present": true,
+              "target": "crate::IsUnexpectedCloseError",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "fn",
+              "expected_present": true,
+              "id": "same-directory-package-call",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::examples::chat::main",
+              "source_endpoint_present": true,
+              "target": "crate::examples::chat::serveHome",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "same-name-different-package-negative",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::examples::chat::main",
+              "source_endpoint_present": true,
+              "target": "crate::examples::filewatch::serveHome",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "function-field-shadow-not-method",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::Upgrader::returnError",
+              "source_endpoint_present": true,
+              "target": "crate::HandshakeError::Error",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "test-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::TestJSON",
+              "source_endpoint_present": true,
+              "target": "crate::TestJSON",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "benchmark-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::BenchmarkMaskBytes",
+              "source_endpoint_present": true,
+              "target": "crate::BenchmarkMaskBytes",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "example-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::ExampleIsUnexpectedCloseError",
+              "source_endpoint_present": true,
+              "target": "crate::ExampleIsUnexpectedCloseError",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "example-helper-not-discovered",
+              "kind": "IsTest",
+              "observed_present": false,
+              "source": "crate::processMessage",
+              "source_endpoint_present": true,
+              "target": "crate::processMessage",
+              "target_endpoint_present": true
+            }
+          ],
+          "source_manifest_after_sha256": "a8d7ea6d7e62bfe5633b36487e100c6a83303ce2163674af455ea266e9b8cae8",
+          "wall_ms": 980
+        },
+        {
+          "graph": {
+            "artifact_bytes": 290071,
+            "artifact_sha256": "e6048f559b9b10666b064ff43382f5156176b9cc30e4e74640a751d08c3ac6b3",
+            "canonical_semantic_sha256": "ad280b8296623a4739242135296871d3d0b784454b91226050f0d3b7fdae5975",
+            "edges": 758,
+            "edges_by_kind": {
+              "Calls": 259,
+              "Contains": 499
+            },
+            "nodes": 505
+          },
+          "inspect_wall_ms": 146,
+          "ordinal": 5,
+          "peak_rss_kib": 11008,
+          "semantic_cases": [
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "concurrent-connection-struct",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate",
+              "source_endpoint_present": true,
+              "target": "crate::Conn",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "connection-method-scope",
+              "kind": "Contains",
+              "observed_present": true,
+              "source": "crate::Conn",
+              "source_endpoint_present": true,
+              "target": "crate::Conn::WriteMessage",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "same-package-receiver-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::Conn::WriteJSON",
+              "source_endpoint_present": true,
+              "target": "crate::Conn::NextWriter",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "module-import-cross-package-call",
+              "kind": "Calls",
+              "observed_present": true,
+              "source": "crate::examples::chat::Client::readPump",
+              "source_endpoint_present": true,
+              "target": "crate::IsUnexpectedCloseError",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "fn",
+              "expected_present": true,
+              "id": "same-directory-package-call",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::examples::chat::main",
+              "source_endpoint_present": true,
+              "target": "crate::examples::chat::serveHome",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "same-name-different-package-negative",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::examples::chat::main",
+              "source_endpoint_present": true,
+              "target": "crate::examples::filewatch::serveHome",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "function-field-shadow-not-method",
+              "kind": "Calls",
+              "observed_present": false,
+              "source": "crate::Upgrader::returnError",
+              "source_endpoint_present": true,
+              "target": "crate::HandshakeError::Error",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "test-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::TestJSON",
+              "source_endpoint_present": true,
+              "target": "crate::TestJSON",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "benchmark-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::BenchmarkMaskBytes",
+              "source_endpoint_present": true,
+              "target": "crate::BenchmarkMaskBytes",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tp",
+              "expected_present": true,
+              "id": "example-discovery",
+              "kind": "IsTest",
+              "observed_present": true,
+              "source": "crate::ExampleIsUnexpectedCloseError",
+              "source_endpoint_present": true,
+              "target": "crate::ExampleIsUnexpectedCloseError",
+              "target_endpoint_present": true
+            },
+            {
+              "classification": "tn",
+              "expected_present": false,
+              "id": "example-helper-not-discovered",
+              "kind": "IsTest",
+              "observed_present": false,
+              "source": "crate::processMessage",
+              "source_endpoint_present": true,
+              "target": "crate::processMessage",
+              "target_endpoint_present": true
+            }
+          ],
+          "source_manifest_after_sha256": "a8d7ea6d7e62bfe5633b36487e100c6a83303ce2163674af455ea266e9b8cae8",
+          "wall_ms": 1070
+        }
+      ],
+      "source_inventory": {
+        "bytes": 193505,
+        "files": 35,
+        "manifest_sha256": "a8d7ea6d7e62bfe5633b36487e100c6a83303ce2163674af455ea266e9b8cae8",
+        "physical_lines": 7337
+      },
+      "summary": {
+        "artifact_unique_digests": 1,
+        "peak_rss_max_kib": 11136,
+        "peak_rss_median_kib": 11008,
+        "semantic": {
+          "fn": 1,
+          "fp": 0,
+          "missing_endpoints": 0,
+          "precision": 1.0,
+          "recall": 0.875,
+          "tn": 3,
+          "tp": 7
+        },
+        "semantic_unique_digests": 1,
+        "unique_node_edge_count_pairs": 1,
+        "wall_max_ms": 1070,
+        "wall_median_ms": 904
+      }
+    }
+  ],
+  "run_definition": {
+    "offline": true,
+    "rayon_threads": 2,
+    "runs_per_repository": 5
+  },
+  "schema_version": 1,
+  "semantic_summary": {
+    "aggregate": {
+      "fn": 1,
+      "fp": 0,
+      "macro_precision": 1.0,
+      "macro_recall": 0.9375,
+      "micro_precision": 1.0,
+      "micro_recall": 0.954545,
+      "missing_endpoints": 0,
+      "tn": 5,
+      "tp": 21
+    },
+    "languages": {
+      "go": {
+        "fn": 1,
+        "fp": 0,
+        "macro_precision": 1.0,
+        "macro_recall": 0.9375,
+        "micro_precision": 1.0,
+        "micro_recall": 0.954545,
+        "missing_endpoints": 0,
+        "tn": 5,
+        "tp": 21
+      }
+    }
+  },
+  "suite_id": "go-support-v1",
+  "tool": {
+    "driver": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/examples/go_corpus",
+    "driver_sha256": "02f192e990edeef01d06cf3782a6d191997658e45e7bc8c6b49cf44e83698ca0",
+    "inspector": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+    "inspector_sha256": "3bf5a36393442939cae271f875efa03bd6173dfc0791f33391a72d1d2fcf5356"
+  }
+}
