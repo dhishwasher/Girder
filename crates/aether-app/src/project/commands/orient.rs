@@ -358,7 +358,10 @@ mod tests {
         assert!(impact_paths.contains(&"crate::calc::caller"));
         assert!(impact_paths.contains(&"crate::calc::test_add"));
 
-        assert!(node.get("confidence").is_none(), "a pinned node was never scored: {node}");
+        assert!(
+            node.get("confidence").is_none(),
+            "a pinned node was never scored: {node}"
+        );
         let _ = std::fs::remove_dir_all(&root);
     }
 

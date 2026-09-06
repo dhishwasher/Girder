@@ -557,11 +557,7 @@ rather than silently dropped.",
             })
         },
         argv: |arguments, root| {
-            let mut argv = vec![
-                "orient".to_string(),
-                root.to_string(),
-                "--json".to_string(),
-            ];
+            let mut argv = vec!["orient".to_string(), root.to_string(), "--json".to_string()];
             let nodes = optional_string_array(arguments, "nodes")?;
             let intent = optional_string(arguments, "intent")?;
             match (nodes.as_deref(), intent) {
@@ -1194,16 +1190,15 @@ mod tests {
     #[test]
     fn orient_requires_some_selection() {
         let error = argv_for("orient", json!({})).unwrap_err();
-        assert!(error.contains("nodes") && error.contains("intent"), "{error}");
+        assert!(
+            error.contains("nodes") && error.contains("intent"),
+            "{error}"
+        );
     }
 
     #[test]
     fn orient_passes_depth_when_provided() {
-        let argv = argv_for(
-            "orient",
-            json!({"nodes": ["crate::a::b"], "depth": 2}),
-        )
-        .unwrap();
+        let argv = argv_for("orient", json!({"nodes": ["crate::a::b"], "depth": 2})).unwrap();
         assert_eq!(
             argv,
             vec![
