@@ -1,14 +1,30 @@
 # Girder
 
-**On this repository's committed ten-node measurement, `girder context
---source-only` returned 8,765 bytes instead of 408,137 bytes from full-file
-reads: a 97.85% reduction.** This measures bytes, not tokens. See the
-[committed observation](./docs/context-vs-read-cost-observation.json).
+**Girder gives coding agents exactly the code they need, instead of whole
+files.** It parses your repository into a living semantic graph — functions,
+definitions, call edges — and answers questions against that graph: exact
+function source, callers and callees, impact analysis, minimal test selection,
+and verified graph-addressed edits. It is one static Rust binary that any agent
+can drive over MCP, plus an optional native IDE.
 
-Girder is a source-available semantic code intelligence tool and native Rust
-IDE. Its living code graph gives people and coding agents exact function
-source, definitions, call relationships, impact analysis, and verified editing
-workflows without making whole-file reads the default.
+```bash
+curl -fsSL https://raw.githubusercontent.com/dhishwasher/Girder/main/install.sh | sh
+```
+
+**Languages:** Rust, Python, TypeScript, and Go. Rust and Python are the most
+mature; TypeScript and Go are measured and gated, with their limits written
+down ([TypeScript](./docs/typescript-support.md), [Go](./docs/go-support.md)).
+
+**Tiers:** the free tier is permanent and needs no account — `get_source`,
+`find_definition`, `search_code`, `ask_codebase`, and `review_changes` on a
+single repository. The `orient` and `impacted_tests` tools need a
+[paid license](#license). Keys are verified offline; the binary never phones
+home.
+
+On this repository's committed ten-node measurement, `girder context
+--source-only` returned 8,765 bytes where full-file reads returned 408,137 — a
+[97.85% reduction](./docs/context-vs-read-cost-observation.json). That counts
+bytes, not tokens.
 
 ## Install
 
@@ -320,13 +336,19 @@ girder extension sample-project marketplace list \
 girder --help
 ```
 
-`analyze`/`forge` walk every `.rs`, `.py`, `.ts`, `.tsx`, `.mts`, and `.cts` file
-(skipping `target`, `.git`, …),
+`analyze`/`forge` walk every `.rs`, `.py`, `.ts`, `.tsx`, `.mts`, `.cts`, and
+`.go` file (skipping `target`, `.git`, …),
 build the graph with directory-aware module paths, resolve free and
 receiver-qualified method calls across files, and persist the `.aether` graph.
-Supported languages are Rust, Python, and TypeScript. TypeScript's core graph
-surface is measured and gated, but remains less mature than Rust and Python;
-see the [honest support boundary and results](docs/typescript-support.md).
+Supported languages are Rust, Python, TypeScript, and Go. The TypeScript and Go
+graph surfaces are measured and gated, but remain less mature than Rust and
+Python: TypeScript meets its precision and recall gates, while Go currently
+records one false negative (micro-recall 0.954545 against a 1.0 gate). See the
+honest support boundaries and results for
+[TypeScript](docs/typescript-support.md) and [Go](docs/go-support.md), with the
+committed observations for
+[TypeScript](docs/typescript-support-observation.json) and
+[Go](docs/go-support-observation.json).
 Rust module-scope imports retain renamed symbol identity across bounded public
 re-export chains, including crate-root and `mod.rs` facades, so collisions are
 resolved by exact path while ambiguous or cyclic aliases stay unlinked.
@@ -767,10 +789,6 @@ Optional DAP adapter smoke test:
 python3 -m pip install debugpy
 cargo test -p aether-dap --test debugpy -- --ignored --nocapture
 ```
-
-The production roadmap (continuous/network collaboration discovery and
-presence, encrypted remote transport, key transparency, self-optimization,
-web/mobile projections, and deeper tracing) is in `BLUEPRINT.md §9`.
 
 The measured table-stakes comparison, current correctness evidence, and
 prioritized open risks are maintained in

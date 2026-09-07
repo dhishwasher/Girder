@@ -9,8 +9,9 @@ Guidance for working in this repository.
 2. A **parallel AI agent swarm** that mutates the graph.
 3. A **time-travel & branching debugger**.
 
-It is a Cargo workspace, not a fork of any editor. See `BLUEPRINT.md` for the
-full design and `README.md` for usage.
+It is a Cargo workspace, not a fork of any editor. See `README.md` for usage
+and the measured engineering documentation under `docs/` for implementation
+status and limitations.
 
 ## Workspace layout
 

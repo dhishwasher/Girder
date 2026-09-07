@@ -253,6 +253,8 @@ mod tests {
     use ring::rand::SystemRandom;
     use ring::signature::{Ed25519KeyPair, KeyPair};
 
+    const DEBUG_TEST_LICENSE_KEY: &str = "girder-v1.2026-09-06.paid.c3a189213567f3aced881143c0d600df36c162252ff026ee6a6377a85959215b90ca7ea51e2eb474d3e8ca4e60b09648994a1e6513772393dcde1b4e7752bd02";
+
     fn signed_key(issued_on: &str, tier: &str) -> (String, Vec<u8>) {
         let rng = SystemRandom::new();
         let private = Ed25519KeyPair::generate_pkcs8(&rng).expect("generate test key");
@@ -271,6 +273,21 @@ mod tests {
         assert_eq!(
             verify_key_with_public_key(&key, &public_key),
             Ok(Tier::Paid)
+        );
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    fn debug_build_accepts_the_debug_test_key() {
+        assert_eq!(verify_key(DEBUG_TEST_LICENSE_KEY), Ok(Tier::Paid));
+    }
+
+    #[cfg(not(debug_assertions))]
+    #[test]
+    fn release_build_rejects_the_debug_test_key() {
+        assert_eq!(
+            verify_key(DEBUG_TEST_LICENSE_KEY),
+            Err(LicenseRejection::BadSignature)
         );
     }
 
