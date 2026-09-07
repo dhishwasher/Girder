@@ -233,24 +233,33 @@ jobs:
 
       - name: Build per-user Windows installer
         if: runner.os == 'Windows'
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
-          repo_root="$(pwd -W)"
-          version="${{ needs.preflight.outputs.version }}"
-          installer="dist/Girder-${version}-setup.exe"
-          # Git Bash otherwise rewrites NSIS /D... switches as POSIX paths,
-          # turning /DVERSION into C:/Program Files/Git/DVERSION.
-          MSYS2_ARG_CONV_EXCL='*' makensis \
-            "/DVERSION=$version" \
-            "/DBINARY_PATH=$repo_root/target/${{ matrix.target }}/release/girder.exe" \
-            "/DICON_PATH=$repo_root/assets/icon.ico" \
-            "/DLICENSE_PATH=$repo_root/LICENSE" \
-            "/DFONT_LICENSE_PATH=$repo_root/assets/fonts/DejaVuSansMono-LICENSE.txt" \
-            "/DOUTPUT_PATH=$repo_root/$installer" \
-            packaging/windows/Girder.nsi
-          test -s "$installer"
-          echo "produced $installer"
+          $repoRoot = (Get-Location).Path
+          $version = "${{ needs.preflight.outputs.version }}"
+          $binary = Join-Path $repoRoot 'target\${{ matrix.target }}\release\girder.exe'
+          $icon = Join-Path $repoRoot 'assets\icon.ico'
+          $license = Join-Path $repoRoot 'LICENSE'
+          $fontLicense = Join-Path $repoRoot 'assets\fonts\DejaVuSansMono-LICENSE.txt'
+          $installer = Join-Path $repoRoot "dist\Girder-$version-setup.exe"
+          $script = Join-Path $repoRoot 'packaging\windows\Girder.nsi'
+
+          foreach ($inputPath in @($binary, $icon, $license, $fontLicense, $script)) {
+            if (-not (Test-Path -LiteralPath $inputPath -PathType Leaf)) {
+              throw "installer input is missing: $inputPath"
+            }
+          }
+
+          & makensis.exe "/DVERSION=$version" "/DBINARY_PATH=$binary" "/DICON_PATH=$icon" `
+            "/DLICENSE_PATH=$license" "/DFONT_LICENSE_PATH=$fontLicense" `
+            "/DOUTPUT_PATH=$installer" $script
+          if ($LASTEXITCODE -ne 0) {
+            throw "makensis failed with exit code $LASTEXITCODE"
+          }
+          if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
+            throw "installer was not produced: $installer"
+          }
+          Write-Output "produced $installer"
 
       # Checksums are generated per target rather than centrally so each one
       # is computed on the machine that produced the artifact.
