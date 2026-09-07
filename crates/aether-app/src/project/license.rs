@@ -4,7 +4,8 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-const KEY_PREFIX: &str = "girder-v1";
+const LEGACY_KEY_PREFIX: &str = "girder-v1";
+const KEY_PREFIX: &str = "girder-v2";
 const PUBLIC_KEY: [u8; 32] = [
     113, 93, 68, 144, 174, 49, 174, 41, 59, 13, 191, 40, 60, 66, 143, 168, 131, 224, 49, 185, 98,
     213, 185, 210, 5, 112, 139, 39, 37, 191, 208, 116,
@@ -115,11 +116,26 @@ pub(crate) fn verify_key(key: &str) -> Result<Tier, LicenseRejection> {
     result
 }
 
-pub(crate) fn unsigned_key(issued_on: &str, tier: &str) -> Result<String, LicenseRejection> {
+pub(crate) fn unsigned_key(
+    issued_on: &str,
+    tier: &str,
+    license_id: &str,
+) -> Result<String, LicenseRejection> {
+    if !valid_date(issued_on)
+        || tier.is_empty()
+        || tier.contains('.')
+        || !valid_license_id(license_id)
+    {
+        return Err(LicenseRejection::Malformed);
+    }
+    Ok(format!("{KEY_PREFIX}.{issued_on}.{tier}.{license_id}"))
+}
+
+fn legacy_unsigned_key(issued_on: &str, tier: &str) -> Result<String, LicenseRejection> {
     if !valid_date(issued_on) || tier.is_empty() || tier.contains('.') {
         return Err(LicenseRejection::Malformed);
     }
-    Ok(format!("{KEY_PREFIX}.{issued_on}.{tier}"))
+    Ok(format!("{LEGACY_KEY_PREFIX}.{issued_on}.{tier}"))
 }
 
 #[cfg(test)]
@@ -138,8 +154,25 @@ fn verify_key_with_public_key(key: &str, public_key: &[u8]) -> Result<Tier, Lice
     let prefix = parts.next().ok_or(LicenseRejection::Malformed)?;
     let issued_on = parts.next().ok_or(LicenseRejection::Malformed)?;
     let tier_name = parts.next().ok_or(LicenseRejection::Malformed)?;
-    let signature = parts.next().ok_or(LicenseRejection::Malformed)?;
-    if parts.next().is_some() || prefix != KEY_PREFIX || !valid_date(issued_on) {
+    let (unsigned, signature) = match prefix {
+        LEGACY_KEY_PREFIX => {
+            let signature = parts.next().ok_or(LicenseRejection::Malformed)?;
+            if parts.next().is_some() {
+                return Err(LicenseRejection::Malformed);
+            }
+            (legacy_unsigned_key(issued_on, tier_name)?, signature)
+        }
+        KEY_PREFIX => {
+            let license_id = parts.next().ok_or(LicenseRejection::Malformed)?;
+            let signature = parts.next().ok_or(LicenseRejection::Malformed)?;
+            if parts.next().is_some() {
+                return Err(LicenseRejection::Malformed);
+            }
+            (unsigned_key(issued_on, tier_name, license_id)?, signature)
+        }
+        _ => return Err(LicenseRejection::Malformed),
+    };
+    if !valid_date(issued_on) {
         return Err(LicenseRejection::Malformed);
     }
 
@@ -149,11 +182,16 @@ fn verify_key_with_public_key(key: &str, public_key: &[u8]) -> Result<Tier, Lice
         _ => return Err(LicenseRejection::UnknownTier),
     };
     let signature = decode_signature(signature)?;
-    let unsigned = unsigned_key(issued_on, tier_name)?;
     UnparsedPublicKey::new(&ED25519, public_key)
         .verify(unsigned.as_bytes(), &signature)
         .map_err(|_| LicenseRejection::BadSignature)?;
     Ok(tier)
+}
+
+fn valid_license_id(license_id: &str) -> bool {
+    license_id.len() == 32
+        && license_id.is_ascii()
+        && license_id.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 fn decode_signature(encoded: &str) -> Result<[u8; 64], LicenseRejection> {
@@ -259,7 +297,8 @@ mod tests {
         let rng = SystemRandom::new();
         let private = Ed25519KeyPair::generate_pkcs8(&rng).expect("generate test key");
         let pair = Ed25519KeyPair::from_pkcs8(private.as_ref()).expect("parse test key");
-        let unsigned = unsigned_key(issued_on, tier).expect("valid test payload");
+        let unsigned = unsigned_key(issued_on, tier, "0123456789abcdef0123456789abcdef")
+            .expect("valid test payload");
         let signature = encode_signature(pair.sign(unsigned.as_bytes()).as_ref());
         (
             format!("{unsigned}.{signature}"),
@@ -272,6 +311,20 @@ mod tests {
         let (key, public_key) = signed_key("2026-09-06", "paid");
         assert_eq!(
             verify_key_with_public_key(&key, &public_key),
+            Ok(Tier::Paid)
+        );
+    }
+
+    #[test]
+    fn legacy_key_returns_its_tier() {
+        let rng = SystemRandom::new();
+        let private = Ed25519KeyPair::generate_pkcs8(&rng).expect("generate test key");
+        let pair = Ed25519KeyPair::from_pkcs8(private.as_ref()).expect("parse test key");
+        let unsigned = legacy_unsigned_key("2026-09-06", "paid").expect("valid test payload");
+        let signature = encode_signature(pair.sign(unsigned.as_bytes()).as_ref());
+        let key = format!("{unsigned}.{signature}");
+        assert_eq!(
+            verify_key_with_public_key(&key, pair.public_key().as_ref()),
             Ok(Tier::Paid)
         );
     }
@@ -306,6 +359,34 @@ mod tests {
         assert_eq!(
             verify_key_with_public_key(&tampered, &public_key),
             Err(LicenseRejection::BadSignature)
+        );
+    }
+
+    #[test]
+    fn tampered_license_id_has_a_bad_signature() {
+        let (key, public_key) = signed_key("2026-09-06", "paid");
+        let tampered = key.replacen(
+            ".0123456789abcdef0123456789abcdef.",
+            ".1123456789abcdef0123456789abcdef.",
+            1,
+        );
+        assert_eq!(
+            verify_key_with_public_key(&tampered, &public_key),
+            Err(LicenseRejection::BadSignature)
+        );
+    }
+
+    #[test]
+    fn malformed_license_id_is_rejected() {
+        let (key, public_key) = signed_key("2026-09-06", "paid");
+        let malformed = key.replacen(
+            ".0123456789abcdef0123456789abcdef.",
+            ".not-a-license-id.",
+            1,
+        );
+        assert_eq!(
+            verify_key_with_public_key(&malformed, &public_key),
+            Err(LicenseRejection::Malformed)
         );
     }
 

@@ -1,6 +1,6 @@
 {
   "name": "girder-mcp",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Semantic-graph MCP server for AI coding agents: read one function instead of a whole file, find a declaration without grep, and select only the tests a change can reach.",
   "keywords": [
     "mcp",

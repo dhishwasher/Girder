@@ -2,6 +2,7 @@
 #[path = "../src/project/license.rs"]
 mod license;
 
+use ring::rand::{SecureRandom, SystemRandom};
 use ring::signature::{Ed25519KeyPair, KeyPair};
 use std::fs;
 use std::path::Path;
@@ -24,6 +25,11 @@ fn run(mut args: impl Iterator<Item = String>) -> Result<(), String> {
         .next()
         .ok_or_else(|| usage("missing private key path"))?;
     let tier = args.next().ok_or_else(|| usage("missing tier"))?;
+    let count = args
+        .next()
+        .map(|count| parse_count(&count))
+        .transpose()?
+        .unwrap_or(1);
     if args.next().is_some() {
         return Err(usage("too many arguments"));
     }
@@ -44,16 +50,38 @@ fn run(mut args: impl Iterator<Item = String>) -> Result<(), String> {
     }
 
     let issued_on = utc_date(SystemTime::now())?;
-    let unsigned = license::unsigned_key(&issued_on, &tier).map_err(|error| error.to_string())?;
-    let signature = encode_signature(pair.sign(unsigned.as_bytes()).as_ref());
-    println!("{unsigned}.{signature}");
+    let rng = SystemRandom::new();
+    for _ in 0..count {
+        let license_id = generate_license_id(&rng)?;
+        let unsigned = license::unsigned_key(&issued_on, &tier, &license_id)
+            .map_err(|error| error.to_string())?;
+        let signature = encode_hex(pair.sign(unsigned.as_bytes()).as_ref());
+        println!("{unsigned}.{signature}");
+    }
     Ok(())
 }
 
-fn encode_signature(signature: &[u8]) -> String {
+fn parse_count(count: &str) -> Result<usize, String> {
+    let count = count
+        .parse::<usize>()
+        .map_err(|_| "count must be a positive integer no greater than 10000".to_string())?;
+    if !(1..=10_000).contains(&count) {
+        return Err("count must be a positive integer no greater than 10000".to_string());
+    }
+    Ok(count)
+}
+
+fn generate_license_id(rng: &dyn SecureRandom) -> Result<String, String> {
+    let mut bytes = [0_u8; 16];
+    rng.fill(&mut bytes)
+        .map_err(|_| "could not generate a random license id".to_string())?;
+    Ok(encode_hex(&bytes))
+}
+
+fn encode_hex(bytes: &[u8]) -> String {
     const HEX: &[u8; 16] = b"0123456789abcdef";
-    let mut encoded = String::with_capacity(signature.len() * 2);
-    for byte in signature {
+    let mut encoded = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
         encoded.push(HEX[usize::from(byte >> 4)] as char);
         encoded.push(HEX[usize::from(byte & 0x0f)] as char);
     }
@@ -61,7 +89,7 @@ fn encode_signature(signature: &[u8]) -> String {
 }
 
 fn usage(reason: &str) -> String {
-    format!("{reason}\nusage: license_keygen <private-key.pk8> <free|paid>")
+    format!("{reason}\nusage: license_keygen <private-key.pk8> <free|paid> [count]")
 }
 
 fn utc_date(now: SystemTime) -> Result<String, String> {
@@ -93,6 +121,24 @@ fn civil_from_days(days_since_epoch: i64) -> (i64, i64, i64) {
 mod tests {
     use super::*;
     use std::time::Duration;
+
+    #[test]
+    fn count_is_bounded_and_positive() {
+        assert_eq!(parse_count("25"), Ok(25));
+        assert!(parse_count("0").is_err());
+        assert!(parse_count("10001").is_err());
+        assert!(parse_count("many").is_err());
+    }
+
+    #[test]
+    fn generated_license_ids_are_unique_hex_values() {
+        let rng = SystemRandom::new();
+        let first = generate_license_id(&rng).unwrap();
+        let second = generate_license_id(&rng).unwrap();
+        assert_eq!(first.len(), 32);
+        assert!(first.bytes().all(|byte| byte.is_ascii_hexdigit()));
+        assert_ne!(first, second);
+    }
 
     #[test]
     fn utc_issue_date_is_derived_without_network_or_locale() {
