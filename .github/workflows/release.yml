@@ -107,6 +107,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Ensure NSIS is available
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $nsis = Get-Command makensis.exe -ErrorAction SilentlyContinue
+          $nsisExe = if ($nsis) { $nsis.Source } else {
+            Join-Path ${env:ProgramFiles(x86)} 'NSIS\makensis.exe'
+          }
+          if (-not (Test-Path -LiteralPath $nsisExe -PathType Leaf)) {
+            choco install nsis --yes --no-progress
+            if ($LASTEXITCODE -ne 0) {
+              throw "NSIS installation failed with exit code $LASTEXITCODE"
+            }
+          }
+          if (-not (Test-Path -LiteralPath $nsisExe -PathType Leaf)) {
+            throw "makensis is unavailable at $nsisExe after installing NSIS"
+          }
+          # Installation does not update this process's PATH. Use the resolved
+          # executable now and expose its directory to later steps via GITHUB_PATH.
+          Split-Path -Parent $nsisExe | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & $nsisExe /VERSION
+          if ($LASTEXITCODE -ne 0) {
+            throw "makensis version check failed with exit code $LASTEXITCODE"
+          }
+
+      - name: Verify NSIS on the packaging PATH
+        if: runner.os == 'Windows'
+        shell: bash
+        run: command -v makensis
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -200,18 +230,6 @@ jobs:
       - name: Build Windows desktop binary
         if: runner.os == 'Windows'
         run: cargo build --release --locked -p aether-app --features gui --target ${{ matrix.target }}
-
-      - name: Ensure NSIS is available
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
-            choco install nsis --yes --no-progress
-          }
-          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
-            throw "makensis is unavailable after installing NSIS"
-          }
-          makensis /VERSION
 
       - name: Build per-user Windows installer
         if: runner.os == 'Windows'
