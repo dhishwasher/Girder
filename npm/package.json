@@ -1,6 +1,6 @@
 {
   "name": "girder-mcp",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Semantic-graph MCP server for AI coding agents: read one function instead of a whole file, find a declaration without grep, and select only the tests a change can reach.",
   "keywords": [
     "mcp",
@@ -21,6 +21,7 @@
     "directory": "npm"
   },
   "license": "BUSL-1.1",
+  "mcpName": "io.github.dhishwasher/girder",
   "type": "commonjs",
   "bin": {
     "girder-mcp": "bin/girder-mcp.js",

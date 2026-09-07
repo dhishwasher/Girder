@@ -1,5 +1,7 @@
 # Girder
 
+<!-- mcp-name: io.github.dhishwasher/girder -->
+
 **Girder gives coding agents exactly the code they need, instead of whole
 files.** It parses your repository into a living semantic graph — functions,
 definitions, call edges — and answers questions against that graph: exact
