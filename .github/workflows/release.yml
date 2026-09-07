@@ -50,13 +50,53 @@ jobs:
           set -euo pipefail
           cargo_version="$(python3 -c 'import tomllib; print(tomllib.load(open("Cargo.toml","rb"))["workspace"]["package"]["version"])')"
           npm_version="$(python3 -c 'import json; print(json.load(open("npm/package.json"))["version"])')"
+          server_version="$(python3 -c 'import json; print(json.load(open("server.json"))["version"])')"
+          server_pkg_version="$(python3 -c 'import json; print(json.load(open("server.json"))["packages"][0]["version"])')"
           echo "version=$cargo_version" >> "$GITHUB_OUTPUT"
-          echo "Cargo.toml:       $cargo_version"
-          echo "npm/package.json: $npm_version"
+          echo "Cargo.toml:              $cargo_version"
+          echo "npm/package.json:        $npm_version"
+          echo "server.json:             $server_version"
+          echo "server.json package:     $server_pkg_version"
 
           failed=""
           if [ "$cargo_version" != "$npm_version" ]; then
             echo "::error::Cargo.toml ($cargo_version) and npm/package.json ($npm_version) disagree"
+            failed=1
+          fi
+
+          # server.json carries the version twice — once for the server record
+          # and once for the npm package it points at. The registry resolves
+          # the package version against npm, so a stale entry here does not
+          # fail loudly: it silently registers the previous release, or 404s
+          # against a version that was never published.
+          if [ "$cargo_version" != "$server_version" ]; then
+            echo "::error::server.json version ($server_version) does not match Cargo.toml ($cargo_version)"
+            failed=1
+          fi
+          if [ "$cargo_version" != "$server_pkg_version" ]; then
+            echo "::error::server.json packages[0].version ($server_pkg_version) does not match Cargo.toml ($cargo_version)"
+            failed=1
+          fi
+
+          # The registry proves ownership by comparing server.json's name
+          # against the mcpName published in the npm tarball, and resolves the
+          # package by identifier. Either mismatch is rejected at publish time,
+          # after the release is already public, so check both here instead.
+          server_name="$(python3 -c 'import json; print(json.load(open("server.json"))["name"])')"
+          mcp_name="$(python3 -c 'import json; print(json.load(open("npm/package.json")).get("mcpName",""))')"
+          pkg_identifier="$(python3 -c 'import json; print(json.load(open("server.json"))["packages"][0]["identifier"])')"
+          pkg_name="$(python3 -c 'import json; print(json.load(open("npm/package.json"))["name"])')"
+          echo "server.json name:        $server_name"
+          echo "npm mcpName:             ${mcp_name:-<missing>}"
+          if [ -z "$mcp_name" ]; then
+            echo "::error::npm/package.json is missing the mcpName field; the MCP registry cannot verify ownership without it"
+            failed=1
+          elif [ "$server_name" != "$mcp_name" ]; then
+            echo "::error::server.json name ($server_name) and npm mcpName ($mcp_name) disagree"
+            failed=1
+          fi
+          if [ "$pkg_identifier" != "$pkg_name" ]; then
+            echo "::error::server.json packages[0].identifier ($pkg_identifier) is not the npm package name ($pkg_name)"
             failed=1
           fi
 
@@ -346,6 +386,11 @@ jobs:
       # produced the tarball. Worth having for a package whose whole purpose is
       # to be executed by someone else's coding agent.
       id-token: write
+    outputs:
+      # The publish step below exits 0 without publishing when NPM_TOKEN is
+      # absent, so job success alone does not mean the package is on npm.
+      # The registry job keys off this instead.
+      published: ${{ steps.publish.outputs.published }}
     steps:
       - uses: actions/checkout@v4
 
@@ -400,6 +445,7 @@ jobs:
           [ -z "$failed" ]
 
       - name: Publish
+        id: publish
         working-directory: npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -409,6 +455,69 @@ jobs:
             echo "::warning::NPM_TOKEN is not set, so nothing was published to npm."
             echo "Add an npm automation token as the NPM_TOKEN repository secret,"
             echo "then re-run this job. The GitHub release is already complete."
+            echo "published=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           npm publish --provenance --access public
+          echo "published=true" >> "$GITHUB_OUTPUT"
+
+  # Registering the server is the last step for a reason: the registry does not
+  # take our word for the package's existence. It fetches
+  # registry.npmjs.org/<pkg>/<version> and compares the mcpName recorded there
+  # against server.json's name. So this cannot run until the npm job has
+  # actually published — not merely succeeded, which it also does when
+  # NPM_TOKEN is unset.
+  mcp-registry:
+    name: Publish to MCP Registry
+    needs: [preflight, npm]
+    runs-on: ubuntu-latest
+    if: needs.npm.outputs.published == 'true'
+    permissions:
+      # OIDC: the registry trusts a GitHub-signed token proving this workflow
+      # runs in dhishwasher/Girder, which is what grants the
+      # io.github.dhishwasher/* namespace. No secret to store or rotate.
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mcp-publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+          arch="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_${os}_${arch}.tar.gz" \
+            | tar xz mcp-publisher
+          ./mcp-publisher --version
+
+      # npm's version endpoint lags a successful `npm publish` by a few seconds
+      # to a few minutes. The registry treats that lag as a hard 404 and fails
+      # the publish, so wait for the exact version to be resolvable rather than
+      # spending a release on a race.
+      - name: Wait for the version to be visible on npm
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ needs.preflight.outputs.version }}"
+          identifier="$(python3 -c 'import json; print(json.load(open("server.json"))["packages"][0]["identifier"])')"
+          url="https://registry.npmjs.org/${identifier}/${version}"
+
+          for attempt in $(seq 1 30); do
+            code="$(curl -s -o /dev/null -w '%{http_code}' "$url" || echo 000)"
+            if [ "$code" = "200" ]; then
+              echo "$identifier@$version is live on npm (attempt $attempt)"
+              exit 0
+            fi
+            echo "attempt $attempt: $url -> $code; retrying in 10s"
+            sleep 10
+          done
+
+          echo "::error::$identifier@$version never became visible on npm after 5 minutes. The MCP registry would reject the publish with a 404, so stopping here. Re-run this job once the version resolves."
+          exit 1
+
+      - name: Authenticate to the MCP Registry
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish the server
+        run: ./mcp-publisher publish
