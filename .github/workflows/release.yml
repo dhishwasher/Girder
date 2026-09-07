@@ -96,7 +96,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: x86_64-unknown-linux-gnu
+          - target: x86_64-unknown-linux-musl
             runner: ubuntu-latest
           - target: aarch64-apple-darwin
             runner: macos-latest
@@ -141,6 +141,12 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+
+      - name: Install musl linker
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes musl-tools
 
       - name: Build release binary
         # Default features only: the headless CLI and the MCP server. The GUI
@@ -201,6 +207,16 @@ jobs:
             | "$BIN" mcp . > handshake.json
           grep -q '"serverInfo"' handshake.json
           grep -q '"protocolVersion":"2025-06-18"' handshake.json
+
+      - name: Verify Linux artifact has no glibc dependency
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        shell: bash
+        run: |
+          BIN="target/${{ matrix.target }}/release/girder"
+          if readelf -l "$BIN" | grep -q 'Requesting program interpreter'; then
+            echo "::error::Linux release is dynamically linked and may depend on the build host's glibc"
+            exit 1
+          fi
 
       - name: Verify the artifact runs (windows)
         if: runner.os == 'Windows'
@@ -358,7 +374,7 @@ jobs:
           npm_version="$(python3 -c 'import json; print(json.load(open("npm/package.json"))["version"])')"
 
           tag="${GITHUB_REF#refs/tags/}"
-          asset="girder-x86_64-unknown-linux-gnu.tar.gz"
+          asset="girder-x86_64-unknown-linux-musl.tar.gz"
           url="https://github.com/${{ github.repository }}/releases/download/${tag}/${asset}"
 
           scratch="$(mktemp -d)"

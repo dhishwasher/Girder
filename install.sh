@@ -62,7 +62,7 @@ fi
 os="$(uname -s)"
 arch="$(uname -m)"
 case "$os" in
-    Linux) os_part="unknown-linux-gnu" ;;
+    Linux) os_part="unknown-linux-musl" ;;
     Darwin) os_part="apple-darwin" ;;
     *) die "unsupported OS: $os (build from source: cargo install --path crates/aether-app)" ;;
 esac
@@ -72,7 +72,7 @@ case "$arch" in
     *) die "unsupported architecture: $arch" ;;
 esac
 # No aarch64 Linux binary is published yet; say so rather than 404ing.
-if [ "$os_part" = "unknown-linux-gnu" ] && [ "$arch_part" = "aarch64" ]; then
+if [ "$os_part" = "unknown-linux-musl" ] && [ "$arch_part" = "aarch64" ]; then
     die "no prebuilt aarch64 Linux binary yet (build from source: cargo install --path crates/aether-app)"
 fi
 target="${arch_part}-${os_part}"

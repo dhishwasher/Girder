@@ -41,7 +41,7 @@ def host_target() -> str | None:
     system = platform.system()
     machine = platform.machine().lower()
     if system == "Linux":
-        os_part = "unknown-linux-gnu"
+        os_part = "unknown-linux-musl"
     elif system == "Darwin":
         os_part = "apple-darwin"
     else:
@@ -53,7 +53,7 @@ def host_target() -> str | None:
     else:
         return None
     # install.sh refuses this pair on purpose: no such asset is published.
-    if os_part == "unknown-linux-gnu" and arch_part == "aarch64":
+    if os_part == "unknown-linux-musl" and arch_part == "aarch64":
         return None
     return f"{arch_part}-{os_part}"
 

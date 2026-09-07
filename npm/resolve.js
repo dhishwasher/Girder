@@ -15,7 +15,7 @@ const { execFileSync } = require("child_process");
 const TARGETS = {
   "darwin-arm64": "aarch64-apple-darwin",
   "darwin-x64": "x86_64-apple-darwin",
-  "linux-x64": "x86_64-unknown-linux-gnu",
+  "linux-x64": "x86_64-unknown-linux-musl",
   "win32-x64": "x86_64-pc-windows-msvc",
 };
 

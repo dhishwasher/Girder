@@ -76,6 +76,11 @@ function withEnv(overrides, body) {
   }
 }
 
+test("Linux x64 downloads the static musl release", () => {
+  const { TARGETS } = require("../resolve");
+  assert.strictEqual(TARGETS["linux-x64"], "x86_64-unknown-linux-musl");
+});
+
 test("resolves nothing when PATH is empty and no binary was vendored", () => {
   const { pkg } = makePackage();
   const resolve = load(pkg);
