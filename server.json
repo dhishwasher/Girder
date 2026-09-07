@@ -1,0 +1,24 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.dhishwasher/girder",
+  "title": "Girder",
+  "description": "Semantic-graph code context: one function instead of a whole file, and minimal test selection.",
+  "version": "0.2.3",
+  "repository": {
+    "url": "https://github.com/dhishwasher/Girder",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/dhishwasher/Girder#readme",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "girder-mcp",
+      "version": "0.2.3",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
