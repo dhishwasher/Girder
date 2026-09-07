@@ -239,7 +239,9 @@ jobs:
           repo_root="$(pwd -W)"
           version="${{ needs.preflight.outputs.version }}"
           installer="dist/Girder-${version}-setup.exe"
-          makensis \
+          # Git Bash otherwise rewrites NSIS /D... switches as POSIX paths,
+          # turning /DVERSION into C:/Program Files/Git/DVERSION.
+          MSYS2_ARG_CONV_EXCL='*' makensis \
             "/DVERSION=$version" \
             "/DBINARY_PATH=$repo_root/target/${{ matrix.target }}/release/girder.exe" \
             "/DICON_PATH=$repo_root/assets/icon.ico" \
