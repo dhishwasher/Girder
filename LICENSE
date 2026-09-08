@@ -1,13 +1,39 @@
+Plain-English summary (not a substitute for the legal terms below)
+
+These terms apply to Girder 0.2.4 and later. Earlier Girder releases remain
+under the terms distributed with those versions. You may copy, modify, and
+redistribute Girder, and you may use it internally, including for commercial
+work, subject to the terms below. The free-tier tools (`get_source`,
+`find_definition`, `search_code`, `ask_codebase`, and `review_changes`) remain
+free for one repository, with no license key and no expiry. A valid paid key is
+required for `orient` and `impacted_tests`; you may not bypass the license-key
+check or remove or obscure the features it protects. You may not offer Girder
+itself as a competing hosted or managed service.
+
 Business Source License 1.1
 
 Parameters
 
 Licensor:             Cory Maynard
 Licensed Work:        Girder
-Additional Use Grant: You may use the Licensed Work for any purpose, including
-                      internal commercial use, EXCEPT offering it to third
-                      parties as a hosted or managed service whose primary
-                      value is the functionality of the Licensed Work.
+Additional Use Grant: You may make production use of the Licensed Work for any
+                      purpose, including internal commercial use, provided
+                      that:
+
+                      1. You may not offer the Licensed Work to third parties
+                         as a hosted or managed service whose primary value is
+                         the functionality of the Licensed Work.
+
+                      2. You may not move, change, disable, or circumvent the
+                         license-key functionality in the Licensed Work, and
+                         you may not remove or obscure any functionality in
+                         the Licensed Work that is protected by a license key.
+
+                      For clarity, condition 2 does not require a license key
+                      for the free-tier functionality: `get_source`,
+                      `find_definition`, `search_code`, `ask_codebase`, and
+                      `review_changes` on one repository. That functionality
+                      may be used without a key and does not expire.
 Change Date:          2030-09-04
 Change License:       Apache License, Version 2.0
 
