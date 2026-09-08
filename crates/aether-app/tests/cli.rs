@@ -114,6 +114,10 @@ fn paid_cli_commands_require_a_license_and_offer_free_alternatives() {
             stderr.contains("`get_source` and `find_definition`"),
             "{stderr}"
         );
+        assert!(
+            stderr.contains("https://maynard42.gumroad.com/l/zwpsjl"),
+            "{stderr}"
+        );
     }
 }
 

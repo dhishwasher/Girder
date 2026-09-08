@@ -90,18 +90,18 @@ pub(crate) fn current_tier() -> Result<Tier, LicenseError> {
 }
 
 pub(crate) fn require_paid(tool: &str) -> io::Result<()> {
-    let alternative =
-        "Free alternative: `get_source` and `find_definition` still answer exact-symbol questions.";
+    let help = "Buy a perpetual Girder license at https://maynard42.gumroad.com/l/zwpsjl. \
+                Free alternative: `get_source` and `find_definition` still answer exact-symbol questions.";
     match current_tier() {
         Ok(Tier::Paid) => Ok(()),
         Ok(Tier::Free) => Err(io::Error::new(
             io::ErrorKind::PermissionDenied,
-            format!("The `{tool}` tool needs a paid Girder license. {alternative}"),
+            format!("The `{tool}` tool needs a paid Girder license. {help}"),
         )),
         Err(error) => Err(io::Error::new(
             io::ErrorKind::PermissionDenied,
             format!(
-                "The `{tool}` tool needs a valid paid Girder license, but the configured key was rejected: {error}. {alternative}"
+                "The `{tool}` tool needs a valid paid Girder license, but the configured key was rejected: {error}. {help}"
             ),
         )),
     }

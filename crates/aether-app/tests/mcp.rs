@@ -140,6 +140,10 @@ fn unlicensed_paid_tool_is_a_readable_normal_tool_result() {
         text.contains("`get_source` and `find_definition`"),
         "{text}"
     );
+    assert!(
+        text.contains("https://maynard42.gumroad.com/l/zwpsjl"),
+        "{text}"
+    );
 
     let free = session.call_tool("get_source", json!({"nodes": ["crate::calc::double"]}));
     assert!(tool_text(&free).contains("pub fn double"), "{free}");

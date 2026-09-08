@@ -20,7 +20,7 @@ down ([TypeScript](./docs/typescript-support.md), [Go](./docs/go-support.md)).
 **Tiers:** the free tier is permanent and needs no account — `get_source`,
 `find_definition`, `search_code`, `ask_codebase`, and `review_changes` on a
 single repository. The `orient` and `impacted_tests` tools need a
-[paid license](#license). Keys are verified offline; the binary never phones
+[paid license](#buy-a-license). Keys are verified offline; the binary never phones
 home.
 
 On this repository's committed ten-node measurement, `girder context
@@ -795,6 +795,23 @@ cargo test -p aether-dap --test debugpy -- --ignored --nocapture
 The measured table-stakes comparison, current correctness evidence, and
 prioritized open risks are maintained in
 [`docs/core-gap-analysis.md`](docs/core-gap-analysis.md).
+
+## Buy a license
+
+Paid access to `orient` and `impacted_tests` costs **$39, one-time and
+perpetual, with no subscription**. [Buy a Girder license on
+Gumroad](https://maynard42.gumroad.com/l/zwpsjl).
+
+Set the purchased key as the complete value of the `GIRDER_LICENSE_KEY`
+environment variable. Alternatively, save it as the only contents of the key
+file that Girder reads for your platform:
+
+- Linux and other non-macOS Unix: `$XDG_CONFIG_HOME/girder/license.key`, or
+  `$HOME/.config/girder/license.key` when `XDG_CONFIG_HOME` is unset
+- macOS: `$HOME/Library/Application Support/girder/license.key`
+- Windows: `%APPDATA%\girder\license.key`
+
+Verification is offline, and the key never expires.
 
 ## License
 

@@ -101,13 +101,31 @@ This skips the PATH search entirely. If the postinstall download did not
 land a binary, it fails loudly naming the path it expected, rather than
 silently falling back to PATH the way a normal run does.
 
+## Buy a license
+
+Paid access to `orient` and `impacted_tests` costs **$39, one-time and
+perpetual, with no subscription**. [Buy a Girder license on
+Gumroad](https://maynard42.gumroad.com/l/zwpsjl).
+
+Set the purchased key as the complete value of the `GIRDER_LICENSE_KEY`
+environment variable. Alternatively, save it as the only contents of the key
+file that Girder reads for your platform:
+
+- Linux and other non-macOS Unix: `$XDG_CONFIG_HOME/girder/license.key`, or
+  `$HOME/.config/girder/license.key` when `XDG_CONFIG_HOME` is unset
+- macOS: `$HOME/Library/Application Support/girder/license.key`
+- Windows: `%APPDATA%\girder\license.key`
+
+Verification is offline, and the key never expires.
+
 ## License
 
 Girder is **source-available** under the
 [Business Source License 1.1](https://github.com/dhishwasher/Girder/blob/main/LICENSE).
 The source is public and free to read, use, modify, and run, including inside
-a company. The only restriction is that you may not offer Girder itself to
-third parties as a competing hosted or managed service whose primary value is
-Girder's functionality.
+a company, subject to its license terms. You may not circumvent its license-key
+functionality or remove or obscure protected functionality, and you may not
+offer Girder itself to third parties as a competing hosted or managed service
+whose primary value is Girder's functionality.
 
 On September 4, 2030, the license converts to the Apache License, Version 2.0.
