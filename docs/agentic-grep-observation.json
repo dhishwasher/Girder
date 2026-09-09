@@ -1,0 +1,611 @@
+{
+  "policy_id": "agentic-grep-v1",
+  "scope": "Discovery costs with a 1.5B local model. This does not establish frontier-model behavior or correctness of complete caller, test, or impact answers.",
+  "freeze": {
+    "commit": "3a84b216626eecbcad7a86cc38e5c3d0ba27255d",
+    "sha256": {
+      "docs/agentic-grep-policy.json": "502dd4c7ea592fd2f4fcb822f5399c18c8b532e24f318a23bdb8895012bbb359",
+      "docs/agentic-grep-prompts.json": "09e0ae8930afccecf010e9982970c25c80f23e37c186fd862c03ff2d58660df1",
+      "docs/evaluator/agentic-grep-targets.json": "09c4b2f43b7b32eb376ab552a1eb4becc42e87a5ee5769d0eb3da4f9dab4261c",
+      "docs/agentic-grep-tools.json": "bff27714b66874b07ff73a930c6aaa3abc82cb6a6b803e152765f19c4d54ab3e",
+      "tools/agentic_grep_benchmark.py": "46509a83297264944c2cde7d55958ffabaad2f88a1152eb4451864cdf55338a9",
+      "tools/test_agentic_grep_benchmark.py": "ec89addc464b27caa45e80277624397dd851b332018cce1ae03d6326edbb0d04",
+      "tools/orient_benchmark.py": "e2233ce64344e29a0c50e05693fc85be8492fde8f0c6dbde5ce562685bd167c5",
+      "tools/harness_support.py": "a63b069acf887b5879f9662251bb0a13fbe945e260937f999225ba85ec7da428",
+      "tools/core_representative_benchmark.py": "4c7b1d1a107f548a5775a16685b72c00fc631539a7969bd609ac2acc790f6eaf",
+      "docs/core-representative-corpus.json": "d362c7fb893b0ab87db489ce1b9c14b182672aa43a77056c5c261daadb076c12",
+      "docs/typescript-support-policy.json": "e95dbea78c64594786408c87e8de4c5a4e44d775dcdefb9c6426dbfa00fe4590",
+      "docs/go-support-policy.json": "2f3fbda5ab81df67097042fa705d29c43c2f3ff15cd9fd31fd46749881f19c50",
+      "docs/orient-tool-policy.json": "efe055ef18a4e873a9e80f8e16b39a155e575dc9257019d5d8758a8b617b83c0"
+    }
+  },
+  "binary_sha256": "123c336d6c3b82845967f33c0538b12d3e73e6fb0b49ff6d7bb971206d80bc69",
+  "state": "incomplete",
+  "records": [
+    {
+      "id": "task-01",
+      "grep": {
+        "answer": null,
+        "reason": "request_timeout",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 1,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 302.645791,
+        "state": "completed"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "request_timeout",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 1,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 310.072998,
+        "state": "completed"
+      },
+      "arm_order": [
+        "grep",
+        "graph"
+      ]
+    },
+    {
+      "id": "task-02",
+      "grep": {
+        "answer": null,
+        "reason": "request_timeout",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 1,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 314.525802,
+        "state": "completed"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "request_timeout",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 1,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 306.168585,
+        "state": "completed"
+      },
+      "arm_order": [
+        "graph",
+        "grep"
+      ]
+    },
+    {
+      "id": "task-03",
+      "grep": {
+        "answer": null,
+        "reason": "request_timeout",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 1,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 370.525619,
+        "state": "completed"
+      },
+      "graph": {
+        "answer": "crate::regex::Regex::replace",
+        "reason": "final_answer",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 1,
+        "model_prompt_tokens": 1817,
+        "model_output_tokens": 16,
+        "elapsed_seconds": 309.062944,
+        "state": "completed"
+      },
+      "arm_order": [
+        "grep",
+        "graph"
+      ]
+    },
+    {
+      "id": "task-04",
+      "grep": {
+        "answer": "crate::commands::Command::invoke",
+        "reason": "final_answer",
+        "tool_calls": 1,
+        "tool_output_bytes": 348,
+        "produced_tool_output_bytes": 348,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 2,
+        "model_prompt_tokens": 1246,
+        "model_output_tokens": 56,
+        "elapsed_seconds": 173.140069,
+        "state": "completed"
+      },
+      "graph": {
+        "answer": "crate::command::Command::invoke",
+        "reason": "final_answer",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 1,
+        "model_prompt_tokens": 1816,
+        "model_output_tokens": 16,
+        "elapsed_seconds": 68.325096,
+        "state": "completed"
+      },
+      "arm_order": [
+        "graph",
+        "grep"
+      ]
+    },
+    {
+      "id": "task-05",
+      "grep": {
+        "answer": null,
+        "reason": "request_timeout",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 1,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 372.208652,
+        "state": "completed"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      },
+      "arm_order": [
+        "grep",
+        "graph"
+      ]
+    },
+    {
+      "id": "task-06",
+      "grep": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      }
+    },
+    {
+      "id": "task-07",
+      "grep": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      }
+    },
+    {
+      "id": "task-08",
+      "grep": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      }
+    },
+    {
+      "id": "task-09",
+      "grep": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      }
+    },
+    {
+      "id": "task-10",
+      "grep": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      }
+    },
+    {
+      "id": "task-11",
+      "grep": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      }
+    },
+    {
+      "id": "task-12",
+      "grep": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      }
+    },
+    {
+      "id": "task-13",
+      "grep": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      }
+    },
+    {
+      "id": "task-14",
+      "grep": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      }
+    },
+    {
+      "id": "task-15",
+      "grep": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      },
+      "graph": {
+        "answer": null,
+        "reason": "not_started",
+        "tool_calls": 0,
+        "tool_output_bytes": 0,
+        "produced_tool_output_bytes": 0,
+        "unconfirmed_tool_output_bytes": 0,
+        "model_requests": 0,
+        "model_prompt_tokens": 0,
+        "model_output_tokens": 0,
+        "elapsed_seconds": 0,
+        "state": "pending"
+      }
+    }
+  ],
+  "graph_construction": [
+    {
+      "task": "task-01",
+      "seconds": 17.14561253800639,
+      "peak_rss_kib": 43916,
+      "exit_code": 0
+    },
+    {
+      "task": "task-02",
+      "seconds": 9.579436040003202,
+      "peak_rss_kib": 34084,
+      "exit_code": 0
+    },
+    {
+      "task": "task-03",
+      "seconds": 6.0868936859988025,
+      "peak_rss_kib": 14600,
+      "exit_code": 0
+    },
+    {
+      "task": "task-04",
+      "seconds": 8.899799963997793,
+      "peak_rss_kib": 42244,
+      "exit_code": 0
+    }
+  ],
+  "errors": [
+    {
+      "type": "TimeoutError",
+      "message": "timed out"
+    }
+  ],
+  "assessment": {
+    "overall": "FAIL",
+    "all_15_correct": false,
+    "byte_gate": false,
+    "call_gate": false,
+    "groups": {
+      "all": {
+        "tasks": 15,
+        "outcomes": {
+          "grep": {
+            "correct": 0,
+            "wrong": 1,
+            "no_answer": 14
+          },
+          "graph": {
+            "correct": 0,
+            "wrong": 2,
+            "no_answer": 13
+          }
+        },
+        "comparable_pairs": 0,
+        "excluded": [],
+        "comparable_costs": {
+          "grep": {
+            "tool_output_bytes": 0,
+            "tool_calls": 0
+          },
+          "graph": {
+            "tool_output_bytes": 0,
+            "tool_calls": 0
+          }
+        },
+        "graph_to_grep_bytes": null,
+        "graph_byte_losses": [],
+        "graph_call_losses": []
+      },
+      "identifier": {
+        "tasks": 12,
+        "outcomes": {
+          "grep": {
+            "correct": 0,
+            "wrong": 1,
+            "no_answer": 11
+          },
+          "graph": {
+            "correct": 0,
+            "wrong": 2,
+            "no_answer": 10
+          }
+        },
+        "comparable_pairs": 0,
+        "excluded": [],
+        "comparable_costs": {
+          "grep": {
+            "tool_output_bytes": 0,
+            "tool_calls": 0
+          },
+          "graph": {
+            "tool_output_bytes": 0,
+            "tool_calls": 0
+          }
+        },
+        "graph_to_grep_bytes": null,
+        "graph_byte_losses": [],
+        "graph_call_losses": []
+      },
+      "description": {
+        "tasks": 3,
+        "outcomes": {
+          "grep": {
+            "correct": 0,
+            "wrong": 0,
+            "no_answer": 3
+          },
+          "graph": {
+            "correct": 0,
+            "wrong": 0,
+            "no_answer": 3
+          }
+        },
+        "comparable_pairs": 0,
+        "excluded": [],
+        "comparable_costs": {
+          "grep": {
+            "tool_output_bytes": 0,
+            "tool_calls": 0
+          },
+          "graph": {
+            "tool_output_bytes": 0,
+            "tool_calls": 0
+          }
+        },
+        "graph_to_grep_bytes": null,
+        "graph_byte_losses": [],
+        "graph_call_losses": []
+      }
+    }
+  }
+}

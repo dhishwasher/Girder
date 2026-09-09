@@ -4,9 +4,52 @@ This measures discovery costs with the local **1.5B**
 `qwen2.5-coder:1.5b` model. It does **not** establish frontier-model behavior,
 or correctness of complete caller, test, or impact answers.
 
-No campaign has run yet. The implementation and inputs must be committed
-before execution. The existing 97.85% whole-file and 97.98% plain-grep
+The single frozen campaign is **incomplete; the overall gate failed**.
+There are no pairs with two correct answers, so it supports no comparative
+cost claim. The existing 97.85% naive whole-file and 97.98% plain-grep
 comparisons do not establish an advantage over adaptive agentic grep.
+
+## Recorded outcome
+
+The [observation](agentic-grep-observation.json) retains all 15 tasks,
+including the 21 arms that never started. The policy, prompts, evaluator
+targets, tool schemas, harness, tests, and settings were committed before
+execution; their hashes and the verified published 0.2.4 binary hash are
+recorded in the observation. No targets were excluded or changed.
+
+| Prompt class | Arm | Correct | Wrong | No answer | Completed arms | Comparable pairs |
+|---|---|---:|---:|---:|---:|---:|
+| Identifier (12 tasks) | Grep | 0 | 1 | 11 | 5 | 0 |
+| Identifier (12 tasks) | Graph | 0 | 2 | 10 | 4 | 0 |
+| Description (3 tasks) | Grep | 0 | 0 | 3 | 0 | 0 |
+| Description (3 tasks) | Graph | 0 | 0 | 3 | 0 | 0 |
+| All (15 tasks) | Grep | 0 | 1 | 14 | 5 | 0 |
+| All (15 tasks) | Graph | 0 | 2 | 13 | 4 | 0 |
+
+Six completed arms hit the configured 300-second chat-request timeout.
+Three returned incorrect semantic paths. The next per-arm model metadata
+check (`/api/show`, with its frozen 30-second timeout) timed out, stopping
+the campaign before task 5's graph arm. No-answer totals include both
+timed-out and unstarted arms; the observation distinguishes their states.
+Observed arm wall time exceeded the request timeout on this heavily loaded
+2.7 GiB VM (up to 372.21 seconds); the timeout setting is not a hard process
+deadline. No timeout or model setting was changed after execution began.
+
+Raw operational totals are six model requests, one tool call, and 348
+confirmed tool-response bytes for grep; four model requests, zero tool
+calls, and zero tool-response bytes for graph. These are failed-task
+counters, **not evidence of graph savings**. There are zero comparable
+pairs in either class, so byte ratios and comparative losses are
+unavailable. Four completed cold graph constructions took 41.71 seconds
+in total; their largest recorded peak RSS was 43,916 KiB. Construction is
+separate from retrieval accounting.
+
+The [per-arm transcripts](agentic-grep-observation-transcripts/) preserve
+the requests, responses, errors, and tool outputs. A prior
+[preflight failure](agentic-grep-preflight-observation.json) found GNU
+`time` missing before any campaign claim or model request. Installing that
+required profiler did not alter frozen inputs. The recorded campaign was
+not restarted after its timeout failure.
 
 ## Inputs and independence
 
