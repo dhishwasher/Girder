@@ -39,6 +39,13 @@ jobs:
       - name: Tests
         run: cargo test --workspace
 
+      - name: Ensure ripgrep is available for measurement tool tests
+        run: |
+          if ! command -v rg > /dev/null; then
+            sudo apt-get update
+            sudo apt-get install --yes ripgrep
+          fi
+
       - name: Measurement harness unit tests
         run: |
           python3 -m unittest -v \
@@ -49,7 +56,8 @@ jobs:
             tools.test_plan_executor_oracle \
             tools.test_context_vs_read_cost \
             tools.test_girder_context_advisory_hook \
-            tools.test_description_search_accuracy
+            tools.test_description_search_accuracy \
+            tools.test_agentic_grep_benchmark
 
       # `curl … | sh` is the README's first install instruction, so install.sh
       # is how most people will obtain the tool. These run the real script

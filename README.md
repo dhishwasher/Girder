@@ -158,6 +158,9 @@ misses tests reached only through dynamic dispatch (measured: recall 0.000 on a
 polymorphic-dispatch case, [`docs/core-representative-mutations.md`](./docs/core-representative-mutations.md)).
 A full test run remains the authority before calling a change safe.
 
+Selecting extra tests costs CPU time; missing a relevant test can conceal a
+regression.
+
 The project root is fixed when the server starts, so no tool call can reach
 another directory. `GIRDER_MCP_TIMEOUT_SECONDS` (default 120) bounds each
 call; raise it for a very large repository.

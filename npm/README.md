@@ -87,6 +87,9 @@ bounded file reads adaptively. No agentic-grep cost claim is established here.
 tests reached only through dynamic dispatch. A full test run is still the
 authority before you call a change safe.
 
+Selecting extra tests costs CPU time; missing a relevant test can conceal a
+regression.
+
 ## Languages
 
 Rust, Python, TypeScript/TSX, and Go. Rust and Python are the most mature;

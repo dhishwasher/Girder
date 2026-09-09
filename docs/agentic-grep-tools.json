@@ -1,0 +1,203 @@
+[
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Get a function's source"
+    },
+    "description": "Return the source of specific functions without the surrounding file. Pin exact node paths with `nodes`, or describe what you want in `intent` to let concept search choose. Measured 97.85% fewer bytes than reading the whole file across ten nodes, and cheaper on all ten (docs/context-vs-read-cost.md). Prefer this over opening a file to read one function. Use `find_definition` or `search_code` first if you do not know the node path.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "include_tests": {
+          "description": "Also return the source of tests that cover each node. Off by default: it costs substantially more bytes.",
+          "type": "boolean"
+        },
+        "intent": {
+          "description": "Natural-language description of the code you want, used only when `nodes` is omitted.",
+          "type": "string"
+        },
+        "nodes": {
+          "description": "Exact node paths, e.g. crate::crates::aether-graph::src::lib::SemanticGraph::tests_for. Use find_definition or search_code to discover them.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "name": "get_source",
+    "title": "Get a function's source"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Find where a name is declared"
+    },
+    "description": "Locate the declarations of an exact identifier: every function or type with that name, and nothing else. This is not a substring or full-text search \u2014 it will not match call sites, comments, or strings, which is why it is drastically cheaper than grep for the question \"where is X defined?\" (measured 97.98% fewer bytes across ten identifiers, docs/names-cost.md). Use `search_code` instead when you only know roughly what you are after.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "description": "Restrict results to functions or types. Defaults to all.",
+          "enum": [
+            "function",
+            "type",
+            "all"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "The exact identifier to look up.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "find_definition",
+    "title": "Find where a name is declared"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Search for code by concept"
+    },
+    "description": "Rank functions and types by relevance to a natural-language description, returning the top matches as scores with node paths. Use this when you do not know the name of what you want; use `find_definition` when you do. Feed the node paths it returns to `get_source`.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "query": {
+          "description": "What the code you are looking for does, in plain language.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "type": "object"
+    },
+    "name": "search_code",
+    "title": "Search for code by concept"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Ask about call relationships"
+    },
+    "description": "Answer a question about this codebase by traversing the semantic graph: what calls a function, what it calls, what a change to it would affect, and what a node is. No code is generated and no model is consulted \u2014 this is graph traversal, so it finds callers that grep cannot (and does not invent ones that do not exist). Prefer it over grepping for call sites.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "description": "e.g. \"what calls resolve_calls?\", \"what would change if I edit tests_for?\"",
+          "type": "string"
+        }
+      },
+      "required": [
+        "question"
+      ],
+      "type": "object"
+    },
+    "name": "ask_codebase",
+    "title": "Ask about call relationships"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "List tests affected by a change"
+    },
+    "description": "Paid license required. Name only the tests that can reach the functions that changed, detected from the git diff or from explicit node paths. One test name per line, ready to pass to a test runner. An empty result means nothing needs testing \u2014 it does NOT mean run everything. Treat this as advisory: it is known to over-select unrelated tests and to miss tests reached only through dynamic dispatch, so a full run remains the authority before you claim a change is safe.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "description": "Exact node paths to analyze. Omit to use the current git diff.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "name": "impacted_tests",
+    "title": "List tests affected by a change"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Review changes semantically"
+    },
+    "description": "Report what changed in this working tree as semantics rather than text: which functions and types were added, modified, or removed, and (in full mode) what they affect and which changes lack test coverage. Complements a text diff instead of replacing it \u2014 use it to see the blast radius of a change you or someone else just made. Coverage gaps it reports are advisory.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "full": {
+          "description": "Include impact radius and coverage gaps. Off by default, which lists only changed node paths.",
+          "type": "boolean"
+        },
+        "since": {
+          "description": "Git ref to compare against. Defaults to HEAD.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "review_changes",
+    "title": "Review changes semantically"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Orient at a node in one call"
+    },
+    "description": "Paid license required. Answer \"what am I about to touch and what does it reach\" for one starting point in a single round trip: its source, direct callers and callees (to `depth`, default 1, capped at 2), the tests that cover it, and its impact set \u2014 everything `get_source` + `ask_codebase` (callers, callees, and impact questions) + `impacted_tests` would answer across several separate calls, bundled into one. Prefer this over chaining those tools when orienting in unfamiliar code. Pin `nodes` when you know the exact path; use `intent` only when you do not, and check the returned `confidence` \u2014 a `\"low\"` value means the match is a guess (natural-language search on this codebase resolves correctly only part of the time, see docs/description-search-accuracy.md), not a verified answer, and `find_definition` or `search_code` first is the safer path. Large caller/callee/test/impact sections report a true count and are capped rather than silently dropped.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "depth": {
+          "description": "Hops of callers/callees to report beyond the immediate ones. Defaults to 1. Capped at 2.",
+          "type": "integer"
+        },
+        "intent": {
+          "description": "Natural-language description of the code to orient at, used only when `nodes` is omitted. A low-confidence resolution is flagged in the response, not hidden.",
+          "type": "string"
+        },
+        "nodes": {
+          "description": "Exact node paths to orient at. Use find_definition or search_code to discover them.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "name": "orient",
+    "title": "Orient at a node in one call"
+  }
+]
