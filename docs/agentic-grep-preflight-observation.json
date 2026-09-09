@@ -1,0 +1,16 @@
+{
+  "record_type": "pre_campaign_preflight",
+  "policy_id": "agentic-grep-v1",
+  "freeze_commit": "717253fedb82bca2a4ba24f244b6234e9d9ee3f3",
+  "recorded_at_utc": "2026-09-09T08:48:29.279021+00:00",
+  "campaign_started": false,
+  "model_requests": 0,
+  "claim_created": false,
+  "observation_created": false,
+  "error": "CampaignIntegrityError: ripgrep and /usr/bin/time are required; do not weaken the baseline",
+  "dependencies": {
+    "ripgrep": "/home/corymaynard370/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path/rg",
+    "gnu_time_exists": false
+  },
+  "action": "Install the missing measurement dependency before the first campaign; preserve the frozen protocol and this failed preflight record."
+}
