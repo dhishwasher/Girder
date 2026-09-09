@@ -153,6 +153,10 @@ are not portable.
 These comparisons do not measure a competent agent choosing grep searches and
 bounded file reads adaptively. No agentic-grep cost claim is established here.
 
+The subsequent [agentic-grep campaign](./docs/agentic-grep.md) with a local
+1.5B model stopped incomplete and produced no pairs with two correct answers.
+It establishes no comparative cost advantage or frontier-model behavior.
+
 `impacted_tests` is **advisory**. It over-selects unrelated tests, and it
 misses tests reached only through dynamic dispatch (measured: recall 0.000 on a
 polymorphic-dispatch case, [`docs/core-representative-mutations.md`](./docs/core-representative-mutations.md)).

@@ -83,6 +83,10 @@ only declarations, but the exact percentages are not portable.
 These comparisons do not measure a competent agent choosing grep searches and
 bounded file reads adaptively. No agentic-grep cost claim is established here.
 
+The subsequent [agentic-grep campaign](https://github.com/dhishwasher/Girder/blob/2690fd9024a6a219827ea7c5f84f0de27df66c30/docs/agentic-grep.md) with a local
+1.5B model stopped incomplete and produced no pairs with two correct answers.
+It establishes no comparative cost advantage or frontier-model behavior.
+
 `impacted_tests` is **advisory**: it over-selects unrelated tests and misses
 tests reached only through dynamic dispatch. A full test run is still the
 authority before you call a change safe.
