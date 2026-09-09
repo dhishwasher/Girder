@@ -13,7 +13,7 @@ can drive over MCP, plus an optional native IDE.
 curl -fsSL https://raw.githubusercontent.com/dhishwasher/Girder/main/install.sh | sh
 ```
 
-**Languages:** Rust, Python, TypeScript, and Go. Rust and Python are the most
+**Languages:** Rust, Python, TypeScript/TSX, and Go. Rust and Python are the most
 mature; TypeScript and Go are measured and gated, with their limits written
 down ([TypeScript](./docs/typescript-support.md), [Go](./docs/go-support.md)).
 
@@ -23,10 +23,12 @@ single repository. The `orient` and `impacted_tests` tools need a
 [paid license](#buy-a-license). Keys are verified offline; the binary never phones
 home.
 
-On this repository's committed ten-node measurement, `girder context
---source-only` returned 8,765 bytes where full-file reads returned 408,137 — a
-[97.85% reduction](./docs/context-vs-read-cost-observation.json). That counts
-bytes, not tokens.
+On the committed 15-task `orient` measurement, one bundled call per task
+returned **48,814 output bytes versus 101,302**, using **15 calls versus 78**
+for the equivalent command chain, with **37/37 gated checks passing** after
+the disclosed fixes. See the [post-fix observation](./docs/orient-tool-observation-post-fix.json)
+and [limitations](#what-that-saves-and-what-it-doesnt). These are output bytes,
+not tokens, and the baseline is Girder's separate commands.
 
 ## Install
 
@@ -103,36 +105,17 @@ skips npm entirely.
 
 Seven tools, all read-only:
 
-| Tool | What it answers |
-|---|---|
-| `get_source` | The source of specific functions, without the file around them. |
-| `find_definition` | Where an exact identifier is declared. Not a substring search. |
-| `search_code` | Which functions match a description, when you don't know the name. |
-| `ask_codebase` | Callers, callees, and blast radius, by graph traversal. |
-| `impacted_tests` | Only the tests that can reach what changed. |
-| `review_changes` | What changed in the working tree, as semantics rather than text. |
-| `orient` | Source, callers, callees, tests, and impact for one node, in one call. |
+| Tool | What it answers | Tier |
+|---|---|---|
+| `get_source` | The source of specific functions, without the file around them. | Free |
+| `find_definition` | Where an exact identifier is declared. Not a substring search. | Free |
+| `search_code` | Which functions match a description, when you don't know the name. | Free |
+| `ask_codebase` | Callers, callees, and blast radius, by graph traversal. | Free |
+| `impacted_tests` | Only the tests that can reach what changed. | Paid |
+| `review_changes` | What changed in the working tree, as semantics rather than text. | Free |
+| `orient` | Source, callers, callees, tests, and impact for one node, in one call. | Paid |
 
 ### What that saves, and what it doesn't
-
-Two precommitted measurements, both counting **bytes of command output rather
-than tokens** (no tokenizer was run):
-
-- `get_source` against reading the whole file: **97.85% fewer bytes** across ten
-  functions sampled by source-size decile, cheaper on all ten
-  ([`docs/context-vs-read-cost.md`](./docs/context-vs-read-cost.md)).
-- `find_definition` against `grep`: **97.98% fewer bytes** across ten
-  identifiers ([`docs/names-cost.md`](./docs/names-cost.md)).
-
-Both are single-repository measurements. The direction is structural — files
-are much larger than the functions in them, and grep returns every mention
-where `find_definition` returns only declarations — but the exact percentages
-are not portable.
-
-`impacted_tests` is **advisory**. It over-selects unrelated tests, and it
-misses tests reached only through dynamic dispatch (measured: recall 0.000 on a
-polymorphic-dispatch case, [`docs/core-representative-mutations.md`](./docs/core-representative-mutations.md)).
-A full test run remains the authority before calling a change safe.
 
 `orient` bundles what `get_source` + `ask_codebase` (callers, callees, and
 impact) + `impacted_tests` otherwise answer across 5-6 separate calls into
@@ -152,6 +135,28 @@ runner-up is close. See [`docs/orient-tool.md`](./docs/orient-tool.md) and
 the committed [policy](./docs/orient-tool-policy.json) /
 [original observation](./docs/orient-tool-observation.json) /
 [post-fix observation](./docs/orient-tool-observation-post-fix.json).
+
+Two additional precommitted measurements, both counting **bytes of command output rather
+than tokens** (no tokenizer was run):
+
+- `get_source` against a naive whole-file-read baseline: **97.85% fewer bytes** across ten
+  functions sampled by source-size decile, cheaper on all ten
+  ([`docs/context-vs-read-cost.md`](./docs/context-vs-read-cost.md)).
+- `find_definition` against a plain-grep baseline: **97.98% fewer bytes** across ten
+  identifiers ([`docs/names-cost.md`](./docs/names-cost.md)).
+
+Both are single-repository measurements. The direction is structural — files
+are much larger than the functions in them, and grep returns every mention
+where `find_definition` returns only declarations — but the exact percentages
+are not portable.
+
+These comparisons do not measure a competent agent choosing grep searches and
+bounded file reads adaptively. No agentic-grep cost claim is established here.
+
+`impacted_tests` is **advisory**. It over-selects unrelated tests, and it
+misses tests reached only through dynamic dispatch (measured: recall 0.000 on a
+polymorphic-dispatch case, [`docs/core-representative-mutations.md`](./docs/core-representative-mutations.md)).
+A full test run remains the authority before calling a change safe.
 
 The project root is fixed when the server starts, so no tool call can reach
 another directory. `GIRDER_MCP_TIMEOUT_SECONDS` (default 120) bounds each
@@ -176,9 +181,9 @@ python3 -m pip install debugpy
 cargo test -p aether-dap --test debugpy -- --ignored
 ```
 
-### Use it on a real project
+### Analyze a repository
 
-Girder is also a CLI that operates on actual directories:
+Use the CLI to build and query a repository's semantic graph:
 
 ```bash
 # Build the semantic graph from a project and save it as <dir>/project.aether:
@@ -342,7 +347,7 @@ girder --help
 `.go` file (skipping `target`, `.git`, …),
 build the graph with directory-aware module paths, resolve free and
 receiver-qualified method calls across files, and persist the `.aether` graph.
-Supported languages are Rust, Python, TypeScript, and Go. The TypeScript and Go
+Supported languages are Rust, Python, TypeScript/TSX, and Go. The TypeScript and Go
 graph surfaces are measured and gated, but remain less mature than Rust and
 Python: TypeScript meets its precision and recall gates, while Go currently
 records one false negative (micro-recall 0.954545 against a 1.0 gate). See the
@@ -749,8 +754,9 @@ deliberately do not enter routing until their HTTP bodies are implemented.
 
 ## Status
 
-A focused, honest prototype: the three pillars (graph-as-truth, agent swarm,
-time-travel debug) are real, tested, and runnable.
+Girder is a semantic-graph MCP server and CLI for coding agents. The native
+GUI, agent swarm, and time-travel debugger are supporting components; the
+measurements below describe the graph's current behavior and limits.
 
 The checked
 [Core Trustworthiness Measurement](docs/core-trustworthiness-measurement.md)

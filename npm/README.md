@@ -33,32 +33,55 @@ so no tool call can reach another directory.
 
 ## Tools
 
-| Tool | What it answers |
-|---|---|
-| `get_source` | The source of specific functions, without the file around them. |
-| `find_definition` | Where an exact identifier is declared. Not a substring search. |
-| `search_code` | Which functions match a description, when you don't know the name. |
-| `ask_codebase` | Callers, callees, and blast radius, by graph traversal. |
-| `impacted_tests` | Only the tests that can reach what changed. |
-| `review_changes` | What changed in the working tree, as semantics rather than text. |
+| Tool | What it answers | Tier |
+|---|---|---|
+| `get_source` | The source of specific functions, without the file around them. | Free |
+| `find_definition` | Where an exact identifier is declared. Not a substring search. | Free |
+| `search_code` | Which functions match a description, when you don't know the name. | Free |
+| `ask_codebase` | Callers, callees, and blast radius, by graph traversal. | Free |
+| `impacted_tests` | Only the tests that can reach what changed. | Paid |
+| `review_changes` | What changed in the working tree, as semantics rather than text. | Free |
+| `orient` | Source, callers, callees, tests, and impact for one node, in one call. | Paid |
 
 Every tool is read-only. None of them run a model, and none write to your
 repository.
 
 ## Measured cost
 
-Two comparisons, both against precommitted policies, both measured in **bytes
+`orient` bundles what `get_source` + `ask_codebase` (callers, callees, and
+impact) + `impacted_tests` otherwise answer across 5-6 separate calls into
+one. On a 15-task corpus spanning ten pinned repositories, that one call used
+**fewer aggregate bytes than the chain it replaces** (48,814 vs 101,302,
+a 0.48 ratio) while cutting 78 round trips to 15 — one per task — and, after
+two disclosed defects were fixed, **37 of 37 gated checks pass**. The first
+run found `impacted_tests --quiet` silently dropping non-Rust/Python test
+names (`orient`'s own test-coverage section did not share the bug, which is
+how it was found); that filter is now removed. Its natural-language `intent`
+input still inherits `search_code`'s accuracy — all three intent tasks in
+this corpus resolved to the wrong node, unchanged and out of scope for this
+fix — but `orient`'s confidence heuristic, which originally caught none of
+the three, now flags all three `"confidence": "low"` with candidate scores
+attached, at the cost of also flagging some correct resolutions when a
+runner-up is close. See [`docs/orient-tool.md`](https://github.com/dhishwasher/Girder/blob/main/docs/orient-tool.md) and
+the committed [policy](https://github.com/dhishwasher/Girder/blob/main/docs/orient-tool-policy.json) /
+[original observation](https://github.com/dhishwasher/Girder/blob/main/docs/orient-tool-observation.json) /
+[post-fix observation](https://github.com/dhishwasher/Girder/blob/main/docs/orient-tool-observation-post-fix.json).
+
+Two additional comparisons, both against precommitted policies, both measured in **bytes
 of output rather than tokens** (no tokenizer was run):
 
-- `get_source` vs reading the whole file: **97.85% fewer bytes** across ten
+- `get_source` vs a naive whole-file-read baseline: **97.85% fewer bytes** across ten
   functions sampled by source-size decile, and cheaper on all ten.
   ([method and honest limits](https://github.com/dhishwasher/Girder/blob/main/docs/context-vs-read-cost.md))
-- `find_definition` vs `grep`: **97.98% fewer bytes** across ten identifiers.
+- `find_definition` vs a plain-grep baseline: **97.98% fewer bytes** across ten identifiers.
   ([method](https://github.com/dhishwasher/Girder/blob/main/docs/names-cost.md))
 
 Both are single-repository measurements. The direction should hold anywhere,
 since it is driven by file size and by grep returning every mention rather than
 only declarations, but the exact percentages are not portable.
+
+These comparisons do not measure a competent agent choosing grep searches and
+bounded file reads adaptively. No agentic-grep cost claim is established here.
 
 `impacted_tests` is **advisory**: it over-selects unrelated tests and misses
 tests reached only through dynamic dispatch. A full test run is still the
@@ -66,7 +89,10 @@ authority before you call a change safe.
 
 ## Languages
 
-Rust and Python.
+Rust, Python, TypeScript/TSX, and Go. Rust and Python are the most mature;
+TypeScript and Go are measured and gated, with their limits written down
+([TypeScript](https://github.com/dhishwasher/Girder/blob/main/docs/typescript-support.md),
+[Go](https://github.com/dhishwasher/Girder/blob/main/docs/go-support.md)).
 
 ## Environment
 
