@@ -1,0 +1,1011 @@
+{
+  "schema_version": 1,
+  "policy_id": "incremental-equivalence-v1",
+  "order": "The first fixture and its first mutation must pass before proceeding to the rest.",
+  "fixtures": [
+    {
+      "id": "rust-three-file-facade",
+      "language": "rust",
+      "files": {
+        "src/lib.rs": "mod math;\nmod app;\npub use math::add;\n",
+        "src/math.rs": "pub fn add() -> i32 { 1 }\npub fn other() -> i32 { 2 }\n",
+        "src/app.rs": "pub fn run() -> i32 { crate::add() }\n"
+      },
+      "initial_edges": [
+        {
+          "from": "crate::app::run",
+          "to": "crate::math::add",
+          "kind": "Calls",
+          "present": true
+        }
+      ],
+      "mutations": [
+        {
+          "id": "rename-export",
+          "changes": [
+            {
+              "path": "src/math.rs",
+              "source": "pub fn plus() -> i32 { 1 }\npub fn other() -> i32 { 2 }\n"
+            }
+          ],
+          "expected_parsed": 1,
+          "expected_reused": 2,
+          "expected_fallback": false,
+          "edges": [
+            {
+              "from": "crate::app::run",
+              "to": "crate::math::add",
+              "kind": "Calls",
+              "present": false
+            }
+          ]
+        },
+        {
+          "id": "repair-facade",
+          "changes": [
+            {
+              "path": "src/lib.rs",
+              "source": "mod math;\nmod app;\npub use math::plus as add;\n"
+            }
+          ]
+        },
+        {
+          "id": "retarget-reexport",
+          "changes": [
+            {
+              "path": "src/lib.rs",
+              "source": "mod math;\nmod app;\npub use math::other as add;\n"
+            }
+          ]
+        },
+        {
+          "id": "body-edit",
+          "changes": [
+            {
+              "path": "src/math.rs",
+              "source": "pub fn plus() -> i32 { 1 }\npub fn other() -> i32 { 3 }\n"
+            }
+          ]
+        },
+        {
+          "id": "multi-file-batch",
+          "changes": [
+            {
+              "path": "src/lib.rs",
+              "source": "mod math;\nmod app;\npub use math::plus;\n"
+            },
+            {
+              "path": "src/app.rs",
+              "source": "pub fn run() -> i32 { crate::plus() }\n"
+            }
+          ]
+        },
+        {
+          "id": "delete-export-file",
+          "changes": [
+            {
+              "path": "src/math.rs",
+              "source": null
+            }
+          ]
+        },
+        {
+          "id": "create-empty-file",
+          "changes": [
+            {
+              "path": "src/math.rs",
+              "source": ""
+            }
+          ]
+        },
+        {
+          "id": "replace-empty-file",
+          "changes": [
+            {
+              "path": "src/math.rs",
+              "source": "pub fn plus() -> i32 { 1 }\npub fn other() -> i32 { 2 }\n"
+            }
+          ]
+        },
+        {
+          "id": "move-file-and-facade",
+          "changes": [
+            {
+              "path": "src/math.rs",
+              "source": null
+            },
+            {
+              "path": "src/number.rs",
+              "source": "pub fn plus() -> i32 { 1 }\npub fn other() -> i32 { 2 }\n"
+            },
+            {
+              "path": "src/lib.rs",
+              "source": "mod number;\nmod app;\npub use number::plus;\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rust-receivers-and-tests",
+      "language": "rust",
+      "files": {
+        "src/types.rs": "pub struct Alpha;\nimpl Alpha { pub fn new() -> Self { Self } pub fn value(&self) -> i32 { 1 } }\npub struct Beta;\nimpl Beta { pub fn new() -> Self { Self } pub fn value(&self) -> i32 { 2 } }\n",
+        "src/factory.rs": "pub fn make() -> crate::types::Alpha { crate::types::Alpha::new() }\n",
+        "src/app.rs": "pub fn run() -> i32 { let item = crate::factory::make(); item.value() }\n",
+        "tests/probe.rs": "#[test]\nfn check_run() { crate::app::run(); }\n"
+      },
+      "mutations": [
+        {
+          "id": "factory-return-type",
+          "changes": [
+            {
+              "path": "src/factory.rs",
+              "source": "pub fn make() -> crate::types::Beta { crate::types::Beta::new() }\n"
+            }
+          ]
+        },
+        {
+          "id": "same-named-method-body",
+          "changes": [
+            {
+              "path": "src/types.rs",
+              "source": "pub struct Alpha;\nimpl Alpha { pub fn new() -> Self { Self } pub fn value(&self) -> i32 { 1 } }\npub struct Beta;\nimpl Beta { pub fn new() -> Self { Self } pub fn value(&self) -> i32 { 3 } }\n"
+            }
+          ]
+        },
+        {
+          "id": "self-constructor-batch",
+          "changes": [
+            {
+              "path": "src/types.rs",
+              "source": "pub struct Alpha;\nimpl Alpha { pub fn create() -> Self { Self } pub fn value(&self) -> i32 { 1 } }\npub struct Beta;\nimpl Beta { pub fn create() -> Self { Self } pub fn value(&self) -> i32 { 2 } }\n"
+            },
+            {
+              "path": "src/factory.rs",
+              "source": "pub fn make() -> crate::types::Beta { crate::types::Beta::create() }\n"
+            }
+          ],
+          "expected_parsed": 2,
+          "expected_reused": 2,
+          "expected_fallback": false
+        },
+        {
+          "id": "candidate-set-expansion",
+          "changes": [
+            {
+              "path": "src/types.rs",
+              "source": "pub struct Alpha;\nimpl Alpha { pub fn create() -> Self { Self } pub fn value(&self) -> i32 { 1 } }\npub struct Beta;\nimpl Beta { pub fn create() -> Self { Self } pub fn value(&self) -> i32 { 2 } }\npub struct Gamma;\nimpl Gamma { pub fn value(&self) -> i32 { 4 } }\n"
+            }
+          ]
+        },
+        {
+          "id": "receiver-annotation",
+          "changes": [
+            {
+              "path": "src/app.rs",
+              "source": "pub fn run(item: crate::types::Alpha) -> i32 { item.value() }\n"
+            }
+          ]
+        },
+        {
+          "id": "method-deletion",
+          "changes": [
+            {
+              "path": "src/types.rs",
+              "source": "pub struct Alpha;\nimpl Alpha { pub fn new() -> Self { Self }  }\npub struct Beta;\nimpl Beta { pub fn new() -> Self { Self } pub fn value(&self) -> i32 { 2 } }\n"
+            }
+          ]
+        },
+        {
+          "id": "test-body-edit",
+          "changes": [
+            {
+              "path": "tests/probe.rs",
+              "source": "#[test]\nfn check_run() { crate::factory::make(); }\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rust-module-swap",
+      "language": "rust",
+      "files": {
+        "src/lib.rs": "mod math; mod app;\n",
+        "src/math.rs": "pub fn add() -> i32 { 1 }\npub fn other() -> i32 { 2 }\n",
+        "src/app.rs": "pub fn run() -> i32 { crate::math::add() }\n",
+        "src/padding.rs": ""
+      },
+      "mutations": [
+        {
+          "id": "file-to-mod-rs",
+          "changes": [
+            {
+              "path": "src/math.rs",
+              "source": null
+            },
+            {
+              "path": "src/math/mod.rs",
+              "source": "pub fn add() -> i32 { 1 }\npub fn other() -> i32 { 2 }\n"
+            }
+          ],
+          "expected_parsed": 1,
+          "expected_reused": 3,
+          "expected_fallback": false
+        },
+        {
+          "id": "mod-rs-to-file",
+          "changes": [
+            {
+              "path": "src/math/mod.rs",
+              "source": null
+            },
+            {
+              "path": "src/math.rs",
+              "source": "pub fn add() -> i32 { 1 }\npub fn other() -> i32 { 2 }\n"
+            }
+          ]
+        },
+        {
+          "id": "empty-replacement",
+          "changes": [
+            {
+              "path": "src/math.rs",
+              "source": ""
+            }
+          ]
+        },
+        {
+          "id": "configuration-rebuild",
+          "changes": [],
+          "structural_reasons": [
+            "configuration_changed"
+          ],
+          "expected_parsed": 4,
+          "expected_reused": 0,
+          "expected_fallback": true
+        },
+        {
+          "id": "uncertain-event-rebuild",
+          "changes": [],
+          "structural_reasons": [
+            "uncertain_event_mapping"
+          ],
+          "expected_fallback": true
+        },
+        {
+          "id": "ownership-rebuild",
+          "changes": [],
+          "structural_reasons": [
+            "ownership_changed"
+          ],
+          "expected_fallback": true
+        },
+        {
+          "id": "cache-reconciliation",
+          "changes": [],
+          "structural_reasons": [
+            "cache_inconsistent"
+          ],
+          "expected_fallback": true
+        }
+      ]
+    },
+    {
+      "id": "python-facades-receivers-and-tests",
+      "language": "python",
+      "files": {
+        "maths.py": "def add():\n    return 1\n\ndef other():\n    return 2\n",
+        "facade.py": "from maths import add\n",
+        "app.py": "from facade import add\nfrom kinds import make\ndef run():\n    return add() + make().value()\n",
+        "kinds.py": "class Alpha:\n    def __init__(self):\n        self.number = 1\n    def value(self):\n        return self.number\nclass Beta:\n    def __init__(self):\n        self.number = 2\n    def value(self):\n        return self.number\ndef make() -> Alpha:\n    return Alpha()\n",
+        "test_app.py": "from app import run\ndef test_run():\n    assert run()\n"
+      },
+      "mutations": [
+        {
+          "id": "body-edit",
+          "changes": [
+            {
+              "path": "maths.py",
+              "source": "def add():\n    return 3\n\ndef other():\n    return 2\n"
+            }
+          ]
+        },
+        {
+          "id": "export-rename",
+          "changes": [
+            {
+              "path": "maths.py",
+              "source": "def plus():\n    return 1\n\ndef other():\n    return 2\n"
+            }
+          ]
+        },
+        {
+          "id": "retarget-reexport",
+          "changes": [
+            {
+              "path": "facade.py",
+              "source": "from maths import other as add\n"
+            }
+          ]
+        },
+        {
+          "id": "factory-return-type",
+          "changes": [
+            {
+              "path": "kinds.py",
+              "source": "class Alpha:\n    def __init__(self):\n        self.number = 1\n    def value(self):\n        return self.number\nclass Beta:\n    def __init__(self):\n        self.number = 2\n    def value(self):\n        return self.number\ndef make() -> Beta:\n    return Beta()\n"
+            }
+          ]
+        },
+        {
+          "id": "constructor-and-method-batch",
+          "changes": [
+            {
+              "path": "kinds.py",
+              "source": "class Alpha:\n    def __init__(self):\n        self.number = 4\n    def value(self):\n        return self.number\nclass Beta:\n    def __init__(self):\n        self.number = 2\n    def value(self):\n        return self.number\ndef make() -> Alpha:\n    return Alpha()\n"
+            },
+            {
+              "path": "app.py",
+              "source": "from kinds import Alpha\ndef run(item: Alpha):\n    return item.value()\n"
+            }
+          ]
+        },
+        {
+          "id": "delete-export-file",
+          "changes": [
+            {
+              "path": "maths.py",
+              "source": null
+            }
+          ]
+        },
+        {
+          "id": "create-empty-file",
+          "changes": [
+            {
+              "path": "maths.py",
+              "source": ""
+            }
+          ]
+        },
+        {
+          "id": "restore-export-file",
+          "changes": [
+            {
+              "path": "maths.py",
+              "source": "def add():\n    return 1\n\ndef other():\n    return 2\n"
+            }
+          ]
+        },
+        {
+          "id": "move-file",
+          "changes": [
+            {
+              "path": "maths.py",
+              "source": null
+            },
+            {
+              "path": "arithmetic.py",
+              "source": "def add():\n    return 1\n\ndef other():\n    return 2\n"
+            }
+          ]
+        },
+        {
+          "id": "empty-replacement",
+          "changes": [
+            {
+              "path": "kinds.py",
+              "source": ""
+            }
+          ]
+        },
+        {
+          "id": "test-body-edit",
+          "changes": [
+            {
+              "path": "test_app.py",
+              "source": "from kinds import Beta\ndef test_run():\n    assert Beta().value()\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "typescript-facades-receivers-and-tests",
+      "language": "typescript",
+      "files": {
+        "maths.ts": "export function add(): number { return 1; }\nexport function other(): number { return 2; }\n",
+        "index.ts": "export { add } from './maths';\n",
+        "app.ts": "import { add } from './index';\nimport { make } from './kinds';\nexport function run(): number { return add() + make().value(); }\n",
+        "kinds.ts": "export class Alpha { constructor() {} value(): number { return 1; } }\nexport class Beta { constructor() {} value(): number { return 2; } }\nexport function make(): Alpha { return new Alpha(); }\n",
+        "app.test.ts": "import { run } from './app';\ntest('run', () => { run(); });\n"
+      },
+      "mutations": [
+        {
+          "id": "body-edit",
+          "changes": [
+            {
+              "path": "maths.ts",
+              "source": "export function add(): number { return 3; }\nexport function other(): number { return 2; }\n"
+            }
+          ]
+        },
+        {
+          "id": "export-rename",
+          "changes": [
+            {
+              "path": "maths.ts",
+              "source": "export function plus(): number { return 1; }\nexport function other(): number { return 2; }\n"
+            }
+          ]
+        },
+        {
+          "id": "retarget-reexport",
+          "changes": [
+            {
+              "path": "index.ts",
+              "source": "export { other as add } from './maths';\n"
+            }
+          ]
+        },
+        {
+          "id": "factory-return-type",
+          "changes": [
+            {
+              "path": "kinds.ts",
+              "source": "export class Alpha { constructor() {} value(): number { return 1; } }\nexport class Beta { constructor() {} value(): number { return 2; } }\nexport function make(): Beta { return new Beta(); }\n"
+            }
+          ]
+        },
+        {
+          "id": "constructor-and-method-batch",
+          "changes": [
+            {
+              "path": "kinds.ts",
+              "source": "export class Alpha { constructor(public size: number = 1) {} value(): number { return 1; } }\nexport class Beta { constructor(public size: number = 1) {} value(): number { return 2; } }\nexport function make(): Alpha { return new Alpha(); }\n"
+            },
+            {
+              "path": "app.ts",
+              "source": "import { Alpha } from './kinds';\nexport function run(item: Alpha): number { return item.value(); }\n"
+            }
+          ]
+        },
+        {
+          "id": "delete-export-file",
+          "changes": [
+            {
+              "path": "maths.ts",
+              "source": null
+            }
+          ]
+        },
+        {
+          "id": "create-empty-file",
+          "changes": [
+            {
+              "path": "maths.ts",
+              "source": ""
+            }
+          ]
+        },
+        {
+          "id": "restore-export-file",
+          "changes": [
+            {
+              "path": "maths.ts",
+              "source": "export function add(): number { return 1; }\nexport function other(): number { return 2; }\n"
+            }
+          ]
+        },
+        {
+          "id": "move-file",
+          "changes": [
+            {
+              "path": "maths.ts",
+              "source": null
+            },
+            {
+              "path": "arithmetic.ts",
+              "source": "export function add(): number { return 1; }\nexport function other(): number { return 2; }\n"
+            }
+          ]
+        },
+        {
+          "id": "empty-replacement",
+          "changes": [
+            {
+              "path": "kinds.ts",
+              "source": ""
+            }
+          ]
+        },
+        {
+          "id": "test-body-edit",
+          "changes": [
+            {
+              "path": "app.test.ts",
+              "source": "import { Beta } from './kinds';\ntest('value', () => { new Beta().value(); });\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tsx-facades-receivers-and-tests",
+      "language": "tsx",
+      "files": {
+        "maths.tsx": "export function add(): number { return 1; }\nexport function other(): number { return 2; }\n",
+        "index.tsx": "export { add } from './maths';\n",
+        "app.tsx": "import { add } from './index';\nimport { make } from './kinds';\nexport function run(): number { return add() + make().value(); }\n\nexport function View() { return <span>{run()}</span>; }\n",
+        "kinds.tsx": "export class Alpha { constructor() {} value(): number { return 1; } }\nexport class Beta { constructor() {} value(): number { return 2; } }\nexport function make(): Alpha { return new Alpha(); }\n",
+        "app.test.tsx": "import { run } from './app';\ntest('run', () => { run(); });\n"
+      },
+      "mutations": [
+        {
+          "id": "body-edit",
+          "changes": [
+            {
+              "path": "maths.tsx",
+              "source": "export function add(): number { return 3; }\nexport function other(): number { return 2; }\n"
+            }
+          ]
+        },
+        {
+          "id": "export-rename",
+          "changes": [
+            {
+              "path": "maths.tsx",
+              "source": "export function plus(): number { return 1; }\nexport function other(): number { return 2; }\n"
+            }
+          ]
+        },
+        {
+          "id": "retarget-reexport",
+          "changes": [
+            {
+              "path": "index.tsx",
+              "source": "export { other as add } from './maths';\n"
+            }
+          ]
+        },
+        {
+          "id": "factory-return-type",
+          "changes": [
+            {
+              "path": "kinds.tsx",
+              "source": "export class Alpha { constructor() {} value(): number { return 1; } }\nexport class Beta { constructor() {} value(): number { return 2; } }\nexport function make(): Beta { return new Beta(); }\n"
+            }
+          ]
+        },
+        {
+          "id": "constructor-and-method-batch",
+          "changes": [
+            {
+              "path": "kinds.tsx",
+              "source": "export class Alpha { constructor(public size: number = 1) {} value(): number { return 1; } }\nexport class Beta { constructor(public size: number = 1) {} value(): number { return 2; } }\nexport function make(): Alpha { return new Alpha(); }\n"
+            },
+            {
+              "path": "app.tsx",
+              "source": "import { Alpha } from './kinds';\nexport function run(item: Alpha): number { return item.value(); }\n"
+            }
+          ]
+        },
+        {
+          "id": "delete-export-file",
+          "changes": [
+            {
+              "path": "maths.tsx",
+              "source": null
+            }
+          ]
+        },
+        {
+          "id": "create-empty-file",
+          "changes": [
+            {
+              "path": "maths.tsx",
+              "source": ""
+            }
+          ]
+        },
+        {
+          "id": "restore-export-file",
+          "changes": [
+            {
+              "path": "maths.tsx",
+              "source": "export function add(): number { return 1; }\nexport function other(): number { return 2; }\n"
+            }
+          ]
+        },
+        {
+          "id": "move-file",
+          "changes": [
+            {
+              "path": "maths.tsx",
+              "source": null
+            },
+            {
+              "path": "arithmetic.tsx",
+              "source": "export function add(): number { return 1; }\nexport function other(): number { return 2; }\n"
+            }
+          ]
+        },
+        {
+          "id": "empty-replacement",
+          "changes": [
+            {
+              "path": "kinds.tsx",
+              "source": ""
+            }
+          ]
+        },
+        {
+          "id": "test-body-edit",
+          "changes": [
+            {
+              "path": "app.test.tsx",
+              "source": "import { Beta } from './kinds';\ntest('value', () => { new Beta().value(); });\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "go-receivers-tests-and-function-value-miss",
+      "language": "go",
+      "files": {
+        "work.go": "package probe\nfunc Work() int { return 1 }\nfunc Other() int { return 2 }\n",
+        "values.go": "package probe\ntype Alpha struct{}\nfunc (a Alpha) Value() int { return 1 }\ntype Beta struct{}\nfunc (b Beta) Value() int { return 2 }\nfunc Make() Alpha { return Alpha{} }\n",
+        "app.go": "package probe\nfunc Run() int { value := Make(); return Work() + value.Value() }\n",
+        "probe_test.go": "package probe\nimport \"testing\"\nfunc TestRun(t *testing.T) { Run() }\n",
+        "callback.go": "package probe\nimport \"net/http\"\nfunc ServeHome(w http.ResponseWriter, r *http.Request) {}\nfunc Register() { http.HandleFunc(\"/\", ServeHome) }\n"
+      },
+      "initial_edges": [
+        {
+          "from": "crate::Register",
+          "to": "crate::ServeHome",
+          "kind": "Calls",
+          "present": false
+        }
+      ],
+      "mutations": [
+        {
+          "id": "body-edit",
+          "changes": [
+            {
+              "path": "work.go",
+              "source": "package probe\nfunc Work() int { return 3 }\nfunc Other() int { return 2 }\n"
+            }
+          ]
+        },
+        {
+          "id": "export-rename",
+          "changes": [
+            {
+              "path": "work.go",
+              "source": "package probe\nfunc Compute() int { return 1 }\nfunc Other() int { return 2 }\n"
+            }
+          ]
+        },
+        {
+          "id": "caller-retarget",
+          "changes": [
+            {
+              "path": "app.go",
+              "source": "package probe\nfunc Run() int { value := Make(); return Other() + value.Value() }\n"
+            }
+          ]
+        },
+        {
+          "id": "factory-return-type",
+          "changes": [
+            {
+              "path": "values.go",
+              "source": "package probe\ntype Alpha struct{}\nfunc (a Alpha) Value() int { return 1 }\ntype Beta struct{}\nfunc (b Beta) Value() int { return 2 }\nfunc Make() Beta { return Beta{} }\n"
+            }
+          ]
+        },
+        {
+          "id": "receiver-constructor-batch",
+          "changes": [
+            {
+              "path": "values.go",
+              "source": "package probe\ntype Alpha struct{}\nfunc (a Alpha) Value() int { return 4 }\ntype Beta struct{}\nfunc (b Beta) Value() int { return 2 }\nfunc Make() Alpha { return Alpha{} }\n"
+            },
+            {
+              "path": "app.go",
+              "source": "package probe\nfunc Run() int { value := Alpha{}; return value.Value() }\n"
+            }
+          ]
+        },
+        {
+          "id": "delete-export-file",
+          "changes": [
+            {
+              "path": "work.go",
+              "source": null
+            }
+          ]
+        },
+        {
+          "id": "create-empty-file",
+          "changes": [
+            {
+              "path": "work.go",
+              "source": ""
+            }
+          ]
+        },
+        {
+          "id": "restore-export-file",
+          "changes": [
+            {
+              "path": "work.go",
+              "source": "package probe\nfunc Work() int { return 1 }\nfunc Other() int { return 2 }\n"
+            }
+          ]
+        },
+        {
+          "id": "move-package-file",
+          "changes": [
+            {
+              "path": "work.go",
+              "source": null
+            },
+            {
+              "path": "maths/work.go",
+              "source": "package probe\nfunc Work() int { return 1 }\nfunc Other() int { return 2 }\n"
+            }
+          ]
+        },
+        {
+          "id": "empty-replacement",
+          "changes": [
+            {
+              "path": "values.go",
+              "source": ""
+            }
+          ]
+        },
+        {
+          "id": "callback-body-edit",
+          "changes": [
+            {
+              "path": "callback.go",
+              "source": "package probe\nimport \"net/http\"\nfunc ServeHome(w http.ResponseWriter, r *http.Request) {}\nfunc Register() { http.HandleFunc(\"/home\", ServeHome) }\n"
+            }
+          ],
+          "edges": [
+            {
+              "from": "crate::Register",
+              "to": "crate::ServeHome",
+              "kind": "Calls",
+              "present": false
+            }
+          ]
+        },
+        {
+          "id": "test-body-edit",
+          "changes": [
+            {
+              "path": "probe_test.go",
+              "source": "package probe\nimport \"testing\"\nfunc TestRun(t *testing.T) { Register() }\n"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "project_cases": [
+    {
+      "id": "configured-source-ownership",
+      "requirement": "Changing girder.toml source roots/exclusions forces full parsing using the new owned set; compare cold with the same config.",
+      "files": {
+        "girder.toml": "[source]\nroots = [\"src\"]\n",
+        "src/lib.rs": "pub fn owned() {}\n",
+        "extra/other.rs": "pub fn other() {}\n"
+      },
+      "mutations": [
+        {
+          "id": "expand-roots",
+          "changes": [
+            {
+              "path": "girder.toml",
+              "source": "[source]\nroots = [\"src\", \"extra\"]\n"
+            }
+          ]
+        },
+        {
+          "id": "exclude-source",
+          "changes": [
+            {
+              "path": "girder.toml",
+              "source": "[source]\nroots = [\"src\", \"extra\"]\nexclude = [\"extra/**\"]\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cargo-bin-metadata",
+      "requirement": "Changing Cargo.toml [[bin]] paths forces full parsing and uses the cold loader bin-target mapping.",
+      "files": {
+        "Cargo.toml": "[package]\nname = \"probe\"\nversion = \"0.1.0\"\n[[bin]]\nname = \"worker\"\npath = \"src/first.rs\"\n",
+        "src/first.rs": "fn main() {}\n",
+        "src/second.rs": "fn main() {}\n"
+      },
+      "mutations": [
+        {
+          "id": "change-bin-path",
+          "changes": [
+            {
+              "path": "Cargo.toml",
+              "source": "[package]\nname = \"probe\"\nversion = \"0.1.0\"\n[[bin]]\nname = \"worker\"\npath = \"src/second.rs\"\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "go-module-metadata",
+      "requirement": "Changing go.mod module path forces full parsing and uses the cold loader import mapping.",
+      "files": {
+        "go.mod": "module example.com/old\n",
+        "maths/math.go": "package maths\nfunc Add() int { return 1 }\n",
+        "app.go": "package probe\nimport \"example.com/old/maths\"\nfunc Run() int { return maths.Add() }\n"
+      },
+      "mutations": [
+        {
+          "id": "change-go-module",
+          "changes": [
+            {
+              "path": "go.mod",
+              "source": "module example.com/new\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "persisted-reconciliation",
+      "requirement": "Metadata and graph-owned nodes/edges survive exactly as SemanticGraph::reconcile_persisted specifies; removed projection nodes and their incoming edges do not survive.",
+      "files": {
+        "src/math.rs": "pub fn add() {}\n",
+        "src/app.rs": "pub fn run() { crate::math::add(); }\n",
+        "src/lib.rs": "mod math; mod app;\n"
+      },
+      "mutations": [
+        {
+          "id": "remove-source-owner",
+          "changes": [
+            {
+              "path": "src/math.rs",
+              "source": null
+            }
+          ]
+        }
+      ],
+      "durable_setup": {
+        "metadata_on": "crate::app::run",
+        "intent": "durable user intent",
+        "graph_owned_node": "crate::manual_note",
+        "graph_owned_edge": {
+          "from": "crate::manual_note",
+          "to": "crate::app::run",
+          "kind": "Impacts"
+        }
+      }
+    },
+    {
+      "id": "normalized-batches",
+      "requirement": "Normalize separators and dot components, coalesce repeated changes with last event winning, reject absolute/traversal/unsupported paths before mutation, and keep the previous graph on rejection.",
+      "files": {
+        "src/a.rs": "pub fn a() {}\n",
+        "src/b.rs": "pub fn b() {}\n",
+        "src/c.rs": "pub fn c() {}\n"
+      },
+      "mutations": [
+        {
+          "id": "coalesce-normalized",
+          "changes": [
+            {
+              "path": "./src/a.rs",
+              "source": "pub fn old() {}\n"
+            },
+            {
+              "path": "src\\a.rs",
+              "source": "pub fn updated() {}\n"
+            }
+          ]
+        }
+      ],
+      "rejected_paths": [
+        "/outside.rs",
+        "../outside.rs",
+        "src/../../outside.rs",
+        "C:\\outside.rs",
+        "src/notes.txt"
+      ]
+    }
+  ],
+  "scaling": {
+    "languages": [
+      "rust",
+      "python",
+      "typescript",
+      "tsx",
+      "go"
+    ],
+    "owned_file_counts": [
+      3,
+      30,
+      300
+    ],
+    "files": "Numbered files, one uniquely named function in each; later functions call the preceding function using that language's source syntax. Go uses one package.",
+    "mutations": [
+      "body edit in first file",
+      "rename first function without fixing its caller",
+      "replace first two files in one batch"
+    ],
+    "repetitions": 1,
+    "format": "Replace {i} and {previous} with zero-padded four-digit decimal indices, from 0000. Index zero uses first_source. Fields are literal templates; braces other than these two markers remain literal.",
+    "templates": {
+      "rust": {
+        "path": "src/f{i}.rs",
+        "first_source": "pub fn f0000() -> i32 { 1 }\n",
+        "source": "pub fn f{i}() -> i32 { crate::f{previous}::f{previous}() }\n"
+      },
+      "python": {
+        "path": "f{i}.py",
+        "first_source": "def f0000():\n    return 1\n",
+        "source": "from f{previous} import f{previous}\ndef f{i}():\n    return f{previous}()\n"
+      },
+      "typescript": {
+        "path": "f{i}.ts",
+        "first_source": "export function f0000(): number { return 1; }\n",
+        "source": "import { f{previous} } from \"./f{previous}\";\nexport function f{i}(): number { return f{previous}(); }\n"
+      },
+      "tsx": {
+        "path": "f{i}.tsx",
+        "first_source": "export function f0000(): number { return 1; }\n",
+        "source": "import { f{previous} } from \"./f{previous}\";\nexport function f{i}(): number { return f{previous}(); }\n"
+      },
+      "go": {
+        "path": "f{i}.go",
+        "first_source": "package probe\nfunc F0000() int { return 1 }\n",
+        "source": "package probe\nfunc F{i}() int { return F{previous}() }\n"
+      }
+    },
+    "mutation_rules": [
+      {
+        "id": "body-edit",
+        "file_indices": [
+          0
+        ],
+        "replace": {
+          "1": "2"
+        }
+      },
+      {
+        "id": "export-rename",
+        "file_indices": [
+          0
+        ],
+        "replace": {
+          "f0000": "renamed",
+          "F0000": "Renamed"
+        }
+      },
+      {
+        "id": "two-file-batch",
+        "file_indices": [
+          0,
+          1
+        ],
+        "contents": "Reset each selected file to its original initial source followed by one additional newline."
+      }
+    ]
+  }
+}

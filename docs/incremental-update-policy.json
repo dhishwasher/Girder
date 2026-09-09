@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "policy_id": "incremental-equivalence-v1",
+  "baseline_commit": "2690fd9024a6a219827ea7c5f84f0de27df66c30",
+  "claim": "Preserve cold-analysis resolution while reusing parsing. No improved semantic coverage is claimed.",
+  "freeze_inputs": [
+    "docs/incremental-update-policy.json",
+    "docs/incremental-mutation-corpus.json"
+  ],
+  "precommit": "Commit this policy and complete mutation corpus before implementation. Preserve every mutation and failed observation; corrective measurements get distinct records.",
+  "stages": [
+    "Collect normalized dirty paths and explicit structural-change reasons.",
+    "Invalidate source-owned nodes and all incident edges; conservatively every source file is a resolution dependent, including imports, facades, receiver hints, and candidate-set changes.",
+    "Re-extract changed files, reconstruct the source graph in the cold project loader's sorted relative-path order from complete cached extraction outputs, then run full project-wide resolution. Apply cold persisted-graph reconciliation."
+  ],
+  "batch_contract": {
+    "operations": [
+      "create",
+      "replace",
+      "delete"
+    ],
+    "moves": "old-path delete plus new-path create",
+    "duplicate_paths": "Normalize before coalescing; the last operation wins.",
+    "path_safety": "Project-relative supported source paths only; reject absolute paths and parent traversal before changing state.",
+    "report": [
+      "dirty_files",
+      "parsed_files",
+      "reused_files",
+      "invalidation_scope",
+      "timing",
+      "full_rebuild_reasons"
+    ]
+  },
+  "fallback": {
+    "full_parse_reasons": [
+      "ownership_changed",
+      "configuration_changed",
+      "uncertain_event_mapping",
+      "cache_inconsistent",
+      "dirty_set_exceeds_half"
+    ],
+    "dirty_ratio": "Number of unique dirty paths divided by max(before_owned_source_file_count, after_owned_source_file_count). Full parsing only when this ratio is greater than 0.5, not equal. Structural reasons also force full parsing.",
+    "normal_update": "Full project-wide resolution with clean-file parsing reuse is normal operation, not a fallback."
+  },
+  "correctness_gate": {
+    "comparison": "Canonical complete node records and complete edge records, including exact node IDs, endpoints, confidence and every edge attribute; compare Calls and test relationships, not just counts.",
+    "ignored": [
+      "internal graph allocation order"
+    ],
+    "oracle": "Fresh cold analysis of the same current sources and configuration after every mutation, with identical persisted reconciliation when present.",
+    "first_required": "Three-file Rust facade export rename: old Calls edge disappears; exactly one file parsed and two reused; no full parsing fallback.",
+    "pass": "Every corpus mutation, project integration case, and scaling mutation must match cold analysis exactly. Any mismatch fails the release gate, regardless of speed.",
+    "known_misses": "Preserve cold misses identically, including Go function-value callbacks, dynamic dispatch, and intent search. Do not repair resolution in this work."
+  },
+  "measurement": {
+    "scaling": "Use the corpus's frozen languages, sizes and mutations once, serially.",
+    "record": [
+      "cold_elapsed_seconds",
+      "update_elapsed_seconds",
+      "cold_peak_rss_kib",
+      "update_peak_rss_kib",
+      "parsed_files",
+      "reused_files",
+      "fallback_count",
+      "fallback_reasons",
+      "correctness"
+    ],
+    "memory": "GNU time process peak RSS; update process includes its initial cold cache construction and preceding mutations. Report that limitation.",
+    "cost_gate": "None. Expose regressions; they cannot excuse inequality.",
+    "fallback_reporting": "Publish count, denominator, percentage and reasons prominently, including threshold-driven full parsing."
+  },
+  "implementation_gates": [
+    "focused facade regression first",
+    "complete mutation and project integration tests",
+    "workspace tests",
+    "fmt",
+    "clippy all targets with warnings denied",
+    "live-providers check",
+    "debugpy integration",
+    "headless demo",
+    "gui lint",
+    "existing CI including Windows",
+    "four-platform release rehearsal before a release"
+  ],
+  "watcher_gate": "No watcher implementation or public watcher claim until incremental equality and required implementation gates pass."
+}
