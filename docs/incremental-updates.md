@@ -4,11 +4,18 @@ The implementation reuses clean-file parsing and runs full project-wide
 resolution. Its claim is limited to preserving cold-analysis resolution;
 it does not improve semantic coverage.
 
-**Validation is in progress.** All 68 frozen mutation steps and the project
-integration cases passed. The mandatory three-file Rust facade test removed
-the old callee edge, matched complete cold node/edge records, and parsed one
-file while reusing two. Measurements and workspace/platform gates must also
-pass before the incremental release gate can be claimed or watching added.
+**The recorded equality measurement passed: 113/113 comparisons matched.**
+All 68 frozen mutation steps and the project integration cases passed their
+regressions. The mandatory three-file Rust facade test removed the old callee
+edge and parsed one file while reusing two. Workspace/platform gates remain
+pending before the incremental release gate can be claimed or watching added.
+
+Full parsing occurred in **11/113 measured updates (9.73%)**: seven exceeded
+the 50% dirty-file threshold, and one each exercised configuration changes,
+uncertain event mapping, ownership changes, and cache inconsistency. The
+updates parsed 149 files and reused 5,149 extraction results (**97.19% reuse**).
+Peak process memory increased in **71/113 comparisons**. These costs remain
+part of the result even though equality passed.
 
 ## Frozen contract
 
@@ -79,10 +86,31 @@ graph artifacts. The update process's peak RSS includes its initial cold
 cache construction and preceding mutations. These are synthetic scaling
 fixtures, not evidence of production-repository performance.
 
-Fallback counts, their denominator and percentage, latency, and parsing
-reuse will be reported with the observation. Frequent full rebuilds or
-cost regressions remain visible even if equality passes. The measurement
-does not impose a speed threshold or permit speed to excuse inequality.
+The [observation](incremental-update-observation.json) records the single
+campaign against implementation commit
+`ac6fb2752ef907dc5d8a52f298b4bd80f9d1adab`, including frozen input and binary
+hashes. No mutations were changed or excluded. The following rows aggregate
+the five languages' three scaling mutations (15 comparisons per size):
+
+| Owned files | Cold time, total (s) | Update time, total (s) | Cold peak RSS, max (KiB) | Update peak RSS, max (KiB) | Parsed / reused files | Full parsing |
+|---:|---:|---:|---:|---:|---:|---:|
+| 3 | 0.550772 | 0.020431 | 2,688 | 2,816 | 25 / 20 | 5/15 (33.33%) |
+| 30 | 0.577484 | 0.027554 | 3,072 | 3,200 | 20 / 430 | 0/15 (0%) |
+| 300 | 1.245402 | 0.161655 | 6,784 | 8,120 | 20 / 4,480 | 0/15 (0%) |
+
+Across all 113 comparisons, timed cold analysis totaled 5.193717 seconds and
+timed updates 0.261836 seconds. No timed update was slower than its paired
+cold analysis in this run. The cold process pays first-use parser startup;
+the update process already paid for its initial cold cache construction
+(5.126729 seconds in total, recorded separately). The difference therefore
+cannot be attributed solely to parsing reuse. Including process startup,
+initial cache construction, preceding mutations, and output serialization,
+the cold processes totaled 10.450484 seconds and update processes 10.780067
+seconds. Maximum process peak RSS was 6,784 KiB cold and 8,120 KiB update.
+
+Frequent full parsing is visible in the small scaling fixtures: a two-file
+batch exceeds half of a three-file project. This limits reuse on those
+updates. There is no speed threshold, and speed cannot excuse inequality.
 
 Routine CI runs the Rust equivalence regressions and Python harness tests.
 The recorded timing campaign runs separately with no concurrent Cargo work.
