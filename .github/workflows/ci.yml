@@ -57,7 +57,8 @@ jobs:
             tools.test_context_vs_read_cost \
             tools.test_girder_context_advisory_hook \
             tools.test_description_search_accuracy \
-            tools.test_agentic_grep_benchmark
+            tools.test_agentic_grep_benchmark \
+            tools.test_incremental_update_benchmark
 
       # `curl … | sh` is the README's first install instruction, so install.sh
       # is how most people will obtain the tool. These run the real script

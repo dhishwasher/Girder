@@ -8,6 +8,12 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+// The cached loader is verified independently before watch mode is exposed.
+#[allow(dead_code)]
+mod incremental;
+#[allow(unused_imports)]
+pub(crate) use incremental::CachedProject;
+
 static NEXT_TEMP_FILE: AtomicUsize = AtomicUsize::new(0);
 const TRANSACTION_ROOT: &str = ".girder/transactions";
 const TRANSACTION_MANIFEST: &str = "manifest.json";

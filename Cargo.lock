@@ -84,6 +84,7 @@ name = "aether-builder"
 version = "0.2.4"
 dependencies = [
  "aether-graph",
+ "serde_json",
  "thiserror 1.0.69",
  "tree-sitter",
  "tree-sitter-go",
