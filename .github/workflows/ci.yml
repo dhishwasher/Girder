@@ -42,8 +42,16 @@ jobs:
       - name: Ensure ripgrep is available for measurement tool tests
         run: |
           if ! command -v rg > /dev/null; then
-            sudo apt-get update
-            sudo apt-get install --yes ripgrep
+            # Ripgrep comes from Ubuntu. Unrelated preinstalled repositories
+            # (for example Chrome) must not block its authenticated indexes.
+            girder_sources_file=/etc/apt/sources.list.d/ubuntu.sources
+            if [ ! -f "$girder_sources_file" ]; then
+              girder_sources_file=/etc/apt/sources.list
+            fi
+            test -s "$girder_sources_file"
+            girder_apt_sources=(-o "Dir::Etc::sourcelist=$girder_sources_file" -o "Dir::Etc::sourceparts=-")
+            sudo apt-get "${girder_apt_sources[@]}" update
+            sudo apt-get "${girder_apt_sources[@]}" install --yes ripgrep
           fi
 
       - name: Measurement harness unit tests
