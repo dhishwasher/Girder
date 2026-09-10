@@ -396,8 +396,35 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
-          registry-url: "https://registry.npmjs.org"
           package-manager-cache: false
+
+      # Do not pass setup-node's registry-url here. In v6 it writes an
+      # _authToken=${NODE_AUTH_TOKEN} entry that prevents npm from initiating
+      # trusted-publisher OIDC when NODE_AUTH_TOKEN is correctly absent.
+      - name: Install an OIDC-capable npm CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global npm@latest
+          npm_version="$(npm --version)"
+          node - "$npm_version" <<'NODE'
+          const actual = process.argv[2].split(".").map(Number);
+          const minimum = [11, 5, 1];
+          if (actual.length < 3 || actual.some((part) => !Number.isInteger(part))) {
+            throw new Error(`cannot parse npm version ${process.argv[2]}`);
+          }
+          let comparison = 0;
+          for (let index = 0; index < minimum.length; index += 1) {
+            if (actual[index] !== minimum[index]) {
+              comparison = actual[index] > minimum[index] ? 1 : -1;
+              break;
+            }
+          }
+          if (comparison < 0) {
+            throw new Error(`npm ${process.argv[2]} is below the OIDC minimum 11.5.1`);
+          }
+          NODE
+          echo "npm $npm_version supports trusted publishing"
 
       - name: Wrapper unit tests
         run: node --test npm/test/*.test.js
