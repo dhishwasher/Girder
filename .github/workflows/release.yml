@@ -382,22 +382,22 @@ jobs:
       needs.preflight.outputs.prerelease != 'true'
     permissions:
       contents: read
-      # Provenance: npm records, and displays, which workflow at which commit
-      # produced the tarball. Worth having for a package whose whole purpose is
-      # to be executed by someone else's coding agent.
+      # The npm trusted publisher for dhishwasher/Girder/release.yml validates
+      # this workflow's short-lived GitHub OIDC identity. It also generates
+      # provenance for the public package automatically.
       id-token: write
     outputs:
-      # The publish step below exits 0 without publishing when NPM_TOKEN is
-      # absent, so job success alone does not mean the package is on npm.
-      # The registry job keys off this instead.
+      # The registry job keys off the completed publish step rather than
+      # attempting to register a version that npm has not accepted.
       published: ${{ steps.publish.outputs.published }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
 
       - name: Wrapper unit tests
         run: node --test npm/test/*.test.js
@@ -447,26 +447,17 @@ jobs:
       - name: Publish
         id: publish
         working-directory: npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
-          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "::warning::NPM_TOKEN is not set, so nothing was published to npm."
-            echo "Add an npm automation token as the NPM_TOKEN repository secret,"
-            echo "then re-run this job. The GitHub release is already complete."
-            echo "published=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          npm publish --provenance --access public
+          npm publish --access public
           echo "published=true" >> "$GITHUB_OUTPUT"
 
   # Registering the server is the last step for a reason: the registry does not
   # take our word for the package's existence. It fetches
   # registry.npmjs.org/<pkg>/<version> and compares the mcpName recorded there
   # against server.json's name. So this cannot run until the npm job has
-  # actually published — not merely succeeded, which it also does when
-  # NPM_TOKEN is unset.
+  # actually published. A missing or mismatched npm trusted-publisher
+  # configuration fails the npm job before this registry job can start.
   mcp-registry:
     name: Publish to MCP Registry
     needs: [preflight, npm]
