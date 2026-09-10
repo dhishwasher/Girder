@@ -5,7 +5,7 @@ use crate::project::process::{run_streamed, BoundedStatus};
 use crate::project::source::build_from_dir_with_config;
 use aether_graph::NodeId;
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
@@ -51,6 +51,11 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     }
     let config = ProjectConfig::load(&root)?;
     let (graph, _builder, files) = build_from_dir_with_config(&root, &config)?;
+    if quiet && !run && out_path.is_none() {
+        print!("{}", quiet_from_graph(&root, &graph, &config, &explicit)?);
+        return Ok(());
+    }
+
     if !quiet {
         out!(
             sink,
@@ -328,4 +333,54 @@ fn run_command(
             format!("test command `{}` was cancelled", command.display()),
         )),
     }
+}
+
+/// The read-only quiet command shared with MCP; no test subprocess is launched.
+pub(super) fn quiet_from_graph(
+    root: &Path,
+    graph: &aether_graph::SemanticGraph,
+    config: &ProjectConfig,
+    explicit: &[&str],
+) -> std::io::Result<String> {
+    let (origin_ids, baseline_paths) = if explicit.is_empty() {
+        let impact = crate::project::git::semantic_changed_impact_with_config(root, graph, config)?
+            .ok_or_else(|| {
+                std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "automatic test-impact requires a Git repository; pass explicit node paths instead",
+        )
+            })?;
+        (impact.origin_ids, impact.baseline_test_paths)
+    } else {
+        let mut ids = Vec::new();
+        let mut missing = Vec::new();
+        for path in explicit {
+            if let Some(node) = graph.find_by_path(path) {
+                ids.push(node.id);
+            } else {
+                missing.push(*path);
+            }
+        }
+        if !missing.is_empty() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("unknown explicit node path(s): {}", missing.join(", ")),
+            ));
+        }
+        (ids, Vec::new())
+    };
+    let mut ids = graph.tests_for_nodes(&origin_ids);
+    let mut seen: HashSet<_> = ids.iter().copied().collect();
+    for path in baseline_paths {
+        if let Some(node) = graph.find_by_path(&path) {
+            if seen.insert(node.id) {
+                ids.push(node.id);
+            }
+        }
+    }
+    Ok(ids
+        .into_iter()
+        .filter_map(|id| graph.get(id))
+        .map(|n| format!("{}\n", n.name))
+        .collect())
 }

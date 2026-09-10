@@ -24,7 +24,7 @@ jobs:
           - target: aarch64-apple-darwin
             runner: macos-latest
           - target: x86_64-apple-darwin
-            runner: macos-latest
+            runner: macos-15-intel
           - target: x86_64-pc-windows-msvc
             runner: windows-latest
     steps:
@@ -35,3 +35,15 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Build workspace and desktop GUI
         run: cargo build --locked --workspace --features aether-app/gui --target ${{ matrix.target }} -j1
+      - name: Execute native watcher safety and MCP restart gates
+        shell: bash
+        run: |
+          cargo test --locked -p aether-app --target ${{ matrix.target }} --bin girder project::commands::mcp::watch::tests --quiet -j1 -- --test-threads=1 > watcher-unit.log 2>&1
+          cargo test --locked -p aether-app --target ${{ matrix.target }} --test mcp_watch --quiet -j1 -- --test-threads=1 > watcher-mcp.log 2>&1
+      - name: Preserve watcher gate logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: watcher-gates-${{ matrix.target }}
+          path: watcher-*.log
+          if-no-files-found: ignore

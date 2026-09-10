@@ -12,7 +12,7 @@ import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import Callable, Mapping, Sequence
 
 
 @dataclass(frozen=True)
@@ -34,6 +34,7 @@ def run_bounded(
     timeout_seconds: float,
     max_output_bytes: int,
     check: bool = True,
+    on_output: Callable[[str, bytes], None] | None = None,
 ) -> BoundedProcessResult:
     """Run argv without a shell, enforcing one hard combined output budget."""
 
@@ -94,6 +95,8 @@ def run_bounded(
                 accepted = chunk[: max(0, remaining)]
                 output[name].extend(accepted)
                 digests[name].update(accepted)
+                if accepted and on_output is not None:
+                    on_output(name, bytes(accepted))
                 total_bytes += len(chunk)
                 if total_bytes > max_output_bytes and failure is None:
                     failure = (

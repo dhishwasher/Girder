@@ -206,7 +206,7 @@ COMMANDS:
                               install <recipe.json> [--approve];
                               enable|disable|remove <extension-id>;
                               marketplace list|search|show|adapt.
-    mcp [dir]                 Serve the read-only graph commands to an AI
+    mcp [dir] [--watch]       Serve the read-only graph commands to an AI
                               coding agent over the Model Context Protocol
                               on stdin/stdout. Exposes search, names, query,
                               context (--source-only shape), review,

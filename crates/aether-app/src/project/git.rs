@@ -236,10 +236,13 @@ pub(crate) fn git_tracked_sources_at(
     Ok(sources)
 }
 
-pub(crate) fn build_baseline_graph(root: &Path, git_ref: &str) -> std::io::Result<SemanticGraph> {
-    let config = ProjectConfig::load(root)?;
+pub(crate) fn build_baseline_graph_with_config(
+    root: &Path,
+    git_ref: &str,
+    config: &ProjectConfig,
+) -> std::io::Result<SemanticGraph> {
     let commit_oid = resolve_git_commit(root, git_ref)?;
-    let sources: BTreeSet<String> = git_tracked_sources_at(root, &commit_oid, &config)?
+    let sources: BTreeSet<String> = git_tracked_sources_at(root, &commit_oid, config)?
         .into_iter()
         .collect();
     let prefix = git_prefix(root)?;
@@ -323,11 +326,20 @@ pub(crate) fn semantic_changed_impact(
     root: &Path,
     current: &SemanticGraph,
 ) -> std::io::Result<Option<ChangedImpact>> {
+    let config = ProjectConfig::load(root)?;
+    semantic_changed_impact_with_config(root, current, &config)
+}
+
+pub(crate) fn semantic_changed_impact_with_config(
+    root: &Path,
+    current: &SemanticGraph,
+    config: &ProjectConfig,
+) -> std::io::Result<Option<ChangedImpact>> {
     if !git_is_repo(root)? {
         return Ok(None);
     }
 
-    let baseline = build_baseline_graph(root, "HEAD")?;
+    let baseline = build_baseline_graph_with_config(root, "HEAD", config)?;
     let diff = current.diff_from(&baseline);
     if diff.is_empty() {
         return Ok(Some(ChangedImpact {

@@ -83,14 +83,17 @@ pub fn orient(args: &[String]) -> std::io::Result<()> {
 /// Everything `orient()` does once `--json` is confirmed present, factored
 /// out so tests can inspect the emitted JSON object directly.
 fn build_output(root: &Path, args: &[String]) -> std::io::Result<Value> {
+    let config = ProjectConfig::load(root)?;
+    let (graph, _, _) = build_from_dir_with_config(root, &config)?;
+    output_from_graph(&graph, args)
+}
+
+pub(super) fn output_from_graph(graph: &SemanticGraph, args: &[String]) -> std::io::Result<Value> {
     let pinned_node_paths = parse_pinned_nodes(args)?;
     let intent = collect_words(args, &["--json"], &["--nodes", "--depth"]);
     let (depth_requested, depth_applied) = parse_depth(args)?;
 
-    let config = ProjectConfig::load(root)?;
-    let (graph, _builder, _files) = build_from_dir_with_config(root, &config)?;
-
-    let ctx = match build_authoring_context(&graph, &intent, pinned_node_paths.as_deref()) {
+    let ctx = match build_authoring_context(graph, &intent, pinned_node_paths.as_deref()) {
         Ok(ctx) => ctx,
         Err(SelectionError::NoMatches) => {
             return Err(invalid_input(&format!("no nodes matched \"{intent}\"")));
@@ -119,7 +122,7 @@ fn build_output(root: &Path, args: &[String]) -> std::io::Result<Value> {
     let nodes: Vec<Value> = ctx
         .nodes
         .iter()
-        .map(|selected| orient_one(&graph, selected, depth_applied, &candidates))
+        .map(|selected| orient_one(graph, selected, depth_applied, &candidates))
         .collect();
 
     Ok(json!({

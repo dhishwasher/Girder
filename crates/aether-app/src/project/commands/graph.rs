@@ -7,7 +7,7 @@ use aether_graph::SemanticGraph;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::io::ErrorKind;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 const ANALYZE_USAGE: &str = "usage: girder analyze <dir> [--json] [--out <path>]";
@@ -162,17 +162,22 @@ pub fn search(args: &[String]) -> std::io::Result<()> {
         return Ok(());
     }
     let (graph, _builder, _files) = build_from_dir(&root)?;
-    println!("Searching {} for \"{query}\" ...", root.display());
-    let hits = graph.semantic_search(&query, 10);
+    let mut sink = Sink::Stdout;
+    search_into(&root, &graph, &query, &mut sink);
+    Ok(())
+}
+
+pub(super) fn search_into(root: &Path, graph: &SemanticGraph, query: &str, sink: &mut Sink) {
+    out!(sink, "Searching {} for \"{query}\" ...", root.display());
+    let hits = graph.semantic_search(query, 10);
     if hits.is_empty() {
-        println!("  no matches");
+        out!(sink, "  no matches");
     }
     for (id, score) in hits {
         if let Some(n) = graph.get(id) {
-            println!("  {:.2}  {}", score, n.path);
+            out!(sink, "  {:.2}  {}", score, n.path);
         }
     }
-    Ok(())
 }
 
 /// `girder plan <dir> <intent...>`

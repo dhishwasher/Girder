@@ -16,9 +16,12 @@ pub(crate) struct CachedProject {
     pub(crate) root: PathBuf,
     pub(crate) config: ProjectConfig,
     pub(crate) graph: SemanticGraph,
+    /// Source-only view used by the existing seven MCP query commands.
+    pub(crate) source_graph: SemanticGraph,
     pub(crate) builder: GraphBuilder,
     pub(crate) persisted_bytes: Option<Vec<u8>>,
     metadata: BTreeMap<String, Option<Vec<u8>>>,
+    extra_excludes: Vec<String>,
 }
 
 fn metadata(root: &Path) -> std::io::Result<BTreeMap<String, Option<Vec<u8>>>> {
@@ -44,15 +47,24 @@ fn normalize_event(path: &str) -> std::io::Result<String> {
 }
 
 impl CachedProject {
+    #[cfg(test)]
     pub(crate) fn open(root: &Path) -> std::io::Result<Self> {
+        Self::open_with_exclusions(root, &[])
+    }
+
+    pub(crate) fn open_with_exclusions(
+        root: &Path,
+        extra_excludes: &[String],
+    ) -> std::io::Result<Self> {
         let root = root.canonicalize()?;
-        let config = ProjectConfig::load(&root)?;
+        let config = Self::configuration(&root, extra_excludes)?;
         let metadata = metadata(&root)?;
         let (source, builder, _) = build_from_dir_with_config(&root, &config)?;
         let persisted = load_graph_snapshot(&root, &config)?;
         if let Some(error) = persisted.error {
             return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, error));
         }
+        let source_graph = source.clone();
         let graph = match persisted.graph {
             Some(durable) => SemanticGraph::reconcile_persisted(source, &durable).0,
             None => source,
@@ -61,10 +73,35 @@ impl CachedProject {
             root,
             config,
             graph,
+            source_graph,
             builder,
             persisted_bytes: persisted.bytes,
             metadata,
+            extra_excludes: extra_excludes.to_vec(),
         })
+    }
+
+    pub(crate) fn configuration(
+        root: &Path,
+        extra_excludes: &[String],
+    ) -> std::io::Result<ProjectConfig> {
+        let mut config = ProjectConfig::load(root)?;
+        config.source.exclude.extend_from_slice(extra_excludes);
+        if !extra_excludes.is_empty() {
+            config.source.exclude.push(
+                config
+                    .graph
+                    .path
+                    .replace('\\', "/")
+                    .trim_start_matches("./")
+                    .to_string(),
+            );
+        }
+        Ok(config)
+    }
+
+    pub(crate) fn configuration_inputs(&self) -> &BTreeMap<String, Option<Vec<u8>>> {
+        &self.metadata
     }
 
     /// Re-read ownership/configuration and build a complete candidate generation.
@@ -80,7 +117,7 @@ impl CachedProject {
             .iter()
             .map(|p| normalize_event(p))
             .collect::<Result<_, _>>()?;
-        let config = ProjectConfig::load(&self.root)?;
+        let config = Self::configuration(&self.root, &self.extra_excludes)?;
         let metadata = metadata(&self.root)?;
         let sources = collect_sources_with_config(&self.root, &config)?;
         let before: BTreeSet<_> = self.builder.source_files().into_iter().collect();
@@ -129,6 +166,7 @@ impl CachedProject {
             let (source, builder, _) = build_from_dir_with_config(&self.root, &config)?;
             let rebuild_seconds = rebuild_started.elapsed().as_secs_f64();
             let reconcile_started = Instant::now();
+            let source_graph = source.clone();
             let graph = match persisted.graph {
                 Some(durable) => SemanticGraph::reconcile_persisted(source, &durable).0,
                 None => source,
@@ -163,9 +201,11 @@ impl CachedProject {
                     root: self.root.clone(),
                     config,
                     graph,
+                    source_graph,
                     builder,
                     persisted_bytes: persisted.bytes,
                     metadata,
+                    extra_excludes: self.extra_excludes.clone(),
                 },
                 report,
             ));
@@ -181,8 +221,11 @@ impl CachedProject {
         let mut next = self.clone();
         let mut report = next
             .builder
-            .update_files(&mut next.graph, &changes, &[])
+            .update_files(&mut next.source_graph, &changes, &[])
             .map_err(std::io::Error::other)?;
+        let reconcile_started = Instant::now();
+        next.graph = SemanticGraph::reconcile_persisted(next.source_graph.clone(), &self.graph).0;
+        report.reconcile_seconds += reconcile_started.elapsed().as_secs_f64();
         next.config = config;
         next.metadata = metadata;
         next.persisted_bytes = persisted.bytes;
