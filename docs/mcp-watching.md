@@ -1,10 +1,11 @@
 # Opt-in MCP watching
 
-Watch mode is under verification in the source tree. It is not included in
-the published npm 0.2.4 package. The
+Watch mode is implemented and verified in the source tree at `b00489d`. It is
+not included in the published npm 0.2.4 package. The
 [incremental equality and platform gates](incremental-update-validation.json)
 passed before watcher implementation began; the watcher has its own
-[policy and gates](mcp-watch-policy.json).
+[policy and gates](mcp-watch-policy.json) and a completed
+[observation](mcp-watch-observation.json).
 
 Start a watch-enabled server with:
 
@@ -71,6 +72,34 @@ unbounded set of query threads. Tool text remains subject to the existing
 4 MiB limit. Protocol responses and watcher diagnostics use stdout and
 stderr respectively.
 
+## Recorded result
+
+The one recorded campaign passed complete source and persisted-record equality
+for all 15 initial graphs and all 45 consecutive mutations. Every update was
+published; none was discarded or failed. Across those updates, 65 file
+extractions were parsed and 4,930 were reused, so parsing reuse was 98.70%.
+Full parsing occurred for 5 of 45 completed candidate builds (11.11%), all with
+the frozen `dirty_set_exceeds_half` reason. The 15 initial builds took 10.550
+seconds in total (0.543-second median; 1.099-second maximum).
+
+| Initial files | Mutations equal | Full parsing | Parsed / reused | Reuse | Median update | Maximum update |
+|---:|---:|---:|---:|---:|---:|---:|
+| 3 | 15/15 | 5/15 (33.33%) | 25 / 20 | 44.44% | 0.448 s | 0.510 s |
+| 30 | 15/15 | 0/15 (0%) | 20 / 430 | 95.56% | 0.514 s | 0.616 s |
+| 300 | 15/15 | 0/15 (0%) | 20 / 4,480 | 99.56% | 0.987 s | 1.088 s |
+| **All** | **45/45** | **5/45 (11.11%)** | **65 / 4,930** | **98.70%** | **0.514 s** | **1.088 s** |
+
+The high full-parsing rate and low reuse in the three-file fixtures are a
+delivery limitation of the conservative greater-than-50% dirty-set rule. The
+larger fixtures avoided full parsing, but update latency rose because integrity
+checks still read the configured source inventory. This measurement supports
+only preservation of cold-analysis resolution while parsing is reused. It does
+not claim improved semantic coverage or production-repository latency.
+
+Repository CI passed at the measured commit. The native watcher safety and MCP
+restart gates also passed on Linux, Windows, Intel macOS, and Apple Silicon in
+[the four-platform run](https://github.com/dhishwasher/Girder/actions/runs/34524122557).
+
 ## Measurement contract
 
 The [watch corpus](mcp-watch-measurement-corpus.json) reuses the incremental
@@ -101,9 +130,9 @@ mutations. Work after the last emitted checkpoint is unquantified. The harness
 saves stdout and stderr as they arrive, including before a timeout or interruption.
 Frequent full parsing remains a delivery limitation even if equality passes.
 
-The observation has not been run or claimed yet. The harness requires
-committed inputs and a separately built probe, refuses an existing output,
-and preserves partial records. The timing probe is ignored in routine CI;
-CI runs its assessment unit tests. Native filesystem, ownership, MCP,
-timeout, and restart gates execute on Linux, Windows, Intel macOS, and
-Apple Silicon macOS through the platform verification workflow.
+The recorded harness used committed inputs and a separately built probe,
+refused an existing output, and preserved the raw probe and diagnostic streams
+alongside the observation. The timing probe remains ignored in routine CI; CI
+runs its assessment unit tests. Native filesystem, ownership, MCP, timeout,
+and restart gates execute on Linux, Windows, Intel macOS, and Apple Silicon
+macOS through the platform verification workflow.

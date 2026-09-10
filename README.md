@@ -103,6 +103,12 @@ Any MCP client config:
 With a binary already installed, `"command": "girder", "args": ["mcp", "."]`
 skips npm entirely.
 
+Source builds after npm 0.2.4 can opt into a cached graph generation with
+`girder mcp . --watch`. The committed watcher measurement matched fresh cold
+analysis after all 45 mutations while reusing 98.70% of file extractions; the
+claim is limited to preserving cold-analysis resolution while reusing parsing.
+See the [watcher result and limitations](./docs/mcp-watching.md).
+
 Seven tools, all read-only:
 
 | Tool | What it answers | Tier |
