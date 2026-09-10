@@ -7,8 +7,11 @@ it does not improve semantic coverage.
 **The recorded equality measurement passed: 113/113 comparisons matched.**
 All 68 frozen mutation steps and the project integration cases passed their
 regressions. The mandatory three-file Rust facade test removed the old callee
-edge and parsed one file while reusing two. Workspace/platform gates remain
-pending before the incremental release gate can be claimed or watching added.
+edge and parsed one file while reusing two. The workspace, lint, feature,
+harness, installer, and npm checks passed in [CI](https://github.com/dhishwasher/Girder/actions/runs/34385249897).
+The [four-platform desktop builds](https://github.com/dhishwasher/Girder/actions/runs/34385518793)
+also passed. The [validation record](incremental-update-validation.json) pins
+these gates to the tested commit; opt-in watcher implementation may now begin.
 
 Full parsing occurred in **11/113 measured updates (9.73%)**: seven exceeded
 the 50% dirty-file threshold, and one each exercised configuration changes,
