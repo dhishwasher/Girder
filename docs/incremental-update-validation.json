@@ -1,0 +1,61 @@
+{
+  "implementation_commit": "ac6fb2752ef907dc5d8a52f298b4bd80f9d1adab",
+  "validated_commit": "0a748beaf8e5533d3d50304d6208ad356f28a261",
+  "equality_observation": "incremental-update-observation.json",
+  "equality": "113/113 PASS",
+  "runs": [
+    {
+      "conclusion": "success",
+      "headSha": "0a748beaf8e5533d3d50304d6208ad356f28a261",
+      "status": "completed",
+      "url": "https://github.com/dhishwasher/Girder/actions/runs/34385249897",
+      "jobs": [
+        {
+          "name": "fmt \u00b7 clippy \u00b7 test",
+          "conclusion": "success",
+          "completedAt": "2026-09-09T17:53:50Z",
+          "url": "https://github.com/dhishwasher/Girder/actions/runs/34385249897/job/102579764461"
+        },
+        {
+          "name": "windows compiles",
+          "conclusion": "success",
+          "completedAt": "2026-09-09T17:50:14Z",
+          "url": "https://github.com/dhishwasher/Girder/actions/runs/34385249897/job/102579764543"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "headSha": "0a748beaf8e5533d3d50304d6208ad356f28a261",
+      "status": "completed",
+      "url": "https://github.com/dhishwasher/Girder/actions/runs/34385518793",
+      "jobs": [
+        {
+          "name": "x86_64-pc-windows-msvc",
+          "conclusion": "success",
+          "completedAt": "2026-09-09T18:09:37Z",
+          "url": "https://github.com/dhishwasher/Girder/actions/runs/34385518793/job/102580679375"
+        },
+        {
+          "name": "x86_64-unknown-linux-gnu",
+          "conclusion": "success",
+          "completedAt": "2026-09-09T18:02:45Z",
+          "url": "https://github.com/dhishwasher/Girder/actions/runs/34385518793/job/102580679711"
+        },
+        {
+          "name": "x86_64-apple-darwin",
+          "conclusion": "success",
+          "completedAt": "2026-09-09T18:03:30Z",
+          "url": "https://github.com/dhishwasher/Girder/actions/runs/34385518793/job/102580679784"
+        },
+        {
+          "name": "aarch64-apple-darwin",
+          "conclusion": "success",
+          "completedAt": "2026-09-09T18:00:21Z",
+          "url": "https://github.com/dhishwasher/Girder/actions/runs/34385518793/job/102580679875"
+        }
+      ]
+    }
+  ],
+  "scope": "Incremental implementation gates before watcher implementation. These builds are not the corrected-release rehearsal."
+}

@@ -58,6 +58,8 @@
 //! and `nodes: ["--out", path]` once wrote a file. Every argument is
 //! refused if it starts with `-` — see [`reject_option_like`].
 
+mod watch;
+
 use crate::project::process::{run_captured, BoundedStatus};
 use serde_json::{json, Map, Value};
 use std::io::{BufRead, Write};
@@ -100,19 +102,26 @@ const METHOD_NOT_FOUND: i64 = -32601;
 const INVALID_PARAMS: i64 = -32602;
 
 pub fn mcp(args: &[String]) -> std::io::Result<()> {
-    let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."))
+    let root_argument = args
+        .iter()
+        .find(|arg| arg.as_str() != "--watch")
+        .map(String::as_str)
+        .unwrap_or(".");
+    let root = PathBuf::from(root_argument)
         .canonicalize()
         .map_err(|error| {
             std::io::Error::new(
                 error.kind(),
-                format!(
-                    "cannot serve MCP for {:?}: {error}",
-                    args.first().map(String::as_str).unwrap_or(".")
-                ),
+                format!("cannot serve MCP for {:?}: {error}", root_argument),
             )
         })?;
 
     let executable = std::env::current_exe()?;
+    let watcher = if args.iter().any(|arg| arg == "--watch") {
+        Some(watch::Server::start(&root)?)
+    } else {
+        None
+    };
     eprintln!(
         "girder MCP server on stdio: root {}, {} tools, read-only",
         root.display(),
@@ -124,6 +133,10 @@ pub fn mcp(args: &[String]) -> std::io::Result<()> {
     for line in stdin.lock().lines() {
         let line = line?;
         if line.trim().is_empty() {
+            continue;
+        }
+        if let Some(watcher) = &watcher {
+            watcher.respond(&line, &executable, &mut stdout)?;
             continue;
         }
         if let Some(response) = handle_line(&line, &root, &executable) {
@@ -603,6 +616,11 @@ fn describe_tool(tool: &Tool) -> Value {
 }
 
 fn call_tool(params: &Value, root: &Path, executable: &Path) -> Result<Value, Failure> {
+    let argv = prepare_tool(params, root)?;
+    Ok(run_tool(executable, &argv))
+}
+
+fn prepare_tool(params: &Value, root: &Path) -> Result<Vec<String>, Failure> {
     let name = params
         .get("name")
         .and_then(Value::as_str)
@@ -629,7 +647,7 @@ fn call_tool(params: &Value, root: &Path, executable: &Path) -> Result<Value, Fa
     let argv = (tool.argv)(arguments, root)
         .map_err(|message| failure(INVALID_PARAMS, format!("{name}: {message}")))?;
 
-    Ok(run_tool(executable, &argv))
+    Ok(argv)
 }
 
 /// Runs one tool's CLI invocation and shapes the outcome as an MCP tool

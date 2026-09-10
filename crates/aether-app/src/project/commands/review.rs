@@ -1,9 +1,10 @@
-use crate::project::git::build_baseline_graph;
+use crate::project::config::ProjectConfig;
+use crate::project::git::build_baseline_graph_with_config;
 use crate::project::output_sink::{out, Sink};
-use crate::project::source::build_from_dir;
+use crate::project::source::build_from_dir_with_config;
 use aether_graph::{NodeId, NodeKind};
 use std::io::ErrorKind;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub fn review(args: &[String]) -> std::io::Result<()> {
     let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
@@ -33,11 +34,28 @@ pub fn review(args: &[String]) -> std::io::Result<()> {
         Sink::Stdout
     };
 
+    let config = ProjectConfig::load(&root)?;
+    let (current, _, files) = build_from_dir_with_config(&root, &config)?;
+    let summary = review_into(&root, &current, files, &config, since, quiet, &mut sink)?;
+    if let Some(path) = &out_path {
+        println!("{summary} -> {}", path.display());
+    }
+    sink.finish(out_path.as_deref())
+}
+
+pub(super) fn review_into(
+    root: &Path,
+    current: &aether_graph::SemanticGraph,
+    files: usize,
+    config: &ProjectConfig,
+    since: &str,
+    quiet: bool,
+    sink: &mut Sink,
+) -> std::io::Result<String> {
     // Build current graph from working tree.
     if !quiet {
         out!(sink, "Building current graph for {} ...", root.display());
     }
-    let (current, _builder, files) = build_from_dir(&root)?;
     if !quiet {
         out!(sink, "  {} file(s), {} nodes", files, current.node_count());
     }
@@ -46,7 +64,7 @@ pub fn review(args: &[String]) -> std::io::Result<()> {
     if !quiet {
         out!(sink, "Building baseline graph from {since} ...");
     }
-    let baseline = build_baseline_graph(&root, since)?;
+    let baseline = build_baseline_graph_with_config(root, since, config)?;
     if !quiet {
         out!(sink, "  {} nodes in baseline", baseline.node_count());
     }
@@ -58,14 +76,7 @@ pub fn review(args: &[String]) -> std::io::Result<()> {
         if !quiet {
             out!(sink, "\nNo semantic changes detected vs {since}.");
         }
-        if let Sink::Buffer(_) = sink {
-            println!(
-                "review: no semantic changes vs {since} -> {}",
-                out_path.as_ref().unwrap().display()
-            );
-        }
-        sink.finish(out_path.as_deref())?;
-        return Ok(());
+        return Ok(format!("review: no semantic changes vs {since}"));
     }
 
     if quiet {
@@ -75,9 +86,9 @@ pub fn review(args: &[String]) -> std::io::Result<()> {
             .chain(diff.modified.iter())
             .chain(diff.removed.iter())
         {
-            println!("{}", c.path);
+            out!(sink, "{}", c.path);
         }
-        return Ok(());
+        return Ok(String::new());
     }
 
     let total_edges = diff.added_edges.len() + diff.removed_edges.len();
@@ -247,14 +258,9 @@ pub fn review(args: &[String]) -> std::io::Result<()> {
         }
     }
 
-    if let Sink::Buffer(_) = sink {
-        println!(
-            "review: {}, {} test gap(s) -> {}",
-            summary_parts.join(", "),
-            uncovered.len(),
-            out_path.as_ref().unwrap().display()
-        );
-    }
-    sink.finish(out_path.as_deref())?;
-    Ok(())
+    Ok(format!(
+        "review: {}, {} test gap(s)",
+        summary_parts.join(", "),
+        uncovered.len()
+    ))
 }

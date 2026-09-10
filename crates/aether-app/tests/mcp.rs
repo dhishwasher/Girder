@@ -503,4 +503,6 @@ fn a_nonexistent_root_fails_at_startup() {
         String::from_utf8_lossy(&output.stderr)
     );
 }
-const TEST_LICENSE_KEY: &str = "girder-v1.2026-09-06.paid.c3a189213567f3aced881143c0d600df36c162252ff026ee6a6377a85959215b90ca7ea51e2eb474d3e8ca4e60b09648994a1e6513772393dcde1b4e7752bd02";
+#[path = "support/license.rs"]
+mod license;
+use license::TEST_LICENSE_KEY;

@@ -55,7 +55,9 @@ fn build_output(root: &Path, args: &[String]) -> std::io::Result<Value> {
     let pinned = pinned_node_paths.as_deref();
     let with_tests = args.iter().any(|arg| arg == "--with-tests");
     if args.iter().any(|arg| arg == "--source-only") {
-        return build_source_only_json(root, &intent, pinned, with_tests);
+        let config = ProjectConfig::load(root)?;
+        let (graph, _, _) = build_from_dir_with_config(root, &config)?;
+        return source_from_graph(&graph, args);
     }
     if with_tests {
         build_context_json_inner(root, &intent, pinned, true)
@@ -133,7 +135,16 @@ fn select_nodes(
     let config = ProjectConfig::load(root)?;
     let (graph, _builder, _files) = build_from_dir_with_config(root, &config)?;
 
-    let ctx = match build_authoring_context(&graph, intent, pinned_node_paths) {
+    select_nodes_from_graph(&graph, intent, pinned_node_paths, with_tests)
+}
+
+fn select_nodes_from_graph(
+    graph: &aether_graph::SemanticGraph,
+    intent: &str,
+    pinned_node_paths: Option<&[String]>,
+    with_tests: bool,
+) -> std::io::Result<Selection> {
+    let ctx = match build_authoring_context(graph, intent, pinned_node_paths) {
         Ok(ctx) => ctx,
         Err(SelectionError::NoMatches) => {
             return Err(invalid_input(&format!("no nodes matched \"{intent}\"")));
@@ -149,7 +160,7 @@ fn select_nodes(
     if with_tests {
         for (selected, entry) in ctx.nodes.iter().zip(node_context.iter_mut()) {
             let test_ids = graph.tests_for(selected.node.id);
-            let tests = covering_tests_entry(&graph, &test_ids);
+            let tests = covering_tests_entry(graph, &test_ids);
             if let Some(object) = entry.as_object_mut() {
                 object.insert("tests".to_string(), tests);
             }
@@ -160,35 +171,6 @@ fn select_nodes(
         node_context,
         node_paths: ctx.node_paths,
     })
-}
-
-/// `--source-only`: the selected nodes' `{path, language, source}` and
-/// nothing else.
-///
-/// Default `context` output is shaped for *plan authoring* — it carries a
-/// Plan Format v2 JSON Schema and a plan skeleton so an external model can
-/// write a plan file. That envelope is a fixed cost paid on every call, and
-/// it dwarfs the payload for the common case: the median function in this
-/// repo is a few hundred bytes of source against several kilobytes of
-/// schema. When the caller only wants to *read* a function — an agent
-/// answering a question, not authoring an edit — the envelope is pure
-/// overhead, so this mode drops it.
-///
-/// Also skips `git_head_commit`: `base_commit` exists to pin a plan's
-/// preconditions, which retrieval has none of. Dropping it means
-/// `--source-only` works in a tree that is dirty, or not a git repository
-/// at all, where the authoring output legitimately cannot.
-fn build_source_only_json(
-    root: &Path,
-    intent: &str,
-    pinned_node_paths: Option<&[String]>,
-    with_tests: bool,
-) -> std::io::Result<Value> {
-    let selection = select_nodes(root, intent, pinned_node_paths, with_tests)?;
-    Ok(json!({
-        "intent": intent,
-        "nodes": selection.node_context,
-    }))
 }
 
 /// Cap on how many covering tests ever get an entry (full source or a bare
@@ -248,6 +230,43 @@ fn covering_tests_entry(
             .collect();
         json!({"full": [], "names_only": names_only, "total_covering_tests": total})
     }
+}
+
+/// Source-only MCP/CLI selection against an already resolved generation.
+///
+/// `--source-only`: the selected nodes' `{path, language, source}` and
+/// nothing else.
+///
+/// Default `context` output is shaped for *plan authoring* — it carries a
+/// Plan Format v2 JSON Schema and a plan skeleton so an external model can
+/// write a plan file. That envelope is a fixed cost paid on every call, and
+/// it dwarfs the payload for the common case: the median function in this
+/// repo is a few hundred bytes of source against several kilobytes of
+/// schema. When the caller only wants to *read* a function — an agent
+/// answering a question, not authoring an edit — the envelope is pure
+/// overhead, so this mode drops it.
+///
+/// Also skips `git_head_commit`: `base_commit` exists to pin a plan's
+/// preconditions, which retrieval has none of. Dropping it means
+/// `--source-only` works in a tree that is dirty, or not a git repository
+/// at all, where the authoring output legitimately cannot.
+pub(super) fn source_from_graph(
+    graph: &aether_graph::SemanticGraph,
+    args: &[String],
+) -> std::io::Result<Value> {
+    let pinned = parse_pinned_nodes(args)?;
+    let intent = collect_words(
+        args,
+        &["--json", "--with-tests", "--source-only"],
+        &["--nodes"],
+    );
+    let selection = select_nodes_from_graph(
+        graph,
+        &intent,
+        pinned.as_deref(),
+        args.iter().any(|a| a == "--with-tests"),
+    )?;
+    Ok(json!({"intent": intent, "nodes": selection.node_context}))
 }
 
 #[cfg(test)]

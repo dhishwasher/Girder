@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {
+      "id": "task-01",
+      "repo_id": "petgraph-0.6.5",
+      "prompt_class": "identifier",
+      "prompt": "Locate the declaration of the public function `dijkstra` that computes shortest distances."
+    },
+    {
+      "id": "task-02",
+      "repo_id": "serde_json-1.0.150",
+      "prompt_class": "identifier",
+      "prompt": "Locate the public `from_slice` deserialization function."
+    },
+    {
+      "id": "task-03",
+      "repo_id": "regex-1.12.4",
+      "prompt_class": "identifier",
+      "prompt": "Locate the `replace` method on the text-string `Regex` type."
+    },
+    {
+      "id": "task-04",
+      "repo_id": "click-8.4.1",
+      "prompt_class": "identifier",
+      "prompt": "Locate the `invoke` method defined on the `Command` class."
+    },
+    {
+      "id": "task-05",
+      "repo_id": "click-8.4.1",
+      "prompt_class": "identifier",
+      "prompt": "Locate the `parse_args` method defined on the `_OptionParser` class."
+    },
+    {
+      "id": "task-06",
+      "repo_id": "pydantic-2.13.4",
+      "prompt_class": "identifier",
+      "prompt": "Locate the `generate_aliases` method defined on the `AliasGenerator` class."
+    },
+    {
+      "id": "task-07",
+      "repo_id": "requests-2.34.2",
+      "prompt_class": "identifier",
+      "prompt": "Locate the package-level HTTP `get` convenience function."
+    },
+    {
+      "id": "task-08",
+      "repo_id": "requests-2.34.2",
+      "prompt_class": "identifier",
+      "prompt": "Locate the `prepare_request` method defined on the `Session` class."
+    },
+    {
+      "id": "task-09",
+      "repo_id": "zod-3.23.8",
+      "prompt_class": "identifier",
+      "prompt": "Locate the `safeParse` method defined on the `ZodType` class."
+    },
+    {
+      "id": "task-10",
+      "repo_id": "type-fest-4.26.1",
+      "prompt_class": "identifier",
+      "prompt": "Locate the exported `MergeDeep` type alias."
+    },
+    {
+      "id": "task-11",
+      "repo_id": "afero-1.11.0",
+      "prompt_class": "identifier",
+      "prompt": "Locate the `ReadFile` method on the `Afero` filesystem wrapper."
+    },
+    {
+      "id": "task-12",
+      "repo_id": "websocket-1.5.3",
+      "prompt_class": "identifier",
+      "prompt": "Locate the `WriteJSON` method on the `Conn` receiver."
+    },
+    {
+      "id": "task-13",
+      "repo_id": "petgraph-0.6.5",
+      "prompt_class": "description",
+      "prompt": "Locate the public algorithm that computes shortest distances from a start node with non-negative edge costs, optionally stopping at a goal, and returns a map of node costs."
+    },
+    {
+      "id": "task-14",
+      "repo_id": "afero-1.11.0",
+      "prompt_class": "description",
+      "prompt": "Locate the filesystem-wrapper method that delegates reading the complete contents of a named file to the package-level helper using the wrapper's configured filesystem."
+    },
+    {
+      "id": "task-15",
+      "repo_id": "serde_json-1.0.150",
+      "prompt_class": "description",
+      "prompt": "Locate the public serializer wrapper that produces a compact JSON string for a serializable value, using byte serialization internally and converting the result to UTF-8 without indentation."
+    }
+  ]
+}

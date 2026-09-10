@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "name": "opt-in-mcp-watch-v1",
+  "prerequisite": "incremental-update-validation.json: 113/113 complete-record equality; CI and four-platform builds passed before implementation",
+  "invocation": "girder mcp <root> --watch",
+  "default_behavior": "unchanged; no default-on switch",
+  "quiet_ms": 250,
+  "stability_check_interval_ms": 100,
+  "event_queue_capacity": 4096,
+  "query_timeout": "existing MCP tool timeout, including waiting for a clean generation and retries",
+  "tool_output_limit_bytes": 4194304,
+  "generation_contract": [
+    "One cached builder owner; private candidates, full project resolution with cached clean extraction.",
+    "Use shared graph-query handlers and existing schemas, argument validation, licensing, and formatting.",
+    "Normalize dirty paths; paired renames remove old and create new. Unknown rename, directory removal, overflow, ownership ambiguity, unstable reads require full reconciliation.",
+    "Check mtime and size twice, 100 ms apart, and validate the owned source/configuration state around reads and publication.",
+    "Do not publish partial candidates. Journal and atomically replace persistence before publishing the generation.",
+    "Graph-dependent calls wait while stale, within their existing timeout. An invalidated generation cannot emit paid results; retry or return an explicit tool error.",
+    "Hold a graph-owner OS lock outside the watched root, reject another owner of the same graph, and coordinate persistence with all existing graph writers.",
+    "Honor source configuration and hard exclusions target, .git, node_modules, __pycache__. Ignore own persistence traffic.",
+    "Preserve cold-analysis misses; no claims of improved semantic coverage."
+  ],
+  "gates": [
+    "atomic_save",
+    "event_storm",
+    "partial_write",
+    "paired_rename",
+    "unknown_rename",
+    "delete_create",
+    "directory_deletion",
+    "ignored_traffic",
+    "configured_scope",
+    "root_removal",
+    "overflow",
+    "second_watcher",
+    "concurrent_calls",
+    "invalidation_before_response",
+    "query_timeout",
+    "output_limit",
+    "licensing",
+    "all_seven_tool_format_parity",
+    "concurrent_graph_writer",
+    "persistence_interruption",
+    "restart_recovery"
+  ],
+  "platforms": [
+    "Linux",
+    "Windows",
+    "macOS Intel",
+    "macOS Apple Silicon"
+  ],
+  "measurement": {
+    "required": [
+      "update_attempts",
+      "published_updates",
+      "discarded_candidates",
+      "full_parsing_count",
+      "fallback_denominator",
+      "fallback_percentage",
+      "fallback_reasons",
+      "update_latency_seconds",
+      "parsed_files",
+      "reused_files"
+    ],
+    "latency_scope": "Include event coalescing, stability checks, filesystem inventory, cache cloning, resolution, journal persistence, and publication. Report initial construction separately.",
+    "assessment": "Any cold-equivalence mismatch, stale paid response, or failed required gate fails correctness regardless of latency. Preserve failures and corrective records separately.",
+    "limitations": "Report frequent full parsing as a delivery limitation even if correctness passes. Synthetic tests do not establish production latency or improved semantic coverage."
+  }
+}

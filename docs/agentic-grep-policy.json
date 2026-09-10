@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "policy_id": "agentic-grep-v1",
+  "scope": "Discovery costs with a 1.5B local model. This does not establish frontier-model behavior or correctness of complete caller, test, or impact answers.",
+  "source_corpus": "docs/orient-tool-policy.json",
+  "prompts": "docs/agentic-grep-prompts.json",
+  "evaluator_targets": "docs/evaluator/agentic-grep-targets.json",
+  "repositories": [
+    {
+      "id": "afero-1.11.0",
+      "artifact": {
+        "bytes": 89257,
+        "format": "tar.gz",
+        "root": "afero-1.11.0",
+        "sha256": "f83f67c4a03d8bba2b7fe1a496e848b2b1b7d97d0b951d85d2b401e7488a4ed4",
+        "url": "https://github.com/spf13/afero/archive/refs/tags/v1.11.0.tar.gz",
+        "version": "1.11.0"
+      }
+    },
+    {
+      "id": "click-8.4.1",
+      "artifact": {
+        "bytes": 353007,
+        "format": "tar.gz",
+        "root": "click-8.4.1",
+        "sha256": "918b5633eddf6b41c32d4f454bf0de810065c74e3f7dbf8ee5452f8be88d3e96",
+        "url": "https://files.pythonhosted.org/packages/9b/98/518d8e5081007684232226f475082b30087d0f585e8457db087298259f49/click-8.4.1.tar.gz"
+      }
+    },
+    {
+      "id": "petgraph-0.6.5",
+      "artifact": {
+        "bytes": 710970,
+        "format": "tar.gz",
+        "root": "petgraph-0.6.5",
+        "sha256": "b4c5cc86750666a3ed20bdaf5ca2a0344f9c67674cae0515bec2da16fbaa47db",
+        "url": "https://static.crates.io/crates/petgraph/petgraph-0.6.5.crate"
+      }
+    },
+    {
+      "id": "pydantic-2.13.4",
+      "artifact": {
+        "bytes": 844775,
+        "format": "tar.gz",
+        "root": "pydantic-2.13.4",
+        "sha256": "c40756b57adaa8b1efeeced5c196f3f3b7c435f90e84ea7f443901bec8099ef6",
+        "url": "https://files.pythonhosted.org/packages/18/a5/b60d21ac674192f8ab0ba4e9fd860690f9b4a6e51ca5df118733b487d8d6/pydantic-2.13.4.tar.gz"
+      }
+    },
+    {
+      "id": "regex-1.12.4",
+      "artifact": {
+        "bytes": 153468,
+        "format": "tar.gz",
+        "root": "regex-1.12.4",
+        "sha256": "f1292b7759ae1cb9ec195452d1390a074f0cd8541ab7a5a8c31cd6db45d4a6ba",
+        "url": "https://static.crates.io/crates/regex/regex-1.12.4.crate"
+      }
+    },
+    {
+      "id": "requests-2.34.2",
+      "artifact": {
+        "bytes": 142856,
+        "format": "tar.gz",
+        "root": "requests-2.34.2",
+        "sha256": "f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed",
+        "url": "https://files.pythonhosted.org/packages/ac/c3/e2a2b89f2d3e2179abd6d00ebd70bff6273f37fb3e0cc209f48b39d00cbf/requests-2.34.2.tar.gz"
+      }
+    },
+    {
+      "id": "serde_json-1.0.150",
+      "artifact": {
+        "bytes": 155574,
+        "format": "tar.gz",
+        "root": "serde_json-1.0.150",
+        "sha256": "e8014e44b4736ed0538adeecded0fce2a272f22dc9578a7eb6b2d9993c74cfb9",
+        "url": "https://static.crates.io/crates/serde_json/serde_json-1.0.150.crate"
+      }
+    },
+    {
+      "id": "type-fest-4.26.1",
+      "artifact": {
+        "bytes": 1086277,
+        "format": "tar.gz",
+        "root": "type-fest-4.26.1",
+        "sha256": "41acbfd36aafc8bbfd774846462e8af7e3e62a7bdb59ddc7fa6684d7eb726735",
+        "url": "https://github.com/sindresorhus/type-fest/archive/refs/tags/v4.26.1.tar.gz",
+        "version": "4.26.1"
+      }
+    },
+    {
+      "id": "websocket-1.5.3",
+      "artifact": {
+        "bytes": 54884,
+        "format": "tar.gz",
+        "root": "websocket-1.5.3",
+        "sha256": "707f217e9a46c516c289b71c45a4e51b11b5e0fcec54c1fbfecde47b8a001799",
+        "url": "https://github.com/gorilla/websocket/archive/refs/tags/v1.5.3.tar.gz",
+        "version": "1.5.3"
+      }
+    },
+    {
+      "id": "zod-3.23.8",
+      "artifact": {
+        "bytes": 586431,
+        "format": "tar.gz",
+        "root": "zod-3.23.8",
+        "sha256": "ecd3ac7eb5bac88202b1146c308c8bbd48e63fc64d6d7f14b5577dde5da02c48",
+        "url": "https://github.com/colinhacks/zod/archive/refs/tags/v3.23.8.tar.gz",
+        "version": "3.23.8"
+      }
+    }
+  ],
+  "model": {
+    "name": "qwen2.5-coder:1.5b",
+    "digest": "d7372fd828518a4d38b1eb196c673c31a85f2ed302b3d1e406c4c2d1b64a0668",
+    "transport": "/api/chat",
+    "temperature": 0,
+    "seed": 42,
+    "num_ctx": 8192,
+    "num_predict": 1024,
+    "request_timeout_seconds": 300,
+    "task_arm_timeout_seconds": 1800,
+    "tool_call_budget": 30,
+    "tool_timeout_seconds": 120,
+    "template_sha256": "1e65450c30670713aa47fe23e8b9662bdf4065e81cc8e3cbfaa98924fcc0d320",
+    "tokenizer_metadata_sha256": {
+      "tokenizer.ggml.merges": "24fa2ae2a398e50784a1fff678482094af4f63e6783d35686726abacda8dc371",
+      "tokenizer.ggml.token_type": "17ccfa7767a8721474dc0fd21ca1308fdfd04e0f64036efbfa97f3e16e5f18f1",
+      "tokenizer.ggml.tokens": "e2fadeac783c911f535d21f858f43127672a1d261af510d3f895e34bd2f6fb10"
+    },
+    "tokenizers_version": "0.22.2"
+  },
+  "execution": {
+    "serial": true,
+    "concurrent_cargo": false,
+    "arm_order": "Odd tasks: grep then graph; even tasks: graph then grep.",
+    "conversation": "Fresh complete message history for each arm; one tool action per turn; schema-constrained action/final envelopes.",
+    "context": "Count the complete rendered Qwen chat template with the pinned model tokenizer before every request. Reserve all 1024 generation tokens. Exceeding 8192 records no_answer; never truncate history. Check Ollama prompt token accounting and stop the campaign on tokenizer disagreement.",
+    "campaign": "Precommit every freeze_input before the single recorded campaign. An exclusive persistent claim prevents restarting the same policy. Write pending records before model execution, append transcripts outside arm roots, and persist observations after every request and result. Preserve failures and interruptions."
+  },
+  "isolation": {
+    "trees": "Two independently extracted copies of each pinned archive. No evaluator files, prior observations, authoring history, transcripts, or feedback are copied into accessible roots.",
+    "tools": "Only the documented tools may read the active root. Reject path traversal, absolute paths, symlinks, ignored paths, and option injection. No arbitrary shell or network tool.",
+    "answers": "The evaluator alone reads independently pinned targets from the original orient corpus; agreeing wrong answers fail."
+  },
+  "tools": {
+    "graph": "All seven existing read-only MCP tools, through the real stdio server and its existing graph-command response adapters. Freeze the advertised tool schemas as initial documentation.",
+    "grep": "Adaptive list_files, ripgrep, and offset_read. Agent chooses query, filters, page size, pagination offset, and bounded line reads. No whole-file requirement or target-specific search sequence.",
+    "result_envelope": "Both arms receive exactly a compact UTF-8 JSON MCP-style content/isError result as the next user message. Tool errors use the same envelope and count fully.",
+    "max_output_bytes": 4194304,
+    "page_limit": 200,
+    "default_page_limit": 50,
+    "ignored_directories": [
+      ".git",
+      "target",
+      "node_modules",
+      "__pycache__"
+    ],
+    "ignored_artifacts": [
+      "project.aether",
+      "project.aether.*"
+    ]
+  },
+  "metrics": {
+    "tool_output_bytes": "UTF-8 bytes of each entire new tool-result envelope confirmed delivered by a successful /api/chat response, including tool errors; count each tool response once. Exclude model prose, initial prompts and replay of prior conversation history. Produced but undelivered results and delivery-unconfirmed results on transport failure are retained separately. Failed task counters do not support comparative cost claims.",
+    "tool_calls": "Every attempted tool action, including rejected arguments and errors.",
+    "model_requests": "Every /api/chat request, including transport errors, reported separately from tool calls.",
+    "graph_construction": "Record initial cold analyze elapsed time and peak RSS separately. Existing default MCP commands re-analyze on retrieval; record that retrieval time without disguising it as cached querying.",
+    "failures": "Retain all raw counters for wrong/no_answer tasks without comparative cost claims."
+  },
+  "gates": {
+    "required_tasks": 15,
+    "required_identifier_tasks": 12,
+    "required_description_tasks": 3,
+    "correctness": "Both final semantic paths must equal the independently pinned expected_path for every task.",
+    "max_graph_to_grep_output_bytes": 0.8,
+    "graph_tool_calls_at_most_grep": true,
+    "cost_population": "Only tasks for which both arms are correct. No aggregate over failed tasks.",
+    "overall": "All 15 correctness pairs AND aggregate graph output bytes <= 80% of grep bytes AND graph calls <= grep calls.",
+    "exclusions": "A genuinely ambiguous pinned target may be explicitly excluded only with its original record and reason retained. Never repin, replace, or claim the original all-15 pass after an exclusion.",
+    "reporting": "Report correct, wrong, no_answer for each arm and prompt class, comparable-pair counts, byte and call losses per class, and overall immutable pass/fail."
+  },
+  "freeze_inputs": [
+    "docs/agentic-grep-policy.json",
+    "docs/agentic-grep-prompts.json",
+    "docs/evaluator/agentic-grep-targets.json",
+    "docs/agentic-grep-tools.json",
+    "tools/agentic_grep_benchmark.py",
+    "tools/test_agentic_grep_benchmark.py",
+    "tools/orient_benchmark.py",
+    "tools/harness_support.py",
+    "tools/core_representative_benchmark.py",
+    "docs/core-representative-corpus.json",
+    "docs/typescript-support-policy.json",
+    "docs/go-support-policy.json",
+    "docs/orient-tool-policy.json"
+  ]
+}

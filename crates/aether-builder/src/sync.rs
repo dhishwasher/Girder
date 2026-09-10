@@ -1,36 +1,36 @@
 //! Keep the semantic graph in sync with source edits.
 //!
-//! The [`GraphBuilder`] owns one [`IncrementalParser`] per open file and the set
-//! of node ids each file currently contributes. On every edit it incrementally
-//! reparses, re-extracts, and *diffs* the result into the graph: new/changed
-//! nodes are upserted, vanished nodes are removed, and edges are rebuilt for the
-//! file. This is the machinery behind bidirectional editor⇄graph sync.
+//! The [`GraphBuilder`] caches complete per-file extraction outputs. Updates
+//! reuse clean-file parsing, reconstruct source projections in cold-load order,
+//! and resolve the whole project before replacing the published graph.
 
-use crate::mapper::{
-    extract, module_path_for, BuildOutput, CallRef, CallTargetRef, InheritRef, RouteEvidence,
-    RustImportRef,
-};
+use crate::mapper::{extract, module_path_for, BuildOutput, CallTargetRef, RouteEvidence};
 use crate::parser::{IncrementalParser, Lang};
 use aether_graph::{Edge, EdgeKind, NodeId, NodeKind, SemanticGraph};
 use std::collections::{HashMap, HashSet};
-use tree_sitter::{InputEdit, Point};
+
+mod update;
+pub use update::{normalize_source_path, FileChange, FullRebuildReason, UpdateError, UpdateReport};
 
 /// Per-file parsing state.
+#[derive(Clone)]
 struct FileState {
-    parser: IncrementalParser,
     source: String,
+    source_fingerprint: NodeId,
     /// Node ids this file currently contributes to the graph.
     owned: HashSet<NodeId>,
     /// Semantic paths before graph upsert de-duplicates equal `NodeId`s.
     paths: Vec<String>,
-    /// Unresolved call references found in this file, for the project resolver.
-    calls: Vec<CallRef>,
-    /// Unresolved inheritance references found in this file.
-    inherits: Vec<InheritRef>,
-    /// Rust imports and public re-exports used to preserve aliased identities.
-    rust_imports: Vec<RustImportRef>,
-    /// Type paths with `impl Drop for T` in this file.
-    drop_impls: Vec<String>,
+    /// All nodes, edges, unresolved references, imports and receiver evidence.
+    extraction: BuildOutput,
+}
+
+impl std::ops::Deref for FileState {
+    type Target = BuildOutput;
+
+    fn deref(&self) -> &Self::Target {
+        &self.extraction
+    }
 }
 
 /// The module path that owns a node, derived from its full path:
@@ -687,7 +687,7 @@ fn resolve_factory_receiver<'a>(
 }
 
 /// Incrementally maps source files into a [`SemanticGraph`].
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct GraphBuilder {
     files: HashMap<String, FileState>,
     /// Cargo `[[bin]]` target overrides: normalized project-relative file
@@ -700,6 +700,7 @@ pub struct GraphBuilder {
     /// import strings verbatim; project-wide resolution maps only imports below
     /// this module to Girder's directory-addressed `crate::...` paths.
     go_module_path: Option<String>,
+    configuration_changed: bool,
 }
 
 impl GraphBuilder {
@@ -711,10 +712,13 @@ impl GraphBuilder {
     /// the source-only graph cannot otherwise see. Replaces any previously
     /// set targets; call again after a manifest change.
     pub fn set_bin_targets(&mut self, bin_targets: HashMap<String, String>) {
+        self.configuration_changed |= !self.files.is_empty() && self.bin_targets != bin_targets;
         self.bin_targets = bin_targets;
     }
 
     pub fn set_go_module_path(&mut self, go_module_path: Option<String>) {
+        self.configuration_changed |=
+            !self.files.is_empty() && self.go_module_path != go_module_path;
         self.go_module_path = go_module_path;
     }
 
@@ -747,14 +751,11 @@ impl GraphBuilder {
         self.files.insert(
             file.to_string(),
             FileState {
-                parser,
                 source: source.to_string(),
+                source_fingerprint: NodeId::from_path(source),
                 owned,
                 paths: out.nodes.iter().map(|node| node.path.clone()).collect(),
-                calls: out.calls.clone(),
-                inherits: out.inherits.clone(),
-                rust_imports: out.rust_imports.clone(),
-                drop_impls: out.drop_impls.clone(),
+                extraction: out,
             },
         );
     }
@@ -763,46 +764,8 @@ impl GraphBuilder {
     /// Uses tree-sitter incremental reparse seeded with a coarse whole-buffer
     /// edit, then diffs the freshly-extracted nodes against what the file owned.
     pub fn update_file(&mut self, graph: &mut SemanticGraph, file: &str, new_source: &str) {
-        let Some(lang) = Lang::from_path(file) else {
-            return;
-        };
-        let prev_owned = self
-            .files
-            .get(file)
-            .map(|s| s.owned.clone())
-            .unwrap_or_default();
-
-        let entry = self
-            .files
-            .entry(file.to_string())
-            .or_insert_with(|| FileState {
-                parser: IncrementalParser::new(lang),
-                source: String::new(),
-                owned: HashSet::new(),
-                paths: Vec::new(),
-                calls: Vec::new(),
-                inherits: Vec::new(),
-                rust_imports: Vec::new(),
-                drop_impls: Vec::new(),
-            });
-
-        // Inform tree-sitter where the edit happened so it reparses incrementally.
-        let edit = whole_buffer_edit(&entry.source, new_source);
-        entry.parser.apply_edit(&edit);
-        let tree = entry.parser.reparse(new_source);
-        entry.source = new_source.to_string();
-
-        let out = extract(&tree, new_source, file, lang);
-        let new_owned = self.apply(graph, file, &out, &prev_owned);
-        if let Some(state) = self.files.get_mut(file) {
-            state.owned = new_owned;
-            state.paths = out.nodes.iter().map(|node| node.path.clone()).collect();
-            state.calls = out.calls.clone();
-            state.inherits = out.inherits.clone();
-            state.rust_imports = out.rust_imports.clone();
-            state.drop_impls = out.drop_impls.clone();
-        }
-        self.resolve_calls(graph);
+        // Keep the legacy void interface's no-op behavior for unsupported paths.
+        let _ = self.update_files(graph, &[FileChange::replace(file, new_source)], &[]);
     }
 
     /// Project-wide call resolution. Rebuilds **all** `Calls` edges from the
@@ -1196,48 +1159,6 @@ impl GraphBuilder {
             .filter(|candidate| candidate.as_str() == path)
             .count()
     }
-}
-
-/// Build a conservative [`InputEdit`] describing "the whole buffer changed".
-///
-/// A production editor would derive a minimal edit from the keystroke; for the
-/// prototype we hand tree-sitter the changed byte range from the start of the
-/// first difference, which still lets it reuse the unchanged prefix's subtree.
-fn whole_buffer_edit(old: &str, new: &str) -> InputEdit {
-    let mut common = old
-        .bytes()
-        .zip(new.bytes())
-        .take_while(|(a, b)| a == b)
-        .count();
-    while common > 0 && (!old.is_char_boundary(common) || !new.is_char_boundary(common)) {
-        common -= 1;
-    }
-    let start_point = byte_to_point(old, common);
-    InputEdit {
-        start_byte: common,
-        old_end_byte: old.len(),
-        new_end_byte: new.len(),
-        start_position: start_point,
-        old_end_position: byte_to_point(old, old.len()),
-        new_end_position: byte_to_point(new, new.len()),
-    }
-}
-
-fn byte_to_point(text: &str, byte: usize) -> Point {
-    let mut row = 0;
-    let mut col = 0;
-    for (i, c) in text.char_indices() {
-        if i >= byte {
-            break;
-        }
-        if c == '\n' {
-            row += 1;
-            col = 0;
-        } else {
-            col += c.len_utf8();
-        }
-    }
-    Point::new(row, col)
 }
 
 #[cfg(test)]

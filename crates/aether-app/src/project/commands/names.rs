@@ -43,11 +43,18 @@ pub fn names(args: &[String]) -> std::io::Result<()> {
 /// out so tests can inspect the returned JSON array directly instead of
 /// scraping stdout.
 fn find_names(root: &Path, identifier: &str, args: &[String]) -> std::io::Result<Vec<Value>> {
-    let kind_filter = parse_kind_filter(args)?;
-
     let config = ProjectConfig::load(root)?;
     let (graph, _builder, _files) = build_from_dir_with_config(root, &config)?;
 
+    names_from_graph(&graph, identifier, args)
+}
+
+pub(super) fn names_from_graph(
+    graph: &aether_graph::SemanticGraph,
+    identifier: &str,
+    args: &[String],
+) -> std::io::Result<Vec<Value>> {
+    let kind_filter = parse_kind_filter(args)?;
     let mut matches: Vec<_> = graph
         .nodes()
         .filter(|node| node.name == identifier)

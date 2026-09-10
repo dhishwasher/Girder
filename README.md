@@ -103,6 +103,12 @@ Any MCP client config:
 With a binary already installed, `"command": "girder", "args": ["mcp", "."]`
 skips npm entirely.
 
+Source builds after npm 0.2.4 can opt into a cached graph generation with
+`girder mcp . --watch`. The committed watcher measurement matched fresh cold
+analysis after all 45 mutations while reusing 98.70% of file extractions; the
+claim is limited to preserving cold-analysis resolution while reusing parsing.
+See the [watcher result and limitations](./docs/mcp-watching.md).
+
 Seven tools, all read-only:
 
 | Tool | What it answers | Tier |
@@ -153,10 +159,17 @@ are not portable.
 These comparisons do not measure a competent agent choosing grep searches and
 bounded file reads adaptively. No agentic-grep cost claim is established here.
 
+The subsequent [agentic-grep campaign](./docs/agentic-grep.md) with a local
+1.5B model stopped incomplete and produced no pairs with two correct answers.
+It establishes no comparative cost advantage or frontier-model behavior.
+
 `impacted_tests` is **advisory**. It over-selects unrelated tests, and it
 misses tests reached only through dynamic dispatch (measured: recall 0.000 on a
 polymorphic-dispatch case, [`docs/core-representative-mutations.md`](./docs/core-representative-mutations.md)).
 A full test run remains the authority before calling a change safe.
+
+Selecting extra tests costs CPU time; missing a relevant test can conceal a
+regression.
 
 The project root is fixed when the server starts, so no tool call can reach
 another directory. `GIRDER_MCP_TIMEOUT_SECONDS` (default 120) bounds each

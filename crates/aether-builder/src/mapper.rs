@@ -174,7 +174,7 @@ pub struct RustImportRef {
 /// Everything extracted from a single file: nodes to upsert, non-call edges to
 /// add (Contains), and unresolved call/inheritance references for the
 /// project-wide resolver.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct BuildOutput {
     pub nodes: Vec<Node>,
     pub edges: Vec<(NodeId, NodeId, Edge)>,

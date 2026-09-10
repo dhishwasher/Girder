@@ -4,10 +4,10 @@ Guidance for working in this repository.
 
 ## What this is
 
-**Girder** — a native Rust IDE prototype built on three pillars:
-1. A **living semantic graph** as the source of truth (not files).
-2. A **parallel AI agent swarm** that mutates the graph.
-3. A **time-travel & branching debugger**.
+**Girder** is a semantic-graph MCP server and CLI for coding agents. It provides
+exact function source, symbol lookup, graph queries, and advisory test selection.
+The native GUI, parallel agent swarm, and time-travel debugger are supporting
+components built around the same graph.
 
 It is a Cargo workspace, not a fork of any editor. See `README.md` for usage
 and the measured engineering documentation under `docs/` for implementation
@@ -18,8 +18,8 @@ status and limitations.
 - `crates/aether-graph` — semantic graph: nodes/edges, impact analysis,
   similarity/search, `.aether` serialization. **The source of truth; everything
   depends on it.**
-- `crates/aether-builder` — tree-sitter → graph (Rust + Python), incremental
-  edit sync, project-wide call resolution, highlight spans.
+- `crates/aether-builder` — tree-sitter → graph (Rust, Python, TypeScript/TSX,
+  and Go), file edit sync, project-wide call resolution, highlight spans.
 - `crates/aether-ai` — `AiProvider` trait, offline `MockProvider` (default),
   `Router`, and implemented OpenAI, Anthropic, and local Ollama providers behind
   `--features live-providers`; Gemini/Grok remain compile-clean extension points.
@@ -28,8 +28,8 @@ status and limitations.
   timeline + what-if.
 - `crates/aether-dap` — Debug Adapter Protocol client/session layer and
   graph-aware breakpoint support.
-- `crates/aether-app` — the `girder` binary: CLI (`analyze`/`search`/
-  `forge`/`inspect`/`demo`) + headless smoke + egui GUI (`--features gui`).
+- `crates/aether-app` — the `girder` binary: MCP server, graph discovery and
+  editing CLI, headless smoke, and egui GUI (`--features gui`).
 
 ## Common commands
 
@@ -62,6 +62,13 @@ cargo test -p aether-dap --test debugpy -- --ignored
 Girder's coverage output is advisory only. It routinely reports tested paths
 as uncovered and over-selects unrelated tests. Cargo and the mutation oracle
 are authoritative.
+
+Selecting extra tests costs CPU time; missing a relevant test can conceal a
+regression. The current bounded Rust and Python trustworthiness fixtures both
+measure precision/recall `1.000/1.000`; the historical Rust precision defect at
+`0.667` is closed ([measurement](docs/core-trustworthiness-measurement.md)).
+The documented dynamic-dispatch failure remains: a representative mutation
+measured recall `0.000` ([evidence](docs/core-representative-mutations.md)).
 
 ### Use Girder instead of reading files
 

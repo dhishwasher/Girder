@@ -1,12 +1,19 @@
+pub(crate) mod locks;
 use crate::project::config::ProjectConfig;
 use aether_builder::GraphBuilder;
 use aether_graph::SemanticGraph;
 use globset::GlobSet;
+pub(crate) use locks::OutputLocks;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
+
+// Complete extraction cache shared by incremental updates and opt-in MCP watching.
+mod incremental;
+pub(crate) use incremental::CachedProject;
 
 static NEXT_TEMP_FILE: AtomicUsize = AtomicUsize::new(0);
 const TRANSACTION_ROOT: &str = ".girder/transactions";
@@ -37,11 +44,17 @@ enum LockWait {
 /// stays valid after unlink, so cleanup under the lock is safe; acquisition
 /// re-checks directory identity and retries because a lock on an unlinked
 /// inode excludes nobody.
-struct JournalLock {
+pub(crate) struct JournalLock {
+    _portable: locks::ProcessLock,
+    #[cfg(unix)]
     _dir: std::fs::File,
 }
 
 impl JournalLock {
+    pub(crate) fn is_current(&self) -> std::io::Result<bool> {
+        self._portable.is_current()
+    }
+
     /// Lock an existing `.girder` directory. `Ok(None)` when the directory
     /// does not exist (nothing to recover) or, in `NonBlock` mode, when a
     /// writer currently holds the lock.
@@ -53,7 +66,7 @@ impl JournalLock {
     /// for any active writer. Keeping `transactions` present makes
     /// `.girder` non-empty, so unlocked best-effort pruners cannot remove
     /// it during the commit critical section.
-    fn create_and_acquire(root: &Path) -> std::io::Result<Self> {
+    pub(crate) fn create_and_acquire(root: &Path) -> std::io::Result<Self> {
         match Self::acquire_inner(root, LockWait::Block, true)? {
             Some(lock) => {
                 std::fs::create_dir_all(root.join(TRANSACTION_ROOT))?;
@@ -67,6 +80,28 @@ impl JournalLock {
 
     fn acquire_inner(root: &Path, wait: LockWait, create: bool) -> std::io::Result<Option<Self>> {
         let path = root.join(".girder");
+        if !create && !path.exists() {
+            return Ok(None);
+        }
+        let root_identity = root.canonicalize()?;
+        let Some(portable) = locks::ProcessLock::acquire(
+            "journal",
+            &root_identity,
+            matches!(wait, LockWait::Block),
+        )?
+        else {
+            return Ok(None);
+        };
+        #[cfg(not(unix))]
+        {
+            if create {
+                std::fs::create_dir_all(&path)?;
+            }
+            return Ok(Some(Self {
+                _portable: portable,
+            }));
+        }
+        #[cfg(unix)]
         for _ in 0..5 {
             if create {
                 std::fs::create_dir_all(&path)?;
@@ -100,7 +135,10 @@ impl JournalLock {
                     Ok(current) => {
                         let held = dir.metadata()?;
                         if current.dev() == held.dev() && current.ino() == held.ino() {
-                            return Ok(Some(JournalLock { _dir: dir }));
+                            return Ok(Some(JournalLock {
+                                _dir: dir,
+                                _portable: portable,
+                            }));
                         }
                     }
                     Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -113,18 +151,13 @@ impl JournalLock {
                 // The directory was removed or replaced while we waited for
                 // the lock; retry against the current inode.
             }
-            #[cfg(not(unix))]
-            {
-                // No advisory directory locking on this platform; preserve
-                // the previous unlocked behavior. `wait` only means
-                // something to `flock`, so it is unused here by design.
-                let _ = wait;
-                return Ok(Some(JournalLock { _dir: dir }));
-            }
         }
-        Err(std::io::Error::other(
-            "could not lock the project journal directory",
-        ))
+        #[cfg(unix)]
+        {
+            Err(std::io::Error::other(
+                "could not lock the project journal directory",
+            ))
+        }
     }
 }
 
@@ -234,7 +267,13 @@ struct TransactionEntry {
     had_original: bool,
     #[serde(default)]
     staged: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    applied_sha256: Option<String>,
     backup: String,
+}
+
+fn bytes_sha256(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
 }
 
 pub(crate) fn is_supported_source_path(path: &str) -> bool {
@@ -509,7 +548,23 @@ pub(crate) fn save_graph(
     let output = safe_project_output_path(root, &config.graph.path)?;
     let bytes = encode_graph(&output, graph)?;
 
-    atomic_write(&output, &bytes)?;
+    let journal = JournalLock::create_and_acquire(root)?;
+    recover_under_lock(root, &journal)?;
+    let outputs = OutputLocks::acquire(root, &[PathBuf::from(&config.graph.path)], true)?
+        .ok_or_else(|| std::io::Error::other("could not lock graph output"))?;
+    // Plain save has always replaced the graph. Read its current baseline
+    // only after both locks, so a preceding watcher update is not a conflict.
+    let expected = read_optional_bytes(&output)?;
+    commit_under_lock(
+        root,
+        vec![ProjectWrite::bytes(
+            PathBuf::from(&config.graph.path),
+            expected,
+            bytes,
+        )],
+        &journal,
+        &outputs,
+    )?;
     Ok(output)
 }
 
@@ -665,10 +720,44 @@ pub(crate) fn commit_project_writes(
     result
 }
 
+/// Commit with held journal and output locks; recover before taking outputs.
+pub(crate) fn commit_under_lock(
+    root: &Path,
+    writes: Vec<ProjectWrite>,
+    _lock: &JournalLock,
+    outputs: &OutputLocks,
+) -> std::io::Result<Vec<PathBuf>> {
+    commit_with_output_locks(root, writes, outputs)
+}
+
+pub(crate) fn recover_under_lock(root: &Path, _lock: &JournalLock) -> std::io::Result<()> {
+    recover_transactions_locked(root, RecoveryScope::All).map(|_| ())
+}
+
 fn commit_project_writes_locked(
     root: &Path,
     writes: Vec<ProjectWrite>,
 ) -> std::io::Result<Vec<PathBuf>> {
+    let paths: Vec<_> = writes.iter().map(|w| w.relative.clone()).collect();
+    let outputs = OutputLocks::acquire(root, &paths, true)?
+        .ok_or_else(|| std::io::Error::other("could not lock transaction outputs"))?;
+    commit_with_output_locks(root, writes, &outputs)
+}
+
+fn commit_with_output_locks(
+    root: &Path,
+    writes: Vec<ProjectWrite>,
+    outputs: &OutputLocks,
+) -> std::io::Result<Vec<PathBuf>> {
+    if !outputs.is_current()?
+        || writes.iter().try_fold(false, |missing, write| {
+            Ok::<_, std::io::Error>(missing || !outputs.covers(root, &write.relative)?)
+        })?
+    {
+        return Err(std::io::Error::other(
+            "transaction output ownership changed",
+        ));
+    }
     let mut targets = BTreeSet::new();
     let mut prepared = Vec::new();
     for write in writes {
@@ -738,13 +827,14 @@ fn commit_project_writes_locked(
             relative: write.relative.to_string_lossy().replace('\\', "/"),
             had_original: current.is_some(),
             staged,
+            applied_sha256: write.contents.as_deref().map(bytes_sha256),
             backup,
         });
     }
 
     maybe_fault_exit("after-staging");
     let manifest = TransactionManifest {
-        version: 1,
+        version: 2,
         entries,
     };
     let manifest_bytes = serde_json::to_vec_pretty(&manifest)
@@ -908,7 +998,7 @@ fn recover_transactions_locked(root: &Path, scope: RecoveryScope) -> std::io::Re
                     format!("invalid transaction manifest: {error}"),
                 )
             })?;
-        if manifest.version != 1 {
+        if ![1, 2].contains(&manifest.version) {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 format!("unsupported transaction version {}", manifest.version),
@@ -920,6 +1010,13 @@ fn recover_transactions_locked(root: &Path, scope: RecoveryScope) -> std::io::Re
                 skipped_live = true;
                 continue;
             }
+            let paths: Vec<_> = manifest
+                .entries
+                .iter()
+                .map(|entry| PathBuf::from(&entry.relative))
+                .collect();
+            let _outputs = OutputLocks::acquire(root, &paths, true)?
+                .ok_or_else(|| std::io::Error::other("could not lock recovery outputs"))?;
             rollback_transaction(root, &transaction_dir, &manifest)?;
             recovered += 1;
         }
@@ -936,16 +1033,55 @@ fn rollback_transaction(
     transaction_dir: &Path,
     manifest: &TransactionManifest,
 ) -> std::io::Result<()> {
+    // Validate the whole batch before restoring any entry. A different root
+    // may have committed a newer value after this transaction was interrupted.
+    let mut restore = Vec::new();
     for entry in &manifest.entries {
         let target = safe_project_output_path(root, &entry.relative)?;
-        if entry.had_original {
+        let original = if entry.had_original {
             let backup = transaction_member(transaction_dir, &entry.backup)?;
-            atomic_write(&target, &std::fs::read(backup)?)?;
+            Some(std::fs::read(backup)?)
+        } else {
+            None
+        };
+        let current = read_optional_bytes(&target)?;
+        if current == original {
+            continue;
+        }
+        let applied_matches = if let Some(staged) = &entry.staged {
+            let digest = match &entry.applied_sha256 {
+                Some(digest) => Some(digest.clone()),
+                // Legacy journals can be checked while their staged bytes
+                // remain. Once moved, an unrecorded applied value is unknown.
+                None => read_optional_bytes(&transaction_member(transaction_dir, staged)?)?
+                    .as_deref()
+                    .map(bytes_sha256),
+            };
+            current
+                .as_deref()
+                .is_some_and(|bytes| digest.as_ref() == Some(&bytes_sha256(bytes)))
+        } else {
+            current.is_none()
+        };
+        if !applied_matches {
+            return Err(std::io::Error::new(std::io::ErrorKind::AlreadyExists, format!(
+                "{} differs from the interrupted transaction's recorded values; refusing rollback and retaining its journal",
+                entry.relative
+            )));
+        }
+        restore.push((target, original));
+    }
+    for (target, original) in restore {
+        if let Some(bytes) = original {
+            atomic_write(&target, &bytes)?;
         } else {
             match std::fs::remove_file(&target) {
                 Ok(()) => {}
                 Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
                 Err(error) => return Err(error),
+            }
+            if let Some(parent) = target.parent() {
+                sync_dir(parent)?;
             }
         }
     }
@@ -1150,7 +1286,7 @@ fn safe_project_path(
         }
     }
 
-    let output = canonical_root.join(relative);
+    let output = canonical_root.join(relative.components().collect::<PathBuf>());
     if let Ok(metadata) = std::fs::symlink_metadata(&output) {
         if metadata.file_type().is_symlink() {
             return Err(std::io::Error::new(
@@ -1441,12 +1577,177 @@ mod tests {
     }
 
     #[test]
+    fn output_locks_normalize_aliases_and_coordinate_nested_roots() {
+        let dir = TempDir::new("output-lock-aliases");
+        std::fs::create_dir_all(dir.0.join("sub")).unwrap();
+        let before = locks::canonical_identity(&dir.0.join("./sub/shared.aether")).unwrap();
+        let held = OutputLocks::acquire(
+            &dir.0,
+            &[
+                PathBuf::from("./sub/shared.aether"),
+                PathBuf::from("sub/shared.aether"),
+            ],
+            false,
+        )
+        .unwrap()
+        .unwrap();
+        assert!(
+            OutputLocks::acquire(&dir.0.join("sub"), &[PathBuf::from("shared.aether")], false)
+                .unwrap()
+                .is_none()
+        );
+        std::fs::write(dir.0.join("sub/shared.aether"), b"created").unwrap();
+        assert_eq!(
+            before,
+            locks::canonical_identity(&dir.0.join("sub/shared.aether")).unwrap()
+        );
+        assert!(
+            OutputLocks::acquire(&dir.0.join("sub"), &[PathBuf::from("shared.aether")], false)
+                .unwrap()
+                .is_none()
+        );
+        drop(held);
+        assert!(
+            OutputLocks::acquire(&dir.0.join("sub"), &[PathBuf::from("shared.aether")], false)
+                .unwrap()
+                .is_some()
+        );
+    }
+
+    #[test]
+    fn plain_graph_save_reads_its_baseline_after_a_nested_output_writer() {
+        let dir = TempDir::new("save-output-order");
+        let child = dir.0.join("sub");
+        std::fs::create_dir_all(&child).unwrap();
+        let graph = SemanticGraph::new();
+        let bytes = graph.to_ron().unwrap();
+        std::fs::write(child.join("project.aether"), &bytes).unwrap();
+        let journal = JournalLock::create_and_acquire(&dir.0).unwrap();
+        let outputs = OutputLocks::acquire(&dir.0, &[PathBuf::from("sub/project.aether")], true)
+            .unwrap()
+            .unwrap();
+        let other_root = child.clone();
+        let writer = std::thread::spawn(move || {
+            let config = ProjectConfig::load(&other_root).unwrap();
+            save_graph(&other_root, &config, &graph)
+        });
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        loop {
+            if locks::ProcessLock::acquire("journal", &child, false)
+                .unwrap()
+                .is_none()
+            {
+                break;
+            }
+            assert!(
+                std::time::Instant::now() < deadline,
+                "writer did not reach its journal lock"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        std::fs::write(child.join("project.aether"), format!("{bytes}\n")).unwrap();
+        drop(outputs);
+        drop(journal);
+        assert!(writer.join().unwrap().is_ok());
+    }
+
+    #[test]
+    fn recovery_retains_conflicting_foreign_writes_without_partial_rollback() {
+        let dir = TempDir::new("foreign-recovery-conflict");
+        let child = dir.0.join("sub");
+        std::fs::create_dir_all(&child).unwrap();
+        let transaction_dir = dir.0.join(TRANSACTION_ROOT).join("interrupted");
+        std::fs::create_dir_all(&transaction_dir).unwrap();
+        std::fs::write(dir.0.join("first.rs"), b"first candidate").unwrap();
+        std::fs::write(child.join("shared.aether"), b"graph candidate").unwrap();
+        std::fs::write(transaction_dir.join("0.backup"), b"first original").unwrap();
+        std::fs::write(transaction_dir.join("1.backup"), b"graph original").unwrap();
+        let manifest = TransactionManifest {
+            version: 2,
+            entries: vec![
+                TransactionEntry {
+                    relative: "first.rs".into(),
+                    had_original: true,
+                    staged: Some("0.staged".into()),
+                    applied_sha256: Some(bytes_sha256(b"first candidate")),
+                    backup: "0.backup".into(),
+                },
+                TransactionEntry {
+                    relative: "sub/shared.aether".into(),
+                    had_original: true,
+                    staged: Some("1.staged".into()),
+                    applied_sha256: Some(bytes_sha256(b"graph candidate")),
+                    backup: "1.backup".into(),
+                },
+            ],
+        };
+        std::fs::write(
+            transaction_dir.join(TRANSACTION_MANIFEST),
+            serde_json::to_vec(&manifest).unwrap(),
+        )
+        .unwrap();
+        commit_project_writes(
+            &child,
+            vec![ProjectWrite::bytes(
+                "shared.aether",
+                Some(b"graph candidate".to_vec()),
+                b"newer graph".to_vec(),
+            )],
+        )
+        .unwrap();
+        let error = recover_project_transactions(&dir.0).unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::AlreadyExists);
+        assert_eq!(
+            std::fs::read(dir.0.join("first.rs")).unwrap(),
+            b"first candidate"
+        );
+        assert_eq!(
+            std::fs::read(child.join("shared.aether")).unwrap(),
+            b"newer graph"
+        );
+        assert!(transaction_dir.join(TRANSACTION_MANIFEST).exists());
+    }
+
+    #[test]
+    fn legacy_recovery_retains_an_unverifiable_applied_value() {
+        let dir = TempDir::new("legacy-recovery-unknown");
+        let transaction_dir = dir.0.join(TRANSACTION_ROOT).join("interrupted");
+        std::fs::create_dir_all(&transaction_dir).unwrap();
+        std::fs::write(dir.0.join("file.rs"), b"unknown later value").unwrap();
+        std::fs::write(transaction_dir.join("0.backup"), b"original").unwrap();
+        let manifest = TransactionManifest {
+            version: 1,
+            entries: vec![TransactionEntry {
+                relative: "file.rs".into(),
+                had_original: true,
+                staged: Some("0.staged".into()),
+                applied_sha256: None,
+                backup: "0.backup".into(),
+            }],
+        };
+        std::fs::write(
+            transaction_dir.join(TRANSACTION_MANIFEST),
+            serde_json::to_vec(&manifest).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            recover_project_transactions(&dir.0).unwrap_err().kind(),
+            std::io::ErrorKind::AlreadyExists
+        );
+        assert_eq!(
+            std::fs::read(dir.0.join("file.rs")).unwrap(),
+            b"unknown later value"
+        );
+        assert!(transaction_dir.join(TRANSACTION_MANIFEST).exists());
+    }
+
+    #[test]
     fn startup_rolls_back_an_interrupted_transaction() {
         let dir = TempDir::new("transaction-recovery");
         let transaction_dir = dir.0.join(TRANSACTION_ROOT).join("interrupted");
         std::fs::create_dir_all(&transaction_dir).unwrap();
-        std::fs::write(dir.0.join("existing.rs"), b"partially committed\n").unwrap();
-        std::fs::write(dir.0.join("created.rs"), b"partially created\n").unwrap();
+        std::fs::write(dir.0.join("existing.rs"), b"candidate\n").unwrap();
+        std::fs::write(dir.0.join("created.rs"), b"candidate\n").unwrap();
         std::fs::write(transaction_dir.join("0.backup"), b"original\n").unwrap();
         std::fs::write(transaction_dir.join("0.staged"), b"candidate\n").unwrap();
         std::fs::write(transaction_dir.join("1.staged"), b"candidate\n").unwrap();
@@ -1457,12 +1758,14 @@ mod tests {
                     relative: "existing.rs".into(),
                     had_original: true,
                     staged: Some("0.staged".into()),
+                    applied_sha256: None,
                     backup: "0.backup".into(),
                 },
                 TransactionEntry {
                     relative: "created.rs".into(),
                     had_original: false,
                     staged: Some("1.staged".into()),
+                    applied_sha256: None,
                     backup: "1.backup".into(),
                 },
             ],
@@ -1494,6 +1797,7 @@ mod tests {
                 relative: "deleted.rs".into(),
                 had_original: true,
                 staged: None,
+                applied_sha256: None,
                 backup: "0.backup".into(),
             }],
         };
@@ -1630,7 +1934,7 @@ fn cli_route() {
     fn directory_build_recovers_before_parsing_sources() {
         let dir = TempDir::new("build-recovery");
         std::fs::create_dir_all(dir.0.join("src")).unwrap();
-        std::fs::write(dir.0.join("src/lib.rs"), b"fn partial() {}\n").unwrap();
+        std::fs::write(dir.0.join("src/lib.rs"), b"fn candidate() {}\n").unwrap();
         let transaction_dir = dir.0.join(TRANSACTION_ROOT).join("interrupted");
         std::fs::create_dir_all(&transaction_dir).unwrap();
         std::fs::write(transaction_dir.join("0.backup"), b"fn original() {}\n").unwrap();
@@ -1641,6 +1945,7 @@ fn cli_route() {
                 relative: "src/lib.rs".into(),
                 had_original: true,
                 staged: Some("0.staged".into()),
+                applied_sha256: None,
                 backup: "0.backup".into(),
             }],
         };
@@ -1653,7 +1958,7 @@ fn cli_route() {
         let (graph, _, _) = build_from_dir(&dir.0).unwrap();
 
         assert!(graph.find_by_path("crate::lib::original").is_some());
-        assert!(graph.find_by_path("crate::lib::partial").is_none());
+        assert!(graph.find_by_path("crate::lib::candidate").is_none());
         assert!(!dir.0.join(".girder").exists());
     }
 
@@ -1670,6 +1975,7 @@ fn cli_route() {
                 relative: "file.rs".into(),
                 had_original: true,
                 staged: Some("0.staged".into()),
+                applied_sha256: None,
                 backup: "0.backup".into(),
             }],
         };
@@ -1691,7 +1997,7 @@ fn cli_route() {
     fn write_interrupted_journal(root: &Path, name: &str) {
         let transaction_dir = root.join(TRANSACTION_ROOT).join(name);
         std::fs::create_dir_all(&transaction_dir).unwrap();
-        std::fs::write(root.join("existing.rs"), b"partially committed\n").unwrap();
+        std::fs::write(root.join("existing.rs"), b"candidate\n").unwrap();
         std::fs::write(transaction_dir.join("0.backup"), b"original\n").unwrap();
         std::fs::write(transaction_dir.join("0.staged"), b"candidate\n").unwrap();
         let manifest = TransactionManifest {
@@ -1700,6 +2006,7 @@ fn cli_route() {
                 relative: "existing.rs".into(),
                 had_original: true,
                 staged: Some("0.staged".into()),
+                applied_sha256: None,
                 backup: "0.backup".into(),
             }],
         };
@@ -1726,7 +2033,7 @@ fn cli_route() {
         let dir = TempDir::new("torn-manifest");
         let transaction_dir = dir.0.join(TRANSACTION_ROOT).join("interrupted");
         std::fs::create_dir_all(&transaction_dir).unwrap();
-        std::fs::write(dir.0.join("existing.rs"), b"partially committed\n").unwrap();
+        std::fs::write(dir.0.join("existing.rs"), b"candidate\n").unwrap();
         std::fs::write(transaction_dir.join("0.backup"), b"original\n").unwrap();
         std::fs::write(transaction_dir.join(TRANSACTION_MANIFEST), b"{ torn").unwrap();
 
@@ -1735,7 +2042,7 @@ fn cli_route() {
         // Nothing was modified and the evidence is preserved for inspection.
         assert_eq!(
             std::fs::read(dir.0.join("existing.rs")).unwrap(),
-            b"partially committed\n"
+            b"candidate\n"
         );
         assert!(transaction_dir.join("0.backup").exists());
         // The failure is stable, not destructive, on retry.
@@ -1756,18 +2063,20 @@ fn cli_route() {
         std::fs::write(transaction_dir.join("1.backup"), b"original two\n").unwrap();
         std::fs::write(transaction_dir.join("1.staged"), b"candidate two\n").unwrap();
         let manifest = TransactionManifest {
-            version: 1,
+            version: 2,
             entries: vec![
                 TransactionEntry {
                     relative: "first.rs".into(),
                     had_original: true,
                     staged: Some("0.staged".into()),
+                    applied_sha256: Some(bytes_sha256(b"candidate one\n")),
                     backup: "0.backup".into(),
                 },
                 TransactionEntry {
                     relative: "second.rs".into(),
                     had_original: true,
                     staged: Some("1.staged".into()),
+                    applied_sha256: Some(bytes_sha256(b"candidate two\n")),
                     backup: "1.backup".into(),
                 },
             ],
@@ -1802,18 +2111,20 @@ fn cli_route() {
         std::fs::write(dir.0.join("created.rs"), b"created\n").unwrap();
         std::fs::write(transaction_dir.join("0.backup"), b"original\n").unwrap();
         let manifest = TransactionManifest {
-            version: 1,
+            version: 2,
             entries: vec![
                 TransactionEntry {
                     relative: "replaced.rs".into(),
                     had_original: true,
                     staged: Some("0.staged".into()),
+                    applied_sha256: Some(bytes_sha256(b"candidate\n")),
                     backup: "0.backup".into(),
                 },
                 TransactionEntry {
                     relative: "created.rs".into(),
                     had_original: false,
                     staged: Some("1.staged".into()),
+                    applied_sha256: Some(bytes_sha256(b"created\n")),
                     backup: "1.backup".into(),
                 },
             ],
@@ -1848,7 +2159,7 @@ fn cli_route() {
         assert!(dir.0.join(TRANSACTION_ROOT).join(&journal).exists());
         assert_eq!(
             std::fs::read(dir.0.join("existing.rs")).unwrap(),
-            b"partially committed\n"
+            b"candidate\n"
         );
 
         // Exclusive recovery reclaims the journal regardless of liveness:

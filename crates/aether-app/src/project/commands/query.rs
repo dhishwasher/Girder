@@ -1,5 +1,5 @@
 use crate::project::source::build_from_dir;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub fn query(args: &[String]) -> std::io::Result<()> {
     use aether_graph::parse_query;
@@ -12,14 +12,9 @@ pub fn query(args: &[String]) -> std::io::Result<()> {
         .map(String::as_str)
         .collect();
 
-    println!("Loading {} ...", root.display());
     let (graph, _builder, files) = build_from_dir(&root)?;
-    println!(
-        "  {} file(s), {} nodes, {} edges\n",
-        files,
-        graph.node_count(),
-        graph.edge_count()
-    );
+    let mut sink = crate::project::output_sink::Sink::Stdout;
+    query_header(&root, &graph, files, &mut sink);
 
     if question_words.is_empty() {
         // Interactive REPL.
@@ -43,10 +38,32 @@ pub fn query(args: &[String]) -> std::io::Result<()> {
     } else {
         // Single-shot mode.
         let question = question_words.join(" ");
-        let q = parse_query(&question);
-        let result = graph.answer_query(&q);
-        println!("{}", result.display());
+        let rendered = query_answer(&graph, &question);
+        println!("{rendered}");
     }
 
     Ok(())
+}
+
+pub(super) fn query_header(
+    root: &Path,
+    graph: &aether_graph::SemanticGraph,
+    files: usize,
+    sink: &mut crate::project::output_sink::Sink,
+) {
+    use crate::project::output_sink::out;
+    out!(sink, "Loading {} ...", root.display());
+    out!(
+        sink,
+        "  {} file(s), {} nodes, {} edges\n",
+        files,
+        graph.node_count(),
+        graph.edge_count()
+    );
+}
+
+pub(super) fn query_answer(graph: &aether_graph::SemanticGraph, question: &str) -> String {
+    graph
+        .answer_query(&aether_graph::parse_query(question))
+        .display()
 }

@@ -23,6 +23,9 @@ use tree_sitter::{Node as TsNode, Tree};
 // EXTENSION POINT: Method values, method expressions, and function-typed fields
 // are not resolved as Calls edges; retrieval cannot follow deferred dispatch
 // through a stored callable.
+// EXTENSION POINT: Function-value references passed as callbacks, such as
+// http.HandleFunc(..., serveHome), are not call expressions and create no Calls
+// edge. The pinned websocket chat example remains a measured miss.
 // EXTENSION POINT: Reflection-based dispatch is not modeled; retrieval cannot
 // link calls selected through reflect or runtime name lookup.
 // EXTENSION POINT: Vendored dependencies are not given module-replacement

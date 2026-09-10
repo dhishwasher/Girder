@@ -1,0 +1,849 @@
+{
+  "schema_version": 1,
+  "visibility": "Evaluator only. Never copy this file, original orient records, or policy history into either arm root or its messages.",
+  "targets": [
+    {
+      "id": "task-01",
+      "expected_path": "crate::algo::dijkstra::dijkstra",
+      "original_orient_record": {
+        "id": "petgraph-dijkstra",
+        "repo_ref": {
+          "id": "petgraph-0.6.5",
+          "pinned_in": "docs/core-representative-corpus.json"
+        },
+        "starting_point": {
+          "kind": "symbol",
+          "value": "crate::algo::dijkstra::dijkstra"
+        },
+        "what_a_competent_engineer_needs": "Before changing dijkstra's signature or behavior, an engineer needs its source, who calls it (tests/graph.rs's dijk and test_astar_null_heuristic per core-representative-v1's dijkstra-cross-file-call and astar-test-dijkstra-call cases), what it calls, and which tests would need to be re-run.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::algo::dijkstra::dijkstra"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::algo::dijkstra::dijkstra?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::algo::dijkstra::dijkstra call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::algo::dijkstra::dijkstra"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::algo::dijkstra::dijkstra?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-02",
+      "expected_path": "crate::de::from_slice",
+      "original_orient_record": {
+        "id": "serde_json-from_slice",
+        "repo_ref": {
+          "id": "serde_json-1.0.150",
+          "pinned_in": "docs/core-representative-corpus.json"
+        },
+        "starting_point": {
+          "kind": "symbol",
+          "value": "crate::de::from_slice"
+        },
+        "what_a_competent_engineer_needs": "from_slice delegates to from_trait and constructs a SliceRead (core-representative-v1's from-slice-wrapper and from-slice-nested-argument-call cases) -- an engineer touching it needs those callees plus its callers before changing the delegation.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::de::from_slice"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::de::from_slice?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::de::from_slice call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::de::from_slice"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::de::from_slice?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-03",
+      "expected_path": "crate::regex::string::Regex::replace",
+      "original_orient_record": {
+        "id": "regex-string-replace",
+        "repo_ref": {
+          "id": "regex-1.12.4",
+          "pinned_in": "docs/core-representative-corpus.json"
+        },
+        "starting_point": {
+          "kind": "symbol",
+          "value": "crate::regex::string::Regex::replace"
+        },
+        "what_a_competent_engineer_needs": "The string-receiver Regex::replace must resolve to its own replacen, not the same-named bytes-module method (core-representative-v1's string-replace-owner and string-replace-not-bytes cases) -- exactly the owner-disambiguation an orienting engineer needs to see before editing.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::regex::string::Regex::replace"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::regex::string::Regex::replace?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::regex::string::Regex::replace call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::regex::string::Regex::replace"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::regex::string::Regex::replace?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-04",
+      "expected_path": "crate::click::core::Command::invoke",
+      "original_orient_record": {
+        "id": "click-command-invoke",
+        "repo_ref": {
+          "id": "click-8.4.1",
+          "pinned_in": "docs/core-representative-corpus.json"
+        },
+        "starting_point": {
+          "kind": "symbol",
+          "value": "crate::click::core::Command::invoke"
+        },
+        "what_a_competent_engineer_needs": "Command::invoke must resolve its Context receiver to Context::invoke and not to same-named Group::invoke or CliRunner::invoke (core-representative-v1's command-invoke-not-group / command-invoke-not-runner negative cases) -- an engineer needs to see exactly which invoke it calls before touching dispatch.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::click::core::Command::invoke"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::click::core::Command::invoke?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::click::core::Command::invoke call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::click::core::Command::invoke"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::click::core::Command::invoke?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-05",
+      "expected_path": "crate::click::parser::_OptionParser::parse_args",
+      "original_orient_record": {
+        "id": "click-parser-parse_args",
+        "repo_ref": {
+          "id": "click-8.4.1",
+          "pinned_in": "docs/core-representative-corpus.json"
+        },
+        "starting_point": {
+          "kind": "symbol",
+          "value": "crate::click::parser::_OptionParser::parse_args"
+        },
+        "what_a_competent_engineer_needs": "parse_args fans out into an options phase and an arguments phase (core-representative-v1's parser-options-phase / parser-arguments-phase cases) -- direct callees at depth 1 are exactly what an engineer needs before changing parse order.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::click::parser::_OptionParser::parse_args"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::click::parser::_OptionParser::parse_args?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::click::parser::_OptionParser::parse_args call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::click::parser::_OptionParser::parse_args"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::click::parser::_OptionParser::parse_args?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-06",
+      "expected_path": "crate::pydantic::aliases::AliasGenerator::generate_aliases",
+      "original_orient_record": {
+        "id": "pydantic-alias-generator",
+        "repo_ref": {
+          "id": "pydantic-2.13.4",
+          "pinned_in": "docs/core-representative-corpus.json"
+        },
+        "starting_point": {
+          "kind": "symbol",
+          "value": "crate::pydantic::aliases::AliasGenerator::generate_aliases"
+        },
+        "what_a_competent_engineer_needs": "generate_aliases invokes its own private _generate_alias helper (core-representative-v1's alias-generator-helper case) -- an engineer needs that callee and any callers before changing the public method's contract.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::pydantic::aliases::AliasGenerator::generate_aliases"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::pydantic::aliases::AliasGenerator::generate_aliases?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::pydantic::aliases::AliasGenerator::generate_aliases call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::pydantic::aliases::AliasGenerator::generate_aliases"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::pydantic::aliases::AliasGenerator::generate_aliases?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-07",
+      "expected_path": "crate::requests::api::get",
+      "original_orient_record": {
+        "id": "requests-get-wrapper",
+        "repo_ref": {
+          "id": "requests-2.34.2",
+          "pinned_in": "docs/core-representative-corpus.json"
+        },
+        "starting_point": {
+          "kind": "symbol",
+          "value": "crate::requests::api::get"
+        },
+        "what_a_competent_engineer_needs": "get is a thin wrapper delegating to request (core-representative-v1's get-wrapper case) -- a low-fan-out case where an engineer mainly needs the one callee and the test coverage, not a large caller set.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::requests::api::get"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::requests::api::get?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::requests::api::get call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::requests::api::get"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::requests::api::get?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-08",
+      "expected_path": "crate::requests::sessions::Session::prepare_request",
+      "original_orient_record": {
+        "id": "requests-session-prepare_request",
+        "repo_ref": {
+          "id": "requests-2.34.2",
+          "pinned_in": "docs/core-representative-corpus.json"
+        },
+        "starting_point": {
+          "kind": "symbol",
+          "value": "crate::requests::sessions::Session::prepare_request"
+        },
+        "what_a_competent_engineer_needs": "prepare_request fans out to PreparedRequest::prepare, merge_setting, merge_hooks, merge_cookies, and cookiejar_from_dict (core-representative-v1's session-* cases) -- a high-fan-out case that stresses depth-1 callee reporting and the output cap.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::requests::sessions::Session::prepare_request"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::requests::sessions::Session::prepare_request?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::requests::sessions::Session::prepare_request call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::requests::sessions::Session::prepare_request"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::requests::sessions::Session::prepare_request?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-09",
+      "expected_path": "crate::types::ZodType::safeParse",
+      "original_orient_record": {
+        "id": "zod-safeparse",
+        "repo_ref": {
+          "id": "zod-3.23.8",
+          "pinned_in": "docs/typescript-support-policy.json"
+        },
+        "starting_point": {
+          "kind": "symbol",
+          "value": "crate::types::ZodType::safeParse"
+        },
+        "what_a_competent_engineer_needs": "safeParse calls handleResult (typescript-support-v1's zod-safe-parse-calls-handle-result-style case) -- the first cross-language (TypeScript) task in this corpus.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::types::ZodType::safeParse"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::types::ZodType::safeParse?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::types::ZodType::safeParse call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::types::ZodType::safeParse"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::types::ZodType::safeParse?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-10",
+      "expected_path": "crate::source::merge-deep::MergeDeep",
+      "original_orient_record": {
+        "id": "type-fest-merge-deep",
+        "repo_ref": {
+          "id": "type-fest-4.26.1",
+          "pinned_in": "docs/typescript-support-policy.json"
+        },
+        "starting_point": {
+          "kind": "symbol",
+          "value": "crate::source::merge-deep::MergeDeep"
+        },
+        "what_a_competent_engineer_needs": "MergeDeep is a pure type-level construct (typescript-support-v1's module-contains-* cases for this file are Contains edges, not Calls) -- deliberately adversarial: a competent engineer here needs to confirm there ARE no runtime callers/callees/tests, not receive a large fan-out.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::source::merge-deep::MergeDeep"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::source::merge-deep::MergeDeep?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::source::merge-deep::MergeDeep call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::source::merge-deep::MergeDeep"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::source::merge-deep::MergeDeep?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-11",
+      "expected_path": "crate::Afero::ReadFile",
+      "original_orient_record": {
+        "id": "afero-readfile",
+        "repo_ref": {
+          "id": "afero-1.11.0",
+          "pinned_in": "docs/go-support-policy.json"
+        },
+        "starting_point": {
+          "kind": "symbol",
+          "value": "crate::Afero::ReadFile"
+        },
+        "what_a_competent_engineer_needs": "Afero::ReadFile calls the package-level ReadFile function (go-support-v1's afero-readfile-calls case) -- the first Go task in this corpus.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::Afero::ReadFile"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::Afero::ReadFile?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::Afero::ReadFile call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::Afero::ReadFile"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::Afero::ReadFile?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-12",
+      "expected_path": "crate::Conn::WriteJSON",
+      "original_orient_record": {
+        "id": "websocket-writejson",
+        "repo_ref": {
+          "id": "websocket-1.5.3",
+          "pinned_in": "docs/go-support-policy.json"
+        },
+        "starting_point": {
+          "kind": "symbol",
+          "value": "crate::Conn::WriteJSON"
+        },
+        "what_a_competent_engineer_needs": "Conn::WriteJSON calls Conn::NextWriter (go-support-v1's conn-writejson-calls-nextwriter-style case) -- a second Go task exercising method-receiver call resolution.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::Conn::WriteJSON"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::Conn::WriteJSON?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::Conn::WriteJSON call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::Conn::WriteJSON"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::Conn::WriteJSON?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-13",
+      "expected_path": "crate::algo::dijkstra::dijkstra",
+      "original_orient_record": {
+        "id": "intent-shortest-path",
+        "repo_ref": {
+          "id": "petgraph-0.6.5",
+          "pinned_in": "docs/core-representative-corpus.json"
+        },
+        "starting_point": {
+          "kind": "intent",
+          "value": "compute the shortest path between two nodes"
+        },
+        "what_a_competent_engineer_needs": "The intended resolution is crate::algo::dijkstra::dijkstra. description-search-accuracy-v1 measured 41.9% top-1 / 77.4% top-5 for this kind of description-to-symbol search, so this task is expected to be adversarial: it is included specifically to record whether orient's intent path fails the same way get_source's does, not to inflate the corpus's pass rate.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "search_code",
+              "arguments": {
+                "query": "compute the shortest path between two nodes"
+              }
+            },
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::algo::dijkstra::dijkstra"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::algo::dijkstra::dijkstra?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::algo::dijkstra::dijkstra call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::algo::dijkstra::dijkstra"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::algo::dijkstra::dijkstra?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-14",
+      "expected_path": "crate::Afero::ReadFile",
+      "original_orient_record": {
+        "id": "intent-mock-filesystem-read",
+        "repo_ref": {
+          "id": "afero-1.11.0",
+          "pinned_in": "docs/go-support-policy.json"
+        },
+        "starting_point": {
+          "kind": "intent",
+          "value": "read a file from the in-memory filesystem"
+        },
+        "what_a_competent_engineer_needs": "The intended resolution is crate::Afero::ReadFile or a node in crate::mem. Adversarial: afero's naming (Afero, mem::File) is generic enough that description search plausibly resolves to an unrelated same-named helper elsewhere in the graph -- recorded honestly either way.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "search_code",
+              "arguments": {
+                "query": "read a file from the in-memory filesystem"
+              }
+            },
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::Afero::ReadFile"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::Afero::ReadFile?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::Afero::ReadFile call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::Afero::ReadFile"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::Afero::ReadFile?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    },
+    {
+      "id": "task-15",
+      "expected_path": "crate::ser::to_string",
+      "original_orient_record": {
+        "id": "intent-serialize-value-to-string",
+        "repo_ref": {
+          "id": "serde_json-1.0.150",
+          "pinned_in": "docs/core-representative-corpus.json"
+        },
+        "starting_point": {
+          "kind": "intent",
+          "value": "serialize a value to a JSON string"
+        },
+        "what_a_competent_engineer_needs": "The intended resolution is crate::ser::to_string (core-representative-v1's to-string-macro-call case names it directly). Adversarial: to_string_pretty is an equally plausible top-1 for this phrasing, so a 'wrong but related' resolution is a realistic failure mode to record, distinct from a nonsense resolution.",
+        "baseline": {
+          "tool_calls": [
+            {
+              "tool": "search_code",
+              "arguments": {
+                "query": "serialize a value to a JSON string"
+              }
+            },
+            {
+              "tool": "get_source",
+              "arguments": {
+                "nodes": [
+                  "crate::ser::to_string"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what calls crate::ser::to_string?"
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what does crate::ser::to_string call?"
+              }
+            },
+            {
+              "tool": "impacted_tests",
+              "arguments": {
+                "nodes": [
+                  "crate::ser::to_string"
+                ]
+              }
+            },
+            {
+              "tool": "ask_codebase",
+              "arguments": {
+                "question": "what would break if I change crate::ser::to_string?"
+              }
+            }
+          ]
+        }
+      },
+      "exclusion": null
+    }
+  ]
+}
