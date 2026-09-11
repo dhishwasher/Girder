@@ -1,0 +1,282 @@
+{
+  "campaigns": [
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 42.68325669600745,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 4.331110900995554,
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "fixture": "tiny-python",
+      "freeze_manifest_sha256": "e9631b160c8e2242766dac14d2151ceffca29beace89c964a641da198b83c7af",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "harness_commit": "80445c150118ecd064df8edffb583f462d36cd9f",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 2752512,
+      "policy_id": "girder-competitor-benchmark-v1-revision-5",
+      "policy_sha256": "4c52a048272fde8596411678aff6d7b9ce53e09f98ded4fdfa0de4005dbe4ad8",
+      "prepare_success": true,
+      "product": "girder",
+      "query_record_count": 100,
+      "query_response_bytes": 41958,
+      "query_status": {
+        "PASS": 40,
+        "WRONG": 60
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "raw/campaign-girder-tiny-v1.tar.gz",
+      "source_result_sha256": "b9971d86f4f99a7dafe5a36dc089b12860e1d6345509b368b4adcd8be00482d4",
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.2.6",
+      "warm_query_seconds_mean": 0.10498274679412134,
+      "warm_query_seconds_total": 0.5249137339706067
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 57.025309151009424,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 4.059933826996712,
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "fixture": "tiny-python",
+      "freeze_manifest_sha256": "e9631b160c8e2242766dac14d2151ceffca29beace89c964a641da198b83c7af",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "harness_commit": "80445c150118ecd064df8edffb583f462d36cd9f",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 3932160,
+      "policy_id": "girder-competitor-benchmark-v1-revision-5",
+      "policy_sha256": "4c52a048272fde8596411678aff6d7b9ce53e09f98ded4fdfa0de4005dbe4ad8",
+      "prepare_success": true,
+      "product": "girder-watch",
+      "query_record_count": 100,
+      "query_response_bytes": 45563,
+      "query_status": {
+        "PASS": 40,
+        "WRONG": 60
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "raw/campaign-girder-watch-tiny-v1.tar.gz",
+      "source_result_sha256": "95f653326d560730189a16535e296b798342665c7021f5f949fb95e2bab10bd8",
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.2.6",
+      "warm_query_seconds_mean": 0.10586606000433676,
+      "warm_query_seconds_total": 0.5293303000216838
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 0,
+          "false_positive": 1,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "true_positive": 2
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "calls_per_query_record": 1.2,
+      "campaign_seconds": 48.73473589099012,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 1.0597526429919526,
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "fixture": "tiny-python",
+      "freeze_manifest_sha256": "e9631b160c8e2242766dac14d2151ceffca29beace89c964a641da198b83c7af",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "harness_commit": "80445c150118ecd064df8edffb583f462d36cd9f",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 13291520,
+      "policy_id": "girder-competitor-benchmark-v1-revision-5",
+      "policy_sha256": "4c52a048272fde8596411678aff6d7b9ce53e09f98ded4fdfa0de4005dbe4ad8",
+      "prepare_success": true,
+      "product": "ripwire",
+      "query_record_count": 100,
+      "query_response_bytes": 122926,
+      "query_status": {
+        "PASS": 40,
+        "WRONG": 60
+      },
+      "query_tool_calls": 120,
+      "raw_archive": "raw/campaign-ripwire-tiny-v3.tar.gz",
+      "source_result_sha256": "4ddaa4003e28b6152c4ce14897ab1489df4809e080fdc598afa62e9547742a61",
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.5.0",
+      "warm_query_seconds_mean": 0.3892381762037985,
+      "warm_query_seconds_total": 1.9461908810189925
+    }
+  ],
+  "schema_version": 1,
+  "scope": "First external campaign: tiny Python adapter gate"
+}

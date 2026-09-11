@@ -18,18 +18,55 @@ The exact acquisition commands, native operations and field projections, depende
 
 ## Reproduction
 
-The Girder and Ripwire adapters and serial campaign runner are now available. The valid external campaign uses revision 5:
+The Girder and Ripwire adapters and serial campaign runner are now available. The first valid external small-fixture campaign uses revision 5. Its [generated report](results/tiny/report.md), [JSON](results/tiny/summary.json), [CSV](results/tiny/summary.csv), and checksum-pinned [raw archives](results/tiny/artifacts.sha256) are committed. The `tiny-python` corpus entry is an adapter gate and remains excluded from the final competitive aggregate.
 
 ```sh
 python3 -m unittest -v tools.competitor_benchmark.test_foundation
 python3 -m unittest -v tools.competitor_benchmark.test_girder_adapter
 python3 -m unittest -v tools.competitor_benchmark.test_ripwire_adapter
 python3 -m unittest -v tools.competitor_benchmark.test_campaign
+python3 -m unittest -v tools.competitor_benchmark.test_reporting
 ```
 
-See [the Girder adapter checkpoint](girder-adapter.md) for exact one-mode-at-a-time commands and its retained observation.
+See [the Girder adapter checkpoint](girder-adapter.md) for its earlier retained validation. The valid comparison was reproduced one product at a time with fresh work and output paths:
 
-Every campaign command will set `CARGO_BUILD_JOBS=1`, `CMAKE_BUILD_PARALLEL_LEVEL=1`, `MAKEFLAGS=-j1`, `RAYON_NUM_THREADS=1`, and `npm_config_jobs=1`. Measured work runs offline after pinned acquisition. A tested supervisor checks preflight memory, samples process-tree RSS and system headroom, bounds time and output, and kills descendants. The final reproduction command will be recorded here and in the generated report after the runner itself is committed.
+```sh
+PYTHONPATH=. python3 -m tools.competitor_benchmark.campaign \
+  --product girder --fixture tiny-python --binary /path/to/girder-0.2.6 \
+  --work-root /external/work/girder-tiny --output /external/runs/girder-tiny
+
+PYTHONPATH=. python3 -m tools.competitor_benchmark.campaign \
+  --product girder-watch --fixture tiny-python --binary /path/to/girder-0.2.6 \
+  --work-root /external/work/girder-watch-tiny --output /external/runs/girder-watch-tiny
+
+PYTHONPATH=. python3 -m tools.competitor_benchmark.campaign \
+  --product ripwire --fixture tiny-python --binary /path/to/ripwire-0.5.0 \
+  --work-root /external/work/ripwire-tiny --output /external/runs/ripwire-tiny
+```
+
+The generator verifies every recorded raw byte count before it writes results:
+
+```sh
+PYTHONPATH=. python3 -m tools.competitor_benchmark.reporting \
+  --result raw/girder.tar.gz=/external/runs/girder-tiny/result.json \
+  --result raw/girder-watch.tar.gz=/external/runs/girder-watch-tiny/result.json \
+  --result raw/ripwire.tar.gz=/external/runs/ripwire-tiny/result.json \
+  --output /path/to/report-output \
+  --title "First external campaign: tiny Python adapter gate" \
+  --scope-note "Excluded adapter gate."
+```
+
+Preserved `result.json` files retain the original absolute raw-artifact paths. To replay from an extracted archive on another machine, pass its extracted campaign directory explicitly:
+
+```sh
+PYTHONPATH=. python3 -m tools.competitor_benchmark.reporting \
+  --result raw/girder.tar.gz=/tmp/campaign-girder/result.json \
+  --artifact-root raw/girder.tar.gz=/tmp/campaign-girder \
+  --output /tmp/replayed-report --title "Replayed result" \
+  --scope-note "Archive replay."
+```
+
+Every campaign command sets `CARGO_BUILD_JOBS=1`, `CMAKE_BUILD_PARALLEL_LEVEL=1`, `MAKEFLAGS=-j1`, `RAYON_NUM_THREADS=1`, and `npm_config_jobs=1`. Measured work runs offline after pinned acquisition. A tested supervisor checks preflight memory, samples process-tree RSS and system headroom, bounds time and output, and kills descendants. The runner refuses an existing output directory or a concurrent campaign lock.
 
 ## Reporting boundaries
 

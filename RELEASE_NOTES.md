@@ -4,9 +4,8 @@ The competitive benchmark now has a frozen, resource-bounded foundation for
 comparing Girder with GitNexus, codebase-memory-mcp, code-review-graph, and
 ripwire. It commits the corpus, mutation sequence, independent oracle, scoring
 rules, version and artifact pins, adapter contract, resource limits, and narrow
-unit tests before any comparative run. Measured results will be added here only
-after each adapter and campaign checkpoint is complete; this entry makes no
-competitive claim yet.
+unit tests before any comparative run. Measured results are added here only
+after each adapter and campaign checkpoint is complete.
 
 The first adapter checkpoint now covers both Girder 0.2.6 MCP modes through
 the common harness. Its retained tiny-fixture validation publishes the known
@@ -17,7 +16,19 @@ Ripwire 0.5.0 is the first external adapter. Its checksum-pinned CLI mapping,
 body-source check, symbol-scoped test-file projection, pagination boundaries,
 and raw preflight failures are frozen before the scored small-fixture run.
 
-See [the benchmark protocol](docs/competitor-benchmark/README.md).
+The first valid external small-fixture comparison is now recorded under frozen
+policy revision 5. Girder normal, Girder watch, and Ripwire each completed the
+tiny Python campaign with 40 PASS and 60 WRONG query records. All found the
+static definition and direct callee; all missed the frozen function-parameter
+callback in callers and reverse impact. Girder normal returned 41,958 query
+response bytes versus Ripwire's 122,926, while using 140 calls versus 120.
+Ripwire recalled both relevant tests by selecting their whole file, with one
+unrelated false positive; Girder returned one relevant test and no unrelated
+test in the base warm query. This fixture is an adapter gate and is excluded
+from the final competitive aggregate.
+
+See [the benchmark protocol](docs/competitor-benchmark/README.md) and the
+[generated first-external result](docs/competitor-benchmark/results/tiny/report.md).
 
 # Girder 0.2.6
 
