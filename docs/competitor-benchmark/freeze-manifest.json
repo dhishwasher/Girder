@@ -1,6 +1,6 @@
 {
-  "frozen_at_utc": "2026-09-11T13:25:45Z",
-  "rule": "Revision 4 inputs. Revision 3 produced one retained invalid external run before any aggregate; only its whole-file STALE label was defective.",
+  "frozen_at_utc": "2026-09-11T13:27:51Z",
+  "rule": "Revision 5 inputs. Prior invalid and interrupted external runs are retained; no aggregate uses them.",
   "schema_version": 1,
   "sha256": {
     "docs/competitor-benchmark/corpus.json": "1711d8b456e960f65f5314a55ce3f2f5d200d44cd43fdbd2deb10efaa98c77e1",
@@ -8,12 +8,12 @@
     "docs/competitor-benchmark/locks/gitnexus-package-lock.json": "fd4bf4e9a2cd0c378d62196c287e38dd5420f7d509113f8346fc73447f448b6b",
     "docs/competitor-benchmark/locks/gitnexus-package.json": "f1c80e259ccd5b1e56d7c6d9f7a8f06eab36b7d26f09c42078291deb0ef99284",
     "docs/competitor-benchmark/oracle.json": "74ea481194be99141992a69cc08aa92663f9b29150943d41df6c8e90752caa8d",
-    "docs/competitor-benchmark/policy.json": "c205b194a6f724d5ee471fad6c7fe9cbd717a524d92456ae82b25cd6670bb7ac",
+    "docs/competitor-benchmark/policy.json": "4c52a048272fde8596411678aff6d7b9ce53e09f98ded4fdfa0de4005dbe4ad8",
     "tools/competitor_benchmark/fixtures.py": "4c7c23efaecbdd40dfab7c322b6059e80ea59c8f4ab53b157f4264e5e13d6a66",
-    "tools/competitor_benchmark/process.py": "17f82ed160e176a3bf311c056beaa5f32feb34497dc8ad3c1c6056f14ac57414",
+    "tools/competitor_benchmark/process.py": "d89707d6f68f31e2b6aac8d41a829ce7d42259d43db12bbfecf76523a50f42bf",
     "tools/competitor_benchmark/protocol.py": "96a18f063a5aa1ba2bf6b95078ec5dfe939259987cc5bc1826f8b43843b9e9cf",
     "tools/competitor_benchmark/resources.py": "c30212bb9762c4afefb6373792634e7d07292600636fe95b13914ff42a1f636d",
     "tools/competitor_benchmark/scoring.py": "f342d9cf8bb9edd419a3e4dea05a365ee33c2d3984e313ba50ca182f5f497460",
-    "tools/competitor_benchmark/test_foundation.py": "5cadcda354765dc982dae0d070c72d6b3827ffc44c76fe52bfd12ce9f5598453"
+    "tools/competitor_benchmark/test_foundation.py": "852412c65118c1c4b99a730fb7a2a39f2b0fd78a21ffb01ac30361fcaf4b8061"
   }
 }

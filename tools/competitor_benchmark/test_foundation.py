@@ -8,6 +8,7 @@ import sys
 import hashlib
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from tools.competitor_benchmark.fixtures import (
@@ -18,6 +19,7 @@ from tools.competitor_benchmark.fixtures import (
 )
 from tools.competitor_benchmark.protocol import ExecutionRecord, Status, normalize_paths
 from tools.competitor_benchmark.process import run_supervised
+from tools.competitor_benchmark.process import process_group_rss_bytes
 from tools.competitor_benchmark.resources import (
     MemorySnapshot,
     read_meminfo,
@@ -285,6 +287,14 @@ class PolicyAndProtocolTests(unittest.TestCase):
                 timeout_seconds=2, maximum_tree_rss_bytes=1, **common,
             )
             self.assertEqual(blocked.status, Status.RESOURCE_BLOCKED)
+
+    def test_rss_sampler_tolerates_process_disappearing_during_proc_read(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            (root / "123").mkdir()
+            (root / "123" / "stat").write_text("placeholder")
+            with mock.patch.object(Path, "read_text", side_effect=ProcessLookupError(3, "gone")):
+                self.assertEqual(process_group_rss_bytes(123, root), 0)
 
 
 if __name__ == "__main__":

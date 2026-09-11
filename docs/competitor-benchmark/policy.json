@@ -278,7 +278,7 @@
     }
   ],
   "freeze_rule": "This policy, corpus.json, oracle.json, scorer, adapter contract, and their unit tests must be committed before any comparative campaign. Campaign results may not change them.",
-  "frozen_at_utc": "2026-09-11T13:25:45Z",
+  "frozen_at_utc": "2026-09-11T13:27:51Z",
   "host_limits": {
     "description": "Low-resource ChromeOS Crostini measurement host; results are host-specific.",
     "emergency_mem_available_bytes": 402653184,
@@ -288,6 +288,7 @@
     "minimum_mem_available_before_expensive_step_bytes": 805306368,
     "no_swap_required": false,
     "on_unsafe_memory": "Do not launch, or terminate the process tree if already running, cleanup, and record RESOURCE_BLOCKED. Never weaken the host or threshold after seeing results.",
+    "proc_race_handling": "A process disappearing during /proc enumeration is normal. OSError while reading a sampled process is ignored; the next 100 ms sample observes the remaining process group.",
     "process_supervision": "Every external process is placed in its own process group. The runner samples the full descendant tree RSS at 100 ms, terminates it above the frozen RSS cap or below emergency system headroom, enforces bounded output and timeout, and kills descendants during cleanup. This supervisor must pass unit tests before acquisition or campaign execution.",
     "required_environment": {
       "CARGO_BUILD_JOBS": "1",
@@ -329,8 +330,8 @@
     "test_inventory": "Each state lists every test node in the fixture. A native whole-test-file prediction expands to every listed node in that file before scoring; this models what will run and retains unrelated nodes as false positives.",
     "tests": "Test nodes in the reverse-transitive impact set."
   },
-  "policy_id": "girder-competitor-benchmark-v1-revision-4",
-  "policy_revision": 4,
+  "policy_id": "girder-competitor-benchmark-v1-revision-5",
+  "policy_revision": 5,
   "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
   "required_report_sections": [
     "Where Girder Lost",
@@ -355,6 +356,12 @@
       "reason": "The run exposed a status-only evaluator defect for whole-file test predictions. Revision 4 preserves all native answers and scoring inputs, compares prior expansions against the prior oracle, retains the invalid run, and changes no tool configuration or benchmark target.",
       "revision": 3,
       "status": "invalidated after first external run and before any aggregate"
+    },
+    {
+      "commit": "168caaadd45281743510af08c80c7cc4a85214ec",
+      "reason": "A normal /proc ESRCH race escaped the resource sampler. Revision 5 handles all OSError process-disappearance races and writes failure.json for any future uncaught interruption. No competitor output or scoring behavior changed.",
+      "revision": 4,
+      "status": "interrupted before completion"
     }
   ],
   "schema_version": 1,

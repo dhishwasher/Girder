@@ -159,7 +159,7 @@ def process_group_rss_bytes(process_group: int, proc_root: Path = Path("/proc"))
             fields = (entry / "stat").read_text().split()
             if int(fields[4]) == process_group:
                 total_pages += int(fields[23])
-        except (FileNotFoundError, PermissionError, IndexError, ValueError):
+        except (OSError, IndexError, ValueError):
             continue
     return total_pages * page_size
 

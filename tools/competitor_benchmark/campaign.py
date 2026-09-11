@@ -261,7 +261,7 @@ def _record_native(native: NativeResult, product: str, version: str, commit: str
 def _finish(output: Path, product: str, fixture: str, records: list[dict[str, Any]], state: str,
             started: float, **extra: Any) -> dict[str, Any]:
     result = {
-        "schema_version": 1, "policy_id": "girder-competitor-benchmark-v1-revision-4",
+        "schema_version": 1, "policy_id": "girder-competitor-benchmark-v1-revision-5",
         "policy_sha256": hashlib.sha256((DOCS / "policy.json").read_bytes()).hexdigest(),
         "freeze_manifest_sha256": hashlib.sha256((DOCS / "freeze-manifest.json").read_bytes()).hexdigest(),
         "harness_commit": subprocess.check_output(
@@ -323,7 +323,21 @@ def main() -> int:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             raise SystemExit("another competitor campaign is already running")
-        run_campaign(args.product, args.fixture, args.binary, args.work_root, args.output)
+        try:
+            run_campaign(args.product, args.fixture, args.binary, args.work_root, args.output)
+        except BaseException as error:
+            args.output.mkdir(parents=True, exist_ok=True)
+            failure = {
+                "schema_version": 1,
+                "classification": "INTERRUPTED_CAMPAIGN",
+                "recorded_at": utc_now(),
+                "exception_type": type(error).__name__,
+                "detail": str(error),
+            }
+            (args.output / "failure.json").write_text(
+                json.dumps(failure, indent=2, sort_keys=True) + "\n"
+            )
+            raise
     return 0
 
 

@@ -101,6 +101,19 @@
       "result_json_sha256": "d9f863101aa37ed0244b1c87653c674fd09bf5be03b706c76fbc27c1362e5ffd",
       "result_use": "None; excluded from every aggregate and replaced by one identical revision 4 rerun.",
       "version": "0.5.0"
+    },
+    {
+      "classification": "INTERRUPTED_CAMPAIGN",
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "comparative_result": false,
+      "detail": "The resource sampler encountered errno ESRCH when a short-lived process disappeared between /proc enumeration and stat reading. Revision 5 catches all OSError races and records future uncaught interruptions automatically.",
+      "fixture": "tiny-python full mutation sequence",
+      "id": "ripwire-tiny-revision4-interrupted",
+      "product": "ripwire",
+      "raw_archive": "docs/competitor-benchmark/invalid-campaign-artifacts/ripwire-tiny-revision4-interrupted.tar.gz",
+      "raw_archive_sha256": "e55f24f8177daa6d0096e2e912b8765c478ec703f3d815e79c90f4bb1e20b9be",
+      "result_use": "None; no result.json was produced.",
+      "version": "0.5.0"
     }
   ],
   "schema_version": 1
