@@ -1,0 +1,1 @@
+{"of":"calculate_total","defs":1,"count":1,"root":"/tmp/ripwire-adapter-validation-tpmdxyi2/fixture","hop_tested":1,"hop_untested":0,"shown":1,"capped":false,"total":1,"has_more":false,"next_offset":1,"offset":0,"limit":500,"graph_ambiguous":0,"graph_unresolved":0,"counts_floor":true,"callers":[{"t":"fn","n":"render_summary","p":"service.py:3","tested":true}]}

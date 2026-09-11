@@ -1,0 +1,1 @@
+ripwire: --json is not yet supported for --affected — supported: the default map, --for, --pack-task, --callers/--callees, --impact, --quality-delta, --test-gate, --metrics, and --plan-lanes which is JSON-native (e.g. ripwire <dir> --callers=SYM --json)

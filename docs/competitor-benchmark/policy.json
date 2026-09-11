@@ -21,6 +21,7 @@
   },
   "adapter_contract": {
     "actual_command_rule": "Every substituted argv and MCP method/arguments envelope is stored in the execution record.",
+    "file_level_test_rule": "Adapters encode a selected whole test file as path::*. The evaluator expands it only against the independently committed test_inventory. Unknown or ambiguous file selections remain false positives.",
     "freshness_rule": "After a mutation, use the product's documented watched/incremental behavior. A product with no update mode is queried normally so its own cache invalidation behavior is measured. Never force a cold rebuild unless the native workflow requires it and the record says so.",
     "methods": [
       "prepare",
@@ -251,9 +252,9 @@
       "native_queries": {
         "callees": "--callees={target} --json",
         "callers": "--callers={target} --json",
-        "definition": "--for={target} --json",
+        "definition": "--for={target} --json, then --expand={returned_path}:{target} --top-k=0 for source evidence (2 calls)",
         "impact": "--impact={target} --json",
-        "tests": "--test-gate --json"
+        "tests": "--affected={target} XML; selected test files normalize as path::*"
       },
       "prepare": [
         "{ripwire}",
@@ -265,17 +266,19 @@
       "projection": {
         "callees": "all --callees returned direct callee identities",
         "callers": "all --callers returned direct caller identities",
-        "definition": "the exact --for match and its returned body as source evidence",
+        "definition": "Exact-name sig rows become path::name; the matching expanded body is source evidence.",
         "impact": "all --impact returned identities, excluding seed",
-        "tests": "all --test-gate selected test identities"
+        "tests": "Every native <test p=...> file becomes p::* and expands to all frozen test nodes in that file during scoring."
       },
+      "query_cache_arg": "--cache={private_cache} on every warm query",
+      "query_pagination": "--limit=500 and --offset=N only on callers, callees, and impact; --for and --affected are fixed reports and reject pagination flags",
       "source": "https://github.com/redhat-et/ripwire/releases/tag/v0.5.0",
       "tag": "v0.5.0",
       "version": "0.5.0"
     }
   ],
   "freeze_rule": "This policy, corpus.json, oracle.json, scorer, adapter contract, and their unit tests must be committed before any comparative campaign. Campaign results may not change them.",
-  "frozen_at_utc": "2026-09-11T13:05:38Z",
+  "frozen_at_utc": "2026-09-11T13:21:44Z",
   "host_limits": {
     "description": "Low-resource ChromeOS Crostini measurement host; results are host-specific.",
     "emergency_mem_available_bytes": 402653184,
@@ -310,6 +313,7 @@
     "raw_artifacts": "Write complete stdout and stderr for every invocation. If combined output exceeds 4 MiB, terminate and record ERROR with the retained capped streams and byte limit.",
     "repetitions": "Exactly one cold prepare, one unmeasured warm-up per supported query at base state, and one measured warm query. Mutation measurements are one cumulative sequence per product-fixture; no retries except frozen readiness polling.",
     "response_bytes": "Exact UTF-8 bytes delivered on native stdout/stderr or MCP response envelopes, before normalization. Initial prompts and harness prose do not exist and are excluded.",
+    "test_granularity": "Function-level predictions score directly. Whole-file predictions expand to every committed test in that file, reflecting actual execution and charging unrelated tests as false positives.",
     "tokens": "Not measured and no token-saving claim is permitted.",
     "update_latency_seconds": "Filesystem mutation completion to first correct usable answer. Poll requests and bytes are counted and retained.",
     "warm_query_correctness": "Warm-up and measured query are independently scored. A measured cost is retained beside its status; cross-product cost comparison requires the same supported task and reports correctness alongside cost.",
@@ -322,10 +326,11 @@
     "impact": "Reverse-transitive runtime callers, excluding the target.",
     "location": "docs/competitor-benchmark/oracle.json",
     "matching_wrong_answers": "Two products returning the same wrong answer are each WRONG.",
+    "test_inventory": "Each state lists every test node in the fixture. A native whole-test-file prediction expands to every listed node in that file before scoring; this models what will run and retains unrelated nodes as false positives.",
     "tests": "Test nodes in the reverse-transitive impact set."
   },
-  "policy_id": "girder-competitor-benchmark-v1-revision-2",
-  "policy_revision": 2,
+  "policy_id": "girder-competitor-benchmark-v1-revision-3",
+  "policy_revision": 3,
   "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
   "required_report_sections": [
     "Where Girder Lost",
@@ -338,6 +343,12 @@
       "reason": "Post-freeze adversarial review found that rename staleness needed to preserve identity evidence when source markers are equal. Girder protocol preflight also fixed the exact impact prompt before any scored run. The invalid preflight and raw response are retained in preflight-log.json.",
       "revision": 1,
       "status": "invalidated_before comparative campaign"
+    },
+    {
+      "commit": "faefdf0",
+      "reason": "Ripwire interface preflight established that --for JSON omits bodies and --test-gate arguments are file-only. Revision 3 freezes the native source expansion, symbol-scoped --affected test query, and file-to-test-inventory scoring before any external score.",
+      "revision": 2,
+      "status": "invalidated before first external comparative campaign"
     }
   ],
   "schema_version": 1,

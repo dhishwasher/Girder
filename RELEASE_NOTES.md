@@ -13,6 +13,10 @@ the common harness. Its retained tiny-fixture validation publishes the known
 dynamic-dispatch losses and keeps invalidated preflight runs separate. These
 adapter checks are excluded from the later competitive aggregate.
 
+Ripwire 0.5.0 is the first external adapter. Its checksum-pinned CLI mapping,
+body-source check, symbol-scoped test-file projection, pagination boundaries,
+and raw preflight failures are frozen before the scored small-fixture run.
+
 See [the benchmark protocol](docs/competitor-benchmark/README.md).
 
 # Girder 0.2.6

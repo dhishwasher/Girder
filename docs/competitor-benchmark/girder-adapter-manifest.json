@@ -1,6 +1,6 @@
 {
   "classification": "ADAPTER_CHECKPOINT",
-  "note": "Source and evidence hashes for the Girder-only integration checkpoint. The foundation hashes remain in freeze-manifest.json.",
+  "note": "Historical source and evidence hashes for the Girder-only integration checkpoint at source_commit. Later additive runner and scorer revisions do not rewrite this record.",
   "schema_version": 1,
   "sha256": {
     "docs/competitor-benchmark/adapter-artifacts/girder-normal-v2.tar.gz": "a0f832e3e3be2799c16f9317555f713e77ede6e00f7cabee694c7adef0ccef0a",
@@ -11,5 +11,6 @@
     "tools/competitor_benchmark/mcp.py": "fba088c51a1d1a01175b1692eda5cf1061f21716b07c2c22eb028f0be795e8ba",
     "tools/competitor_benchmark/test_campaign.py": "4ecdadbb6877b933e2ba595805524bae56af020cbcc67caad1e4821337224c01",
     "tools/competitor_benchmark/test_girder_adapter.py": "91eb368bf6e96fb7ffa7c1bbaeff4dd6e85e9495601d33f60b317d8a6a5070f3"
-  }
+  },
+  "source_commit": "9ae9ba044776cf880cf3fa2b0f327f6000963e89"
 }

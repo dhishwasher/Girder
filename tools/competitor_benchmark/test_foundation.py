@@ -23,7 +23,12 @@ from tools.competitor_benchmark.resources import (
     read_meminfo,
     resource_block_reason,
 )
-from tools.competitor_benchmark.scoring import assess, assess_definition, score_set
+from tools.competitor_benchmark.scoring import (
+    assess,
+    assess_definition,
+    expand_test_file_predictions,
+    score_set,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -42,6 +47,16 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(score_set([], []).recall, 1.0)
         self.assertEqual(score_set([], ["required"]).recall, 0.0)
         self.assertEqual(score_set(["noise"], []).precision, 0.0)
+
+    def test_whole_test_file_expands_and_preserves_unrelated_false_positive(self) -> None:
+        inventory = ["test_a.py::test_needed", "test_a.py::test_unrelated", "test_b.py::test_other"]
+        self.assertEqual(
+            expand_test_file_predictions(["test_a.py::*"], inventory),
+            ("test_a.py::test_needed", "test_a.py::test_unrelated"),
+        )
+        score = score_set(expand_test_file_predictions(["test_a.py::*"], inventory),
+                          ["test_a.py::test_needed"])
+        self.assertEqual((score.precision, score.recall), (0.5, 1.0))
 
     def test_matching_wrong_answers_remain_wrong(self) -> None:
         left = assess(["wrong.py::same"], ["right.py::target"])
@@ -113,6 +128,7 @@ class FixtureTests(unittest.TestCase):
 
     def _assert_state(self, root: Path, state: dict[str, object]) -> None:
         identities = {state["dynamic_dispatch_edge"].split(" -> ")[0], state["dynamic_dispatch_edge"].split(" -> ")[1]}
+        identities.update(state["test_inventory"])
         for answers in state["expected"].values():
             identities.update(answers)
         for identity in identities:

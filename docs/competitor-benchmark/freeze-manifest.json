@@ -1,19 +1,19 @@
 {
-  "frozen_at_utc": "2026-09-11T13:05:38Z",
-  "rule": "Revision 2 pre-campaign inputs. The prior commit remains history; later scored campaigns require these hashes. Results and concrete adapter checkpoints are additive.",
+  "frozen_at_utc": "2026-09-11T13:21:44Z",
+  "rule": "Revision 3 inputs frozen before the first external comparative campaign. Earlier revisions and every adapter preflight remain retained.",
   "schema_version": 1,
   "sha256": {
     "docs/competitor-benchmark/corpus.json": "1711d8b456e960f65f5314a55ce3f2f5d200d44cd43fdbd2deb10efaa98c77e1",
     "docs/competitor-benchmark/locks/code-review-graph-requirements.txt": "32d11d8fd08b10c5abf943694f8edd01dfabaa60b532a8f2ce5d3030cf48ec98",
     "docs/competitor-benchmark/locks/gitnexus-package-lock.json": "fd4bf4e9a2cd0c378d62196c287e38dd5420f7d509113f8346fc73447f448b6b",
     "docs/competitor-benchmark/locks/gitnexus-package.json": "f1c80e259ccd5b1e56d7c6d9f7a8f06eab36b7d26f09c42078291deb0ef99284",
-    "docs/competitor-benchmark/oracle.json": "44e776d8d306684e0791e153956fa7d1405ecded2ce135c97192c08a3ac15842",
-    "docs/competitor-benchmark/policy.json": "e069e04c89ef7f9726e4ffa448afbdeb12f8ddac4c97e1c8ca7b9b49aef66408",
+    "docs/competitor-benchmark/oracle.json": "74ea481194be99141992a69cc08aa92663f9b29150943d41df6c8e90752caa8d",
+    "docs/competitor-benchmark/policy.json": "c8b2bf5ff308c692137c021ddb260bd18ddc09cb246c2cc25f26171e96f448cf",
     "tools/competitor_benchmark/fixtures.py": "4c7c23efaecbdd40dfab7c322b6059e80ea59c8f4ab53b157f4264e5e13d6a66",
     "tools/competitor_benchmark/process.py": "17f82ed160e176a3bf311c056beaa5f32feb34497dc8ad3c1c6056f14ac57414",
     "tools/competitor_benchmark/protocol.py": "96a18f063a5aa1ba2bf6b95078ec5dfe939259987cc5bc1826f8b43843b9e9cf",
     "tools/competitor_benchmark/resources.py": "c30212bb9762c4afefb6373792634e7d07292600636fe95b13914ff42a1f636d",
-    "tools/competitor_benchmark/scoring.py": "28fd0283c9d34e9f8062ef734392a85f3d216fc90251499d78f25b6622725540",
-    "tools/competitor_benchmark/test_foundation.py": "063947ee967cd28b88acba701137851a1422e760f6e1129da3b4732ddf817d70"
+    "tools/competitor_benchmark/scoring.py": "d79275d7e485feae10b88ab04ac694a1220b0fe7664c09e06b8859535f0f662f",
+    "tools/competitor_benchmark/test_foundation.py": "d4cae34e6e5152cd2434ea0935af1c4e5c726a455d1980459c3458c95e8bbdf3"
   }
 }

@@ -1,0 +1,2 @@
+ripwire: cache /dev/null/ripwire-cache-unavailable/ripwire-6e17b94b2c7637cc-lean.bin: cannot write (Not a directory) — every run parses from source until this is fixed
+ripwire: --test-gate: 'calculate_total' matches no indexed file — FILES are path substrings over the indexed tree; files the ingest skipped are not searchable (the --skipped verb lists exactly which, with reasons)

@@ -32,7 +32,12 @@
       },
       "fixture_id": "tiny-python",
       "state": 0,
-      "target": "calculate_total"
+      "target": "calculate_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": "body_edit",
@@ -62,7 +67,12 @@
       },
       "fixture_id": "tiny-python",
       "state": 1,
-      "target": "calculate_total"
+      "target": "calculate_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": "rename",
@@ -92,7 +102,12 @@
       },
       "fixture_id": "tiny-python",
       "state": 2,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": "caller_added",
@@ -124,7 +139,12 @@
       },
       "fixture_id": "tiny-python",
       "state": 3,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": "caller_removed",
@@ -152,7 +172,12 @@
       },
       "fixture_id": "tiny-python",
       "state": 4,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": "symbol_moved",
@@ -180,7 +205,12 @@
       },
       "fixture_id": "tiny-python",
       "state": 5,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": "file_rename",
@@ -208,7 +238,12 @@
       },
       "fixture_id": "tiny-python",
       "state": 6,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": null,
@@ -238,7 +273,12 @@
       },
       "fixture_id": "modest-python",
       "state": 0,
-      "target": "calculate_total"
+      "target": "calculate_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": "body_edit",
@@ -268,7 +308,12 @@
       },
       "fixture_id": "modest-python",
       "state": 1,
-      "target": "calculate_total"
+      "target": "calculate_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": "rename",
@@ -298,7 +343,12 @@
       },
       "fixture_id": "modest-python",
       "state": 2,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": "caller_added",
@@ -330,7 +380,12 @@
       },
       "fixture_id": "modest-python",
       "state": 3,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": "caller_removed",
@@ -358,7 +413,12 @@
       },
       "fixture_id": "modest-python",
       "state": 4,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": "symbol_moved",
@@ -386,7 +446,12 @@
       },
       "fixture_id": "modest-python",
       "state": 5,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": "file_rename",
@@ -414,7 +479,12 @@
       },
       "fixture_id": "modest-python",
       "state": 6,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "test_service.py::test_render_summary",
+        "test_service.py::test_callback",
+        "test_service.py::test_unrelated"
+      ]
     },
     {
       "after_mutation": null,
@@ -444,7 +514,12 @@
       },
       "fixture_id": "modest-rust",
       "state": 0,
-      "target": "calculate_total"
+      "target": "calculate_total",
+      "test_inventory": [
+        "tests/service_test.rs::test_render_summary",
+        "tests/service_test.rs::test_callback",
+        "tests/service_test.rs::test_unrelated"
+      ]
     },
     {
       "after_mutation": "body_edit",
@@ -474,7 +549,12 @@
       },
       "fixture_id": "modest-rust",
       "state": 1,
-      "target": "calculate_total"
+      "target": "calculate_total",
+      "test_inventory": [
+        "tests/service_test.rs::test_render_summary",
+        "tests/service_test.rs::test_callback",
+        "tests/service_test.rs::test_unrelated"
+      ]
     },
     {
       "after_mutation": "rename",
@@ -504,7 +584,12 @@
       },
       "fixture_id": "modest-rust",
       "state": 2,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "tests/service_test.rs::test_render_summary",
+        "tests/service_test.rs::test_callback",
+        "tests/service_test.rs::test_unrelated"
+      ]
     },
     {
       "after_mutation": "caller_added",
@@ -536,7 +621,12 @@
       },
       "fixture_id": "modest-rust",
       "state": 3,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "tests/service_test.rs::test_render_summary",
+        "tests/service_test.rs::test_callback",
+        "tests/service_test.rs::test_unrelated"
+      ]
     },
     {
       "after_mutation": "caller_removed",
@@ -564,7 +654,12 @@
       },
       "fixture_id": "modest-rust",
       "state": 4,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "tests/service_test.rs::test_render_summary",
+        "tests/service_test.rs::test_callback",
+        "tests/service_test.rs::test_unrelated"
+      ]
     },
     {
       "after_mutation": "symbol_moved",
@@ -592,7 +687,12 @@
       },
       "fixture_id": "modest-rust",
       "state": 5,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "tests/service_test.rs::test_render_summary",
+        "tests/service_test.rs::test_callback",
+        "tests/service_test.rs::test_unrelated"
+      ]
     },
     {
       "after_mutation": "file_rename",
@@ -620,7 +720,12 @@
       },
       "fixture_id": "modest-rust",
       "state": 6,
-      "target": "compute_total"
+      "target": "compute_total",
+      "test_inventory": [
+        "tests/service_test.rs::test_render_summary",
+        "tests/service_test.rs::test_callback",
+        "tests/service_test.rs::test_unrelated"
+      ]
     },
     {
       "after_mutation": null,
@@ -650,7 +755,12 @@
       },
       "fixture_id": "modest-typescript-tsx",
       "state": 0,
-      "target": "calculateTotal"
+      "target": "calculateTotal",
+      "test_inventory": [
+        "service.test.tsx::testRenderSummary",
+        "service.test.tsx::testCallback",
+        "service.test.tsx::testUnrelated"
+      ]
     },
     {
       "after_mutation": "body_edit",
@@ -680,7 +790,12 @@
       },
       "fixture_id": "modest-typescript-tsx",
       "state": 1,
-      "target": "calculateTotal"
+      "target": "calculateTotal",
+      "test_inventory": [
+        "service.test.tsx::testRenderSummary",
+        "service.test.tsx::testCallback",
+        "service.test.tsx::testUnrelated"
+      ]
     },
     {
       "after_mutation": "rename",
@@ -710,7 +825,12 @@
       },
       "fixture_id": "modest-typescript-tsx",
       "state": 2,
-      "target": "computeTotal"
+      "target": "computeTotal",
+      "test_inventory": [
+        "service.test.tsx::testRenderSummary",
+        "service.test.tsx::testCallback",
+        "service.test.tsx::testUnrelated"
+      ]
     },
     {
       "after_mutation": "caller_added",
@@ -742,7 +862,12 @@
       },
       "fixture_id": "modest-typescript-tsx",
       "state": 3,
-      "target": "computeTotal"
+      "target": "computeTotal",
+      "test_inventory": [
+        "service.test.tsx::testRenderSummary",
+        "service.test.tsx::testCallback",
+        "service.test.tsx::testUnrelated"
+      ]
     },
     {
       "after_mutation": "caller_removed",
@@ -770,7 +895,12 @@
       },
       "fixture_id": "modest-typescript-tsx",
       "state": 4,
-      "target": "computeTotal"
+      "target": "computeTotal",
+      "test_inventory": [
+        "service.test.tsx::testRenderSummary",
+        "service.test.tsx::testCallback",
+        "service.test.tsx::testUnrelated"
+      ]
     },
     {
       "after_mutation": "symbol_moved",
@@ -798,7 +928,12 @@
       },
       "fixture_id": "modest-typescript-tsx",
       "state": 5,
-      "target": "computeTotal"
+      "target": "computeTotal",
+      "test_inventory": [
+        "service.test.tsx::testRenderSummary",
+        "service.test.tsx::testCallback",
+        "service.test.tsx::testUnrelated"
+      ]
     },
     {
       "after_mutation": "file_rename",
@@ -826,7 +961,12 @@
       },
       "fixture_id": "modest-typescript-tsx",
       "state": 6,
-      "target": "computeTotal"
+      "target": "computeTotal",
+      "test_inventory": [
+        "service.test.tsx::testRenderSummary",
+        "service.test.tsx::testCallback",
+        "service.test.tsx::testUnrelated"
+      ]
     },
     {
       "after_mutation": null,
@@ -856,7 +996,12 @@
       },
       "fixture_id": "modest-go",
       "state": 0,
-      "target": "calculateTotal"
+      "target": "calculateTotal",
+      "test_inventory": [
+        "service_test.go::TestRenderSummary",
+        "service_test.go::TestCallback",
+        "service_test.go::TestUnrelated"
+      ]
     },
     {
       "after_mutation": "body_edit",
@@ -886,7 +1031,12 @@
       },
       "fixture_id": "modest-go",
       "state": 1,
-      "target": "calculateTotal"
+      "target": "calculateTotal",
+      "test_inventory": [
+        "service_test.go::TestRenderSummary",
+        "service_test.go::TestCallback",
+        "service_test.go::TestUnrelated"
+      ]
     },
     {
       "after_mutation": "rename",
@@ -916,7 +1066,12 @@
       },
       "fixture_id": "modest-go",
       "state": 2,
-      "target": "computeTotal"
+      "target": "computeTotal",
+      "test_inventory": [
+        "service_test.go::TestRenderSummary",
+        "service_test.go::TestCallback",
+        "service_test.go::TestUnrelated"
+      ]
     },
     {
       "after_mutation": "caller_added",
@@ -948,7 +1103,12 @@
       },
       "fixture_id": "modest-go",
       "state": 3,
-      "target": "computeTotal"
+      "target": "computeTotal",
+      "test_inventory": [
+        "service_test.go::TestRenderSummary",
+        "service_test.go::TestCallback",
+        "service_test.go::TestUnrelated"
+      ]
     },
     {
       "after_mutation": "caller_removed",
@@ -976,7 +1136,12 @@
       },
       "fixture_id": "modest-go",
       "state": 4,
-      "target": "computeTotal"
+      "target": "computeTotal",
+      "test_inventory": [
+        "service_test.go::TestRenderSummary",
+        "service_test.go::TestCallback",
+        "service_test.go::TestUnrelated"
+      ]
     },
     {
       "after_mutation": "symbol_moved",
@@ -1004,7 +1169,12 @@
       },
       "fixture_id": "modest-go",
       "state": 5,
-      "target": "computeTotal"
+      "target": "computeTotal",
+      "test_inventory": [
+        "service_test.go::TestRenderSummary",
+        "service_test.go::TestCallback",
+        "service_test.go::TestUnrelated"
+      ]
     },
     {
       "after_mutation": "file_rename",
@@ -1032,7 +1202,12 @@
       },
       "fixture_id": "modest-go",
       "state": 6,
-      "target": "computeTotal"
+      "target": "computeTotal",
+      "test_inventory": [
+        "service_test.go::TestRenderSummary",
+        "service_test.go::TestCallback",
+        "service_test.go::TestUnrelated"
+      ]
     }
   ],
   "test_policy": "A relevant test is any test with a runtime call path to the target. This intentionally includes the function-parameter dynamic-dispatch path."

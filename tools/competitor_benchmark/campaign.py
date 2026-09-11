@@ -16,10 +16,11 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from .adapters.girder import GirderAdapter
+from .adapters.ripwire import RipwireAdapter
 from .fixtures import load_corpus, materialize
 from .protocol import NativeResult, QueryKind, Status
 from .resources import read_meminfo
-from .scoring import assess, assess_definition
+from .scoring import assess, assess_definition, expand_test_file_predictions
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -50,7 +51,7 @@ def assess_native(
     kind: str,
     oracle: Mapping[str, Any],
     prior: Mapping[str, Any] | None,
-) -> tuple[Status, dict[str, float | int]]:
+) -> tuple[Status, dict[str, float | int], tuple[str, ...]]:
     expected = oracle["expected"][kind]
     prior_expected = None if prior is None else prior["expected"][kind]
     if kind == QueryKind.DEFINITION.value:
@@ -62,9 +63,15 @@ def assess_native(
             native_status=native.status,
         )
     else:
-        status, score = assess(native.answer, expected, prior_expected=prior_expected,
+        scored_answer = (expand_test_file_predictions(native.answer, oracle["test_inventory"])
+                         if kind == QueryKind.TESTS.value else native.answer)
+        prior_scored = (None if prior is None else
+                        expand_test_file_predictions(native.answer, prior["test_inventory"])
+                        if kind == QueryKind.TESTS.value else prior_expected)
+        status, score = assess(scored_answer, expected, prior_expected=prior_scored,
                                native_status=native.status)
-    return status, score.to_dict()
+        return status, score.to_dict(), tuple(scored_answer)
+    return status, score.to_dict(), tuple(native.answer)
 
 
 def run_campaign(product: str, fixture_id: str, binary: Path, work_root: Path, output: Path) -> dict[str, Any]:
@@ -95,15 +102,22 @@ def run_campaign(product: str, fixture_id: str, binary: Path, work_root: Path, o
         "emergency_available_bytes": policy["host_limits"]["emergency_mem_available_bytes"],
         "maximum_tree_rss_bytes": policy["host_limits"]["maximum_competitor_process_tree_rss_bytes"],
     }
-    adapter = GirderAdapter(binary, watch=(product == "girder-watch"), limits=limits,
-                            private_home=private_home)
+    if product in {"girder", "girder-watch"}:
+        adapter = GirderAdapter(binary, watch=(product == "girder-watch"), limits=limits,
+                                private_home=private_home)
+    elif product == "ripwire":
+        adapter = RipwireAdapter(binary, limits=limits, private_home=private_home,
+                                 initial_target=oracles[0]["target"])
+    else:
+        raise ValueError(f"adapter is not implemented: {product}")
     records: list[dict[str, Any]] = []
     started = time.monotonic()
     campaign_deadline = started + policy["timeouts_seconds"]["single_product_fixture_campaign"]
     try:
         prepare_started = utc_now()
         prepare = adapter.prepare(fixture_root, output / "raw" / "prepare")
-        records.append(_record_native(prepare, product, fixture_id, "prepare", "prepare",
+        records.append(_record_native(prepare, adapter.name, adapter.version, adapter.commit,
+                                      fixture_id, "prepare", "prepare",
                                       prepare_started, utc_now(), (), ()))
         if prepare.status is not Status.PASS:
             return _finish(output, product, fixture_id, records, "PREPARE_FAILED", started)
@@ -118,12 +132,13 @@ def run_campaign(product: str, fixture_id: str, binary: Path, work_root: Path, o
         for phase in ("warmup", "warm_query"):
             for kind in policy["scope"]["query_order"]:
                 _deadline_check(campaign_deadline)
-                native, status, score, began, ended = _query_and_score(
+                native, status, score, scored_answer, began, ended = _query_and_score(
                     query_functions[kind], oracles[0]["target"], kind, oracles[0], None
                 )
-                records.append(_record_native(native, product, fixture_id,
+                records.append(_record_native(native, adapter.name, adapter.version, adapter.commit, fixture_id,
                                               f"state0:{phase}:{kind}", kind, began, ended,
-                                              oracles[0]["expected"][kind], (), status, score))
+                                              oracles[0]["expected"][kind], (), status, score,
+                                              scored_answer=scored_answer))
 
         mutation_summaries = []
         for state, mutation in enumerate(fixture["mutations"], 1):
@@ -131,7 +146,7 @@ def run_campaign(product: str, fixture_id: str, binary: Path, work_root: Path, o
             mutation_started_mono = time.monotonic()
             mutation_started = utc_now()
             changed = adapter.apply_mutation(mutation)
-            records.append(_record_native(changed, product, fixture_id,
+            records.append(_record_native(changed, adapter.name, adapter.version, adapter.commit, fixture_id,
                                           f"state{state}:mutation:{mutation['id']}", "mutation",
                                           mutation_started, utc_now(), (), ()))
             if changed.status is not Status.PASS:
@@ -152,7 +167,7 @@ def run_campaign(product: str, fixture_id: str, binary: Path, work_root: Path, o
                 probe_statuses: dict[str, Status] = {}
                 signature_parts = []
                 for kind in policy["scope"]["query_order"]:
-                    native, status, score, began, ended = _query_and_score(
+                    native, status, score, scored_answer, began, ended = _query_and_score(
                         query_functions[kind], oracles[state]["target"], kind,
                         oracles[state], oracles[state - 1]
                     )
@@ -161,10 +176,10 @@ def run_campaign(product: str, fixture_id: str, binary: Path, work_root: Path, o
                     if status is Status.PASS and kind not in first_pass:
                         first_pass[kind] = time.monotonic() - mutation_started_mono
                     records.append(_record_native(
-                        native, product, fixture_id,
+                        native, adapter.name, adapter.version, adapter.commit, fixture_id,
                         f"state{state}:probe{probe_index}:{kind}", kind, began, ended,
                         oracles[state]["expected"][kind], oracles[state - 1]["expected"][kind],
-                        status, score,
+                        status, score, scored_answer=scored_answer,
                     ))
                 comparable = [value for value in probe_statuses.values() if value is not Status.UNSUPPORTED]
                 if comparable and all(value is Status.PASS for value in comparable):
@@ -205,24 +220,26 @@ def _query_and_score(function: Callable[[str], NativeResult], target: str, kind:
     began = utc_now()
     native = function(target)
     ended = utc_now()
-    status, score = assess_native(native, kind, oracle, prior)
-    return native, status, score, began, ended
+    status, score, scored_answer = assess_native(native, kind, oracle, prior)
+    return native, status, score, scored_answer, began, ended
 
 
-def _record_native(native: NativeResult, product: str, fixture: str, task: str, kind: str,
+def _record_native(native: NativeResult, product: str, version: str, commit: str,
+                   fixture: str, task: str, kind: str,
                    began: str, ended: str, expected: tuple[str, ...] | list[str],
                    prior: tuple[str, ...] | list[str], status: Status | None = None,
-                   score: Mapping[str, float | int] | None = None) -> dict[str, Any]:
+                   score: Mapping[str, float | int] | None = None,
+                   scored_answer: tuple[str, ...] | None = None) -> dict[str, Any]:
     meta = native.metadata
     calls = meta.get("methods", [])
     process = meta.get("process", {})
     return {
-        "schema_version": 1, "competitor": product, "version": GirderAdapter.version,
-        "commit": GirderAdapter.commit, "task_id": task, "fixture_id": fixture,
+        "schema_version": 1, "competitor": product, "version": version,
+        "commit": commit, "task_id": task, "fixture_id": fixture,
         "query_kind": kind, "command_or_tools": calls or process.get("command", []),
         "started_at": began, "ended_at": ended,
         "elapsed_seconds": meta.get("elapsed_seconds", process.get("wall_seconds", 0.0)),
-        "exit_status": process.get("returncode"),
+        "exit_status": process.get("returncode", (meta.get("returncodes") or [None])[-1]),
         "timeout_status": (status or native.status) is Status.TIMEOUT,
         "resource_blocked_status": (status or native.status) is Status.RESOURCE_BLOCKED,
         "stdout_bytes": meta.get("stdout_bytes", process.get("stdout_bytes", 0)),
@@ -230,6 +247,7 @@ def _record_native(native: NativeResult, product: str, fixture: str, task: str, 
         "stdout_artifacts": meta.get("stdout_artifacts", [process["stdout_artifact"]] if process.get("stdout_artifact") else []),
         "stderr_artifacts": meta.get("stderr_artifacts", [process["stderr_artifact"]] if process.get("stderr_artifact") else []),
         "normalized_answer": list(native.answer), "expected_answer": list(expected),
+        "scored_answer": list(native.answer if scored_answer is None else scored_answer),
         "prior_expected_answer": list(prior), "status": (status or native.status or Status.ERROR).value,
         "score": dict(score or {}), "tool_calls": native.tool_calls,
         "peak_rss_bytes": meta.get("peak_rss_bytes", process.get("peak_rss_bytes")),
@@ -240,7 +258,12 @@ def _record_native(native: NativeResult, product: str, fixture: str, task: str, 
 def _finish(output: Path, product: str, fixture: str, records: list[dict[str, Any]], state: str,
             started: float, **extra: Any) -> dict[str, Any]:
     result = {
-        "schema_version": 1, "policy_id": "girder-competitor-benchmark-v1-revision-2",
+        "schema_version": 1, "policy_id": "girder-competitor-benchmark-v1-revision-3",
+        "policy_sha256": hashlib.sha256((DOCS / "policy.json").read_bytes()).hexdigest(),
+        "freeze_manifest_sha256": hashlib.sha256((DOCS / "freeze-manifest.json").read_bytes()).hexdigest(),
+        "harness_commit": subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+        ).strip(),
         "product": product, "fixture": fixture, "campaign_state": state,
         "elapsed_seconds": time.monotonic() - started, "records": records, **extra,
     }
@@ -284,7 +307,7 @@ def _jsonable(value: Any) -> Any:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--product", choices=("girder", "girder-watch"), required=True)
+    parser.add_argument("--product", choices=("girder", "girder-watch", "ripwire"), required=True)
     parser.add_argument("--fixture", required=True)
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--work-root", type=Path, required=True)

@@ -50,6 +50,42 @@
       "record_count": 107,
       "result_use": "None; retained before corrected rerun.",
       "version": "0.2.6"
+    },
+    {
+      "classification": "INVALIDATED_PREFLIGHT",
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "comparative_result": false,
+      "detail": "The pinned JSON --for response returned signatures without bodies. --test-gate=calculate_total refused the symbol as a non-file, and --affected=calculate_total returned the native symbol-scoped test-file selection in XML. Revision 3 freezes a second native --expand call for source evidence and --affected for tests. File-level selections expand to the committed test inventory during evaluator scoring, so unrelated tests in a selected file remain false positives.",
+      "fixture": "tiny-python base state",
+      "id": "ripwire-interface-probe",
+      "product": "ripwire",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/ripwire-interface",
+      "result_use": "Response-shape integration only; excluded from every score and timing aggregate.",
+      "version": "0.5.0"
+    },
+    {
+      "classification": "INVALIDATED_PREFLIGHT",
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "comparative_result": false,
+      "detail": "The first adapter draft applied --limit=500 to every query. Ripwire correctly refused pagination on the fixed --for and --affected reports. Before freezing revision 3, the adapter and policy restricted pagination to callers, callees, and impact.",
+      "fixture": "tiny-python base state",
+      "id": "ripwire-adapter-validation-v1",
+      "product": "ripwire",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/ripwire-adapter-validation-v1",
+      "result_use": "None; excluded from every score and timing aggregate.",
+      "version": "0.5.0"
+    },
+    {
+      "classification": "PREFLIGHT_PASS",
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "comparative_result": false,
+      "detail": "All five adapter methods parsed their native response shapes; definition used two calls and retained source, and tests retained the whole-file prediction as path::*.",
+      "fixture": "tiny-python base state",
+      "id": "ripwire-adapter-validation-v2",
+      "product": "ripwire",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/ripwire-adapter-validation-v2",
+      "result_use": "Adapter gate only; excluded from every score and timing aggregate.",
+      "version": "0.5.0"
     }
   ],
   "schema_version": 1

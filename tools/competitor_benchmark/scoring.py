@@ -33,6 +33,21 @@ def score_set(actual: Iterable[str], expected: Iterable[str]) -> SetScore:
     return SetScore(true_positive, false_positive, false_negative, precision, recall, f1)
 
 
+def expand_test_file_predictions(actual: Iterable[str], inventory: Iterable[str]) -> tuple[str, ...]:
+    """Expand a native whole-file test choice to every test it would run."""
+
+    inventory_norm = normalize_paths(tuple(inventory))
+    expanded: list[str] = []
+    for identity in normalize_paths(tuple(actual)):
+        if not identity.endswith("::*"):
+            expanded.append(identity)
+            continue
+        prefix = identity[:-1]
+        matches = [candidate for candidate in inventory_norm if candidate.startswith(prefix)]
+        expanded.extend(matches or [identity])
+    return normalize_paths(expanded)
+
+
 def assess(
     actual: Iterable[str],
     expected: Iterable[str],

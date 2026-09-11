@@ -1,0 +1,1 @@
+{"of":"calculate_total","defs":1,"count":1,"root":"/tmp/ripwire-probe-8ioabvrk/fixture","hop_tested":1,"hop_untested":0,"graph_ambiguous":0,"graph_unresolved":0,"counts_floor":true,"callees":[{"t":"fn","n":"normalize_value","p":"core.py:1","tested":true}]}
