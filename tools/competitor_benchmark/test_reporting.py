@@ -84,6 +84,7 @@ class ReportingTests(unittest.TestCase):
             self.assertIn("## Where Girder Lost", report)
             self.assertIn("## Where Girder Won", report)
             self.assertIn("## What This Benchmark Does NOT Establish", report)
+            self.assertIn("git show h:docs/competitor-benchmark/policy.json", report)
             self.assertIn("source_result_sha256", (output / "summary.csv").read_text())
 
 

@@ -114,6 +114,71 @@
       "raw_archive_sha256": "e55f24f8177daa6d0096e2e912b8765c478ec703f3d815e79c90f4bb1e20b9be",
       "result_use": "None; no result.json was produced.",
       "version": "0.5.0"
+    },
+    {
+      "classification": "PREFLIGHT_PASS",
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "comparative_result": false,
+      "detail": "The official portable Linux archive matched policy SHA-256 6eef49652bc0c7820f43114125044d40bf7f4d97c11b2592f6b0f6a307702325. The binary reported version 0.10.8; its extracted executable SHA-256 is 1175645cb30560e7e47d78611cd1bcb509478eaf6d4e51f72fe18327ee9c1351.",
+      "id": "codebase-memory-official-acquisition",
+      "product": "codebase-memory-mcp",
+      "result_use": "Acquisition evidence only; no score or timing aggregate.",
+      "version": "0.10.8"
+    },
+    {
+      "classification": "INVALIDATED_PREFLIGHT",
+      "comparative_result": false,
+      "detail": "Startup on the removable-drive private cache failed before indexing because the pinned product rejected the mount ancestry during its cache-private executable-identity check.",
+      "fixture": "tiny-python base state",
+      "id": "codebase-memory-removable-cache-failure",
+      "product": "codebase-memory-mcp",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/codebase-memory/preflight-cbm-interface-v1",
+      "result_use": "None; placement failure retained.",
+      "version": "0.10.8"
+    },
+    {
+      "classification": "INVALIDATED_PREFLIGHT",
+      "comparative_result": false,
+      "detail": "With HOME and CBM_CACHE_DIR moved to a mode-0700 local directory, a frontend executing the 293 MB binary from the removable mount still failed to join its new daemon inside the product fixed 30-second admission window. The isolated daemon exited cleanly after its initial window.",
+      "fixture": "tiny-python base state",
+      "id": "codebase-memory-removable-binary-timeout",
+      "product": "codebase-memory-mcp",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/codebase-memory/preflight-cbm-interface-v2",
+      "result_use": "None; runtime-placement failure retained.",
+      "version": "0.10.8"
+    },
+    {
+      "classification": "PREFLIGHT_PASS",
+      "comparative_result": false,
+      "detail": "A local temporary copy of the checksum-verified executable with local mode-0700 HOME/cache completed initialize and tools/list. The raw schema froze inbound/outbound trace directions, cursor pagination, finite integer depth, and boolean persistence before adapter scoring.",
+      "fixture": "tiny-python base state",
+      "id": "codebase-memory-interface-probe",
+      "product": "codebase-memory-mcp",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/codebase-memory/preflight-cbm-interface-v3",
+      "result_use": "Interface schema only; excluded from every score and timing aggregate.",
+      "version": "0.10.8"
+    },
+    {
+      "classification": "PREFLIGHT_PASS",
+      "comparative_result": false,
+      "detail": "Native JSON response probes established search_graph groups, get_code_snippet source, and trace_path caller/callee group projections. The index reported 29 nodes and 77 edges. The trace result retained the dynamic callback miss.",
+      "fixture": "tiny-python base state",
+      "id": "codebase-memory-response-probe",
+      "product": "codebase-memory-mcp",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/codebase-memory/preflight-cbm-responses-v1",
+      "result_use": "Response-shape integration only; excluded from every score and timing aggregate.",
+      "version": "0.10.8"
+    },
+    {
+      "classification": "PREFLIGHT_PASS",
+      "comparative_result": false,
+      "detail": "All five concrete adapter methods parsed the pinned native response shapes. Definition used two calls with source evidence; callers, callees, impact, and tests used the frozen trace projection.",
+      "fixture": "tiny-python base state",
+      "id": "codebase-memory-adapter-validation-v1",
+      "product": "codebase-memory-mcp",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/codebase-memory/preflight-cbm-adapter-v1",
+      "result_use": "Adapter gate only; excluded from every score and timing aggregate.",
+      "version": "0.10.8"
     }
   ],
   "schema_version": 1

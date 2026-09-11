@@ -1,0 +1,3 @@
+level=info msg=version_cohort.claimed_unheld build=1175645cb30560e7e47d78611cd1bcb509478eaf6d4e51f72fe18327ee9c1351
+codebase-memory-mcp: CBM daemon is active or starting but could not accept this client within 30000 ms
+codebase-memory-mcp: CBM daemon is active or starting but could not accept this client within 30000 ms

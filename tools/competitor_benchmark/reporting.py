@@ -159,6 +159,7 @@ def _counts(values: Mapping[str, int]) -> str:
 
 def render_markdown(summary: Mapping[str, Any], title: str, scope_note: str) -> str:
     rows = summary["campaigns"]
+    harness_commits = sorted({row["harness_commit"] for row in rows})
     table = [
         "| Product | Cold setup (s) | Warm five-query total (s) | Definition | Callers P/R | Callees P/R | Impact P/R | Tests P/R | Mutation terminal | Query bytes | Calls | Peak RSS (bytes) |",
         "|---|---:|---:|---|---|---|---|---|---|---:|---:|---:|",
@@ -257,9 +258,12 @@ def render_markdown(summary: Mapping[str, Any], title: str, scope_note: str) -> 
         "- A matching PASS/WRONG count does not mean the products returned the same wrong answers; the raw records retain each answer and oracle comparison.",
         f"- {exceptional_sentence}", "",
         "## Reproduction", "",
-        "The frozen commands and limits are in [`../../README.md`](../../README.md) and [`../../policy.json`](../../policy.json). "
-        "Each campaign row in `summary.json` pins its product version and commit, harness commit, policy hashes, "
-        "result SHA-256, and raw archive.", "",
+        "[`../../README.md`](../../README.md) and the current [`../../policy.json`](../../policy.json) describe the "
+        "protocol and its revision history. Each campaign row in `summary.json` pins its product version and "
+        "commit, harness commit, policy hashes, result SHA-256, and raw archive. Recover the exact policy used by "
+        f"these inputs with `git show {harness_commits[0]}:docs/competitor-benchmark/policy.json` and verify the "
+        "recorded policy SHA-256." if len(harness_commits) == 1 else
+        "The supplied rows use multiple harness commits; recover each exact policy with `git show <harness_commit>:docs/competitor-benchmark/policy.json` and verify its recorded SHA-256.", "",
     ])
 
 

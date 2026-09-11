@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","id":null,"error":{"code":-32001,"message":"CBM daemon is active or starting but could not accept this client within 30000 ms"}}

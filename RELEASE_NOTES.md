@@ -27,6 +27,15 @@ unrelated false positive; Girder returned one relevant test and no unrelated
 test in the base warm query. This fixture is an adapter gate and is excluded
 from the final competitive aggregate.
 
+The codebase-memory-mcp 0.10.8 adapter is now frozen before its first scored
+run. Native preflight corrected the not-yet-measured mapping to the pinned
+server's inbound/outbound trace directions, finite depth 32, boolean
+persistence, cursor pagination, and JSON group shapes. Two low-resource
+placement failures remain published: the removable mount could not satisfy the
+product's private-cache ancestry check, and a removable-drive executable missed
+its fixed daemon admission window. A local mode-0700 copy of the verified
+binary with a fresh local private cache passed all five adapter operations.
+
 See [the benchmark protocol](docs/competitor-benchmark/README.md) and the
 [generated first-external result](docs/competitor-benchmark/results/tiny/report.md).
 

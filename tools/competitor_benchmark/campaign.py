@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from .adapters.girder import GirderAdapter
+from .adapters.codebase_memory import CodebaseMemoryAdapter
 from .adapters.ripwire import RipwireAdapter
 from .fixtures import load_corpus, materialize
 from .protocol import NativeResult, QueryKind, Status
@@ -108,6 +109,8 @@ def run_campaign(product: str, fixture_id: str, binary: Path, work_root: Path, o
     if product in {"girder", "girder-watch"}:
         adapter = GirderAdapter(binary, watch=(product == "girder-watch"), limits=limits,
                                 private_home=private_home)
+    elif product == "codebase-memory-mcp":
+        adapter = CodebaseMemoryAdapter(binary, limits=limits, private_home=private_home)
     elif product == "ripwire":
         adapter = RipwireAdapter(binary, limits=limits, private_home=private_home,
                                  initial_target=oracles[0]["target"])
@@ -261,7 +264,7 @@ def _record_native(native: NativeResult, product: str, version: str, commit: str
 def _finish(output: Path, product: str, fixture: str, records: list[dict[str, Any]], state: str,
             started: float, **extra: Any) -> dict[str, Any]:
     result = {
-        "schema_version": 1, "policy_id": "girder-competitor-benchmark-v1-revision-5",
+        "schema_version": 1, "policy_id": policy_id(),
         "policy_sha256": hashlib.sha256((DOCS / "policy.json").read_bytes()).hexdigest(),
         "freeze_manifest_sha256": hashlib.sha256((DOCS / "freeze-manifest.json").read_bytes()).hexdigest(),
         "harness_commit": subprocess.check_output(
@@ -282,6 +285,10 @@ def capture_environment(output: Path) -> None:
         "memory": vars(mem), "required_environment": ENV_LIMITS,
     }
     (output / "environment.json").write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
+
+
+def policy_id() -> str:
+    return json.loads((DOCS / "policy.json").read_text(encoding="utf-8"))["policy_id"]
 
 
 def _git_baseline(root: Path) -> None:
@@ -310,7 +317,10 @@ def _jsonable(value: Any) -> Any:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--product", choices=("girder", "girder-watch", "ripwire"), required=True)
+    parser.add_argument(
+        "--product", choices=("girder", "girder-watch", "ripwire", "codebase-memory-mcp"),
+        required=True,
+    )
     parser.add_argument("--fixture", required=True)
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--work-root", type=Path, required=True)

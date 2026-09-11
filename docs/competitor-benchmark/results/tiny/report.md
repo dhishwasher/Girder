@@ -36,4 +36,4 @@ The 18 mutation summaries ended with WRONG 18. Update-to-all-correct latency is 
 
 ## Reproduction
 
-The frozen commands and limits are in [`../../README.md`](../../README.md) and [`../../policy.json`](../../policy.json). Each campaign row in `summary.json` pins its product version and commit, harness commit, policy hashes, result SHA-256, and raw archive.
+[`../../README.md`](../../README.md) and the current [`../../policy.json`](../../policy.json) describe the protocol and its revision history. Each campaign row in `summary.json` pins its product version and commit, harness commit, policy hashes, result SHA-256, and raw archive. Recover the exact policy used by these inputs with `git show 80445c150118ecd064df8edffb583f462d36cd9f:docs/competitor-benchmark/policy.json` and verify the recorded policy SHA-256.

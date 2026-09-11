@@ -1,0 +1,9 @@
+level=info msg=mem.allocator.owned classes=all
+level=info msg=mem.init budget_mb=686 total_ram_mb=2747 source=ram_fraction
+level=info msg=watcher.start interval_ms=multi-sec
+level=info msg=ui.serving url=http://127.0.0.1:9749 port=9749
+level=info msg=daemon.start version=0.10.8 pid=9640 cache_fingerprint=ad0df70c9c022355c61acfc3dfc032c803ece96d15ac81ed316afe1a81b3351f memory_budget_bytes=720335872 physical_job_limit=4 worker_memory_budget_bytes=180083968
+level=info msg=daemon.lifetime_end reason=initial_window_expired
+level=info msg=daemon.runtime_stopping reason=service_stop
+level=info msg=watcher.stop
+level=info msg=daemon.stop

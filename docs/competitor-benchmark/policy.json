@@ -46,7 +46,7 @@
     "Run unit tests only.",
     "Complete Girder normal and watch adapters end-to-end.",
     "Complete ripwire as the first external adapter and run the full tiny-python campaign.",
-    "Run remaining products one at a time in listed order, with process cleanup and memory preflight between products.",
+    "Integrate and run each remaining product one at a time after its concrete adapter is frozen, choosing the lowest-resource reproducible official distribution next; perform process cleanup and memory preflight between products.",
     "Generate immutable JSON, CSV, Markdown report, environment metadata, setup-friction records, and raw artifacts."
   ],
   "competitors": [
@@ -160,6 +160,7 @@
         "CBM_CACHE_DIR": "{private_cache}"
       },
       "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "freshness": "Keep the indexed MCP session open and apply filesystem mutations normally. Do not force reindexing. The product-owned watcher and the frozen evaluator probe loop determine current, stale, rebuilding, or unchanged answers.",
       "id": "codebase-memory-mcp",
       "install": [
         "curl",
@@ -169,22 +170,23 @@
         "https://github.com/DeusData/codebase-memory-mcp/releases/download/v0.10.8/codebase-memory-mcp-linux-amd64-portable.tar.gz"
       ],
       "native_queries": {
-        "callees": "trace_path direction=callees depth=1",
-        "callers": "trace_path direction=callers depth=1",
-        "definition": "search_graph",
-        "impact": "trace_path direction=callers depth=unbounded include_tests=true",
-        "tests": "trace_path direction=callers depth=unbounded include_tests=true"
+        "callees": "trace_path direction=outbound depth=1 mode=calls include_tests=true format=json limit=500 with cursor pagination",
+        "callers": "trace_path direction=inbound depth=1 mode=calls include_tests=true format=json limit=500 with cursor pagination",
+        "definition": "search_graph name_pattern=^{target}$ format=json limit=500 with offset pagination, then get_code_snippet (2 calls for one exact declaration)",
+        "impact": "trace_path direction=inbound depth=32 mode=calls include_tests=true format=json limit=500 with cursor pagination",
+        "tests": "the same inbound depth=32 trace_path result, restricted to native identities in test-shaped paths"
       },
-      "prepare_tool": "index_repository mode=full persistence=memory",
+      "prepare_tool": "index_repository repo_path={fixture} name=benchmark mode=full persistence=false",
       "projection": {
-        "callees": "trace_path callee nodes at depth exactly 1",
-        "callers": "trace_path caller nodes at depth exactly 1",
-        "definition": "unique search_graph declaration followed by get_code_snippet source evidence (2 calls)",
-        "impact": "trace_path caller nodes at every returned depth, excluding seed",
-        "tests": "impact projection restricted to frozen corpus test paths"
+        "callees": "trace_path outbound rows at depth exactly 1, mapped from native qualified-name prefixes to one fixture file.",
+        "callers": "trace_path inbound rows at depth exactly 1, mapped from native qualified-name prefixes to one fixture file.",
+        "definition": "Exact-name search_graph groups map their native file and qualified name to path::symbol; get_code_snippet source is freshness evidence.",
+        "impact": "all inbound trace_path rows through depth 32, excluding the seed because the native response omits it.",
+        "tests": "impact projection restricted by language-native test path shape; the adapter does not read oracle.json."
       },
+      "runtime_placement": "Verify the official archive checksum, extract it externally, then copy that exact binary once to a mode-0700 local temporary runtime directory. Use a fresh mode-0700 local HOME and CBM_CACHE_DIR per campaign. Direct execution/cache on the ChromeOS removable mount failed the pinned product security and 30-second executable-identity admission checks; both raw failures are retained.",
       "serve": [
-        "{codebase-memory-mcp}"
+        "{verified_local_runtime_copy}"
       ],
       "source": "https://github.com/DeusData/codebase-memory-mcp/releases/tag/v0.10.8",
       "tag": "v0.10.8",
@@ -278,7 +280,7 @@
     }
   ],
   "freeze_rule": "This policy, corpus.json, oracle.json, scorer, adapter contract, and their unit tests must be committed before any comparative campaign. Campaign results may not change them.",
-  "frozen_at_utc": "2026-09-11T13:27:51Z",
+  "frozen_at_utc": "2026-09-11T18:43:59Z",
   "host_limits": {
     "description": "Low-resource ChromeOS Crostini measurement host; results are host-specific.",
     "emergency_mem_available_bytes": 402653184,
@@ -330,7 +332,7 @@
     "test_inventory": "Each state lists every test node in the fixture. A native whole-test-file prediction expands to every listed node in that file before scoring; this models what will run and retains unrelated nodes as false positives.",
     "tests": "Test nodes in the reverse-transitive impact set."
   },
-  "policy_id": "girder-competitor-benchmark-v1-revision-5",
+  "policy_id": "girder-competitor-benchmark-v1-revision-6",
   "policy_revision": 5,
   "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
   "required_report_sections": [
@@ -362,6 +364,12 @@
       "reason": "A normal /proc ESRCH race escaped the resource sampler. Revision 5 handles all OSError process-disappearance races and writes failure.json for any future uncaught interruption. No competitor output or scoring behavior changed.",
       "revision": 4,
       "status": "interrupted before completion"
+    },
+    {
+      "commit": "80445c150118ecd064df8edffb583f462d36cd9f",
+      "reason": "Revision 5 produced the complete, separately reported Girder normal, Girder watch, and Ripwire tiny-python adapter gate. codebase-memory-mcp preflight then established that the pinned schema uses inbound/outbound directions, finite depth 32, boolean persistence, and a security-sensitive local cache/runtime placement. Revision 6 corrects only that not-yet-measured adapter mapping and makes campaign policy IDs data-driven.",
+      "revision": 5,
+      "status": "valid completed Girder/Ripwire tiny adapter gate; superseded for subsequent campaigns"
     }
   ],
   "schema_version": 1,
