@@ -1,3 +1,15 @@
+# Unreleased benchmark work
+
+The competitive benchmark now has a frozen, resource-bounded foundation for
+comparing Girder with GitNexus, codebase-memory-mcp, code-review-graph, and
+ripwire. It commits the corpus, mutation sequence, independent oracle, scoring
+rules, version and artifact pins, adapter contract, resource limits, and narrow
+unit tests before any comparative run. Measured results will be added here only
+after each adapter and campaign checkpoint is complete; this entry makes no
+competitive claim yet.
+
+See [the benchmark protocol](docs/competitor-benchmark/README.md).
+
 # Girder 0.2.6
 
 Girder 0.2.6 ships the opt-in MCP watcher that was merged after the 0.2.5

@@ -1,0 +1,1039 @@
+{
+  "authorship": "Hand-authored from the committed source corpus before any competitor campaign; tool output must never modify this file.",
+  "identity_format": "repository-relative POSIX path::source-level symbol name",
+  "impact_policy": "Reverse-transitive runtime callers of the target, excluding the target itself.",
+  "schema_version": 1,
+  "states": [
+    {
+      "after_mutation": null,
+      "definition_source_marker": "return sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::calculate_total",
+      "expected": {
+        "callees": [
+          "core.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "service.py::render_summary"
+        ],
+        "definition": [
+          "core.py::calculate_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "service.py::render_summary",
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ],
+        "tests": [
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ]
+      },
+      "fixture_id": "tiny-python",
+      "state": 0,
+      "target": "calculate_total"
+    },
+    {
+      "after_mutation": "body_edit",
+      "definition_source_marker": "total = sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::calculate_total",
+      "expected": {
+        "callees": [
+          "core.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "service.py::render_summary"
+        ],
+        "definition": [
+          "core.py::calculate_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "service.py::render_summary",
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ],
+        "tests": [
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ]
+      },
+      "fixture_id": "tiny-python",
+      "state": 1,
+      "target": "calculate_total"
+    },
+    {
+      "after_mutation": "rename",
+      "definition_source_marker": "total = sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::compute_total",
+      "expected": {
+        "callees": [
+          "core.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "service.py::render_summary"
+        ],
+        "definition": [
+          "core.py::compute_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "service.py::render_summary",
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ],
+        "tests": [
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ]
+      },
+      "fixture_id": "tiny-python",
+      "state": 2,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": "caller_added",
+      "definition_source_marker": "total = sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::compute_total",
+      "expected": {
+        "callees": [
+          "core.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "service.py::audit_summary",
+          "service.py::render_summary"
+        ],
+        "definition": [
+          "core.py::compute_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "service.py::audit_summary",
+          "service.py::render_summary",
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ],
+        "tests": [
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ]
+      },
+      "fixture_id": "tiny-python",
+      "state": 3,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": "caller_removed",
+      "definition_source_marker": "total = sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::compute_total",
+      "expected": {
+        "callees": [
+          "core.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "service.py::audit_summary"
+        ],
+        "definition": [
+          "core.py::compute_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "service.py::audit_summary",
+          "test_service.py::test_callback"
+        ],
+        "tests": [
+          "test_service.py::test_callback"
+        ]
+      },
+      "fixture_id": "tiny-python",
+      "state": 4,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": "symbol_moved",
+      "definition_source_marker": "total = sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::compute_total",
+      "expected": {
+        "callees": [
+          "normalizer.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "service.py::audit_summary"
+        ],
+        "definition": [
+          "core.py::compute_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "service.py::audit_summary",
+          "test_service.py::test_callback"
+        ],
+        "tests": [
+          "test_service.py::test_callback"
+        ]
+      },
+      "fixture_id": "tiny-python",
+      "state": 5,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": "file_rename",
+      "definition_source_marker": "total = sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::compute_total",
+      "expected": {
+        "callees": [
+          "normalizer.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "presentation.py::audit_summary"
+        ],
+        "definition": [
+          "core.py::compute_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "presentation.py::audit_summary",
+          "test_service.py::test_callback"
+        ],
+        "tests": [
+          "test_service.py::test_callback"
+        ]
+      },
+      "fixture_id": "tiny-python",
+      "state": 6,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": null,
+      "definition_source_marker": "return sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::calculate_total",
+      "expected": {
+        "callees": [
+          "core.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "service.py::render_summary"
+        ],
+        "definition": [
+          "core.py::calculate_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "service.py::render_summary",
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ],
+        "tests": [
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ]
+      },
+      "fixture_id": "modest-python",
+      "state": 0,
+      "target": "calculate_total"
+    },
+    {
+      "after_mutation": "body_edit",
+      "definition_source_marker": "total = sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::calculate_total",
+      "expected": {
+        "callees": [
+          "core.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "service.py::render_summary"
+        ],
+        "definition": [
+          "core.py::calculate_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "service.py::render_summary",
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ],
+        "tests": [
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ]
+      },
+      "fixture_id": "modest-python",
+      "state": 1,
+      "target": "calculate_total"
+    },
+    {
+      "after_mutation": "rename",
+      "definition_source_marker": "total = sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::compute_total",
+      "expected": {
+        "callees": [
+          "core.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "service.py::render_summary"
+        ],
+        "definition": [
+          "core.py::compute_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "service.py::render_summary",
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ],
+        "tests": [
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ]
+      },
+      "fixture_id": "modest-python",
+      "state": 2,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": "caller_added",
+      "definition_source_marker": "total = sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::compute_total",
+      "expected": {
+        "callees": [
+          "core.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "service.py::audit_summary",
+          "service.py::render_summary"
+        ],
+        "definition": [
+          "core.py::compute_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "service.py::audit_summary",
+          "service.py::render_summary",
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ],
+        "tests": [
+          "test_service.py::test_callback",
+          "test_service.py::test_render_summary"
+        ]
+      },
+      "fixture_id": "modest-python",
+      "state": 3,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": "caller_removed",
+      "definition_source_marker": "total = sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::compute_total",
+      "expected": {
+        "callees": [
+          "core.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "service.py::audit_summary"
+        ],
+        "definition": [
+          "core.py::compute_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "service.py::audit_summary",
+          "test_service.py::test_callback"
+        ],
+        "tests": [
+          "test_service.py::test_callback"
+        ]
+      },
+      "fixture_id": "modest-python",
+      "state": 4,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": "symbol_moved",
+      "definition_source_marker": "total = sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::compute_total",
+      "expected": {
+        "callees": [
+          "normalizer.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "service.py::audit_summary"
+        ],
+        "definition": [
+          "core.py::compute_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "service.py::audit_summary",
+          "test_service.py::test_callback"
+        ],
+        "tests": [
+          "test_service.py::test_callback"
+        ]
+      },
+      "fixture_id": "modest-python",
+      "state": 5,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": "file_rename",
+      "definition_source_marker": "total = sum(normalize_value(item) for item in items)",
+      "dynamic_dispatch_edge": "callback.py::invoke_callback -> core.py::compute_total",
+      "expected": {
+        "callees": [
+          "normalizer.py::normalize_value"
+        ],
+        "callers": [
+          "callback.py::invoke_callback",
+          "presentation.py::audit_summary"
+        ],
+        "definition": [
+          "core.py::compute_total"
+        ],
+        "impact": [
+          "callback.py::invoke_callback",
+          "presentation.py::audit_summary",
+          "test_service.py::test_callback"
+        ],
+        "tests": [
+          "test_service.py::test_callback"
+        ]
+      },
+      "fixture_id": "modest-python",
+      "state": 6,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": null,
+      "definition_source_marker": "items.iter().map(|item| normalize_value(*item)).sum()",
+      "dynamic_dispatch_edge": "src/callback.rs::invoke_callback -> src/core.rs::calculate_total",
+      "expected": {
+        "callees": [
+          "src/core.rs::normalize_value"
+        ],
+        "callers": [
+          "src/callback.rs::invoke_callback",
+          "src/service.rs::render_summary"
+        ],
+        "definition": [
+          "src/core.rs::calculate_total"
+        ],
+        "impact": [
+          "src/callback.rs::invoke_callback",
+          "src/service.rs::render_summary",
+          "tests/service_test.rs::test_callback",
+          "tests/service_test.rs::test_render_summary"
+        ],
+        "tests": [
+          "tests/service_test.rs::test_callback",
+          "tests/service_test.rs::test_render_summary"
+        ]
+      },
+      "fixture_id": "modest-rust",
+      "state": 0,
+      "target": "calculate_total"
+    },
+    {
+      "after_mutation": "body_edit",
+      "definition_source_marker": "items.iter().fold(0, |sum, item| sum + normalize_value(*item))",
+      "dynamic_dispatch_edge": "src/callback.rs::invoke_callback -> src/core.rs::calculate_total",
+      "expected": {
+        "callees": [
+          "src/core.rs::normalize_value"
+        ],
+        "callers": [
+          "src/callback.rs::invoke_callback",
+          "src/service.rs::render_summary"
+        ],
+        "definition": [
+          "src/core.rs::calculate_total"
+        ],
+        "impact": [
+          "src/callback.rs::invoke_callback",
+          "src/service.rs::render_summary",
+          "tests/service_test.rs::test_callback",
+          "tests/service_test.rs::test_render_summary"
+        ],
+        "tests": [
+          "tests/service_test.rs::test_callback",
+          "tests/service_test.rs::test_render_summary"
+        ]
+      },
+      "fixture_id": "modest-rust",
+      "state": 1,
+      "target": "calculate_total"
+    },
+    {
+      "after_mutation": "rename",
+      "definition_source_marker": "items.iter().fold(0, |sum, item| sum + normalize_value(*item))",
+      "dynamic_dispatch_edge": "src/callback.rs::invoke_callback -> src/core.rs::compute_total",
+      "expected": {
+        "callees": [
+          "src/core.rs::normalize_value"
+        ],
+        "callers": [
+          "src/callback.rs::invoke_callback",
+          "src/service.rs::render_summary"
+        ],
+        "definition": [
+          "src/core.rs::compute_total"
+        ],
+        "impact": [
+          "src/callback.rs::invoke_callback",
+          "src/service.rs::render_summary",
+          "tests/service_test.rs::test_callback",
+          "tests/service_test.rs::test_render_summary"
+        ],
+        "tests": [
+          "tests/service_test.rs::test_callback",
+          "tests/service_test.rs::test_render_summary"
+        ]
+      },
+      "fixture_id": "modest-rust",
+      "state": 2,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": "caller_added",
+      "definition_source_marker": "items.iter().fold(0, |sum, item| sum + normalize_value(*item))",
+      "dynamic_dispatch_edge": "src/callback.rs::invoke_callback -> src/core.rs::compute_total",
+      "expected": {
+        "callees": [
+          "src/core.rs::normalize_value"
+        ],
+        "callers": [
+          "src/callback.rs::invoke_callback",
+          "src/service.rs::audit_summary",
+          "src/service.rs::render_summary"
+        ],
+        "definition": [
+          "src/core.rs::compute_total"
+        ],
+        "impact": [
+          "src/callback.rs::invoke_callback",
+          "src/service.rs::audit_summary",
+          "src/service.rs::render_summary",
+          "tests/service_test.rs::test_callback",
+          "tests/service_test.rs::test_render_summary"
+        ],
+        "tests": [
+          "tests/service_test.rs::test_callback",
+          "tests/service_test.rs::test_render_summary"
+        ]
+      },
+      "fixture_id": "modest-rust",
+      "state": 3,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": "caller_removed",
+      "definition_source_marker": "items.iter().fold(0, |sum, item| sum + normalize_value(*item))",
+      "dynamic_dispatch_edge": "src/callback.rs::invoke_callback -> src/core.rs::compute_total",
+      "expected": {
+        "callees": [
+          "src/core.rs::normalize_value"
+        ],
+        "callers": [
+          "src/callback.rs::invoke_callback",
+          "src/service.rs::audit_summary"
+        ],
+        "definition": [
+          "src/core.rs::compute_total"
+        ],
+        "impact": [
+          "src/callback.rs::invoke_callback",
+          "src/service.rs::audit_summary",
+          "tests/service_test.rs::test_callback"
+        ],
+        "tests": [
+          "tests/service_test.rs::test_callback"
+        ]
+      },
+      "fixture_id": "modest-rust",
+      "state": 4,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": "symbol_moved",
+      "definition_source_marker": "items.iter().fold(0, |sum, item| sum + normalize_value(*item))",
+      "dynamic_dispatch_edge": "src/callback.rs::invoke_callback -> src/core.rs::compute_total",
+      "expected": {
+        "callees": [
+          "src/normalizer.rs::normalize_value"
+        ],
+        "callers": [
+          "src/callback.rs::invoke_callback",
+          "src/service.rs::audit_summary"
+        ],
+        "definition": [
+          "src/core.rs::compute_total"
+        ],
+        "impact": [
+          "src/callback.rs::invoke_callback",
+          "src/service.rs::audit_summary",
+          "tests/service_test.rs::test_callback"
+        ],
+        "tests": [
+          "tests/service_test.rs::test_callback"
+        ]
+      },
+      "fixture_id": "modest-rust",
+      "state": 5,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": "file_rename",
+      "definition_source_marker": "items.iter().fold(0, |sum, item| sum + normalize_value(*item))",
+      "dynamic_dispatch_edge": "src/callback.rs::invoke_callback -> src/core.rs::compute_total",
+      "expected": {
+        "callees": [
+          "src/normalizer.rs::normalize_value"
+        ],
+        "callers": [
+          "src/callback.rs::invoke_callback",
+          "src/presentation.rs::audit_summary"
+        ],
+        "definition": [
+          "src/core.rs::compute_total"
+        ],
+        "impact": [
+          "src/callback.rs::invoke_callback",
+          "src/presentation.rs::audit_summary",
+          "tests/service_test.rs::test_callback"
+        ],
+        "tests": [
+          "tests/service_test.rs::test_callback"
+        ]
+      },
+      "fixture_id": "modest-rust",
+      "state": 6,
+      "target": "compute_total"
+    },
+    {
+      "after_mutation": null,
+      "definition_source_marker": "items.map(normalizeValue).reduce((a, b) => a + b, 0)",
+      "dynamic_dispatch_edge": "callback.ts::invokeCallback -> core.ts::calculateTotal",
+      "expected": {
+        "callees": [
+          "core.ts::normalizeValue"
+        ],
+        "callers": [
+          "callback.ts::invokeCallback",
+          "service.tsx::RenderSummary"
+        ],
+        "definition": [
+          "core.ts::calculateTotal"
+        ],
+        "impact": [
+          "callback.ts::invokeCallback",
+          "service.test.tsx::testCallback",
+          "service.test.tsx::testRenderSummary",
+          "service.tsx::RenderSummary"
+        ],
+        "tests": [
+          "service.test.tsx::testCallback",
+          "service.test.tsx::testRenderSummary"
+        ]
+      },
+      "fixture_id": "modest-typescript-tsx",
+      "state": 0,
+      "target": "calculateTotal"
+    },
+    {
+      "after_mutation": "body_edit",
+      "definition_source_marker": "for (const item of items)",
+      "dynamic_dispatch_edge": "callback.ts::invokeCallback -> core.ts::calculateTotal",
+      "expected": {
+        "callees": [
+          "core.ts::normalizeValue"
+        ],
+        "callers": [
+          "callback.ts::invokeCallback",
+          "service.tsx::RenderSummary"
+        ],
+        "definition": [
+          "core.ts::calculateTotal"
+        ],
+        "impact": [
+          "callback.ts::invokeCallback",
+          "service.test.tsx::testCallback",
+          "service.test.tsx::testRenderSummary",
+          "service.tsx::RenderSummary"
+        ],
+        "tests": [
+          "service.test.tsx::testCallback",
+          "service.test.tsx::testRenderSummary"
+        ]
+      },
+      "fixture_id": "modest-typescript-tsx",
+      "state": 1,
+      "target": "calculateTotal"
+    },
+    {
+      "after_mutation": "rename",
+      "definition_source_marker": "for (const item of items)",
+      "dynamic_dispatch_edge": "callback.ts::invokeCallback -> core.ts::computeTotal",
+      "expected": {
+        "callees": [
+          "core.ts::normalizeValue"
+        ],
+        "callers": [
+          "callback.ts::invokeCallback",
+          "service.tsx::RenderSummary"
+        ],
+        "definition": [
+          "core.ts::computeTotal"
+        ],
+        "impact": [
+          "callback.ts::invokeCallback",
+          "service.test.tsx::testCallback",
+          "service.test.tsx::testRenderSummary",
+          "service.tsx::RenderSummary"
+        ],
+        "tests": [
+          "service.test.tsx::testCallback",
+          "service.test.tsx::testRenderSummary"
+        ]
+      },
+      "fixture_id": "modest-typescript-tsx",
+      "state": 2,
+      "target": "computeTotal"
+    },
+    {
+      "after_mutation": "caller_added",
+      "definition_source_marker": "for (const item of items)",
+      "dynamic_dispatch_edge": "callback.ts::invokeCallback -> core.ts::computeTotal",
+      "expected": {
+        "callees": [
+          "core.ts::normalizeValue"
+        ],
+        "callers": [
+          "callback.ts::invokeCallback",
+          "service.tsx::RenderSummary",
+          "service.tsx::auditSummary"
+        ],
+        "definition": [
+          "core.ts::computeTotal"
+        ],
+        "impact": [
+          "callback.ts::invokeCallback",
+          "service.test.tsx::testCallback",
+          "service.test.tsx::testRenderSummary",
+          "service.tsx::RenderSummary",
+          "service.tsx::auditSummary"
+        ],
+        "tests": [
+          "service.test.tsx::testCallback",
+          "service.test.tsx::testRenderSummary"
+        ]
+      },
+      "fixture_id": "modest-typescript-tsx",
+      "state": 3,
+      "target": "computeTotal"
+    },
+    {
+      "after_mutation": "caller_removed",
+      "definition_source_marker": "for (const item of items)",
+      "dynamic_dispatch_edge": "callback.ts::invokeCallback -> core.ts::computeTotal",
+      "expected": {
+        "callees": [
+          "core.ts::normalizeValue"
+        ],
+        "callers": [
+          "callback.ts::invokeCallback",
+          "service.tsx::auditSummary"
+        ],
+        "definition": [
+          "core.ts::computeTotal"
+        ],
+        "impact": [
+          "callback.ts::invokeCallback",
+          "service.test.tsx::testCallback",
+          "service.tsx::auditSummary"
+        ],
+        "tests": [
+          "service.test.tsx::testCallback"
+        ]
+      },
+      "fixture_id": "modest-typescript-tsx",
+      "state": 4,
+      "target": "computeTotal"
+    },
+    {
+      "after_mutation": "symbol_moved",
+      "definition_source_marker": "for (const item of items)",
+      "dynamic_dispatch_edge": "callback.ts::invokeCallback -> core.ts::computeTotal",
+      "expected": {
+        "callees": [
+          "normalizer.ts::normalizeValue"
+        ],
+        "callers": [
+          "callback.ts::invokeCallback",
+          "service.tsx::auditSummary"
+        ],
+        "definition": [
+          "core.ts::computeTotal"
+        ],
+        "impact": [
+          "callback.ts::invokeCallback",
+          "service.test.tsx::testCallback",
+          "service.tsx::auditSummary"
+        ],
+        "tests": [
+          "service.test.tsx::testCallback"
+        ]
+      },
+      "fixture_id": "modest-typescript-tsx",
+      "state": 5,
+      "target": "computeTotal"
+    },
+    {
+      "after_mutation": "file_rename",
+      "definition_source_marker": "for (const item of items)",
+      "dynamic_dispatch_edge": "callback.ts::invokeCallback -> core.ts::computeTotal",
+      "expected": {
+        "callees": [
+          "normalizer.ts::normalizeValue"
+        ],
+        "callers": [
+          "callback.ts::invokeCallback",
+          "presentation.tsx::auditSummary"
+        ],
+        "definition": [
+          "core.ts::computeTotal"
+        ],
+        "impact": [
+          "callback.ts::invokeCallback",
+          "presentation.tsx::auditSummary",
+          "service.test.tsx::testCallback"
+        ],
+        "tests": [
+          "service.test.tsx::testCallback"
+        ]
+      },
+      "fixture_id": "modest-typescript-tsx",
+      "state": 6,
+      "target": "computeTotal"
+    },
+    {
+      "after_mutation": null,
+      "definition_source_marker": "total := 0",
+      "dynamic_dispatch_edge": "callback.go::invokeCallback -> core.go::calculateTotal",
+      "expected": {
+        "callees": [
+          "core.go::normalizeValue"
+        ],
+        "callers": [
+          "callback.go::invokeCallback",
+          "service.go::renderSummary"
+        ],
+        "definition": [
+          "core.go::calculateTotal"
+        ],
+        "impact": [
+          "callback.go::invokeCallback",
+          "service.go::renderSummary",
+          "service_test.go::TestCallback",
+          "service_test.go::TestRenderSummary"
+        ],
+        "tests": [
+          "service_test.go::TestCallback",
+          "service_test.go::TestRenderSummary"
+        ]
+      },
+      "fixture_id": "modest-go",
+      "state": 0,
+      "target": "calculateTotal"
+    },
+    {
+      "after_mutation": "body_edit",
+      "definition_source_marker": "total := len(items) * 0",
+      "dynamic_dispatch_edge": "callback.go::invokeCallback -> core.go::calculateTotal",
+      "expected": {
+        "callees": [
+          "core.go::normalizeValue"
+        ],
+        "callers": [
+          "callback.go::invokeCallback",
+          "service.go::renderSummary"
+        ],
+        "definition": [
+          "core.go::calculateTotal"
+        ],
+        "impact": [
+          "callback.go::invokeCallback",
+          "service.go::renderSummary",
+          "service_test.go::TestCallback",
+          "service_test.go::TestRenderSummary"
+        ],
+        "tests": [
+          "service_test.go::TestCallback",
+          "service_test.go::TestRenderSummary"
+        ]
+      },
+      "fixture_id": "modest-go",
+      "state": 1,
+      "target": "calculateTotal"
+    },
+    {
+      "after_mutation": "rename",
+      "definition_source_marker": "total := len(items) * 0",
+      "dynamic_dispatch_edge": "callback.go::invokeCallback -> core.go::computeTotal",
+      "expected": {
+        "callees": [
+          "core.go::normalizeValue"
+        ],
+        "callers": [
+          "callback.go::invokeCallback",
+          "service.go::renderSummary"
+        ],
+        "definition": [
+          "core.go::computeTotal"
+        ],
+        "impact": [
+          "callback.go::invokeCallback",
+          "service.go::renderSummary",
+          "service_test.go::TestCallback",
+          "service_test.go::TestRenderSummary"
+        ],
+        "tests": [
+          "service_test.go::TestCallback",
+          "service_test.go::TestRenderSummary"
+        ]
+      },
+      "fixture_id": "modest-go",
+      "state": 2,
+      "target": "computeTotal"
+    },
+    {
+      "after_mutation": "caller_added",
+      "definition_source_marker": "total := len(items) * 0",
+      "dynamic_dispatch_edge": "callback.go::invokeCallback -> core.go::computeTotal",
+      "expected": {
+        "callees": [
+          "core.go::normalizeValue"
+        ],
+        "callers": [
+          "callback.go::invokeCallback",
+          "service.go::auditSummary",
+          "service.go::renderSummary"
+        ],
+        "definition": [
+          "core.go::computeTotal"
+        ],
+        "impact": [
+          "callback.go::invokeCallback",
+          "service.go::auditSummary",
+          "service.go::renderSummary",
+          "service_test.go::TestCallback",
+          "service_test.go::TestRenderSummary"
+        ],
+        "tests": [
+          "service_test.go::TestCallback",
+          "service_test.go::TestRenderSummary"
+        ]
+      },
+      "fixture_id": "modest-go",
+      "state": 3,
+      "target": "computeTotal"
+    },
+    {
+      "after_mutation": "caller_removed",
+      "definition_source_marker": "total := len(items) * 0",
+      "dynamic_dispatch_edge": "callback.go::invokeCallback -> core.go::computeTotal",
+      "expected": {
+        "callees": [
+          "core.go::normalizeValue"
+        ],
+        "callers": [
+          "callback.go::invokeCallback",
+          "service.go::auditSummary"
+        ],
+        "definition": [
+          "core.go::computeTotal"
+        ],
+        "impact": [
+          "callback.go::invokeCallback",
+          "service.go::auditSummary",
+          "service_test.go::TestCallback"
+        ],
+        "tests": [
+          "service_test.go::TestCallback"
+        ]
+      },
+      "fixture_id": "modest-go",
+      "state": 4,
+      "target": "computeTotal"
+    },
+    {
+      "after_mutation": "symbol_moved",
+      "definition_source_marker": "total := len(items) * 0",
+      "dynamic_dispatch_edge": "callback.go::invokeCallback -> core.go::computeTotal",
+      "expected": {
+        "callees": [
+          "normalizer.go::normalizeValue"
+        ],
+        "callers": [
+          "callback.go::invokeCallback",
+          "service.go::auditSummary"
+        ],
+        "definition": [
+          "core.go::computeTotal"
+        ],
+        "impact": [
+          "callback.go::invokeCallback",
+          "service.go::auditSummary",
+          "service_test.go::TestCallback"
+        ],
+        "tests": [
+          "service_test.go::TestCallback"
+        ]
+      },
+      "fixture_id": "modest-go",
+      "state": 5,
+      "target": "computeTotal"
+    },
+    {
+      "after_mutation": "file_rename",
+      "definition_source_marker": "total := len(items) * 0",
+      "dynamic_dispatch_edge": "callback.go::invokeCallback -> core.go::computeTotal",
+      "expected": {
+        "callees": [
+          "normalizer.go::normalizeValue"
+        ],
+        "callers": [
+          "callback.go::invokeCallback",
+          "presentation.go::auditSummary"
+        ],
+        "definition": [
+          "core.go::computeTotal"
+        ],
+        "impact": [
+          "callback.go::invokeCallback",
+          "presentation.go::auditSummary",
+          "service_test.go::TestCallback"
+        ],
+        "tests": [
+          "service_test.go::TestCallback"
+        ]
+      },
+      "fixture_id": "modest-go",
+      "state": 6,
+      "target": "computeTotal"
+    }
+  ],
+  "test_policy": "A relevant test is any test with a runtime call path to the target. This intentionally includes the function-parameter dynamic-dispatch path."
+}

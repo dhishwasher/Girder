@@ -1,0 +1,297 @@
+{
+  "fixtures": [
+    {
+      "aggregate_inclusion": false,
+      "base_files": {
+        "callback.py": "from collections.abc import Callable\n\ndef invoke_callback(target: Callable[[list[int]], int], items: list[int]) -> int:\n    return target(items)\n",
+        "core.py": "def normalize_value(value: int) -> int:\n    return max(value, 0)\n\ndef calculate_total(items: list[int]) -> int:\n    return sum(normalize_value(item) for item in items)\n",
+        "service.py": "from core import calculate_total\n\ndef render_summary(items: list[int]) -> str:\n    return str(calculate_total(items))\n",
+        "test_service.py": "from callback import invoke_callback\nfrom core import calculate_total\nfrom service import render_summary\n\ndef test_render_summary() -> None:\n    assert render_summary([2, -1]) == \"2\"\n\ndef test_callback() -> None:\n    assert invoke_callback(calculate_total, [3]) == 3\n\ndef test_unrelated() -> None:\n    assert 2 + 2 == 4\n"
+      },
+      "id": "tiny-python",
+      "language": "python",
+      "mutations": [
+        {
+          "id": "body_edit",
+          "write": {
+            "core.py": "def normalize_value(value: int) -> int:\n    return max(value, 0)\n\ndef calculate_total(items: list[int]) -> int:\n    total = sum(normalize_value(item) for item in items)\n    return total\n"
+          }
+        },
+        {
+          "id": "rename",
+          "write": {
+            "core.py": "def normalize_value(value: int) -> int:\n    return max(value, 0)\n\ndef compute_total(items: list[int]) -> int:\n    total = sum(normalize_value(item) for item in items)\n    return total\n",
+            "service.py": "from core import compute_total\n\ndef render_summary(items: list[int]) -> str:\n    return str(compute_total(items))\n",
+            "test_service.py": "from callback import invoke_callback\nfrom core import compute_total\nfrom service import render_summary\n\ndef test_render_summary() -> None:\n    assert render_summary([2, -1]) == \"2\"\n\ndef test_callback() -> None:\n    assert invoke_callback(compute_total, [3]) == 3\n\ndef test_unrelated() -> None:\n    assert 2 + 2 == 4\n"
+          }
+        },
+        {
+          "id": "caller_added",
+          "write": {
+            "service.py": "from core import compute_total\n\ndef render_summary(items: list[int]) -> str:\n    return str(compute_total(items))\n\ndef audit_summary(items: list[int]) -> int:\n    return compute_total(items)\n"
+          }
+        },
+        {
+          "id": "caller_removed",
+          "write": {
+            "service.py": "from core import compute_total\n\ndef render_summary(items: list[int]) -> str:\n    return str(len(items))\n\ndef audit_summary(items: list[int]) -> int:\n    return compute_total(items)\n"
+          }
+        },
+        {
+          "id": "symbol_moved",
+          "write": {
+            "core.py": "from normalizer import normalize_value\n\ndef compute_total(items: list[int]) -> int:\n    total = sum(normalize_value(item) for item in items)\n    return total\n",
+            "normalizer.py": "def normalize_value(value: int) -> int:\n    return value if value >= 0 else 0\n"
+          }
+        },
+        {
+          "delete": [
+            "service.py"
+          ],
+          "id": "file_rename",
+          "write": {
+            "presentation.py": "from core import compute_total\n\ndef render_summary(items: list[int]) -> str:\n    return str(len(items))\n\ndef audit_summary(items: list[int]) -> int:\n    return compute_total(items)\n",
+            "test_service.py": "from callback import invoke_callback\nfrom core import compute_total\nfrom presentation import render_summary\n\ndef test_render_summary() -> None:\n    assert render_summary([2, -1]) == \"2\"\n\ndef test_callback() -> None:\n    assert invoke_callback(compute_total, [3]) == 3\n\ndef test_unrelated() -> None:\n    assert 2 + 2 == 4\n"
+          }
+        }
+      ],
+      "purpose": "adapter_smoke"
+    },
+    {
+      "aggregate_inclusion": true,
+      "base_files": {
+        "callback.py": "from collections.abc import Callable\n\ndef invoke_callback(target: Callable[[list[int]], int], items: list[int]) -> int:\n    return target(items)\n",
+        "core.py": "def normalize_value(value: int) -> int:\n    return max(value, 0)\n\ndef calculate_total(items: list[int]) -> int:\n    return sum(normalize_value(item) for item in items)\n",
+        "service.py": "from core import calculate_total\n\ndef render_summary(items: list[int]) -> str:\n    return str(calculate_total(items))\n",
+        "test_service.py": "from callback import invoke_callback\nfrom core import calculate_total\nfrom service import render_summary\n\ndef test_render_summary() -> None:\n    assert render_summary([2, -1]) == \"2\"\n\ndef test_callback() -> None:\n    assert invoke_callback(calculate_total, [3]) == 3\n\ndef test_unrelated() -> None:\n    assert 2 + 2 == 4\n"
+      },
+      "id": "modest-python",
+      "language": "python",
+      "mutations": [
+        {
+          "id": "body_edit",
+          "write": {
+            "core.py": "def normalize_value(value: int) -> int:\n    return max(value, 0)\n\ndef calculate_total(items: list[int]) -> int:\n    total = sum(normalize_value(item) for item in items)\n    return total\n"
+          }
+        },
+        {
+          "id": "rename",
+          "write": {
+            "core.py": "def normalize_value(value: int) -> int:\n    return max(value, 0)\n\ndef compute_total(items: list[int]) -> int:\n    total = sum(normalize_value(item) for item in items)\n    return total\n",
+            "service.py": "from core import compute_total\n\ndef render_summary(items: list[int]) -> str:\n    return str(compute_total(items))\n",
+            "test_service.py": "from callback import invoke_callback\nfrom core import compute_total\nfrom service import render_summary\n\ndef test_render_summary() -> None:\n    assert render_summary([2, -1]) == \"2\"\n\ndef test_callback() -> None:\n    assert invoke_callback(compute_total, [3]) == 3\n\ndef test_unrelated() -> None:\n    assert 2 + 2 == 4\n"
+          }
+        },
+        {
+          "id": "caller_added",
+          "write": {
+            "service.py": "from core import compute_total\n\ndef render_summary(items: list[int]) -> str:\n    return str(compute_total(items))\n\ndef audit_summary(items: list[int]) -> int:\n    return compute_total(items)\n"
+          }
+        },
+        {
+          "id": "caller_removed",
+          "write": {
+            "service.py": "from core import compute_total\n\ndef render_summary(items: list[int]) -> str:\n    return str(len(items))\n\ndef audit_summary(items: list[int]) -> int:\n    return compute_total(items)\n"
+          }
+        },
+        {
+          "id": "symbol_moved",
+          "write": {
+            "core.py": "from normalizer import normalize_value\n\ndef compute_total(items: list[int]) -> int:\n    total = sum(normalize_value(item) for item in items)\n    return total\n",
+            "normalizer.py": "def normalize_value(value: int) -> int:\n    return value if value >= 0 else 0\n"
+          }
+        },
+        {
+          "delete": [
+            "service.py"
+          ],
+          "id": "file_rename",
+          "write": {
+            "presentation.py": "from core import compute_total\n\ndef render_summary(items: list[int]) -> str:\n    return str(len(items))\n\ndef audit_summary(items: list[int]) -> int:\n    return compute_total(items)\n",
+            "test_service.py": "from callback import invoke_callback\nfrom core import compute_total\nfrom presentation import render_summary\n\ndef test_render_summary() -> None:\n    assert render_summary([2, -1]) == \"2\"\n\ndef test_callback() -> None:\n    assert invoke_callback(compute_total, [3]) == 3\n\ndef test_unrelated() -> None:\n    assert 2 + 2 == 4\n"
+          }
+        }
+      ],
+      "purpose": "cross_language"
+    },
+    {
+      "aggregate_inclusion": true,
+      "base_files": {
+        "Cargo.toml": "[package]\nname = \"fixture\"\nversion = \"0.0.0\"\nedition = \"2021\"\n",
+        "src/callback.rs": "pub fn invoke_callback(target: fn(&[i32]) -> i32, items: &[i32]) -> i32 { target(items) }\n",
+        "src/core.rs": "pub fn normalize_value(value: i32) -> i32 { value.max(0) }\npub fn calculate_total(items: &[i32]) -> i32 { items.iter().map(|item| normalize_value(*item)).sum() }\n",
+        "src/lib.rs": "mod callback;\nmod core;\nmod service;\npub use callback::invoke_callback;\npub use core::calculate_total;\npub use service::render_summary;\n",
+        "src/service.rs": "use crate::core::calculate_total;\npub fn render_summary(items: &[i32]) -> String { calculate_total(items).to_string() }\n",
+        "tests/service_test.rs": "use fixture::{calculate_total, invoke_callback, render_summary};\n#[test]\nfn test_render_summary() { assert_eq!(render_summary(&[2, -1]), \"2\"); }\n#[test]\nfn test_callback() { assert_eq!(invoke_callback(calculate_total, &[3]), 3); }\n#[test]\nfn test_unrelated() { assert_eq!(2 + 2, 4); }\n"
+      },
+      "id": "modest-rust",
+      "language": "rust",
+      "mutations": [
+        {
+          "id": "body_edit",
+          "write": {
+            "src/core.rs": "pub fn normalize_value(value: i32) -> i32 { value.max(0) }\npub fn calculate_total(items: &[i32]) -> i32 { items.iter().fold(0, |sum, item| sum + normalize_value(*item)) }\n"
+          }
+        },
+        {
+          "id": "rename",
+          "write": {
+            "src/core.rs": "pub fn normalize_value(value: i32) -> i32 { value.max(0) }\npub fn compute_total(items: &[i32]) -> i32 { items.iter().fold(0, |sum, item| sum + normalize_value(*item)) }\n",
+            "src/lib.rs": "mod callback;\nmod core;\nmod service;\npub use callback::invoke_callback;\npub use core::compute_total;\npub use service::render_summary;\n",
+            "src/service.rs": "use crate::core::compute_total;\npub fn render_summary(items: &[i32]) -> String { compute_total(items).to_string() }\n",
+            "tests/service_test.rs": "use fixture::{compute_total, invoke_callback, render_summary};\n#[test]\nfn test_render_summary() { assert_eq!(render_summary(&[2, -1]), \"2\"); }\n#[test]\nfn test_callback() { assert_eq!(invoke_callback(compute_total, &[3]), 3); }\n#[test]\nfn test_unrelated() { assert_eq!(2 + 2, 4); }\n"
+          }
+        },
+        {
+          "id": "caller_added",
+          "write": {
+            "src/service.rs": "use crate::core::compute_total;\npub fn render_summary(items: &[i32]) -> String { compute_total(items).to_string() }\n\npub fn audit_summary(items: &[i32]) -> i32 { compute_total(items) }\n"
+          }
+        },
+        {
+          "id": "caller_removed",
+          "write": {
+            "src/service.rs": "use crate::core::compute_total;\npub fn render_summary(items: &[i32]) -> String { items.len().to_string() }\npub fn audit_summary(items: &[i32]) -> i32 { compute_total(items) }\n"
+          }
+        },
+        {
+          "id": "symbol_moved",
+          "write": {
+            "src/core.rs": "use crate::normalizer::normalize_value;\npub fn compute_total(items: &[i32]) -> i32 { items.iter().fold(0, |sum, item| sum + normalize_value(*item)) }\n",
+            "src/lib.rs": "mod callback;\nmod core;\nmod normalizer;\nmod service;\npub use callback::invoke_callback;\npub use core::compute_total;\npub use service::render_summary;\n",
+            "src/normalizer.rs": "pub fn normalize_value(value: i32) -> i32 { if value >= 0 { value } else { 0 } }\n"
+          }
+        },
+        {
+          "delete": [
+            "src/service.rs"
+          ],
+          "id": "file_rename",
+          "write": {
+            "src/lib.rs": "mod callback;\nmod core;\nmod normalizer;\nmod presentation;\npub use callback::invoke_callback;\npub use core::compute_total;\npub use presentation::render_summary;\n",
+            "src/presentation.rs": "use crate::core::compute_total;\npub fn render_summary(items: &[i32]) -> String { items.len().to_string() }\npub fn audit_summary(items: &[i32]) -> i32 { compute_total(items) }\n"
+          }
+        }
+      ],
+      "purpose": "cross_language"
+    },
+    {
+      "aggregate_inclusion": true,
+      "base_files": {
+        "callback.ts": "export function invokeCallback(target: (items: number[]) => number, items: number[]): number { return target(items); }\n",
+        "core.ts": "export function normalizeValue(value: number): number { return Math.max(value, 0); }\nexport function calculateTotal(items: number[]): number { return items.map(normalizeValue).reduce((a, b) => a + b, 0); }\n",
+        "package.json": "{\"name\":\"fixture\",\"private\":true,\"version\":\"0.0.0\"}\n",
+        "service.test.tsx": "import { invokeCallback } from \"./callback\";\nimport { calculateTotal } from \"./core\";\nimport { RenderSummary } from \"./service\";\nexport function testRenderSummary(): void { if (RenderSummary({items: [2, -1]}) !== \"2\") throw new Error(); }\nexport function testCallback(): void { if (invokeCallback(calculateTotal, [3]) !== 3) throw new Error(); }\nexport function testUnrelated(): void { if (2 + 2 !== 4) throw new Error(); }\n",
+        "service.tsx": "import { calculateTotal } from \"./core\";\nexport function RenderSummary(props: { items: number[] }): string { return String(calculateTotal(props.items)); }\n"
+      },
+      "id": "modest-typescript-tsx",
+      "language": "typescript_tsx",
+      "mutations": [
+        {
+          "id": "body_edit",
+          "write": {
+            "core.ts": "export function normalizeValue(value: number): number { return Math.max(value, 0); }\nexport function calculateTotal(items: number[]): number { let total = 0; for (const item of items) { total += normalizeValue(item); } return total; }\n"
+          }
+        },
+        {
+          "id": "rename",
+          "write": {
+            "core.ts": "export function normalizeValue(value: number): number { return Math.max(value, 0); }\nexport function computeTotal(items: number[]): number { let total = 0; for (const item of items) { total += normalizeValue(item); } return total; }\n",
+            "service.test.tsx": "import { invokeCallback } from \"./callback\";\nimport { computeTotal } from \"./core\";\nimport { RenderSummary } from \"./service\";\nexport function testRenderSummary(): void { if (RenderSummary({items: [2, -1]}) !== \"2\") throw new Error(); }\nexport function testCallback(): void { if (invokeCallback(computeTotal, [3]) !== 3) throw new Error(); }\nexport function testUnrelated(): void { if (2 + 2 !== 4) throw new Error(); }\n",
+            "service.tsx": "import { computeTotal } from \"./core\";\nexport function RenderSummary(props: { items: number[] }): string { return String(computeTotal(props.items)); }\n"
+          }
+        },
+        {
+          "id": "caller_added",
+          "write": {
+            "service.tsx": "import { computeTotal } from \"./core\";\nexport function RenderSummary(props: { items: number[] }): string { return String(computeTotal(props.items)); }\n\nexport function auditSummary(items: number[]): number { return computeTotal(items); }\n"
+          }
+        },
+        {
+          "id": "caller_removed",
+          "write": {
+            "service.tsx": "import { computeTotal } from \"./core\";\nexport function RenderSummary(props: { items: number[] }): string { return String(props.items.length); }\nexport function auditSummary(items: number[]): number { return computeTotal(items); }\n"
+          }
+        },
+        {
+          "id": "symbol_moved",
+          "write": {
+            "core.ts": "import { normalizeValue } from \"./normalizer\";\nexport function computeTotal(items: number[]): number { let total = 0; for (const item of items) { total += normalizeValue(item); } return total; }\n",
+            "normalizer.ts": "export function normalizeValue(value: number): number { return value >= 0 ? value : 0; }\n"
+          }
+        },
+        {
+          "delete": [
+            "service.tsx"
+          ],
+          "id": "file_rename",
+          "write": {
+            "presentation.tsx": "import { computeTotal } from \"./core\";\nexport function RenderSummary(props: { items: number[] }): string { return String(props.items.length); }\nexport function auditSummary(items: number[]): number { return computeTotal(items); }\n",
+            "service.test.tsx": "import { invokeCallback } from \"./callback\";\nimport { computeTotal } from \"./core\";\nimport { RenderSummary } from \"./presentation\";\nexport function testRenderSummary(): void { if (RenderSummary({items: [2, -1]}) !== \"2\") throw new Error(); }\nexport function testCallback(): void { if (invokeCallback(computeTotal, [3]) !== 3) throw new Error(); }\nexport function testUnrelated(): void { if (2 + 2 !== 4) throw new Error(); }\n"
+          }
+        }
+      ],
+      "purpose": "cross_language"
+    },
+    {
+      "aggregate_inclusion": true,
+      "base_files": {
+        "callback.go": "package fixture\n\nfunc invokeCallback(target func([]int) int, items []int) int { return target(items) }\n",
+        "core.go": "package fixture\n\nfunc normalizeValue(value int) int { if value < 0 { return 0 }; return value }\nfunc calculateTotal(items []int) int { total := 0; for _, item := range items { total += normalizeValue(item) }; return total }\n",
+        "go.mod": "module example.com/fixture\n\ngo 1.22\n",
+        "service.go": "package fixture\n\nimport \"strconv\"\nfunc renderSummary(items []int) string { return strconv.Itoa(calculateTotal(items)) }\n",
+        "service_test.go": "package fixture\n\nimport \"testing\"\nfunc TestRenderSummary(t *testing.T) { if renderSummary([]int{2, -1}) != \"2\" { t.Fail() } }\nfunc TestCallback(t *testing.T) { if invokeCallback(calculateTotal, []int{3}) != 3 { t.Fail() } }\nfunc TestUnrelated(t *testing.T) { if 2 + 2 != 4 { t.Fail() } }\n"
+      },
+      "id": "modest-go",
+      "language": "go",
+      "mutations": [
+        {
+          "id": "body_edit",
+          "write": {
+            "core.go": "package fixture\n\nfunc normalizeValue(value int) int { if value < 0 { return 0 }; return value }\nfunc calculateTotal(items []int) int { total := len(items) * 0; for _, item := range items { total += normalizeValue(item) }; return total }\n"
+          }
+        },
+        {
+          "id": "rename",
+          "write": {
+            "core.go": "package fixture\n\nfunc normalizeValue(value int) int { if value < 0 { return 0 }; return value }\nfunc computeTotal(items []int) int { total := len(items) * 0; for _, item := range items { total += normalizeValue(item) }; return total }\n",
+            "service.go": "package fixture\n\nimport \"strconv\"\nfunc renderSummary(items []int) string { return strconv.Itoa(computeTotal(items)) }\n",
+            "service_test.go": "package fixture\n\nimport \"testing\"\nfunc TestRenderSummary(t *testing.T) { if renderSummary([]int{2, -1}) != \"2\" { t.Fail() } }\nfunc TestCallback(t *testing.T) { if invokeCallback(computeTotal, []int{3}) != 3 { t.Fail() } }\nfunc TestUnrelated(t *testing.T) { if 2 + 2 != 4 { t.Fail() } }\n"
+          }
+        },
+        {
+          "id": "caller_added",
+          "write": {
+            "service.go": "package fixture\n\nimport \"strconv\"\nfunc renderSummary(items []int) string { return strconv.Itoa(computeTotal(items)) }\n\nfunc auditSummary(items []int) int { return computeTotal(items) }\n"
+          }
+        },
+        {
+          "id": "caller_removed",
+          "write": {
+            "service.go": "package fixture\n\nimport \"strconv\"\nfunc renderSummary(items []int) string { return strconv.Itoa(len(items)) }\nfunc auditSummary(items []int) int { return computeTotal(items) }\n"
+          }
+        },
+        {
+          "id": "symbol_moved",
+          "write": {
+            "core.go": "package fixture\n\nfunc computeTotal(items []int) int { total := len(items) * 0; for _, item := range items { total += normalizeValue(item) }; return total }\n",
+            "normalizer.go": "package fixture\n\nfunc normalizeValue(value int) int { if value >= 0 { return value }; return 0 }\n"
+          }
+        },
+        {
+          "delete": [
+            "service.go"
+          ],
+          "id": "file_rename",
+          "write": {
+            "presentation.go": "package fixture\n\nimport \"strconv\"\nfunc renderSummary(items []int) string { return strconv.Itoa(len(items)) }\nfunc auditSummary(items []int) int { return computeTotal(items) }\n"
+          }
+        }
+      ],
+      "purpose": "cross_language"
+    }
+  ],
+  "frozen_at_utc": "2026-09-11T00:00:00Z",
+  "mutation_semantics": "Mutations apply cumulatively in listed order. Every query runs after readiness handling and before the next mutation.",
+  "schema_version": 1
+}

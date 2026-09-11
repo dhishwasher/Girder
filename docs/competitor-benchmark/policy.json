@@ -1,0 +1,401 @@
+{
+  "acquisition": {
+    "cache_root": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1",
+    "dependency_lock_sha256": {
+      "docs/competitor-benchmark/locks/code-review-graph-requirements.txt": "32d11d8fd08b10c5abf943694f8edd01dfabaa60b532a8f2ce5d3030cf48ec98",
+      "docs/competitor-benchmark/locks/gitnexus-package-lock.json": "fd4bf4e9a2cd0c378d62196c287e38dd5420f7d509113f8346fc73447f448b6b",
+      "docs/competitor-benchmark/locks/gitnexus-package.json": "f1c80e259ccd5b1e56d7c6d9f7a8f06eab36b7d26f09c42078291deb0ef99284"
+    },
+    "dependency_locks": {
+      "code-review-graph": [
+        "docs/competitor-benchmark/locks/code-review-graph-requirements.txt"
+      ],
+      "gitnexus": [
+        "docs/competitor-benchmark/locks/gitnexus-package.json",
+        "docs/competitor-benchmark/locks/gitnexus-package-lock.json"
+      ]
+    },
+    "isolation": "Each product-fixture run receives a fresh fixture copy and private HOME, XDG_CACHE_HOME, npm prefix, and product cache. No index or process is shared across products.",
+    "network_policy": "Only version-pinned package or release acquisition may use the network. All measured prepare, query, update, and cleanup steps run offline.",
+    "source_clone_policy": "If a source checkout is unavoidable, clone its pinned tag with --depth 1 --filter=blob:none. Never clone mutable default branches."
+  },
+  "adapter_contract": {
+    "actual_command_rule": "Every substituted argv and MCP method/arguments envelope is stored in the execution record.",
+    "freshness_rule": "After a mutation, use the product's documented watched/incremental behavior. A product with no update mode is queried normally so its own cache invalidation behavior is measured. Never force a cold rebuild unless the native workflow requires it and the record says so.",
+    "methods": [
+      "prepare",
+      "query_definition",
+      "query_callers",
+      "query_callees",
+      "query_impact",
+      "query_tests",
+      "apply_mutation",
+      "wait_until_ready",
+      "cleanup"
+    ],
+    "native_tool_rule": "Use the documented native query closest to the requested relation. Do not supplement a result with grep, another competitor, or evaluator data.",
+    "normalization_rule": "Normalize only separators, repository prefixes, documented symbol wrappers, and native node IDs that map unambiguously to path::symbol. Ambiguous matches stay in the answer and become false positives.",
+    "pagination_rule": "Consume all native pages up to the frozen output and timeout limits; count every request as one tool call and every delivered UTF-8 response byte.",
+    "source_freshness_rule": "Definition retrieval must also return native source evidence containing the state-specific frozen marker. If the product exposes no source in an applicable native definition/context operation, definition freshness for body_edit is UNSUPPORTED rather than guessed from the filesystem.",
+    "test_identity_rule": "The oracle declares test nodes by committed test-file path and symbol, including exported TypeScript/TSX test declarations. Native filename/framework heuristics are measured; adapters do not redefine the oracle.",
+    "unsupported_rule": "Return UNSUPPORTED only when the pinned product exposes no applicable native operation. Do not infer an empty answer."
+  },
+  "campaign_order": [
+    "Commit policy, corpus, oracle, adapter API, scorer, resource guard, unit tests, documentation, and release-note entry.",
+    "Run unit tests only.",
+    "Complete Girder normal and watch adapters end-to-end.",
+    "Complete ripwire as the first external adapter and run the full tiny-python campaign.",
+    "Run remaining products one at a time in listed order, with process cleanup and memory preflight between products.",
+    "Generate immutable JSON, CSV, Markdown report, environment metadata, setup-friction records, and raw artifacts."
+  ],
+  "competitors": [
+    {
+      "artifact": "girder-x86_64-unknown-linux-musl.tar.gz",
+      "artifact_sha256": "7446c502aef85fc7e63e79da1e471096003253272b400790825183f6f9bc9ad3",
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "id": "girder",
+      "install": [
+        "gh",
+        "release",
+        "download",
+        "v0.2.6",
+        "--repo",
+        "dhishwasher/Girder",
+        "--pattern",
+        "girder-x86_64-unknown-linux-musl.tar.gz",
+        "--pattern",
+        "girder-x86_64-unknown-linux-musl.tar.gz.sha256"
+      ],
+      "modes": [
+        "normal MCP",
+        "MCP --watch"
+      ],
+      "native_queries": {
+        "callees": "resolve_calls",
+        "callers": "resolve_calls",
+        "definition": "find_definition followed by get_source for the one exact node (2 calls)",
+        "impact": "impact",
+        "tests": "impacted_tests"
+      },
+      "prepare": [
+        "{girder}",
+        "analyze",
+        "{fixture}"
+      ],
+      "projection": {
+        "callees": "resolve_calls direct outgoing CALLS only",
+        "callers": "resolve_calls direct incoming CALLS only",
+        "definition": "exact find_definition node; get_source text is source evidence",
+        "impact": "impact reverse-transitive symbol identities excluding seed",
+        "tests": "impacted_tests test identities"
+      },
+      "serve_normal": [
+        "{girder}",
+        "mcp",
+        "{fixture}"
+      ],
+      "serve_watch": [
+        "{girder}",
+        "mcp",
+        "{fixture}",
+        "--watch"
+      ],
+      "source": "https://github.com/dhishwasher/Girder/releases/tag/v0.2.6",
+      "tag": "v0.2.6",
+      "version": "0.2.6"
+    },
+    {
+      "commit": "c0c3fa18a9b27d210099f908095fec373dd3d2d5",
+      "id": "gitnexus",
+      "install": [
+        "npm",
+        "ci",
+        "--omit=dev",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "install_cwd": "A private copy containing the committed GitNexus package.json and package-lock.json.",
+      "install_environment": {
+        "GITNEXUS_SKIP_OPTIONAL_GRAMMARS": "1"
+      },
+      "native_queries": {
+        "callees": "context",
+        "callers": "context",
+        "definition": "context",
+        "impact": "impact direction=upstream maxDepth=32 includeTests=true with full pagination",
+        "tests": "impact direction=upstream maxDepth=32 includeTests=true, filtered to frozen test paths"
+      },
+      "package": "gitnexus@1.6.11",
+      "package_integrity": "sha512-+UdZPqmRSIc0dwZea43uHVOPhtnfBk/3iRj7WDzfqTPGPpQ8EcqcsBKbA07uySOjS3um/zLJIGOn8KfM0ZFh4g==",
+      "prepare": [
+        "{gitnexus}",
+        "analyze",
+        "{fixture}",
+        "--workers",
+        "1",
+        "--skip-embeddings",
+        "--skip-agents-md",
+        "--skip-skills"
+      ],
+      "projection": {
+        "callees": "context outgoing entries whose relation is CALLS",
+        "callers": "context incoming entries whose relation is CALLS",
+        "definition": "context focal symbol with include_source=true",
+        "impact": "impact byDepth symbol identities only, all pages, excluding seed",
+        "tests": "impact byDepth identities whose normalized path is a frozen corpus test path"
+      },
+      "serve": [
+        "{gitnexus}",
+        "mcp"
+      ],
+      "source": "https://github.com/abhigyanpatwari/GitNexus/releases/tag/v1.6.11",
+      "tag": "v1.6.11",
+      "version": "1.6.11"
+    },
+    {
+      "artifact": "codebase-memory-mcp-linux-amd64-portable.tar.gz",
+      "artifact_sha256": "6eef49652bc0c7820f43114125044d40bf7f4d97c11b2592f6b0f6a307702325",
+      "cache_environment": {
+        "CBM_CACHE_DIR": "{private_cache}"
+      },
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "id": "codebase-memory-mcp",
+      "install": [
+        "curl",
+        "-fL",
+        "--output",
+        "{artifact}",
+        "https://github.com/DeusData/codebase-memory-mcp/releases/download/v0.10.8/codebase-memory-mcp-linux-amd64-portable.tar.gz"
+      ],
+      "native_queries": {
+        "callees": "trace_path direction=callees depth=1",
+        "callers": "trace_path direction=callers depth=1",
+        "definition": "search_graph",
+        "impact": "trace_path direction=callers depth=unbounded include_tests=true",
+        "tests": "trace_path direction=callers depth=unbounded include_tests=true"
+      },
+      "prepare_tool": "index_repository mode=full persistence=memory",
+      "projection": {
+        "callees": "trace_path callee nodes at depth exactly 1",
+        "callers": "trace_path caller nodes at depth exactly 1",
+        "definition": "unique search_graph declaration followed by get_code_snippet source evidence (2 calls)",
+        "impact": "trace_path caller nodes at every returned depth, excluding seed",
+        "tests": "impact projection restricted to frozen corpus test paths"
+      },
+      "serve": [
+        "{codebase-memory-mcp}"
+      ],
+      "source": "https://github.com/DeusData/codebase-memory-mcp/releases/tag/v0.10.8",
+      "tag": "v0.10.8",
+      "version": "0.10.8"
+    },
+    {
+      "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "id": "code-review-graph",
+      "install": [
+        "{venv_python}",
+        "-m",
+        "pip",
+        "install",
+        "--require-hashes",
+        "--only-binary=:all:",
+        "-r",
+        "{committed_requirements}"
+      ],
+      "native_queries": {
+        "callees": "query callees_of",
+        "callers": "query callers_of",
+        "definition": "search",
+        "impact": "impact --depth 64 --max-results 500",
+        "tests": "query tests_for"
+      },
+      "package": "code-review-graph==2.3.8",
+      "prepare": [
+        "{code-review-graph}",
+        "build",
+        "--repo",
+        "{fixture}",
+        "--skip-flows"
+      ],
+      "projection": {
+        "callees": "query callees_of returned identities",
+        "callers": "query callers_of returned identities",
+        "definition": "unique search declaration; source evidence when the native result includes it, otherwise body-edit freshness is UNSUPPORTED",
+        "impact": "impact returned symbol identities, excluding seed",
+        "tests": "query tests_for returned identities"
+      },
+      "source": "https://github.com/tirth8205/code-review-graph/releases/tag/v2.3.8",
+      "tag": "v2.3.8",
+      "update": [
+        "{code-review-graph}",
+        "update",
+        "--repo",
+        "{fixture}",
+        "--skip-flows"
+      ],
+      "version": "2.3.8",
+      "wheel_sha256": "013ae3c119cc7de337f9e88fe36daef82e2d4def942a014edcf97f126e208547"
+    },
+    {
+      "artifact": "ripwire-0.5.0-linux-x64.tar.gz",
+      "artifact_sha256": "f06e9d7e55032e8e5c397405ed72a19d6e70767d28c8c617a925de4401779f50",
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "id": "ripwire",
+      "install": [
+        "curl",
+        "-fL",
+        "--output",
+        "{artifact}",
+        "https://github.com/redhat-et/ripwire/releases/download/v0.5.0/ripwire-0.5.0-linux-x64.tar.gz"
+      ],
+      "native_queries": {
+        "callees": "--callees={target} --json",
+        "callers": "--callers={target} --json",
+        "definition": "--for={target} --json",
+        "impact": "--impact={target} --json",
+        "tests": "--test-gate --json"
+      },
+      "prepare": [
+        "{ripwire}",
+        "{fixture}",
+        "--for={target}",
+        "--json",
+        "--no-cache"
+      ],
+      "projection": {
+        "callees": "all --callees returned direct callee identities",
+        "callers": "all --callers returned direct caller identities",
+        "definition": "the exact --for match and its returned body as source evidence",
+        "impact": "all --impact returned identities, excluding seed",
+        "tests": "all --test-gate selected test identities"
+      },
+      "source": "https://github.com/redhat-et/ripwire/releases/tag/v0.5.0",
+      "tag": "v0.5.0",
+      "version": "0.5.0"
+    }
+  ],
+  "freeze_rule": "This policy, corpus.json, oracle.json, scorer, adapter contract, and their unit tests must be committed before any comparative campaign. Campaign results may not change them.",
+  "frozen_at_utc": "2026-09-11T12:52:24Z",
+  "host_limits": {
+    "description": "Low-resource ChromeOS Crostini measurement host; results are host-specific.",
+    "emergency_mem_available_bytes": 402653184,
+    "execution_concurrency": 1,
+    "maximum_combined_output_bytes_per_invocation": 4194304,
+    "maximum_competitor_process_tree_rss_bytes": 1073741824,
+    "minimum_mem_available_before_expensive_step_bytes": 805306368,
+    "no_swap_required": false,
+    "on_unsafe_memory": "Do not launch, or terminate the process tree if already running, cleanup, and record RESOURCE_BLOCKED. Never weaken the host or threshold after seeing results.",
+    "process_supervision": "Every external process is placed in its own process group. The runner samples the full descendant tree RSS at 100 ms, terminates it above the frozen RSS cap or below emergency system headroom, enforces bounded output and timeout, and kills descendants during cleanup. This supervisor must pass unit tests before acquisition or campaign execution.",
+    "required_environment": {
+      "CARGO_BUILD_JOBS": "1",
+      "CMAKE_BUILD_PARALLEL_LEVEL": "1",
+      "MAKEFLAGS": "-j1",
+      "RAYON_NUM_THREADS": "1",
+      "npm_config_jobs": "1"
+    }
+  },
+  "limitations": [
+    "This benchmark measures small frozen fixtures on one low-resource Chromebook container; it does not establish universal performance or large-repository behavior.",
+    "It measures these pinned versions and native interfaces, not every product capability or configuration.",
+    "Girder natural-language search remains experimental, impacted_tests remains advisory, dynamic dispatch can be missed, and watched updates reuse parsing while still performing project-wide semantic resolution.",
+    "Bytes are bytes. No tokenizer is run.",
+    "A static frozen oracle cannot establish correctness on code patterns absent from the corpus."
+  ],
+  "measurements": {
+    "calls": "Every native CLI invocation or MCP tools/call request. Model requests are not used.",
+    "cold_setup_index_seconds": "Acquisition/install excluded; starts immediately before product preparation and ends at first ready response.",
+    "freshness_probe": "After each mutation, query all five kinds in the fixed order, skipping only native UNSUPPORTED kinds. Current source-marker evidence is required for definition. First correct usable answer occurs when every supported query in one probe set is PASS. Poll every 250 ms. Three identical completed WRONG probe sets may terminate only after 2 seconds. Explicit STALE/rebuilding is polled until correct or 120 seconds. Intrinsically wrong terminal answers and timeouts have null update-to-correct latency; their first/last probe elapsed, calls, bytes, and statuses remain recorded.",
+    "peak_memory": "Maximum observed process-tree RSS when available; null otherwise. It is never inferred.",
+    "raw_artifacts": "Write complete stdout and stderr for every invocation. If combined output exceeds 4 MiB, terminate and record ERROR with the retained capped streams and byte limit.",
+    "repetitions": "Exactly one cold prepare, one unmeasured warm-up per supported query at base state, and one measured warm query. Mutation measurements are one cumulative sequence per product-fixture; no retries except frozen readiness polling.",
+    "response_bytes": "Exact UTF-8 bytes delivered on native stdout/stderr or MCP response envelopes, before normalization. Initial prompts and harness prose do not exist and are excluded.",
+    "tokens": "Not measured and no token-saving claim is permitted.",
+    "update_latency_seconds": "Filesystem mutation completion to first correct usable answer. Poll requests and bytes are counted and retained.",
+    "warm_query_correctness": "Warm-up and measured query are independently scored. A measured cost is retained beside its status; cross-product cost comparison requires the same supported task and reports correctness alongside cost.",
+    "warm_query_seconds": "Wall time around the native query after a successful warm-up of the identical query; the warm-up is separately recorded."
+  },
+  "oracle": {
+    "access": "Evaluator only. Adapter modules and competitor process trees must not receive this path or its contents.",
+    "calls": "Direct runtime call relationships. The frozen function-parameter edge is included even when static products miss it.",
+    "definition": "Exact declaration identity.",
+    "impact": "Reverse-transitive runtime callers, excluding the target.",
+    "location": "docs/competitor-benchmark/oracle.json",
+    "matching_wrong_answers": "Two products returning the same wrong answer are each WRONG.",
+    "tests": "Test nodes in the reverse-transitive impact set."
+  },
+  "policy_id": "girder-competitor-benchmark-v1",
+  "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
+  "required_report_sections": [
+    "Where Girder Lost",
+    "Where Girder Won",
+    "What This Benchmark Does NOT Establish"
+  ],
+  "schema_version": 1,
+  "scope": {
+    "aggregate_population": "tiny-python is an adapter/scorer gate and is excluded from comparative aggregates. The four modest language fixtures are the aggregate population.",
+    "fixture_order": [
+      "tiny-python",
+      "modest-rust",
+      "modest-python",
+      "modest-typescript-tsx",
+      "modest-go"
+    ],
+    "larger_repository": "Optional only after the frozen tiny and modest campaign completes. Its corpus and oracle require a separately committed additive policy before execution.",
+    "mutation_order": [
+      "body_edit",
+      "rename",
+      "caller_added",
+      "caller_removed",
+      "symbol_moved",
+      "file_rename"
+    ],
+    "product_changes": "Forbidden during this campaign. Product defects remain measured defects.",
+    "products": [
+      "girder",
+      "girder-watch",
+      "gitnexus",
+      "codebase-memory-mcp",
+      "code-review-graph",
+      "ripwire"
+    ],
+    "query_order": [
+      "definition",
+      "callers",
+      "callees",
+      "impact",
+      "tests"
+    ]
+  },
+  "scoring": {
+    "aggregate_rule": "Macro-average per task and report counts. Do not silently omit losses or failures.",
+    "comparison_rule": "Operational costs may be compared on common supported tasks and must retain their correctness status. Never call unsupported, timeout, install failure, or resource failure a Girder win.",
+    "definition": "PASS only for exact set equality; also report precision, recall, and F1.",
+    "failure_numeric_treatment": "Precision/recall/F1 macro values include only queries that returned a parseable answer (PASS, WRONG, or STALE). Every table also reports eligible-task denominator, parsed-answer denominator, and all status counts. UNSUPPORTED, TIMEOUT, RESOURCE_BLOCKED, INSTALL_FAILED, and ERROR are never converted to zero or omitted from status counts.",
+    "freshness": "PASS for the current oracle; STALE when the answer exactly equals the distinct preceding oracle or the product explicitly reports stale/rebuilding; WRONG for any other completed wrong answer.",
+    "relations": "Set precision=TP/(TP+FP), recall=TP/(TP+FN), and harmonic F1. Empty/empty has precision=recall=1. Empty against nonempty has both 0 where applicable.",
+    "statuses": [
+      "PASS",
+      "WRONG",
+      "STALE",
+      "UNSUPPORTED",
+      "TIMEOUT",
+      "RESOURCE_BLOCKED",
+      "INSTALL_FAILED",
+      "ERROR"
+    ],
+    "test_priority": "Report precision and recall separately; never collapse a missed required test into an accuracy-only score."
+  },
+  "timeouts_seconds": {
+    "cleanup": 30,
+    "download": 300,
+    "freshness_poll_interval": 0.25,
+    "identical_wrong_probe_sets_before_terminal": 3,
+    "install": 600,
+    "minimum_wrong_stability_window": 2.0,
+    "prepare_or_cold_index": 300,
+    "query": 60,
+    "resource_sample_interval": 0.1,
+    "single_product_fixture_campaign": 1800,
+    "wait_until_ready": 120
+  }
+}
