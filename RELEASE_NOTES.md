@@ -80,6 +80,17 @@ completed run was copied to local storage, byte-accounted, archived, extracted,
 and replayed without rerunning the campaign. This tiny fixture remains excluded
 from the final aggregate.
 
+GitNexus 1.6.11 installation preflight retained two failures before any score.
+The first exact-lock npm install ran on the removable 9p mount for 414.886
+seconds before required `.bin` symlink creation failed with `EACCES`; its peak
+RSS was 61,153,280 bytes. A fresh local retry then exposed a benchmark resource
+sampler bug: splitting `/proc/<pid>/stat` on spaces shifted fixed fields for a
+process name containing spaces and reported an impossible multi-terabyte RSS.
+Revision 11 parses fields after the final parenthesized process-name delimiter
+and adds a regression test. The false `RESOURCE_BLOCKED` record remains
+published, and no threshold, corpus target, or completed competitor result was
+changed.
+
 See [the benchmark protocol](docs/competitor-benchmark/README.md) and the
 [generated first-external result](docs/competitor-benchmark/results/tiny/report.md).
 

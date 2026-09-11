@@ -156,9 +156,18 @@ def process_group_rss_bytes(process_group: int, proc_root: Path = Path("/proc"))
         if not entry.name.isdigit():
             continue
         try:
-            fields = (entry / "stat").read_text().split()
-            if int(fields[4]) == process_group:
-                total_pages += int(fields[23])
+            raw = (entry / "stat").read_text()
+            # The second proc stat field is a parenthesized process name and
+            # may itself contain spaces or right parentheses. Split only after
+            # its final closing parenthesis so later fixed-position fields do
+            # not shift. In the remaining field-3-based list, pgrp is index 2
+            # and rss is index 21.
+            close = raw.rfind(")")
+            if close < 0:
+                continue
+            fields = raw[close + 1:].split()
+            if int(fields[2]) == process_group:
+                total_pages += int(fields[21])
         except (OSError, IndexError, ValueError):
             continue
     return total_pages * page_size

@@ -1,0 +1,17 @@
+{
+  "commit": "c0c3fa18a9b27d210099f908095fec373dd3d2d5",
+  "comparative_result": false,
+  "preflight_artifact_sha256": {
+    "preflight-gitnexus-install-v1/install-location.json": "0f77bf8a26f99eba7cf5e83cc78c122bb47805a718c4dd709a84788c37da5e6a",
+    "preflight-gitnexus-install-v1/install-result.json": "60f79bcf7abeb04eca1d93f173e540b9401201c141b4a18ceeab77d80ca9876a",
+    "preflight-gitnexus-install-v1/install.stderr": "79367fe2c141ab38cc09a0c23afcce7ad81bda1b9bf039661eb16b25339e8374",
+    "preflight-gitnexus-install-v1/install.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "preflight-gitnexus-install-v2/install-location.json": "8d63ada8a353699602db209beb6e8f764bfa6fcc8484f0e770d729e79892efea",
+    "preflight-gitnexus-install-v2/install-result.json": "eb492f5e9e0ff73726b3f1f63f1870c32649ea76888b6477a55d11c85de22e1a",
+    "preflight-gitnexus-install-v2/install.stderr": "d2e85a3b0d01b8482efa1399be840a002d9b75ab4ba71d471e82fefc377adc3a",
+    "preflight-gitnexus-install-v2/install.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "product": "gitnexus",
+  "schema_version": 1,
+  "version": "1.6.11"
+}

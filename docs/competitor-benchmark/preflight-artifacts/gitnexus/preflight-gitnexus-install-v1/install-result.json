@@ -1,0 +1,23 @@
+{
+  "command": [
+    "npm",
+    "ci",
+    "--omit=dev",
+    "--no-audit",
+    "--no-fund"
+  ],
+  "cwd": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/gitnexus-1.6.11",
+  "detail": "process exited 243",
+  "environment": {
+    "GITNEXUS_SKIP_OPTIONAL_GRAMMARS": "1",
+    "npm_config_cache": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/npm-cache-gitnexus-1.6.11"
+  },
+  "peak_rss_bytes": 61153280,
+  "returncode": 243,
+  "status": "ERROR",
+  "stderr_bytes": 3747,
+  "stderr_sha256": "79367fe2c141ab38cc09a0c23afcce7ad81bda1b9bf039661eb16b25339e8374",
+  "stdout_bytes": 0,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wall_seconds": 414.886104256002
+}

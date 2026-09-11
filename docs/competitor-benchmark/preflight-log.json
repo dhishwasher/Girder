@@ -271,6 +271,26 @@
       "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/code-review-graph/packaging-failure-direct-9p",
       "result_use": "None; invalid padded archive excluded from every score and timing aggregate.",
       "version": "2.3.8"
+    },
+    {
+      "classification": "INSTALL_FAILED",
+      "comparative_result": false,
+      "detail": "The first exact-lock npm ci ran on the ChromeOS removable 9p mount and failed after 414.886 seconds when npm could not create the required node_modules/.bin/arrow2csv symlink (EACCES). Peak process-tree RSS was 61153280 bytes. This was a filesystem-placement failure, not an OOM or compiler failure.",
+      "id": "gitnexus-removable-install-symlink-failure",
+      "product": "gitnexus",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/gitnexus/preflight-gitnexus-install-v1",
+      "result_use": "None; failed placement retained. The fresh retry uses local temporary installation storage with the same committed lock and external acquisition cache.",
+      "version": "1.6.11"
+    },
+    {
+      "classification": "INVALIDATED_PREFLIGHT",
+      "comparative_result": false,
+      "detail": "The first local install retry was terminated after 123.779 seconds when the resource sampler reported an impossible 7949430816768-byte process-tree RSS while system MemAvailable remained about 1.7 GB. Audit found /proc/<pid>/stat was split on spaces, allowing a process name with spaces to shift pgrp and rss field indexes. Revision 11 fixes the parser and adds a regression test.",
+      "id": "gitnexus-install-v2-false-rss-block",
+      "product": "gitnexus",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/gitnexus/preflight-gitnexus-install-v2",
+      "result_use": "None; false resource classification retained. No GitNexus score exists.",
+      "version": "1.6.11"
     }
   ],
   "schema_version": 1

@@ -145,6 +145,7 @@
         "impact": "impact byDepth symbol identities only, all pages, excluding seed",
         "tests": "impact byDepth identities whose normalized path is a frozen corpus test path"
       },
+      "runtime_placement": "Install the exact committed npm lock into a fresh local temporary directory because the ChromeOS removable 9p mount rejects required npm .bin symlinks. Keep the reusable npm acquisition cache external; each campaign still receives a fresh local HOME and product data directory.",
       "serve": [
         "{gitnexus}",
         "mcp"
@@ -287,7 +288,7 @@
     }
   ],
   "freeze_rule": "This policy, corpus.json, oracle.json, scorer, adapter contract, and their unit tests must be committed before any comparative campaign. Campaign results may not change them.",
-  "frozen_at_utc": "2026-09-11T19:13:43Z",
+  "frozen_at_utc": "2026-09-11T23:47:40Z",
   "host_limits": {
     "description": "Low-resource ChromeOS Crostini measurement host; results are host-specific.",
     "emergency_mem_available_bytes": 402653184,
@@ -298,7 +299,7 @@
     "no_swap_required": false,
     "on_unsafe_memory": "Do not launch, or terminate the process tree if already running, cleanup, and record RESOURCE_BLOCKED. Never weaken the host or threshold after seeing results.",
     "proc_race_handling": "A process disappearing during /proc enumeration is normal. OSError while reading a sampled process is ignored; the next 100 ms sample observes the remaining process group.",
-    "process_supervision": "Every external process is placed in its own process group. The runner samples the full descendant tree RSS at 100 ms, terminates it above the frozen RSS cap or below emergency system headroom, enforces bounded output and timeout, and kills descendants during cleanup. This supervisor must pass unit tests before acquisition or campaign execution.",
+    "process_supervision": "Every external process is placed in its own process group. The runner samples the full descendant tree RSS at 100 ms, parses /proc stat after the final parenthesized process-name delimiter so spaces or right parentheses cannot shift fields, terminates above the frozen RSS cap or below emergency system headroom, enforces bounded output and timeout, and kills descendants during cleanup. This supervisor must pass unit tests before acquisition or campaign execution.",
     "required_environment": {
       "CARGO_BUILD_JOBS": "1",
       "CMAKE_BUILD_PARALLEL_LEVEL": "1",
@@ -339,8 +340,8 @@
     "test_inventory": "Each state lists every test node in the fixture. A native whole-test-file prediction expands to every listed node in that file before scoring; this models what will run and retains unrelated nodes as false positives.",
     "tests": "Test nodes in the reverse-transitive impact set."
   },
-  "policy_id": "girder-competitor-benchmark-v1-revision-10",
-  "policy_revision": 10,
+  "policy_id": "girder-competitor-benchmark-v1-revision-11",
+  "policy_revision": 11,
   "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
   "required_report_sections": [
     "Where Girder Lost",
@@ -401,6 +402,12 @@
       "reason": "The successful locked install and native preflight established that code-review-graph requires local CRG_DATA_DIR on this ChromeOS removable mount, requires complete MCP initialize client fields, exposes definition source only through get_review_context_tool after exact search, and maps impact from the target file. Revision 10 freezes those response-derived mappings and the concrete MCP adapter before any code-review-graph score. Prior scored tiny gates retain their original policy revisions.",
       "revision": 9,
       "status": "invalidated before first code-review-graph scored campaign"
+    },
+    {
+      "commit": "2a5641ccc19ff2846d0f5a2ea37555955b31df99",
+      "reason": "Revision 10 produced the complete, separately reported code-review-graph tiny-python adapter gate. GitNexus installation preflight then exposed that the RSS sampler split /proc stat on spaces, so a process name containing spaces shifted the fixed fields and yielded an impossible multi-terabyte value. Revision 11 parses after the final parenthesized process-name delimiter and adds a regression test before a fresh GitNexus install retry. No competitor behavior, oracle, target, numeric limit, or completed result changed.",
+      "revision": 10,
+      "status": "valid completed code-review-graph tiny adapter gate; superseded for subsequent campaigns"
     }
   ],
   "schema_version": 1,

@@ -1,0 +1,57 @@
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @tree-sitter-grammars/tree-sitter-zig@1.1.2
+npm warn Found: tree-sitter@0.21.1
+npm warn node_modules/tree-sitter
+npm warn   tree-sitter@"0.21.1" from gitnexus@1.6.11
+npm warn   node_modules/gitnexus
+npm warn     gitnexus@"1.6.11" from the root project
+npm warn   10 more (tree-sitter-c-sharp, tree-sitter-cpp, tree-sitter-go, ...)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peerOptional tree-sitter@"^0.22.1" from @tree-sitter-grammars/tree-sitter-zig@1.1.2
+npm warn node_modules/@tree-sitter-grammars/tree-sitter-zig
+npm warn   optional @tree-sitter-grammars/tree-sitter-zig@"1.1.2" from gitnexus@1.6.11
+npm warn   node_modules/gitnexus
+npm warn
+npm warn Conflicting peer dependency: tree-sitter@0.22.4
+npm warn node_modules/tree-sitter
+npm warn   peerOptional tree-sitter@"^0.22.1" from @tree-sitter-grammars/tree-sitter-zig@1.1.2
+npm warn   node_modules/@tree-sitter-grammars/tree-sitter-zig
+npm warn     optional @tree-sitter-grammars/tree-sitter-zig@"1.1.2" from gitnexus@1.6.11
+npm warn     node_modules/gitnexus
+npm warn deprecated boolean@3.2.0: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+npm error code EACCES
+npm error syscall symlink
+npm error path ../apache-arrow/bin/arrow2csv.js
+npm error dest /mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/gitnexus-1.6.11/node_modules/.bin/arrow2csv
+npm error errno -13
+npm error Error: EACCES: permission denied, symlink '../apache-arrow/bin/arrow2csv.js' -> '/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/gitnexus-1.6.11/node_modules/.bin/arrow2csv'
+npm error     at async symlink (node:internal/fs/promises:1001:10)
+npm error     at async Promise.all (index 0)
+npm error     at async Promise.all (index 0)
+npm error     at async #createBinLinks (/usr/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/rebuild.js:402:5)
+npm error     at async Promise.allSettled (index 0)
+npm error     at async #linkAllBins (/usr/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/rebuild.js:376:5)
+npm error     at async #build (/usr/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/rebuild.js:161:7)
+npm error     at async Arborist.rebuild (/usr/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/rebuild.js:63:5)
+npm error     at async [reifyPackages] (/usr/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:334:11)
+npm error     at async Arborist.reify (/usr/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:149:5) {
+npm error   errno: -13,
+npm error   code: 'EACCES',
+npm error   syscall: 'symlink',
+npm error   path: '../apache-arrow/bin/arrow2csv.js',
+npm error   dest: '/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/gitnexus-1.6.11/node_modules/.bin/arrow2csv'
+npm error }
+npm error
+npm error The operation was rejected by your operating system.
+npm error It is likely you do not have the permissions to access this file as the current user
+npm error
+npm error If you believe this might be a permissions issue, please double-check the
+npm error permissions of the file and its containing directories, or try running
+npm error the command again as root/Administrator.
+npm notice
+npm notice New major version of npm available! 10.9.8 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+npm error A complete log of this run can be found in: /mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/npm-cache-gitnexus-1.6.11/_logs/2026-09-11T23_37_03_635Z-debug-0.log

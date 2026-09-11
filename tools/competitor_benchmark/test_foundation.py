@@ -296,6 +296,16 @@ class PolicyAndProtocolTests(unittest.TestCase):
             with mock.patch.object(Path, "read_text", side_effect=ProcessLookupError(3, "gone")):
                 self.assertEqual(process_group_rss_bytes(123, root), 0)
 
+    def test_rss_sampler_handles_spaces_and_parentheses_in_process_name(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            proc = root / "123"
+            proc.mkdir()
+            fields = ["S", "1", "777"] + ["0"] * 18 + ["42"]
+            (proc / "stat").write_text("123 (npm worker) name) " + " ".join(fields))
+            with mock.patch("os.sysconf", return_value=4096):
+                self.assertEqual(process_group_rss_bytes(777, root), 42 * 4096)
+
 
 if __name__ == "__main__":
     unittest.main()
