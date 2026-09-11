@@ -1,0 +1,168 @@
+[
+  {
+    "answer": [],
+    "detail": "",
+    "elapsed_seconds": 5.412496264005313,
+    "label": "prepare",
+    "peak_rss_bytes": 109031424,
+    "source_text": null,
+    "status": "PASS",
+    "stderr_bytes": 243,
+    "stdout_bytes": 40132,
+    "tool_calls": 0
+  },
+  {
+    "answer": [
+      "core.py::calculate_total"
+    ],
+    "detail": "",
+    "elapsed_seconds": 0.2959043109731283,
+    "label": "base:definition",
+    "peak_rss_bytes": 100642816,
+    "source_text": "1: def normalize_value(value: int) -> int:\n2:     return max(value, 0)\n3: \n4: def calculate_total(items: list[int]) -> int:\n5:     return sum(normalize_value(item) for item in items)",
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stdout_bytes": 11031,
+    "tool_calls": 2
+  },
+  {
+    "answer": [
+      "service.py::render_summary"
+    ],
+    "detail": "",
+    "elapsed_seconds": 0.10874218502431177,
+    "label": "base:callers",
+    "peak_rss_bytes": 100773888,
+    "source_text": null,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stdout_bytes": 3615,
+    "tool_calls": 1
+  },
+  {
+    "answer": [
+      "core.py::normalize_value",
+      "sum"
+    ],
+    "detail": "",
+    "elapsed_seconds": 0.10379982300219126,
+    "label": "base:callees",
+    "peak_rss_bytes": 96841728,
+    "source_text": null,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stdout_bytes": 4519,
+    "tool_calls": 1
+  },
+  {
+    "answer": [
+      "service.py::render_summary",
+      "test_service.py::test_callback",
+      "test_service.py::test_render_summary"
+    ],
+    "detail": "",
+    "elapsed_seconds": 0.22375329700298607,
+    "label": "base:impact",
+    "peak_rss_bytes": 100773888,
+    "source_text": null,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stdout_bytes": 26641,
+    "tool_calls": 2
+  },
+  {
+    "answer": [],
+    "detail": "",
+    "elapsed_seconds": 0.12961877099587582,
+    "label": "base:tests",
+    "peak_rss_bytes": 100773888,
+    "source_text": null,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stdout_bytes": 1882,
+    "tool_calls": 1
+  },
+  {
+    "answer": [],
+    "detail": "",
+    "elapsed_seconds": 0.5278408130106982,
+    "label": "mutation:body_edit",
+    "peak_rss_bytes": 101167104,
+    "source_text": null,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stdout_bytes": 2446,
+    "tool_calls": 0
+  },
+  {
+    "answer": [
+      "core.py::calculate_total"
+    ],
+    "detail": "",
+    "elapsed_seconds": 0.21100977301830426,
+    "label": "body_edit:definition",
+    "peak_rss_bytes": 100642816,
+    "source_text": "1: def normalize_value(value: int) -> int:\n2:     return max(value, 0)\n3: \n4: def calculate_total(items: list[int]) -> int:\n5:     total = sum(normalize_value(item) for item in items)\n6:     return total",
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stdout_bytes": 11090,
+    "tool_calls": 2
+  },
+  {
+    "answer": [
+      "service.py::render_summary"
+    ],
+    "detail": "",
+    "elapsed_seconds": 0.09698268299689516,
+    "label": "body_edit:callers",
+    "peak_rss_bytes": 96841728,
+    "source_text": null,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stdout_bytes": 3616,
+    "tool_calls": 1
+  },
+  {
+    "answer": [
+      "core.py::normalize_value",
+      "sum"
+    ],
+    "detail": "",
+    "elapsed_seconds": 0.0935627069848124,
+    "label": "body_edit:callees",
+    "peak_rss_bytes": 100773888,
+    "source_text": null,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stdout_bytes": 4526,
+    "tool_calls": 1
+  },
+  {
+    "answer": [
+      "service.py::render_summary",
+      "test_service.py::test_callback",
+      "test_service.py::test_render_summary"
+    ],
+    "detail": "",
+    "elapsed_seconds": 0.18906994099961594,
+    "label": "body_edit:impact",
+    "peak_rss_bytes": 100904960,
+    "source_text": null,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stdout_bytes": 26655,
+    "tool_calls": 2
+  },
+  {
+    "answer": [],
+    "detail": "",
+    "elapsed_seconds": 0.15433011300046928,
+    "label": "body_edit:tests",
+    "peak_rss_bytes": 96972800,
+    "source_text": null,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stdout_bytes": 1882,
+    "tool_calls": 1
+  }
+]

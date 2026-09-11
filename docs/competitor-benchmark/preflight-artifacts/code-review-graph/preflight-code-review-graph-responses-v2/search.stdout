@@ -1,0 +1,39 @@
+{
+  "status": "ok",
+  "query": "calculate_total",
+  "search_mode": "fts",
+  "summary": "Found 1 node(s) matching 'calculate_total'",
+  "results": [
+    {
+      "name": "calculate_total",
+      "qualified_name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::calculate_total",
+      "kind": "Function",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "line_start": 4,
+      "line_end": 5,
+      "language": "python",
+      "params": "(items: list[int])",
+      "return_type": "int",
+      "signature": "def calculate_total((items: list[int])) -> int",
+      "score": 0.04918
+    }
+  ],
+  "_hints": {
+    "next_steps": [
+      {
+        "tool": "query_graph",
+        "suggestion": "Inspect callers/callees of a search result"
+      },
+      {
+        "tool": "get_flow",
+        "suggestion": "See the execution flow through a matched node"
+      },
+      {
+        "tool": "get_impact_radius",
+        "suggestion": "Check the blast radius from matched nodes"
+      }
+    ],
+    "related": [],
+    "warnings": []
+  }
+}

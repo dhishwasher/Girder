@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e/bin/code-review-graph",
+    "build",
+    "--repo",
+    "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture",
+    "--skip-flows"
+  ],
+  "detail": "",
+  "environment": {
+    "CRG_DATA_DIR": "/tmp/crg-benchmark-data-c87mo1fz/data"
+  },
+  "peak_rss_bytes": 52195328,
+  "returncode": 0,
+  "status": "PASS",
+  "stderr_bytes": 1099,
+  "stderr_sha256": "d0e828e8e10e915144169fc3c79dded6f2a534d8ef5193fa08ee51d66059fef8",
+  "stdout_bytes": 62,
+  "stdout_sha256": "d59f395aa7dc179e193f3cdfb62bbe2180b60a6a407b024e306e0fc9bf7b4610",
+  "wall_seconds": 2.1502316659898497
+}

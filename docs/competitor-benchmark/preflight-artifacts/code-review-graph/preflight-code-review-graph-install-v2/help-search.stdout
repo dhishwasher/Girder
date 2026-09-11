@@ -1,0 +1,12 @@
+usage: code-review-graph search [-h] [--kind {File,Class,Function,Type,Test}]
+                                [--limit LIMIT] [--repo REPO]
+                                query
+
+positional arguments:
+  query                 Search string
+
+options:
+  -h, --help            show this help message and exit
+  --kind {File,Class,Function,Type,Test}
+  --limit LIMIT
+  --repo REPO           Repository root (auto-detected)

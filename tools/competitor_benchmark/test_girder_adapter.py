@@ -79,6 +79,28 @@ class GirderNormalizationTests(unittest.TestCase):
 
 
 class McpTransportTests(unittest.TestCase):
+    def test_initialize_sends_required_client_fields(self) -> None:
+        server = (
+            "import json,sys\n"
+            "q=json.loads(sys.stdin.readline())\n"
+            "r={'jsonrpc':'2.0','id':q['id'],'result':{'params':q['params']}}\n"
+            "sys.stdout.write(json.dumps(r,separators=(',',':'))+'\\n'); sys.stdout.flush()\n"
+        )
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            with McpSession(
+                [sys.executable, "-u", "-c", server], cwd=root, env=os.environ,
+                artifact_root=root / "raw", minimum_available_bytes=1,
+                emergency_available_bytes=1, maximum_tree_rss_bytes=256 * 1024 * 1024,
+                max_output_bytes=4096,
+            ) as session:
+                call = session.initialize(5)
+            self.assertEqual(call.status, Status.PASS)
+            assert call.result is not None
+            self.assertEqual(call.result["params"]["capabilities"], {})
+            self.assertEqual(call.result["params"]["clientInfo"]["name"],
+                             "girder-competitor-benchmark")
+
     def test_json_line_transport_preserves_raw_response_bytes(self) -> None:
         server = (
             "import json,sys\n"

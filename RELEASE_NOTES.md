@@ -58,8 +58,17 @@ The first code-review-graph 2.3.8 install failed before measurement because the
 hash lock pinned PyJWT 2.13.0 without spelling the `crypto` extra required by
 its MCP dependency. pip rejected the resulting unhashed candidate. The raw
 failure and 184 MB peak process-tree RSS are retained. Revision 9 pins the same
-2.13.0 wheel and hash with the required extra before one fresh binary-only
-retry; no code-review-graph score exists yet.
+2.13.0 wheel and hash with the required extra. A fresh binary-only install then
+passed in 59.308 seconds without a compiler and peaked at 214,331,392 bytes.
+
+Native preflight also retained a SQLite disk-I/O failure when graph data lived
+on the ChromeOS removable mount. A fresh local private `CRG_DATA_DIR` passed.
+Revision 10 freezes code-review-graph's persistent MCP adapter, complete MCP
+initialization fields, exact-search plus native-source definition mapping,
+direct relationship queries, file-scoped impact, native tests query, and
+synchronous incremental update before its first score. The adapter preflight
+completed the base state and body edit with a 109,031,424-byte peak; no
+code-review-graph comparative result exists yet.
 
 See [the benchmark protocol](docs/competitor-benchmark/README.md) and the
 [generated first-external result](docs/competitor-benchmark/results/tiny/report.md).

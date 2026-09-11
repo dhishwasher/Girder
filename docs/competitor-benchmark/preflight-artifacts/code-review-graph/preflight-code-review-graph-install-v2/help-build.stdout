@@ -1,0 +1,20 @@
+usage: code-review-graph build [-h] [--repo REPO] [-q] [--skip-flows]
+                               [--skip-postprocess] [--data-dir DATA_DIR]
+                               [--embedding-provider {local,openai,google,minimax,voyage}]
+                               [--embedding-model EMBEDDING_MODEL]
+
+options:
+  -h, --help            show this help message and exit
+  --repo REPO           Repository root (auto-detected)
+  -q, --quiet           Suppress output
+  --skip-flows          Skip flow/community detection (signatures + FTS only)
+  --skip-postprocess    Skip all post-processing (raw parse only)
+  --data-dir DATA_DIR   External directory to store graph database (useful for
+                        network shares)
+  --embedding-provider {local,openai,google,minimax,voyage}
+                        Explicitly refresh an existing embedding index with
+                        this provider; requires --embedding-model (default:
+                        disabled)
+  --embedding-model EMBEDDING_MODEL
+                        Exact model for --embedding-provider. Cloud providers
+                        may transmit source-derived text and incur API cost

@@ -1,0 +1,11 @@
+usage: code-review-graph query [-h] [--repo REPO]
+                               {callers_of,callees_of,imports_of,importers_of,children_of,tests_for,inheritors_of,file_summary}
+                               target
+
+positional arguments:
+  {callers_of,callees_of,imports_of,importers_of,children_of,tests_for,inheritors_of,file_summary}
+  target                Node name, qualified name, or file path
+
+options:
+  -h, --help            show this help message and exit
+  --repo REPO           Repository root (auto-detected)

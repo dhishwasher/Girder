@@ -1,0 +1,12 @@
+{
+  "detail": "",
+  "peak_rss_bytes": 214331392,
+  "returncode": 0,
+  "status": "PASS",
+  "stderr_bytes": 0,
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout_bytes": 10180,
+  "stdout_sha256": "06bcfdb6e892e48b9c6f0b0bc49dc52b64114c6c172a03331ed022a229ed8040",
+  "venv": "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e",
+  "wall_seconds": 59.30806938998285
+}

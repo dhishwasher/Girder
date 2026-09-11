@@ -194,6 +194,7 @@
     },
     {
       "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "freshness": "After each filesystem mutation, synchronously await build_or_update_graph_tool with full_rebuild=false and postprocess=minimal, then begin the common query probe loop.",
       "id": "code-review-graph",
       "install": [
         "{venv_python}",
@@ -206,35 +207,41 @@
         "{committed_requirements}"
       ],
       "native_queries": {
-        "callees": "query callees_of",
-        "callers": "query callers_of",
-        "definition": "search",
-        "impact": "impact --depth 64 --max-results 500",
-        "tests": "query tests_for"
+        "callees": "query_graph_tool pattern=callees_of target={target} detail_level=standard max_results=500",
+        "callers": "query_graph_tool pattern=callers_of target={target} detail_level=standard max_results=500",
+        "definition": "semantic_search_nodes_tool query={target} kind=Function limit=500 detail_level=standard, then get_review_context_tool for the unique returned file with include_source=true max_depth=0 max_files=1",
+        "impact": "semantic_search_nodes_tool exact-name target lookup, then get_impact_radius_tool changed_files=[returned_file] max_depth=64 detail_level=standard (native implementation limit 500)",
+        "tests": "query_graph_tool pattern=tests_for target={target} detail_level=standard max_results=500"
       },
       "package": "code-review-graph==2.3.8",
       "prepare": [
         "{code-review-graph}",
-        "build",
+        "serve",
         "--repo",
         "{fixture}",
-        "--skip-flows"
+        "then MCP build_or_update_graph_tool full_rebuild=true postprocess=minimal"
       ],
       "projection": {
-        "callees": "query callees_of returned identities",
-        "callers": "query callers_of returned identities",
-        "definition": "unique search declaration; source evidence when the native result includes it, otherwise body-edit freshness is UNSUPPORTED",
-        "impact": "impact returned symbol identities, excluding seed",
-        "tests": "query tests_for returned identities"
+        "callees": "query_graph_tool callees_of result identities; unresolved native identities remain false positives.",
+        "callers": "query_graph_tool callers_of result identities; unresolved native identities remain false positives.",
+        "definition": "Exact-name Function search results map native file_path and name to path::symbol; get_review_context_tool source_snippets for the unique file supply source freshness evidence.",
+        "impact": "get_impact_radius_tool impacted_nodes with kind other than File, excluding the seed because it is returned in changed_nodes.",
+        "tests": "query_graph_tool tests_for result identities."
       },
+      "runtime_placement": "Use a fresh mode-0700 local HOME and CRG_DATA_DIR for each campaign while fixtures and raw artifacts remain external. SQLite graph creation on the ChromeOS removable 9p mount failed with disk I/O error; the retained local-data retry passed.",
+      "serve": [
+        "{code-review-graph}",
+        "serve",
+        "--repo",
+        "{fixture}"
+      ],
       "source": "https://github.com/tirth8205/code-review-graph/releases/tag/v2.3.8",
       "tag": "v2.3.8",
       "update": [
-        "{code-review-graph}",
-        "update",
-        "--repo",
-        "{fixture}",
-        "--skip-flows"
+        "MCP build_or_update_graph_tool",
+        "full_rebuild=false",
+        "repo_root={fixture}",
+        "postprocess=minimal"
       ],
       "version": "2.3.8",
       "wheel_sha256": "013ae3c119cc7de337f9e88fe36daef82e2d4def942a014edcf97f126e208547"
@@ -280,7 +287,7 @@
     }
   ],
   "freeze_rule": "This policy, corpus.json, oracle.json, scorer, adapter contract, and their unit tests must be committed before any comparative campaign. Campaign results may not change them.",
-  "frozen_at_utc": "2026-09-11T19:00:04Z",
+  "frozen_at_utc": "2026-09-11T19:13:43Z",
   "host_limits": {
     "description": "Low-resource ChromeOS Crostini measurement host; results are host-specific.",
     "emergency_mem_available_bytes": 402653184,
@@ -332,8 +339,8 @@
     "test_inventory": "Each state lists every test node in the fixture. A native whole-test-file prediction expands to every listed node in that file before scoring; this models what will run and retains unrelated nodes as false positives.",
     "tests": "Test nodes in the reverse-transitive impact set."
   },
-  "policy_id": "girder-competitor-benchmark-v1-revision-9",
-  "policy_revision": 5,
+  "policy_id": "girder-competitor-benchmark-v1-revision-10",
+  "policy_revision": 10,
   "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
   "required_report_sections": [
     "Where Girder Lost",
@@ -388,6 +395,12 @@
       "reason": "Revision 8 produced the complete, separately reported codebase-memory tiny-python adapter gate. The first code-review-graph binary-only install then proved its committed lock expressed PyJWT without the crypto extra requested by mcp, so pip treated the extra dependency as unhashed. Revision 9 pins the same version and wheel hash as PyJWT[crypto]==2.13.0 before any code-review-graph campaign.",
       "revision": 8,
       "status": "valid completed codebase-memory tiny adapter gate; superseded for subsequent campaigns"
+    },
+    {
+      "commit": "62e022476b0eda87be9de174afa24d17bfc7307d",
+      "reason": "The successful locked install and native preflight established that code-review-graph requires local CRG_DATA_DIR on this ChromeOS removable mount, requires complete MCP initialize client fields, exposes definition source only through get_review_context_tool after exact search, and maps impact from the target file. Revision 10 freezes those response-derived mappings and the concrete MCP adapter before any code-review-graph score. Prior scored tiny gates retain their original policy revisions.",
+      "revision": 9,
+      "status": "invalidated before first code-review-graph scored campaign"
     }
   ],
   "schema_version": 1,

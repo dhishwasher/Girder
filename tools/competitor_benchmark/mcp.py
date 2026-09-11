@@ -160,7 +160,11 @@ class McpSession:
         )
 
     def initialize(self, timeout_seconds: float) -> McpCall:
-        return self.request("initialize", {"protocolVersion": "2025-06-18"}, timeout_seconds)
+        return self.request("initialize", {
+            "protocolVersion": "2025-06-18",
+            "capabilities": {},
+            "clientInfo": {"name": "girder-competitor-benchmark", "version": "1"},
+        }, timeout_seconds)
 
     def call_tool(self, name: str, arguments: Mapping[str, Any], timeout_seconds: float) -> McpCall:
         return self.request("tools/call", {"name": name, "arguments": arguments}, timeout_seconds)

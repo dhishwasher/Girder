@@ -215,6 +215,50 @@
       "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/code-review-graph/preflight-code-review-graph-install-v1",
       "result_use": "None; install failure retained. Revision 9 pins the same 2.13.0 wheel and hash with its required crypto extra before one fresh retry.",
       "version": "2.3.8"
+    },
+    {
+      "classification": "PREFLIGHT_PASS",
+      "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "comparative_result": false,
+      "detail": "A fresh Python 3.11 venv installed the revision 9 binary-only hash lock successfully in 59.308 seconds. The process-tree peak was 214331392 bytes, no compiler fallback occurred, and the executable reported code-review-graph 2.3.8.",
+      "id": "code-review-graph-install-v2",
+      "product": "code-review-graph",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/code-review-graph/preflight-code-review-graph-install-v2",
+      "result_use": "Installation evidence only; excluded from every score and timing aggregate.",
+      "version": "2.3.8"
+    },
+    {
+      "classification": "INVALIDATED_PREFLIGHT",
+      "comparative_result": false,
+      "detail": "The first native build kept its default graph database beside the removable-mount fixture and failed with SQLite disk I/O error after 4.696 seconds. Peak process-tree RSS was 40796160 bytes. This was a filesystem-placement failure, not a resource-limit failure.",
+      "fixture": "tiny-python base state",
+      "id": "code-review-graph-removable-data-eio",
+      "product": "code-review-graph",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/code-review-graph/preflight-code-review-graph-responses-v1",
+      "result_use": "None; placement failure retained.",
+      "version": "2.3.8"
+    },
+    {
+      "classification": "PREFLIGHT_PASS",
+      "comparative_result": false,
+      "detail": "A fresh local mode-0700 CRG_DATA_DIR resolved SQLite placement. CLI and MCP probes established exact search, callers, callees, tests_for, file-scoped impact, source-bearing review context, and structured response shapes. The first incomplete MCP initialize request is retained beside the corrected probe.",
+      "fixture": "tiny-python base state",
+      "id": "code-review-graph-interface-response-probe",
+      "product": "code-review-graph",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/code-review-graph/preflight-code-review-graph-responses-v2",
+      "result_use": "Interface and response-shape integration only; excluded from every score and timing aggregate.",
+      "version": "2.3.8"
+    },
+    {
+      "classification": "PREFLIGHT_PASS",
+      "comparative_result": false,
+      "detail": "The persistent MCP adapter completed full preparation, all five native query mappings, one synchronous incremental body-edit update, and all five post-update queries. Definition used exact search plus native source; the unresolved builtin sum remains in callees as a false positive. Peak observed process-tree RSS was 109031424 bytes.",
+      "fixture": "tiny-python base state and body edit",
+      "id": "code-review-graph-adapter-validation-v1",
+      "product": "code-review-graph",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/code-review-graph/preflight-code-review-graph-adapter-v1",
+      "result_use": "Adapter gate only; excluded from every score and timing aggregate.",
+      "version": "2.3.8"
     }
   ],
   "schema_version": 1

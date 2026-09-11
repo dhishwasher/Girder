@@ -17,6 +17,7 @@ from typing import Any, Callable, Mapping
 
 from .adapters.girder import GirderAdapter
 from .adapters.codebase_memory import CodebaseMemoryAdapter
+from .adapters.code_review_graph import CodeReviewGraphAdapter
 from .adapters.ripwire import RipwireAdapter
 from .fixtures import load_corpus, materialize
 from .protocol import NativeResult, QueryKind, Status
@@ -111,6 +112,8 @@ def run_campaign(product: str, fixture_id: str, binary: Path, work_root: Path, o
                                 private_home=private_home)
     elif product == "codebase-memory-mcp":
         adapter = CodebaseMemoryAdapter(binary, limits=limits, private_home=private_home)
+    elif product == "code-review-graph":
+        adapter = CodeReviewGraphAdapter(binary, limits=limits, private_home=private_home)
     elif product == "ripwire":
         adapter = RipwireAdapter(binary, limits=limits, private_home=private_home,
                                  initial_target=oracles[0]["target"])
@@ -342,7 +345,8 @@ def _jsonable(value: Any) -> Any:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--product", choices=("girder", "girder-watch", "ripwire", "codebase-memory-mcp"),
+        "--product", choices=("girder", "girder-watch", "ripwire", "codebase-memory-mcp",
+                              "code-review-graph"),
         required=True,
     )
     parser.add_argument("--fixture", required=True)

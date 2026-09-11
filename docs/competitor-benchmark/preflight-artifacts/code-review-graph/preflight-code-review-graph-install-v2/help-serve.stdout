@@ -1,0 +1,17 @@
+usage: code-review-graph serve [-h] [--repo REPO] [--auto-watch]
+                               [--tools TOOLS] [--http] [--host ADDR]
+                               [--port PORT]
+
+options:
+  -h, --help     show this help message and exit
+  --repo REPO    Repository root (auto-detected)
+  --auto-watch   Start filesystem watch in a daemon thread while MCP server
+                 runs
+  --tools TOOLS  Comma-separated list of tool names to expose (e.g.
+                 query_graph_tool,semantic_search_nodes_tool). Unlisted tools
+                 are removed. Falls back to CRG_TOOLS env var. When unset, all
+                 tools are available.
+  --http         Listen for MCP over Streamable HTTP on localhost (default
+                 port 5555)
+  --host ADDR    Bind address for --http (default: 127.0.0.1)
+  --port PORT    Port for --http (default: 5555)

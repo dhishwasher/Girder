@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e/bin/code-review-graph",
+    "build",
+    "--repo",
+    "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v1/fixture",
+    "--skip-flows"
+  ],
+  "detail": "process exited 1",
+  "peak_rss_bytes": 40796160,
+  "returncode": 1,
+  "status": "ERROR",
+  "stderr_bytes": 762,
+  "stderr_sha256": "7a71c6fbe323f6f532b6feeba1b1ed6ca7dfa9752522a718014a27a2593fcd69",
+  "stdout_bytes": 0,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wall_seconds": 4.695700963988202
+}

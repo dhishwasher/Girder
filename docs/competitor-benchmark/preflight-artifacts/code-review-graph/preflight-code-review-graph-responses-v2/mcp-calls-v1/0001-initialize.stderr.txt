@@ -1,0 +1,3 @@
+[09/11/26 15:08:08] INFO     Starting MCP server                transport.py:241
+                             'code-review-graph' with transport                 
+                             'stdio'                                            

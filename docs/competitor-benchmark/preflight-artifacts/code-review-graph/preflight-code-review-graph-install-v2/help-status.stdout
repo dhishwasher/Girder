@@ -1,0 +1,10 @@
+usage: code-review-graph status [-h] [--repo REPO] [-q] [--json]
+                                [--data-dir DATA_DIR]
+
+options:
+  -h, --help           show this help message and exit
+  --repo REPO          Repository root (auto-detected)
+  -q, --quiet          Suppress output
+  --json               Output one machine-readable JSON object
+  --data-dir DATA_DIR  External directory to store graph database (useful for
+                       network shares)

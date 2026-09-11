@@ -1,0 +1,50 @@
+{
+  "status": "ok",
+  "pattern": "callees_of",
+  "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::calculate_total",
+  "description": "Find all functions called by a given function",
+  "summary": "Found 2 result(s) for callees_of('/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::calculate_total')",
+  "result_count": 2,
+  "results_omitted": 0,
+  "results": [
+    {
+      "kind": "Function",
+      "name": "sum",
+      "qualified_name": "sum"
+    },
+    {
+      "id": 4,
+      "kind": "Function",
+      "name": "normalize_value",
+      "qualified_name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::normalize_value",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "line_start": 1,
+      "line_end": 2,
+      "language": "python",
+      "parent_name": null,
+      "is_test": false
+    }
+  ],
+  "edges": [
+    {
+      "id": 7,
+      "kind": "CALLS",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::calculate_total",
+      "target": "sum",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "line": 5,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 8,
+      "kind": "CALLS",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::calculate_total",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::normalize_value",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "line": 5,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    }
+  ]
+}

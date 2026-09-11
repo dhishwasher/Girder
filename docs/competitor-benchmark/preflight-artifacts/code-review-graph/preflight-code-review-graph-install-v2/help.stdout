@@ -1,0 +1,51 @@
+usage: code-review-graph [-h] [-v]
+                         {install,init,uninstall,build,update,postprocess,embed,watch,status,forget,visualize,wiki,register,unregister,repos,eval,detect-changes,enrich,dead-code,query,impact,search,flows,flow,communities,community,architecture,large-functions,refactor,serve,mcp,daemon}
+                         ...
+
+Persistent incremental knowledge graph for code reviews
+
+positional arguments:
+  {install,init,uninstall,build,update,postprocess,embed,watch,status,forget,visualize,wiki,register,unregister,repos,eval,detect-changes,enrich,dead-code,query,impact,search,flows,flow,communities,community,architecture,large-functions,refactor,serve,mcp,daemon}
+    install             Register MCP server with AI coding platforms
+    init                Alias for install
+    uninstall           Safely remove code-review-graph data, configs, hooks,
+                        and generated skills
+    build               Full graph build (re-parse all files)
+    update              Incremental update (only changed files)
+    postprocess         Run post-processing on existing graph (flows,
+                        communities, FTS)
+    embed               Compute vector embeddings for semantic search
+    watch               Watch for changes and auto-update
+    status              Show graph statistics
+    forget              Remove already-parsed files from the graph without a
+                        full rebuild
+    visualize           Generate interactive HTML graph visualization
+    wiki                Generate markdown wiki from community structure
+    register            Register a repository in the multi-repo registry
+    unregister          Remove a repository from the multi-repo registry
+    repos               List registered repositories
+    eval                Run evaluation benchmarks
+    detect-changes      Analyze change impact against the existing graph
+                        (read-only). Does NOT re-parse files — for that, use
+                        'update --brief'.
+    enrich              Enrich hook input with graph context
+    dead-code           Find functions/classes with no callers or test
+                        references
+    query               Query graph relationships
+    impact              Analyze the blast radius of changes
+    search              Search graph entities
+    flows               List stored execution flows
+    flow                Show one stored execution flow
+    communities         List graph communities
+    community           Show one graph community
+    architecture        Show architecture overview
+    large-functions     Find oversized graph nodes
+    refactor            Preview graph-backed refactors
+    serve               Start MCP server (stdio by default, or HTTP on
+                        localhost with --http)
+    mcp                 Alias for serve
+    daemon              Multi-repo watch daemon (start/stop/status/add/remove)
+
+options:
+  -h, --help            show this help message and exit
+  -v, --version         Show version and exit

@@ -1,0 +1,358 @@
+[
+  {
+    "name": "build_or_update_graph_tool",
+    "description": "Build or incrementally update the code knowledge graph.\n\nCall this first to initialize the graph, or after making changes.\nBy default performs an incremental update (only changed files).\nSet full_rebuild=True to re-parse every file.\n\nRuns the blocking full_build / incremental_update work in a thread\nvia ``asyncio.to_thread`` so the stdio event loop stays responsive.\nWithout this wrapper, long builds deadlocked on Windows because\n``ProcessPoolExecutor`` (used by parallel parsing) interacted badly",
+    "required": [],
+    "properties": [
+      "base",
+      "embedding_model",
+      "embedding_provider",
+      "full_rebuild",
+      "postprocess",
+      "recurse_submodules",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "run_postprocess_tool",
+    "description": "Run post-processing on existing graph (flows, communities, FTS index).\n\nUse after building with postprocess=\"none\" or \"minimal\", or to re-run\nexpensive steps independently. Signatures are always computed.\n\nOffloaded to a thread via ``asyncio.to_thread`` so community\ndetection on large graphs doesn't block the MCP event loop. See:\n#46, #136.",
+    "required": [],
+    "properties": [
+      "communities",
+      "embedding_model",
+      "embedding_provider",
+      "flows",
+      "fts",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "get_minimal_context_tool",
+    "description": "Get ultra-compact context for any task (~100 tokens). Always call this first.\n\nReturns graph stats, risk score, top communities/flows, and suggested\nnext tools in a single compact response. Use this as the entry point\nbefore any other graph tool to minimize token usage. Returns\n``status: not_ready`` with a build suggestion when the graph is missing,\nempty, or known to have been built at a different Git commit.",
+    "required": [],
+    "properties": [
+      "base",
+      "changed_files",
+      "repo_root",
+      "task"
+    ]
+  },
+  {
+    "name": "get_impact_radius_tool",
+    "description": "Analyze the blast radius of changed files in the codebase.\n\nShows which functions, classes, and files are impacted by changes.\nAuto-detects changed files from git if not specified.",
+    "required": [],
+    "properties": [
+      "base",
+      "changed_files",
+      "detail_level",
+      "max_depth",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "query_graph_tool",
+    "description": "Run a predefined graph query to explore code relationships.\n\nAvailable patterns:\n- callers_of: Find functions that call the target\n- references_to: Find nodes that reference the target\n- callees_of: Find functions called by the target\n- imports_of: Find what the target imports\n- importers_of: Find files that import the target\n- children_of: Find nodes contained in a file or class\n- tests_for: Find tests for the target\n- inheritors_of: Find classes inheriting from the target\n- triggers_of: Find m",
+    "required": [
+      "pattern",
+      "target"
+    ],
+    "properties": [
+      "detail_level",
+      "max_results",
+      "pattern",
+      "repo_root",
+      "target"
+    ]
+  },
+  {
+    "name": "get_review_context_tool",
+    "description": "Generate a focused, token-efficient review context for code changes.\n\nCombines impact analysis with source snippets and review guidance.\nUse this for comprehensive code reviews.",
+    "required": [],
+    "properties": [
+      "base",
+      "changed_files",
+      "detail_level",
+      "include_source",
+      "max_depth",
+      "max_files",
+      "max_lines_per_file",
+      "max_results",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "semantic_search_nodes_tool",
+    "description": "Search for code entities by name, keyword, or semantic similarity.\n\nUses vector embeddings for semantic search when available (run embed_graph_tool\nfirst, with a provider of your choice: \"local\" needs sentence-transformers,\n\"openai\" / \"google\" / \"minimax\" / \"voyage\" need their respective env vars).\nFalls back to FTS5 / keyword matching when no matching embeddings exist for\nthe given provider.",
+    "required": [
+      "query"
+    ],
+    "properties": [
+      "detail_level",
+      "kind",
+      "limit",
+      "model",
+      "provider",
+      "query",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "embed_graph_tool",
+    "description": "Compute vector embeddings for all graph nodes to enable semantic search.\n\nRequires: pip install code-review-graph[embeddings] (local provider only;\ncloud providers use stdlib urllib).\nDefault provider: local. Default model: all-MiniLM-L6-v2.\nOverride provider via `provider` param, model via `model` param or\nCRG_EMBEDDING_MODEL / CRG_OPENAI_MODEL / CRG_VOYAGE_MODEL env vars.\nChanging the model or provider re-embeds all nodes automatically.\n\nAfter running this, semantic_search_nodes_tool will use ",
+    "required": [],
+    "properties": [
+      "model",
+      "provider",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "list_graph_stats_tool",
+    "description": "Get aggregate statistics about the code knowledge graph.\n\nShows total nodes, edges, languages, files, and last update time.\nUseful for checking if the graph is built and up to date.",
+    "required": [],
+    "properties": [
+      "repo_root"
+    ]
+  },
+  {
+    "name": "get_docs_section_tool",
+    "description": "Get a specific section from the LLM-optimized documentation reference.\n\nReturns only the requested section content for minimal token usage.\nUse this before answering any user question about the plugin.\n\nAvailable sections: usage, review-delta, review-pr, commands, legal,\nwatch, embeddings, languages, troubleshooting.",
+    "required": [
+      "section_name"
+    ],
+    "properties": [
+      "repo_root",
+      "section_name"
+    ]
+  },
+  {
+    "name": "find_large_functions_tool",
+    "description": "Find functions, classes, or files exceeding a line-count threshold.\n\nUseful for decomposition audits, code quality checks, and enforcing\nsize limits during code review. Results are ordered by line count.",
+    "required": [],
+    "properties": [
+      "file_path_pattern",
+      "kind",
+      "limit",
+      "min_lines",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "list_flows_tool",
+    "description": "List execution flows in the codebase, sorted by criticality.\n\nEach flow represents a call chain starting from an entry point\n(HTTP handler, CLI command, test function, etc.). Use this to\nunderstand the main execution paths through the codebase.",
+    "required": [],
+    "properties": [
+      "detail_level",
+      "kind",
+      "limit",
+      "repo_root",
+      "sort_by"
+    ]
+  },
+  {
+    "name": "get_flow_tool",
+    "description": "Get detailed information about a single execution flow.\n\nReturns the full call path with each step's function name, file, and\nline numbers. Optionally includes source code snippets for each step.\n\nProvide either flow_id (from list_flows_tool) or flow_name to search by name.",
+    "required": [],
+    "properties": [
+      "flow_id",
+      "flow_name",
+      "include_source",
+      "max_source_lines",
+      "max_steps",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "get_affected_flows_tool",
+    "description": "Find execution flows affected by changed files.\n\nIdentifies which execution flows pass through nodes in the changed files.\nUseful during code review to understand which user-facing or critical paths\nare impacted by a change. Auto-detects changed files from git if not specified.",
+    "required": [],
+    "properties": [
+      "base",
+      "changed_files",
+      "detail_level",
+      "max_flows",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "list_communities_tool",
+    "description": "List detected code communities in the codebase.\n\nEach community represents a cluster of related code entities (functions,\nclasses) detected via the Leiden algorithm or file-based grouping.\nUse this to understand the high-level structure of the codebase.",
+    "required": [],
+    "properties": [
+      "detail_level",
+      "max_members",
+      "max_results",
+      "min_size",
+      "repo_root",
+      "sort_by"
+    ]
+  },
+  {
+    "name": "get_community_tool",
+    "description": "Get detailed information about a single code community.\n\nReturns community metadata including size, cohesion, dominant language,\nand member list. Optionally includes full node details for each member.\n\nProvide either community_id (from list_communities_tool) or community_name\nto search by name.",
+    "required": [],
+    "properties": [
+      "community_id",
+      "community_name",
+      "include_members",
+      "max_members",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "get_architecture_overview_tool",
+    "description": "Generate an architecture overview based on community structure.\n\nBuilds a high-level view of the codebase architecture by analyzing\ncommunity boundaries and cross-community coupling. Includes warnings\nfor high coupling between communities.",
+    "required": [],
+    "properties": [
+      "detail_level",
+      "max_members",
+      "max_results",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "detect_changes_tool",
+    "description": "Detect changes and produce risk-scored, priority-ordered review guidance.\n\nPrimary tool for code review. Maps git diffs to affected functions,\nflows, communities, and test coverage gaps. Returns risk scores and\nprioritized review items. Replaces get_review_context for change-aware reviews.\n\nOffloaded to a thread via ``asyncio.to_thread`` \u2014 runs `git diff`\nsubprocesses and BFS traversals that can take several seconds on\nlarge repos. See: #46, #136.",
+    "required": [],
+    "properties": [
+      "base",
+      "changed_files",
+      "detail_level",
+      "include_source",
+      "max_depth",
+      "max_flows",
+      "max_results",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "refactor_tool",
+    "description": "Graph-powered refactoring operations.\n\nUnified entry point for rename previews, dead code detection, and\nrefactoring suggestions.\n\nModes:\n- rename: Preview renaming a symbol. Returns an edit list and a refactor_id\n  to pass to apply_refactor_tool. Requires old_name and new_name.\n- dead_code: Find unreferenced functions/classes (no callers, tests, or\n  importers, and not entry points).\n- suggest: Get community-driven refactoring suggestions (move misplaced\n  functions, remove dead code).",
+    "required": [],
+    "properties": [
+      "detail_level",
+      "file_pattern",
+      "kind",
+      "max_results",
+      "mode",
+      "new_name",
+      "old_name",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "apply_refactor_tool",
+    "description": "Apply a previously previewed refactoring to source files.\n\nTakes a refactor_id from a prior refactor_tool(mode=\"rename\") call and\napplies the exact string replacements to the target files. Previews\nexpire after 10 minutes.\n\nSecurity: All edit paths are validated to be within the repo root.\nOnly exact string replacements are performed (no regex, no eval).",
+    "required": [
+      "refactor_id"
+    ],
+    "properties": [
+      "dry_run",
+      "max_diff_files",
+      "refactor_id",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "generate_wiki_tool",
+    "description": "Generate a markdown wiki from the code community structure.\n\nCreates a wiki page for each detected community and an index page.\nPages are written to .code-review-graph/wiki/ inside the repository.\nOnly regenerates pages whose content has changed unless force=True.\n\nOffloaded to a thread via ``asyncio.to_thread`` \u2014 on large graphs\nthe page-generation loop touches every community and issues many\nSQLite reads, which would block the MCP event loop. See: #46, #136.",
+    "required": [],
+    "properties": [
+      "force",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "get_wiki_page_tool",
+    "description": "Retrieve a specific wiki page by community name.\n\nReturns the markdown content of the wiki page for the given community.\nThe wiki must have been generated first via generate_wiki_tool.",
+    "required": [
+      "community_name"
+    ],
+    "properties": [
+      "community_name",
+      "max_chars",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "get_hub_nodes_tool",
+    "description": "Find the most connected nodes in the codebase (architectural hotspots).\n\nHub nodes have the highest total degree (in + out edges). Changes to\nthem have disproportionate blast radius. Excludes File nodes.",
+    "required": [],
+    "properties": [
+      "detail_level",
+      "repo_root",
+      "top_n"
+    ]
+  },
+  {
+    "name": "get_bridge_nodes_tool",
+    "description": "Find architectural chokepoints via betweenness centrality.\n\nBridge nodes sit on shortest paths between many node pairs.\nIf they break, multiple code regions lose connectivity.\nUses sampling approximation for graphs > 5000 nodes.",
+    "required": [],
+    "properties": [
+      "detail_level",
+      "repo_root",
+      "top_n"
+    ]
+  },
+  {
+    "name": "get_knowledge_gaps_tool",
+    "description": "Identify structural weaknesses in the codebase graph.\n\nFinds isolated nodes (disconnected), thin communities (< 3 members),\nuntested hotspots (high-degree nodes without test coverage), and\nsingle-file communities.",
+    "required": [],
+    "properties": [
+      "detail_level",
+      "max_per_category",
+      "repo_root"
+    ]
+  },
+  {
+    "name": "get_surprising_connections_tool",
+    "description": "Find unexpected architectural coupling via composite surprise scoring.\n\nScores edges by: cross-community (+0.3), cross-language (+0.2),\nperipheral-to-hub (+0.2), cross-test-boundary (+0.15), and\nunusual edge kinds (+0.15).",
+    "required": [],
+    "properties": [
+      "detail_level",
+      "repo_root",
+      "top_n"
+    ]
+  },
+  {
+    "name": "get_suggested_questions_tool",
+    "description": "Auto-generate review questions from graph analysis.\n\nProduces prioritized questions about: bridge nodes needing tests,\nuntested hub nodes, surprising cross-community coupling, thin\ncommunities, and untested hotspots.",
+    "required": [],
+    "properties": [
+      "repo_root"
+    ]
+  },
+  {
+    "name": "traverse_graph_tool",
+    "description": "BFS/DFS traversal from best-matching node with token budget.\n\nFree-form graph exploration: finds the node best matching your\nquery, then traverses outward via BFS or DFS up to the given\ndepth, collecting connected nodes within the token budget.",
+    "required": [
+      "query"
+    ],
+    "properties": [
+      "depth",
+      "mode",
+      "query",
+      "repo_root",
+      "token_budget"
+    ]
+  },
+  {
+    "name": "list_repos_tool",
+    "description": "List all registered repositories in the multi-repo registry.\n\nReturns the list of repos registered at ~/.code-review-graph/registry.json.\nUse the CLI 'register' command to add repos.",
+    "required": [],
+    "properties": []
+  },
+  {
+    "name": "cross_repo_search_tool",
+    "description": "Search for code entities across all registered repositories.\n\nRuns hybrid search on each registered repo's graph database and interleaves\nresults by repository-local rank. Equal ranks follow registry order, and up\nto ``limit`` results per searched repo may be returned. Register repos first\nwith the CLI 'register' command.",
+    "required": [
+      "query"
+    ],
+    "properties": [
+      "kind",
+      "limit",
+      "max_results",
+      "query"
+    ]
+  }
+]

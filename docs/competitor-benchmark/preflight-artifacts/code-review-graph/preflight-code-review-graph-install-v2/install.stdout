@@ -1,0 +1,160 @@
+Collecting aiofile==3.12.3
+  Using cached aiofile-3.12.3-py3-none-any.whl (22 kB)
+Collecting annotated-types==0.8.0
+  Using cached annotated_types-0.8.0-py3-none-any.whl (13 kB)
+Collecting anyio==4.15.1
+  Using cached anyio-4.15.1-py3-none-any.whl (132 kB)
+Collecting attrs==26.1.0
+  Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+Collecting Authlib==1.8.0
+  Using cached authlib-1.8.0-py2.py3-none-any.whl (260 kB)
+Collecting backports.tarfile==1.2.0
+  Using cached backports.tarfile-1.2.0-py3-none-any.whl (30 kB)
+Collecting beartype==0.22.9
+  Using cached beartype-0.22.9-py3-none-any.whl (1.3 MB)
+Collecting cachetools==7.1.8
+  Using cached cachetools-7.1.8-py3-none-any.whl (16 kB)
+Collecting caio==0.12.4
+  Using cached caio-0.12.4-cp311-cp311-manylinux_2_34_x86_64.whl (156 kB)
+Collecting certifi==2026.7.22
+  Using cached certifi-2026.7.22-py3-none-any.whl (136 kB)
+Collecting cffi==2.1.1
+  Using cached cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (217 kB)
+Collecting click==8.5.0
+  Using cached click-8.5.0-py3-none-any.whl (125 kB)
+Collecting code-review-graph==2.3.8
+  Using cached code_review_graph-2.3.8-py3-none-any.whl (619 kB)
+Collecting cryptography==50.0.1
+  Using cached cryptography-50.0.1-cp311-abi3-manylinux_2_34_x86_64.whl (4.7 MB)
+Collecting cyclopts==4.25.2
+  Using cached cyclopts-4.25.2-py3-none-any.whl (242 kB)
+Collecting dnspython==2.8.0
+  Using cached dnspython-2.8.0-py3-none-any.whl (331 kB)
+Collecting docstring_parser==0.18.0
+  Using cached docstring_parser-0.18.0-py3-none-any.whl (22 kB)
+Collecting email-validator==2.3.0
+  Using cached email_validator-2.3.0-py3-none-any.whl (35 kB)
+Collecting exceptiongroup==1.3.1
+  Using cached exceptiongroup-1.3.1-py3-none-any.whl (16 kB)
+Collecting fastmcp==3.4.7
+  Using cached fastmcp-3.4.7-py3-none-any.whl (8.0 kB)
+Collecting fastmcp-slim==3.4.7
+  Using cached fastmcp_slim-3.4.7-py3-none-any.whl (769 kB)
+Collecting griffelib==2.3.0
+  Using cached griffelib-2.3.0-py3-none-any.whl (169 kB)
+Collecting h11==0.16.0
+  Using cached h11-0.16.0-py3-none-any.whl (37 kB)
+Collecting httpcore==1.0.9
+  Using cached httpcore-1.0.9-py3-none-any.whl (78 kB)
+Collecting httpx==0.28.1
+  Using cached httpx-0.28.1-py3-none-any.whl (73 kB)
+Collecting httpx-sse==0.4.3
+  Using cached httpx_sse-0.4.3-py3-none-any.whl (9.0 kB)
+Collecting idna==3.19
+  Using cached idna-3.19-py3-none-any.whl (68 kB)
+Collecting importlib_metadata==9.0.1
+  Using cached importlib_metadata-9.0.1-py3-none-any.whl (27 kB)
+Collecting jaraco.classes==3.4.0
+  Using cached jaraco.classes-3.4.0-py3-none-any.whl (6.8 kB)
+Collecting jaraco.context==6.1.2
+  Using cached jaraco_context-6.1.2-py3-none-any.whl (7.9 kB)
+Collecting jaraco.functools==4.6.0
+  Using cached jaraco_functools-4.6.0-py3-none-any.whl (11 kB)
+Collecting jeepney==0.9.0
+  Using cached jeepney-0.9.0-py3-none-any.whl (49 kB)
+Collecting joserfc==1.7.5
+  Using cached joserfc-1.7.5-py3-none-any.whl (71 kB)
+Collecting jsonref==1.1.0
+  Using cached jsonref-1.1.0-py3-none-any.whl (9.4 kB)
+Collecting jsonschema==4.26.0
+  Using cached jsonschema-4.26.0-py3-none-any.whl (90 kB)
+Collecting jsonschema-path==0.5.0
+  Using cached jsonschema_path-0.5.0-py3-none-any.whl (24 kB)
+Collecting jsonschema-specifications==2025.9.1
+  Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+Collecting keyring==25.7.0
+  Using cached keyring-25.7.0-py3-none-any.whl (39 kB)
+Collecting markdown-it-py==4.2.0
+  Using cached markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+Collecting mcp==1.30.0
+  Using cached mcp-1.30.0-py3-none-any.whl (234 kB)
+Collecting mdurl==0.1.2
+  Using cached mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Collecting more-itertools==11.1.0
+  Using cached more_itertools-11.1.0-py3-none-any.whl (72 kB)
+Collecting networkx==3.6.1
+  Using cached networkx-3.6.1-py3-none-any.whl (2.1 MB)
+Collecting openapi-pydantic==0.5.1
+  Using cached openapi_pydantic-0.5.1-py3-none-any.whl (96 kB)
+Collecting opentelemetry-api==1.44.0
+  Using cached opentelemetry_api-1.44.0-py3-none-any.whl (60 kB)
+Collecting packaging==26.3
+  Using cached packaging-26.3-py3-none-any.whl (129 kB)
+Collecting pathable==0.6.0
+  Using cached pathable-0.6.0-py3-none-any.whl (18 kB)
+Collecting platformdirs==4.11.8
+  Using cached platformdirs-4.11.8-py3-none-any.whl (24 kB)
+Collecting py-key-value-aio==0.4.5
+  Using cached py_key_value_aio-0.4.5-py3-none-any.whl (170 kB)
+Collecting pycparser==3.0
+  Using cached pycparser-3.0-py3-none-any.whl (48 kB)
+Collecting pydantic==2.13.5
+  Using cached pydantic-2.13.5-py3-none-any.whl (472 kB)
+Collecting pydantic-settings==2.15.0
+  Using cached pydantic_settings-2.15.0-py3-none-any.whl (69 kB)
+Collecting pydantic_core==2.46.5
+  Using cached pydantic_core-2.46.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+Collecting Pygments==2.21.0
+  Using cached pygments-2.21.0-py3-none-any.whl (1.3 MB)
+Collecting PyJWT[crypto]==2.13.0
+  Using cached pyjwt-2.13.0-py3-none-any.whl (31 kB)
+Collecting pyperclip==1.11.0
+  Using cached pyperclip-1.11.0-py3-none-any.whl (11 kB)
+Collecting python-dotenv==1.2.3
+  Using cached python_dotenv-1.2.3-py3-none-any.whl (22 kB)
+Collecting python-multipart==0.0.32
+  Using cached python_multipart-0.0.32-py3-none-any.whl (30 kB)
+Collecting PyYAML==6.0.3
+  Using cached pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+Collecting referencing==0.37.0
+  Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+Collecting rich==15.0.0
+  Using cached rich-15.0.0-py3-none-any.whl (310 kB)
+Collecting rich-rst==2.1.0
+  Using cached rich_rst-2.1.0-py3-none-any.whl (272 kB)
+Collecting rpds-py==2026.6.3
+  Using cached rpds_py-2026.6.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (371 kB)
+Collecting SecretStorage==3.5.0
+  Using cached secretstorage-3.5.0-py3-none-any.whl (15 kB)
+Collecting sse-starlette==3.4.11
+  Using cached sse_starlette-3.4.11-py3-none-any.whl (17 kB)
+Collecting starlette==1.6.0
+  Using cached starlette-1.6.0-py3-none-any.whl (75 kB)
+Collecting tree-sitter==0.26.0
+  Using cached tree_sitter-0.26.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (664 kB)
+Collecting tree-sitter-c-sharp==0.23.5
+  Using cached tree_sitter_c_sharp-0.23.5-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (358 kB)
+Collecting tree-sitter-embedded-template==0.25.0
+  Using cached tree_sitter_embedded_template-0.25.0-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (18 kB)
+Collecting tree-sitter-language-pack==0.13.0
+  Using cached tree_sitter_language_pack-0.13.0-cp310-abi3-manylinux2014_x86_64.whl (20.0 MB)
+Collecting tree-sitter-yaml==0.7.2
+  Using cached tree_sitter_yaml-0.7.2-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (91 kB)
+Collecting typing-inspection==0.4.4
+  Using cached typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+Collecting typing_extensions==4.16.0
+  Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Collecting uncalled-for==0.4.0
+  Using cached uncalled_for-0.4.0-py3-none-any.whl (15 kB)
+Collecting uvicorn==0.52.4
+  Using cached uvicorn-0.52.4-py3-none-any.whl (79 kB)
+Collecting watchdog==6.0.0
+  Using cached watchdog-6.0.0-py3-none-manylinux2014_x86_64.whl (79 kB)
+Collecting watchfiles==1.2.0
+  Using cached watchfiles-1.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (456 kB)
+Collecting websockets==17.1
+  Using cached websockets-17.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (224 kB)
+Collecting zipp==4.1.0
+  Using cached zipp-4.1.0-py3-none-any.whl (10 kB)
+Installing collected packages: pyperclip, zipp, websockets, watchdog, uncalled-for, typing_extensions, tree-sitter-yaml, tree-sitter-embedded-template, tree-sitter-c-sharp, tree-sitter, rpds-py, PyYAML, python-multipart, python-dotenv, PyJWT, Pygments, pycparser, platformdirs, pathable, packaging, networkx, more-itertools, mdurl, jsonref, jeepney, idna, httpx-sse, h11, griffelib, docstring_parser, dnspython, click, certifi, caio, cachetools, beartype, backports.tarfile, attrs, annotated-types, uvicorn, typing-inspection, tree-sitter-language-pack, referencing, pydantic_core, py-key-value-aio, opentelemetry-api, markdown-it-py, jaraco.functools, jaraco.context, jaraco.classes, importlib_metadata, httpcore, exceptiongroup, email-validator, cffi, anyio, aiofile, watchfiles, starlette, rich, pydantic, jsonschema-specifications, jsonschema-path, httpx, cryptography, sse-starlette, SecretStorage, rich-rst, pydantic-settings, openapi-pydantic, jsonschema, joserfc, mcp, keyring, fastmcp-slim, cyclopts, Authlib, fastmcp, code-review-graph
+Successfully installed Authlib-1.8.0 PyJWT-2.13.0 PyYAML-6.0.3 Pygments-2.21.0 SecretStorage-3.5.0 aiofile-3.12.3 annotated-types-0.8.0 anyio-4.15.1 attrs-26.1.0 backports.tarfile-1.2.0 beartype-0.22.9 cachetools-7.1.8 caio-0.12.4 certifi-2026.7.22 cffi-2.1.1 click-8.5.0 code-review-graph-2.3.8 cryptography-50.0.1 cyclopts-4.25.2 dnspython-2.8.0 docstring_parser-0.18.0 email-validator-2.3.0 exceptiongroup-1.3.1 fastmcp-3.4.7 fastmcp-slim-3.4.7 griffelib-2.3.0 h11-0.16.0 httpcore-1.0.9 httpx-0.28.1 httpx-sse-0.4.3 idna-3.19 importlib_metadata-9.0.1 jaraco.classes-3.4.0 jaraco.context-6.1.2 jaraco.functools-4.6.0 jeepney-0.9.0 joserfc-1.7.5 jsonref-1.1.0 jsonschema-4.26.0 jsonschema-path-0.5.0 jsonschema-specifications-2025.9.1 keyring-25.7.0 markdown-it-py-4.2.0 mcp-1.30.0 mdurl-0.1.2 more-itertools-11.1.0 networkx-3.6.1 openapi-pydantic-0.5.1 opentelemetry-api-1.44.0 packaging-26.3 pathable-0.6.0 platformdirs-4.11.8 py-key-value-aio-0.4.5 pycparser-3.0 pydantic-2.13.5 pydantic-settings-2.15.0 pydantic_core-2.46.5 pyperclip-1.11.0 python-dotenv-1.2.3 python-multipart-0.0.32 referencing-0.37.0 rich-15.0.0 rich-rst-2.1.0 rpds-py-2026.6.3 sse-starlette-3.4.11 starlette-1.6.0 tree-sitter-0.26.0 tree-sitter-c-sharp-0.23.5 tree-sitter-embedded-template-0.25.0 tree-sitter-language-pack-0.13.0 tree-sitter-yaml-0.7.2 typing-inspection-0.4.4 typing_extensions-4.16.0 uncalled-for-0.4.0 uvicorn-0.52.4 watchdog-6.0.0 watchfiles-1.2.0 websockets-17.1 zipp-4.1.0

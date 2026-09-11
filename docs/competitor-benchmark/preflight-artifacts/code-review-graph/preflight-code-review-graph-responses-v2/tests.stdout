@@ -1,0 +1,12 @@
+{
+  "status": "ok",
+  "pattern": "tests_for",
+  "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::calculate_total",
+  "description": "Find all tests for a given function or class",
+  "summary": "Found 0 result(s) for tests_for('/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::calculate_total')",
+  "result_count": 0,
+  "results_omitted": 0,
+  "results": [],
+  "edges": [],
+  "confidence": "python getattr dispatch and decorator-based registration are not statically traced, so callers can be missing here"
+}

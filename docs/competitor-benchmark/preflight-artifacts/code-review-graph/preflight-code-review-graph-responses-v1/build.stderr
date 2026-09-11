@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e/bin/code-review-graph", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e/lib/python3.11/site-packages/code_review_graph/cli.py", line 1729, in main
+    store = GraphStore(db_path)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e/lib/python3.11/site-packages/code_review_graph/graph.py", line 198, in __init__
+    self._init_schema()
+  File "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e/lib/python3.11/site-packages/code_review_graph/graph.py", line 218, in _init_schema
+    self._conn.executescript(_SCHEMA_SQL)
+sqlite3.OperationalError: disk I/O error

@@ -1,0 +1,34 @@
+usage: code-review-graph update [-h] [--base BASE] [--repo REPO] [-q]
+                                [--skip-flows] [--skip-postprocess] [--brief]
+                                [--verify] [--data-dir DATA_DIR]
+                                [--embedding-provider {local,openai,google,minimax,voyage}]
+                                [--embedding-model EMBEDDING_MODEL]
+
+options:
+  -h, --help            show this help message and exit
+  --base BASE           Git diff base (default: the commit the graph was last
+                        built at)
+  --repo REPO           Repository root (auto-detected)
+  -q, --quiet           Suppress output
+  --skip-flows          Skip flow/community detection (signatures + FTS only)
+  --skip-postprocess    Skip all post-processing (raw parse only)
+  --brief               After re-parsing changed files into the graph, also
+                        print the risk summary + Token Savings panel that
+                        'detect-changes --brief' prints. Use this after a
+                        rebase or large change set when you want to refresh
+                        the graph AND see the impact in one command; use
+                        'detect-changes --brief' alone when the graph is
+                        already up to date (analysis only, no re-parse).
+  --verify              Calibrate the estimated savings against tiktoken's
+                        cl100k_base tokenizer (the GPT-4 family tokenizer).
+                        Adds a second row to the panel with the real token
+                        counts. Requires `pip install tiktoken`.
+  --data-dir DATA_DIR   External directory to store graph database (useful for
+                        network shares)
+  --embedding-provider {local,openai,google,minimax,voyage}
+                        Explicitly refresh an existing embedding index with
+                        this provider; requires --embedding-model (default:
+                        disabled)
+  --embedding-model EMBEDDING_MODEL
+                        Exact model for --embedding-provider. Cloud providers
+                        may transmit source-derived text and incur API cost

@@ -1,0 +1,256 @@
+{
+  "status": "ok",
+  "summary": "Blast radius for 1 changed file(s):\n  - 3 nodes directly changed\n  - 5 nodes impacted (within 64 hops)\n  - 2 additional files affected",
+  "changed_files": [
+    "core.py"
+  ],
+  "changed_nodes": [
+    {
+      "id": 3,
+      "kind": "File",
+      "name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "qualified_name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "line_start": 1,
+      "line_end": 6,
+      "language": "python",
+      "parent_name": null,
+      "is_test": false
+    },
+    {
+      "id": 5,
+      "kind": "Function",
+      "name": "calculate_total",
+      "qualified_name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::calculate_total",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "line_start": 4,
+      "line_end": 5,
+      "language": "python",
+      "parent_name": null,
+      "is_test": false
+    },
+    {
+      "id": 4,
+      "kind": "Function",
+      "name": "normalize_value",
+      "qualified_name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::normalize_value",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "line_start": 1,
+      "line_end": 2,
+      "language": "python",
+      "parent_name": null,
+      "is_test": false
+    }
+  ],
+  "impacted_nodes": [
+    {
+      "id": 7,
+      "kind": "Function",
+      "name": "render_summary",
+      "qualified_name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py::render_summary",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py",
+      "line_start": 3,
+      "line_end": 4,
+      "language": "python",
+      "parent_name": null,
+      "is_test": false,
+      "impact_score": 0.6
+    },
+    {
+      "id": 10,
+      "kind": "Test",
+      "name": "test_callback",
+      "qualified_name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py::test_callback",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "line_start": 8,
+      "line_end": 9,
+      "language": "python",
+      "parent_name": null,
+      "is_test": true,
+      "impact_score": 0.36
+    },
+    {
+      "id": 9,
+      "kind": "Test",
+      "name": "test_render_summary",
+      "qualified_name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py::test_render_summary",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "line_start": 5,
+      "line_end": 6,
+      "language": "python",
+      "parent_name": null,
+      "is_test": true,
+      "impact_score": 0.36
+    },
+    {
+      "id": 6,
+      "kind": "File",
+      "name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py",
+      "qualified_name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py",
+      "line_start": 1,
+      "line_end": 5,
+      "language": "python",
+      "parent_name": null,
+      "is_test": false,
+      "impact_score": 0.3
+    },
+    {
+      "id": 8,
+      "kind": "File",
+      "name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "qualified_name": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "line_start": 1,
+      "line_end": 13,
+      "language": "python",
+      "parent_name": null,
+      "is_test": true,
+      "impact_score": 0.3
+    }
+  ],
+  "impacted_files": [
+    "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py",
+    "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py"
+  ],
+  "edges": [
+    {
+      "id": 4,
+      "kind": "CONTAINS",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::normalize_value",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "line": 1,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 6,
+      "kind": "CONTAINS",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::calculate_total",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "line": 4,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 8,
+      "kind": "CALLS",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::calculate_total",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::normalize_value",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "line": 5,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 9,
+      "kind": "IMPORTS_FROM",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py",
+      "line": 1,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 10,
+      "kind": "CONTAINS",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py::render_summary",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py",
+      "line": 3,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 12,
+      "kind": "CALLS",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py::render_summary",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::calculate_total",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py",
+      "line": 4,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 22,
+      "kind": "TESTED_BY",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py::render_summary",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py::test_render_summary",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "line": 6,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 14,
+      "kind": "IMPORTS_FROM",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "line": 2,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 15,
+      "kind": "IMPORTS_FROM",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "line": 3,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 16,
+      "kind": "CONTAINS",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py::test_render_summary",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "line": 5,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 18,
+      "kind": "CONTAINS",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py::test_callback",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "line": 8,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 20,
+      "kind": "REFERENCES",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py::test_callback",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/core.py::calculate_total",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "line": 9,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    },
+    {
+      "id": 17,
+      "kind": "CALLS",
+      "source": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py::test_render_summary",
+      "target": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/service.py::render_summary",
+      "file_path": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture/test_service.py",
+      "line": 6,
+      "confidence": 1.0,
+      "confidence_tier": "EXTRACTED"
+    }
+  ],
+  "truncated": false,
+  "total_impacted": 5,
+  "nodes_omitted": 0,
+  "context_savings": {
+    "estimated": true,
+    "saved_tokens": 0,
+    "saved_percent": 0
+  }
+}

@@ -1,0 +1,12 @@
+usage: code-review-graph impact [-h] [--files FILES [FILES ...]]
+                                [--depth DEPTH] [--max-results MAX_RESULTS]
+                                [--base BASE] [--repo REPO]
+
+options:
+  -h, --help            show this help message and exit
+  --files FILES [FILES ...]
+                        Changed files (auto-detected when omitted)
+  --depth DEPTH
+  --max-results MAX_RESULTS
+  --base BASE
+  --repo REPO           Repository root (auto-detected)

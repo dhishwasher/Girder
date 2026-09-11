@@ -1,0 +1,126 @@
+[
+  {
+    "command": [
+      "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e/bin/code-review-graph",
+      "status",
+      "--repo",
+      "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture",
+      "--json"
+    ],
+    "detail": "",
+    "label": "status",
+    "peak_rss_bytes": 43585536,
+    "returncode": 0,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 338,
+    "stdout_sha256": "9767c9f42c1c91407eb6abded90aa4573a0dcaff50e51c0ebd5835d2f641b454",
+    "wall_seconds": 1.2990567329979967
+  },
+  {
+    "command": [
+      "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e/bin/code-review-graph",
+      "search",
+      "calculate_total",
+      "--repo",
+      "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture",
+      "--limit",
+      "500"
+    ],
+    "detail": "",
+    "label": "search",
+    "peak_rss_bytes": 41775104,
+    "returncode": 0,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 1208,
+    "stdout_sha256": "f93be2b75f8e70b5ebc2c292663592e229732f853ea887f721b1ab4a4e2edaf1",
+    "wall_seconds": 1.3642755079781637
+  },
+  {
+    "command": [
+      "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e/bin/code-review-graph",
+      "query",
+      "callers_of",
+      "calculate_total",
+      "--repo",
+      "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture"
+    ],
+    "detail": "",
+    "label": "callers",
+    "peak_rss_bytes": 41910272,
+    "returncode": 0,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 1694,
+    "stdout_sha256": "981bf8b05b328ee05c3481499c52d8f6ab30f3044aa5ec4f2dd4f8cfdc45e45d",
+    "wall_seconds": 1.0638668530154973
+  },
+  {
+    "command": [
+      "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e/bin/code-review-graph",
+      "query",
+      "callees_of",
+      "calculate_total",
+      "--repo",
+      "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture"
+    ],
+    "detail": "",
+    "label": "callees",
+    "peak_rss_bytes": 41877504,
+    "returncode": 0,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 2239,
+    "stdout_sha256": "063c15654e0e8e0346460fc01101731090e3239392992b41b927ebd220ecb277",
+    "wall_seconds": 1.060728227981599
+  },
+  {
+    "command": [
+      "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e/bin/code-review-graph",
+      "query",
+      "tests_for",
+      "calculate_total",
+      "--repo",
+      "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture"
+    ],
+    "detail": "",
+    "label": "tests",
+    "peak_rss_bytes": 45645824,
+    "returncode": 0,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 677,
+    "stdout_sha256": "4a4e7a093a98498385fa7f40a4b626c1715d77552afa72155e065f79a84eee0a",
+    "wall_seconds": 1.1587697459908668
+  },
+  {
+    "command": [
+      "/tmp/code-review-graph-benchmark-venv-v2-d_v1y08e/bin/code-review-graph",
+      "impact",
+      "--files",
+      "core.py",
+      "--depth",
+      "64",
+      "--max-results",
+      "500",
+      "--repo",
+      "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/work/preflight-code-review-graph-responses-v2/fixture"
+    ],
+    "detail": "",
+    "label": "impact",
+    "peak_rss_bytes": 42176512,
+    "returncode": 0,
+    "status": "PASS",
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 13349,
+    "stdout_sha256": "55a0697435582743dd314363e670320c9bb4d08e9d34c30fa6d35c815c86971c",
+    "wall_seconds": 1.1375399029930122
+  }
+]
