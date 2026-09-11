@@ -1,0 +1,291 @@
+{
+  "binary": {
+    "artifact_sha256": "7446c502aef85fc7e63e79da1e471096003253272b400790825183f6f9bc9ad3",
+    "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+    "version": "0.2.6"
+  },
+  "classification": "ADAPTER_VALIDATION",
+  "comparative_result": false,
+  "fixture": "tiny-python",
+  "note": "These serial end-to-end runs validate adapter transport, normalization, mutations, accounting, and cleanup. They are excluded from the later frozen multi-product comparison. WRONG results are retained and are the expected dynamic-dispatch loss against the independent oracle.",
+  "policy_id": "girder-competitor-benchmark-v1-revision-2",
+  "runs": [
+    {
+      "campaign_state": "COMPLETE",
+      "elapsed_seconds": 44.908770643989556,
+      "mutation_summaries": [
+        {
+          "first_pass_seconds_by_query": {
+            "callees": 0.9340403999958653,
+            "definition": 0.32384466199437156
+          },
+          "mutation": "body_edit",
+          "probe_sets": 3,
+          "state": 1,
+          "terminal_status": "WRONG",
+          "update_to_correct_seconds": null
+        },
+        {
+          "first_pass_seconds_by_query": {
+            "callees": 1.000772720988607,
+            "definition": 0.4191380830015987
+          },
+          "mutation": "rename",
+          "probe_sets": 3,
+          "state": 2,
+          "terminal_status": "WRONG",
+          "update_to_correct_seconds": null
+        },
+        {
+          "first_pass_seconds_by_query": {
+            "callees": 1.1516773189941887,
+            "definition": 0.4062371209729463
+          },
+          "mutation": "caller_added",
+          "probe_sets": 3,
+          "state": 3,
+          "terminal_status": "WRONG",
+          "update_to_correct_seconds": null
+        },
+        {
+          "first_pass_seconds_by_query": {
+            "callees": 0.9733135759888683,
+            "definition": 0.3979374199989252
+          },
+          "mutation": "caller_removed",
+          "probe_sets": 3,
+          "state": 4,
+          "terminal_status": "WRONG",
+          "update_to_correct_seconds": null
+        },
+        {
+          "first_pass_seconds_by_query": {
+            "callees": 1.0788006740040146,
+            "definition": 0.46729324298212305
+          },
+          "mutation": "symbol_moved",
+          "probe_sets": 3,
+          "state": 5,
+          "terminal_status": "WRONG",
+          "update_to_correct_seconds": null
+        },
+        {
+          "first_pass_seconds_by_query": {
+            "callees": 1.2494105249934364,
+            "definition": 0.6242951529857237
+          },
+          "mutation": "file_rename",
+          "probe_sets": 3,
+          "state": 6,
+          "terminal_status": "WRONG",
+          "update_to_correct_seconds": null
+        }
+      ],
+      "peak_rss_bytes": 2752512,
+      "product": "girder",
+      "raw_accounting_check": "PASS: every record byte count equaled the sum of its referenced raw artifact sizes",
+      "raw_archive": "docs/competitor-benchmark/adapter-artifacts/girder-normal-v2.tar.gz",
+      "raw_archive_sha256": "a0f832e3e3be2799c16f9317555f713e77ede6e00f7cabee694c7adef0ccef0a",
+      "record_count": 107,
+      "result_json_sha256": "b7780ac7f909b731ff84eb69da6ed6e54b1d2947aa5cbc49855f594badda5524",
+      "status_counts": {
+        "ERROR": 0,
+        "INSTALL_FAILED": 0,
+        "PASS": 47,
+        "RESOURCE_BLOCKED": 0,
+        "STALE": 0,
+        "TIMEOUT": 0,
+        "UNSUPPORTED": 0,
+        "WRONG": 60
+      },
+      "total_recorded_response_bytes": 50470,
+      "total_recorded_tool_calls": 140,
+      "warm_queries": [
+        {
+          "elapsed_seconds": 0.16467494503012858,
+          "kind": "definition",
+          "precision": 1.0,
+          "recall": 1.0,
+          "response_bytes": 579,
+          "status": "PASS",
+          "tool_calls": 2
+        },
+        {
+          "elapsed_seconds": 0.061679597973125055,
+          "kind": "callers",
+          "precision": 1.0,
+          "recall": 0.5,
+          "response_bytes": 372,
+          "status": "WRONG",
+          "tool_calls": 1
+        },
+        {
+          "elapsed_seconds": 0.09696569899097085,
+          "kind": "callees",
+          "precision": 1.0,
+          "recall": 1.0,
+          "response_bytes": 371,
+          "status": "PASS",
+          "tool_calls": 1
+        },
+        {
+          "elapsed_seconds": 0.06453050699201412,
+          "kind": "impact",
+          "precision": 1.0,
+          "recall": 0.5,
+          "response_bytes": 460,
+          "status": "WRONG",
+          "tool_calls": 1
+        },
+        {
+          "elapsed_seconds": 0.16348420397844166,
+          "kind": "tests",
+          "precision": 1.0,
+          "recall": 0.5,
+          "response_bytes": 327,
+          "status": "WRONG",
+          "tool_calls": 2
+        }
+      ]
+    },
+    {
+      "campaign_state": "COMPLETE",
+      "elapsed_seconds": 54.77505720901536,
+      "mutation_summaries": [
+        {
+          "first_pass_seconds_by_query": {
+            "callees": 2.95999139000196,
+            "definition": 2.360026898997603
+          },
+          "mutation": "body_edit",
+          "probe_sets": 3,
+          "state": 1,
+          "terminal_status": "WRONG",
+          "update_to_correct_seconds": null
+        },
+        {
+          "first_pass_seconds_by_query": {
+            "callees": 2.5750238389882725,
+            "definition": 2.022061298979679
+          },
+          "mutation": "rename",
+          "probe_sets": 3,
+          "state": 2,
+          "terminal_status": "WRONG",
+          "update_to_correct_seconds": null
+        },
+        {
+          "first_pass_seconds_by_query": {
+            "callees": 2.878557905991329,
+            "definition": 1.980781829013722
+          },
+          "mutation": "caller_added",
+          "probe_sets": 3,
+          "state": 3,
+          "terminal_status": "WRONG",
+          "update_to_correct_seconds": null
+        },
+        {
+          "first_pass_seconds_by_query": {
+            "callees": 2.4521589360083453,
+            "definition": 2.010853154002689
+          },
+          "mutation": "caller_removed",
+          "probe_sets": 3,
+          "state": 4,
+          "terminal_status": "WRONG",
+          "update_to_correct_seconds": null
+        },
+        {
+          "first_pass_seconds_by_query": {
+            "callees": 2.671233631001087,
+            "definition": 2.0965043540054467
+          },
+          "mutation": "symbol_moved",
+          "probe_sets": 3,
+          "state": 5,
+          "terminal_status": "WRONG",
+          "update_to_correct_seconds": null
+        },
+        {
+          "first_pass_seconds_by_query": {
+            "callees": 2.7377454029920045,
+            "definition": 2.0980075739789754
+          },
+          "mutation": "file_rename",
+          "probe_sets": 3,
+          "state": 6,
+          "terminal_status": "WRONG",
+          "update_to_correct_seconds": null
+        }
+      ],
+      "peak_rss_bytes": 4063232,
+      "product": "girder-watch",
+      "raw_accounting_check": "PASS: every record byte count equaled the sum of its referenced raw artifact sizes",
+      "raw_archive": "docs/competitor-benchmark/adapter-artifacts/girder-watch-v2.tar.gz",
+      "raw_archive_sha256": "89f8a078462790da06e71894ce79884e88aafb32df625b9df8bc9c52b1697a64",
+      "record_count": 107,
+      "result_json_sha256": "f81eae8dfd600630403fe14052cd98e682c161d61fe71088a030b75f055f6a75",
+      "status_counts": {
+        "ERROR": 0,
+        "INSTALL_FAILED": 0,
+        "PASS": 47,
+        "RESOURCE_BLOCKED": 0,
+        "STALE": 0,
+        "TIMEOUT": 0,
+        "UNSUPPORTED": 0,
+        "WRONG": 60
+      },
+      "total_recorded_response_bytes": 53681,
+      "total_recorded_tool_calls": 140,
+      "warm_queries": [
+        {
+          "elapsed_seconds": 0.20410675700986758,
+          "kind": "definition",
+          "precision": 1.0,
+          "recall": 1.0,
+          "response_bytes": 579,
+          "status": "PASS",
+          "tool_calls": 2
+        },
+        {
+          "elapsed_seconds": 0.07283200498204678,
+          "kind": "callers",
+          "precision": 1.0,
+          "recall": 0.5,
+          "response_bytes": 371,
+          "status": "WRONG",
+          "tool_calls": 1
+        },
+        {
+          "elapsed_seconds": 0.07977683798526414,
+          "kind": "callees",
+          "precision": 1.0,
+          "recall": 1.0,
+          "response_bytes": 370,
+          "status": "PASS",
+          "tool_calls": 1
+        },
+        {
+          "elapsed_seconds": 0.10238259498146363,
+          "kind": "impact",
+          "precision": 1.0,
+          "recall": 0.5,
+          "response_bytes": 459,
+          "status": "WRONG",
+          "tool_calls": 1
+        },
+        {
+          "elapsed_seconds": 0.14174071498564444,
+          "kind": "tests",
+          "precision": 1.0,
+          "recall": 0.5,
+          "response_bytes": 327,
+          "status": "WRONG",
+          "tool_calls": 2
+        }
+      ]
+    }
+  ],
+  "schema_version": 1
+}

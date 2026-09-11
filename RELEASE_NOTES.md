@@ -8,6 +8,11 @@ unit tests before any comparative run. Measured results will be added here only
 after each adapter and campaign checkpoint is complete; this entry makes no
 competitive claim yet.
 
+The first adapter checkpoint now covers both Girder 0.2.6 MCP modes through
+the common harness. Its retained tiny-fixture validation publishes the known
+dynamic-dispatch losses and keeps invalidated preflight runs separate. These
+adapter checks are excluded from the later competitive aggregate.
+
 See [the benchmark protocol](docs/competitor-benchmark/README.md).
 
 # Girder 0.2.6

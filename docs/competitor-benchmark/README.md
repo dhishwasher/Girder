@@ -18,11 +18,15 @@ The exact acquisition commands, native operations and field projections, depende
 
 ## Reproduction
 
-The campaign runner and concrete adapters will be added in the next checkpoints. Until then, only the frozen-foundation tests are valid:
+The Girder adapter and serial campaign runner are now available. The first external adapter is still pending, so current observations validate Girder integration and are excluded from competitive aggregates:
 
 ```sh
 python3 -m unittest -v tools.competitor_benchmark.test_foundation
+python3 -m unittest -v tools.competitor_benchmark.test_girder_adapter
+python3 -m unittest -v tools.competitor_benchmark.test_campaign
 ```
+
+See [the Girder adapter checkpoint](girder-adapter.md) for exact one-mode-at-a-time commands and its retained observation.
 
 Every campaign command will set `CARGO_BUILD_JOBS=1`, `CMAKE_BUILD_PARALLEL_LEVEL=1`, `MAKEFLAGS=-j1`, `RAYON_NUM_THREADS=1`, and `npm_config_jobs=1`. Measured work runs offline after pinned acquisition. A tested supervisor checks preflight memory, samples process-tree RSS and system headroom, bounds time and output, and kills descendants. The final reproduction command will be recorded here and in the generated report after the runner itself is committed.
 

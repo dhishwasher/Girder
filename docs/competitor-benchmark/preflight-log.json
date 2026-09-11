@@ -1,24 +1,56 @@
 {
-  "schema_version": 1,
   "records": [
     {
-      "id": "post-freeze-advisor-scorer-review",
       "classification": "INVALIDATED_PREFLIGHT",
       "comparative_result": false,
       "detail": "The first frozen scorer classified an old renamed identity as WRONG when old and current source markers were equal. No campaign had run. Revision 2 preserves STALE from the identity comparison and adds a regression test.",
+      "id": "post-freeze-advisor-scorer-review",
       "result_use": "None"
     },
     {
-      "id": "girder-normal-initial-protocol-probe",
       "classification": "INVALIDATED_PREFLIGHT",
-      "comparative_result": false,
-      "product": "girder",
-      "version": "0.2.6",
       "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
-      "fixture": "tiny-python base state",
+      "comparative_result": false,
       "detail": "The exploratory phrase `what would change if I edit calculate_total?` selected Girder concept search rather than impact because its parser takes text after the first `change` keyword. The adapter now freezes `impact of {target}?`, which the pinned parser classifies as impact. Other probe calls established the response shapes used by normalization.",
+      "fixture": "tiny-python base state",
+      "id": "girder-normal-initial-protocol-probe",
+      "product": "girder",
       "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/girder-normal-initial",
-      "result_use": "Response-shape integration only; excluded from every score and timing aggregate."
+      "result_use": "Response-shape integration only; excluded from every score and timing aggregate.",
+      "version": "0.2.6"
+    },
+    {
+      "campaign_state": "COMPLETE",
+      "classification": "INVALIDATED_PREFLIGHT",
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "comparative_result": false,
+      "detail": "The adapter completed, but audit found that its prepare execution record counted only MCP handshake bytes and omitted the separately preserved analyze bytes. Query outputs and statuses were not used to change the oracle or product behavior.",
+      "elapsed_seconds": 44.19803066001623,
+      "fixture": "tiny-python full mutation sequence",
+      "id": "phase2-girder-normal-v1",
+      "product": "girder",
+      "raw_archive": "docs/competitor-benchmark/preflight-artifacts/phase2-invalidated/girder-normal-v1.tar.gz",
+      "raw_archive_sha256": "ea2e45ff7a59d5499d0c56d6060273fbe11a7c42a05f4ca773b4c43c862045c5",
+      "record_count": 107,
+      "result_use": "None; retained before corrected rerun.",
+      "version": "0.2.6"
+    },
+    {
+      "campaign_state": "COMPLETE",
+      "classification": "INVALIDATED_PREFLIGHT",
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "comparative_result": false,
+      "detail": "The adapter completed, but audit found that its prepare execution record counted only MCP handshake bytes and omitted the separately preserved analyze bytes. Query outputs and statuses were not used to change the oracle or product behavior.",
+      "elapsed_seconds": 54.492067576997215,
+      "fixture": "tiny-python full mutation sequence",
+      "id": "phase2-girder-watch-v1",
+      "product": "girder-watch",
+      "raw_archive": "docs/competitor-benchmark/preflight-artifacts/phase2-invalidated/girder-watch-v1.tar.gz",
+      "raw_archive_sha256": "65488824bd43dfb39cb5941c3a0143fbabbedf88e84825258bd92fcd72ac1fcd",
+      "record_count": 107,
+      "result_use": "None; retained before corrected rerun.",
+      "version": "0.2.6"
     }
-  ]
+  ],
+  "schema_version": 1
 }
