@@ -280,7 +280,7 @@
     }
   ],
   "freeze_rule": "This policy, corpus.json, oracle.json, scorer, adapter contract, and their unit tests must be committed before any comparative campaign. Campaign results may not change them.",
-  "frozen_at_utc": "2026-09-11T18:43:59Z",
+  "frozen_at_utc": "2026-09-11T18:49:09Z",
   "host_limits": {
     "description": "Low-resource ChromeOS Crostini measurement host; results are host-specific.",
     "emergency_mem_available_bytes": 402653184,
@@ -310,9 +310,9 @@
   "measurements": {
     "calls": "Every native CLI invocation or MCP tools/call request. Model requests are not used.",
     "cold_setup_index_seconds": "Acquisition/install excluded; starts immediately before product preparation and ends at first ready response.",
-    "freshness_probe": "After each mutation, query all five kinds in the fixed order, skipping only native UNSUPPORTED kinds. Current source-marker evidence is required for definition. First correct usable answer occurs when every supported query in one probe set is PASS. Poll every 250 ms. Three identical completed WRONG probe sets may terminate only after 2 seconds. Explicit STALE/rebuilding is polled until correct or 120 seconds. Intrinsically wrong terminal answers and timeouts have null update-to-correct latency; their first/last probe elapsed, calls, bytes, and statuses remain recorded.",
+    "freshness_probe": "After each mutation, query all five kinds in the fixed order, skipping only native UNSUPPORTED kinds. Current source-marker evidence is required for definition. First correct usable answer occurs when every supported query in one probe set is PASS. Poll every 250 ms. Three identical completed WRONG probe sets may terminate only after 2 seconds and only when no applicable result is STALE. Any STALE result resets the wrong-answer stability window. Explicit STALE/rebuilding is polled until it clears or 120 seconds. Intrinsically wrong terminal answers and timeouts have null update-to-correct latency; their first/last probe elapsed, calls, bytes, and statuses remain recorded.",
     "peak_memory": "Maximum observed process-tree RSS when available; null otherwise. It is never inferred.",
-    "preflight_boundary": "Adapter response-shape probes are INVALIDATED_PREFLIGHT, retained with raw output, and excluded from all scores and timings. The comparative campaign begins only after revision 2 and the concrete adapter checkpoint are committed.",
+    "preflight_boundary": "Adapter response-shape probes are INVALIDATED_PREFLIGHT or PREFLIGHT_PASS, retained with raw output, and excluded from all scores and timings. Each product campaign begins only after the current policy and its concrete adapter checkpoint are committed.",
     "raw_artifacts": "Write complete stdout and stderr for every invocation. If combined output exceeds 4 MiB, terminate and record ERROR with the retained capped streams and byte limit.",
     "repetitions": "Exactly one cold prepare, one unmeasured warm-up per supported query at base state, and one measured warm query. Mutation measurements are one cumulative sequence per product-fixture; no retries except frozen readiness polling.",
     "response_bytes": "Exact UTF-8 bytes delivered on native stdout/stderr or MCP response envelopes, before normalization. Initial prompts and harness prose do not exist and are excluded.",
@@ -332,7 +332,7 @@
     "test_inventory": "Each state lists every test node in the fixture. A native whole-test-file prediction expands to every listed node in that file before scoring; this models what will run and retains unrelated nodes as false positives.",
     "tests": "Test nodes in the reverse-transitive impact set."
   },
-  "policy_id": "girder-competitor-benchmark-v1-revision-6",
+  "policy_id": "girder-competitor-benchmark-v1-revision-7",
   "policy_revision": 5,
   "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
   "required_report_sections": [
@@ -370,6 +370,12 @@
       "reason": "Revision 5 produced the complete, separately reported Girder normal, Girder watch, and Ripwire tiny-python adapter gate. codebase-memory-mcp preflight then established that the pinned schema uses inbound/outbound directions, finite depth 32, boolean persistence, and a security-sensitive local cache/runtime placement. Revision 6 corrects only that not-yet-measured adapter mapping and makes campaign policy IDs data-driven.",
       "revision": 5,
       "status": "valid completed Girder/Ripwire tiny adapter gate; superseded for subsequent campaigns"
+    },
+    {
+      "commit": "2e39da3",
+      "reason": "The codebase-memory adapter checkpoint exposed that its documented watcher may remain stale for multiple seconds. Review found the evaluator could terminate on a stable known WRONG answer while a different query was still STALE. Revision 7 resets wrong-answer stability whenever any applicable result is STALE; it changes no oracle, native answer, adapter behavior, threshold, or completed revision 5 result.",
+      "revision": 6,
+      "status": "invalidated before first codebase-memory scored campaign"
     }
   ],
   "schema_version": 1,

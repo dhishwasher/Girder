@@ -179,6 +179,15 @@
       "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/codebase-memory/preflight-cbm-adapter-v1",
       "result_use": "Adapter gate only; excluded from every score and timing aggregate.",
       "version": "0.10.8"
+    },
+    {
+      "classification": "INVALIDATED_PREFLIGHT",
+      "comparative_result": false,
+      "detail": "Before the first scored run, review found that a persistent known WRONG query could advance the identical-wrong terminal counter while another query remained STALE. Revision 7 resets that counter whenever any applicable query is STALE, preserving the full 120-second readiness window.",
+      "id": "codebase-memory-stale-plus-wrong-stability-review",
+      "product": "codebase-memory-mcp",
+      "result_use": "None; no codebase-memory campaign had started.",
+      "version": "0.10.8"
     }
   ],
   "schema_version": 1

@@ -196,10 +196,9 @@ def run_campaign(product: str, fixture_id: str, binary: Path, work_root: Path, o
                                     if value in {Status.TIMEOUT, Status.RESOURCE_BLOCKED, Status.ERROR})
                     break
                 signature = tuple(signature_parts)
-                if signature == prior_signature and any(value is Status.WRONG for value in comparable):
-                    identical_wrong += 1
-                else:
-                    identical_wrong = 1
+                identical_wrong = _wrong_stability_count(
+                    comparable, signature, prior_signature, identical_wrong
+                )
                 prior_signature = signature
                 elapsed = time.monotonic() - mutation_started_mono
                 if identical_wrong >= policy["timeouts_seconds"]["identical_wrong_probe_sets_before_terminal"] \
@@ -301,6 +300,17 @@ def _git_baseline(root: Path) -> None:
 def _deadline_check(deadline: float) -> None:
     if time.monotonic() >= deadline:
         raise TimeoutError("single-product fixture campaign deadline exceeded")
+
+
+def _wrong_stability_count(
+    statuses: Sequence[Status], signature: tuple[Any, ...],
+    prior_signature: tuple[Any, ...] | None, current: int,
+) -> int:
+    if any(status is Status.STALE for status in statuses):
+        return 0
+    if not any(status is Status.WRONG for status in statuses):
+        return 0
+    return current + 1 if signature == prior_signature else 1
 
 
 def _jsonable(value: Any) -> Any:

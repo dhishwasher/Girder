@@ -35,6 +35,9 @@ placement failures remain published: the removable mount could not satisfy the
 product's private-cache ancestry check, and a removable-drive executable missed
 its fixed daemon admission window. A local mode-0700 copy of the verified
 binary with a fresh local private cache passed all five adapter operations.
+Before measurement, the freshness loop was also corrected so a stable known
+wrong answer cannot terminate probing while another applicable answer remains
+stale. Any stale result now resets the wrong-answer stability window.
 
 See [the benchmark protocol](docs/competitor-benchmark/README.md) and the
 [generated first-external result](docs/competitor-benchmark/results/tiny/report.md).
