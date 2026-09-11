@@ -44,6 +44,16 @@ retained and excluded. Repeated identical errors now use the same frozen
 three-probe, two-second stability bound as wrong answers; timeouts and resource
 blocks remain immediately terminal.
 
+The valid revision 8 rerun completed. Its warmed base result passed exact
+definition/source and direct callees, while callers, impact, and tests each had
+precision 1.000 and recall 0.500 from the retained dynamic-callback miss. The
+body edit refreshed definition and callees. Rename then produced an empty exact
+search and native `function not found` trace errors through the frozen
+stability window; the five remaining mutation summaries ended `ERROR`. This
+establishes no recovery inside that bound, not that a longer watcher wait could
+never recover. The run recorded 88,414 query-response bytes and 170 calls,
+including every failed probe, and remains excluded from the final aggregate.
+
 See [the benchmark protocol](docs/competitor-benchmark/README.md) and the
 [generated first-external result](docs/competitor-benchmark/results/tiny/report.md).
 

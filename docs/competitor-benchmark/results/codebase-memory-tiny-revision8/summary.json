@@ -1,0 +1,105 @@
+{
+  "campaigns": [
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "calls_per_query_record": 1.0303030303030303,
+      "campaign_seconds": 42.96151986697805,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 21.93048803898273,
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "fixture": "tiny-python",
+      "freeze_manifest_sha256": "9358720840623a30494b7717667527986b0bc11c9203367d5346ae2f0f42ca41",
+      "freshness_status_by_kind": {
+        "callees": {
+          "ERROR": 5,
+          "PASS": 1
+        },
+        "callers": {
+          "ERROR": 5,
+          "WRONG": 1
+        },
+        "definition": {
+          "PASS": 1,
+          "WRONG": 5
+        },
+        "impact": {
+          "ERROR": 5,
+          "WRONG": 1
+        },
+        "tests": {
+          "ERROR": 5,
+          "WRONG": 1
+        }
+      },
+      "harness_commit": "a7b652819f37115742601e9dc1d5d58702bde34b",
+      "mutation_terminal_status": {
+        "ERROR": 5,
+        "WRONG": 1
+      },
+      "peak_rss_bytes": 5767168,
+      "policy_id": "girder-competitor-benchmark-v1-revision-8",
+      "policy_sha256": "e85989869b524bbf2ab6e0b4ec7327838e46aa5f0d8378a7a73e76eaff542dd2",
+      "prepare_success": true,
+      "product": "codebase-memory-mcp",
+      "query_record_count": 165,
+      "query_response_bytes": 88414,
+      "query_status": {
+        "ERROR": 112,
+        "PASS": 10,
+        "WRONG": 43
+      },
+      "query_tool_calls": 170,
+      "raw_archive": "raw/campaign-codebase-memory-tiny-v2.tar.gz",
+      "source_result_sha256": "7ea68238517d2bab78c625bd616d559a64033ee0e830439d991daa351e93528f",
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.10.8",
+      "warm_query_seconds_mean": 0.04688700220431201,
+      "warm_query_seconds_total": 0.23443501102156006
+    }
+  ],
+  "schema_version": 1,
+  "scope": "codebase-memory-mcp tiny Python campaign under revision 8"
+}

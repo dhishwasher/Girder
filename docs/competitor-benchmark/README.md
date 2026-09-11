@@ -18,7 +18,7 @@ The exact acquisition commands, native operations and field projections, depende
 
 ## Reproduction
 
-The Girder, Ripwire, and codebase-memory-mcp adapters and serial campaign runner are now available. The first valid external small-fixture campaign uses revision 5. Its [generated report](results/tiny/report.md), [JSON](results/tiny/summary.json), [CSV](results/tiny/summary.csv), and checksum-pinned [raw archives](results/tiny/artifacts.sha256) are committed. The `tiny-python` corpus entry is an adapter gate and remains excluded from the final competitive aggregate. The [codebase-memory adapter checkpoint](codebase-memory-adapter.md) precedes the common revision 8 freshness-gate correction and its scored rerun.
+The Girder, Ripwire, and codebase-memory-mcp adapters and serial campaign runner are now available. The first valid external small-fixture campaign uses revision 5. Its [generated report](results/tiny/report.md), [JSON](results/tiny/summary.json), [CSV](results/tiny/summary.csv), and checksum-pinned [raw archives](results/tiny/artifacts.sha256) are committed. The [codebase-memory adapter checkpoint and revision 8 result](codebase-memory-adapter.md) preserve its separate policy revision, failed placements, invalid first run, and valid scored rerun. The `tiny-python` corpus entry is an adapter gate and remains excluded from the final competitive aggregate.
 
 ```sh
 python3 -m unittest -v tools.competitor_benchmark.test_foundation

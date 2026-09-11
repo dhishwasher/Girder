@@ -28,7 +28,15 @@ The first startup placed the private cache on the ChromeOS removable mount. The 
 
 Copying the already verified executable once to a mode-0700 local temporary runtime directory resolved admission. Subsequent schema, response, and adapter probes completed with about 1.7 GB `MemAvailable`; observed process-tree RSS stayed below 6 MB. Both failed placements and every successful native response remain under [preflight artifacts](preflight-artifacts/codebase-memory), and [preflight-log.json](preflight-log.json) excludes them from scores and timing aggregates.
 
-## Reproduce the next campaign
+## Scored tiny result
+
+The valid revision 8 campaign is preserved as a [generated report](results/codebase-memory-tiny-revision8/report.md), [JSON](results/codebase-memory-tiny-revision8/summary.json), [CSV](results/codebase-memory-tiny-revision8/summary.csv), and checksum-pinned [raw archive](results/codebase-memory-tiny-revision8/artifacts.sha256). It completed in 42.962 seconds with a 21.930-second cold setup and a 0.234-second warmed five-query total.
+
+The warmed base query passed definition and callees. Callers, impact, and tests each had precision 1.000 and recall 0.500 because the function-parameter callback remained unresolved. The body edit refreshed definition and callee evidence, but caller, impact, and test answers retained that known loss. After rename, exact definition search returned no row and trace operations returned native `function not found` errors. Those answers stayed identical through the frozen two-second stability window; the five remaining mutation summaries therefore ended `ERROR`. The result retains 88,414 response bytes and 170 calls across every warmup, measured query, and freshness probe, including 112 error records.
+
+This result establishes failure to recover within the frozen stability window. It does not establish that the product's multi-second watcher would never recover under a longer wait. The tiny fixture remains excluded from the final aggregate.
+
+## Reproduce a campaign
 
 After verifying and extracting the policy-pinned archive, make one local runtime copy and run a fresh isolated campaign:
 
