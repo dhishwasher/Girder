@@ -1,0 +1,23 @@
+{
+  "command": [
+    "npm",
+    "ci",
+    "--omit=dev",
+    "--no-audit",
+    "--no-fund"
+  ],
+  "cwd": "/tmp/girder-gitnexus-install-v3-_gkxu88w",
+  "detail": "process-tree RSS=1076068352 exceeded cap 1073741824",
+  "environment": {
+    "GITNEXUS_SKIP_OPTIONAL_GRAMMARS": "1",
+    "npm_config_cache": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/npm-cache-gitnexus-1.6.11"
+  },
+  "peak_rss_bytes": 1076068352,
+  "returncode": -9,
+  "status": "RESOURCE_BLOCKED",
+  "stderr_bytes": 1232,
+  "stderr_sha256": "d2e85a3b0d01b8482efa1399be840a002d9b75ab4ba71d471e82fefc377adc3a",
+  "stdout_bytes": 0,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wall_seconds": 38.08515168199665
+}

@@ -291,6 +291,17 @@
       "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/gitnexus/preflight-gitnexus-install-v2",
       "result_use": "None; false resource classification retained. No GitNexus score exists.",
       "version": "1.6.11"
+    },
+    {
+      "classification": "RESOURCE_BLOCKED",
+      "commit": "c0c3fa18a9b27d210099f908095fec373dd3d5",
+      "comparative_result": false,
+      "detail": "After revision 11 fixed /proc stat parsing, a third fresh exact-lock npm ci in local temporary storage reached a credible 1076068352-byte process-tree RSS, exceeding the frozen 1073741824-byte cap. The supervisor terminated it after 38.085 seconds. The benchmark does not raise the limit or omit additional dependencies after seeing this result.",
+      "id": "gitnexus-install-v3-resource-blocked",
+      "product": "gitnexus",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/gitnexus/preflight-gitnexus-install-v3",
+      "result_use": "Host-specific setup result only. GitNexus receives no correctness, cost, freshness, or comparative score and this is not counted as a Girder win.",
+      "version": "1.6.11"
     }
   ],
   "schema_version": 1

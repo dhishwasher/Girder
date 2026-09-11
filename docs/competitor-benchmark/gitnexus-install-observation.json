@@ -1,0 +1,43 @@
+{
+  "attempts": [
+    {
+      "id": "install-v1",
+      "peak_rss_bytes": 61153280,
+      "placement": "ChromeOS removable 9p",
+      "reason": "npm required node_modules/.bin symlink creation failed with EACCES",
+      "status": "ERROR",
+      "wall_seconds": 414.886104256002
+    },
+    {
+      "id": "install-v2",
+      "placement": "local temporary directory",
+      "reason": "benchmark /proc stat parser misread shifted fields for a process name containing spaces; revision 11 fixed it",
+      "reported_peak_rss_bytes": 7949430816768,
+      "status": "INVALIDATED_RESOURCE_BLOCKED",
+      "wall_seconds": 123.77869393199217
+    },
+    {
+      "id": "install-v3",
+      "limit_bytes": 1073741824,
+      "peak_rss_bytes": 1076068352,
+      "placement": "fresh local temporary directory",
+      "reason": "credible process-tree RSS exceeded the frozen cap",
+      "status": "RESOURCE_BLOCKED",
+      "wall_seconds": 38.08515168199665
+    }
+  ],
+  "boundary": "This establishes only that the pinned exact-lock installation could not complete under the frozen resource and placement rules on this host. It establishes no GitNexus semantic correctness, query cost, freshness, or behavior after installation.",
+  "commit": "c0c3fa18a9b27d210099f908095fec373dd3d5",
+  "comparative_result": false,
+  "correctness_score": null,
+  "final_status": "RESOURCE_BLOCKED",
+  "node_version": "v22.23.1",
+  "npm_version": "10.9.8",
+  "observation_id": "gitnexus-1.6.11-low-resource-install",
+  "package_integrity": "sha512-+UdZPqmRSIc0dwZea43uHVOPhtnfBk/3iRj7WDzfqTPGPpQ8EcqcsBKbA07uySOjS3um/zLJIGOn8KfM0ZFh4g==",
+  "policy_id": "girder-competitor-benchmark-v1-revision-11",
+  "product": "gitnexus",
+  "recorded_at_utc": "2026-09-11T23:50:00Z",
+  "schema_version": 1,
+  "version": "1.6.11"
+}

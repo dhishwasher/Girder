@@ -91,6 +91,12 @@ and adds a regression test. The false `RESOURCE_BLOCKED` record remains
 published, and no threshold, corpus target, or completed competitor result was
 changed.
 
+The corrected third GitNexus install reached 1,076,068,352 bytes process-tree
+RSS, 2,326,528 bytes above the frozen 1 GiB cap. The supervisor stopped it after
+38.085 seconds. The benchmark keeps the limit and exact dependency lock intact,
+records GitNexus as host-specific `RESOURCE_BLOCKED`, and assigns it no
+correctness or comparative score.
+
 See [the benchmark protocol](docs/competitor-benchmark/README.md) and the
 [generated first-external result](docs/competitor-benchmark/results/tiny/report.md).
 

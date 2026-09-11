@@ -1,0 +1,22 @@
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @tree-sitter-grammars/tree-sitter-zig@1.1.2
+npm warn Found: tree-sitter@0.21.1
+npm warn node_modules/tree-sitter
+npm warn   tree-sitter@"0.21.1" from gitnexus@1.6.11
+npm warn   node_modules/gitnexus
+npm warn     gitnexus@"1.6.11" from the root project
+npm warn   10 more (tree-sitter-c-sharp, tree-sitter-cpp, tree-sitter-go, ...)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peerOptional tree-sitter@"^0.22.1" from @tree-sitter-grammars/tree-sitter-zig@1.1.2
+npm warn node_modules/@tree-sitter-grammars/tree-sitter-zig
+npm warn   optional @tree-sitter-grammars/tree-sitter-zig@"1.1.2" from gitnexus@1.6.11
+npm warn   node_modules/gitnexus
+npm warn
+npm warn Conflicting peer dependency: tree-sitter@0.22.4
+npm warn node_modules/tree-sitter
+npm warn   peerOptional tree-sitter@"^0.22.1" from @tree-sitter-grammars/tree-sitter-zig@1.1.2
+npm warn   node_modules/@tree-sitter-grammars/tree-sitter-zig
+npm warn     optional @tree-sitter-grammars/tree-sitter-zig@"1.1.2" from gitnexus@1.6.11
+npm warn     node_modules/gitnexus
+npm warn deprecated boolean@3.2.0: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
