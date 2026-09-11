@@ -2,7 +2,7 @@
 
 The codebase-memory-mcp 0.10.8 adapter uses the checksum-verified official portable Linux release through its native MCP server. This checkpoint freezes the concrete v0.10.8 schemas and normalization before any scored codebase-memory campaign. It is preflight evidence, not a competitive result.
 
-The adapter checkpoint was committed under revision 6. Before its first score, revision 7 corrected the common freshness loop so an explicitly stale answer resets the stable-wrong terminal window; it did not change this adapter, its native queries, or the oracle.
+The adapter checkpoint was committed under revision 6. Revision 7 corrected the common freshness loop so an explicitly stale answer resets the stable-wrong terminal window. The first scored attempt then showed that a first native error also ended probing before the documented multi-second watcher could recover. Revision 8 gives repeated identical errors the existing bounded stability window. Neither correction changed this adapter, its native queries, or the oracle; the invalid revision 7 run is retained in full.
 
 The official archive SHA-256 is `6eef49652bc0c7820f43114125044d40bf7f4d97c11b2592f6b0f6a307702325`. The extracted executable reports `codebase-memory-mcp 0.10.8` and has SHA-256 `1175645cb30560e7e47d78611cd1bcb509478eaf6d4e51f72fe18327ee9c1351`. The [adapter manifest](codebase-memory-adapter-manifest.json) pins every retained preflight artifact.
 

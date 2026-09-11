@@ -280,7 +280,7 @@
     }
   ],
   "freeze_rule": "This policy, corpus.json, oracle.json, scorer, adapter contract, and their unit tests must be committed before any comparative campaign. Campaign results may not change them.",
-  "frozen_at_utc": "2026-09-11T18:49:09Z",
+  "frozen_at_utc": "2026-09-11T18:53:41Z",
   "host_limits": {
     "description": "Low-resource ChromeOS Crostini measurement host; results are host-specific.",
     "emergency_mem_available_bytes": 402653184,
@@ -310,7 +310,7 @@
   "measurements": {
     "calls": "Every native CLI invocation or MCP tools/call request. Model requests are not used.",
     "cold_setup_index_seconds": "Acquisition/install excluded; starts immediately before product preparation and ends at first ready response.",
-    "freshness_probe": "After each mutation, query all five kinds in the fixed order, skipping only native UNSUPPORTED kinds. Current source-marker evidence is required for definition. First correct usable answer occurs when every supported query in one probe set is PASS. Poll every 250 ms. Three identical completed WRONG probe sets may terminate only after 2 seconds and only when no applicable result is STALE. Any STALE result resets the wrong-answer stability window. Explicit STALE/rebuilding is polled until it clears or 120 seconds. Intrinsically wrong terminal answers and timeouts have null update-to-correct latency; their first/last probe elapsed, calls, bytes, and statuses remain recorded.",
+    "freshness_probe": "After each mutation, query all five kinds in the fixed order, skipping only native UNSUPPORTED kinds. Current source-marker evidence is required for definition. First correct usable answer occurs when every supported query in one probe set is PASS. Poll every 250 ms. Three identical completed WRONG or ERROR probe sets may terminate only after 2 seconds and only when no applicable result is STALE. Any STALE result resets the terminal stability window. TIMEOUT and RESOURCE_BLOCKED terminate immediately. If every kind is unsupported, the mutation is UNSUPPORTED. At the 120-second readiness deadline, preserve STALE, ERROR, or WRONG from the last probe instead of relabeling it as a request timeout. Non-PASS mutations have null update-to-correct latency; their first/last probe elapsed, calls, bytes, and statuses remain recorded.",
     "peak_memory": "Maximum observed process-tree RSS when available; null otherwise. It is never inferred.",
     "preflight_boundary": "Adapter response-shape probes are INVALIDATED_PREFLIGHT or PREFLIGHT_PASS, retained with raw output, and excluded from all scores and timings. Each product campaign begins only after the current policy and its concrete adapter checkpoint are committed.",
     "raw_artifacts": "Write complete stdout and stderr for every invocation. If combined output exceeds 4 MiB, terminate and record ERROR with the retained capped streams and byte limit.",
@@ -332,7 +332,7 @@
     "test_inventory": "Each state lists every test node in the fixture. A native whole-test-file prediction expands to every listed node in that file before scoring; this models what will run and retains unrelated nodes as false positives.",
     "tests": "Test nodes in the reverse-transitive impact set."
   },
-  "policy_id": "girder-competitor-benchmark-v1-revision-7",
+  "policy_id": "girder-competitor-benchmark-v1-revision-8",
   "policy_revision": 5,
   "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
   "required_report_sections": [
@@ -376,6 +376,12 @@
       "reason": "The codebase-memory adapter checkpoint exposed that its documented watcher may remain stale for multiple seconds. Review found the evaluator could terminate on a stable known WRONG answer while a different query was still STALE. Revision 7 resets wrong-answer stability whenever any applicable result is STALE; it changes no oracle, native answer, adapter behavior, threshold, or completed revision 5 result.",
       "revision": 6,
       "status": "invalidated before first codebase-memory scored campaign"
+    },
+    {
+      "commit": "243c7866da7ba14f3710241d408636e606a540e8",
+      "reason": "The complete retained run exposed that the evaluator terminated on the first native ERROR after a rename, so it did not measure whether a documented multi-second watcher later produced a usable answer. Revision 8 applies the existing three-identical-probe and two-second stability bounds to ERROR as well as WRONG, keeps TIMEOUT and RESOURCE_BLOCKED immediately terminal, and preserves STALE at the readiness deadline. No adapter, oracle, target, or numeric threshold changed.",
+      "revision": 7,
+      "status": "invalidated after first codebase-memory run and before any cross-language aggregate"
     }
   ],
   "schema_version": 1,

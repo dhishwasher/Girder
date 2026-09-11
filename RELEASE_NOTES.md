@@ -38,6 +38,11 @@ binary with a fresh local private cache passed all five adapter operations.
 Before measurement, the freshness loop was also corrected so a stable known
 wrong answer cannot terminate probing while another applicable answer remains
 stale. Any stale result now resets the wrong-answer stability window.
+The first scored attempt then exposed that a single native error still ended
+probing before a multi-second watcher could recover. That complete run is
+retained and excluded. Repeated identical errors now use the same frozen
+three-probe, two-second stability bound as wrong answers; timeouts and resource
+blocks remain immediately terminal.
 
 See [the benchmark protocol](docs/competitor-benchmark/README.md) and the
 [generated first-external result](docs/competitor-benchmark/results/tiny/report.md).

@@ -163,10 +163,11 @@ def run_campaign(product: str, fixture_id: str, binary: Path, work_root: Path, o
             adapter.wait_until_ready(policy["timeouts_seconds"]["wait_until_ready"])
             probe_deadline = mutation_started_mono + policy["timeouts_seconds"]["wait_until_ready"]
             prior_signature: tuple[tuple[str, str, tuple[str, ...]], ...] | None = None
-            identical_wrong = 0
+            identical_terminal = 0
             first_pass: dict[str, float] = {}
             probe_index = 0
             terminal = "TIMEOUT"
+            last_comparable: list[Status] = []
             while time.monotonic() < probe_deadline:
                 _deadline_check(campaign_deadline)
                 probe_index += 1
@@ -188,24 +189,30 @@ def run_campaign(product: str, fixture_id: str, binary: Path, work_root: Path, o
                         status, score, scored_answer=scored_answer,
                     ))
                 comparable = [value for value in probe_statuses.values() if value is not Status.UNSUPPORTED]
+                last_comparable = comparable
+                if not comparable:
+                    terminal = "UNSUPPORTED"
+                    break
                 if comparable and all(value is Status.PASS for value in comparable):
                     terminal = "PASS"
                     break
-                if any(value in {Status.TIMEOUT, Status.RESOURCE_BLOCKED, Status.ERROR} for value in comparable):
+                if any(value in {Status.TIMEOUT, Status.RESOURCE_BLOCKED} for value in comparable):
                     terminal = next(value.value for value in comparable
-                                    if value in {Status.TIMEOUT, Status.RESOURCE_BLOCKED, Status.ERROR})
+                                    if value in {Status.TIMEOUT, Status.RESOURCE_BLOCKED})
                     break
                 signature = tuple(signature_parts)
-                identical_wrong = _wrong_stability_count(
-                    comparable, signature, prior_signature, identical_wrong
+                identical_terminal = _terminal_stability_count(
+                    comparable, signature, prior_signature, identical_terminal
                 )
                 prior_signature = signature
                 elapsed = time.monotonic() - mutation_started_mono
-                if identical_wrong >= policy["timeouts_seconds"]["identical_wrong_probe_sets_before_terminal"] \
+                if identical_terminal >= policy["timeouts_seconds"]["identical_wrong_probe_sets_before_terminal"] \
                         and elapsed >= policy["timeouts_seconds"]["minimum_wrong_stability_window"]:
-                    terminal = "WRONG"
+                    terminal = "ERROR" if Status.ERROR in comparable else "WRONG"
                     break
                 time.sleep(policy["timeouts_seconds"]["freshness_poll_interval"])
+            if terminal == "TIMEOUT":
+                terminal = _deadline_terminal(last_comparable)
             elapsed = time.monotonic() - mutation_started_mono
             mutation_summaries.append({
                 "state": state, "mutation": mutation["id"], "terminal_status": terminal,
@@ -302,15 +309,22 @@ def _deadline_check(deadline: float) -> None:
         raise TimeoutError("single-product fixture campaign deadline exceeded")
 
 
-def _wrong_stability_count(
+def _terminal_stability_count(
     statuses: Sequence[Status], signature: tuple[Any, ...],
     prior_signature: tuple[Any, ...] | None, current: int,
 ) -> int:
     if any(status is Status.STALE for status in statuses):
         return 0
-    if not any(status is Status.WRONG for status in statuses):
+    if not any(status in {Status.WRONG, Status.ERROR} for status in statuses):
         return 0
     return current + 1 if signature == prior_signature else 1
+
+
+def _deadline_terminal(statuses: Sequence[Status]) -> str:
+    for status in (Status.RESOURCE_BLOCKED, Status.TIMEOUT, Status.STALE, Status.ERROR, Status.WRONG):
+        if status in statuses:
+            return status.value
+    return "UNSUPPORTED" if not statuses else "TIMEOUT"
 
 
 def _jsonable(value: Any) -> Any:

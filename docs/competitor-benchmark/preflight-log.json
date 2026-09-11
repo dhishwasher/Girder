@@ -188,6 +188,23 @@
       "product": "codebase-memory-mcp",
       "result_use": "None; no codebase-memory campaign had started.",
       "version": "0.10.8"
+    },
+    {
+      "campaign_state": "COMPLETE",
+      "classification": "INVALIDATED_CAMPAIGN",
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "comparative_result": false,
+      "detail": "The run completed with valid raw accounting, but after rename the native server returned function-not-found errors while its watcher could still be converging. The common evaluator stopped on the first ERROR, preventing measurement of time to first later usable answer. Revision 8 gives identical ERROR probe sets the existing bounded stability window. No observed answer was discarded.",
+      "elapsed_seconds": 34.48831421099021,
+      "fixture": "tiny-python full mutation sequence",
+      "id": "codebase-memory-tiny-revision7-campaign",
+      "product": "codebase-memory-mcp",
+      "raw_archive": "docs/competitor-benchmark/invalid-campaign-artifacts/codebase-memory-tiny-revision7.tar.gz",
+      "raw_archive_sha256": "b3b1050b885bed5f8b06a81a69c98f874a9ee127f82ba05eaf61140b15eaf2f5",
+      "record_count": 57,
+      "result_json_sha256": "01cb351a4bee5097ef1c136f0a9b38e788339b0a771cdebff930a6a5e5b28218",
+      "result_use": "None; excluded from every aggregate and replaced by one revision 8 rerun.",
+      "version": "0.10.8"
     }
   ],
   "schema_version": 1

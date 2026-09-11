@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import unittest
 
-from tools.competitor_benchmark.campaign import _wrong_stability_count, assess_native
+from tools.competitor_benchmark.campaign import (
+    _deadline_terminal,
+    _terminal_stability_count,
+    assess_native,
+)
 from tools.competitor_benchmark.protocol import NativeResult, Status
 
 
@@ -35,16 +39,27 @@ class CampaignScoringTests(unittest.TestCase):
     def test_stale_answer_resets_wrong_stability_window(self) -> None:
         signature = (("definition", "STALE", ("old.py::f",)), ("callers", "WRONG", ()))
         self.assertEqual(
-            _wrong_stability_count([Status.STALE, Status.WRONG], signature, signature, 2),
+            _terminal_stability_count([Status.STALE, Status.WRONG], signature, signature, 2),
             0,
         )
 
     def test_current_wrong_answer_advances_stability_window(self) -> None:
         signature = (("definition", "PASS", ("new.py::f",)), ("callers", "WRONG", ()))
         self.assertEqual(
-            _wrong_stability_count([Status.PASS, Status.WRONG], signature, signature, 2),
+            _terminal_stability_count([Status.PASS, Status.WRONG], signature, signature, 2),
             3,
         )
+
+    def test_transient_error_advances_bounded_terminal_window(self) -> None:
+        signature = (("definition", "WRONG", ()), ("callers", "ERROR", ()))
+        self.assertEqual(
+            _terminal_stability_count([Status.WRONG, Status.ERROR], signature, signature, 2),
+            3,
+        )
+
+    def test_probe_deadline_preserves_stale_classification(self) -> None:
+        self.assertEqual(_deadline_terminal([Status.PASS, Status.STALE]), "STALE")
+        self.assertEqual(_deadline_terminal([]), "UNSUPPORTED")
 
 
 if __name__ == "__main__":
