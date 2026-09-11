@@ -31,6 +31,22 @@ Any MCP client config:
 The path argument is the project to serve. It is fixed when the server starts,
 so no tool call can reach another directory.
 
+### Opt-in watch mode
+
+Girder 0.2.6 adds an opt-in MCP watcher:
+
+```bash
+npx -y girder-mcp . --watch
+```
+
+The server keeps a validated graph generation in memory, coalesces source
+changes, reparses changed files, and runs full project-wide resolution before
+publishing the next generation. The normal invocation without `--watch`
+retains its existing behavior. The recorded 45-mutation campaign matched fresh
+cold analysis while reusing 98.70% of file extractions. The claim is limited to
+preserving cold-analysis resolution while reusing parsing; see the
+[watcher result and limitations](https://github.com/dhishwasher/Girder/blob/v0.2.6/docs/mcp-watching.md).
+
 ## Tools
 
 | Tool | What it answers | Tier |

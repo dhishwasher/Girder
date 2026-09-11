@@ -1,7 +1,8 @@
 # Opt-in MCP watching
 
-Watch mode is implemented and verified in the source tree at `b00489d`. It is
-not included in the published npm 0.2.4 package. The
+Watch mode ships in Girder 0.2.6. Its implementation and recorded measurement
+were completed at `b00489d`, then passed the release gates from the merged
+source tree. The
 [incremental equality and platform gates](incremental-update-validation.json)
 passed before watcher implementation began; the watcher has its own
 [policy and gates](mcp-watch-policy.json) and a completed
