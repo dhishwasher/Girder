@@ -1,0 +1,98 @@
+{
+  "campaigns": [
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 1,
+          "precision": 0.5,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.75,
+          "true_positive": 3
+        },
+        "tests": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": null,
+          "recall": 0.0,
+          "true_positive": 0
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "WRONG",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 35.240959184011444,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 8.426897917001043,
+      "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "fixture": "tiny-python",
+      "freeze_manifest_sha256": "39eec24236baea6254e2c08962677e4c721b695b17dde7f3b98811c847b13a73",
+      "freshness_status_by_kind": {
+        "callees": {
+          "WRONG": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "harness_commit": "2a5641ccc19ff2846d0f5a2ea37555955b31df99",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 193798144,
+      "policy_id": "girder-competitor-benchmark-v1-revision-10",
+      "policy_sha256": "b552ff3304c2bbc644ff2adf06983bdda2f8591c2a1123be55fd31b9965113cb",
+      "prepare_success": true,
+      "product": "code-review-graph",
+      "query_record_count": 100,
+      "query_response_bytes": 869360,
+      "query_status": {
+        "PASS": 20,
+        "WRONG": 80
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "raw/campaign-code-review-graph-tiny-revision10.tar.gz",
+      "source_result_sha256": "537fdd78861769da00583b30cf78010c1d0936e5575065842543fa6f29654c45",
+      "update_to_all_correct_seconds_mean": null,
+      "version": "2.3.8",
+      "warm_query_seconds_mean": 0.15511559140286407,
+      "warm_query_seconds_total": 0.7755779570143204
+    }
+  ],
+  "schema_version": 1,
+  "scope": "code-review-graph tiny Python campaign under revision 10"
+}

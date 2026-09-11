@@ -67,8 +67,18 @@ Revision 10 freezes code-review-graph's persistent MCP adapter, complete MCP
 initialization fields, exact-search plus native-source definition mapping,
 direct relationship queries, file-scoped impact, native tests query, and
 synchronous incremental update before its first score. The adapter preflight
-completed the base state and body edit with a 109,031,424-byte peak; no
-code-review-graph comparative result exists yet.
+completed the base state and body edit with a 109,031,424-byte peak.
+
+Its first scored tiny campaign then completed under the committed revision 10
+policy. The warmed definition passed. Callers were 1.000/0.500 precision and
+recall, callees were 0.500/1.000 because native output retained builtin `sum`,
+file-scoped impact was 1.000/0.750, and native `tests_for` returned no tests.
+All six mutation summaries ended `WRONG`. The run recorded 869,360 query
+response bytes in 140 calls and peaked at 193,798,144 bytes RSS. A failed
+direct archive from the removable 9p mount is retained separately; the same
+completed run was copied to local storage, byte-accounted, archived, extracted,
+and replayed without rerunning the campaign. This tiny fixture remains excluded
+from the final aggregate.
 
 See [the benchmark protocol](docs/competitor-benchmark/README.md) and the
 [generated first-external result](docs/competitor-benchmark/results/tiny/report.md).

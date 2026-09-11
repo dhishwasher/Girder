@@ -26,6 +26,14 @@ The final adapter preflight completed full preparation, all five base queries, a
 
 The [artifact manifest](code-review-graph-adapter-manifest.json) pins the retained install, placement-failure, interface, and adapter-response files under [preflight artifacts](preflight-artifacts/code-review-graph). It also retains the incomplete MCP initialize request that omitted required client fields; revision 10 supplies the standard `capabilities` and `clientInfo` fields for every later campaign.
 
+## Tiny campaign result
+
+The first scored revision 10 campaign is preserved as a [generated report](results/code-review-graph-tiny-revision10/report.md), [JSON](results/code-review-graph-tiny-revision10/summary.json), [CSV](results/code-review-graph-tiny-revision10/summary.csv), and checksum-pinned [raw archive](results/code-review-graph-tiny-revision10/artifacts.sha256). It completed in 35.241 seconds with an 8.427-second cold setup and a 0.776-second warmed five-query total.
+
+The warmed base definition passed. Callers had precision 1.000 and recall 0.500 because the dynamic callback was absent. Callees had precision 0.500 and recall 1.000 because the native builtin `sum` remained an unresolved extra result. File-scoped impact had precision 1.000 and recall 0.750, and native `tests_for` returned no tests. All six mutation summaries ended `WRONG`; current definition source was available, but at least one other query remained incomplete or noisy. Across every recorded warmup, warmed query, and freshness probe, the run delivered 869,360 query-response bytes in 140 calls and peaked at 193,798,144 bytes RSS.
+
+Direct GNU tar packaging from the removable 9p mount reported shrinking files and padded its output. That invalid archive is retained under the preflight artifacts and excluded. The unchanged completed campaign was then copied file-by-file to local storage, every recorded byte was revalidated, and the resulting archive was extracted and replayed to byte-identical JSON, CSV, and Markdown reports.
+
 ## Reproduction
 
 ```sh

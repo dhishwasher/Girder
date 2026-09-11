@@ -259,6 +259,18 @@
       "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/code-review-graph/preflight-code-review-graph-adapter-v1",
       "result_use": "Adapter gate only; excluded from every score and timing aggregate.",
       "version": "2.3.8"
+    },
+    {
+      "classification": "PACKAGING_FAILED",
+      "comparative_result": false,
+      "detail": "After the scored campaign completed, direct GNU tar packaging from the ChromeOS removable 9p mount reported that result.json and many raw response files shrank while read and padded those entries with zeros. The nonzero tar result and invalid archive are retained. The unchanged source tree was copied file-by-file to local storage, passed raw byte accounting, and produced the separately checksum-pinned valid result archive; the campaign was not rerun.",
+      "fixture": "completed tiny-python revision 10 campaign",
+      "id": "code-review-graph-direct-9p-packaging-failure",
+      "product": "code-review-graph",
+      "raw_archive_sha256": "d66170017f7f9fbebf4243a4dce5ea6187c96bb62172a92feca7243d6324ad15",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/code-review-graph/packaging-failure-direct-9p",
+      "result_use": "None; invalid padded archive excluded from every score and timing aggregate.",
+      "version": "2.3.8"
     }
   ],
   "schema_version": 1

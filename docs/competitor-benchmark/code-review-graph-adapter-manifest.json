@@ -2,6 +2,9 @@
   "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
   "comparative_result": false,
   "preflight_artifact_sha256": {
+    "packaging-failure-direct-9p/README.txt": "cb9d43b4913198b607742ac25aee7c68497e0dec69ed59c7d942f3bf9ccd4008",
+    "packaging-failure-direct-9p/invalid-padded-archive.sha256": "179c57caf74d8ec5e6c340380d9d235e696456b1b499119a3731bb3f00cf71fc",
+    "packaging-failure-direct-9p/invalid-padded-archive.tar.gz": "d66170017f7f9fbebf4243a4dce5ea6187c96bb62172a92feca7243d6324ad15",
     "preflight-code-review-graph-adapter-v1/raw/prepare/mcp/0001-initialize.stderr.txt": "dad3580aae27185315b6f05e8e1b8e6781e2f4cf4721037853af44b1bfb791c0",
     "preflight-code-review-graph-adapter-v1/raw/prepare/mcp/0001-initialize.stdout.jsonl": "5efb37552eb3c93f3d68a6ef6e6d2ac691c58605cce11a8721802d9e9ceef264",
     "preflight-code-review-graph-adapter-v1/raw/prepare/mcp/0002-tools-list.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
