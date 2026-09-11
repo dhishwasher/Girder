@@ -1,0 +1,2 @@
+ERROR: In --require-hashes mode, all requirements must have their versions pinned with ==. These do not:
+    pyjwt[crypto]>=2.10.1 from https://files.pythonhosted.org/packages/9c/97/672cb32ce0dfea44b740cb7b4f97038463b9cf7c0ead1aacf595572851d6/pyjwt-2.14.0-py3-none-any.whl (from mcp==1.30.0->-r /home/corymaynard370/Bit-code/docs/competitor-benchmark/locks/code-review-graph-requirements.txt (line 40))

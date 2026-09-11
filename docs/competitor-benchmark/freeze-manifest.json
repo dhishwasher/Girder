@@ -1,14 +1,14 @@
 {
-  "frozen_at_utc": "2026-09-11T18:53:41Z",
-  "rule": "Revision 8 inputs. Stable ERROR and WRONG probes share the existing bound; subsequent campaigns require these hashes.",
+  "frozen_at_utc": "2026-09-11T19:00:04Z",
+  "rule": "Revision 9 inputs. The code-review-graph lock pins the required PyJWT crypto extra; subsequent campaigns require these hashes.",
   "schema_version": 1,
   "sha256": {
     "docs/competitor-benchmark/corpus.json": "1711d8b456e960f65f5314a55ce3f2f5d200d44cd43fdbd2deb10efaa98c77e1",
-    "docs/competitor-benchmark/locks/code-review-graph-requirements.txt": "32d11d8fd08b10c5abf943694f8edd01dfabaa60b532a8f2ce5d3030cf48ec98",
+    "docs/competitor-benchmark/locks/code-review-graph-requirements.txt": "7531d4a0dd1357675bcb9151ff8ee44563a6f3e974a10856451fb009396fc3dc",
     "docs/competitor-benchmark/locks/gitnexus-package-lock.json": "fd4bf4e9a2cd0c378d62196c287e38dd5420f7d509113f8346fc73447f448b6b",
     "docs/competitor-benchmark/locks/gitnexus-package.json": "f1c80e259ccd5b1e56d7c6d9f7a8f06eab36b7d26f09c42078291deb0ef99284",
     "docs/competitor-benchmark/oracle.json": "74ea481194be99141992a69cc08aa92663f9b29150943d41df6c8e90752caa8d",
-    "docs/competitor-benchmark/policy.json": "e85989869b524bbf2ab6e0b4ec7327838e46aa5f0d8378a7a73e76eaff542dd2",
+    "docs/competitor-benchmark/policy.json": "6b94b47ce6d0b4348286360ec39477688c2195d87803f1413e27534f588971ea",
     "tools/competitor_benchmark/adapters/codebase_memory.py": "8df7cf09e37a510805624709012807ded04c389cce3207d128dad9f1ad310de0",
     "tools/competitor_benchmark/adapters/girder.py": "a52baa5265faee4bebd66d25f9797f5b6d80192d2811f4aee6163cc143971cc6",
     "tools/competitor_benchmark/adapters/ripwire.py": "53c9ac1dbec68f703a5188d44347d5a5f65d5f32d3d9527208afca4ee49042ce",

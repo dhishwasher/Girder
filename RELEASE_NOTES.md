@@ -54,6 +54,13 @@ establishes no recovery inside that bound, not that a longer watcher wait could
 never recover. The run recorded 88,414 query-response bytes and 170 calls,
 including every failed probe, and remains excluded from the final aggregate.
 
+The first code-review-graph 2.3.8 install failed before measurement because the
+hash lock pinned PyJWT 2.13.0 without spelling the `crypto` extra required by
+its MCP dependency. pip rejected the resulting unhashed candidate. The raw
+failure and 184 MB peak process-tree RSS are retained. Revision 9 pins the same
+2.13.0 wheel and hash with the required extra before one fresh binary-only
+retry; no code-review-graph score exists yet.
+
 See [the benchmark protocol](docs/competitor-benchmark/README.md) and the
 [generated first-external result](docs/competitor-benchmark/results/tiny/report.md).
 

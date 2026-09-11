@@ -2,7 +2,7 @@
   "acquisition": {
     "cache_root": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1",
     "dependency_lock_sha256": {
-      "docs/competitor-benchmark/locks/code-review-graph-requirements.txt": "32d11d8fd08b10c5abf943694f8edd01dfabaa60b532a8f2ce5d3030cf48ec98",
+      "docs/competitor-benchmark/locks/code-review-graph-requirements.txt": "7531d4a0dd1357675bcb9151ff8ee44563a6f3e974a10856451fb009396fc3dc",
       "docs/competitor-benchmark/locks/gitnexus-package-lock.json": "fd4bf4e9a2cd0c378d62196c287e38dd5420f7d509113f8346fc73447f448b6b",
       "docs/competitor-benchmark/locks/gitnexus-package.json": "f1c80e259ccd5b1e56d7c6d9f7a8f06eab36b7d26f09c42078291deb0ef99284"
     },
@@ -280,7 +280,7 @@
     }
   ],
   "freeze_rule": "This policy, corpus.json, oracle.json, scorer, adapter contract, and their unit tests must be committed before any comparative campaign. Campaign results may not change them.",
-  "frozen_at_utc": "2026-09-11T18:53:41Z",
+  "frozen_at_utc": "2026-09-11T19:00:04Z",
   "host_limits": {
     "description": "Low-resource ChromeOS Crostini measurement host; results are host-specific.",
     "emergency_mem_available_bytes": 402653184,
@@ -332,7 +332,7 @@
     "test_inventory": "Each state lists every test node in the fixture. A native whole-test-file prediction expands to every listed node in that file before scoring; this models what will run and retains unrelated nodes as false positives.",
     "tests": "Test nodes in the reverse-transitive impact set."
   },
-  "policy_id": "girder-competitor-benchmark-v1-revision-8",
+  "policy_id": "girder-competitor-benchmark-v1-revision-9",
   "policy_revision": 5,
   "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
   "required_report_sections": [
@@ -382,6 +382,12 @@
       "reason": "The complete retained run exposed that the evaluator terminated on the first native ERROR after a rename, so it did not measure whether a documented multi-second watcher later produced a usable answer. Revision 8 applies the existing three-identical-probe and two-second stability bounds to ERROR as well as WRONG, keeps TIMEOUT and RESOURCE_BLOCKED immediately terminal, and preserves STALE at the readiness deadline. No adapter, oracle, target, or numeric threshold changed.",
       "revision": 7,
       "status": "invalidated after first codebase-memory run and before any cross-language aggregate"
+    },
+    {
+      "commit": "a7b652819f37115742601e9dc1d5d58702bde34b",
+      "reason": "Revision 8 produced the complete, separately reported codebase-memory tiny-python adapter gate. The first code-review-graph binary-only install then proved its committed lock expressed PyJWT without the crypto extra requested by mcp, so pip treated the extra dependency as unhashed. Revision 9 pins the same version and wheel hash as PyJWT[crypto]==2.13.0 before any code-review-graph campaign.",
+      "revision": 8,
+      "status": "valid completed codebase-memory tiny adapter gate; superseded for subsequent campaigns"
     }
   ],
   "schema_version": 1,

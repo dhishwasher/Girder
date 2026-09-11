@@ -205,6 +205,16 @@
       "result_json_sha256": "01cb351a4bee5097ef1c136f0a9b38e788339b0a771cdebff930a6a5e5b28218",
       "result_use": "None; excluded from every aggregate and replaced by one revision 8 rerun.",
       "version": "0.10.8"
+    },
+    {
+      "classification": "INSTALL_FAILED",
+      "comparative_result": false,
+      "detail": "The first fresh Python 3.11 venv install used --require-hashes and --only-binary=:all:. pip 23 rejected mcp 1.30.0 dependency pyjwt[crypto]>=2.10.1 because the lock pinned PyJWT 2.13.0 without spelling the crypto extra, so the resolver attempted an unhashed PyJWT 2.14.0 candidate. Peak process-tree RSS was 183640064 bytes; this was not a resource failure or compiler fallback.",
+      "id": "code-review-graph-install-v1-unhashed-extra",
+      "product": "code-review-graph",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/code-review-graph/preflight-code-review-graph-install-v1",
+      "result_use": "None; install failure retained. Revision 9 pins the same 2.13.0 wheel and hash with its required crypto extra before one fresh retry.",
+      "version": "2.3.8"
     }
   ],
   "schema_version": 1

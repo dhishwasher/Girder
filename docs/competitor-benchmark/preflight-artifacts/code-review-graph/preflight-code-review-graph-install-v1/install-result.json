@@ -1,0 +1,12 @@
+{
+  "detail": "process exited 1",
+  "peak_rss_bytes": 183640064,
+  "returncode": 1,
+  "status": "ERROR",
+  "stderr_bytes": 403,
+  "stderr_sha256": "f0239fe4a054dd90f9d5096019504d54091aaa8e6f8d93cd3e94ad93efe8927b",
+  "stdout_bytes": 12394,
+  "stdout_sha256": "3a8d4872812255458f24f8011014de7fb555560900691f1b4b43f1f72432845d",
+  "venv": "/tmp/code-review-graph-benchmark-venv-mxam_f3q",
+  "wall_seconds": 30.396225607022643
+}
