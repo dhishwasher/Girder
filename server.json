@@ -3,7 +3,7 @@
   "name": "io.github.dhishwasher/girder",
   "title": "Girder",
   "description": "Local semantic code graph: source, definitions, callers, callees, impact, and semantic change review",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "repository": {
     "url": "https://github.com/dhishwasher/Girder",
     "source": "github"
@@ -14,7 +14,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "girder-mcp",
-      "version": "0.2.5",
+      "version": "0.2.6",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"

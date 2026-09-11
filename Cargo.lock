@@ -26,7 +26,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
 name = "aether-agents"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "aether-ai",
  "aether-builder",
@@ -39,7 +39,7 @@ dependencies = [
 
 [[package]]
 name = "aether-ai"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "async-trait",
  "reqwest",
@@ -51,7 +51,7 @@ dependencies = [
 
 [[package]]
 name = "aether-app"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "aether-agents",
  "aether-ai",
@@ -83,7 +83,7 @@ dependencies = [
 
 [[package]]
 name = "aether-builder"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "aether-graph",
  "serde_json",
@@ -97,7 +97,7 @@ dependencies = [
 
 [[package]]
 name = "aether-dap"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "aether-graph",
  "serde",
@@ -108,7 +108,7 @@ dependencies = [
 
 [[package]]
 name = "aether-debugger"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "aether-ai",
  "serde",
@@ -118,7 +118,7 @@ dependencies = [
 
 [[package]]
 name = "aether-extensions"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "aether-graph",
  "globset",
@@ -130,7 +130,7 @@ dependencies = [
 
 [[package]]
 name = "aether-graph"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "bincode",
  "petgraph",
