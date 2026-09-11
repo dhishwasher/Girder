@@ -26,6 +26,7 @@ from tools.competitor_benchmark.resources import (
 from tools.competitor_benchmark.scoring import (
     assess,
     assess_definition,
+    assess_test_predictions,
     expand_test_file_predictions,
     score_set,
 )
@@ -57,6 +58,22 @@ class ScoringTests(unittest.TestCase):
         score = score_set(expand_test_file_predictions(["test_a.py::*"], inventory),
                           ["test_a.py::test_needed"])
         self.assertEqual((score.precision, score.recall), (0.5, 1.0))
+
+    def test_wrong_file_level_prediction_is_not_compared_with_itself_as_prior(self) -> None:
+        inventory = ["test.py::needed", "test.py::unrelated"]
+        status, score, _ = assess_test_predictions(
+            ["test.py::*"], ["test.py::needed"], inventory,
+            prior_expected=["test.py::needed"], prior_inventory=inventory,
+        )
+        self.assertEqual(status, Status.WRONG)
+        self.assertEqual(score.precision, 0.5)
+
+    def test_old_file_level_prediction_can_be_stale_after_test_move(self) -> None:
+        status, _, _ = assess_test_predictions(
+            ["old_test.py::*"], ["new_test.py::needed"], ["new_test.py::needed"],
+            prior_expected=["old_test.py::needed"], prior_inventory=["old_test.py::needed"],
+        )
+        self.assertEqual(status, Status.STALE)
 
     def test_matching_wrong_answers_remain_wrong(self) -> None:
         left = assess(["wrong.py::same"], ["right.py::target"])

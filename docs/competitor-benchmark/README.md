@@ -2,7 +2,7 @@
 
 This directory defines the frozen, resource-bounded comparison of Girder 0.2.6 with GitNexus 1.6.11, codebase-memory-mcp 0.10.8, code-review-graph 2.3.8, and ripwire 0.5.0. It asks whether each pinned tool retrieves exact definitions, direct calls, reverse-transitive impact, and relevant tests, and whether those answers become current after a fixed refactor sequence.
 
-Revisions 1 and 2 were invalidated before the first external comparative campaign. Adversarial review found a rename-staleness scoring edge case, the first Girder response-shape probe exposed an impact phrase that selected concept search, and Ripwire preflight established its source and symbol-scoped test response formats. Revision 3 freezes those corrections, including fair whole-test-file scoring, and retains every invalid probe and raw response in [preflight-log.json](preflight-log.json). No score or timing uses those probes.
+Revisions 1 and 2 were invalidated before the first external comparative campaign. Adversarial review found a rename-staleness scoring edge case, the first Girder response-shape probe exposed an impact phrase that selected concept search, and Ripwire preflight established its source and symbol-scoped test response formats. The first revision 3 external run then exposed a status-only bug in prior-state comparison for whole-test-file predictions. Revision 4 corrects that comparison without changing native answers, targets, thresholds, or adapter behavior. Every invalid probe and run remains in [preflight-log.json](preflight-log.json) with its raw artifact. No aggregate uses them.
 
 The benchmark is intentionally able to publish Girder losses. `oracle.json` is hand-authored from the source corpus before any competitor run. Adapters cannot read it. `corpus.json` fixes a tiny Python fixture followed by Rust, Python, TypeScript/TSX, and Go fixtures. The function-parameter call remains in the oracle so Girder's documented dynamic-dispatch miss cannot be hidden.
 
@@ -18,7 +18,7 @@ The exact acquisition commands, native operations and field projections, depende
 
 ## Reproduction
 
-The Girder and Ripwire adapters and serial campaign runner are now available. The first scored external campaign begins only after the revision 3 checkpoint is committed:
+The Girder and Ripwire adapters and serial campaign runner are now available. The valid external campaign uses revision 4:
 
 ```sh
 python3 -m unittest -v tools.competitor_benchmark.test_foundation

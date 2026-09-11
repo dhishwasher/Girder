@@ -48,6 +48,33 @@ def expand_test_file_predictions(actual: Iterable[str], inventory: Iterable[str]
     return normalize_paths(expanded)
 
 
+def assess_test_predictions(
+    actual: Iterable[str],
+    expected: Iterable[str],
+    inventory: Iterable[str],
+    *,
+    prior_expected: Iterable[str] | None = None,
+    prior_inventory: Iterable[str] | None = None,
+    native_status: Status | None = None,
+) -> tuple[Status, SetScore, tuple[str, ...]]:
+    """Score file- or function-granularity tests against current and prior states."""
+
+    raw = tuple(actual)
+    current_actual = expand_test_file_predictions(raw, inventory)
+    expected_norm = normalize_paths(tuple(expected))
+    score = score_set(current_actual, expected_norm)
+    if native_status is not None and native_status is not Status.PASS:
+        return native_status, score, current_actual
+    if current_actual == expected_norm:
+        return Status.PASS, score, current_actual
+    if prior_expected is not None and prior_inventory is not None:
+        prior_actual = expand_test_file_predictions(raw, prior_inventory)
+        prior_norm = normalize_paths(tuple(prior_expected))
+        if prior_norm != expected_norm and prior_actual == prior_norm:
+            return Status.STALE, score, current_actual
+    return Status.WRONG, score, current_actual
+
+
 def assess(
     actual: Iterable[str],
     expected: Iterable[str],

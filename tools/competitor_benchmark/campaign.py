@@ -20,7 +20,7 @@ from .adapters.ripwire import RipwireAdapter
 from .fixtures import load_corpus, materialize
 from .protocol import NativeResult, QueryKind, Status
 from .resources import read_meminfo
-from .scoring import assess, assess_definition, expand_test_file_predictions
+from .scoring import assess, assess_definition, assess_test_predictions
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -62,15 +62,18 @@ def assess_native(
             prior_source_marker=None if prior is None else prior["definition_source_marker"],
             native_status=native.status,
         )
+    elif kind == QueryKind.TESTS.value:
+        status, score, scored_answer = assess_test_predictions(
+            native.answer, expected, oracle["test_inventory"],
+            prior_expected=prior_expected,
+            prior_inventory=None if prior is None else prior["test_inventory"],
+            native_status=native.status,
+        )
+        return status, score.to_dict(), scored_answer
     else:
-        scored_answer = (expand_test_file_predictions(native.answer, oracle["test_inventory"])
-                         if kind == QueryKind.TESTS.value else native.answer)
-        prior_scored = (None if prior is None else
-                        expand_test_file_predictions(native.answer, prior["test_inventory"])
-                        if kind == QueryKind.TESTS.value else prior_expected)
-        status, score = assess(scored_answer, expected, prior_expected=prior_scored,
+        status, score = assess(native.answer, expected, prior_expected=prior_expected,
                                native_status=native.status)
-        return status, score.to_dict(), tuple(scored_answer)
+        return status, score.to_dict(), tuple(native.answer)
     return status, score.to_dict(), tuple(native.answer)
 
 
@@ -258,7 +261,7 @@ def _record_native(native: NativeResult, product: str, version: str, commit: str
 def _finish(output: Path, product: str, fixture: str, records: list[dict[str, Any]], state: str,
             started: float, **extra: Any) -> dict[str, Any]:
     result = {
-        "schema_version": 1, "policy_id": "girder-competitor-benchmark-v1-revision-3",
+        "schema_version": 1, "policy_id": "girder-competitor-benchmark-v1-revision-4",
         "policy_sha256": hashlib.sha256((DOCS / "policy.json").read_bytes()).hexdigest(),
         "freeze_manifest_sha256": hashlib.sha256((DOCS / "freeze-manifest.json").read_bytes()).hexdigest(),
         "harness_commit": subprocess.check_output(

@@ -278,7 +278,7 @@
     }
   ],
   "freeze_rule": "This policy, corpus.json, oracle.json, scorer, adapter contract, and their unit tests must be committed before any comparative campaign. Campaign results may not change them.",
-  "frozen_at_utc": "2026-09-11T13:21:44Z",
+  "frozen_at_utc": "2026-09-11T13:25:45Z",
   "host_limits": {
     "description": "Low-resource ChromeOS Crostini measurement host; results are host-specific.",
     "emergency_mem_available_bytes": 402653184,
@@ -329,8 +329,8 @@
     "test_inventory": "Each state lists every test node in the fixture. A native whole-test-file prediction expands to every listed node in that file before scoring; this models what will run and retains unrelated nodes as false positives.",
     "tests": "Test nodes in the reverse-transitive impact set."
   },
-  "policy_id": "girder-competitor-benchmark-v1-revision-3",
-  "policy_revision": 3,
+  "policy_id": "girder-competitor-benchmark-v1-revision-4",
+  "policy_revision": 4,
   "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
   "required_report_sections": [
     "Where Girder Lost",
@@ -349,6 +349,12 @@
       "reason": "Ripwire interface preflight established that --for JSON omits bodies and --test-gate arguments are file-only. Revision 3 freezes the native source expansion, symbol-scoped --affected test query, and file-to-test-inventory scoring before any external score.",
       "revision": 2,
       "status": "invalidated before first external comparative campaign"
+    },
+    {
+      "commit": "8185f806416347a586573e75c113fed3ecad3863",
+      "reason": "The run exposed a status-only evaluator defect for whole-file test predictions. Revision 4 preserves all native answers and scoring inputs, compares prior expansions against the prior oracle, retains the invalid run, and changes no tool configuration or benchmark target.",
+      "revision": 3,
+      "status": "invalidated after first external run and before any aggregate"
     }
   ],
   "schema_version": 1,
@@ -404,7 +410,8 @@
       "INSTALL_FAILED",
       "ERROR"
     ],
-    "test_priority": "Report precision and recall separately; never collapse a missed required test into an accuracy-only score."
+    "test_priority": "Report precision and recall separately; never collapse a missed required test into an accuracy-only score.",
+    "whole_file_staleness": "Expand a file prediction against the current inventory for current scoring and separately against the prior inventory for prior-oracle staleness. Never pass the current expanded answer as the prior expected answer."
   },
   "timeouts_seconds": {
     "cleanup": 30,

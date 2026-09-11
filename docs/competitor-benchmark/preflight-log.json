@@ -86,6 +86,21 @@
       "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/ripwire-adapter-validation-v2",
       "result_use": "Adapter gate only; excluded from every score and timing aggregate.",
       "version": "0.5.0"
+    },
+    {
+      "campaign_state": "COMPLETE",
+      "classification": "INVALIDATED_CAMPAIGN",
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "comparative_result": false,
+      "detail": "The run completed and raw answers were preserved, but the evaluator mislabeled wrong whole-file test predictions as STALE by comparing each expanded answer with itself in the prior-answer slot. Revision 4 compares a prior-inventory expansion with the actual prior oracle. No target, native output, threshold, adapter behavior, or precision/recall rule changed.",
+      "fixture": "tiny-python full mutation sequence",
+      "id": "ripwire-tiny-revision3-campaign",
+      "product": "ripwire",
+      "raw_archive": "docs/competitor-benchmark/invalid-campaign-artifacts/ripwire-tiny-revision3.tar.gz",
+      "raw_archive_sha256": "83091ea9e0027d30edbd3d0970cbdd6b4d97df642e9537a475060a3c8ff4211a",
+      "result_json_sha256": "d9f863101aa37ed0244b1c87653c674fd09bf5be03b706c76fbc27c1362e5ffd",
+      "result_use": "None; excluded from every aggregate and replaced by one identical revision 4 rerun.",
+      "version": "0.5.0"
     }
   ],
   "schema_version": 1
