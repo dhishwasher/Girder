@@ -76,8 +76,10 @@ def assess_definition(
     )
     if native_status is not None and native_status is not Status.PASS:
         return status, score
+    if status is Status.WRONG:
+        return Status.WRONG, score
     if source_text is None:
-        return Status.UNSUPPORTED, score
+        return (Status.STALE if status is Status.STALE else Status.UNSUPPORTED), score
     current = expected_source_marker in source_text
     old = prior_source_marker is not None and prior_source_marker in source_text
     if status is Status.STALE and old:

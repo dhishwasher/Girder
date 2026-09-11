@@ -1,0 +1,1 @@
+{"id":6,"jsonrpc":"2.0","result":{"content":[{"text":"Loading /tmp/girder-competitor-probe-j_m6oq13/fixture ...\n  4 file(s), 11 nodes, 11 edges\n\nQ: callees of calculate_total\n[callees] 'crate::core::calculate_total' calls 1 function(s)\n  · crate::core::normalize_value\n\n","type":"text"}],"isError":false}}

@@ -1,0 +1,1 @@
+girder MCP server on stdio: root /tmp/girder-competitor-probe-j_m6oq13/fixture, 7 tools, read-only

@@ -1,0 +1,1 @@
+{"id":4,"jsonrpc":"2.0","result":{"content":[{"text":"{\n  \"intent\": \"\",\n  \"nodes\": [\n    {\n      \"language\": \"python\",\n      \"path\": \"crate::core::calculate_total\",\n      \"source\": \"def calculate_total(items: list[int]) -> int:\\n    return sum(normalize_value(item) for item in items)\"\n    }\n  ]\n}\n","type":"text"}],"isError":false}}

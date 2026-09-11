@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "id": "post-freeze-advisor-scorer-review",
+      "classification": "INVALIDATED_PREFLIGHT",
+      "comparative_result": false,
+      "detail": "The first frozen scorer classified an old renamed identity as WRONG when old and current source markers were equal. No campaign had run. Revision 2 preserves STALE from the identity comparison and adds a regression test.",
+      "result_use": "None"
+    },
+    {
+      "id": "girder-normal-initial-protocol-probe",
+      "classification": "INVALIDATED_PREFLIGHT",
+      "comparative_result": false,
+      "product": "girder",
+      "version": "0.2.6",
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "fixture": "tiny-python base state",
+      "detail": "The exploratory phrase `what would change if I edit calculate_total?` selected Girder concept search rather than impact because its parser takes text after the first `change` keyword. The adapter now freezes `impact of {target}?`, which the pinned parser classifies as impact. Other probe calls established the response shapes used by normalization.",
+      "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/girder-normal-initial",
+      "result_use": "Response-shape integration only; excluded from every score and timing aggregate."
+    }
+  ]
+}

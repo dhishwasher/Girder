@@ -2,6 +2,8 @@
 
 This directory defines the frozen, resource-bounded comparison of Girder 0.2.6 with GitNexus 1.6.11, codebase-memory-mcp 0.10.8, code-review-graph 2.3.8, and ripwire 0.5.0. It asks whether each pinned tool retrieves exact definitions, direct calls, reverse-transitive impact, and relevant tests, and whether those answers become current after a fixed refactor sequence.
 
+Revision 1 was invalidated before the comparative campaign. Adversarial review found a rename-staleness scoring edge case, and the first Girder response-shape probe exposed an impact phrase that selected concept search. Revision 2 fixes both, freezes the concrete prompt, and retains the invalid probe and raw response in [preflight-log.json](preflight-log.json). No score or timing uses that probe.
+
 The benchmark is intentionally able to publish Girder losses. `oracle.json` is hand-authored from the source corpus before any competitor run. Adapters cannot read it. `corpus.json` fixes a tiny Python fixture followed by Rust, Python, TypeScript/TSX, and Go fixtures. The function-parameter call remains in the oracle so Girder's documented dynamic-dispatch miss cannot be hidden.
 
 ## Frozen execution order

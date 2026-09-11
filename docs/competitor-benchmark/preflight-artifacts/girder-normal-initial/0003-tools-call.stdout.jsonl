@@ -1,0 +1,1 @@
+{"id":3,"jsonrpc":"2.0","result":{"content":[{"text":"[\n  {\n    \"kind\": \"Function\",\n    \"language\": \"python\",\n    \"path\": \"crate::core::calculate_total\"\n  }\n]\n","type":"text"}],"isError":false}}

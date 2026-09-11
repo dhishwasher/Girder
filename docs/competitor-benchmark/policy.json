@@ -71,10 +71,10 @@
         "MCP --watch"
       ],
       "native_queries": {
-        "callees": "resolve_calls",
-        "callers": "resolve_calls",
+        "callees": "ask_codebase question=`what does {target} call?`",
+        "callers": "ask_codebase question=`what calls {target}?`",
         "definition": "find_definition followed by get_source for the one exact node (2 calls)",
-        "impact": "impact",
+        "impact": "ask_codebase question=`impact of {target}?`",
         "tests": "impacted_tests"
       },
       "prepare": [
@@ -83,10 +83,10 @@
         "{fixture}"
       ],
       "projection": {
-        "callees": "resolve_calls direct outgoing CALLS only",
-        "callers": "resolve_calls direct incoming CALLS only",
+        "callees": "All semantic paths in the ask_codebase callees response except the seed; direct only by native query contract.",
+        "callers": "All semantic paths in the ask_codebase callers response except the seed; direct only by native query contract.",
         "definition": "exact find_definition node; get_source text is source evidence",
-        "impact": "impact reverse-transitive symbol identities excluding seed",
+        "impact": "All semantic paths in the ask_codebase impact response except the seed.",
         "tests": "impacted_tests test identities"
       },
       "serve_normal": [
@@ -275,7 +275,7 @@
     }
   ],
   "freeze_rule": "This policy, corpus.json, oracle.json, scorer, adapter contract, and their unit tests must be committed before any comparative campaign. Campaign results may not change them.",
-  "frozen_at_utc": "2026-09-11T12:52:24Z",
+  "frozen_at_utc": "2026-09-11T13:05:38Z",
   "host_limits": {
     "description": "Low-resource ChromeOS Crostini measurement host; results are host-specific.",
     "emergency_mem_available_bytes": 402653184,
@@ -306,6 +306,7 @@
     "cold_setup_index_seconds": "Acquisition/install excluded; starts immediately before product preparation and ends at first ready response.",
     "freshness_probe": "After each mutation, query all five kinds in the fixed order, skipping only native UNSUPPORTED kinds. Current source-marker evidence is required for definition. First correct usable answer occurs when every supported query in one probe set is PASS. Poll every 250 ms. Three identical completed WRONG probe sets may terminate only after 2 seconds. Explicit STALE/rebuilding is polled until correct or 120 seconds. Intrinsically wrong terminal answers and timeouts have null update-to-correct latency; their first/last probe elapsed, calls, bytes, and statuses remain recorded.",
     "peak_memory": "Maximum observed process-tree RSS when available; null otherwise. It is never inferred.",
+    "preflight_boundary": "Adapter response-shape probes are INVALIDATED_PREFLIGHT, retained with raw output, and excluded from all scores and timings. The comparative campaign begins only after revision 2 and the concrete adapter checkpoint are committed.",
     "raw_artifacts": "Write complete stdout and stderr for every invocation. If combined output exceeds 4 MiB, terminate and record ERROR with the retained capped streams and byte limit.",
     "repetitions": "Exactly one cold prepare, one unmeasured warm-up per supported query at base state, and one measured warm query. Mutation measurements are one cumulative sequence per product-fixture; no retries except frozen readiness polling.",
     "response_bytes": "Exact UTF-8 bytes delivered on native stdout/stderr or MCP response envelopes, before normalization. Initial prompts and harness prose do not exist and are excluded.",
@@ -323,12 +324,21 @@
     "matching_wrong_answers": "Two products returning the same wrong answer are each WRONG.",
     "tests": "Test nodes in the reverse-transitive impact set."
   },
-  "policy_id": "girder-competitor-benchmark-v1",
+  "policy_id": "girder-competitor-benchmark-v1-revision-2",
+  "policy_revision": 2,
   "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
   "required_report_sections": [
     "Where Girder Lost",
     "Where Girder Won",
     "What This Benchmark Does NOT Establish"
+  ],
+  "revision_history": [
+    {
+      "commit": "b310566",
+      "reason": "Post-freeze adversarial review found that rename staleness needed to preserve identity evidence when source markers are equal. Girder protocol preflight also fixed the exact impact prompt before any scored run. The invalid preflight and raw response are retained in preflight-log.json.",
+      "revision": 1,
+      "status": "invalidated_before comparative campaign"
+    }
   ],
   "schema_version": 1,
   "scope": {
