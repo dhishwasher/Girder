@@ -193,6 +193,7 @@ def render_markdown(
         )
 
     reduction = 1 - matched["left_response_bytes"] / matched["right_response_bytes"]
+    host = setup["host_environment"]
     return "\n".join([
         "# Modest cross-language competitive benchmark", "",
         "This is the final aggregate of 20 complete modest-fixture campaigns: twelve external-product campaigns "
@@ -210,6 +211,11 @@ def render_markdown(
         "errors after rename; those errors remain separate from wrong parseable answers.", "",
         "## Per-language results", "", *language, "",
         "## Setup friction", "", *setup_table, "",
+        f"Each of the 20 included campaigns archived an `environment.json`. They agree on {host['cpu_count']} "
+        f"CPUs, {host['total_memory_bytes']} bytes total memory, {host['swap_total_bytes']} bytes swap, Python "
+        f"{host['python']}, and `{host['platform']}`. Starting available memory ranged from "
+        f"{host['minimum_mem_available_bytes_at_start']} to {host['maximum_mem_available_bytes_at_start']} bytes. "
+        "Every record contains the frozen single-job environment.", "",
         f"GitNexus is a host-specific `{blocked['final_status']}` setup result. Its corrected exact-lock installation "
         f"peaked at {blocked['attempts'][-1]['peak_rss_bytes']} bytes, above the frozen "
         f"{blocked['attempts'][-1]['limit_bytes']} byte cap, and was stopped. It receives no correctness, cost, "

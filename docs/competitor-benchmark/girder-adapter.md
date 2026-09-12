@@ -2,7 +2,7 @@
 
 The Girder 0.2.6 adapter now runs both normal MCP and `mcp --watch` through the common interface. It uses the checksum-verified official Linux release binary, an isolated home and cache, the existing local license file without logging it, JSON-lines MCP, and the frozen process-tree supervisor. Every native response is retained before normalization.
 
-This checkpoint is adapter validation on `tiny-python`, not a competitive result. The full comparison will rerun Girder after every external adapter is frozen. The two corrected serial runs exercised cold preparation, a warm-up, one measured warm query of each kind, and all six cumulative mutations.
+This checkpoint is adapter validation on `tiny-python`, not a competitive result. The later [final modest-language aggregate](results/modest-final/report.md) reran Girder after every external adapter was frozen. The two checkpoint runs exercised cold preparation, a warm-up, one measured warm query of each kind, and all six cumulative mutations.
 
 | Mode | Definition | Callers | Callees | Impact | Tests |
 | --- | ---: | ---: | ---: | ---: | ---: |

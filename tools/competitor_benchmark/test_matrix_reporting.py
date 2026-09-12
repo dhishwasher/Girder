@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import unittest
+from pathlib import Path
 
 from tools.competitor_benchmark.matrix_reporting import (
-    FIXTURES, RUNNABLE_PRODUCTS, aggregate_campaigns, matched_all_pass_cost, validate_matrix,
+    FIXTURES, RUNNABLE_PRODUCTS, aggregate_campaigns, matched_all_pass_cost, render_markdown, validate_matrix,
 )
 
 
@@ -61,6 +63,41 @@ class MatrixReportingTests(unittest.TestCase):
         self.assertEqual(result["left_response_bytes"], 30)
         self.assertEqual(result["right_response_bytes"], 60)
         self.assertEqual(result["left_tool_calls"], result["right_tool_calls"])
+
+    def test_report_preserves_required_sections_and_blocked_status(self) -> None:
+        blocked = {
+            "product": "gitnexus", "version": "1", "final_status": "RESOURCE_BLOCKED",
+            "attempts": [{"peak_rss_bytes": 101, "limit_bytes": 100}],
+        }
+        setup = {
+            "products": [{
+                "product": "girder", "version": "1", "outcome": "PASS", "distribution": "binary",
+                "network_and_account": "network only", "measured_friction": "none",
+            }],
+            "host_environment": {
+                "cpu_count": 2, "total_memory_bytes": 200, "swap_total_bytes": 0, "python": "3",
+                "platform": "Linux", "minimum_mem_available_bytes_at_start": 100,
+                "maximum_mem_available_bytes_at_start": 150,
+            },
+        }
+        aggregates = aggregate_campaigns(self.rows)
+        matched = matched_all_pass_cost(self.rows, "girder", "ripwire", "definition")
+        report = render_markdown(self.rows, aggregates, blocked, setup, matched)
+        self.assertIn("## Where Girder Lost", report)
+        self.assertIn("## Where Girder Won", report)
+        self.assertIn("## What This Benchmark Does NOT Establish", report)
+        self.assertIn("RESOURCE_BLOCKED", report)
+        self.assertIn("20 included campaigns archived an `environment.json`", report)
+
+    def test_gitnexus_provenance_is_consistent(self) -> None:
+        root = Path(__file__).resolve().parents[2] / "docs" / "competitor-benchmark"
+        policy = json.loads((root / "policy.json").read_text())
+        observation = json.loads((root / "gitnexus-install-observation.json").read_text())
+        manifest = json.loads((root / "gitnexus-preflight-manifest.json").read_text())
+        preflight = json.loads((root / "preflight-log.json").read_text())
+        pinned = next(item for item in policy["competitors"] if item["id"] == "gitnexus")["commit"]
+        resource_stop = next(item for item in preflight["records"] if item["id"] == "gitnexus-install-v3-resource-blocked")
+        self.assertEqual({pinned, observation["commit"], manifest["commit"], resource_stop["commit"]}, {pinned})
 
 
 if __name__ == "__main__":

@@ -18,7 +18,9 @@ The exact acquisition commands, native operations and field projections, depende
 
 ## Reproduction
 
-The Girder, Ripwire, codebase-memory-mcp, and code-review-graph adapters and serial campaign runner are now available. The first valid external small-fixture campaign uses revision 5. Its [generated report](results/tiny/report.md), [JSON](results/tiny/summary.json), [CSV](results/tiny/summary.csv), and checksum-pinned [raw archives](results/tiny/artifacts.sha256) are committed. The [codebase-memory adapter checkpoint and revision 8 result](codebase-memory-adapter.md) preserve its separate policy revision, failed placements, invalid first run, and valid scored rerun. The [code-review-graph adapter checkpoint and revision 10 result](code-review-graph-adapter.md) preserve its installation and placement failures, native mappings, scored tiny campaign, and invalid direct-9p packaging attempt. [GitNexus is resource-blocked](gitnexus-setup.md) during exact-lock installation on this host and receives no comparative score. The `tiny-python` corpus entry is an adapter gate and remains excluded from the final competitive aggregate.
+The Girder, Ripwire, codebase-memory-mcp, and code-review-graph adapters completed the four modest language fixtures. The [final generated report](results/modest-final/report.md), [JSON](results/modest-final/summary.json), per-campaign [CSV](results/modest-final/summary.csv), product [aggregate CSV](results/modest-final/aggregate.csv), [inclusion manifest](results/modest-final/inclusion-manifest.json), and checksum-pinned [raw archives](results/modest-final/artifacts.sha256) are committed. The aggregate includes twelve unaffected external campaigns from revision 11 and the eight corrected Girder campaigns from revision 12. [GitNexus is resource-blocked](gitnexus-setup.md) during exact-lock installation on this host and receives no comparative score.
+
+The separately reported `tiny-python` campaigns remain adapter gates excluded from the final aggregate. Their [first external report](results/tiny/report.md), [codebase-memory revision 8 result](results/codebase-memory-tiny-revision8/report.md), and [code-review-graph revision 10 result](results/code-review-graph-tiny-revision10/report.md) preserve the staged validation history and failures.
 
 ```sh
 python3 -m unittest -v tools.competitor_benchmark.test_foundation
@@ -76,6 +78,13 @@ PYTHONPATH=. python3 -m tools.competitor_benchmark.reporting \
 
 Every campaign command sets `CARGO_BUILD_JOBS=1`, `CMAKE_BUILD_PARALLEL_LEVEL=1`, `MAKEFLAGS=-j1`, `RAYON_NUM_THREADS=1`, and `npm_config_jobs=1`. Measured work runs offline after pinned acquisition. A tested supervisor checks preflight memory, samples process-tree RSS and system headroom, bounds time and output, and kills descendants. The runner refuses an existing output directory or a concurrent campaign lock.
 
+The final aggregate can be replayed without rerunning any product. This verifies all 20 raw-archive checksums, extracts them, rechecks every recorded byte count, regenerates all tables, and requires byte-identical outputs:
+
+```sh
+docs/competitor-benchmark/results/modest-final/reproduce-report.sh \
+  /tmp/girder-competitor-benchmark-modest-final-replay
+```
+
 ## Reporting boundaries
 
-The final report will contain `Where Girder Lost`, `Where Girder Won`, and `What This Benchmark Does NOT Establish`. Costs remain attached to correctness, and response sizes are labeled bytes because no tokenizer is used. These measurements describe one constrained Chromebook and the committed fixtures; they do not establish universal performance, behavior on large repositories, or capabilities beyond the native interfaces exercised here.
+The final report contains `Where Girder Lost`, `Where Girder Won`, and `What This Benchmark Does NOT Establish`. Costs remain attached to correctness, and response sizes are labeled bytes because no tokenizer was used. These measurements describe one constrained Chromebook and the committed fixtures; they do not establish universal performance, behavior on large repositories, or capabilities beyond the native interfaces exercised here.

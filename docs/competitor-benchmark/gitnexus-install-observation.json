@@ -27,7 +27,7 @@
     }
   ],
   "boundary": "This establishes only that the pinned exact-lock installation could not complete under the frozen resource and placement rules on this host. It establishes no GitNexus semantic correctness, query cost, freshness, or behavior after installation.",
-  "commit": "c0c3fa18a9b27d210099f908095fec373dd3d5",
+  "commit": "c0c3fa18a9b27d210099f908095fec373dd3d2d5",
   "comparative_result": false,
   "correctness_score": null,
   "final_status": "RESOURCE_BLOCKED",

@@ -1,0 +1,271 @@
+{
+  "blocked_setup_only": [
+    {
+      "comparative_result": false,
+      "observation": "../../gitnexus-install-observation.json",
+      "product": "gitnexus",
+      "status": "RESOURCE_BLOCKED",
+      "version": "1.6.11"
+    }
+  ],
+  "excluded": [
+    {
+      "evidence": "../tiny",
+      "reason": "adapter gates, excluded by the frozen corpus",
+      "scope": "tiny-python campaigns"
+    },
+    {
+      "evidence": "../../invalid-campaign-artifacts/modest-girder-revision11-normalization.tar.gz",
+      "reason": "Rust crate-path adapter normalization defect",
+      "scope": "eight Girder revision 11 modest campaigns"
+    },
+    {
+      "evidence": "../../preflight-log.json",
+      "reason": "not comparative results",
+      "scope": "all invalid, interrupted, and preflight-only attempts"
+    }
+  ],
+  "included_campaigns": [
+    {
+      "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "fixture": "modest-go",
+      "freeze_manifest_sha256": "9797212d9b93eb53abb76d82e35b03df19975d40dc2215f7e79e9e23d15dd24e",
+      "harness_commit": "51279d9259912b6544d4d3bd1eae8c08f79351be",
+      "policy_id": "girder-competitor-benchmark-v1-revision-11",
+      "policy_sha256": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+      "product": "code-review-graph",
+      "raw_archive": "raw/campaign-code-review-graph-modest-go-revision11.tar.gz",
+      "source_result_sha256": "38e8a219113631203c9cbeb756231cbafd68f60b423397a8dcbe2d4776a1f763",
+      "version": "2.3.8"
+    },
+    {
+      "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "fixture": "modest-python",
+      "freeze_manifest_sha256": "9797212d9b93eb53abb76d82e35b03df19975d40dc2215f7e79e9e23d15dd24e",
+      "harness_commit": "51279d9259912b6544d4d3bd1eae8c08f79351be",
+      "policy_id": "girder-competitor-benchmark-v1-revision-11",
+      "policy_sha256": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+      "product": "code-review-graph",
+      "raw_archive": "raw/campaign-code-review-graph-modest-python-revision11.tar.gz",
+      "source_result_sha256": "321a98f06fea7e14712924e282adf8d455078f6dffd5b3adb3dbe790ee5847d3",
+      "version": "2.3.8"
+    },
+    {
+      "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "fixture": "modest-rust",
+      "freeze_manifest_sha256": "9797212d9b93eb53abb76d82e35b03df19975d40dc2215f7e79e9e23d15dd24e",
+      "harness_commit": "51279d9259912b6544d4d3bd1eae8c08f79351be",
+      "policy_id": "girder-competitor-benchmark-v1-revision-11",
+      "policy_sha256": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+      "product": "code-review-graph",
+      "raw_archive": "raw/campaign-code-review-graph-modest-rust-revision11.tar.gz",
+      "source_result_sha256": "e50e182b4d35a8995c88d2922bb619771e33131d9a2923b66d78cc8da0288d81",
+      "version": "2.3.8"
+    },
+    {
+      "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "fixture": "modest-typescript-tsx",
+      "freeze_manifest_sha256": "9797212d9b93eb53abb76d82e35b03df19975d40dc2215f7e79e9e23d15dd24e",
+      "harness_commit": "51279d9259912b6544d4d3bd1eae8c08f79351be",
+      "policy_id": "girder-competitor-benchmark-v1-revision-11",
+      "policy_sha256": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+      "product": "code-review-graph",
+      "raw_archive": "raw/campaign-code-review-graph-modest-typescript-tsx-revision11.tar.gz",
+      "source_result_sha256": "45778a4d463b93fdf46e1055eecc8dd9ff92c45a96b058b967d3d9e0e4ba7a9a",
+      "version": "2.3.8"
+    },
+    {
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "fixture": "modest-go",
+      "freeze_manifest_sha256": "9797212d9b93eb53abb76d82e35b03df19975d40dc2215f7e79e9e23d15dd24e",
+      "harness_commit": "51279d9259912b6544d4d3bd1eae8c08f79351be",
+      "policy_id": "girder-competitor-benchmark-v1-revision-11",
+      "policy_sha256": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+      "product": "codebase-memory-mcp",
+      "raw_archive": "raw/campaign-codebase-memory-mcp-modest-go-revision11.tar.gz",
+      "source_result_sha256": "cffb5f171b4c812809110f54b7fc390c096485244d1deaaf92c7fd1351856900",
+      "version": "0.10.8"
+    },
+    {
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "fixture": "modest-python",
+      "freeze_manifest_sha256": "9797212d9b93eb53abb76d82e35b03df19975d40dc2215f7e79e9e23d15dd24e",
+      "harness_commit": "51279d9259912b6544d4d3bd1eae8c08f79351be",
+      "policy_id": "girder-competitor-benchmark-v1-revision-11",
+      "policy_sha256": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+      "product": "codebase-memory-mcp",
+      "raw_archive": "raw/campaign-codebase-memory-mcp-modest-python-revision11.tar.gz",
+      "source_result_sha256": "4567f3ce95572410dbbd4ec38d47854fe8d045099ae21a964b6bb1570cd58f37",
+      "version": "0.10.8"
+    },
+    {
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "fixture": "modest-rust",
+      "freeze_manifest_sha256": "9797212d9b93eb53abb76d82e35b03df19975d40dc2215f7e79e9e23d15dd24e",
+      "harness_commit": "51279d9259912b6544d4d3bd1eae8c08f79351be",
+      "policy_id": "girder-competitor-benchmark-v1-revision-11",
+      "policy_sha256": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+      "product": "codebase-memory-mcp",
+      "raw_archive": "raw/campaign-codebase-memory-mcp-modest-rust-revision11.tar.gz",
+      "source_result_sha256": "b6a8b313871042ec09201dca0eef99e8c91426ffc92b795ca32d857bf47fe963",
+      "version": "0.10.8"
+    },
+    {
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "fixture": "modest-typescript-tsx",
+      "freeze_manifest_sha256": "9797212d9b93eb53abb76d82e35b03df19975d40dc2215f7e79e9e23d15dd24e",
+      "harness_commit": "51279d9259912b6544d4d3bd1eae8c08f79351be",
+      "policy_id": "girder-competitor-benchmark-v1-revision-11",
+      "policy_sha256": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+      "product": "codebase-memory-mcp",
+      "raw_archive": "raw/campaign-codebase-memory-mcp-modest-typescript-tsx-revision11.tar.gz",
+      "source_result_sha256": "a9e5e4aa183a33841fbaf6f529ff08ff1054f7938020a95b6cc4a5f542151906",
+      "version": "0.10.8"
+    },
+    {
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "fixture": "modest-go",
+      "freeze_manifest_sha256": "9ab048198f4b3a6e168ea172af3a368f0a802b650d9f66aa657050035237a6a8",
+      "harness_commit": "5939e042779d5f2478c4058f6ad2edd79c9212c7",
+      "policy_id": "girder-competitor-benchmark-v1-revision-12",
+      "policy_sha256": "c56c6b94506f64a9d4ba177c22874b441ec3f3c65e797444cfc33cbb564a14e0",
+      "product": "girder",
+      "raw_archive": "raw/campaign-girder-modest-go-revision12.tar.gz",
+      "source_result_sha256": "fb6462e5412be6a96d3f30eb9e5bd73993cf74792df84c7ffc83837b9316fafd",
+      "version": "0.2.6"
+    },
+    {
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "fixture": "modest-python",
+      "freeze_manifest_sha256": "9ab048198f4b3a6e168ea172af3a368f0a802b650d9f66aa657050035237a6a8",
+      "harness_commit": "5939e042779d5f2478c4058f6ad2edd79c9212c7",
+      "policy_id": "girder-competitor-benchmark-v1-revision-12",
+      "policy_sha256": "c56c6b94506f64a9d4ba177c22874b441ec3f3c65e797444cfc33cbb564a14e0",
+      "product": "girder",
+      "raw_archive": "raw/campaign-girder-modest-python-revision12.tar.gz",
+      "source_result_sha256": "41013c42b6856a72de702433241723b6fba1cb6de337535ed5289bd4ef9b694f",
+      "version": "0.2.6"
+    },
+    {
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "fixture": "modest-rust",
+      "freeze_manifest_sha256": "9ab048198f4b3a6e168ea172af3a368f0a802b650d9f66aa657050035237a6a8",
+      "harness_commit": "5939e042779d5f2478c4058f6ad2edd79c9212c7",
+      "policy_id": "girder-competitor-benchmark-v1-revision-12",
+      "policy_sha256": "c56c6b94506f64a9d4ba177c22874b441ec3f3c65e797444cfc33cbb564a14e0",
+      "product": "girder",
+      "raw_archive": "raw/campaign-girder-modest-rust-revision12.tar.gz",
+      "source_result_sha256": "ebc08113e28fd91258f631abbcb8fe2e54035104ec82a8488ca793c4a4cf7edf",
+      "version": "0.2.6"
+    },
+    {
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "fixture": "modest-typescript-tsx",
+      "freeze_manifest_sha256": "9ab048198f4b3a6e168ea172af3a368f0a802b650d9f66aa657050035237a6a8",
+      "harness_commit": "5939e042779d5f2478c4058f6ad2edd79c9212c7",
+      "policy_id": "girder-competitor-benchmark-v1-revision-12",
+      "policy_sha256": "c56c6b94506f64a9d4ba177c22874b441ec3f3c65e797444cfc33cbb564a14e0",
+      "product": "girder",
+      "raw_archive": "raw/campaign-girder-modest-typescript-tsx-revision12.tar.gz",
+      "source_result_sha256": "9d4bc4c4e05a56f10122359ea9585addcb548e222702058d2251ba1e0d0659f9",
+      "version": "0.2.6"
+    },
+    {
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "fixture": "modest-go",
+      "freeze_manifest_sha256": "9ab048198f4b3a6e168ea172af3a368f0a802b650d9f66aa657050035237a6a8",
+      "harness_commit": "5939e042779d5f2478c4058f6ad2edd79c9212c7",
+      "policy_id": "girder-competitor-benchmark-v1-revision-12",
+      "policy_sha256": "c56c6b94506f64a9d4ba177c22874b441ec3f3c65e797444cfc33cbb564a14e0",
+      "product": "girder-watch",
+      "raw_archive": "raw/campaign-girder-watch-modest-go-revision12.tar.gz",
+      "source_result_sha256": "9ac1bf27e9e706f0aecb48f417411ae90651e4a8923772fe120d7ae4c42c6f95",
+      "version": "0.2.6"
+    },
+    {
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "fixture": "modest-python",
+      "freeze_manifest_sha256": "9ab048198f4b3a6e168ea172af3a368f0a802b650d9f66aa657050035237a6a8",
+      "harness_commit": "5939e042779d5f2478c4058f6ad2edd79c9212c7",
+      "policy_id": "girder-competitor-benchmark-v1-revision-12",
+      "policy_sha256": "c56c6b94506f64a9d4ba177c22874b441ec3f3c65e797444cfc33cbb564a14e0",
+      "product": "girder-watch",
+      "raw_archive": "raw/campaign-girder-watch-modest-python-revision12.tar.gz",
+      "source_result_sha256": "6d4a001793d13fdb3ad19e2a4e1ad1ee2d0979fbf2e92527420d70e536a5c7b1",
+      "version": "0.2.6"
+    },
+    {
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "fixture": "modest-rust",
+      "freeze_manifest_sha256": "9ab048198f4b3a6e168ea172af3a368f0a802b650d9f66aa657050035237a6a8",
+      "harness_commit": "5939e042779d5f2478c4058f6ad2edd79c9212c7",
+      "policy_id": "girder-competitor-benchmark-v1-revision-12",
+      "policy_sha256": "c56c6b94506f64a9d4ba177c22874b441ec3f3c65e797444cfc33cbb564a14e0",
+      "product": "girder-watch",
+      "raw_archive": "raw/campaign-girder-watch-modest-rust-revision12.tar.gz",
+      "source_result_sha256": "a75c3bc10c01c5839f54b1b1788046cc3ec15c6e48b7063f41d59bbbe95952ca",
+      "version": "0.2.6"
+    },
+    {
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "fixture": "modest-typescript-tsx",
+      "freeze_manifest_sha256": "9ab048198f4b3a6e168ea172af3a368f0a802b650d9f66aa657050035237a6a8",
+      "harness_commit": "5939e042779d5f2478c4058f6ad2edd79c9212c7",
+      "policy_id": "girder-competitor-benchmark-v1-revision-12",
+      "policy_sha256": "c56c6b94506f64a9d4ba177c22874b441ec3f3c65e797444cfc33cbb564a14e0",
+      "product": "girder-watch",
+      "raw_archive": "raw/campaign-girder-watch-modest-typescript-tsx-revision12.tar.gz",
+      "source_result_sha256": "bb7623f515d69f09adc563cfb29df179ddc829509495b2da07f1b597eb08f2e7",
+      "version": "0.2.6"
+    },
+    {
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "fixture": "modest-go",
+      "freeze_manifest_sha256": "9797212d9b93eb53abb76d82e35b03df19975d40dc2215f7e79e9e23d15dd24e",
+      "harness_commit": "51279d9259912b6544d4d3bd1eae8c08f79351be",
+      "policy_id": "girder-competitor-benchmark-v1-revision-11",
+      "policy_sha256": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+      "product": "ripwire",
+      "raw_archive": "raw/campaign-ripwire-modest-go-revision11.tar.gz",
+      "source_result_sha256": "23dfa33101afc914be242837d55f9f8ae707fc260f5fa2c5213f0327c81fe1e3",
+      "version": "0.5.0"
+    },
+    {
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "fixture": "modest-python",
+      "freeze_manifest_sha256": "9797212d9b93eb53abb76d82e35b03df19975d40dc2215f7e79e9e23d15dd24e",
+      "harness_commit": "51279d9259912b6544d4d3bd1eae8c08f79351be",
+      "policy_id": "girder-competitor-benchmark-v1-revision-11",
+      "policy_sha256": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+      "product": "ripwire",
+      "raw_archive": "raw/campaign-ripwire-modest-python-revision11.tar.gz",
+      "source_result_sha256": "236004f425df5cc638d9b888e72e9fe85331a68d9a094759e254b2bd509ddde1",
+      "version": "0.5.0"
+    },
+    {
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "fixture": "modest-rust",
+      "freeze_manifest_sha256": "9797212d9b93eb53abb76d82e35b03df19975d40dc2215f7e79e9e23d15dd24e",
+      "harness_commit": "51279d9259912b6544d4d3bd1eae8c08f79351be",
+      "policy_id": "girder-competitor-benchmark-v1-revision-11",
+      "policy_sha256": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+      "product": "ripwire",
+      "raw_archive": "raw/campaign-ripwire-modest-rust-revision11.tar.gz",
+      "source_result_sha256": "834b7807fdf47d4481b20a11056678152b7219e4c7f4afb5117af11da680b1d0",
+      "version": "0.5.0"
+    },
+    {
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "fixture": "modest-typescript-tsx",
+      "freeze_manifest_sha256": "9797212d9b93eb53abb76d82e35b03df19975d40dc2215f7e79e9e23d15dd24e",
+      "harness_commit": "51279d9259912b6544d4d3bd1eae8c08f79351be",
+      "policy_id": "girder-competitor-benchmark-v1-revision-11",
+      "policy_sha256": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+      "product": "ripwire",
+      "raw_archive": "raw/campaign-ripwire-modest-typescript-tsx-revision11.tar.gz",
+      "source_result_sha256": "70612a73d84287a629e6fbff8a56c945cae24cf883e026949e5cfe3d769c000d",
+      "version": "0.5.0"
+    }
+  ],
+  "schema_version": 1
+}

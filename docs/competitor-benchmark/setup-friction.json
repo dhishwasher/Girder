@@ -1,4 +1,21 @@
 {
+  "host_environment": {
+    "campaign_environment_records": 20,
+    "cpu_count": 2,
+    "maximum_mem_available_bytes_at_start": 1750597632,
+    "minimum_mem_available_bytes_at_start": 1717723136,
+    "platform": "Linux-6.6.135-09383-g1140e4f27e24-x86_64-with-glibc2.36",
+    "python": "3.11.2",
+    "required_environment": {
+      "CARGO_BUILD_JOBS": "1",
+      "CMAKE_BUILD_PARALLEL_LEVEL": "1",
+      "MAKEFLAGS": "-j1",
+      "RAYON_NUM_THREADS": "1",
+      "npm_config_jobs": "1"
+    },
+    "swap_total_bytes": 0,
+    "total_memory_bytes": 2881343488
+  },
   "products": [
     {
       "account_required": false,

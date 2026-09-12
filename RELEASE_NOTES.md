@@ -101,8 +101,16 @@ The first complete modest-language matrix was audited before aggregation. That
 audit found a Girder adapter error: conventional Rust paths such as
 `crate::core::calculate_total` were not mapped to their unique `src/core.rs`
 source identity. All eight affected Girder revision 11 campaigns are preserved
-and excluded. Revision 12 freezes the normalization correction and reruns only
+and excluded. Revision 12 froze the normalization correction and reran only
 those campaigns; the twelve external revision 11 campaigns remain unchanged.
+
+The [final cross-language report](docs/competitor-benchmark/results/modest-final/report.md)
+now includes 20 complete campaigns and the GitNexus setup-only resource stop.
+No product reached a fully correct result after any mutation. On the matched
+Rust, Python, and TypeScript/TSX exact-definition attempts where Girder and
+Ripwire both passed all 60 records, Girder returned 35,764 response bytes versus
+158,514 with the same 120 calls. Girder lost the strict Go file-qualified
+identity check even though its native response included the correct source.
 
 See [the benchmark protocol](docs/competitor-benchmark/README.md) and the
 [generated first-external result](docs/competitor-benchmark/results/tiny/report.md).
