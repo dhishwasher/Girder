@@ -1,6 +1,6 @@
 {
-  "frozen_at_utc": "2026-09-11T19:00:04Z",
-  "rule": "Revision 9 inputs. The code-review-graph lock pins the required PyJWT crypto extra; subsequent campaigns require these hashes.",
+  "frozen_at_utc": "2026-09-12T00:16:58Z",
+  "rule": "Revision 12 inputs. Rust crate-path normalization is frozen before the eight Girder modest-language reruns; twelve external revision 11 campaigns remain valid.",
   "schema_version": 1,
   "sha256": {
     "docs/competitor-benchmark/corpus.json": "1711d8b456e960f65f5314a55ce3f2f5d200d44cd43fdbd2deb10efaa98c77e1",
@@ -8,10 +8,10 @@
     "docs/competitor-benchmark/locks/gitnexus-package-lock.json": "fd4bf4e9a2cd0c378d62196c287e38dd5420f7d509113f8346fc73447f448b6b",
     "docs/competitor-benchmark/locks/gitnexus-package.json": "f1c80e259ccd5b1e56d7c6d9f7a8f06eab36b7d26f09c42078291deb0ef99284",
     "docs/competitor-benchmark/oracle.json": "74ea481194be99141992a69cc08aa92663f9b29150943d41df6c8e90752caa8d",
-    "docs/competitor-benchmark/policy.json": "00e34ee61adf9f4364e0332f4646347c6591abddb787a7cf6d0f593e7fa8d554",
+    "docs/competitor-benchmark/policy.json": "c56c6b94506f64a9d4ba177c22874b441ec3f3c65e797444cfc33cbb564a14e0",
     "tools/competitor_benchmark/adapters/code_review_graph.py": "9ab8f9b1ad3ba902394def593c3460642c20e76c5d2317987f219fb38d266a06",
     "tools/competitor_benchmark/adapters/codebase_memory.py": "8df7cf09e37a510805624709012807ded04c389cce3207d128dad9f1ad310de0",
-    "tools/competitor_benchmark/adapters/girder.py": "a52baa5265faee4bebd66d25f9797f5b6d80192d2811f4aee6163cc143971cc6",
+    "tools/competitor_benchmark/adapters/girder.py": "620de46ef6618b5dd8898a07e6416bafddd2b77406ea41eead054dc498f966d8",
     "tools/competitor_benchmark/adapters/ripwire.py": "53c9ac1dbec68f703a5188d44347d5a5f65d5f32d3d9527208afca4ee49042ce",
     "tools/competitor_benchmark/campaign.py": "9942ba0455a53e5caf9363ba334ef1e2e7f3fc901340729f2101c35292e56f6a",
     "tools/competitor_benchmark/fixtures.py": "4c7c23efaecbdd40dfab7c322b6059e80ea59c8f4ab53b157f4264e5e13d6a66",
@@ -24,7 +24,7 @@
     "tools/competitor_benchmark/test_code_review_graph_adapter.py": "647d78e1fc3751de8facaf9ecfb229d97fec443da6f2277f9e5083ebd069dddd",
     "tools/competitor_benchmark/test_codebase_memory_adapter.py": "d9a5ae1c6ba136debdc289daedc2bbc638d7499fbce493e690d72139b12b8d9d",
     "tools/competitor_benchmark/test_foundation.py": "afc24fc464e61c8aeb28898f82b1ef0daa1b4e6bd924cef4d3d9b73204c087c1",
-    "tools/competitor_benchmark/test_girder_adapter.py": "097c741887ffa2517786cd69ea071ca526588f8e7042583c08781e2c9d57f5ce",
+    "tools/competitor_benchmark/test_girder_adapter.py": "2f2e33b6f4955f579f28512589afde915abacbee70b930c0c13d1d23df8eab1c",
     "tools/competitor_benchmark/test_ripwire_adapter.py": "719456d202dcb4febe0a7f4a8ee3df6a89b7b42478fa38dba7f824dca88a54da"
   }
 }

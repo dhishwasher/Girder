@@ -202,7 +202,13 @@ class GirderAdapter(Adapter):
                 continue
             relative = path.relative_to(self.fixture_root).as_posix()
             without_suffix = relative[: -len(path.suffix)]
-            if without_suffix.replace("/", "::") == module:
+            native_modules = {without_suffix.replace("/", "::")}
+            # Rust crate paths omit the filesystem-only src directory and use
+            # foo for either src/foo.rs or src/foo/mod.rs.
+            if path.suffix == ".rs":
+                conventional = without_suffix.replace("/", "::").removeprefix("src::")
+                native_modules.add(conventional.removesuffix("::mod"))
+            if module in native_modules:
                 candidates.append(relative)
         if len(candidates) == 1:
             return f"{candidates[0]}::{parts[-1]}"

@@ -302,6 +302,20 @@
       "raw_artifacts": "docs/competitor-benchmark/preflight-artifacts/gitnexus/preflight-gitnexus-install-v3",
       "result_use": "Host-specific setup result only. GitNexus receives no correctness, cost, freshness, or comparative score and this is not counted as a Girder win.",
       "version": "1.6.11"
+    },
+    {
+      "campaign_state": "COMPLETE",
+      "classification": "INVALIDATED_CAMPAIGN",
+      "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+      "comparative_result": false,
+      "detail": "All eight campaigns completed with raw accounting intact. Aggregate audit found the adapter treated conventional Rust crate::core identities as unresolved because it required the filesystem-only src prefix. Revision 12 maps crate modules to unique src/foo.rs or src/foo/mod.rs paths. Root-level Go crate::symbol identities remain unresolved because the native response supplies no file identity. No product behavior, oracle, target, or numeric threshold changed.",
+      "fixture": "four modest language fixtures in both Girder modes",
+      "id": "modest-girder-revision11-normalization",
+      "product": "girder and girder-watch",
+      "raw_archive": "docs/competitor-benchmark/invalid-campaign-artifacts/modest-girder-revision11-normalization.tar.gz",
+      "raw_archive_sha256": "583af75bc3c1fc0b2717c4fdf7254053dcc5ec7257616f1c1affc985364e1935",
+      "result_use": "None for these eight Girder rows; retained before one revision 12 rerun of both modes. The twelve external revision 11 campaigns are unaffected and remain valid.",
+      "version": "0.2.6"
     }
   ],
   "schema_version": 1

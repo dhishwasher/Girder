@@ -46,6 +46,24 @@ class GirderNormalizationTests(unittest.TestCase):
             self.assertEqual(adapter._identity("crate::src::core::compute_total"),
                              "src/core.rs::compute_total")
 
+    def test_identity_maps_rust_crate_module_without_src_prefix(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            (root / "src").mkdir()
+            (root / "src" / "core.rs").write_text("fn compute_total() {}")
+            adapter = self.make_adapter(root, [])
+            self.assertEqual(adapter._identity("crate::core::compute_total"),
+                             "src/core.rs::compute_total")
+
+    def test_identity_maps_rust_mod_file_to_module(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            (root / "src" / "math").mkdir(parents=True)
+            (root / "src" / "math" / "mod.rs").write_text("fn compute_total() {}")
+            adapter = self.make_adapter(root, [])
+            self.assertEqual(adapter._identity("crate::math::compute_total"),
+                             "src/math/mod.rs::compute_total")
+
     def test_relationship_excludes_seed_and_normalizes_result(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)

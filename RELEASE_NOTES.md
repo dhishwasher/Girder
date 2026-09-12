@@ -97,6 +97,13 @@ RSS, 2,326,528 bytes above the frozen 1 GiB cap. The supervisor stopped it after
 records GitNexus as host-specific `RESOURCE_BLOCKED`, and assigns it no
 correctness or comparative score.
 
+The first complete modest-language matrix was audited before aggregation. That
+audit found a Girder adapter error: conventional Rust paths such as
+`crate::core::calculate_total` were not mapped to their unique `src/core.rs`
+source identity. All eight affected Girder revision 11 campaigns are preserved
+and excluded. Revision 12 freezes the normalization correction and reruns only
+those campaigns; the twelve external revision 11 campaigns remain unchanged.
+
 See [the benchmark protocol](docs/competitor-benchmark/README.md) and the
 [generated first-external result](docs/competitor-benchmark/results/tiny/report.md).
 

@@ -55,6 +55,7 @@
       "artifact_sha256": "7446c502aef85fc7e63e79da1e471096003253272b400790825183f6f9bc9ad3",
       "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
       "id": "girder",
+      "identity_normalization": "Map crate module segments to the unique fixture source path. For Rust, also map conventional crate module foo to src/foo.rs or src/foo/mod.rs; keep root-level paths without a native file identity unresolved.",
       "install": [
         "gh",
         "release",
@@ -288,7 +289,7 @@
     }
   ],
   "freeze_rule": "This policy, corpus.json, oracle.json, scorer, adapter contract, and their unit tests must be committed before any comparative campaign. Campaign results may not change them.",
-  "frozen_at_utc": "2026-09-11T23:47:40Z",
+  "frozen_at_utc": "2026-09-12T00:13:45Z",
   "host_limits": {
     "description": "Low-resource ChromeOS Crostini measurement host; results are host-specific.",
     "emergency_mem_available_bytes": 402653184,
@@ -340,8 +341,8 @@
     "test_inventory": "Each state lists every test node in the fixture. A native whole-test-file prediction expands to every listed node in that file before scoring; this models what will run and retains unrelated nodes as false positives.",
     "tests": "Test nodes in the reverse-transitive impact set."
   },
-  "policy_id": "girder-competitor-benchmark-v1-revision-11",
-  "policy_revision": 11,
+  "policy_id": "girder-competitor-benchmark-v1-revision-12",
+  "policy_revision": 12,
   "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
   "required_report_sections": [
     "Where Girder Lost",
@@ -408,6 +409,12 @@
       "reason": "Revision 10 produced the complete, separately reported code-review-graph tiny-python adapter gate. GitNexus installation preflight then exposed that the RSS sampler split /proc stat on spaces, so a process name containing spaces shifted the fixed fields and yielded an impossible multi-terabyte value. Revision 11 parses after the final parenthesized process-name delimiter and adds a regression test before a fresh GitNexus install retry. No competitor behavior, oracle, target, numeric limit, or completed result changed.",
       "revision": 10,
       "status": "valid completed code-review-graph tiny adapter gate; superseded for subsequent campaigns"
+    },
+    {
+      "commit": "b98b80d444f999b7e098c36c4901cd65340ba44b",
+      "reason": "Revision 11 produced twelve valid external modest-language campaigns and eight completed Girder campaigns. Aggregate audit found the Girder adapter did not normalize conventional Rust crate paths, where crate::core omits the filesystem-only src prefix, even though the mapping to src/core.rs was unique. Revision 12 adds only that language-convention normalization and its tests. All eight Girder revision 11 runs are retained and excluded; the twelve external runs remain valid because their policy, adapters, answers, and scoring are unchanged.",
+      "revision": 11,
+      "status": "external modest campaigns valid; Girder modest campaigns invalidated before aggregate"
     }
   ],
   "schema_version": 1,
