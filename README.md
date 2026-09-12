@@ -81,13 +81,29 @@ See the [observation](./docs/description-search-accuracy-observation.json) and
 [Model Context Protocol](https://modelcontextprotocol.io), so an agent can ask
 about your codebase instead of reading files into its context window.
 
-Claude Code:
+Preview the changes, then configure detected agents:
 
 ```bash
-claude mcp add girder -- npx -y girder-mcp .
+npx -y girder-mcp setup --dry-run
+npx -y girder-mcp setup
 ```
 
-Any MCP client config:
+`setup` detects Claude Code (`~/.claude` or an existing in-home project
+`.mcp.json`), Codex (`~/.codex` or an in-home `CODEX_HOME`), and Cursor
+(`~/.cursor`). It merges the `girder` MCP entry into each detected agent's
+documented config and registers an advisory PreToolUse hook for Claude Code and
+Cursor. Codex receives the MCP entry but no read hook: its documented shell
+reads do not expose a structured `Read` payload. A generic MCP client has no
+universal config path and is reported as not detected. Setup never writes
+outside your home directory. Existing `girder` entries remain untouched unless
+you pass `--force`; `girder setup --uninstall` removes only setup-owned changes.
+The hook writes a one-line suggestion to stderr only when a saved graph is
+already present and never blocks a read. Some clients show successful-hook
+stderr only in debug logs, so it is advisory logging rather than guaranteed
+model-visible guidance.
+
+For clients setup cannot detect, add this entry to their documented MCP config
+manually:
 
 ```json
 {
