@@ -15,6 +15,7 @@ mod orient;
 mod planfile_cmd;
 mod query;
 mod review;
+mod setup;
 mod test_impact;
 
 pub(crate) use agents::{forge, swarm_plan};
@@ -39,4 +40,5 @@ pub(crate) use orient::orient;
 pub(crate) use planfile_cmd::{plan_explain, plan_run, plan_validate};
 pub(crate) use query::query;
 pub(crate) use review::review;
+pub(crate) use setup::setup;
 pub(crate) use test_impact::test_impact;

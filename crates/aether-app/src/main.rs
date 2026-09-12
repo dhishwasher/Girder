@@ -28,6 +28,14 @@ COMMANDS:
     demo                      Run the headless end-to-end pipeline demo (default)
     config <dir> [--init]     Show the validated effective project configuration.
                               --init creates girder.toml without overwriting.
+    setup [--agents <list>] [--dry-run] [--force] [--uninstall]
+                              Detect installed coding agents and merge the Girder
+                              MCP server into their documented user configuration.
+                              Supports Claude Code, Codex, and Cursor. Generic MCP
+                              clients have no universal config path and are reported
+                              without guessing. --dry-run prints exact diffs and
+                              writes nothing; --uninstall removes only setup-owned
+                              entries.
     analyze <dir> [--json] [--out <path>]
                               Build the semantic graph from a project directory,
                               report likely duplicates, save the configured graph.
@@ -250,6 +258,7 @@ fn main() {
         }
         Some("--gui") => launch_gui_or_fallback(args.get(1)),
         Some("config") => report(project::config(&args[1..])),
+        Some("setup") => report(project::setup(&args[1..])),
         Some("analyze") => report(project::analyze(&args[1..])),
         Some("search") => report(project::search(&args[1..])),
         Some("names") => report(project::names(&args[1..])),
