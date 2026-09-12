@@ -118,10 +118,13 @@ def summarize_result(path: Path, archive: str, artifact_root: Path | None = None
         "warm_query_seconds_mean": sum(row["elapsed_seconds"] for row in warm) / len(warm),
         "base_status_by_kind": {kind: base_by_kind[kind][0]["status"] for kind in QUERY_KINDS},
         "base_score_by_kind": {kind: _micro_score(base_by_kind[kind]) for kind in QUERY_KINDS},
+        "base_task_status": dict(sorted(Counter(row["status"] for row in warm).items())),
         "freshness_status_by_kind": freshness_by_kind,
+        "freshness_terminal_query_status": dict(sorted(Counter(row["status"] for row in last_probes).items())),
         "mutation_terminal_status": dict(sorted(Counter(
             row["terminal_status"] for row in result.get("mutation_summaries", [])
         ).items())),
+        "update_to_all_correct_count": len(successful_latencies),
         "update_to_all_correct_seconds_mean": (
             sum(successful_latencies) / len(successful_latencies) if successful_latencies else None
         ),
@@ -130,6 +133,19 @@ def summarize_result(path: Path, archive: str, artifact_root: Path | None = None
         "query_tool_calls": sum(row["tool_calls"] for row in queries),
         "query_record_count": len(queries),
         "calls_per_query_record": sum(row["tool_calls"] for row in queries) / len(queries),
+        "query_cost_by_kind": {
+            kind: {
+                "response_bytes": sum(
+                    row["stdout_bytes"] + row["stderr_bytes"] for row in queries if row["query_kind"] == kind
+                ),
+                "tool_calls": sum(row["tool_calls"] for row in queries if row["query_kind"] == kind),
+                "query_records": sum(1 for row in queries if row["query_kind"] == kind),
+                "status": dict(sorted(Counter(
+                    row["status"] for row in queries if row["query_kind"] == kind
+                ).items())),
+            }
+            for kind in QUERY_KINDS
+        },
         "peak_rss_bytes": max(rss) if rss else None,
         "source_result_sha256": hashlib.sha256(raw).hexdigest(),
         "raw_archive": archive,

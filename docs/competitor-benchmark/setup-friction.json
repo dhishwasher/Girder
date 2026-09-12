@@ -1,0 +1,65 @@
+{
+  "products": [
+    {
+      "account_required": false,
+      "compiler_required": false,
+      "distribution": "Checksum-verified official prebuilt Linux release archive; no compiler",
+      "install_command": "gh release download v0.2.6 --repo dhishwasher/Girder --pattern girder-x86_64-unknown-linux-musl.tar.gz --pattern girder-x86_64-unknown-linux-musl.tar.gz.sha256",
+      "measured_friction": "Installed and ran from the external acquisition cache",
+      "network_and_account": "Network for acquisition; no API or account",
+      "network_required_for_acquisition": true,
+      "outcome": "PASS",
+      "product": "girder",
+      "version": "0.2.6"
+    },
+    {
+      "account_required": false,
+      "compiler_required": null,
+      "distribution": "Exact npm lock; installation did not complete, so compiler need is unknown",
+      "install_command": "GITNEXUS_SKIP_OPTIONAL_GRAMMARS=1 CARGO_BUILD_JOBS=1 CMAKE_BUILD_PARALLEL_LEVEL=1 MAKEFLAGS=-j1 RAYON_NUM_THREADS=1 npm_config_jobs=1 npm ci --omit=dev --no-audit --no-fund",
+      "measured_friction": "9p symlink EACCES, then corrected local install exceeded the frozen 1 GiB process-tree RSS cap by 2,326,528 bytes",
+      "network_and_account": "npm registry for acquisition; no API or product account",
+      "network_required_for_acquisition": true,
+      "outcome": "RESOURCE_BLOCKED",
+      "product": "gitnexus",
+      "version": "1.6.11"
+    },
+    {
+      "account_required": false,
+      "compiler_required": false,
+      "distribution": "Checksum-verified official portable Linux binary; no compiler",
+      "install_command": "curl -fL --output codebase-memory-mcp-linux-amd64-portable.tar.gz https://github.com/DeusData/codebase-memory-mcp/releases/download/v0.10.8/codebase-memory-mcp-linux-amd64-portable.tar.gz",
+      "measured_friction": "Required a mode-0700 local runtime and cache; removable-mount placement failed private-cache and executable-admission checks",
+      "network_and_account": "Network for acquisition; no API or account",
+      "network_required_for_acquisition": true,
+      "outcome": "PASS after local placement",
+      "product": "codebase-memory-mcp",
+      "version": "0.10.8"
+    },
+    {
+      "account_required": false,
+      "compiler_required": false,
+      "distribution": "Hash-locked binary-only Python wheels; no compiler fallback",
+      "install_command": "python -m pip install --require-hashes --only-binary=:all: -r docs/competitor-benchmark/locks/code-review-graph-requirements.txt",
+      "measured_friction": "Fresh install took 59.308 seconds and 214,331,392 bytes peak RSS; SQLite data required a local CRG_DATA_DIR",
+      "network_and_account": "Python package index for acquisition; no API or account",
+      "network_required_for_acquisition": true,
+      "outcome": "PASS after lock and placement corrections",
+      "product": "code-review-graph",
+      "version": "2.3.8"
+    },
+    {
+      "account_required": false,
+      "compiler_required": false,
+      "distribution": "Checksum-verified official prebuilt Linux release archive; no compiler",
+      "install_command": "curl -fL --output ripwire-0.5.0-linux-x64.tar.gz https://github.com/redhat-et/ripwire/releases/download/v0.5.0/ripwire-0.5.0-linux-x64.tar.gz",
+      "measured_friction": "Installed and ran from the external acquisition cache",
+      "network_and_account": "Network for acquisition; no API or account",
+      "network_required_for_acquisition": true,
+      "outcome": "PASS",
+      "product": "ripwire",
+      "version": "0.5.0"
+    }
+  ],
+  "schema_version": 1
+}

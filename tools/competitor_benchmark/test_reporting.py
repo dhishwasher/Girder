@@ -51,6 +51,10 @@ class ReportingTests(unittest.TestCase):
         self.assertEqual(row["base_status_by_kind"]["callers"], "PASS")
         self.assertEqual(row["freshness_status_by_kind"]["callers"], {"PASS": 1})
         self.assertEqual(row["query_record_count"], 12)
+        self.assertEqual(row["base_task_status"], {"PASS": 5})
+        self.assertEqual(row["freshness_terminal_query_status"], {"PASS": 1})
+        self.assertEqual(row["query_cost_by_kind"]["callers"]["status"], {"PASS": 3, "STALE": 1})
+        self.assertEqual(row["update_to_all_correct_count"], 1)
         self.assertEqual(row["update_to_all_correct_seconds_mean"], 0.4)
 
     def test_raw_byte_mismatch_fails_generation(self) -> None:
