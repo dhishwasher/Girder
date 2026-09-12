@@ -67,6 +67,10 @@ struct McpState {
     config_created: bool,
     previous: Option<Value>,
     installed: Value,
+    #[serde(default)]
+    original_text: Option<String>,
+    #[serde(default)]
+    installed_sha256: String,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -84,6 +88,10 @@ struct HookState {
     style: HookStyle,
     previous_matches: Vec<Value>,
     installed: Value,
+    #[serde(default)]
+    original_text: Option<String>,
+    #[serde(default)]
+    installed_sha256: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -330,23 +338,23 @@ fn detect(
             }
             Agent::Codex => {
                 let default_directory = home.join(".codex");
-                let directory = codex_home
-                    .filter(|path| path.is_absolute() && path.starts_with(home))
-                    .unwrap_or(&default_directory)
-                    .to_path_buf();
+                let directory = codex_home.unwrap_or(&default_directory).to_path_buf();
+                let in_home = directory.is_absolute() && directory.starts_with(home);
+                let detected = in_home && directory.is_dir();
                 Detection {
                     agent: *agent,
-                    config_path: directory.is_dir().then(|| directory.join("config.toml")),
-                    format: directory.is_dir().then_some(ConfigFormat::Toml),
-                    evidence: if directory.is_dir() {
-                        if codex_home.is_some_and(|path| path == directory) {
+                    config_path: detected.then(|| directory.join("config.toml")),
+                    format: detected.then_some(ConfigFormat::Toml),
+                    evidence: if detected {
+                        if codex_home.is_some() {
                             "in-home $CODEX_HOME exists".into()
                         } else {
                             "~/.codex exists".into()
                         }
-                    } else if codex_home.is_some() && directory == default_directory {
-                        "$CODEX_HOME is outside home, relative, or absent; ~/.codex does not exist"
-                            .into()
+                    } else if codex_home.is_some() && !in_home {
+                        "$CODEX_HOME is outside home or relative; skipped".into()
+                    } else if codex_home.is_some() {
+                        "$CODEX_HOME does not exist".into()
                     } else {
                         "~/.codex does not exist".into()
                     },
@@ -425,6 +433,8 @@ fn plan_install(
                 config_created: before.is_none(),
                 previous: current,
                 installed: desired.clone(),
+                original_text: optional_utf8(&before, &config_path)?,
+                installed_sha256: String::new(),
             });
         }
         let after = if format == ConfigFormat::Toml {
@@ -433,6 +443,13 @@ fn plan_install(
             set_mcp_entry(&mut document, format, Some(desired))?;
             serialize_config(&document, format)?
         };
+        if let Some(owned) = state
+            .mcps
+            .iter_mut()
+            .find(|owned| owned.config_path == config_path.to_string_lossy())
+        {
+            owned.installed_sha256 = sha256(&after);
+        }
         push_change(changes, config_path, before, Some(after));
     }
 
@@ -483,6 +500,18 @@ fn plan_uninstall(
                 set_mcp_entry(&mut document, owned.format, owned.previous.clone())?;
                 serialize_config(&document, owned.format)?
             };
+            if !owned.installed_sha256.is_empty()
+                && sha256(bytes) == owned.installed_sha256
+                && owned.original_text.is_some()
+            {
+                push_change(
+                    changes,
+                    config_path,
+                    before,
+                    owned.original_text.map(String::into_bytes),
+                );
+                continue;
+            }
             let after_document = parse_config(Some(&after), owned.format, &config_path)?;
             if owned.config_created && config_is_empty(&after_document, owned.format)? {
                 push_change(changes, config_path, before, None);
@@ -611,10 +640,19 @@ fn plan_hook_install(
             style,
             previous_matches: matches,
             installed: desired.clone(),
+            original_text: optional_utf8(&before, &config_path)?,
+            installed_sha256: String::new(),
         });
     }
     replace_matching_hooks(&mut document, event_key, style, Some(desired))?;
     let after = serialize_config(&document, ConfigFormat::Json)?;
+    if let Some(owned) = state
+        .hooks
+        .iter_mut()
+        .find(|owned| owned.config_path == config_path.to_string_lossy())
+    {
+        owned.installed_sha256 = sha256(&after);
+    }
     push_change(changes, config_path, before, Some(after));
     Ok(())
 }
@@ -642,6 +680,18 @@ fn uninstall_hooks(
                     ));
                     retained_hooks.push(owned);
                 }
+                continue;
+            }
+            if !owned.installed_sha256.is_empty()
+                && sha256(bytes) == owned.installed_sha256
+                && owned.original_text.is_some()
+            {
+                push_change(
+                    changes,
+                    config_path,
+                    before,
+                    owned.original_text.map(String::into_bytes),
+                );
                 continue;
             }
             remove_exact_hook(&mut document, &owned.event_key, &owned.installed)?;
@@ -1091,6 +1141,17 @@ fn read_optional(path: &Path) -> io::Result<Option<Vec<u8>>> {
     }
 }
 
+fn optional_utf8(bytes: &Option<Vec<u8>>, path: &Path) -> io::Result<Option<String>> {
+    bytes
+        .as_deref()
+        .map(|bytes| {
+            std::str::from_utf8(bytes)
+                .map(str::to_owned)
+                .map_err(|error| invalid(format!("{} is not UTF-8: {error}", path.display())))
+        })
+        .transpose()
+}
+
 fn push_change(
     changes: &mut Vec<Change>,
     path: PathBuf,
@@ -1414,7 +1475,7 @@ mod tests {
         home.run(&["--agents", "claude,codex,cursor", "--uninstall"]);
         assert_eq!(
             std::fs::read_to_string(home.0.join(".claude.json")).unwrap(),
-            "{\n  \"mcpServers\": {\n    \"other\": {\n      \"command\": \"keep\"\n    }\n  }\n}\n"
+            "{\"mcpServers\":{\"other\":{\"command\":\"keep\"}}}\n"
         );
         assert_eq!(
             std::fs::read_to_string(home.0.join(".codex/config.toml")).unwrap(),
@@ -1422,7 +1483,7 @@ mod tests {
         );
         assert_eq!(
             std::fs::read_to_string(home.0.join(".cursor/mcp.json")).unwrap(),
-            "{\n  \"theme\": \"dark\"\n}\n"
+            "{\"theme\":\"dark\"}\n"
         );
         for path in [
             home.0.join(".claude/settings.json"),
@@ -1634,6 +1695,23 @@ mod tests {
     }
 
     #[test]
+    fn uninstall_restores_unedited_hook_config_exactly() {
+        let home = TempHome::new("hook-exact-restore");
+        home.mkdir(".cursor");
+        let original =
+            "{\"hooks\":{\"preToolUse\":[{\"command\":\"keep\",\"matcher\":\"Shell\"}]}}\n";
+        home.write(".cursor/hooks.json", original);
+
+        home.run(&["--agents", "cursor"]);
+        home.run(&["--agents", "cursor", "--uninstall"]);
+
+        assert_eq!(
+            std::fs::read_to_string(home.0.join(".cursor/hooks.json")).unwrap(),
+            original
+        );
+    }
+
+    #[test]
     fn force_does_not_replace_a_nested_group_with_unrelated_handlers() {
         let home = TempHome::new("mixed-hook-group");
         home.mkdir(".claude");
@@ -1674,6 +1752,27 @@ mod tests {
         assert!(String::from_utf8(output)
             .unwrap()
             .contains("in-home $CODEX_HOME exists"));
+    }
+
+    #[test]
+    fn codex_home_outside_home_does_not_write_inactive_default_config() {
+        let home = TempHome::new("codex-outside-home");
+        home.mkdir(".codex");
+        let mut output = Vec::new();
+        run(
+            &["--agents".into(), "codex".into()],
+            Environment {
+                home: home.0.clone(),
+                cwd: home.0.clone(),
+                codex_home: Some(std::env::temp_dir()),
+            },
+            &mut output,
+        )
+        .unwrap();
+        assert!(!home.0.join(".codex/config.toml").exists());
+        assert!(String::from_utf8(output)
+            .unwrap()
+            .contains("$CODEX_HOME is outside home or relative; skipped"));
     }
 
     #[test]
