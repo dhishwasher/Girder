@@ -1,80 +1,67 @@
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
-HOOK = Path(__file__).parents[1] / ".claude" / "hooks" / "girder_context_advisory.py"
+HOOK = Path(__file__).parents[1] / "npm" / "hooks" / "girder_context_advisory.py"
 
 
 class GirderContextAdvisoryHookTests(unittest.TestCase):
-    def run_hook(self, file_path: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
-        payload = json.dumps({"tool_input": {"file_path": file_path}})
+    def run_hook(self, payload: str) -> subprocess.CompletedProcess:
         return subprocess.run(
             [sys.executable, str(HOOK)],
             input=payload,
             capture_output=True,
             text=True,
-            env=env or {},
+            check=False,
         )
 
-    def test_default_env_is_advisory_not_deny(self):
-        result = self.run_hook("crates/aether-app/src/project.rs")
-        self.assertEqual(result.returncode, 0)
-        output = json.loads(result.stdout)
-        self.assertNotIn("permissionDecision", output["hookSpecificOutput"])
-        self.assertIn("additionalContext", output["hookSpecificOutput"])
+    def test_advises_only_for_whole_source_reads_with_a_graph(self):
+        with tempfile.TemporaryDirectory() as root:
+            request = {
+                "tool_name": "Read",
+                "cwd": root,
+                "tool_input": {"file_path": "crates/aether-app/src/project.rs"},
+            }
+            missing = self.run_hook(json.dumps(request))
+            self.assertEqual((missing.returncode, missing.stdout, missing.stderr), (0, "", ""))
 
-    def test_enforce_denies_a_non_allowlisted_rust_file(self):
-        result = self.run_hook(
-            "crates/aether-app/src/project.rs",
-            env={"GIRDER_HOOK_ENFORCE": "1"},
-        )
-        self.assertEqual(result.returncode, 0)
-        output = json.loads(result.stdout)
-        self.assertEqual(output["hookSpecificOutput"]["permissionDecision"], "deny")
-        self.assertIn("girder context", output["hookSpecificOutput"]["permissionDecisionReason"])
+            Path(root, "project.aether").touch()
+            ready = self.run_hook(json.dumps(request))
+            self.assertEqual(ready.returncode, 0)
+            self.assertEqual(ready.stdout, "")
+            self.assertIn("girder context", ready.stderr)
 
-    def test_enforce_stays_advisory_for_allowlisted_main_rs(self):
-        result = self.run_hook(
-            "crates/aether-app/src/main.rs",
-            env={"GIRDER_HOOK_ENFORCE": "1"},
-        )
-        self.assertEqual(result.returncode, 0)
-        output = json.loads(result.stdout)
-        self.assertNotIn("permissionDecision", output["hookSpecificOutput"])
-        self.assertIn("additionalContext", output["hookSpecificOutput"])
+            for file_path in ("sample.py", "sample.ts", "sample.tsx", "sample.go"):
+                with self.subTest(file_path=file_path):
+                    request["tool_input"]["file_path"] = file_path
+                    self.assertIn("girder context", self.run_hook(json.dumps(request)).stderr)
 
-    def test_enforce_stays_advisory_for_allowlisted_cargo_toml(self):
-        result = self.run_hook("Cargo.toml", env={"GIRDER_HOOK_ENFORCE": "1"})
-        self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout.strip(), "")
+    def test_ignores_bounded_reads_other_tools_and_non_source_files(self):
+        with tempfile.TemporaryDirectory() as root:
+            Path(root, "project.aether").touch()
+            request = {
+                "tool_name": "Read",
+                "cwd": root,
+                "tool_input": {"file_path": "sample.rs", "offset": 20},
+            }
+            for change in (
+                {},
+                {"tool_input": {"file_path": "README.md"}},
+                {"tool_name": "Bash", "tool_input": {"file_path": "sample.rs"}},
+            ):
+                with self.subTest(change=change):
+                    candidate = request | change
+                    result = self.run_hook(json.dumps(candidate))
+                    self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "", ""))
 
-    def test_enforce_stays_advisory_for_docs_directory(self):
-        result = self.run_hook(
-            "docs/some_script.py",
-            env={"GIRDER_HOOK_ENFORCE": "1"},
-        )
-        self.assertEqual(result.returncode, 0)
-        output = json.loads(result.stdout)
-        self.assertNotIn("permissionDecision", output["hookSpecificOutput"])
-
-    def test_non_source_file_is_silent_regardless_of_enforce(self):
-        for env in ({}, {"GIRDER_HOOK_ENFORCE": "1"}):
-            with self.subTest(env=env):
-                result = self.run_hook("README.md", env=env)
-                self.assertEqual(result.returncode, 0)
-                self.assertEqual(result.stdout.strip(), "")
-
-    def test_malformed_stdin_is_silent(self):
-        result = subprocess.run(
-            [sys.executable, str(HOOK)],
-            input="not json",
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout.strip(), "")
+    def test_malformed_input_fails_open(self):
+        for payload in ("not json", "[]", "{}"):
+            with self.subTest(payload=payload):
+                result = self.run_hook(payload)
+                self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "", ""))
 
 
 if __name__ == "__main__":
