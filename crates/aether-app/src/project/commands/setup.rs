@@ -1,11 +1,20 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
+use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 use std::ffi::OsString;
 use std::io::{self, Write};
 use std::path::{Component, Path, PathBuf};
 
 const STATE_FILE: &str = "girder-setup-state.json";
+#[cfg(windows)]
+const HOOK_FILE: &str = "girder_context_advisory.py";
+#[cfg(windows)]
+const HOOK_SOURCE: &str = include_str!("../../../../../npm/hooks/girder_context_advisory.py");
+#[cfg(not(windows))]
+const HOOK_FILE: &str = "girder_context_advisory.sh";
+#[cfg(not(windows))]
+const HOOK_SOURCE: &str = include_str!("../../../../../npm/hooks/girder_context_advisory.sh");
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 enum Agent {
@@ -60,10 +69,37 @@ struct McpState {
     installed: Value,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "lowercase")]
+enum HookStyle {
+    Nested,
+    Flat,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct HookState {
+    config_path: String,
+    config_created: bool,
+    event_key: String,
+    style: HookStyle,
+    previous_matches: Vec<Value>,
+    installed: Value,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct ScriptState {
+    path: String,
+    previous: Option<String>,
+    installed_sha256: String,
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(default)]
 struct SetupState {
     version: u32,
     mcps: Vec<McpState>,
+    hooks: Vec<HookState>,
+    scripts: Vec<ScriptState>,
 }
 
 #[derive(Debug)]
@@ -161,9 +197,12 @@ fn run(args: &[String], env: Environment, out: &mut dyn Write) -> io::Result<()>
         // subsequent uninstall can still identify the intended Girder entry.
         changes.sort_by_key(|change| {
             if options.uninstall {
-                is_state_path(&change.path)
+                (is_state_path(&change.path), false)
             } else {
-                !is_state_path(&change.path)
+                (
+                    !is_state_path(&change.path),
+                    !is_hook_script_path(&change.path),
+                )
             }
         });
         for change in &changes {
@@ -355,51 +394,55 @@ fn plan_install(
     if state.version == 0 {
         state.version = 1;
     }
+    let state_before = read_optional(&state_path)?;
 
     let format = detection.format.expect("detected format");
     let before = read_optional(&config_path)?;
     let desired = mcp_entry();
     let mut document = parse_config(before.as_deref(), format, &config_path)?;
     let current = get_mcp_entry(&document, format)?;
-    if current.is_some() && !force {
-        notes.push(format!(
-            "{}: existing girder entry left unchanged (use --force to replace it).",
-            detection.agent.label()
-        ));
-        return Ok(());
-    }
     if current.as_ref() == Some(&desired) {
         notes.push(format!(
             "{}: girder entry already configured.",
             detection.agent.label()
         ));
-        return Ok(());
-    }
-
-    if let Some(owned) = state
-        .mcps
-        .iter_mut()
-        .find(|owned| owned.config_path == config_path.to_string_lossy())
-    {
-        owned.installed = desired.clone();
+    } else if current.is_some() && !force {
+        notes.push(format!(
+            "{}: existing girder entry left unchanged (use --force to replace it).",
+            detection.agent.label()
+        ));
     } else {
-        state.mcps.push(McpState {
-            config_path: config_path.to_string_lossy().into_owned(),
-            format,
-            config_created: before.is_none(),
-            previous: current,
-            installed: desired.clone(),
-        });
+        if let Some(owned) = state
+            .mcps
+            .iter_mut()
+            .find(|owned| owned.config_path == config_path.to_string_lossy())
+        {
+            owned.installed = desired.clone();
+        } else {
+            state.mcps.push(McpState {
+                config_path: config_path.to_string_lossy().into_owned(),
+                format,
+                config_created: before.is_none(),
+                previous: current,
+                installed: desired.clone(),
+            });
+        }
+        let after = if format == ConfigFormat::Toml {
+            rewrite_codex_toml(before.as_deref().unwrap_or_default(), Some(&desired))?
+        } else {
+            set_mcp_entry(&mut document, format, Some(desired))?;
+            serialize_config(&document, format)?
+        };
+        push_change(changes, config_path, before, Some(after));
     }
-    set_mcp_entry(&mut document, format, Some(desired))?;
-    let after = serialize_config(&document, format)?;
-    push_change(changes, config_path, before, Some(after));
 
-    let state_before = read_optional(&state_path)?;
-    let state_after = serde_json::to_vec_pretty(&state)
-        .map(append_newline)
-        .map_err(json_error)?;
-    push_change(changes, state_path, state_before, Some(state_after));
+    plan_hook_install(detection, home, force, &mut state, changes, notes)?;
+    if has_ownership(&state) {
+        let state_after = serde_json::to_vec_pretty(&state)
+            .map(append_newline)
+            .map_err(json_error)?;
+        push_change(changes, state_path, state_before, Some(state_after));
+    }
     Ok(())
 }
 
@@ -418,14 +461,6 @@ fn plan_uninstall(
         ));
         return Ok(());
     };
-    if state.mcps.is_empty() {
-        notes.push(format!(
-            "{}: no setup-owned MCP entry to remove.",
-            detection.agent.label()
-        ));
-        return Ok(());
-    }
-
     let mut retained = Vec::new();
     for owned in std::mem::take(&mut state.mcps) {
         let config_path = safe_target(Path::new(&owned.config_path), home)?;
@@ -442,18 +477,25 @@ fn plan_uninstall(
                 retained.push(owned);
                 continue;
             }
-            set_mcp_entry(&mut document, owned.format, owned.previous.clone())?;
-            if owned.config_created && config_is_empty(&document, owned.format)? {
+            let after = if owned.format == ConfigFormat::Toml {
+                rewrite_codex_toml(bytes, owned.previous.as_ref())?
+            } else {
+                set_mcp_entry(&mut document, owned.format, owned.previous.clone())?;
+                serialize_config(&document, owned.format)?
+            };
+            let after_document = parse_config(Some(&after), owned.format, &config_path)?;
+            if owned.config_created && config_is_empty(&after_document, owned.format)? {
                 push_change(changes, config_path, before, None);
             } else {
-                let after = serialize_config(&document, owned.format)?;
                 push_change(changes, config_path, before, Some(after));
             }
         }
     }
     state.mcps = retained;
 
-    if state.mcps.is_empty() {
+    uninstall_hooks(detection, home, &mut state, changes, notes)?;
+
+    if state.mcps.is_empty() && state.hooks.is_empty() && state.scripts.is_empty() {
         push_change(changes, state_path, state_before, None);
     } else {
         let after = serde_json::to_vec_pretty(&state)
@@ -462,6 +504,402 @@ fn plan_uninstall(
         push_change(changes, state_path, state_before, Some(after));
     }
     Ok(())
+}
+
+fn plan_hook_install(
+    detection: &Detection,
+    home: &Path,
+    force: bool,
+    state: &mut SetupState,
+    changes: &mut Vec<Change>,
+    notes: &mut Vec<String>,
+) -> io::Result<()> {
+    let Some((event_key, style)) = hook_shape(detection.agent) else {
+        if detection.agent == Agent::Codex {
+            notes.push(
+                "Codex: advisory hook not registered because documented file reads arrive as unstructured Bash commands, not a structured Read payload."
+                    .into(),
+            );
+        }
+        return Ok(());
+    };
+    let script_path = safe_target(&detection.config_dir.join("hooks").join(HOOK_FILE), home)?;
+    let script_before = read_optional(&script_path)?;
+    let script_matches = script_before.as_deref() == Some(HOOK_SOURCE.as_bytes());
+    if script_before.is_some() && !script_matches && !force {
+        notes.push(format!(
+            "{}: existing {} left unchanged; advisory hook was not registered (use --force to replace it).",
+            detection.agent.label(),
+            script_path.display()
+        ));
+        return Ok(());
+    }
+    if !script_matches {
+        if let Some(owned) = state
+            .scripts
+            .iter_mut()
+            .find(|owned| owned.path == script_path.to_string_lossy())
+        {
+            owned.installed_sha256 = sha256(HOOK_SOURCE.as_bytes());
+        } else {
+            state.scripts.push(ScriptState {
+                path: script_path.to_string_lossy().into_owned(),
+                previous: script_before
+                    .as_deref()
+                    .map(std::str::from_utf8)
+                    .transpose()
+                    .map_err(|error| {
+                        invalid(format!(
+                            "existing hook {} is not UTF-8: {error}",
+                            script_path.display()
+                        ))
+                    })?
+                    .map(str::to_owned),
+                installed_sha256: sha256(HOOK_SOURCE.as_bytes()),
+            });
+        }
+        push_change(
+            changes,
+            script_path.clone(),
+            script_before,
+            Some(HOOK_SOURCE.as_bytes().to_vec()),
+        );
+    }
+
+    let config_path = safe_target(&hook_config_path(detection), home)?;
+    let before = read_optional(&config_path)?;
+    let mut document = parse_config(before.as_deref(), ConfigFormat::Json, &config_path)?;
+    let desired = hook_entry(style, &script_path);
+    let matches = matching_hooks(&document, event_key, style)?;
+    if matches.len() == 1 && matches[0] == desired {
+        notes.push(format!(
+            "{}: Girder advisory hook already configured.",
+            detection.agent.label()
+        ));
+        return Ok(());
+    }
+    if !matches.is_empty() && !force {
+        notes.push(format!(
+            "{}: existing Girder advisory hook left unchanged (use --force to replace it).",
+            detection.agent.label()
+        ));
+        return Ok(());
+    }
+    if force
+        && matches
+            .iter()
+            .any(|entry| !hook_group_is_safely_replaceable(entry, style))
+    {
+        notes.push(format!(
+            "{}: a Girder advisory handler shares a hook group with other handlers; left the group unchanged.",
+            detection.agent.label()
+        ));
+        return Ok(());
+    }
+
+    if let Some(owned) = state
+        .hooks
+        .iter_mut()
+        .find(|owned| owned.config_path == config_path.to_string_lossy())
+    {
+        owned.installed = desired.clone();
+    } else {
+        state.hooks.push(HookState {
+            config_path: config_path.to_string_lossy().into_owned(),
+            config_created: before.is_none(),
+            event_key: event_key.into(),
+            style,
+            previous_matches: matches,
+            installed: desired.clone(),
+        });
+    }
+    replace_matching_hooks(&mut document, event_key, style, Some(desired))?;
+    let after = serialize_config(&document, ConfigFormat::Json)?;
+    push_change(changes, config_path, before, Some(after));
+    Ok(())
+}
+
+fn uninstall_hooks(
+    detection: &Detection,
+    home: &Path,
+    state: &mut SetupState,
+    changes: &mut Vec<Change>,
+    notes: &mut Vec<String>,
+) -> io::Result<()> {
+    let mut retained_hooks = Vec::new();
+    for owned in std::mem::take(&mut state.hooks) {
+        let config_path = safe_target(Path::new(&owned.config_path), home)?;
+        let before = read_optional(&config_path)?;
+        if let Some(bytes) = before.as_deref() {
+            let mut document = parse_config(Some(bytes), ConfigFormat::Json, &config_path)?;
+            let matches = matching_hooks(&document, &owned.event_key, owned.style)?;
+            if !matches.iter().any(|entry| entry == &owned.installed) {
+                if !matches.is_empty() {
+                    notes.push(format!(
+                        "{}: advisory hook in {} changed after setup; left it and its ownership record unchanged.",
+                        detection.agent.label(),
+                        config_path.display()
+                    ));
+                    retained_hooks.push(owned);
+                }
+                continue;
+            }
+            remove_exact_hook(&mut document, &owned.event_key, &owned.installed)?;
+            append_hooks(
+                &mut document,
+                &owned.event_key,
+                owned.previous_matches.clone(),
+            )?;
+            if owned.config_created && config_is_empty(&document, ConfigFormat::Json)? {
+                push_change(changes, config_path, before, None);
+            } else {
+                let after = serialize_config(&document, ConfigFormat::Json)?;
+                push_change(changes, config_path, before, Some(after));
+            }
+        }
+    }
+    state.hooks = retained_hooks;
+
+    let preserve_scripts = !state.hooks.is_empty();
+    let mut retained_scripts = Vec::new();
+    for owned in std::mem::take(&mut state.scripts) {
+        if preserve_scripts {
+            retained_scripts.push(owned);
+            continue;
+        }
+        let script_path = safe_target(Path::new(&owned.path), home)?;
+        let before = read_optional(&script_path)?;
+        if let Some(bytes) = before.as_deref() {
+            if sha256(bytes) != owned.installed_sha256 {
+                notes.push(format!(
+                    "{}: hook script {} changed after setup; left it and its ownership record unchanged.",
+                    detection.agent.label(),
+                    script_path.display()
+                ));
+                retained_scripts.push(owned);
+                continue;
+            }
+            push_change(
+                changes,
+                script_path,
+                before,
+                owned.previous.map(String::into_bytes),
+            );
+        }
+    }
+    state.scripts = retained_scripts;
+    Ok(())
+}
+
+fn hook_shape(agent: Agent) -> Option<(&'static str, HookStyle)> {
+    match agent {
+        Agent::Claude => Some(("PreToolUse", HookStyle::Nested)),
+        Agent::Cursor => Some(("preToolUse", HookStyle::Flat)),
+        Agent::Codex | Agent::Generic => None,
+    }
+}
+
+fn hook_config_path(detection: &Detection) -> PathBuf {
+    match detection.agent {
+        Agent::Claude => detection.config_dir.join("settings.json"),
+        Agent::Codex | Agent::Cursor => detection.config_dir.join("hooks.json"),
+        Agent::Generic => unreachable!("generic clients have no hook path"),
+    }
+}
+
+fn hook_entry(style: HookStyle, script_path: &Path) -> Value {
+    let interpreter = if cfg!(windows) { "python" } else { "sh" };
+    let command = format!(
+        "{interpreter} {}",
+        shell_quote(&script_path.to_string_lossy())
+    );
+    match style {
+        HookStyle::Nested => json!({
+            "matcher": "Read",
+            "hooks": [{"type": "command", "command": command}]
+        }),
+        HookStyle::Flat => json!({"command": command, "matcher": "Read"}),
+    }
+}
+
+fn shell_quote(value: &str) -> String {
+    if cfg!(windows) {
+        format!("\"{}\"", value.replace('"', "\\\""))
+    } else {
+        format!("'{}'", value.replace('\'', "'\\''"))
+    }
+}
+
+fn matching_hooks(document: &Value, event_key: &str, style: HookStyle) -> io::Result<Vec<Value>> {
+    let Some(entries) = hook_entries(document, event_key)? else {
+        return Ok(Vec::new());
+    };
+    Ok(entries
+        .iter()
+        .filter(|entry| hook_group_contains_girder(entry, style))
+        .cloned()
+        .collect())
+}
+
+fn hook_entries<'a>(document: &'a Value, event_key: &str) -> io::Result<Option<&'a Vec<Value>>> {
+    let root = document
+        .as_object()
+        .ok_or_else(|| invalid("hook config root must be an object"))?;
+    let Some(hooks) = root.get("hooks") else {
+        return Ok(None);
+    };
+    let hooks = hooks
+        .as_object()
+        .ok_or_else(|| invalid("hooks must be an object"))?;
+    let Some(entries) = hooks.get(event_key) else {
+        return Ok(None);
+    };
+    entries
+        .as_array()
+        .map(Some)
+        .ok_or_else(|| invalid(format!("hooks.{event_key} must be an array")))
+}
+
+fn hook_group_contains_girder(entry: &Value, style: HookStyle) -> bool {
+    match style {
+        HookStyle::Flat => entry
+            .get("command")
+            .and_then(Value::as_str)
+            .is_some_and(is_girder_hook_command),
+        HookStyle::Nested => entry
+            .get("hooks")
+            .and_then(Value::as_array)
+            .is_some_and(|handlers| {
+                handlers.iter().any(|handler| {
+                    handler
+                        .get("command")
+                        .and_then(Value::as_str)
+                        .is_some_and(is_girder_hook_command)
+                })
+            }),
+    }
+}
+
+fn hook_group_is_safely_replaceable(entry: &Value, style: HookStyle) -> bool {
+    match style {
+        HookStyle::Flat => hook_group_contains_girder(entry, style),
+        HookStyle::Nested => entry
+            .get("hooks")
+            .and_then(Value::as_array)
+            .is_some_and(|handlers| {
+                !handlers.is_empty()
+                    && handlers.iter().all(|handler| {
+                        handler
+                            .get("command")
+                            .and_then(Value::as_str)
+                            .is_some_and(is_girder_hook_command)
+                    })
+            }),
+    }
+}
+
+fn replace_matching_hooks(
+    document: &mut Value,
+    event_key: &str,
+    style: HookStyle,
+    installed: Option<Value>,
+) -> io::Result<()> {
+    let entries = hook_entries_mut(document, event_key, installed.is_some())?;
+    if let Some(entries) = entries {
+        entries.retain(|entry| {
+            !(hook_group_contains_girder(entry, style)
+                && hook_group_is_safely_replaceable(entry, style))
+        });
+        if let Some(installed) = installed {
+            entries.push(installed);
+        }
+    }
+    prune_empty_hooks(document, event_key)?;
+    Ok(())
+}
+
+fn remove_exact_hook(document: &mut Value, event_key: &str, installed: &Value) -> io::Result<()> {
+    if let Some(entries) = hook_entries_mut(document, event_key, false)? {
+        if let Some(index) = entries.iter().position(|entry| entry == installed) {
+            entries.remove(index);
+        }
+    }
+    prune_empty_hooks(document, event_key)
+}
+
+fn is_girder_hook_command(command: &str) -> bool {
+    command.contains("girder_context_advisory.py") || command.contains("girder_context_advisory.sh")
+}
+
+fn append_hooks(document: &mut Value, event_key: &str, entries: Vec<Value>) -> io::Result<()> {
+    if entries.is_empty() {
+        return Ok(());
+    }
+    hook_entries_mut(document, event_key, true)?
+        .expect("created hook array")
+        .extend(entries);
+    Ok(())
+}
+
+fn hook_entries_mut<'a>(
+    document: &'a mut Value,
+    event_key: &str,
+    create: bool,
+) -> io::Result<Option<&'a mut Vec<Value>>> {
+    let root = document
+        .as_object_mut()
+        .ok_or_else(|| invalid("hook config root must be an object"))?;
+    if create && !root.contains_key("hooks") {
+        root.insert("hooks".into(), Value::Object(Map::new()));
+    }
+    let Some(hooks) = root.get_mut("hooks") else {
+        return Ok(None);
+    };
+    let hooks = hooks
+        .as_object_mut()
+        .ok_or_else(|| invalid("hooks must be an object"))?;
+    if create && !hooks.contains_key(event_key) {
+        hooks.insert(event_key.into(), Value::Array(Vec::new()));
+    }
+    let Some(entries) = hooks.get_mut(event_key) else {
+        return Ok(None);
+    };
+    entries
+        .as_array_mut()
+        .map(Some)
+        .ok_or_else(|| invalid(format!("hooks.{event_key} must be an array")))
+}
+
+fn prune_empty_hooks(document: &mut Value, event_key: &str) -> io::Result<()> {
+    let root = document
+        .as_object_mut()
+        .ok_or_else(|| invalid("hook config root must be an object"))?;
+    let Some(hooks) = root.get_mut("hooks") else {
+        return Ok(());
+    };
+    let hooks = hooks
+        .as_object_mut()
+        .ok_or_else(|| invalid("hooks must be an object"))?;
+    if hooks
+        .get(event_key)
+        .and_then(Value::as_array)
+        .is_some_and(Vec::is_empty)
+    {
+        hooks.remove(event_key);
+    }
+    if hooks.is_empty() {
+        root.remove("hooks");
+    }
+    Ok(())
+}
+
+fn sha256(bytes: &[u8]) -> String {
+    let digest = Sha256::digest(bytes);
+    digest.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn has_ownership(state: &SetupState) -> bool {
+    !(state.mcps.is_empty() && state.hooks.is_empty() && state.scripts.is_empty())
 }
 
 fn mcp_entry() -> Value {
@@ -512,6 +950,62 @@ fn serialize_config(document: &Value, format: ConfigFormat) -> io::Result<Vec<u8
             .map(|text| text.into_bytes())
             .map_err(|error| invalid(format!("could not encode TOML: {error}"))),
     }
+}
+
+fn rewrite_codex_toml(before: &[u8], entry: Option<&Value>) -> io::Result<Vec<u8>> {
+    let text = std::str::from_utf8(before)
+        .map_err(|error| invalid(format!("Codex config is not UTF-8: {error}")))?;
+    let lines: Vec<&str> = text.split_inclusive('\n').collect();
+    let start = lines
+        .iter()
+        .position(|line| line.trim() == "[mcp_servers.girder]");
+    let existing = parse_config(Some(before), ConfigFormat::Toml, Path::new("config.toml"))?;
+    if get_mcp_entry(&existing, ConfigFormat::Toml)?.is_some() && start.is_none() {
+        return Err(invalid(
+            "Codex girder entry uses an inline or unsupported TOML shape; left config unchanged",
+        ));
+    }
+
+    let mut after = String::new();
+    if let Some(start) = start {
+        let end = lines[start + 1..]
+            .iter()
+            .position(|line| line.trim_start().starts_with('['))
+            .map_or(lines.len(), |relative| start + 1 + relative);
+        for line in &lines[..start] {
+            after.push_str(line);
+        }
+        if let Some(entry) = entry {
+            after.push_str(&codex_girder_table(entry)?);
+        }
+        for line in &lines[end..] {
+            after.push_str(line);
+        }
+    } else {
+        after.push_str(text);
+        if let Some(entry) = entry {
+            if !after.is_empty() && !after.ends_with('\n') {
+                after.push('\n');
+            }
+            after.push_str(&codex_girder_table(entry)?);
+        }
+    }
+    let after_document = parse_config(
+        Some(after.as_bytes()),
+        ConfigFormat::Toml,
+        Path::new("config.toml"),
+    )?;
+    if get_mcp_entry(&after_document, ConfigFormat::Toml)?.as_ref() != entry {
+        return Err(invalid(
+            "Codex TOML rewrite did not produce the requested entry",
+        ));
+    }
+    Ok(after.into_bytes())
+}
+
+fn codex_girder_table(entry: &Value) -> io::Result<String> {
+    toml::to_string_pretty(&json!({"mcp_servers": {"girder": entry}}))
+        .map_err(|error| invalid(format!("could not encode Codex girder entry: {error}")))
 }
 
 fn get_mcp_entry(document: &Value, format: ConfigFormat) -> io::Result<Option<Value>> {
@@ -782,6 +1276,10 @@ fn is_state_path(path: &Path) -> bool {
     path.file_name().is_some_and(|name| name == STATE_FILE)
 }
 
+fn is_hook_script_path(path: &Path) -> bool {
+    path.file_name().is_some_and(|name| name == HOOK_FILE)
+}
+
 fn json_error(error: serde_json::Error) -> io::Error {
     invalid(format!("JSON error: {error}"))
 }
@@ -882,6 +1380,22 @@ mod tests {
         let claude_after = std::fs::read(home.0.join(".claude.json")).unwrap();
         let codex_after = std::fs::read(home.0.join(".codex/config.toml")).unwrap();
         let cursor_after = std::fs::read(home.0.join(".cursor/mcp.json")).unwrap();
+        let claude_hooks: Value =
+            serde_json::from_slice(&std::fs::read(home.0.join(".claude/settings.json")).unwrap())
+                .unwrap();
+        let cursor_hooks: Value =
+            serde_json::from_slice(&std::fs::read(home.0.join(".cursor/hooks.json")).unwrap())
+                .unwrap();
+        assert_eq!(claude_hooks["hooks"]["PreToolUse"][0]["matcher"], "Read");
+        assert_eq!(cursor_hooks["hooks"]["preToolUse"][0]["matcher"], "Read");
+        assert!(first.contains("Codex: advisory hook not registered"));
+        for directory in [".claude", ".cursor"] {
+            assert_eq!(
+                std::fs::read_to_string(home.0.join(directory).join("hooks").join(HOOK_FILE))
+                    .unwrap(),
+                HOOK_SOURCE
+            );
+        }
         let second = home.run(&["--agents", "claude,codex,cursor"]);
         assert!(second.contains("Changed:\n  nothing"));
         assert_eq!(
@@ -910,6 +1424,18 @@ mod tests {
             std::fs::read_to_string(home.0.join(".cursor/mcp.json")).unwrap(),
             "{\n  \"theme\": \"dark\"\n}\n"
         );
+        for path in [
+            home.0.join(".claude/settings.json"),
+            home.0.join(".cursor/hooks.json"),
+            home.0.join(".claude/hooks").join(HOOK_FILE),
+            home.0.join(".cursor/hooks").join(HOOK_FILE),
+        ] {
+            assert!(
+                !path.exists(),
+                "setup-owned file survived: {}",
+                path.display()
+            );
+        }
     }
 
     #[test]
@@ -923,7 +1449,14 @@ mod tests {
 
         let untouched = home.run(&["--agents", "cursor"]);
         assert!(untouched.contains("existing girder entry left unchanged"));
-        assert!(!home.0.join(".cursor").join(STATE_FILE).exists());
+        let untouched_config: Value =
+            serde_json::from_slice(&std::fs::read(home.0.join(".cursor/mcp.json")).unwrap())
+                .unwrap();
+        assert_eq!(
+            untouched_config["mcpServers"]["girder"]["command"],
+            "custom"
+        );
+        assert!(home.0.join(".cursor").join(STATE_FILE).exists());
 
         home.run(&["--agents", "cursor", "--force"]);
         let configured: Value =
@@ -1009,6 +1542,119 @@ mod tests {
     }
 
     #[test]
+    fn force_replaces_and_uninstall_restores_an_existing_hook() {
+        let home = TempHome::new("force-hook");
+        home.mkdir(".cursor");
+        home.write(
+            ".cursor/hooks.json",
+            "{\"hooks\":{\"preToolUse\":[{\"command\":\"python old/girder_context_advisory.py\",\"matcher\":\"Read\"},{\"command\":\"keep\",\"matcher\":\"Shell\"}]}}\n",
+        );
+        let untouched = home.run(&["--agents", "cursor"]);
+        assert!(untouched.contains("existing Girder advisory hook left unchanged"));
+
+        home.run(&["--agents", "cursor", "--force"]);
+        let configured: Value =
+            serde_json::from_slice(&std::fs::read(home.0.join(".cursor/hooks.json")).unwrap())
+                .unwrap();
+        let configured_entries = configured["hooks"]["preToolUse"].as_array().unwrap();
+        assert_eq!(configured_entries.len(), 2);
+        assert!(configured_entries
+            .iter()
+            .any(|entry| entry["command"] == "keep"));
+        assert!(configured_entries.iter().any(|entry| {
+            entry["command"]
+                .as_str()
+                .is_some_and(|command| command.contains(&home.0.to_string_lossy().to_string()))
+        }));
+
+        home.run(&["--agents", "cursor", "--uninstall"]);
+        let restored: Value =
+            serde_json::from_slice(&std::fs::read(home.0.join(".cursor/hooks.json")).unwrap())
+                .unwrap();
+        let restored_entries = restored["hooks"]["preToolUse"].as_array().unwrap();
+        assert!(restored_entries
+            .iter()
+            .any(|entry| entry["command"] == "python old/girder_context_advisory.py"));
+        assert!(restored_entries
+            .iter()
+            .any(|entry| entry["command"] == "keep"));
+    }
+
+    #[test]
+    fn uninstall_removes_only_the_exact_owned_hook_entry() {
+        let home = TempHome::new("exact-hook-uninstall");
+        home.mkdir(".cursor");
+        home.run(&["--agents", "cursor"]);
+        let hooks_path = home.0.join(".cursor/hooks.json");
+        let mut document: Value =
+            serde_json::from_slice(&std::fs::read(&hooks_path).unwrap()).unwrap();
+        document["hooks"]["preToolUse"]
+            .as_array_mut()
+            .unwrap()
+            .push(json!({
+                "command": "python custom/girder_context_advisory.py",
+                "matcher": "Read"
+            }));
+        std::fs::write(
+            &hooks_path,
+            append_newline(serde_json::to_vec_pretty(&document).unwrap()),
+        )
+        .unwrap();
+
+        home.run(&["--agents", "cursor", "--uninstall"]);
+        let remaining: Value =
+            serde_json::from_slice(&std::fs::read(&hooks_path).unwrap()).unwrap();
+        let entries = remaining["hooks"]["preToolUse"].as_array().unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(
+            entries[0]["command"],
+            "python custom/girder_context_advisory.py"
+        );
+    }
+
+    #[test]
+    fn uninstall_keeps_the_script_when_its_registration_was_modified() {
+        let home = TempHome::new("modified-hook");
+        home.mkdir(".cursor");
+        home.run(&["--agents", "cursor"]);
+        let hooks_path = home.0.join(".cursor/hooks.json");
+        let mut document: Value =
+            serde_json::from_slice(&std::fs::read(&hooks_path).unwrap()).unwrap();
+        document["hooks"]["preToolUse"][0]["timeout"] = json!(5);
+        std::fs::write(
+            &hooks_path,
+            append_newline(serde_json::to_vec_pretty(&document).unwrap()),
+        )
+        .unwrap();
+
+        let output = home.run(&["--agents", "cursor", "--uninstall"]);
+        assert!(output.contains("advisory hook") && output.contains("changed after setup"));
+        assert!(home.0.join(".cursor/hooks").join(HOOK_FILE).exists());
+        assert!(home.0.join(".cursor").join(STATE_FILE).exists());
+    }
+
+    #[test]
+    fn force_does_not_replace_a_nested_group_with_unrelated_handlers() {
+        let home = TempHome::new("mixed-hook-group");
+        home.mkdir(".claude");
+        home.write(
+            ".claude/settings.json",
+            "{\"hooks\":{\"PreToolUse\":[{\"matcher\":\"Read\",\"hooks\":[{\"type\":\"command\",\"command\":\"keep\"},{\"type\":\"command\",\"command\":\"python old/girder_context_advisory.py\"}]}]}}\n",
+        );
+
+        let output = home.run(&["--agents", "claude", "--force"]);
+        assert!(output.contains("shares a hook group with other handlers"));
+        let document: Value =
+            serde_json::from_slice(&std::fs::read(home.0.join(".claude/settings.json")).unwrap())
+                .unwrap();
+        let handlers = document["hooks"]["PreToolUse"][0]["hooks"]
+            .as_array()
+            .unwrap();
+        assert_eq!(handlers.len(), 2);
+        assert!(handlers.iter().any(|handler| handler["command"] == "keep"));
+    }
+
+    #[test]
     fn codex_home_override_is_used_only_inside_home() {
         let home = TempHome::new("codex-home");
         home.mkdir("custom-codex");
@@ -1028,6 +1674,25 @@ mod tests {
         assert!(String::from_utf8(output)
             .unwrap()
             .contains("in-home $CODEX_HOME exists"));
+    }
+
+    #[test]
+    fn codex_merge_preserves_comments_and_other_tables_byte_for_byte() {
+        let home = TempHome::new("codex-comments");
+        home.mkdir(".codex");
+        let original = "# private agent preferences\nmodel = \"gpt\"\n\n[features]\nweb_search = true # keep this\n";
+        home.write(".codex/config.toml", original);
+
+        home.run(&["--agents", "codex"]);
+        let installed = std::fs::read_to_string(home.0.join(".codex/config.toml")).unwrap();
+        assert!(installed.starts_with(original));
+        assert!(installed.contains("[mcp_servers.girder]"));
+
+        home.run(&["--agents", "codex", "--uninstall"]);
+        assert_eq!(
+            std::fs::read_to_string(home.0.join(".codex/config.toml")).unwrap(),
+            original
+        );
     }
 
     #[test]

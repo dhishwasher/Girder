@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 
-// `npx girder-mcp [dir]` — start the Girder MCP server on stdio.
+// `npx girder-mcp [dir]` starts MCP; `npx girder-mcp setup` configures agents.
 //
 // This is the entry point an MCP client config points at. It execs the real
 // binary with `mcp` prepended, so the client's stdin/stdout are handed
@@ -43,8 +43,9 @@ for (const line of resolutionNotice("girder-mcp", binary)) {
 // project the agent is working on.
 const args = process.argv.slice(2);
 const forwarded = args.length > 0 ? args : ["."];
+const command = forwarded[0] === "setup" ? forwarded : ["mcp", ...forwarded];
 
-const child = spawn(binary, ["mcp", ...forwarded], {
+const child = spawn(binary, command, {
   stdio: "inherit",
   env: childEnv(),
 });

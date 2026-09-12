@@ -29,6 +29,7 @@
   },
   "files": [
     "bin/",
+    "hooks/",
     "install.js",
     "resolve.js",
     "README.md"

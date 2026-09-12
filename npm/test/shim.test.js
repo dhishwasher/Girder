@@ -53,8 +53,8 @@ function writeFakeGirder(dir, name, version) {
   return { file, marker };
 }
 
-function run(pkg, pathDir) {
-  const child = spawn(process.execPath, [path.join(pkg, "bin", "girder-mcp.js"), "."], {
+function run(pkg, pathDir, args = ["."]) {
+  const child = spawn(process.execPath, [path.join(pkg, "bin", "girder-mcp.js"), ...args], {
     cwd: pkg,
     env: { ...process.env, PATH: pathDir },
   });
@@ -113,6 +113,26 @@ test("when only the vendored binary exists, stderr says nothing about a second b
     assert.strictEqual(stdout.toString("utf8"), "vendored-mcp-output");
     assert.match(stderr, /downloaded by this package/);
     assert.doesNotMatch(stderr, /found on PATH/, "nothing was found on PATH to report");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("setup goes to the Rust CLI while ordinary invocation still starts MCP", async () => {
+  const { root, pkg } = makePackage();
+  try {
+    const binDir = scratchDir(root, "bin");
+    const binary = writeFakeGirder(binDir, "setup", "0.1.0");
+    fs.writeFileSync(
+      binary.file,
+      "#!/bin/sh\n" +
+        "if [ \"$1\" = \"--version\" ]; then printf 'girder 0.1.0\\n'; exit 0; fi\n" +
+        "printf '%s\\n' \"$*\"\n"
+    );
+    const setup = await run(pkg, binDir, ["setup", "--dry-run"]);
+    const mcp = await run(pkg, binDir, ["."]);
+    assert.strictEqual(setup.stdout.toString("utf8"), "setup --dry-run\n");
+    assert.strictEqual(mcp.stdout.toString("utf8"), "mcp .\n");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

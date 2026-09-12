@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/girder_context_advisory.py\""
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/npm/hooks/girder_context_advisory.py\""
           }
         ]
       }
