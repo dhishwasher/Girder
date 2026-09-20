@@ -710,7 +710,7 @@ fn plan_hook_install(
                                 script_path.display()
                             ))
                         })
-                        .map(str::to_owned),
+                        .map(str::to_owned)?,
                     installed_sha256: sha256(HOOK_SOURCE.as_bytes()),
                 });
             }
