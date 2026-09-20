@@ -20,6 +20,6 @@ native_status=$?
 if printf '%s' "$payload" | grep -Eq '"hook_event_name"[[:space:]]*:[[:space:]]*"PreToolUse"'; then
   printf '%s' "$native_stdout"
 else
-  cat "$stderr_file"
+  cat "$stderr_file" >&2
 fi
 exit 0
