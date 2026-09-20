@@ -357,6 +357,13 @@ fn compute_post_edit(payload: &Value) -> ImpactComputation {
     result
 }
 
+#[cfg(test)]
+fn report_for_path(graph: &SemanticGraph, file_path: &str) -> Option<String> {
+    report_for_path_stats(graph, file_path)
+        .and_then(|report| render_report(&[report]))
+        .map(|report| report.text)
+}
+
 fn report_for_path_stats(graph: &SemanticGraph, file_path: &str) -> Option<PathReport> {
     let mut origins: Vec<_> = graph
         .nodes()
