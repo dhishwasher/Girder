@@ -220,6 +220,7 @@ COMMANDS:
                               context (--source-only shape), review,
                               test-impact, and orient as MCP tools. No
                               writes, no model calls, no network.
+    hook                      Internal fail-open PreToolUse advisory helper.
     --gui [dir]               Launch the native egui/wgpu window for a project
     --version                 Show the version
     --help                    Show this help
@@ -228,6 +229,12 @@ COMMANDS:
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let cmd = args.first().map(String::as_str);
+
+    if cmd == Some("hook") {
+        // Keep the standalone advisory off the normal logging/startup path.
+        let _ = project::hook(&args[1..]);
+        return;
+    }
 
     let filter =
         tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "warn".into());

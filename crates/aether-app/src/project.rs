@@ -43,9 +43,9 @@ pub(crate) use commands::extensions::{
     ExtensionMutation, ExtensionMutationOutcome, ExtensionMutationRequest,
 };
 pub(crate) use commands::{
-    analyze, collaboration, config, context, dap, debug, do_intent, extensions, forge, inspect,
-    mcp, names, new, orient, plan_explain, plan_run, plan_validate, query, refactor, review,
-    search, setup, swarm_plan, test_impact,
+    analyze, collaboration, config, context, dap, debug, do_intent, extensions, forge, hook,
+    inspect, mcp, names, new, orient, plan_explain, plan_run, plan_validate, query, refactor,
+    review, search, setup, swarm_plan, test_impact,
 };
 #[cfg(feature = "gui")]
 pub(crate) use commands::{

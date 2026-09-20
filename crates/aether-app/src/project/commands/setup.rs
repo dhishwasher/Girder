@@ -162,6 +162,9 @@ fn run(args: &[String], env: Environment, out: &mut dyn Write) -> io::Result<()>
             ),
         )
     })?;
+    let executable = std::env::current_exe()
+        .and_then(|path| path.canonicalize())
+        .map_err(|error| invalid(format!("could not resolve the Girder executable: {error}")))?;
 
     writeln!(out, "Detection:")?;
     let detections = detect(&home, &cwd, env.codex_home.as_deref(), &options.agents);
@@ -191,7 +194,14 @@ fn run(args: &[String], env: Environment, out: &mut dyn Write) -> io::Result<()>
         if options.uninstall {
             plan_uninstall(detection, &home, &mut changes, &mut notes)?;
         } else {
-            plan_install(detection, &home, options.force, &mut changes, &mut notes)?;
+            plan_install(
+                detection,
+                &home,
+                &executable,
+                options.force,
+                &mut changes,
+                &mut notes,
+            )?;
         }
     }
 
@@ -389,6 +399,7 @@ fn detect(
 fn plan_install(
     detection: &Detection,
     home: &Path,
+    executable: &Path,
     force: bool,
     changes: &mut Vec<Change>,
     notes: &mut Vec<String>,
@@ -414,9 +425,14 @@ fn plan_install(
             "{}: girder entry already configured.",
             detection.agent.label()
         ));
-    } else if current.is_some() && !force {
+    } else if current.is_some()
+        && !state.mcps.iter().any(|owned| {
+            owned.config_path == config_path.to_string_lossy()
+                && current.as_ref() == Some(&owned.installed)
+        })
+    {
         notes.push(format!(
-            "{}: existing girder entry left unchanged (use --force to replace it).",
+            "{}: existing girder entry is not setup-owned; left it unchanged (force does not replace another server).",
             detection.agent.label()
         ));
     } else {
@@ -453,12 +469,19 @@ fn plan_install(
         push_change(changes, config_path, before, Some(after));
     }
 
-    plan_hook_install(detection, home, force, &mut state, changes, notes)?;
+    plan_hook_install(
+        detection, home, executable, force, &mut state, changes, notes,
+    )?;
     if has_ownership(&state) {
         let state_after = serde_json::to_vec_pretty(&state)
             .map(append_newline)
             .map_err(json_error)?;
         push_change(changes, state_path, state_before, Some(state_after));
+    } else {
+        // A migration can consume the last legacy owned artifact (for
+        // example, Cursor's old advisory hook) while its MCP entry belongs to
+        // another server. Do not leave an empty ownership record behind.
+        push_change(changes, state_path, state_before, None);
     }
     Ok(())
 }
@@ -538,28 +561,97 @@ fn plan_uninstall(
 fn plan_hook_install(
     detection: &Detection,
     home: &Path,
+    executable: &Path,
     force: bool,
     state: &mut SetupState,
     changes: &mut Vec<Change>,
     notes: &mut Vec<String>,
 ) -> io::Result<()> {
-    let Some((event_key, style)) = hook_shape(detection.agent) else {
-        if detection.agent == Agent::Codex {
+    if detection.agent == Agent::Cursor {
+        uninstall_hooks(detection, home, state, changes, notes)?;
+        notes.push(
+            "Cursor: MCP configured; preToolUse hook skipped because Cursor only exposes agent_message on DENY and malformed or empty hook output can block the tool."
+                .into(),
+        );
+        return Ok(());
+    }
+    if detection.agent == Agent::Codex {
+        let config_path = safe_target(
+            detection.config_path.as_ref().expect("detected config"),
+            home,
+        )?;
+        let before = read_optional(&config_path)?;
+        let document = parse_config(before.as_deref(), ConfigFormat::Toml, &config_path)?;
+        if document.get("hooks").is_some() {
             notes.push(
-                "Codex: advisory hook not registered because documented file reads arrive as unstructured Bash commands, not a structured Read payload."
+                "Codex: advisory hook skipped because inline [hooks] is already present; MCP was configured."
                     .into(),
             );
+            return Ok(());
         }
+    }
+    let Some((event_key, style)) = hook_shape(detection.agent) else {
         return Ok(());
     };
+    let config_path = safe_target(&hook_config_path(detection), home)?;
+    let before = read_optional(&config_path)?;
+    let mut document = parse_config(before.as_deref(), ConfigFormat::Json, &config_path)?;
     let script_path = safe_target(&detection.config_dir.join("hooks").join(HOOK_FILE), home)?;
+    let matcher = if detection.agent == Agent::Codex {
+        "Read|read_file|mcp__.*__read_file"
+    } else {
+        "Read"
+    };
+    let desired = hook_entry(style, matcher, &script_path, executable);
+    let matches = matching_hooks(&document, event_key, style)?;
+    let owned_hook = state
+        .hooks
+        .iter()
+        .find(|owned| {
+            owned.config_path == config_path.to_string_lossy()
+                && matches.iter().any(|entry| entry == &owned.installed)
+        })
+        .map(|owned| owned.installed.clone());
+    if force
+        && matches
+            .iter()
+            .any(|entry| !hook_group_is_safely_replaceable(entry, style))
+    {
+        notes.push(format!(
+            "{}: a Girder advisory handler shares a hook group with other handlers; left the group unchanged.",
+            detection.agent.label()
+        ));
+        return Ok(());
+    }
+
+    if !matches.is_empty() && owned_hook.is_none() {
+        notes.push(format!(
+            "{}: existing advisory hook is not setup-owned; left it unchanged (force does not replace another hook).",
+            detection.agent.label()
+        ));
+        return Ok(());
+    }
+
     let script_before = read_optional(&script_path)?;
     let script_matches = script_before.as_deref() == Some(HOOK_SOURCE.as_bytes());
-    if script_before.is_some() && !script_matches && !force {
+    let owned_script = state.scripts.iter().find(|owned| {
+        owned.path == script_path.to_string_lossy()
+            && script_before
+                .as_deref()
+                .is_some_and(|bytes| sha256(bytes) == owned.installed_sha256)
+    });
+    if script_before.is_some() && !script_matches && owned_script.is_none() {
         notes.push(format!(
-            "{}: existing {} left unchanged; advisory hook was not registered (use --force to replace it).",
+            "{}: existing {} left unchanged; advisory hook was not registered because the script is not setup-owned.",
             detection.agent.label(),
             script_path.display()
+        ));
+        return Ok(());
+    }
+    if matches.len() == 1 && matches[0] == desired && script_matches {
+        notes.push(format!(
+            "{}: Girder advisory hook already configured.",
+            detection.agent.label()
         ));
         return Ok(());
     }
@@ -595,37 +687,6 @@ fn plan_hook_install(
         );
     }
 
-    let config_path = safe_target(&hook_config_path(detection), home)?;
-    let before = read_optional(&config_path)?;
-    let mut document = parse_config(before.as_deref(), ConfigFormat::Json, &config_path)?;
-    let desired = hook_entry(style, &script_path);
-    let matches = matching_hooks(&document, event_key, style)?;
-    if matches.len() == 1 && matches[0] == desired {
-        notes.push(format!(
-            "{}: Girder advisory hook already configured.",
-            detection.agent.label()
-        ));
-        return Ok(());
-    }
-    if !matches.is_empty() && !force {
-        notes.push(format!(
-            "{}: existing Girder advisory hook left unchanged (use --force to replace it).",
-            detection.agent.label()
-        ));
-        return Ok(());
-    }
-    if force
-        && matches
-            .iter()
-            .any(|entry| !hook_group_is_safely_replaceable(entry, style))
-    {
-        notes.push(format!(
-            "{}: a Girder advisory handler shares a hook group with other handlers; left the group unchanged.",
-            detection.agent.label()
-        ));
-        return Ok(());
-    }
-
     if let Some(owned) = state
         .hooks
         .iter_mut()
@@ -644,7 +705,13 @@ fn plan_hook_install(
             installed_sha256: String::new(),
         });
     }
-    replace_matching_hooks(&mut document, event_key, style, Some(desired))?;
+    replace_matching_hooks(
+        &mut document,
+        event_key,
+        style,
+        Some(desired),
+        owned_hook.as_ref(),
+    )?;
     let after = serialize_config(&document, ConfigFormat::Json)?;
     if let Some(owned) = state
         .hooks
@@ -744,8 +811,8 @@ fn uninstall_hooks(
 fn hook_shape(agent: Agent) -> Option<(&'static str, HookStyle)> {
     match agent {
         Agent::Claude => Some(("PreToolUse", HookStyle::Nested)),
-        Agent::Cursor => Some(("preToolUse", HookStyle::Flat)),
-        Agent::Codex | Agent::Generic => None,
+        Agent::Codex => Some(("PreToolUse", HookStyle::Nested)),
+        Agent::Cursor | Agent::Generic => None,
     }
 }
 
@@ -757,18 +824,19 @@ fn hook_config_path(detection: &Detection) -> PathBuf {
     }
 }
 
-fn hook_entry(style: HookStyle, script_path: &Path) -> Value {
+fn hook_entry(style: HookStyle, matcher: &str, script_path: &Path, executable: &Path) -> Value {
     let interpreter = if cfg!(windows) { "python" } else { "sh" };
     let command = format!(
-        "{interpreter} {}",
-        shell_quote(&script_path.to_string_lossy())
+        "{interpreter} {} {}",
+        shell_quote(&script_path.to_string_lossy()),
+        shell_quote(&executable.to_string_lossy())
     );
     match style {
         HookStyle::Nested => json!({
-            "matcher": "Read",
+            "matcher": matcher,
             "hooks": [{"type": "command", "command": command}]
         }),
-        HookStyle::Flat => json!({"command": command, "matcher": "Read"}),
+        HookStyle::Flat => json!({"command": command, "matcher": matcher}),
     }
 }
 
@@ -853,12 +921,14 @@ fn replace_matching_hooks(
     event_key: &str,
     style: HookStyle,
     installed: Option<Value>,
+    owned: Option<&Value>,
 ) -> io::Result<()> {
     let entries = hook_entries_mut(document, event_key, installed.is_some())?;
     if let Some(entries) = entries {
         entries.retain(|entry| {
             !(hook_group_contains_girder(entry, style)
-                && hook_group_is_safely_replaceable(entry, style))
+                && hook_group_is_safely_replaceable(entry, style)
+                && owned.is_none_or(|owned| entry == owned))
         });
         if let Some(installed) = installed {
             entries.push(installed);
@@ -1444,13 +1514,15 @@ mod tests {
         let claude_hooks: Value =
             serde_json::from_slice(&std::fs::read(home.0.join(".claude/settings.json")).unwrap())
                 .unwrap();
-        let cursor_hooks: Value =
-            serde_json::from_slice(&std::fs::read(home.0.join(".cursor/hooks.json")).unwrap())
+        let codex_hooks: Value =
+            serde_json::from_slice(&std::fs::read(home.0.join(".codex/hooks.json")).unwrap())
                 .unwrap();
         assert_eq!(claude_hooks["hooks"]["PreToolUse"][0]["matcher"], "Read");
-        assert_eq!(cursor_hooks["hooks"]["preToolUse"][0]["matcher"], "Read");
-        assert!(first.contains("Codex: advisory hook not registered"));
-        for directory in [".claude", ".cursor"] {
+        assert_eq!(
+            codex_hooks["hooks"]["PreToolUse"][0]["matcher"],
+            "Read|read_file|mcp__.*__read_file"
+        );
+        for directory in [".claude", ".codex"] {
             assert_eq!(
                 std::fs::read_to_string(home.0.join(directory).join("hooks").join(HOOK_FILE))
                     .unwrap(),
@@ -1487,9 +1559,9 @@ mod tests {
         );
         for path in [
             home.0.join(".claude/settings.json"),
-            home.0.join(".cursor/hooks.json"),
+            home.0.join(".codex/hooks.json"),
             home.0.join(".claude/hooks").join(HOOK_FILE),
-            home.0.join(".cursor/hooks").join(HOOK_FILE),
+            home.0.join(".codex/hooks").join(HOOK_FILE),
         ] {
             assert!(
                 !path.exists(),
@@ -1500,7 +1572,7 @@ mod tests {
     }
 
     #[test]
-    fn existing_entry_is_untouched_without_force_and_restored_after_force() {
+    fn foreign_mcp_entry_is_untouched_even_with_force() {
         let home = TempHome::new("force");
         home.mkdir(".cursor");
         home.write(
@@ -1509,7 +1581,7 @@ mod tests {
         );
 
         let untouched = home.run(&["--agents", "cursor"]);
-        assert!(untouched.contains("existing girder entry left unchanged"));
+        assert!(untouched.contains("not setup-owned; left it unchanged"));
         let untouched_config: Value =
             serde_json::from_slice(&std::fs::read(home.0.join(".cursor/mcp.json")).unwrap())
                 .unwrap();
@@ -1517,19 +1589,13 @@ mod tests {
             untouched_config["mcpServers"]["girder"]["command"],
             "custom"
         );
-        assert!(home.0.join(".cursor").join(STATE_FILE).exists());
+        assert!(!home.0.join(".cursor").join(STATE_FILE).exists());
 
         home.run(&["--agents", "cursor", "--force"]);
         let configured: Value =
             serde_json::from_slice(&std::fs::read(home.0.join(".cursor/mcp.json")).unwrap())
                 .unwrap();
-        assert_eq!(configured["mcpServers"]["girder"], mcp_entry());
-
-        home.run(&["--agents", "cursor", "--uninstall"]);
-        let restored: Value =
-            serde_json::from_slice(&std::fs::read(home.0.join(".cursor/mcp.json")).unwrap())
-                .unwrap();
-        assert_eq!(restored["mcpServers"]["girder"]["command"], "custom");
+        assert_eq!(configured["mcpServers"]["girder"]["command"], "custom");
     }
 
     #[test]
@@ -1603,58 +1669,170 @@ mod tests {
     }
 
     #[test]
-    fn force_replaces_and_uninstall_restores_an_existing_hook() {
-        let home = TempHome::new("force-hook");
-        home.mkdir(".cursor");
+    fn codex_inline_hooks_are_not_duplicated() {
+        let home = TempHome::new("codex-inline-hooks");
+        home.mkdir(".codex");
         home.write(
-            ".cursor/hooks.json",
-            "{\"hooks\":{\"preToolUse\":[{\"command\":\"python old/girder_context_advisory.py\",\"matcher\":\"Read\"},{\"command\":\"keep\",\"matcher\":\"Shell\"}]}}\n",
+            ".codex/config.toml",
+            "model = \"gpt\"\n\n[hooks]\npre_tool_use = []\n",
         );
-        let untouched = home.run(&["--agents", "cursor"]);
-        assert!(untouched.contains("existing Girder advisory hook left unchanged"));
 
-        home.run(&["--agents", "cursor", "--force"]);
-        let configured: Value =
-            serde_json::from_slice(&std::fs::read(home.0.join(".cursor/hooks.json")).unwrap())
+        let output = home.run(&["--agents", "codex"]);
+        assert!(output.contains("inline [hooks] is already present"));
+        assert!(!home.0.join(".codex/hooks.json").exists());
+        let config = std::fs::read_to_string(home.0.join(".codex/config.toml")).unwrap();
+        assert!(config.contains("[mcp_servers.girder]"));
+    }
+
+    #[test]
+    fn hook_command_pins_absolute_native_executable_and_codex_matcher() {
+        let home = TempHome::new("hook-command");
+        home.mkdir(".codex");
+        home.run(&["--agents", "codex"]);
+        let hooks: Value =
+            serde_json::from_slice(&std::fs::read(home.0.join(".codex/hooks.json")).unwrap())
                 .unwrap();
-        let configured_entries = configured["hooks"]["preToolUse"].as_array().unwrap();
+        assert_eq!(
+            hooks["hooks"]["PreToolUse"][0]["matcher"],
+            "Read|read_file|mcp__.*__read_file"
+        );
+        let command = hooks["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+            .as_str()
+            .unwrap();
+        assert!(command.contains(HOOK_FILE));
+        assert!(command.split_whitespace().count() >= 3);
+    }
+
+    #[test]
+    fn setup_owned_old_launcher_is_upgraded_in_place() {
+        let home = TempHome::new("hook-migration");
+        home.mkdir(".claude");
+        home.run(&["--agents", "claude"]);
+
+        let script_path = home.0.join(".claude/hooks").join(HOOK_FILE);
+        std::fs::write(&script_path, "old launcher\n").unwrap();
+        let state_path = home.0.join(".claude").join(STATE_FILE);
+        let mut state: SetupState =
+            serde_json::from_slice(&std::fs::read(&state_path).unwrap()).unwrap();
+        state.scripts[0].installed_sha256 = sha256(b"old launcher\n");
+        std::fs::write(
+            &state_path,
+            append_newline(serde_json::to_vec_pretty(&state).unwrap()),
+        )
+        .unwrap();
+
+        home.run(&["--agents", "claude"]);
+        assert_eq!(std::fs::read_to_string(script_path).unwrap(), HOOK_SOURCE);
+    }
+
+    #[test]
+    fn cursor_migration_removes_only_owned_legacy_hook_and_restores_originals() {
+        let home = TempHome::new("cursor-hook-migration");
+        home.mkdir(".cursor");
+        let original_mcp = "{\"mcpServers\":{\"girder\":{\"command\":\"keep\"}}}\n";
+        home.write(".cursor/mcp.json", original_mcp);
+
+        let hooks_path = home.0.join(".cursor/hooks.json");
+        let script_path = home.0.join(".cursor/hooks").join(HOOK_FILE);
+        let old_hook = json!({
+            "command": "python legacy/girder_context_advisory.py",
+            "matcher": "Read",
+        });
+        let foreign_hook = json!({"command": "keep", "matcher": "Shell"});
+        let hooks = json!({"hooks": {"preToolUse": [old_hook.clone(), foreign_hook.clone()]}});
+        let hook_bytes = append_newline(serde_json::to_vec_pretty(&hooks).unwrap());
+        std::fs::write(&hooks_path, &hook_bytes).unwrap();
+        std::fs::create_dir_all(script_path.parent().unwrap()).unwrap();
+        std::fs::write(&script_path, "legacy installed script\n").unwrap();
+
+        let state_path = home.0.join(".cursor").join(STATE_FILE);
+        let mut state = SetupState {
+            version: 1,
+            ..SetupState::default()
+        };
+        state.hooks.push(HookState {
+            config_path: hooks_path.to_string_lossy().into_owned(),
+            config_created: false,
+            event_key: "preToolUse".into(),
+            style: HookStyle::Flat,
+            previous_matches: Vec::new(),
+            installed: old_hook,
+            original_text: None,
+            installed_sha256: sha256(&hook_bytes),
+        });
+        state.scripts.push(ScriptState {
+            path: script_path.to_string_lossy().into_owned(),
+            previous: Some("script before legacy setup\n".into()),
+            installed_sha256: sha256(b"legacy installed script\n"),
+        });
+        std::fs::write(
+            &state_path,
+            append_newline(serde_json::to_vec_pretty(&state).unwrap()),
+        )
+        .unwrap();
+
+        let migrated = home.run(&["--agents", "cursor"]);
+        assert!(migrated.contains("Cursor: MCP configured; preToolUse hook skipped"));
+        let hooks: Value = serde_json::from_slice(&std::fs::read(&hooks_path).unwrap()).unwrap();
+        assert_eq!(hooks["hooks"]["preToolUse"], json!([foreign_hook]));
+        assert_eq!(
+            std::fs::read_to_string(&script_path).unwrap(),
+            "script before legacy setup\n"
+        );
+        assert!(!state_path.exists());
+
+        home.run(&["--agents", "cursor", "--uninstall"]);
+        assert_eq!(
+            std::fs::read_to_string(home.0.join(".cursor/mcp.json")).unwrap(),
+            original_mcp
+        );
+        let hooks: Value = serde_json::from_slice(&std::fs::read(&hooks_path).unwrap()).unwrap();
+        assert_eq!(hooks["hooks"]["preToolUse"], json!([foreign_hook]));
+        assert_eq!(
+            std::fs::read_to_string(&script_path).unwrap(),
+            "script before legacy setup\n"
+        );
+    }
+
+    #[test]
+    fn foreign_hook_is_untouched_even_with_force() {
+        let home = TempHome::new("force-hook");
+        home.mkdir(".codex");
+        home.write(
+            ".codex/hooks.json",
+            "{\"hooks\":{\"PreToolUse\":[{\"matcher\":\"Read\",\"hooks\":[{\"type\":\"command\",\"command\":\"python old/girder_context_advisory.py\"}]},{\"matcher\":\"Shell\",\"hooks\":[{\"type\":\"command\",\"command\":\"keep\"}]}]}}\n",
+        );
+        let untouched = home.run(&["--agents", "codex"]);
+        assert!(untouched.contains("existing advisory hook is not setup-owned"));
+
+        home.run(&["--agents", "codex", "--force"]);
+        let configured: Value =
+            serde_json::from_slice(&std::fs::read(home.0.join(".codex/hooks.json")).unwrap())
+                .unwrap();
+        let configured_entries = configured["hooks"]["PreToolUse"].as_array().unwrap();
         assert_eq!(configured_entries.len(), 2);
         assert!(configured_entries
             .iter()
-            .any(|entry| entry["command"] == "keep"));
+            .any(|entry| entry["hooks"][0]["command"] == "keep"));
         assert!(configured_entries.iter().any(|entry| {
-            entry["command"]
-                .as_str()
-                .is_some_and(|command| command.contains(&home.0.to_string_lossy().to_string()))
+            entry["hooks"][0]["command"] == "python old/girder_context_advisory.py"
         }));
-
-        home.run(&["--agents", "cursor", "--uninstall"]);
-        let restored: Value =
-            serde_json::from_slice(&std::fs::read(home.0.join(".cursor/hooks.json")).unwrap())
-                .unwrap();
-        let restored_entries = restored["hooks"]["preToolUse"].as_array().unwrap();
-        assert!(restored_entries
-            .iter()
-            .any(|entry| entry["command"] == "python old/girder_context_advisory.py"));
-        assert!(restored_entries
-            .iter()
-            .any(|entry| entry["command"] == "keep"));
     }
 
     #[test]
     fn uninstall_removes_only_the_exact_owned_hook_entry() {
         let home = TempHome::new("exact-hook-uninstall");
-        home.mkdir(".cursor");
-        home.run(&["--agents", "cursor"]);
-        let hooks_path = home.0.join(".cursor/hooks.json");
+        home.mkdir(".claude");
+        home.run(&["--agents", "claude"]);
+        let hooks_path = home.0.join(".claude/settings.json");
         let mut document: Value =
             serde_json::from_slice(&std::fs::read(&hooks_path).unwrap()).unwrap();
-        document["hooks"]["preToolUse"]
+        document["hooks"]["PreToolUse"]
             .as_array_mut()
             .unwrap()
             .push(json!({
-                "command": "python custom/girder_context_advisory.py",
-                "matcher": "Read"
+                "matcher": "Read",
+                "hooks": [{"type": "command", "command": "python custom/girder_context_advisory.py"}]
             }));
         std::fs::write(
             &hooks_path,
@@ -1662,13 +1840,13 @@ mod tests {
         )
         .unwrap();
 
-        home.run(&["--agents", "cursor", "--uninstall"]);
+        home.run(&["--agents", "claude", "--uninstall"]);
         let remaining: Value =
             serde_json::from_slice(&std::fs::read(&hooks_path).unwrap()).unwrap();
-        let entries = remaining["hooks"]["preToolUse"].as_array().unwrap();
+        let entries = remaining["hooks"]["PreToolUse"].as_array().unwrap();
         assert_eq!(entries.len(), 1);
         assert_eq!(
-            entries[0]["command"],
+            entries[0]["hooks"][0]["command"],
             "python custom/girder_context_advisory.py"
         );
     }
@@ -1676,37 +1854,37 @@ mod tests {
     #[test]
     fn uninstall_keeps_the_script_when_its_registration_was_modified() {
         let home = TempHome::new("modified-hook");
-        home.mkdir(".cursor");
-        home.run(&["--agents", "cursor"]);
-        let hooks_path = home.0.join(".cursor/hooks.json");
+        home.mkdir(".claude");
+        home.run(&["--agents", "claude"]);
+        let hooks_path = home.0.join(".claude/settings.json");
         let mut document: Value =
             serde_json::from_slice(&std::fs::read(&hooks_path).unwrap()).unwrap();
-        document["hooks"]["preToolUse"][0]["timeout"] = json!(5);
+        document["hooks"]["PreToolUse"][0]["timeout"] = json!(5);
         std::fs::write(
             &hooks_path,
             append_newline(serde_json::to_vec_pretty(&document).unwrap()),
         )
         .unwrap();
 
-        let output = home.run(&["--agents", "cursor", "--uninstall"]);
+        let output = home.run(&["--agents", "claude", "--uninstall"]);
         assert!(output.contains("advisory hook") && output.contains("changed after setup"));
-        assert!(home.0.join(".cursor/hooks").join(HOOK_FILE).exists());
-        assert!(home.0.join(".cursor").join(STATE_FILE).exists());
+        assert!(home.0.join(".claude/hooks").join(HOOK_FILE).exists());
+        assert!(home.0.join(".claude").join(STATE_FILE).exists());
     }
 
     #[test]
     fn uninstall_restores_unedited_hook_config_exactly() {
         let home = TempHome::new("hook-exact-restore");
-        home.mkdir(".cursor");
+        home.mkdir(".claude");
         let original =
-            "{\"hooks\":{\"preToolUse\":[{\"command\":\"keep\",\"matcher\":\"Shell\"}]}}\n";
-        home.write(".cursor/hooks.json", original);
+            "{\"hooks\":{\"PreToolUse\":[{\"matcher\":\"Shell\",\"hooks\":[{\"type\":\"command\",\"command\":\"keep\"}]}]}}\n";
+        home.write(".claude/settings.json", original);
 
-        home.run(&["--agents", "cursor"]);
-        home.run(&["--agents", "cursor", "--uninstall"]);
+        home.run(&["--agents", "claude"]);
+        home.run(&["--agents", "claude", "--uninstall"]);
 
         assert_eq!(
-            std::fs::read_to_string(home.0.join(".cursor/hooks.json")).unwrap(),
+            std::fs::read_to_string(home.0.join(".claude/settings.json")).unwrap(),
             original
         );
     }

@@ -19,16 +19,20 @@ npx -y girder-mcp setup
 `setup` detects Claude Code (`~/.claude` or an existing in-home project
 `.mcp.json`), Codex (`~/.codex` or an in-home `CODEX_HOME`), and Cursor
 (`~/.cursor`). It merges the `girder` MCP entry into each detected agent's
-documented config and registers an advisory PreToolUse hook for Claude Code and
-Cursor. Codex receives the MCP entry but no read hook: its documented shell
-reads do not expose a structured `Read` payload. A generic MCP client has no
-universal config path and is reported as not detected. Setup never writes
-outside your home directory. Existing `girder` entries remain untouched unless
-you pass `--force`; `girder setup --uninstall` removes only setup-owned changes.
-The hook writes a one-line suggestion to stderr only when a saved graph is
-already present and never blocks a read. Some clients show successful-hook
-stderr only in debug logs, so it is advisory logging rather than guaranteed
-model-visible guidance.
+documented config and installs structured-read hooks for Claude Code and Codex.
+Cursor is MCP-only because its PreToolUse hook output can block a tool and its
+`agent_message` output is only surfaced on DENY. Codex hooks cover
+structured `Read`, `read_file`, and `mcp__.*__read_file` events; shell commands
+are intentionally not parsed. A generic MCP client has no universal config path
+and is reported as not detected. Setup never writes outside your home
+directory. Existing foreign `girder` entries remain untouched, including with
+`--force`; `girder setup --uninstall` removes only setup-owned changes.
+
+The packaged launcher forwards stdin and stdout to the pinned native `girder
+hook` executable and fails open on errors. Standalone hook stdout is the
+client's `additionalContext` JSON protocol; MCP remains JSON-RPC on its own
+stdout. The hook only gives guidance when `project.aether` already exists; it
+never builds or loads a graph. See the [setup and client path guide](https://github.com/dhishwasher/Girder/blob/main/docs/setup.md).
 
 For clients setup cannot detect, add this entry to their documented MCP config
 manually:
