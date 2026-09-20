@@ -73,7 +73,7 @@ preserving cold-analysis resolution while reusing parsing; see the
 | `ask_codebase` | Callers, callees, and blast radius, by graph traversal. | Free |
 | `impacted_tests` | Only the tests that can reach what changed. | Paid |
 | `review_changes` | What changed in the working tree, as semantics rather than text. | Free |
-| `orient` | Source, callers, callees, tests, and impact for one node, in one call. | Paid |
+| `orient` | Source, callers, callees, tests, and impact for one node, in one call. | Free |
 
 Every tool is read-only. None of them run a model, and none write to your
 repository.
@@ -168,7 +168,7 @@ silently falling back to PATH the way a normal run does.
 
 ## Buy a license
 
-Paid access to `orient` and `impacted_tests` costs **$39, one-time and
+Paid access to `impacted_tests` costs **$39, one-time and
 perpetual, with no subscription**. [Buy a Girder license on
 Gumroad](https://maynard42.gumroad.com/l/zwpsjl).
 

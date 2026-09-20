@@ -122,22 +122,26 @@ impl Session {
 }
 
 #[test]
-fn unlicensed_paid_tool_is_a_readable_normal_tool_result() {
+fn unlicensed_orient_is_free_but_impacted_tests_remains_paid() {
     let root = fixture("license-gate");
     let mut session = Session::start_unlicensed(&root);
     session.initialize();
 
-    let response = session.call_tool("orient", json!({"nodes": ["crate::sample::answer"]}));
+    let response = session.call_tool("orient", json!({"nodes": ["crate::calc::double"]}));
+    let orient_text = tool_text(&response);
+    let orient: Value = serde_json::from_str(&orient_text).unwrap();
+    assert_eq!(orient["nodes"][0]["path"], "crate::calc::double");
+    assert!(orient["nodes"][0]["source"]
+        .as_str()
+        .is_some_and(|source| source.contains("pub fn double")));
+
+    let response = session.call_tool("impacted_tests", json!({"nodes": ["crate::calc::double"]}));
     assert_eq!(response["result"]["isError"], true, "{response}");
     let text = response["result"]["content"][0]["text"]
         .as_str()
         .expect("license failure must be readable text");
     assert!(
-        text.contains("`orient` tool needs a paid Girder license"),
-        "{text}"
-    );
-    assert!(
-        text.contains("`get_source` and `find_definition`"),
+        text.contains("`impacted_tests` tool needs a paid Girder license"),
         "{text}"
     );
     assert!(
@@ -145,8 +149,6 @@ fn unlicensed_paid_tool_is_a_readable_normal_tool_result() {
         "{text}"
     );
 
-    let free = session.call_tool("get_source", json!({"nodes": ["crate::calc::double"]}));
-    assert!(tool_text(&free).contains("pub fn double"), "{free}");
     assert_eq!(session.request("ping", json!({}))["result"], json!({}));
 
     let (clean_exit, stderr) = session.finish();

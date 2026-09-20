@@ -387,11 +387,7 @@ impl Server {
                 return emit_optional(output, Some(error_response(id, error.code, &error.message)))
             }
         };
-        let paid = match argv[0].as_str() {
-            "orient" => Some("orient"),
-            "test-impact" => Some("impacted_tests"),
-            _ => None,
-        };
+        let paid = crate::paid_tool_for_command(Some(argv[0].as_str()));
         if let Some(tool) = paid {
             if let Err(error) = crate::project::require_paid(tool) {
                 return emit_result(

@@ -18,8 +18,8 @@ mature; TypeScript and Go are measured and gated, with their limits written
 down ([TypeScript](./docs/typescript-support.md), [Go](./docs/go-support.md)).
 
 **Tiers:** the free tier is permanent and needs no account — `get_source`,
-`find_definition`, `search_code`, `ask_codebase`, and `review_changes` on a
-single repository. The `orient` and `impacted_tests` tools need a
+`find_definition`, `search_code`, `ask_codebase`, `review_changes`, and
+`orient` on a single repository. The `impacted_tests` tool needs a
 [paid license](#buy-a-license). Keys are verified offline; the binary never phones
 home.
 
@@ -137,7 +137,7 @@ Seven tools, all read-only:
 | `ask_codebase` | Callers, callees, and blast radius, by graph traversal. | Free |
 | `impacted_tests` | Only the tests that can reach what changed. | Paid |
 | `review_changes` | What changed in the working tree, as semantics rather than text. | Free |
-| `orient` | Source, callers, callees, tests, and impact for one node, in one call. | Paid |
+| `orient` | Source, callers, callees, tests, and impact for one node, in one call. | Free |
 
 ### What that saves, and what it doesn't
 
@@ -835,7 +835,7 @@ prioritized open risks are maintained in
 
 ## Buy a license
 
-Paid access to `orient` and `impacted_tests` costs **$39, one-time and
+Paid access to `impacted_tests` costs **$39, one-time and
 perpetual, with no subscription**. [Buy a Girder license on
 Gumroad](https://maynard42.gumroad.com/l/zwpsjl).
 
@@ -857,8 +857,8 @@ Girder is **source-available**, not open source, under the
 
 The free tier is genuinely free and permanent: it has no expiry and requires no
 account. For a single repository it includes `get_source`, `find_definition`,
-`search_code`, `ask_codebase`, and `review_changes`. The `orient` and
-`impacted_tests` tools require a paid license.
+`search_code`, `ask_codebase`, `review_changes`, and `orient`. The
+`impacted_tests` tool requires a paid license.
 
 Licenses are signed keys verified locally by the Girder binary. The binary
 never phones home, makes no network call for licensing, and works fully offline

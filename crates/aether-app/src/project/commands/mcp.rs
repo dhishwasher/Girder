@@ -535,7 +535,6 @@ someone else just made. Coverage gaps it reports are advisory.",
         name: "orient",
         title: "Orient at a node in one call",
         description: "\
-Paid license required. \
 Answer \"what am I about to touch and what does it reach\" for one starting \
 point in a single round trip: its source, direct callers and callees (to \
 `depth`, default 1, capped at 2), the tests that cover it, and its impact \
@@ -943,7 +942,7 @@ mod tests {
             assert!(!description.is_empty(), "{name} needs a description");
             assert_eq!(
                 description.starts_with("Paid license required."),
-                matches!(name, "orient" | "impacted_tests"),
+                name == "impacted_tests",
                 "only paid tools should advertise the license requirement: {name}"
             );
             assert_eq!(tool["inputSchema"]["type"], "object", "{name}");

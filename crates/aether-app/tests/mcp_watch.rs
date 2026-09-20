@@ -229,11 +229,15 @@ fn watch_unlicensed_pair_and_second_owner_fail_clearly() {
     let root = Fixture::new();
     let mut watch = Session::start(&root.0, true, false, &[]);
     watch.published();
-    for name in ["orient", "impacted_tests"] {
-        let response = watch.call(name, json!({"nodes":["crate::math::add"]}));
-        assert_eq!(response["result"]["isError"], true);
-        assert!(text(&response).contains("paid Girder license"));
-    }
+    let orient = watch.call("orient", json!({"nodes":["crate::math::add"]}));
+    let orient_value: Value = serde_json::from_str(text(&orient)).unwrap();
+    assert_eq!(orient_value["nodes"][0]["path"], "crate::math::add");
+    assert!(orient_value["nodes"][0]["source"]
+        .as_str()
+        .is_some_and(|source| source.contains("pub fn add")));
+    let impacted = watch.call("impacted_tests", json!({"nodes":["crate::math::add"]}));
+    assert_eq!(impacted["result"]["isError"], true);
+    assert!(text(&impacted).contains("paid Girder license"));
     let alternate_temp = Fixture::new();
     let alternate_temp_text = alternate_temp.0.to_str().unwrap();
     let mut second = Session::start(

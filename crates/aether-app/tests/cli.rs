@@ -95,30 +95,62 @@ fn run_girder_output(args: &[&str]) -> Output {
 #[test]
 fn paid_cli_commands_require_a_license_and_offer_free_alternatives() {
     let isolated = TempRepo::new("unlicensed-paid-commands");
-    for (command, tool) in [("orient", "orient"), ("test-impact", "impacted_tests")] {
-        let output = Command::new(env!("CARGO_BIN_EXE_girder"))
-            .args([command, isolated.path().to_str().unwrap()])
-            .env_remove("GIRDER_LICENSE_KEY")
-            .env("XDG_CONFIG_HOME", isolated.path())
-            .env("APPDATA", isolated.path())
-            .env("HOME", isolated.path())
-            .output()
-            .unwrap();
-        assert!(!output.status.success(), "{command} unexpectedly succeeded");
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        assert!(
-            stderr.contains(&format!("`{tool}` tool needs a paid Girder license")),
-            "{stderr}"
-        );
-        assert!(
-            stderr.contains("`get_source` and `find_definition`"),
-            "{stderr}"
-        );
-        assert!(
-            stderr.contains("https://maynard42.gumroad.com/l/zwpsjl"),
-            "{stderr}"
-        );
-    }
+    isolated.write(
+        "src/lib.rs",
+        "pub fn answer() -> i32 { 42 }\n\n#[test]\nfn answer_is_correct() { assert_eq!(answer(), 42); }\n",
+    );
+
+    let orient = Command::new(env!("CARGO_BIN_EXE_girder"))
+        .args([
+            "orient",
+            isolated.path().to_str().unwrap(),
+            "--nodes",
+            "crate::lib::answer",
+            "--json",
+        ])
+        .env_remove("GIRDER_LICENSE_KEY")
+        .env("XDG_CONFIG_HOME", isolated.path())
+        .env("APPDATA", isolated.path())
+        .env("HOME", isolated.path())
+        .output()
+        .unwrap();
+    assert!(
+        orient.status.success(),
+        "orient unexpectedly refused without a key\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&orient.stdout),
+        String::from_utf8_lossy(&orient.stderr)
+    );
+    let orient_json: serde_json::Value = serde_json::from_slice(&orient.stdout).unwrap();
+    assert_eq!(orient_json["nodes"][0]["path"], "crate::lib::answer");
+    assert!(orient_json["nodes"][0]["source"]
+        .as_str()
+        .is_some_and(|source| source.contains("pub fn answer")));
+
+    let output = Command::new(env!("CARGO_BIN_EXE_girder"))
+        .args(["test-impact", isolated.path().to_str().unwrap()])
+        .env_remove("GIRDER_LICENSE_KEY")
+        .env("XDG_CONFIG_HOME", isolated.path())
+        .env("APPDATA", isolated.path())
+        .env("HOME", isolated.path())
+        .output()
+        .unwrap();
+    assert!(
+        !output.status.success(),
+        "test-impact unexpectedly succeeded"
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("`impacted_tests` tool needs a paid Girder license"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("`get_source`, `find_definition`, and `orient`"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("https://maynard42.gumroad.com/l/zwpsjl"),
+        "{stderr}"
+    );
 }
 
 fn run_girder(args: &[&str]) -> String {

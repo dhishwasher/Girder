@@ -91,7 +91,7 @@ pub(crate) fn current_tier() -> Result<Tier, LicenseError> {
 
 pub(crate) fn require_paid(tool: &str) -> io::Result<()> {
     let help = "Buy a perpetual Girder license at https://maynard42.gumroad.com/l/zwpsjl. \
-                Free alternative: `get_source` and `find_definition` still answer exact-symbol questions.";
+                Free alternatives: `get_source`, `find_definition`, and `orient` still answer code-navigation questions.";
     match current_tier() {
         Ok(Tier::Paid) => Ok(()),
         Ok(Tier::Free) => Err(io::Error::new(

@@ -312,7 +312,6 @@ fn main() {
 
 fn paid_tool_for_command(command: Option<&str>) -> Option<&'static str> {
     match command {
-        Some("orient") => Some("orient"),
         Some("test-impact") => Some("impacted_tests"),
         _ => None,
     }
