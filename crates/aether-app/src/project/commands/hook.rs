@@ -58,15 +58,11 @@ pub fn hook(args: &[String]) -> std::io::Result<()> {
 }
 
 fn hook_observation() -> std::io::Result<()> {
-    let (sender, receiver) = mpsc::sync_channel(1);
-    let _ = std::thread::Builder::new().spawn(move || {
-        let _ = sender.send(catch_silently(observation_output).flatten());
-    });
-    let observation = receiver
-        .recv_timeout(COMPUTATION_TIMEOUT)
-        .ok()
+    // Measure the computation synchronously so scheduler delay is not counted
+    // as graph work. Production mode above retains the hard timeout.
+    let observation = catch_silently(observation_output)
         .flatten()
-        .unwrap_or_else(|| ObservationRecord::timed_out());
+        .unwrap_or_else(ObservationRecord::failed);
     let mut stdout = std::io::stdout().lock();
     let _ = serde_json::to_writer(&mut stdout, &observation);
     let _ = stdout.write_all(b"\n");
@@ -129,10 +125,9 @@ struct ObservationRecord {
 }
 
 impl ObservationRecord {
-    fn timed_out() -> Self {
+    fn failed() -> Self {
         Self {
-            timed_out: true,
-            duration_us: COMPUTATION_TIMEOUT.as_micros(),
+            failed: true,
             ..Self::default()
         }
     }
@@ -197,6 +192,7 @@ struct ImpactComputation {
 
 impl ImpactComputation {
     fn observation(self) -> ObservationRecord {
+        let timed_out = self.duration_us >= COMPUTATION_TIMEOUT.as_micros();
         ObservationRecord {
             graph_ready: self.graph_ready,
             origins: self.origins,
@@ -205,10 +201,10 @@ impl ImpactComputation {
             origins_omitted: self.origins_omitted,
             reached_omitted: self.reached_omitted,
             uncovered_omitted: self.uncovered_omitted,
-            emitted_bytes: self.emitted_bytes,
+            emitted_bytes: if timed_out { 0 } else { self.emitted_bytes },
             duration_us: self.duration_us,
-            emitted: self.report.is_some(),
-            timed_out: false,
+            emitted: self.report.is_some() && !timed_out,
+            timed_out,
             failed: self.failed,
         }
     }
