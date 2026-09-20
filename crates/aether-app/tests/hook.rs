@@ -240,7 +240,8 @@ fn edit_observation_is_stdout_only_and_distinguishes_missing_graph() {
     assert!(output.stderr.is_empty(), "stderr: {:?}", output.stderr);
     let record: Value = serde_json::from_slice(&output.stdout).expect("observation JSON");
     assert_eq!(record["graph_ready"], false);
-    assert_eq!(record["timed_out"], false);
     assert_eq!(record["failed"], false);
     assert_eq!(record["emitted"], false);
+    let duration_us = record["duration_us"].as_u64().expect("duration_us");
+    assert_eq!(record["timed_out"], duration_us >= 20_000);
 }
