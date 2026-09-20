@@ -268,7 +268,7 @@ impl ReportEntries {
                     .map(|uncovered| (path.file_path.clone(), uncovered)),
             );
         }
-        entries.origins.sort_by(|left, right| left.cmp(right));
+        entries.origins.sort();
         entries.reached.sort_by(|left, right| {
             left.1
                 .distance
@@ -355,12 +355,6 @@ fn compute_post_edit(payload: &Value) -> ImpactComputation {
     }
     result.duration_us = started.elapsed().as_micros();
     result
-}
-
-fn report_for_path(graph: &SemanticGraph, file_path: &str) -> Option<String> {
-    report_for_path_stats(graph, file_path)
-        .and_then(|report| render_report(&[report]))
-        .map(|report| report.text)
 }
 
 fn report_for_path_stats(graph: &SemanticGraph, file_path: &str) -> Option<PathReport> {

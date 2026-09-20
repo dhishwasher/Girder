@@ -689,38 +689,36 @@ fn plan_hook_install(
         ));
         return Ok(());
     }
-    if installed_any || repair_script {
-        if !script_matches {
-            if let Some(owned) = state
-                .scripts
-                .iter_mut()
-                .find(|owned| owned.path == script_path.to_string_lossy())
-            {
-                owned.installed_sha256 = sha256(HOOK_SOURCE.as_bytes());
-            } else {
-                state.scripts.push(ScriptState {
-                    path: script_path.to_string_lossy().into_owned(),
-                    previous: script_before
-                        .as_deref()
-                        .map(std::str::from_utf8)
-                        .transpose()
-                        .map_err(|error| {
-                            invalid(format!(
-                                "existing hook {} is not UTF-8: {error}",
-                                script_path.display()
-                            ))
-                        })?
-                        .map(str::to_owned),
-                    installed_sha256: sha256(HOOK_SOURCE.as_bytes()),
-                });
-            }
-            push_change(
-                changes,
-                script_path.clone(),
-                script_before,
-                Some(HOOK_SOURCE.as_bytes().to_vec()),
-            );
+    if (installed_any || repair_script) && !script_matches {
+        if let Some(owned) = state
+            .scripts
+            .iter_mut()
+            .find(|owned| owned.path == script_path.to_string_lossy())
+        {
+            owned.installed_sha256 = sha256(HOOK_SOURCE.as_bytes());
+        } else {
+            state.scripts.push(ScriptState {
+                path: script_path.to_string_lossy().into_owned(),
+                previous: script_before
+                    .as_deref()
+                    .map(std::str::from_utf8)
+                    .transpose()
+                    .map_err(|error| {
+                        invalid(format!(
+                            "existing hook {} is not UTF-8: {error}",
+                            script_path.display()
+                        ))
+                    })?
+                    .map(str::to_owned),
+                installed_sha256: sha256(HOOK_SOURCE.as_bytes()),
+            });
         }
+        push_change(
+            changes,
+            script_path.clone(),
+            script_before,
+            Some(HOOK_SOURCE.as_bytes().to_vec()),
+        );
     }
     if installed_any {
         let after = serialize_config(&document, ConfigFormat::Json)?;
