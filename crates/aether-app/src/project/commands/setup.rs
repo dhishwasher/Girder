@@ -709,8 +709,8 @@ fn plan_hook_install(
                                 "existing hook {} is not UTF-8: {error}",
                                 script_path.display()
                             ))
-                        })
-                        .map(str::to_owned)?,
+                        })?
+                        .map(str::to_owned),
                     installed_sha256: sha256(HOOK_SOURCE.as_bytes()),
                 });
             }
