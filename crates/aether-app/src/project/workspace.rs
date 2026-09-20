@@ -7,7 +7,7 @@ use crate::project::projection::{
 #[cfg(feature = "gui")]
 use crate::project::source::read_project_bytes_bounded;
 use crate::project::source::{
-    collect_sources_with_config, commit_project_writes, graph_project_write, load_graph_snapshot,
+    collect_sources_with_config, commit_project_writes, graph_project_writes, load_graph_snapshot,
     read_project_bytes, recover_project_transactions, ProjectWrite,
 };
 #[cfg(feature = "gui")]
@@ -353,13 +353,15 @@ impl ProjectWorkspace {
             Some(self.clean_buffer.as_bytes().to_vec()),
             self.buffer.clone(),
         );
-        let graph_write = graph_project_write(
+        let graph_writes = graph_project_writes(
             &self.root,
             &self.config,
             &graph,
             self.clean_graph_bytes.clone(),
         )?;
-        commit_project_writes(&self.root, vec![source_write, graph_write])?;
+        let mut writes = vec![source_write];
+        writes.extend(graph_writes);
+        commit_project_writes(&self.root, writes)?;
         let source_path = self.root.join(&file);
         self.clean_buffer.clone_from(&self.buffer);
         self.clean_graph_bytes = read_project_bytes(&self.root, &self.config.graph.path)?;

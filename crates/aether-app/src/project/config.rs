@@ -172,13 +172,17 @@ impl Default for ValidationConfig {
 
 impl ProjectConfig {
     pub(crate) fn load(root: &Path) -> std::io::Result<Self> {
+        let config = Self::load_unvalidated(root)?;
+        config.validate()?;
+        Ok(config)
+    }
+
+    fn load_unvalidated(root: &Path) -> std::io::Result<Self> {
         let path = root.join(CONFIG_FILE);
         let text = match std::fs::read_to_string(&path) {
             Ok(text) => text,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                let config = Self::default();
-                config.validate()?;
-                return Ok(config);
+                return Ok(Self::default());
             }
             Err(error) => return Err(error),
         };
@@ -188,7 +192,6 @@ impl ProjectConfig {
                 format!("invalid {}: {error}", path.display()),
             )
         })?;
-        config.validate()?;
         Ok(config)
     }
 

@@ -1,6 +1,6 @@
 use crate::project::config::{ProjectConfig, CONFIG_FILE};
 use crate::project::source::{
-    commit_project_writes, graph_project_write, read_project_bytes, ProjectWrite,
+    commit_project_writes, graph_project_writes, read_project_bytes, ProjectWrite,
 };
 use aether_builder::GraphBuilder;
 use aether_graph::{Node, NodeKind, RenameOutcome, SemanticGraph};
@@ -146,7 +146,7 @@ pub(crate) fn plan_authored_functions(
         Some(baseline) => baseline.graph.clone(),
         None => read_project_bytes(root, &config.graph.path)?,
     };
-    writes.push(graph_project_write(root, config, graph, graph_expected)?);
+    writes.extend(graph_project_writes(root, config, graph, graph_expected)?);
     Ok(ProjectionPlan { writes, projected })
 }
 
@@ -204,7 +204,7 @@ pub(crate) fn project_rename(
     }
 
     let graph_expected = read_project_bytes(root, &config.graph.path)?;
-    writes.push(graph_project_write(root, config, after, graph_expected)?);
+    writes.extend(graph_project_writes(root, config, after, graph_expected)?);
     commit_project_writes(root, writes)?;
     Ok(projected)
 }

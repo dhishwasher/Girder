@@ -676,9 +676,15 @@ fn update_loop(
             let writer_guard = JournalLock::create_and_acquire(&shared.root)?;
             source::recover_under_lock(&shared.root, &writer_guard)?;
             let config = CachedProject::configuration(&shared.root, &exclusions())?;
-            let output_guard =
-                OutputLocks::acquire(&shared.root, &[PathBuf::from(&config.graph.path)], true)?
-                    .ok_or_else(|| io::Error::other("could not lock graph output"))?;
+            let output_guard = OutputLocks::acquire(
+                &shared.root,
+                &[
+                    PathBuf::from(&config.graph.path),
+                    PathBuf::from(source::HOOK_CACHE_PATH),
+                ],
+                true,
+            )?
+            .ok_or_else(|| io::Error::other("could not lock graph output"))?;
             let before = Snapshot::capture(&shared.root, &config)?;
             thread::sleep(STABILITY);
             if Snapshot::capture(&shared.root, &config)? != before {
@@ -747,7 +753,7 @@ fn update_loop(
                     "graph owner lock was replaced; restart watching",
                 ));
             }
-            let write = source::graph_project_write(
+            let writes = source::graph_project_writes(
                 &shared.root,
                 &candidate.config,
                 &candidate.graph,
@@ -762,7 +768,7 @@ fn update_loop(
                 }
                 state.config = candidate.config.clone();
             }
-            source::commit_under_lock(&shared.root, vec![write], &writer_guard, &output_guard)?;
+            source::commit_under_lock(&shared.root, writes, &writer_guard, &output_guard)?;
             candidate.persisted_bytes =
                 source::read_project_bytes(&shared.root, &candidate.config.graph.path)?;
             let published = Snapshot::capture(&shared.root, &candidate.config)?;

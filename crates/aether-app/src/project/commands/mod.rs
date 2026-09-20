@@ -34,7 +34,7 @@ pub(crate) use dap::dap;
 pub(crate) use debug::debug;
 pub(crate) use extensions::extensions;
 pub(crate) use graph::{analyze, inspect, refactor, search};
-pub(crate) use hook::hook;
+pub(crate) use hook::{encode_impact_cache, hook};
 pub(crate) use mcp::mcp;
 pub(crate) use names::names;
 pub(crate) use new_cmd::new;

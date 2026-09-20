@@ -4,7 +4,7 @@
 //! events get a bounded blast-radius advisory from the saved graph snapshot.
 //! The edit path never scans or reconciles source files.
 
-use crate::project::{config::ProjectConfig, source};
+use crate::project::source;
 use aether_graph::{NodeId, NodeKind, SemanticGraph};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
@@ -168,7 +168,7 @@ struct EditRequest {
     paths: Vec<String>,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
 struct ReachedNode {
     distance: u32,
     path: String,
@@ -210,33 +210,71 @@ impl ImpactComputation {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 struct PathReport {
     file_path: String,
+    origin_count: usize,
     origins: Vec<String>,
+    reached_count: usize,
     reached: Vec<ReachedNode>,
+    uncovered_count: usize,
     uncovered: Vec<ReachedNode>,
 }
 
 impl PathReport {
     fn origin_count(&self) -> usize {
-        self.origins.len()
+        self.origin_count
     }
 
     fn reached_count(&self) -> usize {
-        self.reached.len()
+        self.reached_count
     }
 
     fn uncovered_count(&self) -> usize {
-        self.uncovered.len()
+        self.uncovered_count
     }
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+struct ImpactCache {
+    schema_version: u32,
+    paths: Vec<PathReport>,
+}
+
+impl ImpactCache {
+    fn report_for(&self, path: &str) -> Option<&PathReport> {
+        self.paths
+            .binary_search_by(|entry| entry.file_path.as_str().cmp(path))
+            .ok()
+            .map(|index| &self.paths[index])
+    }
+}
+
+pub(crate) fn encode_impact_cache(graph: &SemanticGraph) -> std::io::Result<Vec<u8>> {
+    let files: BTreeSet<_> = graph
+        .nodes()
+        .filter(|node| node.kind == NodeKind::Function && node.attr("is_test").is_none())
+        .filter_map(|node| node.file.as_deref().and_then(normalize_node_file))
+        .collect();
+    let paths = files
+        .into_iter()
+        .filter_map(|path| report_for_path_stats(graph, &path))
+        .collect();
+    serde_json::to_vec(&ImpactCache {
+        schema_version: 1,
+        paths,
+    })
+    .map_err(|error| std::io::Error::other(format!("could not encode hook cache: {error}")))
 }
 
 #[derive(Debug)]
 struct ReportEntries {
     edited: Vec<String>,
+    origin_count: usize,
     origins: Vec<(String, String)>,
+    reached_count: usize,
     reached: Vec<(String, ReachedNode)>,
+    uncovered_count: usize,
     uncovered: Vec<(String, ReachedNode)>,
 }
 
@@ -244,8 +282,11 @@ impl ReportEntries {
     fn from_paths(paths: &[PathReport]) -> Self {
         let mut entries = Self {
             edited: paths.iter().map(|path| path.file_path.clone()).collect(),
+            origin_count: paths.iter().map(PathReport::origin_count).sum(),
             origins: Vec::new(),
+            reached_count: paths.iter().map(PathReport::reached_count).sum(),
             reached: Vec::new(),
+            uncovered_count: paths.iter().map(PathReport::uncovered_count).sum(),
             uncovered: Vec::new(),
         };
         for path in paths {
@@ -307,27 +348,33 @@ fn compute_post_edit(payload: &Value) -> ImpactComputation {
             ..ImpactComputation::default()
         };
     };
-    let Ok(config) = ProjectConfig::load(&request.cwd) else {
+    let Ok(snapshot) = source::load_hook_snapshot(&request.cwd) else {
         return ImpactComputation {
             duration_us: started.elapsed().as_micros(),
             failed: true,
             ..ImpactComputation::default()
         };
     };
-    let Ok(snapshot) = source::load_graph_snapshot(&request.cwd, &config) else {
+    let Some(snapshot) = snapshot else {
+        return ImpactComputation {
+            duration_us: started.elapsed().as_micros(),
+            ..ImpactComputation::default()
+        };
+    };
+    let Ok(cache) = serde_json::from_slice::<ImpactCache>(&snapshot) else {
         return ImpactComputation {
             duration_us: started.elapsed().as_micros(),
             failed: true,
             ..ImpactComputation::default()
         };
     };
-    let Some(graph) = snapshot.graph.as_ref() else {
+    if cache.schema_version != 1 {
         return ImpactComputation {
             duration_us: started.elapsed().as_micros(),
-            failed: snapshot.error.is_some(),
+            failed: true,
             ..ImpactComputation::default()
         };
-    };
+    }
 
     let mut reports = Vec::new();
     let mut result = ImpactComputation {
@@ -335,7 +382,7 @@ fn compute_post_edit(payload: &Value) -> ImpactComputation {
         ..ImpactComputation::default()
     };
     for path in request.paths {
-        if let Some(path_report) = report_for_path_stats(graph, &path) {
+        if let Some(path_report) = cache.report_for(&path) {
             result.origins += path_report.origin_count();
             result.reached += path_report.reached_count();
             result.uncovered += path_report.uncovered_count();
@@ -346,7 +393,7 @@ fn compute_post_edit(payload: &Value) -> ImpactComputation {
     result.reached_omitted = result.reached.saturating_sub(MAX_REACHED);
     result.uncovered_omitted = result.uncovered.saturating_sub(MAX_UNCOVERED);
     if !reports.is_empty() {
-        if let Some(rendered) = render_report(&reports) {
+        if let Some(rendered) = render_report_refs(&reports) {
             result.emitted_bytes = rendered.text.len();
             result.report = Some(rendered.text);
         } else {
@@ -418,7 +465,7 @@ fn report_for_path_stats(graph: &SemanticGraph, file_path: &str) -> Option<PathR
             .then_with(|| left.path.cmp(&right.path))
     });
 
-    let uncovered: Vec<_> = reached
+    let mut uncovered: Vec<_> = reached
         .iter()
         .filter(|entry| {
             graph.get(entry.id).is_some_and(|node| {
@@ -430,19 +477,28 @@ fn report_for_path_stats(graph: &SemanticGraph, file_path: &str) -> Option<PathR
         .cloned()
         .collect();
 
+    let origin_count = origins.len();
+    let reached_count = reached.len();
+    let uncovered_count = uncovered.len();
+    origins.truncate(MAX_ORIGINS);
+    reached.truncate(MAX_REACHED);
+    uncovered.truncate(MAX_UNCOVERED);
     Some(PathReport {
         file_path: file_path.to_owned(),
+        origin_count,
         origins: origins.into_iter().map(|(_, path)| path).collect(),
+        reached_count,
         reached,
+        uncovered_count,
         uncovered,
     })
 }
 
 fn render_report(paths: &[PathReport]) -> Option<RenderedReport> {
     let entries = ReportEntries::from_paths(paths);
-    let origins = entries.origins.len();
-    let reached = entries.reached.len();
-    let uncovered = entries.uncovered.len();
+    let origins = entries.origin_count;
+    let reached = entries.reached_count;
+    let uncovered = entries.uncovered_count;
     let mut output = String::new();
     push_report_line(
         &mut output,
@@ -489,6 +545,10 @@ fn render_report(paths: &[PathReport]) -> Option<RenderedReport> {
         )?;
     }
     Some(RenderedReport { text: output })
+}
+
+fn render_report_refs(paths: &[&PathReport]) -> Option<RenderedReport> {
+    render_report(&paths.iter().map(|path| (*path).clone()).collect::<Vec<_>>())
 }
 
 fn push_report_line(output: &mut String, line: &str) -> Option<()> {

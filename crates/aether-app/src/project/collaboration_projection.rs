@@ -1,6 +1,6 @@
 use crate::project::config::ProjectConfig;
 use crate::project::source::{
-    commit_project_writes, graph_project_write, is_configured_source_path, load_reconciled_graph,
+    commit_project_writes, graph_project_writes, is_configured_source_path, load_reconciled_graph,
     read_project_bytes, ProjectWrite,
 };
 #[cfg(feature = "gui")]
@@ -274,7 +274,7 @@ pub(crate) fn plan_collaboration_projection(
     }
     if conflicts.is_empty() {
         let (reconciled, _) = SemanticGraph::reconcile_persisted(projected, remote);
-        writes.push(graph_project_write(
+        writes.extend(graph_project_writes(
             root,
             config,
             &reconciled,

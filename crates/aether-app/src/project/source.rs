@@ -19,6 +19,8 @@ static NEXT_TEMP_FILE: AtomicUsize = AtomicUsize::new(0);
 const TRANSACTION_ROOT: &str = ".girder/transactions";
 const TRANSACTION_MANIFEST: &str = "manifest.json";
 const TRANSACTION_COMMITTED: &str = "COMMITTED";
+pub(crate) const HOOK_CACHE_PATH: &str = ".girder/hook-impact-v1.json";
+const MAX_HOOK_CACHE_BYTES: usize = 64 * 1024 * 1024;
 
 /// Which interrupted journals a recovery pass may reclaim.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -547,40 +549,49 @@ pub(crate) fn save_graph(
 ) -> std::io::Result<PathBuf> {
     let output = safe_project_output_path(root, &config.graph.path)?;
     let bytes = encode_graph(&output, graph)?;
+    let hook_cache = crate::project::commands::encode_impact_cache(graph)?;
 
     let journal = JournalLock::create_and_acquire(root)?;
     recover_under_lock(root, &journal)?;
-    let outputs = OutputLocks::acquire(root, &[PathBuf::from(&config.graph.path)], true)?
-        .ok_or_else(|| std::io::Error::other("could not lock graph output"))?;
+    let outputs = OutputLocks::acquire(
+        root,
+        &[
+            PathBuf::from(&config.graph.path),
+            PathBuf::from(HOOK_CACHE_PATH),
+        ],
+        true,
+    )?
+    .ok_or_else(|| std::io::Error::other("could not lock graph output"))?;
     // Plain save has always replaced the graph. Read its current baseline
     // only after both locks, so a preceding watcher update is not a conflict.
     let expected = read_optional_bytes(&output)?;
+    let cache_expected = read_project_bytes(root, HOOK_CACHE_PATH)?;
     commit_under_lock(
         root,
-        vec![ProjectWrite::bytes(
-            PathBuf::from(&config.graph.path),
-            expected,
-            bytes,
-        )],
+        vec![
+            ProjectWrite::bytes(PathBuf::from(&config.graph.path), expected, bytes),
+            ProjectWrite::bytes(HOOK_CACHE_PATH, cache_expected, hook_cache),
+        ],
         &journal,
         &outputs,
     )?;
     Ok(output)
 }
 
-pub(crate) fn graph_project_write(
+pub(crate) fn graph_project_writes(
     root: &Path,
     config: &ProjectConfig,
     graph: &SemanticGraph,
     expected: Option<Vec<u8>>,
-) -> std::io::Result<ProjectWrite> {
+) -> std::io::Result<Vec<ProjectWrite>> {
     let output = safe_project_input_path(root, &config.graph.path)?;
     let contents = encode_graph(&output, graph)?;
-    Ok(ProjectWrite::bytes(
-        PathBuf::from(&config.graph.path),
-        expected,
-        contents,
-    ))
+    let cache_expected = read_project_bytes(root, HOOK_CACHE_PATH)?;
+    let hook_cache = crate::project::commands::encode_impact_cache(graph)?;
+    Ok(vec![
+        ProjectWrite::bytes(PathBuf::from(&config.graph.path), expected, contents),
+        ProjectWrite::bytes(HOOK_CACHE_PATH, cache_expected, hook_cache),
+    ])
 }
 
 pub(crate) fn load_graph_snapshot(
@@ -615,6 +626,34 @@ pub(crate) fn load_graph_snapshot(
             error: Some(error.to_string()),
         }),
     }
+}
+
+/// Load the bounded impact view from its fixed sidecar. The hook performs one
+/// bounded open/read and never parses project configuration or the full graph.
+pub(crate) fn load_hook_snapshot(root: &Path) -> std::io::Result<Option<Vec<u8>>> {
+    let path = root.join(HOOK_CACHE_PATH);
+    let mut options = std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NOFOLLOW);
+    }
+    let file = match options.open(&path) {
+        Ok(file) => file,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(error),
+    };
+    let mut cache = Vec::with_capacity(8 * 1024);
+    file.take(MAX_HOOK_CACHE_BYTES as u64 + 1)
+        .read_to_end(&mut cache)?;
+    if cache.len() > MAX_HOOK_CACHE_BYTES {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "hook impact cache exceeds the size limit",
+        ));
+    }
+    Ok(Some(cache))
 }
 
 /// Rebuild source projections and merge them with the validated durable graph.
@@ -1484,9 +1523,51 @@ mod tests {
 
         let output = save_graph(&dir.0, &config, &graph).unwrap();
         let loaded = SemanticGraph::load(&output).unwrap();
+        let hook_snapshot = load_hook_snapshot(&dir.0).unwrap().unwrap();
 
         assert_eq!(output, dir.0.join(".girder/semantic.aether"));
         assert!(loaded.find_by_path("crate::work").is_some());
+        assert_eq!(
+            serde_json::from_slice::<serde_json::Value>(&hook_snapshot).unwrap()["schema_version"],
+            1
+        );
+    }
+
+    #[test]
+    fn binary_graph_round_trips_with_a_hook_cache() {
+        let dir = TempDir::new("binary-hook-snapshot");
+        let mut config = ProjectConfig::default();
+        config.graph.path = "project.aetherb".into();
+        let mut graph = SemanticGraph::new();
+        graph.upsert_node(aether_graph::Node::new(
+            aether_graph::NodeKind::Function,
+            "work",
+            "crate::work",
+        ));
+
+        let output = save_graph(&dir.0, &config, &graph).unwrap();
+        let loaded = SemanticGraph::load(&output).unwrap();
+        let hook_snapshot = load_hook_snapshot(&dir.0).unwrap().unwrap();
+
+        assert!(loaded.find_by_path("crate::work").is_some());
+        assert_eq!(
+            serde_json::from_slice::<serde_json::Value>(&hook_snapshot).unwrap()["schema_version"],
+            1
+        );
+    }
+
+    #[test]
+    fn old_graphs_have_no_hook_cache_and_cache_reads_are_bounded() {
+        let dir = TempDir::new("hook-snapshot-fail-open");
+        let old = SemanticGraph::new().to_ron().unwrap();
+        std::fs::write(dir.0.join("project.aether"), old).unwrap();
+        let missing = load_hook_snapshot(&dir.0).unwrap();
+        assert!(missing.is_none());
+
+        std::fs::create_dir_all(dir.0.join(".girder")).unwrap();
+        std::fs::write(dir.0.join(HOOK_CACHE_PATH), b"!!!!").unwrap();
+        let cached = load_hook_snapshot(&dir.0).unwrap().unwrap();
+        assert_eq!(cached, b"!!!!");
     }
 
     #[cfg(unix)]

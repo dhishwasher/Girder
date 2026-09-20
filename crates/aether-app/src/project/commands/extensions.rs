@@ -1,6 +1,6 @@
 use crate::project::config::{ProjectConfig, CONFIG_FILE};
 use crate::project::source::{
-    commit_project_writes, graph_project_write, load_reconciled_graph, read_project_bytes,
+    commit_project_writes, graph_project_writes, load_reconciled_graph, read_project_bytes,
     read_project_bytes_bounded, ProjectWrite,
 };
 use crate::project::validation::{validate_candidate, ValidationStatus};
@@ -80,7 +80,7 @@ impl ExtensionMutationRequest {
                 let grant = ExtensionGrant::approve(&recipe).map_err(extension_error)?;
                 install_with_receipts(&mut self.graph, recipe.clone(), grant, receipts)
                     .map_err(extension_error)?;
-                writes.push(graph_project_write(
+                writes.extend(graph_project_writes(
                     &self.root,
                     &self.config,
                     &self.graph,
@@ -127,7 +127,7 @@ impl ExtensionMutationRequest {
                     })?;
                 let mut writes = projection_remove_writes(&record);
                 uninstall(&mut self.graph, &extension_id).map_err(extension_error)?;
-                writes.push(graph_project_write(
+                writes.extend(graph_project_writes(
                     &self.root,
                     &self.config,
                     &self.graph,
@@ -547,7 +547,7 @@ fn preview_or_install(
     let (mut writes, receipts) = projection_install_writes(root, &recipe)?;
     let grant = ExtensionGrant::approve(&recipe).map_err(extension_error)?;
     install_with_receipts(graph, recipe.clone(), grant, receipts).map_err(extension_error)?;
-    writes.push(graph_project_write(root, config, graph, graph_baseline)?);
+    writes.extend(graph_project_writes(root, config, graph, graph_baseline)?);
     validate_and_commit(
         root,
         config,
@@ -582,7 +582,7 @@ fn remove_extension(
             format!("extension {extension_id} is not installed"),
         ));
     }
-    writes.push(graph_project_write(root, config, graph, graph_baseline)?);
+    writes.extend(graph_project_writes(root, config, graph, graph_baseline)?);
     validate_and_commit(
         root,
         config,
@@ -676,9 +676,9 @@ fn commit_graph_only(
     graph_baseline: Option<Vec<u8>>,
     graph: &SemanticGraph,
 ) -> std::io::Result<()> {
-    let graph_write = graph_project_write(root, config, graph, graph_baseline)?;
+    let graph_writes = graph_project_writes(root, config, graph, graph_baseline)?;
     ensure_config_unchanged(root, config_baseline)?;
-    commit_project_writes(root, vec![graph_write])?;
+    commit_project_writes(root, graph_writes)?;
     Ok(())
 }
 
