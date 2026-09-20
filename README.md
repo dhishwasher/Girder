@@ -92,22 +92,27 @@ npx -y girder-mcp setup
 `setup` detects Claude Code (`~/.claude` or an existing in-home project
 `.mcp.json`), Codex (`~/.codex` or an in-home `CODEX_HOME`), and Cursor
 (`~/.cursor`). It merges the `girder` MCP entry into each detected agent's
-documented config and installs structured-read hooks for Claude Code and Codex.
-Cursor is MCP-only because its PreToolUse hook output can block a tool and its
-`agent_message` output is only surfaced on DENY. Codex hooks cover
-structured `Read`, `read_file`, and `mcp__.*__read_file` events; shell commands
-are intentionally not parsed. A generic MCP client has no universal config path
-and is reported as not detected. Setup never writes outside your home
-directory. Existing foreign `girder` entries remain untouched, including with
-`--force`; `girder setup --uninstall` removes only setup-owned changes.
+documented config and installs nested `PreToolUse` and `PostToolUse` hooks for
+Claude Code and Codex. Pre hooks cover structured `Read`, `read_file`, and
+`mcp__.*__read_file` events; post hooks cover Claude's
+`Edit|Write|NotebookEdit` and Codex's `apply_patch|Edit|Write` edit names.
+Shell commands are intentionally not parsed. Cursor is MCP-only: its documented
+post-edit hook input and output semantics do not establish the standalone
+additional-context protocol used by this launcher, so setup does not register a
+hook there. A generic MCP client has no universal config path and is reported as
+not detected. Setup never writes outside your home directory. Existing foreign
+`girder` entries remain untouched, including with `--force`; `girder setup
+--uninstall` removes only setup-owned changes.
 
-The packaged hook launcher forwards stdin and stdout to the pinned native
-`girder hook` executable and fails open on errors. Standalone hook stdout is
-the client's `additionalContext` JSON protocol; the MCP server continues to
-use JSON-RPC on its own stdout. The hook only gives guidance when
-`project.aether` already exists; it never builds or loads a graph. See the
-[setup and client path guide](./docs/setup.md) for config paths, ownership, and
-the manual JSON fallback.
+The packaged hook launcher forwards each event to the pinned native `girder hook`
+executable and fails open on errors. Only standalone `PreToolUse` JSON is
+forwarded on stdout; post-edit native diagnostics pass through stderr, and MCP
+continues to use JSON-RPC on its own stdout. The read advisory only gives
+guidance when `project.aether` already exists. The post-edit advisory uses that
+saved graph snapshot, does not scan or rebuild the project, and describes the
+last analyzed version of changed files. See the [setup and client path
+guide](./docs/setup.md) for config paths, ownership, and the manual JSON
+fallback.
 
 For clients setup cannot detect, add this entry to their documented MCP config
 manually:

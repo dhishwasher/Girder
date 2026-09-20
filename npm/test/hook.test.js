@@ -29,7 +29,7 @@ function makeStub(root, body) {
 function runHookWithBinary(cwd, payload, binary) {
   return spawnSync(INTERPRETER, [HOOK, binary], {
     cwd,
-    input: JSON.stringify(payload),
+    input: Buffer.from(JSON.stringify(payload)),
     encoding: null,
   });
 }
@@ -60,6 +60,34 @@ test("launcher fails open when the pinned native executable is unavailable", () 
   }
 });
 
+test("launcher forwards post-edit native stderr but suppresses post-edit stdout", { skip: process.platform === "win32" }, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "girder-hook-post-"));
+  const payload = { hook_event_name: "PostToolUse", tool_name: "Edit", tool_input: { file_path: "src/lib.rs" } };
+  const stub = makeStub(root, "printf native-stdout; printf native-stderr >&2");
+  try {
+    const result = runHookWithBinary(root, payload, stub);
+    assert.strictEqual(result.status, 0);
+    assert.strictEqual(result.stdout.length, 0);
+    assert.strictEqual(result.stderr.toString("utf8"), "native-stderr");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("launcher stays silent when native hook fails after writing both streams", { skip: process.platform === "win32" }, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "girder-hook-post-fail-"));
+  const payload = { hook_event_name: "PostToolUse", tool_name: "Edit", tool_input: {} };
+  const stub = makeStub(root, "printf native-stdout; printf native-stderr >&2; exit 7");
+  try {
+    const result = runHookWithBinary(root, payload, stub);
+    assert.strictEqual(result.status, 0);
+    assert.strictEqual(result.stdout.length, 0);
+    assert.strictEqual(result.stderr.length, 0);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("Python launcher forwards stdin and fails open", { skip: process.platform === "win32" }, () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "girder-hook-python-"));
   const pythonHook = path.join(PACKAGE, "hooks", "girder_context_advisory.py");
@@ -68,11 +96,49 @@ test("Python launcher forwards stdin and fails open", { skip: process.platform =
   try {
     const result = spawnSync("python3", [pythonHook, stub], {
       cwd: root,
-      input: JSON.stringify(payload),
+      input: Buffer.from(JSON.stringify(payload)),
       encoding: null,
     });
     assert.strictEqual(result.status, 0);
     assert.deepStrictEqual(result.stdout.toString("utf8"), JSON.stringify(payload));
+    assert.strictEqual(result.stderr.length, 0);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Python launcher forwards post-edit native stderr but suppresses post-edit stdout", { skip: process.platform === "win32" }, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "girder-hook-python-post-"));
+  const pythonHook = path.join(PACKAGE, "hooks", "girder_context_advisory.py");
+  const payload = { hook_event_name: "PostToolUse", tool_name: "apply_patch", tool_input: {} };
+  const stub = makeStub(root, "printf native-stdout; printf native-stderr >&2");
+  try {
+    const result = spawnSync("python3", [pythonHook, stub], {
+      cwd: root,
+      input: Buffer.from(JSON.stringify(payload)),
+      encoding: null,
+    });
+    assert.strictEqual(result.status, 0);
+    assert.strictEqual(result.stdout.length, 0);
+    assert.strictEqual(result.stderr.toString("utf8"), "native-stderr");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Python launcher stays silent when native hook fails after writing both streams", { skip: process.platform === "win32" }, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "girder-hook-python-post-fail-"));
+  const pythonHook = path.join(PACKAGE, "hooks", "girder_context_advisory.py");
+  const payload = { hook_event_name: "PostToolUse", tool_name: "apply_patch", tool_input: {} };
+  const stub = makeStub(root, "printf native-stdout; printf native-stderr >&2; exit 7");
+  try {
+    const result = spawnSync("python3", [pythonHook, stub], {
+      cwd: root,
+      input: Buffer.from(JSON.stringify(payload)),
+      encoding: null,
+    });
+    assert.strictEqual(result.status, 0);
+    assert.strictEqual(result.stdout.length, 0);
     assert.strictEqual(result.stderr.length, 0);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });

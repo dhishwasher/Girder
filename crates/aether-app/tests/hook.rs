@@ -67,6 +67,14 @@ fn run_hook(root: &Path, payload: &[u8]) -> Output {
     run_with_input(command, payload)
 }
 
+fn run_hook_observation(root: &Path, payload: &[u8]) -> Output {
+    let mut command = Command::new(env!("CARGO_BIN_EXE_girder"));
+    command
+        .args(["hook", "--edit-blast-radius", "--observation"])
+        .current_dir(root);
+    run_with_input(command, payload)
+}
+
 fn read_payload(root: &Path) -> Value {
     json!({
         "tool_name": "Read",
@@ -212,4 +220,27 @@ fn stalled_stdin_fails_open_silently_within_one_second() {
     stderr.read_to_end(&mut stderr_bytes).unwrap();
     assert!(stdout_bytes.is_empty(), "stdout: {stdout_bytes:?}");
     assert!(stderr_bytes.is_empty(), "stderr: {stderr_bytes:?}");
+}
+
+#[test]
+fn edit_observation_is_stdout_only_and_distinguishes_missing_graph() {
+    let root = TempRoot::new("observation");
+    let payload = json!({
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Edit",
+        "tool_input": {"file_path": root.source()},
+        "tool_response": {"success": true},
+        "cwd": root.path(),
+    });
+    let output = run_hook_observation(
+        root.path(),
+        &serde_json::to_vec(&payload).expect("serialize observation payload"),
+    );
+    assert!(output.status.success(), "stderr: {:?}", output.stderr);
+    assert!(output.stderr.is_empty(), "stderr: {:?}", output.stderr);
+    let record: Value = serde_json::from_slice(&output.stdout).expect("observation JSON");
+    assert_eq!(record["graph_ready"], false);
+    assert_eq!(record["timed_out"], false);
+    assert_eq!(record["failed"], false);
+    assert_eq!(record["emitted"], false);
 }

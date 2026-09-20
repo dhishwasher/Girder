@@ -11,24 +11,30 @@ Setup writes only under the home directory and records its exact changes in
 `girder-setup-state.json` beside each detected client config. Uninstall restores
 only those owned changes. A foreign server already occupying the `girder` name
 is preserved even with `--force`; force is limited to setup-owned Girder
-artifacts. Cursor receives MCP configuration only because malformed or empty
-Cursor PreToolUse output can block a tool, and `agent_message` is only exposed
-on DENY.
+artifacts. Cursor receives MCP configuration only: setup leaves its
+`preToolUse` permission hook and its `postToolUse`/`afterFileEdit` hooks
+untouched because their documented input/output contracts differ from this
+launcher's standalone protocol. No Cursor hook is registered or claimed by
+the ownership record.
 
 | Client | MCP config | Hook config | Hook coverage |
 | --- | --- | --- | --- |
-| Claude Code | `~/.claude.json` or in-home project `.mcp.json` | `~/.claude/settings.json` | `PreToolUse` matcher `Read` |
-| Codex | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` | `$CODEX_HOME/hooks.json` or `~/.codex/hooks.json` | `PreToolUse` matcher `Read\|read_file\|mcp__.*__read_file` |
+| Claude Code | `~/.claude.json` or in-home project `.mcp.json` | `~/.claude/settings.json` | nested `PreToolUse` `Read`; nested `PostToolUse` `Edit\|Write\|NotebookEdit` |
+| Codex | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` | `$CODEX_HOME/hooks.json` or `~/.codex/hooks.json` | nested `PreToolUse` `Read\|read_file\|mcp__.*__read_file`; nested `PostToolUse` `apply_patch\|Edit\|Write` |
 | Cursor | `~/.cursor/mcp.json` | not registered | MCP only |
 | Other clients | documented by that client | no universal path | add MCP manually |
 
 Codex also supports inline `[hooks]` in `config.toml`. When that
 representation is present, setup leaves it alone rather than creating a
 duplicate `hooks.json`; MCP setup still proceeds. Shell commands are not parsed
-as structured reads. The native hook accepts only whole-file structured reads,
-checks for an existing `project.aether`, and exits silently when the graph is
-missing, the input is malformed, or the read is bounded. It never builds or
-loads a graph.
+as structured reads. The native hook accepts only whole-file structured reads
+for the pre hook and successful source-file edit events for the post hook. The
+pre hook checks for an existing `project.aether` and exits silently when the
+graph is missing, the input is malformed, or the read is bounded. The post hook
+uses only that saved graph snapshot: it does not scan source files, reconcile
+the working tree, build or update a graph, or identify the exact changed
+function. New functions are absent until the project is analyzed again. Both
+paths fail open.
 
 Input parsing and metadata checks have a 20 ms deadline; expiry produces no
 advice. Process startup and operating-system scheduling are outside that
@@ -47,11 +53,12 @@ zero-overhead requirement. The 20 ms work deadline was not increased. Silent
 timeout responses remain intentional; this debug-host result is not a release
 performance measurement.
 
-Standalone hook stdout is the client hook protocol: valid responses contain
-`additionalContext` JSON. The shell/Python package launchers pass stdin and
-stdout to the pinned native `girder hook` binary, suppress errors, and always
-exit successfully. MCP startup and tool calls remain JSON-RPC on MCP stdout;
-the two protocols must not be mixed.
+Standalone `PreToolUse` hook stdout is the client hook protocol: valid responses
+contain `additionalContext` JSON. The shell/Python package launchers pass each
+event to the pinned native `girder hook` binary, forward stdout only for a
+recognized `PreToolUse` event, allow post-edit native stderr through,
+and always exit successfully. MCP startup and tool calls remain JSON-RPC on
+MCP stdout; the two protocols must not be mixed.
 
 For a client without setup detection, add the MCP entry to its documented
 config:

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsString;
 use std::io::{self, Write};
 use std::path::{Component, Path, PathBuf};
@@ -590,55 +590,21 @@ fn plan_hook_install(
             return Ok(());
         }
     }
-    let Some((event_key, style)) = hook_shape(detection.agent) else {
+    let Some(specs) = hook_specs(detection.agent) else {
         return Ok(());
     };
     let config_path = safe_target(&hook_config_path(detection), home)?;
     let before = read_optional(&config_path)?;
     let mut document = parse_config(before.as_deref(), ConfigFormat::Json, &config_path)?;
     let script_path = safe_target(&detection.config_dir.join("hooks").join(HOOK_FILE), home)?;
-    let matcher = if detection.agent == Agent::Codex {
-        "Read|read_file|mcp__.*__read_file"
-    } else {
-        "Read"
-    };
-    let desired = hook_entry(style, matcher, &script_path, executable);
-    let matches = matching_hooks(&document, event_key, style)?;
-    let owned_hook = state
-        .hooks
-        .iter()
-        .find(|owned| {
-            owned.config_path == config_path.to_string_lossy()
-                && matches.iter().any(|entry| entry == &owned.installed)
-        })
-        .map(|owned| owned.installed.clone());
-    if force
-        && matches
-            .iter()
-            .any(|entry| !hook_group_is_safely_replaceable(entry, style))
-    {
-        notes.push(format!(
-            "{}: a Girder advisory handler shares a hook group with other handlers; left the group unchanged.",
-            detection.agent.label()
-        ));
-        return Ok(());
-    }
-
-    if !matches.is_empty() && owned_hook.is_none() {
-        notes.push(format!(
-            "{}: existing advisory hook is not setup-owned; left it unchanged (force does not replace another hook).",
-            detection.agent.label()
-        ));
-        return Ok(());
-    }
-
     let script_before = read_optional(&script_path)?;
     let script_matches = script_before.as_deref() == Some(HOOK_SOURCE.as_bytes());
     let owned_script = state.scripts.iter().find(|owned| {
         owned.path == script_path.to_string_lossy()
-            && script_before
-                .as_deref()
-                .is_some_and(|bytes| sha256(bytes) == owned.installed_sha256)
+            && (script_before.is_none()
+                || script_before
+                    .as_deref()
+                    .is_some_and(|bytes| sha256(bytes) == owned.installed_sha256))
     });
     if script_before.is_some() && !script_matches && owned_script.is_none() {
         notes.push(format!(
@@ -648,79 +614,124 @@ fn plan_hook_install(
         ));
         return Ok(());
     }
-    if matches.len() == 1 && matches[0] == desired && script_matches {
+
+    let spec_count = specs.len();
+    let mut installed_any = false;
+    let mut already_configured = 0;
+    let config_key = config_path.to_string_lossy().into_owned();
+    for &(event_key, style, matcher) in &specs {
+        let desired = hook_entry(style, matcher, &script_path, executable);
+        let matches = matching_hooks(&document, event_key, style)?;
+        let owned_hook = state
+            .hooks
+            .iter()
+            .find(|owned| {
+                owned.config_path == config_key
+                    && owned.event_key == event_key
+                    && matches.iter().any(|entry| entry == &owned.installed)
+            })
+            .map(|owned| owned.installed.clone());
+        if force
+            && matches
+                .iter()
+                .any(|entry| !hook_group_is_safely_replaceable(entry, style))
+        {
+            notes.push(format!(
+                "{}: a Girder advisory handler shares a hook group with other handlers; left the {} group unchanged.",
+                detection.agent.label(), event_key
+            ));
+            continue;
+        }
+        if !matches.is_empty() && owned_hook.is_none() {
+            notes.push(format!(
+                "{}: existing advisory hook is not setup-owned; left the {} group unchanged (force does not replace another hook).",
+                detection.agent.label(), event_key
+            ));
+            continue;
+        }
+        if matches.len() == 1 && matches[0] == desired {
+            already_configured += 1;
+            continue;
+        }
+        installed_any = true;
+        if let Some(owned) = state
+            .hooks
+            .iter_mut()
+            .find(|owned| owned.config_path == config_key && owned.event_key == event_key)
+        {
+            owned.installed = desired.clone();
+        } else {
+            state.hooks.push(HookState {
+                config_path: config_key.clone(),
+                config_created: before.is_none(),
+                event_key: event_key.into(),
+                style,
+                previous_matches: matches,
+                installed: desired.clone(),
+                original_text: optional_utf8(&before, &config_path)?,
+                installed_sha256: String::new(),
+            });
+        }
+        replace_matching_hooks(
+            &mut document,
+            event_key,
+            style,
+            Some(desired),
+            owned_hook.as_ref(),
+        )?;
+    }
+
+    let repair_script = !script_matches && owned_script.is_some();
+    if !installed_any && already_configured == spec_count && !repair_script {
         notes.push(format!(
-            "{}: Girder advisory hook already configured.",
+            "{}: Girder advisory hooks already configured.",
             detection.agent.label()
         ));
         return Ok(());
     }
-    if !script_matches {
-        if let Some(owned) = state
-            .scripts
-            .iter_mut()
-            .find(|owned| owned.path == script_path.to_string_lossy())
-        {
-            owned.installed_sha256 = sha256(HOOK_SOURCE.as_bytes());
-        } else {
-            state.scripts.push(ScriptState {
-                path: script_path.to_string_lossy().into_owned(),
-                previous: script_before
-                    .as_deref()
-                    .map(std::str::from_utf8)
-                    .transpose()
-                    .map_err(|error| {
-                        invalid(format!(
-                            "existing hook {} is not UTF-8: {error}",
-                            script_path.display()
-                        ))
-                    })?
-                    .map(str::to_owned),
-                installed_sha256: sha256(HOOK_SOURCE.as_bytes()),
-            });
+    if installed_any || repair_script {
+        if !script_matches {
+            if let Some(owned) = state
+                .scripts
+                .iter_mut()
+                .find(|owned| owned.path == script_path.to_string_lossy())
+            {
+                owned.installed_sha256 = sha256(HOOK_SOURCE.as_bytes());
+            } else {
+                state.scripts.push(ScriptState {
+                    path: script_path.to_string_lossy().into_owned(),
+                    previous: script_before
+                        .as_deref()
+                        .map(std::str::from_utf8)
+                        .transpose()
+                        .map_err(|error| {
+                            invalid(format!(
+                                "existing hook {} is not UTF-8: {error}",
+                                script_path.display()
+                            ))
+                        })
+                        .map(str::to_owned),
+                    installed_sha256: sha256(HOOK_SOURCE.as_bytes()),
+                });
+            }
+            push_change(
+                changes,
+                script_path.clone(),
+                script_before,
+                Some(HOOK_SOURCE.as_bytes().to_vec()),
+            );
         }
-        push_change(
-            changes,
-            script_path.clone(),
-            script_before,
-            Some(HOOK_SOURCE.as_bytes().to_vec()),
-        );
     }
-
-    if let Some(owned) = state
-        .hooks
-        .iter_mut()
-        .find(|owned| owned.config_path == config_path.to_string_lossy())
-    {
-        owned.installed = desired.clone();
-    } else {
-        state.hooks.push(HookState {
-            config_path: config_path.to_string_lossy().into_owned(),
-            config_created: before.is_none(),
-            event_key: event_key.into(),
-            style,
-            previous_matches: matches,
-            installed: desired.clone(),
-            original_text: optional_utf8(&before, &config_path)?,
-            installed_sha256: String::new(),
-        });
+    if installed_any {
+        let after = serialize_config(&document, ConfigFormat::Json)?;
+        let installed_sha256 = sha256(&after);
+        for owned in &mut state.hooks {
+            if owned.config_path == config_key {
+                owned.installed_sha256 = installed_sha256.clone();
+            }
+        }
+        push_change(changes, config_path, before, Some(after));
     }
-    replace_matching_hooks(
-        &mut document,
-        event_key,
-        style,
-        Some(desired),
-        owned_hook.as_ref(),
-    )?;
-    let after = serialize_config(&document, ConfigFormat::Json)?;
-    if let Some(owned) = state
-        .hooks
-        .iter_mut()
-        .find(|owned| owned.config_path == config_path.to_string_lossy())
-    {
-        owned.installed_sha256 = sha256(&after);
-    }
-    push_change(changes, config_path, before, Some(after));
     Ok(())
 }
 
@@ -731,12 +742,49 @@ fn uninstall_hooks(
     changes: &mut Vec<Change>,
     notes: &mut Vec<String>,
 ) -> io::Result<()> {
-    let mut retained_hooks = Vec::new();
+    let mut grouped = BTreeMap::<String, Vec<HookState>>::new();
     for owned in std::mem::take(&mut state.hooks) {
-        let config_path = safe_target(Path::new(&owned.config_path), home)?;
+        grouped
+            .entry(owned.config_path.clone())
+            .or_default()
+            .push(owned);
+    }
+    let mut retained_hooks = Vec::new();
+    for (config_key, owned_hooks) in grouped {
+        let config_path = safe_target(Path::new(&config_key), home)?;
         let before = read_optional(&config_path)?;
-        if let Some(bytes) = before.as_deref() {
-            let mut document = parse_config(Some(bytes), ConfigFormat::Json, &config_path)?;
+        let Some(bytes) = before.as_deref() else {
+            continue;
+        };
+        let mut document = parse_config(Some(bytes), ConfigFormat::Json, &config_path)?;
+        let mut all_present = true;
+        for owned in &owned_hooks {
+            let matches = matching_hooks(&document, &owned.event_key, owned.style)?;
+            if !matches.iter().any(|entry| entry == &owned.installed) {
+                all_present = false;
+            }
+        }
+        let original_text = owned_hooks
+            .iter()
+            .find_map(|owned| owned.original_text.clone());
+        let same_installed_snapshot = owned_hooks.iter().all(|owned| {
+            !owned.installed_sha256.is_empty() && owned.installed_sha256 == sha256(bytes)
+        });
+        if all_present && same_installed_snapshot {
+            if let Some(original_text) = original_text {
+                push_change(
+                    changes,
+                    config_path,
+                    before,
+                    Some(original_text.into_bytes()),
+                );
+                continue;
+            }
+        }
+
+        let config_created = owned_hooks.iter().any(|owned| owned.config_created);
+        let mut changed = false;
+        for owned in owned_hooks {
             let matches = matching_hooks(&document, &owned.event_key, owned.style)?;
             if !matches.iter().any(|entry| entry == &owned.installed) {
                 if !matches.is_empty() {
@@ -749,25 +797,16 @@ fn uninstall_hooks(
                 }
                 continue;
             }
-            if !owned.installed_sha256.is_empty()
-                && sha256(bytes) == owned.installed_sha256
-                && owned.original_text.is_some()
-            {
-                push_change(
-                    changes,
-                    config_path,
-                    before,
-                    owned.original_text.map(String::into_bytes),
-                );
-                continue;
-            }
             remove_exact_hook(&mut document, &owned.event_key, &owned.installed)?;
             append_hooks(
                 &mut document,
                 &owned.event_key,
                 owned.previous_matches.clone(),
             )?;
-            if owned.config_created && config_is_empty(&document, ConfigFormat::Json)? {
+            changed = true;
+        }
+        if changed {
+            if config_created && config_is_empty(&document, ConfigFormat::Json)? {
                 push_change(changes, config_path, before, None);
             } else {
                 let after = serialize_config(&document, ConfigFormat::Json)?;
@@ -808,10 +847,20 @@ fn uninstall_hooks(
     Ok(())
 }
 
-fn hook_shape(agent: Agent) -> Option<(&'static str, HookStyle)> {
+fn hook_specs(agent: Agent) -> Option<Vec<(&'static str, HookStyle, &'static str)>> {
     match agent {
-        Agent::Claude => Some(("PreToolUse", HookStyle::Nested)),
-        Agent::Codex => Some(("PreToolUse", HookStyle::Nested)),
+        Agent::Claude => Some(vec![
+            ("PreToolUse", HookStyle::Nested, "Read"),
+            ("PostToolUse", HookStyle::Nested, "Edit|Write|NotebookEdit"),
+        ]),
+        Agent::Codex => Some(vec![
+            (
+                "PreToolUse",
+                HookStyle::Nested,
+                "Read|read_file|mcp__.*__read_file",
+            ),
+            ("PostToolUse", HookStyle::Nested, "apply_patch|Edit|Write"),
+        ]),
         Agent::Cursor | Agent::Generic => None,
     }
 }
@@ -1519,8 +1568,16 @@ mod tests {
                 .unwrap();
         assert_eq!(claude_hooks["hooks"]["PreToolUse"][0]["matcher"], "Read");
         assert_eq!(
+            claude_hooks["hooks"]["PostToolUse"][0]["matcher"],
+            "Edit|Write|NotebookEdit"
+        );
+        assert_eq!(
             codex_hooks["hooks"]["PreToolUse"][0]["matcher"],
             "Read|read_file|mcp__.*__read_file"
+        );
+        assert_eq!(
+            codex_hooks["hooks"]["PostToolUse"][0]["matcher"],
+            "apply_patch|Edit|Write"
         );
         for directory in [".claude", ".codex"] {
             assert_eq!(
@@ -1696,6 +1753,10 @@ mod tests {
             hooks["hooks"]["PreToolUse"][0]["matcher"],
             "Read|read_file|mcp__.*__read_file"
         );
+        assert_eq!(
+            hooks["hooks"]["PostToolUse"][0]["matcher"],
+            "apply_patch|Edit|Write"
+        );
         let command = hooks["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
             .as_str()
             .unwrap();
@@ -1723,6 +1784,25 @@ mod tests {
 
         home.run(&["--agents", "claude"]);
         assert_eq!(std::fs::read_to_string(script_path).unwrap(), HOOK_SOURCE);
+    }
+
+    #[test]
+    fn setup_owned_missing_launcher_is_reinstalled_when_registrations_match() {
+        let home = TempHome::new("hook-missing-repair");
+        home.mkdir(".claude");
+        home.run(&["--agents", "claude"]);
+
+        let script_path = home.0.join(".claude/hooks").join(HOOK_FILE);
+        std::fs::remove_file(&script_path).unwrap();
+        let output = home.run(&["--agents", "claude"]);
+
+        assert!(output.contains("created") || output.contains("updated"));
+        assert_eq!(std::fs::read_to_string(script_path).unwrap(), HOOK_SOURCE);
+        let hooks: Value =
+            serde_json::from_slice(&std::fs::read(home.0.join(".claude/settings.json")).unwrap())
+                .unwrap();
+        assert_eq!(hooks["hooks"]["PreToolUse"].as_array().unwrap().len(), 1);
+        assert_eq!(hooks["hooks"]["PostToolUse"].as_array().unwrap().len(), 1);
     }
 
     #[test]
