@@ -2,13 +2,25 @@
   "schema_version": 1,
   "policy_id": "edit-blast-radius-v1",
   "corpus_sha256": "82f8b06ea365b79dd5c2d17960e5b46785200ef3eae27efc51ea2dbb15217fbe",
-  "implementation_commit": "9dde6d10963ecfe897da77937367dbca18dbfa6d",
-  "binary_sha256": "dc3c3cad7bc3e3df1f492d9ef20faa453301458953555059c011ad66ac069dde",
+  "implementation_commit": "3b382c13c3adbf010a27311f711ff2f625df5df7",
+  "binary_sha256": "1b2b3b87ee3b0968f12c13e00c3a518fd3c3dfac1dc7a2412f60ca5cfa480643",
   "platform": "Linux-6.6.141-09476-g954adab60416-x86_64-with-glibc2.36",
   "clean_input": {
     "passed": true,
     "worktree_clean": true
   },
+  "aggregate": {
+    "eligible_events": 141,
+    "skipped_events": 8,
+    "timed_out_events": 0,
+    "failed_event_count": 0,
+    "p50_duration_us": 248,
+    "p95_duration_us": 2289,
+    "max_duration_us": 3509,
+    "max_emitted_bytes": 2054,
+    "failed_events": []
+  },
+  "latency_note": "Computation duration excludes process startup; fail-open behavior covers startup and all other errors. The release binary ran from a home-local copy matching the installed package location; running it directly from the ChromeOS 9p build target adds lazy page-fault latency. Red timeouts and failures are retained.",
   "records": [
     {
       "case": "rust-three-file-facade",
@@ -22,10 +34,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 318337,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 429,
+      "duration_us": 426,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -41,9 +53,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 220702,
+      "duration_us": 194,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -59,9 +71,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 70728,
+      "duration_us": 283,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -76,10 +88,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 70252,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 432,
+      "duration_us": 255,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -95,9 +107,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 81356,
+      "duration_us": 158,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -112,10 +124,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 163926,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 250,
+      "duration_us": 279,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -130,10 +142,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 67724,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 432,
+      "duration_us": 211,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -149,9 +161,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 88543,
+      "duration_us": 159,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -167,9 +179,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 194866,
+      "duration_us": 135,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -184,10 +196,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 134641,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 432,
+      "duration_us": 319,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -203,9 +215,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 108932,
+      "duration_us": 138,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -221,9 +233,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 83557,
+      "duration_us": 138,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -238,10 +250,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 86743,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 327,
+      "duration_us": 287,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -256,10 +268,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 98926,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 708,
+      "duration_us": 279,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -274,10 +286,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 67012,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 708,
+      "duration_us": 189,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -292,10 +304,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 84989,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 327,
+      "duration_us": 238,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -310,10 +322,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 67660,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 723,
+      "duration_us": 406,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -328,10 +340,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 124544,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 265,
+      "duration_us": 194,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -346,10 +358,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 89732,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 939,
+      "duration_us": 332,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -365,9 +377,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 82464,
+      "duration_us": 206,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -382,10 +394,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 69462,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 429,
+      "duration_us": 205,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -401,9 +413,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 61416,
+      "duration_us": 167,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -418,10 +430,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 89063,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 421,
+      "duration_us": 244,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -437,9 +449,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 93067,
+      "duration_us": 149,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -454,10 +466,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 69743,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 429,
+      "duration_us": 252,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -548,10 +560,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 131890,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 386,
+      "duration_us": 267,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -566,10 +578,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 88108,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 386,
+      "duration_us": 689,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -585,9 +597,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 136026,
+      "duration_us": 166,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -602,10 +614,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 164753,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 784,
+      "duration_us": 901,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -620,10 +632,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 80400,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 784,
+      "duration_us": 236,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -638,10 +650,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 180792,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 244,
+      "duration_us": 169,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -656,10 +668,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 102792,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 351,
+      "duration_us": 213,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -675,9 +687,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 70171,
+      "duration_us": 315,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -693,9 +705,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 58852,
+      "duration_us": 176,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -710,10 +722,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 142842,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 348,
+      "duration_us": 244,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -729,9 +741,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 60897,
+      "duration_us": 191,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -746,10 +758,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 99380,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 776,
+      "duration_us": 558,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -765,9 +777,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 138332,
+      "duration_us": 140,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -782,10 +794,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 77219,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 381,
+      "duration_us": 3509,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -800,10 +812,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 125656,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 381,
+      "duration_us": 185,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -819,9 +831,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 86744,
+      "duration_us": 144,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -836,10 +848,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 74875,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 797,
+      "duration_us": 281,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -854,10 +866,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 110531,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 797,
+      "duration_us": 213,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -872,10 +884,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 357688,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 239,
+      "duration_us": 165,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -890,10 +902,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 75144,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 351,
+      "duration_us": 202,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -909,9 +921,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 86084,
+      "duration_us": 189,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -927,9 +939,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 92939,
+      "duration_us": 189,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -944,10 +956,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 79398,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 348,
+      "duration_us": 248,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -963,9 +975,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 88440,
+      "duration_us": 211,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -980,10 +992,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 100084,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 765,
+      "duration_us": 242,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -999,9 +1011,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 73132,
+      "duration_us": 155,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1016,10 +1028,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 110843,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 453,
+      "duration_us": 277,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1034,10 +1046,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 65420,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 453,
+      "duration_us": 284,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1053,9 +1065,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 89440,
+      "duration_us": 155,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1070,10 +1082,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 97947,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 878,
+      "duration_us": 235,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1088,10 +1100,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 66100,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 878,
+      "duration_us": 255,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1106,10 +1118,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 85618,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 331,
+      "duration_us": 254,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1124,10 +1136,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 124761,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 358,
+      "duration_us": 254,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1143,9 +1155,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 69806,
+      "duration_us": 161,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1161,9 +1173,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 79213,
+      "duration_us": 156,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1178,10 +1190,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 124485,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 355,
+      "duration_us": 218,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1197,9 +1209,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 72170,
+      "duration_us": 162,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1214,10 +1226,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 93490,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 781,
+      "duration_us": 223,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1233,9 +1245,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 89196,
+      "duration_us": 238,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1250,10 +1262,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 66003,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 329,
+      "duration_us": 226,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1268,10 +1280,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 92674,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 329,
+      "duration_us": 249,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1286,10 +1298,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 79417,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 223,
+      "duration_us": 282,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1304,10 +1316,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 105573,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 466,
+      "duration_us": 280,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1322,10 +1334,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 45265,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 466,
+      "duration_us": 214,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1340,10 +1352,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 63545,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 223,
+      "duration_us": 201,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1358,10 +1370,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 137593,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 311,
+      "duration_us": 266,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1377,9 +1389,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 105288,
+      "duration_us": 170,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1395,9 +1407,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 97897,
+      "duration_us": 179,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1412,10 +1424,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 77950,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 302,
+      "duration_us": 235,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1431,9 +1443,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 54916,
+      "duration_us": 172,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1448,10 +1460,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 74193,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 437,
+      "duration_us": 208,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1466,10 +1478,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 60973,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 354,
+      "duration_us": 247,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1485,9 +1497,9 @@
       "truncated_reached": 0,
       "truncated_uncovered": 0,
       "emitted_bytes": 0,
-      "duration_us": 70229,
+      "duration_us": 137,
       "emitted": false,
-      "timed_out": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1578,10 +1590,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 75697,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 323,
+      "duration_us": 248,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1596,10 +1608,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 70375,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 230,
+      "duration_us": 223,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1614,10 +1626,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 89546,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 230,
+      "duration_us": 182,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1632,10 +1644,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 67014,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 422,
+      "duration_us": 233,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1650,10 +1662,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 75910,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 422,
+      "duration_us": 194,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1668,10 +1680,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 70848,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 276,
+      "duration_us": 232,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1686,10 +1698,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 66728,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 346,
+      "duration_us": 240,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1704,10 +1716,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 14,
-      "emitted_bytes": 0,
-      "duration_us": 80623,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1971,
+      "duration_us": 576,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1722,10 +1734,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 14,
-      "emitted_bytes": 0,
-      "duration_us": 91826,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1971,
+      "duration_us": 1135,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1740,10 +1752,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 138630,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 276,
+      "duration_us": 395,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1758,10 +1770,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 13,
-      "emitted_bytes": 0,
-      "duration_us": 80916,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1932,
+      "duration_us": 717,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1776,10 +1788,10 @@
       "truncated_origins": 0,
       "truncated_reached": 268,
       "truncated_uncovered": 284,
-      "emitted_bytes": 0,
-      "duration_us": 327253,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 2054,
+      "duration_us": 2254,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1794,10 +1806,10 @@
       "truncated_origins": 0,
       "truncated_reached": 268,
       "truncated_uncovered": 284,
-      "emitted_bytes": 0,
-      "duration_us": 167109,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 2054,
+      "duration_us": 2077,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1812,10 +1824,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 89104,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 276,
+      "duration_us": 2151,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1830,10 +1842,10 @@
       "truncated_origins": 0,
       "truncated_reached": 267,
       "truncated_uncovered": 283,
-      "emitted_bytes": 0,
-      "duration_us": 210925,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 2054,
+      "duration_us": 2073,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1848,10 +1860,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 74641,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 390,
+      "duration_us": 231,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1866,10 +1878,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 120617,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 390,
+      "duration_us": 220,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1884,10 +1896,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 73879,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 260,
+      "duration_us": 220,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1902,10 +1914,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 70007,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 322,
+      "duration_us": 197,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1920,10 +1932,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 14,
-      "emitted_bytes": 0,
-      "duration_us": 818156,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1779,
+      "duration_us": 498,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1938,10 +1950,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 14,
-      "emitted_bytes": 0,
-      "duration_us": 87134,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1779,
+      "duration_us": 405,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1956,10 +1968,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 107566,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 260,
+      "duration_us": 408,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1974,10 +1986,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 13,
-      "emitted_bytes": 0,
-      "duration_us": 70456,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1744,
+      "duration_us": 391,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -1992,10 +2004,10 @@
       "truncated_origins": 0,
       "truncated_reached": 268,
       "truncated_uncovered": 284,
-      "emitted_bytes": 0,
-      "duration_us": 235843,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1854,
+      "duration_us": 2220,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2010,10 +2022,10 @@
       "truncated_origins": 0,
       "truncated_reached": 268,
       "truncated_uncovered": 284,
-      "emitted_bytes": 0,
-      "duration_us": 223316,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1854,
+      "duration_us": 2500,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2028,10 +2040,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 125819,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 260,
+      "duration_us": 2259,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2046,10 +2058,10 @@
       "truncated_origins": 0,
       "truncated_reached": 267,
       "truncated_uncovered": 283,
-      "emitted_bytes": 0,
-      "duration_us": 164576,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1854,
+      "duration_us": 3298,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2064,10 +2076,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 71643,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 390,
+      "duration_us": 228,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2082,10 +2094,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 111675,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 390,
+      "duration_us": 241,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2100,10 +2112,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 71408,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 260,
+      "duration_us": 382,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2118,10 +2130,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 74928,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 322,
+      "duration_us": 382,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2136,10 +2148,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 14,
-      "emitted_bytes": 0,
-      "duration_us": 67342,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1779,
+      "duration_us": 1300,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2154,10 +2166,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 14,
-      "emitted_bytes": 0,
-      "duration_us": 66350,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1779,
+      "duration_us": 473,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2172,10 +2184,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 61798,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 260,
+      "duration_us": 785,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2190,10 +2202,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 13,
-      "emitted_bytes": 0,
-      "duration_us": 89354,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1744,
+      "duration_us": 491,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2208,10 +2220,10 @@
       "truncated_origins": 0,
       "truncated_reached": 268,
       "truncated_uncovered": 284,
-      "emitted_bytes": 0,
-      "duration_us": 211378,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1854,
+      "duration_us": 2056,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2226,10 +2238,10 @@
       "truncated_origins": 0,
       "truncated_reached": 268,
       "truncated_uncovered": 284,
-      "emitted_bytes": 0,
-      "duration_us": 139251,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1854,
+      "duration_us": 2979,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2244,10 +2256,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 117118,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 260,
+      "duration_us": 2115,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2262,10 +2274,10 @@
       "truncated_origins": 0,
       "truncated_reached": 267,
       "truncated_uncovered": 283,
-      "emitted_bytes": 0,
-      "duration_us": 136826,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1854,
+      "duration_us": 2231,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2280,10 +2292,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 110555,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 398,
+      "duration_us": 227,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2298,10 +2310,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 64542,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 398,
+      "duration_us": 491,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2316,10 +2328,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 92765,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 264,
+      "duration_us": 162,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2334,10 +2346,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 65037,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 328,
+      "duration_us": 219,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2352,10 +2364,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 14,
-      "emitted_bytes": 0,
-      "duration_us": 93371,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1827,
+      "duration_us": 419,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2370,10 +2382,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 14,
-      "emitted_bytes": 0,
-      "duration_us": 77691,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1827,
+      "duration_us": 642,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2388,10 +2400,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 76121,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 264,
+      "duration_us": 404,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2406,10 +2418,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 13,
-      "emitted_bytes": 0,
-      "duration_us": 105977,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1791,
+      "duration_us": 562,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2424,10 +2436,10 @@
       "truncated_origins": 0,
       "truncated_reached": 268,
       "truncated_uncovered": 284,
-      "emitted_bytes": 0,
-      "duration_us": 203487,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1904,
+      "duration_us": 2320,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2442,10 +2454,10 @@
       "truncated_origins": 0,
       "truncated_reached": 268,
       "truncated_uncovered": 284,
-      "emitted_bytes": 0,
-      "duration_us": 175805,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1904,
+      "duration_us": 2713,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2460,10 +2472,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 116016,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 264,
+      "duration_us": 2140,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2478,10 +2490,10 @@
       "truncated_origins": 0,
       "truncated_reached": 267,
       "truncated_uncovered": 283,
-      "emitted_bytes": 0,
-      "duration_us": 252886,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1904,
+      "duration_us": 2289,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2496,10 +2508,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 79912,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 341,
+      "duration_us": 242,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2514,10 +2526,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 67366,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 341,
+      "duration_us": 220,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2532,10 +2544,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 108131,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 239,
+      "duration_us": 336,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2550,10 +2562,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 65948,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 287,
+      "duration_us": 244,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2568,10 +2580,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 14,
-      "emitted_bytes": 0,
-      "duration_us": 85763,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1450,
+      "duration_us": 1742,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2586,10 +2598,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 14,
-      "emitted_bytes": 0,
-      "duration_us": 70564,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1450,
+      "duration_us": 387,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2604,10 +2616,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 64260,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 239,
+      "duration_us": 496,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2622,10 +2634,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 13,
-      "emitted_bytes": 0,
-      "duration_us": 197021,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1422,
+      "duration_us": 468,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2640,10 +2652,10 @@
       "truncated_origins": 0,
       "truncated_reached": 268,
       "truncated_uncovered": 284,
-      "emitted_bytes": 0,
-      "duration_us": 190538,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1511,
+      "duration_us": 2264,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2658,10 +2670,10 @@
       "truncated_origins": 0,
       "truncated_reached": 268,
       "truncated_uncovered": 284,
-      "emitted_bytes": 0,
-      "duration_us": 153001,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1511,
+      "duration_us": 3181,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2676,10 +2688,10 @@
       "truncated_origins": 0,
       "truncated_reached": 0,
       "truncated_uncovered": 0,
-      "emitted_bytes": 0,
-      "duration_us": 250834,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 239,
+      "duration_us": 2086,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     },
     {
@@ -2694,23 +2706,11 @@
       "truncated_origins": 0,
       "truncated_reached": 267,
       "truncated_uncovered": 283,
-      "emitted_bytes": 0,
-      "duration_us": 159007,
-      "emitted": false,
-      "timed_out": true,
+      "emitted_bytes": 1511,
+      "duration_us": 2149,
+      "emitted": true,
+      "timed_out": false,
       "failed": false
     }
-  ],
-  "aggregate": {
-    "eligible_events": 141,
-    "skipped_events": 8,
-    "timed_out_events": 141,
-    "failed_event_count": 0,
-    "p50_duration_us": 88543,
-    "p95_duration_us": 223316,
-    "max_duration_us": 818156,
-    "max_emitted_bytes": 0,
-    "failed_events": []
-  },
-  "latency_note": "Computation duration excludes process startup; fail-open behavior covers startup and all other errors. Red timeouts and failures are retained."
+  ]
 }
