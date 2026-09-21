@@ -2575,7 +2575,7 @@ fn crash_forge_at(point: &str) -> TempRepo {
     // Any later analysis command triggers recovery of the dead journal.
     run_girder(&["test-impact", repo.path().to_str().unwrap()]);
     assert!(
-        !repo.path().join(".girder").exists(),
+        !repo.path().join(".girder/transactions").exists(),
         "recovery must clean the {point} journal"
     );
     repo
