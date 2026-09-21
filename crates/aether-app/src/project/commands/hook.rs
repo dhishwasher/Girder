@@ -7,6 +7,7 @@
 use crate::project::source;
 use aether_graph::{NodeId, NodeKind, SemanticGraph};
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -19,6 +20,7 @@ const MAX_REPORT_BYTES: usize = 8 * 1024;
 const MAX_ORIGINS: usize = 8;
 const MAX_REACHED: usize = 32;
 const MAX_UNCOVERED: usize = 16;
+const IMPACT_CACHE_HEADER: &[u8] = b"GIRDER_HOOK_IMPACT_V2\n";
 const ADVISORY: &str = "Girder: consider `girder context . --nodes <node::path> --json --source-only` before this whole-file read.";
 
 static PANIC_HOOK_LOCK: Mutex<()> = Mutex::new(());
@@ -235,36 +237,73 @@ impl PathReport {
     }
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
-struct ImpactCache {
-    schema_version: u32,
-    paths: Vec<PathReport>,
-}
-
-impl ImpactCache {
-    fn report_for(&self, path: &str) -> Option<&PathReport> {
-        self.paths
-            .binary_search_by(|entry| entry.file_path.as_str().cmp(path))
-            .ok()
-            .map(|index| &self.paths[index])
-    }
-}
-
 pub(crate) fn encode_impact_cache(graph: &SemanticGraph) -> std::io::Result<Vec<u8>> {
     let files: BTreeSet<_> = graph
         .nodes()
         .filter(|node| node.kind == NodeKind::Function && node.attr("is_test").is_none())
         .filter_map(|node| node.file.as_deref().and_then(normalize_node_file))
         .collect();
-    let paths = files
+    let paths: Vec<_> = files
         .into_iter()
         .filter_map(|path| report_for_path_stats(graph, &path))
         .collect();
-    serde_json::to_vec(&ImpactCache {
-        schema_version: 1,
-        paths,
-    })
-    .map_err(|error| std::io::Error::other(format!("could not encode hook cache: {error}")))
+    let mut body = Vec::new();
+    let mut index = Vec::with_capacity(paths.len());
+    for report in paths {
+        let offset = body.len();
+        serde_json::to_writer(&mut body, &report).map_err(|error| {
+            std::io::Error::other(format!("could not encode hook cache: {error}"))
+        })?;
+        index.push((
+            format!("{:x}", Sha256::digest(report.file_path.as_bytes())),
+            offset,
+            body.len() - offset,
+        ));
+    }
+    let mut encoded = Vec::with_capacity(IMPACT_CACHE_HEADER.len() + index.len() * 91 + body.len());
+    encoded.extend_from_slice(IMPACT_CACHE_HEADER);
+    for (digest, offset, length) in index {
+        writeln!(encoded, "{digest} {offset:016x} {length:08x}")?;
+    }
+    encoded.push(b'\n');
+    encoded.extend_from_slice(&body);
+    Ok(encoded)
+}
+
+fn decode_impact_cache(bytes: &[u8], paths: &[String]) -> Option<Vec<PathReport>> {
+    let rest = bytes.strip_prefix(IMPACT_CACHE_HEADER)?;
+    let (index_bytes, body) = if let Some(body) = rest.strip_prefix(b"\n") {
+        (&[][..], body)
+    } else {
+        let index_end = rest.windows(2).position(|window| window == b"\n\n")?;
+        (&rest[..index_end], &rest[index_end + 2..])
+    };
+    let index = std::str::from_utf8(index_bytes).ok()?;
+    let wanted: BTreeMap<_, _> = paths
+        .iter()
+        .map(|path| (format!("{:x}", Sha256::digest(path.as_bytes())), path))
+        .collect();
+    let mut reports = Vec::new();
+    for line in index.lines() {
+        let mut fields = line.split(' ');
+        let digest = fields.next()?;
+        let offset = usize::from_str_radix(fields.next()?, 16).ok()?;
+        let length = usize::from_str_radix(fields.next()?, 16).ok()?;
+        if fields.next().is_some() {
+            return None;
+        }
+        let Some(path) = wanted.get(digest) else {
+            continue;
+        };
+        let end = offset.checked_add(length)?;
+        let report: PathReport = serde_json::from_slice(body.get(offset..end)?).ok()?;
+        if report.file_path.as_str() != path.as_str() {
+            return None;
+        }
+        reports.push(report);
+    }
+    reports.sort_by(|left, right| left.file_path.cmp(&right.file_path));
+    Some(reports)
 }
 
 #[derive(Debug)]
@@ -361,39 +400,27 @@ fn compute_post_edit(payload: &Value) -> ImpactComputation {
             ..ImpactComputation::default()
         };
     };
-    let Ok(cache) = serde_json::from_slice::<ImpactCache>(&snapshot) else {
+    let Some(reports) = decode_impact_cache(&snapshot, &request.paths) else {
         return ImpactComputation {
             duration_us: started.elapsed().as_micros(),
             failed: true,
             ..ImpactComputation::default()
         };
     };
-    if cache.schema_version != 1 {
-        return ImpactComputation {
-            duration_us: started.elapsed().as_micros(),
-            failed: true,
-            ..ImpactComputation::default()
-        };
-    }
-
-    let mut reports = Vec::new();
     let mut result = ImpactComputation {
         graph_ready: true,
         ..ImpactComputation::default()
     };
-    for path in request.paths {
-        if let Some(path_report) = cache.report_for(&path) {
-            result.origins += path_report.origin_count();
-            result.reached += path_report.reached_count();
-            result.uncovered += path_report.uncovered_count();
-            reports.push(path_report);
-        }
+    for path_report in &reports {
+        result.origins += path_report.origin_count();
+        result.reached += path_report.reached_count();
+        result.uncovered += path_report.uncovered_count();
     }
     result.origins_omitted = result.origins.saturating_sub(MAX_ORIGINS);
     result.reached_omitted = result.reached.saturating_sub(MAX_REACHED);
     result.uncovered_omitted = result.uncovered.saturating_sub(MAX_UNCOVERED);
     if !reports.is_empty() {
-        if let Some(rendered) = render_report_refs(&reports) {
+        if let Some(rendered) = render_report(&reports) {
             result.emitted_bytes = rendered.text.len();
             result.report = Some(rendered.text);
         } else {
@@ -545,10 +572,6 @@ fn render_report(paths: &[PathReport]) -> Option<RenderedReport> {
         )?;
     }
     Some(RenderedReport { text: output })
-}
-
-fn render_report_refs(paths: &[&PathReport]) -> Option<RenderedReport> {
-    render_report(&paths.iter().map(|path| (*path).clone()).collect::<Vec<_>>())
 }
 
 fn push_report_line(output: &mut String, line: &str) -> Option<()> {

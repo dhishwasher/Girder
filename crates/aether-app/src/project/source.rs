@@ -1527,10 +1527,7 @@ mod tests {
 
         assert_eq!(output, dir.0.join(".girder/semantic.aether"));
         assert!(loaded.find_by_path("crate::work").is_some());
-        assert_eq!(
-            serde_json::from_slice::<serde_json::Value>(&hook_snapshot).unwrap()["schema_version"],
-            1
-        );
+        assert!(hook_snapshot.starts_with(b"GIRDER_HOOK_IMPACT_V2\n"));
     }
 
     #[test]
@@ -1550,10 +1547,7 @@ mod tests {
         let hook_snapshot = load_hook_snapshot(&dir.0).unwrap().unwrap();
 
         assert!(loaded.find_by_path("crate::work").is_some());
-        assert_eq!(
-            serde_json::from_slice::<serde_json::Value>(&hook_snapshot).unwrap()["schema_version"],
-            1
-        );
+        assert!(hook_snapshot.starts_with(b"GIRDER_HOOK_IMPACT_V2\n"));
     }
 
     #[test]
