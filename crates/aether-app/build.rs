@@ -1,4 +1,6 @@
 fn main() {
+    println!("cargo:rerun-if-changed=build.rs");
+
     #[cfg(windows)]
     {
         println!("cargo:rerun-if-changed=../../assets/icon.ico");
