@@ -1,3 +1,17 @@
+# Girder 0.2.7
+
+Girder 0.2.7 makes `orient` available without a license and adds `girder
+setup` for installing advisory Claude Code and Codex hooks alongside the MCP
+server. The read hook suggests Girder context before whole-file reads. After a
+successful edit, the hook reports the saved graph's bounded blast radius and
+which reached functions lack a covering test.
+
+The edit advisory uses a precomputed, path-indexed cache and keeps its frozen
+20 ms computation ceiling. On all 141 eligible events in the committed
+cross-language mutation corpus, the home-local release binary recorded zero
+timeouts and zero failures (p50 0.248 ms, p95 2.289 ms, max 3.509 ms). The hook
+remains fail-open and makes no network calls.
+
 # Unreleased benchmark work
 
 The competitive benchmark now has a frozen, resource-bounded foundation for
