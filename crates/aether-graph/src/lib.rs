@@ -10,6 +10,7 @@
 //! app renders projections of it. Everything else in the workspace depends on
 //! this crate.
 
+mod claims;
 mod collaboration;
 mod diff;
 mod edge;
@@ -22,6 +23,9 @@ mod refactor;
 mod serialize;
 mod similarity;
 
+pub use claims::{
+    CallClaim, CallClass, CallEvidence, ClassifiedImpact, UnknownBoundary, CALL_EVIDENCE_ATTRIBUTE,
+};
 pub use collaboration::{
     ActorId, Dot, GraphAction, GraphDelta, GraphOperation, GraphReplica, MergeReport,
     OperationAttestation, SyncReport, VersionVector,
@@ -40,7 +44,9 @@ use petgraph::stable_graph::{NodeIndex, StableDiGraph};
 use std::collections::HashMap;
 
 pub(crate) fn is_parser_owned_attribute(key: &str) -> bool {
-    matches!(key, "is_test" | "return_type" | "source_projection") || is_route_attribute(key)
+    matches!(key, "is_test" | "return_type" | "source_projection")
+        || key == CALL_EVIDENCE_ATTRIBUTE
+        || is_route_attribute(key)
 }
 
 /// Subprocess-route metadata keys, set by project-wide call resolution and
