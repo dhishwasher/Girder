@@ -258,14 +258,15 @@ Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
 
 ## Stage 3 — Close dispatch holes one language at a time
 
-**Status: NOT STARTED**
+**Status: IN PROGRESS** (policy frozen for Rust; audit and resolver work not
+yet started)
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
 
 | Language | Status | Before / after evidence | Dependency |
 | --- | --- | --- | --- |
-| Rust | NOT STARTED | none / none | Stage 2 |
+| Rust | IN PROGRESS | none / none | Stage 2 |
 | Python | NOT STARTED | none / none | Rust trustworthy on a real repository |
 | TypeScript | NOT STARTED | none / none | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
@@ -281,8 +282,50 @@ real-repository audit. Publish coverage, sample limits, dispatch assumptions,
 and every remaining hole. A hole that cannot be closed is Unknown, never omitted.
 Fixture perfection alone is insufficient. Failure blocks the next language.
 
+**"Zero classification errors" is defined, frozen before any Rust audit
+site is labeled:** an error is an **unsound** audit cell in the same sense
+the dispatch corpus's scorer already uses — `overclaim` (Girder's answer
+asserts more certainty than the true class, i.e. a false Must or a false
+May with no viable candidate set) or `unsafe_exclusion` (a reachable call
+site excluded from the graph's reasoning entirely). Per the frozen
+classification policy, "a hole that cannot be closed is Unknown, never
+omitted" — so an honestly-labeled `unknown` audit result, even where the
+true answer is `must` or `may`, is a **conservative** miss, not an error.
+This reading is the only one consistent with the corpus's own scoring rule
+committed in `32bd5d2`; the alternative (any mismatch counts as an error)
+would make Rust unable to pass while a single unclosable hole exists
+anywhere in the audited sample, which contradicts "a hole that cannot be
+closed is Unknown, never omitted" being an acceptable outcome.
+
+**Rust audit methodology, frozen before any site is read:**
+- **Corpus:** the three already-cached, sha256-verified crates from
+  `docs/core-representative-corpus.json` (`petgraph-0.6.5`,
+  `serde_json-1.0.150`, `regex-1.12.4`) via
+  `.benchmark-cache/core-representative-v1/`. No network fetch.
+- **Site enumeration is independent of Girder's own parser** — a call
+  site Girder's tree-sitter grammar fails to see would never enter a
+  Girder-derived sample. Sites are found with a plain regex over the
+  crates' `.rs` source, not `girder query`/`orient`.
+- **Stratified, deterministic sample:** a fixed random seed, ≥100 sites
+  total across the three crates, stratified across six syntactic shapes —
+  plain call (`ident(...)`), method call (`.ident(...)`), path/associated
+  call (`Type::ident(...)`), macro invocation (`ident!(...)`), fn-pointer
+  or closure call (an opaque callee expression), and operator usage
+  (binary/unary on a type implementing the relevant trait).
+- **Ground truth is read from the source before Girder is run on any
+  site** — same discipline as the dispatch corpus. A site's true class
+  (`must`/`may`/`unknown`) is determined by reading the call and its
+  candidate resolution, not by observing what Girder answers.
+- **Reading Girder's per-site answer:** no public per-call-site command
+  exists yet. `girder analyze <dir> --json` followed by
+  `girder inspect <graph>.aether --json` exposes each node's raw
+  `call_evidence_v1` attribute (RON-encoded: `class`, `reason`,
+  `coverage_gap`, `targets` per call site) — confirmed present on this
+  binary; no new command needed for the audit itself.
+
 **Gate per language:** before/after corpus and real-repository audit, then all
-common gates. **Observation:** none. **Blockers:** Stage 2 and language order.
+common gates. **Observation:** none yet — audit site selection and labeling
+have not started. **Blockers:** Stage 2 and language order (satisfied).
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 
