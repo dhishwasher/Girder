@@ -76,6 +76,22 @@ on the committed 31-item corpus, below the precommitted 75% and 90% thresholds.
 See the [observation](./docs/description-search-accuracy-observation.json) and
 [policy](./docs/description-search-accuracy-policy.json).
 
+## Competitor benchmark
+
+On the 20-task modest cross-language base set, Girder passed **5/20** versus
+Ripwire's **7/20** — a loss. But across the 60 attempts where both products
+passed, Girder returned **35,764 bytes** versus Ripwire's **158,514** — 77.4%
+fewer — at identical call counts (120 each). GitNexus could not be scored: its
+install exceeded the frozen 1 GiB ceiling on this measurement machine, which is
+a fact about install footprint on a constrained host, not a claim about its
+quality.
+
+No product in this benchmark reached full correctness, and the benchmark does
+not establish an overall best product. See the full
+[report](./docs/competitor-benchmark/results/modest-final/report.md) for
+methodology, per-language results, and everything the numbers above don't
+establish.
+
 ## Use it from an AI coding agent
 
 `girder mcp` serves the read-only graph commands over the
