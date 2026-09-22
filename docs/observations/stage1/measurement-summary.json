@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "kind": "stage-criterion-measurement",
+  "stage": 1,
+  "date": "2026-09-22",
+  "candidate_commit": "c927122475ea453cfcda8b75e33dc3dadd5abbdf",
+  "candidate_commit_note": "Rust/binary code last changed at d1706d60740b2ba8ca3aec96906e1bd23e0d69d0; c927122 only fixed the Python oracle harness (--unbounded wiring, path-based matching) found while running this measurement. The measured binary is identical between the two.",
+  "binary": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+  "binary_sha256": "ebb0e661f992225936d038a5d9c5f9563368b11c017afba9d86b914147def9b0",
+  "policy": "docs/call-classification-policy.md",
+  "policy_sha256": "d6d686a9033c5a9e44665e8134707a8074296352ec3af28507286d925d96befb",
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target",
+    "cargo": "1.97.1",
+    "rustc": "1.97.1",
+    "python": "3.11.2"
+  },
+  "measurements": [
+    {
+      "name": "core-trustworthiness fixtures (Rust + Python, synthetic, dynamic-probe-verified)",
+      "command": "python3 tools/core_trustworthiness_oracle.py --bitcode <binary> --json",
+      "exit_code": 0,
+      "result_file": "trustworthiness-measurement.json",
+      "verbose_log": "trustworthiness-measurement.log",
+      "baseline_matched": "docs/core-trustworthiness-baseline.json (schema_version 2, regenerated from this run)",
+      "flat_aggregate": {
+        "true_positives": 7,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "true_negatives": 4,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "classified_aggregate": {
+        "must_true_positives": 0,
+        "must_false_positives": 0,
+        "must_precision": null,
+        "may_true_positives": 0,
+        "may_only_recall": 0.0,
+        "must_or_may_true_positives": 0,
+        "must_or_may_recall": 0.0,
+        "unknown_count": 11,
+        "boundary_count": 102
+      }
+    },
+    {
+      "name": "core-representative-mutations (Click 8.4.1, real repository, one declared dynamic-dispatch mutation)",
+      "command": "python3 tools/core_representative_mutations.py --bitcode <binary> --offline --json",
+      "exit_code": 0,
+      "result_file": "representative-mutations-measurement.json",
+      "offline_source": "pinned cache .benchmark-cache/core-representative-v1/918b5633eddf6b41c32d4f454bf0de810065c74e3f7dbf8ee5452f8be88d3e96.tar.gz, sha256-verified against docs/core-representative-corpus.json before use; no network fetch performed",
+      "flat_aggregate": {
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 2,
+        "true_negatives": 1,
+        "precision": 1.0,
+        "recall": 0.0
+      },
+      "flat_aggregate_note": "This 0.000 recall on the flat/legacy mechanism is the pre-existing, already-documented dynamic-dispatch gap (docs/core-representative-mutations.md); unchanged by Stage 1 work.",
+      "classified_aggregate": {
+        "must_true_positives": 0,
+        "must_false_positives": 0,
+        "must_precision": null,
+        "may_true_positives": 0,
+        "may_only_recall": 0.0,
+        "must_or_may_true_positives": 0,
+        "must_or_may_recall": 0.0,
+        "unknown_count": 3,
+        "boundary_count": 7499
+      }
+    }
+  ],
+  "pooled_classified_result": {
+    "must_precision": null,
+    "must_true_positives": 0,
+    "must_false_positives": 0,
+    "may_only_recall": 0.0,
+    "must_or_may_recall": 0.0,
+    "unknown_count": 14,
+    "boundary_count": 7601
+  },
+  "trustworthy_must_gate": {
+    "criterion": "precision 1.000 with a nonempty Must set and zero false Must claims",
+    "result": "FAILED-AND-PUBLISHED",
+    "reason": "Must set is empty on every corpus measured (synthetic fixtures and the one real-repository mutation); precision is therefore undefined (null), not met. May is empty in every case too (0.000 recall wherever a positive existed) because the extractor does not yet enumerate any May candidates at all."
+  },
+  "root_causes_observed": [
+    "Must proofs are restricted to same-file, top-level, direct-binding calls (crates/aether-builder/src/mapper/claims.rs); the trustworthiness fixtures' tests live in the same file as the mutated function but every test function's own assert_eq!/similar macro invocation is an 'unexpanded-macro-or-decorator' Unknown claim, which alone makes exclusion of any other function unprovable once classified_impact's flood rule fires.",
+    "classified_impact's flood rule (aether-graph/src/claims.rs) marks every Function node in the WHOLE graph as at least Unknown once a single Unknown-classified call exists anywhere in the graph, not just near the queried origin — so on any real codebase (where some unresolved call almost always exists somewhere) the practical result is close to 'everything is at least Unknown', which is safe but not discriminating.",
+    "The extractor never emits CallClass::May: it has no enumeration logic yet for trait objects, generics, interface implementors, overloads, inheritance, or structural typing (that is Stage 3 work, per docs/roadmap.md); every non-Must call site is currently classified Unknown rather than May, even where a bounded May candidate set would in principle be knowable.",
+    "Cross-file calls (the Click Group.invoke mutation, and Go's TestAdd/Add split across files) can never reach Must: annotate() is called once per file during extraction, before project-wide resolve_calls runs, so a call's target must be declared in the SAME file's syntax tree to be provable."
+  ],
+  "limitations": [
+    "Only Rust and Python fixtures are exercised by core-trustworthiness; the corpus has no TypeScript or Go cases yet, so this measurement says nothing about those two languages' Must/May behavior.",
+    "core-representative-mutations has exactly one declared mutation (group-invoke) against one repository (Click); it is evidence that the dynamic comparison harness runs end-to-end against real code, not a general accuracy claim (see docs/core-gap-analysis.md's own framing, unchanged here).",
+    "This is not yet the dedicated dispatch corpus Stage 2 requires (40+ cases weighted to trait objects/generics/inheritance/structural typing/interfaces); it is the existing mutation corpus named in Stage 1's precommitted criterion.",
+    "The boundary flood makes Unknown counts and boundary counts a property of the whole indexed graph, not a tight measure of origin-local uncertainty; docs/roadmap.md records this as a named consequence, not a hidden one."
+  ]
+}

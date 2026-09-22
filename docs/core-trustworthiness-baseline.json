@@ -1,7 +1,128 @@
 {
-  "schema_version": 1,
+  "aggregate": {
+    "false_negatives": 0,
+    "false_positives": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "true_negatives": 4,
+    "true_positives": 7
+  },
+  "classified_aggregate": {
+    "boundary_count": 102,
+    "may_only_recall": 0.0,
+    "may_true_positives": 0,
+    "must_false_positives": 0,
+    "must_or_may_recall": 0.0,
+    "must_or_may_true_positives": 0,
+    "must_precision": null,
+    "must_true_positives": 0,
+    "unknown_count": 11
+  },
   "results": {
+    "python": {
+      "bitcode_reported_impacted": 3,
+      "bitcode_reported_skipped": 2,
+      "classified": {
+        "boundary_count": 39,
+        "may": [],
+        "may_only_recall": 0.0,
+        "may_true_positives": [],
+        "must": [],
+        "must_false_positives": [],
+        "must_or_may_recall": 0.0,
+        "must_or_may_true_positives": [],
+        "must_precision": null,
+        "must_true_positives": [],
+        "unknown": [
+          "test_python_cross_module_selected",
+          "test_python_decoy",
+          "test_python_direct_selected",
+          "test_python_optional_selected",
+          "test_python_third_party_decoy"
+        ],
+        "unknown_count": 5
+      },
+      "executed": [
+        "test_python_cross_module_selected",
+        "test_python_direct_selected",
+        "test_python_optional_selected"
+      ],
+      "false_negatives": [],
+      "false_positives": [],
+      "precision": 1.0,
+      "recall": 1.0,
+      "selected": [
+        "test_python_cross_module_selected",
+        "test_python_direct_selected",
+        "test_python_optional_selected"
+      ],
+      "true_negatives": [
+        "test_python_decoy",
+        "test_python_third_party_decoy"
+      ],
+      "true_positives": [
+        "test_python_cross_module_selected",
+        "test_python_direct_selected",
+        "test_python_optional_selected"
+      ],
+      "universe": [
+        "test_python_cross_module_selected",
+        "test_python_decoy",
+        "test_python_direct_selected",
+        "test_python_optional_selected",
+        "test_python_third_party_decoy"
+      ]
+    },
     "rust": {
+      "bitcode_reported_impacted": 4,
+      "bitcode_reported_skipped": 2,
+      "classified": {
+        "boundary_count": 63,
+        "may": [],
+        "may_only_recall": 0.0,
+        "may_true_positives": [],
+        "must": [],
+        "must_false_positives": [],
+        "must_or_may_recall": 0.0,
+        "must_or_may_true_positives": [],
+        "must_precision": null,
+        "must_true_positives": [],
+        "unknown": [
+          "rust_cli_selected",
+          "rust_cli_unrelated",
+          "rust_custom_bin_selected",
+          "rust_direct_selected",
+          "rust_raii_drop_selected",
+          "rust_unrelated"
+        ],
+        "unknown_count": 6
+      },
+      "executed": [
+        "rust_cli_selected",
+        "rust_custom_bin_selected",
+        "rust_direct_selected",
+        "rust_raii_drop_selected"
+      ],
+      "false_negatives": [],
+      "false_positives": [],
+      "precision": 1.0,
+      "recall": 1.0,
+      "selected": [
+        "rust_cli_selected",
+        "rust_custom_bin_selected",
+        "rust_direct_selected",
+        "rust_raii_drop_selected"
+      ],
+      "true_negatives": [
+        "rust_cli_unrelated",
+        "rust_unrelated"
+      ],
+      "true_positives": [
+        "rust_cli_selected",
+        "rust_custom_bin_selected",
+        "rust_direct_selected",
+        "rust_raii_drop_selected"
+      ],
       "universe": [
         "rust_cli_selected",
         "rust_cli_unrelated",
@@ -9,77 +130,8 @@
         "rust_direct_selected",
         "rust_raii_drop_selected",
         "rust_unrelated"
-      ],
-      "selected": [
-        "rust_cli_selected",
-        "rust_custom_bin_selected",
-        "rust_direct_selected",
-        "rust_raii_drop_selected"
-      ],
-      "executed": [
-        "rust_cli_selected",
-        "rust_custom_bin_selected",
-        "rust_direct_selected",
-        "rust_raii_drop_selected"
-      ],
-      "true_positives": [
-        "rust_cli_selected",
-        "rust_custom_bin_selected",
-        "rust_direct_selected",
-        "rust_raii_drop_selected"
-      ],
-      "false_positives": [],
-      "false_negatives": [],
-      "true_negatives": [
-        "rust_cli_unrelated",
-        "rust_unrelated"
-      ],
-      "precision": 1.0,
-      "recall": 1.0,
-      "bitcode_reported_impacted": 4,
-      "bitcode_reported_skipped": 2
-    },
-    "python": {
-      "universe": [
-        "test_python_cross_module_selected",
-        "test_python_decoy",
-        "test_python_direct_selected",
-        "test_python_optional_selected",
-        "test_python_third_party_decoy"
-      ],
-      "selected": [
-        "test_python_cross_module_selected",
-        "test_python_direct_selected",
-        "test_python_optional_selected"
-      ],
-      "executed": [
-        "test_python_cross_module_selected",
-        "test_python_direct_selected",
-        "test_python_optional_selected"
-      ],
-      "true_positives": [
-        "test_python_cross_module_selected",
-        "test_python_direct_selected",
-        "test_python_optional_selected"
-      ],
-      "false_positives": [],
-      "false_negatives": [],
-      "true_negatives": [
-        "test_python_decoy",
-        "test_python_third_party_decoy"
-      ],
-      "precision": 1.0,
-      "recall": 1.0,
-      "bitcode_reported_impacted": 3,
-      "bitcode_reported_skipped": 2
+      ]
     }
   },
-  "aggregate": {
-    "true_positives": 7,
-    "false_positives": 0,
-    "false_negatives": 0,
-    "true_negatives": 4,
-    "precision": 1.0,
-    "recall": 1.0
-  }
+  "schema_version": 2
 }

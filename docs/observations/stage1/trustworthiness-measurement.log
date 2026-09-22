@@ -1,0 +1,1192 @@
+
+--- Bit Code rust output ---
+Building semantic graph for /tmp/bitcode-core-trust-8nvb_egn/rust/static ...
+  5 file(s), 22 nodes, 35 edges
+  changed files: src/operations.rs
+
+Changed functions (1):
+  · crate::operations::selected_operation
+
+Impacted tests (4):
+  ✓ crate::tests::impact::rust_cli_selected (rust)
+  ✓ crate::tests::impact::rust_custom_bin_selected (rust)
+  ✓ crate::tests::impact::rust_direct_selected (rust)
+  ✓ crate::tests::impact::rust_raii_drop_selected (rust)
+
+Commands to run impacted tests only:
+  cargo test --workspace rust_cli_selected
+  cargo test --workspace rust_custom_bin_selected
+  cargo test --workspace rust_direct_selected
+  cargo test --workspace rust_raii_drop_selected
+
+  (2 other test(s) not in impact set — skipped)
+
+--- Bit Code rust classified output ---
+{
+  "boundaries": {
+    "by_category": {
+      "coverage_gap": 24,
+      "missing_or_invalid_evidence": 11,
+      "unresolved_call_site": 28
+    },
+    "count": 63,
+    "items": [
+      {
+        "caller": "crate::lib",
+        "coverage_gap": true,
+        "file": "src/lib.rs",
+        "reason": "implicit-drop-or-operator-dispatch-not-certified",
+        "site": {
+          "end_byte": 107,
+          "start_byte": 0,
+          "start_col": 0,
+          "start_row": 0
+        }
+      },
+      {
+        "caller": "crate::lib",
+        "coverage_gap": true,
+        "file": "src/lib.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 33,
+          "start_byte": 21,
+          "start_col": 0,
+          "start_row": 2
+        }
+      },
+      {
+        "caller": "crate::lib::test_support_only",
+        "coverage_gap": true,
+        "file": "src/lib.rs",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 106,
+          "start_byte": 34,
+          "start_col": 0,
+          "start_row": 3
+        }
+      },
+      {
+        "caller": "crate::lib::test_support_only",
+        "coverage_gap": false,
+        "file": "src/lib.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 103,
+          "start_byte": 71,
+          "start_col": 12,
+          "start_row": 4
+        }
+      },
+      {
+        "caller": "crate::main::main",
+        "coverage_gap": true,
+        "file": "src/main.rs",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 297,
+          "start_byte": 86,
+          "start_col": 0,
+          "start_row": 3
+        }
+      },
+      {
+        "caller": "crate::main::main",
+        "coverage_gap": false,
+        "file": "src/main.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 119,
+          "start_byte": 108,
+          "start_col": 10,
+          "start_row": 4
+        }
+      },
+      {
+        "caller": "crate::main::main",
+        "coverage_gap": false,
+        "file": "src/main.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 126,
+          "start_byte": 108,
+          "start_col": 10,
+          "start_row": 4
+        }
+      },
+      {
+        "caller": "crate::main::main",
+        "coverage_gap": false,
+        "file": "src/main.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 137,
+          "start_byte": 108,
+          "start_col": 10,
+          "start_row": 4
+        }
+      },
+      {
+        "caller": "crate::main::main",
+        "coverage_gap": true,
+        "file": "src/main.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 204,
+          "start_byte": 168,
+          "start_col": 28,
+          "start_row": 5
+        }
+      },
+      {
+        "caller": "crate::main::main",
+        "coverage_gap": true,
+        "file": "src/main.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 272,
+          "start_byte": 235,
+          "start_col": 29,
+          "start_row": 6
+        }
+      },
+      {
+        "caller": "crate::operations",
+        "coverage_gap": true,
+        "file": "src/operations.rs",
+        "reason": "implicit-drop-or-operator-dispatch-not-certified",
+        "site": {
+          "end_byte": 837,
+          "start_byte": 0,
+          "start_col": 0,
+          "start_row": 0
+        }
+      },
+      {
+        "caller": "crate::operations::mark_probe",
+        "coverage_gap": false,
+        "file": "src/operations.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 135,
+          "start_byte": 100,
+          "start_col": 21,
+          "start_row": 5
+        }
+      },
+      {
+        "caller": "crate::operations::mark_probe",
+        "coverage_gap": false,
+        "file": "src/operations.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 204,
+          "start_byte": 186,
+          "start_col": 20,
+          "start_row": 8
+        }
+      },
+      {
+        "caller": "crate::operations::mark_probe",
+        "coverage_gap": false,
+        "file": "src/operations.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 226,
+          "start_byte": 186,
+          "start_col": 20,
+          "start_row": 8
+        }
+      },
+      {
+        "caller": "crate::operations::mark_probe",
+        "coverage_gap": false,
+        "file": "src/operations.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 248,
+          "start_byte": 186,
+          "start_col": 20,
+          "start_row": 8
+        }
+      },
+      {
+        "caller": "crate::operations::mark_probe",
+        "coverage_gap": false,
+        "file": "src/operations.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 268,
+          "start_byte": 186,
+          "start_col": 20,
+          "start_row": 8
+        }
+      },
+      {
+        "caller": "crate::operations::mark_probe",
+        "coverage_gap": false,
+        "file": "src/operations.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 305,
+          "start_byte": 186,
+          "start_col": 20,
+          "start_row": 8
+        }
+      },
+      {
+        "caller": "crate::operations::mark_probe",
+        "coverage_gap": true,
+        "file": "src/operations.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 348,
+          "start_byte": 311,
+          "start_col": 4,
+          "start_row": 13
+        }
+      },
+      {
+        "caller": "crate::operations::mark_probe",
+        "coverage_gap": false,
+        "file": "src/operations.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 377,
+          "start_byte": 311,
+          "start_col": 4,
+          "start_row": 13
+        }
+      },
+      {
+        "caller": "crate::tests::impact",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "implicit-drop-or-operator-dispatch-not-certified",
+        "site": {
+          "end_byte": 1215,
+          "start_byte": 0,
+          "start_col": 0,
+          "start_row": 0
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_cli",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 390,
+          "start_byte": 106,
+          "start_col": 0,
+          "start_row": 3
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_cli",
+        "coverage_gap": false,
+        "file": "tests/impact.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 205,
+          "start_byte": 159,
+          "start_col": 17,
+          "start_row": 4
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_cli",
+        "coverage_gap": false,
+        "file": "tests/impact.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 225,
+          "start_byte": 159,
+          "start_col": 17,
+          "start_row": 4
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_cli",
+        "coverage_gap": false,
+        "file": "tests/impact.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 243,
+          "start_byte": 159,
+          "start_col": 17,
+          "start_row": 4
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_cli",
+        "coverage_gap": false,
+        "file": "tests/impact.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 281,
+          "start_byte": 159,
+          "start_col": 17,
+          "start_row": 4
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_cli",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 204,
+          "start_byte": 172,
+          "start_col": 30,
+          "start_row": 4
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_cli",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 319,
+          "start_byte": 287,
+          "start_col": 4,
+          "start_row": 8
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_cli",
+        "coverage_gap": false,
+        "file": "tests/impact.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 357,
+          "start_byte": 325,
+          "start_col": 4,
+          "start_row": 9
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_cli",
+        "coverage_gap": false,
+        "file": "tests/impact.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 388,
+          "start_byte": 325,
+          "start_col": 4,
+          "start_row": 9
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_custom_cli",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 697,
+          "start_byte": 392,
+          "start_col": 0,
+          "start_row": 12
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_custom_cli",
+        "coverage_gap": false,
+        "file": "tests/impact.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 505,
+          "start_byte": 452,
+          "start_col": 17,
+          "start_row": 13
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_custom_cli",
+        "coverage_gap": false,
+        "file": "tests/impact.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 525,
+          "start_byte": 452,
+          "start_col": 17,
+          "start_row": 13
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_custom_cli",
+        "coverage_gap": false,
+        "file": "tests/impact.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 543,
+          "start_byte": 452,
+          "start_col": 17,
+          "start_row": 13
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_custom_cli",
+        "coverage_gap": false,
+        "file": "tests/impact.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 588,
+          "start_byte": 452,
+          "start_col": 17,
+          "start_row": 13
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_custom_cli",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 504,
+          "start_byte": 465,
+          "start_col": 30,
+          "start_row": 13
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_custom_cli",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 626,
+          "start_byte": 594,
+          "start_col": 4,
+          "start_row": 17
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_custom_cli",
+        "coverage_gap": false,
+        "file": "tests/impact.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 664,
+          "start_byte": 632,
+          "start_col": 4,
+          "start_row": 18
+        }
+      },
+      {
+        "caller": "crate::tests::impact::run_custom_cli",
+        "coverage_gap": false,
+        "file": "tests/impact.rs",
+        "reason": "rust-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 695,
+          "start_byte": 632,
+          "start_col": 4,
+          "start_row": 18
+        }
+      },
+      {
+        "caller": "crate::tests::impact",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 706,
+          "start_byte": 699,
+          "start_col": 0,
+          "start_row": 21
+        }
+      },
+      {
+        "caller": "crate::tests::impact::rust_direct_selected",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 783,
+          "start_byte": 707,
+          "start_col": 0,
+          "start_row": 22
+        }
+      },
+      {
+        "caller": "crate::tests::impact::rust_direct_selected",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 780,
+          "start_byte": 739,
+          "start_col": 4,
+          "start_row": 23
+        }
+      },
+      {
+        "caller": "crate::tests::impact",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 792,
+          "start_byte": 785,
+          "start_col": 0,
+          "start_row": 26
+        }
+      },
+      {
+        "caller": "crate::tests::impact::rust_cli_selected",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 865,
+          "start_byte": 793,
+          "start_col": 0,
+          "start_row": 27
+        }
+      },
+      {
+        "caller": "crate::tests::impact::rust_cli_selected",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 862,
+          "start_byte": 822,
+          "start_col": 4,
+          "start_row": 28
+        }
+      },
+      {
+        "caller": "crate::tests::impact",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 874,
+          "start_byte": 867,
+          "start_col": 0,
+          "start_row": 31
+        }
+      },
+      {
+        "caller": "crate::tests::impact::rust_cli_unrelated",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 960,
+          "start_byte": 875,
+          "start_col": 0,
+          "start_row": 32
+        }
+      },
+      {
+        "caller": "crate::tests::impact::rust_cli_unrelated",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 957,
+          "start_byte": 905,
+          "start_col": 4,
+          "start_row": 33
+        }
+      },
+      {
+        "caller": "crate::tests::impact",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 969,
+          "start_byte": 962,
+          "start_col": 0,
+          "start_row": 36
+        }
+      },
+      {
+        "caller": "crate::tests::impact::rust_unrelated",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 1045,
+          "start_byte": 970,
+          "start_col": 0,
+          "start_row": 37
+        }
+      },
+      {
+        "caller": "crate::tests::impact::rust_unrelated",
+        "coverage_gap": true,
+        "file": "tests/impact.rs",
+        "reason": "unexpanded-macro-or-decorator",
+        "site": {
+          "end_byte": 1042,
+          "start_byte": 996,
+          "start_col": 4,
+          "start_row": 38
+        }
+      }
+    ],
+    "truncated": true
+  },
+  "may": {
+    "count": 0,
+    "paths": [],
+    "truncated": false
+  },
+  "must": {
+    "count": 0,
+    "paths": [],
+    "truncated": false
+  },
+  "schema_version": 1,
+  "unknown": {
+    "count": 6,
+    "paths": [
+      "crate::tests::impact::rust_cli_selected",
+      "crate::tests::impact::rust_cli_unrelated",
+      "crate::tests::impact::rust_custom_bin_selected",
+      "crate::tests::impact::rust_direct_selected",
+      "crate::tests::impact::rust_raii_drop_selected",
+      "crate::tests::impact::rust_unrelated"
+    ],
+    "truncated": false
+  }
+}
+
+--- Bit Code python output ---
+Building semantic graph for /tmp/bitcode-core-trust-8nvb_egn/python/static ...
+  6 file(s), 24 nodes, 29 edges
+  changed files: models.py
+
+Changed functions (1):
+  · crate::models::SessionIdentity::selected_operation
+
+Impacted tests (3):
+  ✓ crate::tests::test_service::OracleTests::test_python_cross_module_selected (python)
+  ✓ crate::tests::test_service::OracleTests::test_python_direct_selected (python)
+  ✓ crate::tests::test_service::OracleTests::test_python_optional_selected (python)
+
+Commands to run impacted tests only:
+  pytest -k 'test_python_cross_module_selected or test_python_direct_selected or test_python_optional_selected'
+
+  (2 other test(s) not in impact set — skipped)
+
+--- Bit Code python classified output ---
+{
+  "boundaries": {
+    "by_category": {
+      "coverage_gap": 6,
+      "missing_or_invalid_evidence": 10,
+      "unresolved_call_site": 23
+    },
+    "count": 39,
+    "items": [
+      {
+        "caller": "crate::external",
+        "coverage_gap": true,
+        "file": "external.py",
+        "reason": "implicit-runtime-dispatch-not-certified",
+        "site": {
+          "end_byte": 183,
+          "start_byte": 0,
+          "start_col": 0,
+          "start_row": 0
+        }
+      },
+      {
+        "caller": "crate::external::via_third_party",
+        "coverage_gap": true,
+        "file": "external.py",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 182,
+          "start_byte": 91,
+          "start_col": 0,
+          "start_row": 5
+        }
+      },
+      {
+        "caller": "crate::external::via_third_party",
+        "coverage_gap": false,
+        "file": "external.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 182,
+          "start_byte": 153,
+          "start_col": 11,
+          "start_row": 6
+        }
+      },
+      {
+        "caller": "crate::gateway",
+        "coverage_gap": true,
+        "file": "gateway.py",
+        "reason": "implicit-runtime-dispatch-not-certified",
+        "site": {
+          "end_byte": 120,
+          "start_byte": 0,
+          "start_col": 0,
+          "start_row": 0
+        }
+      },
+      {
+        "caller": "crate::gateway::via_gateway",
+        "coverage_gap": true,
+        "file": "gateway.py",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 119,
+          "start_byte": 64,
+          "start_col": 0,
+          "start_row": 4
+        }
+      },
+      {
+        "caller": "crate::gateway::via_gateway",
+        "coverage_gap": false,
+        "file": "gateway.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 119,
+          "start_byte": 94,
+          "start_col": 11,
+          "start_row": 5
+        }
+      },
+      {
+        "caller": "crate::gateway::via_gateway",
+        "coverage_gap": false,
+        "file": "gateway.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 118,
+          "start_byte": 101,
+          "start_col": 18,
+          "start_row": 5
+        }
+      },
+      {
+        "caller": "crate::models",
+        "coverage_gap": true,
+        "file": "models.py",
+        "reason": "implicit-runtime-dispatch-not-certified",
+        "site": {
+          "end_byte": 377,
+          "start_byte": 0,
+          "start_col": 0,
+          "start_row": 0
+        }
+      },
+      {
+        "caller": "crate::models::_mark_probe",
+        "coverage_gap": false,
+        "file": "models.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 105,
+          "start_byte": 67,
+          "start_col": 11,
+          "start_row": 5
+        }
+      },
+      {
+        "caller": "crate::models::_mark_probe",
+        "coverage_gap": false,
+        "file": "models.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 137,
+          "start_byte": 127,
+          "start_col": 8,
+          "start_row": 7
+        }
+      },
+      {
+        "caller": "crate::models::_mark_probe",
+        "coverage_gap": false,
+        "file": "models.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 190,
+          "start_byte": 127,
+          "start_col": 8,
+          "start_row": 7
+        }
+      },
+      {
+        "caller": "crate::service",
+        "coverage_gap": true,
+        "file": "service.py",
+        "reason": "implicit-runtime-dispatch-not-certified",
+        "site": {
+          "end_byte": 349,
+          "start_byte": 0,
+          "start_col": 0,
+          "start_row": 0
+        }
+      },
+      {
+        "caller": "crate::service::direct",
+        "coverage_gap": true,
+        "file": "service.py",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 131,
+          "start_byte": 52,
+          "start_col": 0,
+          "start_row": 3
+        }
+      },
+      {
+        "caller": "crate::service::direct",
+        "coverage_gap": false,
+        "file": "service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 131,
+          "start_byte": 102,
+          "start_col": 11,
+          "start_row": 4
+        }
+      },
+      {
+        "caller": "crate::service::optional",
+        "coverage_gap": true,
+        "file": "service.py",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 269,
+          "start_byte": 134,
+          "start_col": 0,
+          "start_row": 7
+        }
+      },
+      {
+        "caller": "crate::service::optional",
+        "coverage_gap": false,
+        "file": "service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 269,
+          "start_byte": 240,
+          "start_col": 11,
+          "start_row": 10
+        }
+      },
+      {
+        "caller": "crate::service::decoy",
+        "coverage_gap": true,
+        "file": "service.py",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 348,
+          "start_byte": 272,
+          "start_col": 0,
+          "start_row": 13
+        }
+      },
+      {
+        "caller": "crate::service::decoy",
+        "coverage_gap": false,
+        "file": "service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 348,
+          "start_byte": 319,
+          "start_col": 11,
+          "start_row": 14
+        }
+      },
+      {
+        "caller": "crate::tests::__init__",
+        "coverage_gap": true,
+        "file": "tests/__init__.py",
+        "reason": "implicit-runtime-dispatch-not-certified",
+        "site": {
+          "end_byte": 45,
+          "start_byte": 0,
+          "start_col": 0,
+          "start_row": 0
+        }
+      },
+      {
+        "caller": "crate::tests::test_service",
+        "coverage_gap": true,
+        "file": "tests/test_service.py",
+        "reason": "implicit-runtime-dispatch-not-certified",
+        "site": {
+          "end_byte": 785,
+          "start_byte": 0,
+          "start_col": 0,
+          "start_row": 0
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_direct_selected",
+        "coverage_gap": true,
+        "file": "tests/test_service.py",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 341,
+          "start_byte": 244,
+          "start_col": 4,
+          "start_row": 9
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_direct_selected",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 341,
+          "start_byte": 291,
+          "start_col": 8,
+          "start_row": 10
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_direct_selected",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 336,
+          "start_byte": 311,
+          "start_col": 28,
+          "start_row": 10
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_direct_selected",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 335,
+          "start_byte": 318,
+          "start_col": 35,
+          "start_row": 10
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_optional_selected",
+        "coverage_gap": true,
+        "file": "tests/test_service.py",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 448,
+          "start_byte": 347,
+          "start_col": 4,
+          "start_row": 12
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_optional_selected",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 448,
+          "start_byte": 396,
+          "start_col": 8,
+          "start_row": 13
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_optional_selected",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 443,
+          "start_byte": 416,
+          "start_col": 28,
+          "start_row": 13
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_optional_selected",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 442,
+          "start_byte": 425,
+          "start_col": 37,
+          "start_row": 13
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_decoy",
+        "coverage_gap": true,
+        "file": "tests/test_service.py",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 540,
+          "start_byte": 454,
+          "start_col": 4,
+          "start_row": 15
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_decoy",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 540,
+          "start_byte": 491,
+          "start_col": 8,
+          "start_row": 16
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_decoy",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 530,
+          "start_byte": 508,
+          "start_col": 25,
+          "start_row": 16
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_decoy",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 529,
+          "start_byte": 514,
+          "start_col": 31,
+          "start_row": 16
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_cross_module_selected",
+        "coverage_gap": true,
+        "file": "tests/test_service.py",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 637,
+          "start_byte": 546,
+          "start_col": 4,
+          "start_row": 18
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_cross_module_selected",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 637,
+          "start_byte": 599,
+          "start_col": 8,
+          "start_row": 19
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_cross_module_selected",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 632,
+          "start_byte": 619,
+          "start_col": 28,
+          "start_row": 19
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_third_party_decoy",
+        "coverage_gap": true,
+        "file": "tests/test_service.py",
+        "reason": "uncertified-Calls-edge",
+        "site": {
+          "end_byte": 784,
+          "start_byte": 643,
+          "start_col": 4,
+          "start_row": 21
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_third_party_decoy",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 784,
+          "start_byte": 692,
+          "start_col": 8,
+          "start_row": 22
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_third_party_decoy",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 759,
+          "start_byte": 722,
+          "start_col": 12,
+          "start_row": 23
+        }
+      },
+      {
+        "caller": "crate::tests::test_service::OracleTests::test_python_third_party_decoy",
+        "coverage_gap": false,
+        "file": "tests/test_service.py",
+        "reason": "python-binding-or-dispatch-unproven",
+        "site": {
+          "end_byte": 758,
+          "start_byte": 738,
+          "start_col": 28,
+          "start_row": 23
+        }
+      }
+    ],
+    "truncated": false
+  },
+  "may": {
+    "count": 0,
+    "paths": [],
+    "truncated": false
+  },
+  "must": {
+    "count": 0,
+    "paths": [],
+    "truncated": false
+  },
+  "schema_version": 1,
+  "unknown": {
+    "count": 5,
+    "paths": [
+      "crate::tests::test_service::OracleTests::test_python_cross_module_selected",
+      "crate::tests::test_service::OracleTests::test_python_decoy",
+      "crate::tests::test_service::OracleTests::test_python_direct_selected",
+      "crate::tests::test_service::OracleTests::test_python_optional_selected",
+      "crate::tests::test_service::OracleTests::test_python_third_party_decoy"
+    ],
+    "truncated": false
+  }
+}
+| Fixture | TP | FP | FN | TN | Precision | Recall |
+|---|---:|---:|---:|---:|---:|---:|
+| Rust | 4 | 0 | 0 | 2 | 1.000 | 1.000 |
+| Python | 3 | 0 | 0 | 2 | 1.000 | 1.000 |
+| Combined | 7 | 0 | 0 | 4 | 1.000 | 1.000 |
+rust: selected=rust_cli_selected,rust_custom_bin_selected,rust_direct_selected,rust_raii_drop_selected; executed=rust_cli_selected,rust_custom_bin_selected,rust_direct_selected,rust_raii_drop_selected; fp=-; fn=-
+python: selected=test_python_cross_module_selected,test_python_direct_selected,test_python_optional_selected; executed=test_python_cross_module_selected,test_python_direct_selected,test_python_optional_selected; fp=-; fn=-
+baseline: matches /home/corymaynard370/Bit-code/docs/core-trustworthiness-baseline.json
+classified: must_precision=None (tp=0, fp=0) may_only_recall=0.0 (tp=0) must_or_may_recall=0.0 unknown_count=11 boundary_count=102

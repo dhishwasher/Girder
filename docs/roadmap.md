@@ -53,14 +53,51 @@ weaken thresholds or change expectations to improve a reported score.
 
 ## Stage 1 — Must / May / Unknown
 
-**Status: IN PROGRESS**
+**Status: FAILED-AND-PUBLISHED** (implementation complete; the precommitted
+trustworthy-Must threshold was measured and not met — see below)
 
 The [v1 classification policy](call-classification-policy.md) is specified for
 separate preimplementation commitment (`4745a5c`). Shared graph evidence and
 classified reachability are implemented (`eb120c1`);
 [seven development unit checks passed](observations/stage1/graph-evidence-tests.json).
-Extractor integration, public CLI/MCP answers, and mutation measurements remain
-unimplemented. This is not stage-completion evidence.
+Extractor call evidence for Rust/Python/TypeScript/Go is attached at every
+graph build (`6b11d28`). `impacted_tests`/`test-impact` and `orient` return
+labeled Must/May/Unknown answers, including the watched MCP path (`48a9713`,
+`d1706d6`); `--quiet` was fixed in the same pass to actually be the
+conservative must∪may∪unknown union its description claims, not the
+pre-existing unclassified mechanism (`d1706d6` — the mechanism switch is a
+real, deliberate behavior change: `--quiet` now frequently returns close to
+the full test inventory rather than a scoped-but-sometimes-wrong one, until
+Stage 3 closes dispatch holes).
+
+**Measured** (`c927122`, full detail in
+[measurement-summary.json](observations/stage1/measurement-summary.json)):
+on both the core-trustworthiness fixtures (Rust + Python, dynamic-probe-
+verified) and the one core-representative-mutations case against Click (a
+real repository), the **Must set is empty** (precision undefined/null, not
+1.000) and **May is empty** (0.000 recall wherever a positive existed) —
+the extractor never emits `CallClass::May` yet; that enumeration is Stage 3
+work. Pooled: `unknown_count=14`, `boundary_count=7601`. Root causes
+recorded in the observation: Must proofs are same-file/top-level-only
+(cross-file calls, e.g. Click's `Group.invoke` mutation and Go's
+file-split test/impl pair, can never reach Must under this extractor); any
+non-`#[test]`/`#[tokio::test]` Rust attribute or any Python decorator
+anywhere in a file zeroes that file's proofs; `classified_impact`'s flood
+rule marks every function in the whole graph Unknown once a single
+unresolved call exists anywhere, which is near-universal on real code.
+
+**The trustworthy Must threshold (1.000, nonempty set) is UNMET.** Per the
+precommitted criterion this is published as failure, not hidden or softened,
+and the program continues to Stage 2 below — closing these holes is
+explicitly Stage 3 scope, in language order, not a reason to relax Stage 1's
+policy or re-run until the number looks better.
+
+Known, deliberately out-of-scope-for-Stage-1 gaps carried forward: the
+advisory hook still consumes the unclassified `tests_for_nodes`/`impact_of`
+path, not the classified one; `orient`'s classification section has no
+`--unbounded`-equivalent escape hatch (its existing 50-item cap policy is
+unchanged, matching its other sections); there is no continuation offset for
+a truncated classified list, only a truncated flag and true count.
 
 Precommit a separate language-specific classification policy for Rust, Python,
 TypeScript/TSX, and Go. Must means a proven resolved call without a viable
@@ -82,7 +119,16 @@ The trustworthy Must threshold is 1.000 with a nonempty set. If unmet, publish
 the failure and continue to Stage 2; do not hide or soften it.
 
 **Gate:** mutation-oracle measurement and classification/API tests, then all
-common gates. **Observation:** none. **Blockers:** none established for policy.
+common gates — all run against `c927122`, all passing:
+`cargo test --workspace -j1 --quiet` (24 suites, 0 failed),
+`cargo clippy --workspace --all-targets -j1 -- -D warnings` (clean),
+`cargo fmt --all --check` (clean),
+`node --test npm/test/*.test.js` (29 passed, 2 pre-existing skips, 0 failed).
+**Observation:**
+[measurement-summary.json](observations/stage1/measurement-summary.json),
+[trustworthiness-measurement.json](observations/stage1/trustworthiness-measurement.json),
+[representative-mutations-measurement.json](observations/stage1/representative-mutations-measurement.json).
+**Blockers:** none; the criterion was measured and failed honestly.
 
 ## Stage 2 — The dispatch corpus
 
@@ -225,12 +271,23 @@ gates. **Observation:** none. **Blockers:** capable agent not yet established.
 
 ## Current checkpoint
 
-- 2026-09-22: Stage 1 policy and shared graph evidence committed. Seven graph
-  unit checks passed; remaining stages NOT STARTED. No stage measurements or
-  common stage gates run.
+- 2026-09-22: Stage 1 is complete and **FAILED-AND-PUBLISHED**: extractor call
+  evidence, classified CLI/MCP answers (including the `--quiet` honesty fix),
+  and the frozen mutation measurement are all implemented, run, and committed
+  (`6b11d28`, `48a9713`, `d1706d6`, `c927122`). The trustworthy-Must gate
+  (precision 1.000, nonempty set) was not met — Must is empty on every
+  corpus measured; see
+  [measurement-summary.json](observations/stage1/measurement-summary.json)
+  for root causes. All four common gates pass on `c927122`. Stages 2–7
+  remain NOT STARTED.
 - MOVESPEED is available: approximately 291 GB free; system reports approximately
   2 GB available RAM and no swap. Cargo and rustc are available from its cache.
 - Stage 4 requires Claude Code, Cursor, and Codex adapters plus raw MCP JSON fallback.
-- Next: attach fresh extractor/resolver call evidence, then wire classified
-  CLI/MCP answers and run the frozen mutation measurement and common gates.
+- Next: Stage 2 — commit the versioned dispatch corpus (≥40 cases, initially
+  48, 12 per language, weighted to Rust trait objects/generics, Python
+  inheritance/super/getattr, TypeScript structural typing/unions, Go
+  interfaces) and score Girder against every case, publishing every failure.
+  Stage 1's measured root causes (same-file-only proofs, no May enumeration
+  at all, the whole-graph flood rule) are exactly what Stage 3's per-language
+  work will need to address once Stage 2's corpus exists to measure against.
 - Completion remains unproven until every criterion above has committed evidence.
