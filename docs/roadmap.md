@@ -323,9 +323,52 @@ closed is Unknown, never omitted" being an acceptable outcome.
   `coverage_gap`, `targets` per call site) — confirmed present on this
   binary; no new command needed for the audit itself.
 
+**Rust before-observation complete.** All 105 audit sites labeled with
+ground truth read from source before Girder was run on any of them, then
+scored against Girder's actual per-site `call_evidence_v1` answer (via
+`girder analyze --json` + `girder inspect --json`). Full detail in
+[audit-scoring-summary.json](observations/stage3-rust-audit/audit-scoring-summary.json),
+raw per-site results in
+[audit-scored-results.json](observations/stage3-rust-audit/audit-scored-results.json),
+labels in
+[audit-sites-labeled.json](observations/stage3-rust-audit/audit-sites-labeled.json).
+
+An honest property of the sampling method itself, disclosed rather than
+hidden: **53 of 105 (50%) sampled sites were not real call sites at all**
+(match-arm patterns, generic bounds, function definitions, doc prose,
+`macro_rules!` bodies, one comment block, and raw-string false positives) —
+this was precommitted as a known risk of "crude but independent" regex
+sampling before any site was read, and it means the `operator_usage` and
+`fn_pointer_or_closure` shape categories contributed almost no real signal.
+Of the 49 sites that could be scored: **zero unsound cells** (0 overclaim,
+0 unsafe_exclusion) — converging with the dispatch corpus's own
+zero-unsound result. But recall is 0%: all 31 true must/may sites (28
+must, 3 may) scored conservative, and **every single one carries the
+identical reason `rust-binding-or-dispatch-unproven`**. Traced to the exact
+line: `crates/aether-builder/src/mapper/claims.rs:122`,
+`function.filter(|f| f.kind() == "identifier")` — Must-proof eligibility
+only ever considers bare-identifier calls; method calls
+(`receiver.method()`) and path/associated calls (`Type::method()`) are
+categorically excluded regardless of whether they're genuinely unambiguous
+(e.g. `gr.add_node(...)` on a concrete `Graph<...>`, provably Must,
+currently never even attempted). This is a more specific, more directly
+actionable root cause than the previously-named cross-file and
+attribute-disqualification gaps — on this real-code sample, it explains
+100% of the misses, not those two.
+
+**Not yet done:** the resolver change, and the after-observation (re-run
+this audit, the dispatch corpus, and the Stage 1 trustworthiness oracle,
+all three must show no regression and the audit must show fewer
+conservative / more exact cells) that "measured dispatch-corpus
+improvement" requires. Stage 3 (Rust) cannot be marked DONE on the
+before-observation alone.
+
 **Gate per language:** before/after corpus and real-repository audit, then all
-common gates. **Observation:** none yet — audit site selection and labeling
-have not started. **Blockers:** Stage 2 and language order (satisfied).
+common gates. **Observation:**
+[audit-scoring-summary.json](observations/stage3-rust-audit/audit-scoring-summary.json)
+(before-observation only; after-observation pending). **Blockers:** none —
+Stage 2 and language order satisfied; next action is the resolver change
+named above.
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 

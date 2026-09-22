@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "kind": "stage-criterion-measurement",
+  "stage": 3,
+  "language": "rust",
+  "phase": "before-observation",
+  "date": "2026-09-22",
+  "candidate_commit": "301d445",
+  "candidate_commit_note": "No Rust source changed since f53f6dd/32bd5d2; this measures the same binary already scored for Stage 1 and Stage 2 (sha256 f74eea37666cb9a0943cc2383d62aedad840d7db056a8a3e0e5bcb6f4f7a1bbe).",
+  "corpus": "docs/observations/stage3-rust-audit/audit-sites-labeled.json",
+  "method": "For each of the 105 sites in audit-sites.json, true_class was authored by reading source context before running Girder (see audit-sites-labeled.json's per-site rationale). Girder's actual per-site answer was then read via `girder analyze <crate> --json` (builds+saves the graph) followed by `girder inspect <graph>.aether --json` (dumps every node's raw call_evidence_v1 attribute), matching each sampled site's (file, line) against the CallClaim whose site.start_row falls within +/-2 rows of the sampled line.",
+  "results": {
+    "total_sites": 105,
+    "not_a_call_site": 53,
+    "no_evidence_found": 3,
+    "scored": 49
+  },
+  "not_a_call_site_finding": "53 of 105 (50%) of the sites this crude, Girder-independent regex sampler selected are not real call sites at all: match-arm enum patterns, generic bound declarations, function definitions, doc-comment prose, macro_rules! definition bodies, one block of commented-out code, and raw string literals whose text happens to contain call-like character sequences. This is published as an honest property of the sampling method itself (precommitted as 'crude but independent' before any site was read), not evidence about Girder. It also means the two shape categories most prone to false positives (operator_usage, fn_pointer_or_closure) contributed almost no real audit signal -- nearly all their matches were generic bounds or macro_rules! bodies respectively.",
+  "no_evidence_found_sites": [
+    {
+      "crate": "petgraph-0.6.5", "file": "tests/quickcheck.rs", "line": 66, "true_class": "unknown",
+      "note": "Inside a quickcheck! { ... } macro block; the enclosing function itself appears to not be indexed as an ordinary Function node with call evidence, consistent with the whole function body being macro-argument tokens."
+    },
+    {
+      "crate": "petgraph-0.6.5", "file": "tests/quickcheck.rs", "line": 547, "true_class": "must",
+      "note": "Same cause as above: inside a quickcheck! { ... } block."
+    },
+    {
+      "crate": "serde_json-1.0.150", "file": "src/ser.rs", "line": 504, "true_class": "may",
+      "note": "Not inside a macro block. Root cause not fully diagnosed in this pass -- the enclosing method (a multi-line chained call inside a match arm) does not appear to have a distinctly-indexed Function node with call evidence covering this line in the +/-2 row search window. Recorded as unexplained rather than guessed at."
+    }
+  ],
+  "confusion_matrix": {
+    "exact": 18,
+    "conservative": 31,
+    "unsafe_exclusion": 0,
+    "overclaim": 0,
+    "unsound_total": 0
+  },
+  "exact_breakdown": {
+    "unknown": 18
+  },
+  "conservative_breakdown": {
+    "must": 28,
+    "may": 3
+  },
+  "headline_finding": "Zero unsound cells (0 overclaim, 0 unsafe_exclusion) across all 49 scorable real-world sites -- converges with the dispatch corpus's own zero-unsound result (32bd5d2) on hand-authored fixtures. Girder never overclaims certainty on real code either. But recall is 0%: every one of the 31 scorable must/may sites (28 must, 3 may) scored conservative (observed Unknown), and every single one carries the identical reason string 'rust-binding-or-dispatch-unproven'.",
+  "root_cause_confirmed": "Traced to crates/aether-builder/src/mapper/claims.rs line 122: `function.filter(|f| f.kind() == \"identifier\")` -- the Must-proof eligibility check only ever considers calls whose callee expression is a bare identifier (a plain_call shape, e.g. target()). Method calls (receiver.method(), tree-sitter kind field_expression) and path/associated calls (Type::method(), tree-sitter kind scoped_identifier) are categorically excluded from Must certification by this filter, regardless of whether they are genuinely unambiguous -- e.g. gr.add_node(...) on a concrete Graph<...>, or UnGraph::from_edges(...) on a concrete type alias, both structurally provable as Must but never even attempted. This is a single, specific, more actionable root cause than the previously-named general 'same-file/top-level-only' and 'macro-argument' gaps (both still real and both also present in this audit's sites, but neither explains why EVERY must/may site failed with the exact same reason -- this filter does): on this sample, it is not cross-file calls or attribute-disqualified files causing the misses, it is that method/path calls were never eligible for Must in the first place, in-file or not.",
+  "stage3_criterion_status": {
+    "nonempty_must_precision_1000": "Met, inherited from the dispatch corpus (3/3, unchanged from Stage 2's 32bd5d2) -- not new evidence from this audit, since 0 must/may sites were classified must or may at all here.",
+    "zero_classification_errors_on_audit": "Met: 0 unsound cells (0 overclaim + 0 unsafe_exclusion) out of 49 scored.",
+    "measured_dispatch_corpus_improvement": "NOT met -- no resolver change has been made yet. This document is the before-observation; an after-observation and a demonstrated improvement are still required to close Stage 3 for Rust."
+  },
+  "next_action": "The identifier-only filter at mapper/claims.rs:122 is the single highest-leverage next fix: extending Must-proof eligibility to method calls and path/associated calls where the receiver/type is a concrete, same-file, single-impl type would be expected to move a meaningful fraction of this audit's 31 conservative must/may cells to exact, without touching the already-correct 18 exact unknown cells (macro invocations stay Unknown regardless). Any such change must be re-verified against: this audit (re-run, expect fewer conservative/more exact, still 0 unsound), the dispatch corpus (32bd5d2, must stay 0 unsound and must_precision 1.000), and the Stage 1 trustworthiness oracle (f53f6dd, its union recall must not regress from 4/4)."
+}
