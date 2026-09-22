@@ -453,15 +453,37 @@ benchmark, don't run it against the stale snapshot.
   All four common gates pass on `32bd5d2`
   ([gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/)).
   Stages 3–7 remain NOT STARTED.
+- 2026-09-22: Stage 3 (Rust) is **IN PROGRESS**, policy and audit site
+  selection done, labeling and resolver work not started. `25f7572` froze,
+  before any site was read: "zero classification errors" = zero unsound
+  audit cells (overclaim/unsafe_exclusion, matching the corpus's own scoring
+  rule — an honest Unknown on an unclosable hole is conservative, not an
+  error), and the audit methodology (regex-based site enumeration
+  independent of Girder's own parser, fixed-seed stratified sample,
+  ground-truth-before-Girder discipline). `858d549` committed
+  `tools/dispatch_audit_site_selector.py` and its output,
+  [audit-sites.json](observations/stage3-rust-audit/audit-sites.json): 105
+  sites (≥100 minimum) across petgraph/serde_json/regex, stratified over 6
+  syntactic shapes (~17-18 each). Confirmed `girder analyze --json` +
+  `girder inspect --json` already exposes per-site `call_evidence_v1`
+  (class/reason/coverage_gap/targets) — no new read command needed.
 - MOVESPEED is available: approximately 291 GB free; system reports approximately
   2 GB available RAM and no swap. Cargo and rustc are available from its cache.
 - Stage 4 requires Claude Code, Cursor, and Codex adapters plus raw MCP JSON fallback.
-- Next: Stage 3 — close dispatch holes one language at a time, Rust first
-  (`docs/roadmap.md` Stage 3's own order: Rust → Python → TypeScript → Go).
-  The dispatch corpus now exists to measure improvement against. Stage 2's
-  measured findings name concrete Rust starting points: the same-file/
-  top-level-only proof restriction, the total absence of May enumeration,
-  the whole-graph flood rule, and the newly found assert!/assert_eq!
-  macro-argument gap. Freeze a before-observation on the corpus before
-  changing the Rust resolver, per Stage 3's own precommitted criterion.
+- Next: label each of the 105 audit-sites.json sites with true must/may/
+  unknown ground truth, read from source, before running Girder on any of
+  them (same discipline as the dispatch corpus). Then read Girder's actual
+  per-site answers via `girder analyze`/`inspect --json`, score against the
+  labels using the frozen unsound/conservative rule, and publish a
+  before-observation. Only then start Rust resolver changes — tally the
+  audit's conservative cells by root cause first (Stage 2 already suggests
+  file-wide attribute disqualification and the assert!/assert_eq!
+  macro-argument gap as likely dominant; verify with the tally rather than
+  assuming) and close the highest-tally hole first. Re-run the Stage 1
+  trustworthiness oracle as part of the Rust gate — its must-or-may-or-
+  unknown union recall is 4/4 today only because of the flood; any change
+  that narrows the flood must keep both that and the corpus's
+  unsafe_exclusion count at 0. If Rust's criterion isn't met, mark
+  FAILED-AND-PUBLISHED and stop — do not start Python before Rust is
+  trustworthy on a real repository.
 - Completion remains unproven until every criterion above has committed evidence.
