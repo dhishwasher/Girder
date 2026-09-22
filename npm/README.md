@@ -2,8 +2,9 @@
 
 A semantic-graph MCP server for AI coding agents. It answers questions about a
 repository from a parsed graph of it, so an agent can read one function instead
-of a whole file, find a declaration without grep, and run only the tests a
-change can reach.
+of a whole file, find a declaration without grep, and get a conservative
+(over-selecting, never knowingly under-selecting) list of the tests a change
+might reach.
 
 Requires no Rust toolchain: `postinstall` downloads a prebuilt binary.
 

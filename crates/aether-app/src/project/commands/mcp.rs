@@ -265,10 +265,12 @@ rather than by reading files. Prefer these tools over opening files or \
 grepping: `get_source` returns one function's source without the file around \
 it (measured 97.85% fewer bytes than reading the whole file across ten \
 nodes), `find_definition` beats grep for locating a declaration (measured \
-97.98% fewer bytes across ten identifiers), and `impacted_tests` names only \
-the tests that can reach what changed. Every tool is read-only and confined \
-to the project root the server started in. Byte measurements, not token \
-measurements: see docs/context-vs-read-cost.md and docs/names-cost.md.";
+97.98% fewer bytes across ten identifiers), and `impacted_tests` names the \
+tests that can reach what changed as a conservative union — it is known to \
+over-select broadly rather than risk missing one (set `classified: true` \
+for why). Every tool is read-only and confined to the project root the \
+server started in. Byte measurements, not token measurements: see \
+docs/context-vs-read-cost.md and docs/names-cost.md.";
 
 /// Translates a tool call's validated arguments, plus the pinned project
 /// root, into the argv that answers it. `Err` becomes a client-visible

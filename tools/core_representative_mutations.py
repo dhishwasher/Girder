@@ -377,9 +377,15 @@ def measure_mutation(
     dynamically_executed = {
         test.node_id for test in mutation.tests if executed[test.node_id]
     }
-    classified_for_declared["boundary_count"] = classified_paths["boundary_count"]
+    for passthrough in (
+        "boundary_count",
+        "boundary_by_category",
+        "must_total_count",
+        "may_total_count",
+        "unknown_total_count",
+    ):
+        classified_for_declared[passthrough] = classified_paths[passthrough]
     classified = classified_metrics(classified_for_declared, dynamically_executed)
-    classified["executed_count"] = len(dynamically_executed)
 
     return {
         "id": mutation.id,
@@ -433,24 +439,30 @@ def aggregate_classified_metrics(
     null-on-zero-denominator convention as classified_metrics itself."""
     must_tp = must_fp = may_tp = must_or_may_tp = 0
     must_denominator = executed_denominator = 0
-    unknown_count = boundary_count = 0
+    unknown_count = unknown_total_count = boundary_count = 0
+    boundary_by_category: dict[str, int] = {}
     for result in results:
         c = result["classified"]
         must_tp += len(c["must_true_positives"])
         must_fp += len(c["must_false_positives"])
         may_tp += len(c["may_true_positives"])
         must_or_may_tp += len(c["must_or_may_true_positives"])
-        must_denominator += len(c["must"])
-        executed_denominator += c["executed_count"]
+        must_denominator += c["must_denominator"]
+        executed_denominator += c["executed_denominator"]
         unknown_count += c["unknown_count"]
+        unknown_total_count += c["unknown_total_count"]
         boundary_count += c["boundary_count"]
+        for category, count in c["boundary_by_category"].items():
+            boundary_by_category[category] = boundary_by_category.get(category, 0) + count
     return {
         "must_true_positives": must_tp,
         "must_false_positives": must_fp,
+        "must_denominator": must_denominator,
         "must_precision": round(must_tp / must_denominator, 6)
         if must_denominator
         else None,
         "may_true_positives": may_tp,
+        "executed_denominator": executed_denominator,
         "may_only_recall": round(may_tp / executed_denominator, 6)
         if executed_denominator
         else None,
@@ -459,7 +471,9 @@ def aggregate_classified_metrics(
         if executed_denominator
         else None,
         "unknown_count": unknown_count,
+        "unknown_total_count": unknown_total_count,
         "boundary_count": boundary_count,
+        "boundary_by_category": boundary_by_category,
     }
 
 
@@ -516,7 +530,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
             )
     document = {
-        "schema_version": 2,
+        "schema_version": 3,
         "repository": REPOSITORY_ID,
         "mutations": results,
         "aggregate": aggregate_metrics(results),

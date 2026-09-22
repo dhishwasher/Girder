@@ -268,7 +268,15 @@ def parse_bitcode_classified_selection(output: str) -> dict[str, object]:
             or document["may"]["truncated"]
             or document["unknown"]["truncated"]
         ),
+        # The CLI's own true totals, before any caller narrows these sets
+        # down to a declared/fixture universe — "report all discovered
+        # Unknown tests ... separately so a large graph cannot hide the
+        # measured inventory's results" (docs/call-classification-policy.md).
+        "must_total_count": document["must"]["count"],
+        "may_total_count": document["may"]["count"],
+        "unknown_total_count": document["unknown"]["count"],
         "boundary_count": document["boundaries"]["count"],
+        "boundary_by_category": dict(document["boundaries"]["by_category"]),
     }
 
 
@@ -290,19 +298,30 @@ def classified_metrics(
         "must": sorted(must),
         "may": sorted(may),
         "unknown": sorted(unknown),
+        # Declared-universe count (this classified set narrowed to the
+        # caller's own tests), distinct from the CLI's *_total_count below,
+        # which is the true discovered count across the whole graph.
         "unknown_count": len(unknown),
+        "must_total_count": classified.get("must_total_count"),
+        "may_total_count": classified.get("may_total_count"),
+        "unknown_total_count": classified.get("unknown_total_count"),
         "boundary_count": classified["boundary_count"],
+        "boundary_by_category": classified.get("boundary_by_category", {}),
         "must_true_positives": sorted(must_tp),
         "must_false_positives": sorted(must_fp),
+        "must_denominator": len(must),
         "must_precision": round(len(must_tp) / len(must), 6) if must else None,
         "may_true_positives": sorted(may_tp),
+        "may_false_negatives": sorted(executed - may),
         "may_only_recall": (
             round(len(may_tp) / len(executed), 6) if executed else None
         ),
         "must_or_may_true_positives": sorted(must_or_may_tp),
+        "must_or_may_false_negatives": sorted(executed - (must | may)),
         "must_or_may_recall": (
             round(len(must_or_may_tp) / len(executed), 6) if executed else None
         ),
+        "executed_denominator": len(executed),
     }
 
 
@@ -314,24 +333,30 @@ def aggregate_classified_metrics(
     fixture's denominator for it was zero."""
     must_tp = must_fp = may_tp = must_or_may_tp = 0
     must_denominator = executed_denominator = 0
-    unknown_count = boundary_count = 0
+    unknown_count = unknown_total_count = boundary_count = 0
+    boundary_by_category: dict[str, int] = {}
     for result in results.values():
         c = result["classified"]
         must_tp += len(c["must_true_positives"])
         must_fp += len(c["must_false_positives"])
         may_tp += len(c["may_true_positives"])
         must_or_may_tp += len(c["must_or_may_true_positives"])
-        must_denominator += len(c["must"])
-        executed_denominator += len(result["executed"])
+        must_denominator += c["must_denominator"]
+        executed_denominator += c["executed_denominator"]
         unknown_count += c["unknown_count"]
+        unknown_total_count += c["unknown_total_count"]
         boundary_count += c["boundary_count"]
+        for category, count in c["boundary_by_category"].items():
+            boundary_by_category[category] = boundary_by_category.get(category, 0) + count
     return {
         "must_true_positives": must_tp,
         "must_false_positives": must_fp,
+        "must_denominator": must_denominator,
         "must_precision": round(must_tp / must_denominator, 6)
         if must_denominator
         else None,
         "may_true_positives": may_tp,
+        "executed_denominator": executed_denominator,
         "may_only_recall": round(may_tp / executed_denominator, 6)
         if executed_denominator
         else None,
@@ -340,7 +365,9 @@ def aggregate_classified_metrics(
         if executed_denominator
         else None,
         "unknown_count": unknown_count,
+        "unknown_total_count": unknown_total_count,
         "boundary_count": boundary_count,
+        "boundary_by_category": boundary_by_category,
     }
 
 
@@ -512,7 +539,14 @@ def measure_fixture(
         bucket: {path_to_test[path] for path in classified_selection[bucket]}  # type: ignore[index]
         for bucket in ("must", "may", "unknown")
     }
-    classified_by_test["boundary_count"] = classified_selection["boundary_count"]
+    for passthrough in (
+        "boundary_count",
+        "boundary_by_category",
+        "must_total_count",
+        "may_total_count",
+        "unknown_total_count",
+    ):
+        classified_by_test[passthrough] = classified_selection[passthrough]
 
     executed: set[str] = set()
     for index, test in enumerate(fixture.tests):
@@ -660,7 +694,7 @@ def main() -> int:
     if file_sha256(bitcode) != binary_sha256:
         raise RuntimeError("the measured Bit Code binary changed during the oracle run")
     document = {
-        "schema_version": 2,
+        "schema_version": 3,
         "results": results,
         "aggregate": aggregate_metrics(results),
         "classified_aggregate": aggregate_classified_metrics(results),

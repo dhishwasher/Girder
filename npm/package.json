@@ -1,7 +1,7 @@
 {
   "name": "girder-mcp",
   "version": "0.2.7",
-  "description": "Semantic-graph MCP server for AI coding agents: read one function instead of a whole file, find a declaration without grep, and select only the tests a change can reach.",
+  "description": "Semantic-graph MCP server for AI coding agents: read one function instead of a whole file, find a declaration without grep, and get a conservative list of the tests a change might reach.",
   "keywords": [
     "mcp",
     "model-context-protocol",

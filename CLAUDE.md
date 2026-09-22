@@ -103,9 +103,13 @@ saves depends entirely on the size of the diff, so there is no fixed ratio.
 
 To run tests:
     T=$(girder test-impact . --quiet); if [ -n "$T" ]; then cargo test -- $T; else echo "no impacted tests"; fi
-Not the full suite. Runs only tests reachable from what changed.
-The guard matters: an empty selection means nothing needs testing, and a bare
-`cargo test $(...)` would run everything instead.
+This is the conservative must∪may∪unknown union (docs/call-classification-policy.md),
+not a targeted answer: it includes any test that cannot be proven unreachable,
+which as of Stage 1 is frequently close to the full suite (see
+docs/observations/stage1/measurement-summary.json). Pass --classified to see
+why each test was included. The empty-selection guard still matters: an
+empty selection means nothing needs testing, and a bare `cargo test $(...)`
+would run everything instead.
 
 To answer a question about the codebase: girder query . "<question>"
 No file reading required.
