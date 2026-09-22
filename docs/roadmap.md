@@ -53,7 +53,10 @@ weaken thresholds or change expectations to improve a reported score.
 
 ## Stage 1 — Must / May / Unknown
 
-**Status: NOT STARTED**
+**Status: IN PROGRESS**
+
+The [v1 classification policy](call-classification-policy.md) is specified for
+separate preimplementation commitment. No classified API or measurement exists yet.
 
 Precommit a separate language-specific classification policy for Rust, Python,
 TypeScript/TSX, and Go. Must means a proven resolved call without a viable
@@ -218,10 +221,11 @@ gates. **Observation:** none. **Blockers:** capable agent not yet established.
 
 ## Current checkpoint
 
-- 2026-09-22: roadmap and project resume instructions committed; all seven
-  implementation stages remain NOT STARTED. No stage measurements or gates run.
+- 2026-09-22: roadmap and project resume instructions committed. Stage 1 policy
+  specified; remaining stages NOT STARTED. No stage measurements or gates run.
 - MOVESPEED is available: approximately 291 GB free; system reports approximately
   2 GB available RAM and no swap. Cargo and rustc are available from its cache.
 - Stage 4 requires Claude Code, Cursor, and Codex adapters plus raw MCP JSON fallback.
-- Next: commit the Stage 1 classification policy separately before implementation.
+- Next: commit the Stage 1 policy separately, then implement shared call evidence
+  and classified reachability before changing CLI/MCP presentation.
 - Completion remains unproven until every criterion above has committed evidence.
