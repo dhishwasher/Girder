@@ -289,6 +289,16 @@ fn classified_tests(graph: &SemanticGraph, id: NodeId) -> Value {
     let paths = |ids: &[NodeId]| section(graph, ids.to_vec(), 0);
     let boundary_count = classified.boundaries.len();
     let boundary_truncated = boundary_count > MAX_LISTED_PER_SECTION;
+    let mut by_category: std::collections::BTreeMap<&'static str, usize> =
+        std::collections::BTreeMap::new();
+    for boundary in &classified.boundaries {
+        *by_category
+            .entry(super::test_impact::boundary_category(
+                &boundary.reason,
+                boundary.coverage_gap,
+            ))
+            .or_insert(0) += 1;
+    }
     let boundaries: Vec<Value> = classified
         .boundaries
         .into_iter()
@@ -304,6 +314,7 @@ fn classified_tests(graph: &SemanticGraph, id: NodeId) -> Value {
         },
         "boundaries": {
             "count": boundary_count,
+            "by_category": by_category,
             "items": boundaries,
             "truncated": boundary_truncated,
         },

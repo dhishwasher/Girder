@@ -12,6 +12,13 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     let run = args.iter().any(|a| a == "--run");
     let quiet = args.iter().any(|a| a == "--quiet");
     let classified = args.iter().any(|a| a == "--classified");
+    // Offline-evaluator-only: not exposed via the MCP schema. Skips the
+    // display cap on classified must/may/unknown *paths* (boundary items
+    // stay capped regardless, to bound output size) so measurement tooling
+    // can see the true, uncapped classification instead of a display-capped
+    // slice, per the frozen policy's "explicit unbounded output mode ...
+    // for offline evaluators".
+    let unbounded = args.iter().any(|a| a == "--unbounded");
     let out_path = args
         .windows(2)
         .find(|w| w[0] == "--out")
@@ -25,7 +32,7 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
                 continue;
             }
             match arg.as_str() {
-                "--run" | "--quiet" | "--classified" => continue,
+                "--run" | "--quiet" | "--classified" | "--unbounded" => continue,
                 "--out" => {
                     skip_next = true;
                     continue;
@@ -53,7 +60,10 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     let config = ProjectConfig::load(&root)?;
     let (graph, _builder, files) = build_from_dir_with_config(&root, &config)?;
     if quiet && classified && !run && out_path.is_none() {
-        print!("{}", classified_from_graph(&root, &graph, &config, &explicit)?);
+        print!(
+            "{}",
+            classified_from_graph(&root, &graph, &config, &explicit, unbounded)?
+        );
         return Ok(());
     }
     if quiet && !run && out_path.is_none() {
@@ -378,7 +388,30 @@ fn resolve_origins(
     }
 }
 
-/// The read-only quiet command shared with MCP; no test subprocess is launched.
+/// Sorts node ids by their graph path (breaking ties by id), the ordering
+/// the frozen classification policy requires for every labeled set.
+fn sort_by_path(graph: &aether_graph::SemanticGraph, ids: &mut [NodeId]) {
+    ids.sort_by(|a, b| {
+        let left = graph.get(*a).map(|n| n.path.as_str()).unwrap_or_default();
+        let right = graph.get(*b).map(|n| n.path.as_str()).unwrap_or_default();
+        left.cmp(right).then_with(|| a.cmp(b))
+    });
+}
+
+/// The read-only quiet command shared with MCP: the conservative union of
+/// every test whose coverage could not be *excluded* — must, may, and
+/// unknown alike — per docs/call-classification-policy.md ("Quiet CLI test
+/// selection returns the conservative union of known test paths in all
+/// three classes ... an empty result never means nothing needs testing").
+///
+/// This is deliberately NOT the same test set `tests_for_nodes`/`impact_of`
+/// compute on their own (those stay unchanged for their other callers, e.g.
+/// the advisory hook) — this union is evidence-classified, so it grows to
+/// include every test once a single unresolved call anywhere in the graph
+/// makes exclusion unprovable. On real code that is common, so this
+/// selection is frequently close to the full test inventory; that is the
+/// intended, honest behavior while Must/May coverage is still thin (Stage 1),
+/// not a bug. No test subprocess is launched here.
 pub(super) fn quiet_from_graph(
     root: &Path,
     graph: &aether_graph::SemanticGraph,
@@ -386,14 +419,35 @@ pub(super) fn quiet_from_graph(
     explicit: &[&str],
 ) -> std::io::Result<String> {
     let (origin_ids, baseline_paths) = resolve_origins(root, graph, config, explicit)?;
-    let mut ids = graph.tests_for_nodes(&origin_ids);
-    let mut seen: HashSet<_> = ids.iter().copied().collect();
+    let classified = graph.classified_impact(&origin_ids).tests(graph);
+    let mut ids: Vec<NodeId> = classified
+        .must
+        .into_iter()
+        .chain(classified.may)
+        .chain(classified.unknown)
+        .collect();
+    let mut seen: HashSet<NodeId> = ids.iter().copied().collect();
     for path in baseline_paths {
         if let Some(node) = graph.find_by_path(&path) {
             if seen.insert(node.id) {
                 ids.push(node.id);
             }
         }
+    }
+    sort_by_path(graph, &mut ids);
+    if !classified.boundaries.is_empty() {
+        eprintln!(
+            "test-impact: {} unresolved call-evidence boundar{} found; this \
+             selection is the conservative must∪may∪unknown union, not a \
+             targeted answer — pass --classified to see why each test is \
+             included (docs/call-classification-policy.md)",
+            classified.boundaries.len(),
+            if classified.boundaries.len() == 1 {
+                "y"
+            } else {
+                "ies"
+            }
+        );
     }
     Ok(ids
         .into_iter()
@@ -404,8 +458,37 @@ pub(super) fn quiet_from_graph(
 
 /// Cap on how many paths or boundary records one section lists in full before
 /// degrading to a count — mirrors `orient`'s `MAX_LISTED_PER_SECTION`. `count`
-/// is always the true total; only the listed items are capped.
+/// is always the true total; only the listed items are capped. `--unbounded`
+/// (CLI-only, not exposed via MCP) lifts the cap on the must/may/unknown
+/// *path* lists for offline measurement tooling; boundary items stay capped
+/// regardless; see `docs/call-classification-policy.md`'s "An explicit
+/// unbounded output mode may be used by offline evaluators."
 const MAX_LISTED: usize = 50;
+
+/// Three-way split of *why* a boundary exists, per the frozen policy's
+/// "report all three kinds with reasons": a call site whose target could not
+/// be resolved; a whole-file/module coverage gap (unexpanded macro, parse
+/// error, a language construct this extractor doesn't certify); or evidence
+/// that is missing, stale, invalid, or backed only by an uncertified legacy
+/// edge. Matches the reason strings `mapper/claims.rs` and
+/// `aether-graph/src/claims.rs` actually emit.
+pub(super) fn boundary_category(reason: &str, coverage_gap: bool) -> &'static str {
+    const MISSING_OR_INVALID_EVIDENCE: &[&str] = &[
+        "missing-node",
+        "missing-call-evidence",
+        "invalid-call-evidence",
+        "stale-call-evidence",
+        "unsupported-call-evidence-version",
+        "invalid-call-claim",
+    ];
+    if MISSING_OR_INVALID_EVIDENCE.contains(&reason) || reason.starts_with("uncertified-") {
+        "missing_or_invalid_evidence"
+    } else if coverage_gap {
+        "coverage_gap"
+    } else {
+        "unresolved_call_site"
+    }
+}
 
 /// Labeled Must/May/Unknown test selection, per the frozen classification
 /// policy (`docs/call-classification-policy.md`): the tests reachable from
@@ -419,6 +502,7 @@ pub(super) fn classified_from_graph(
     graph: &aether_graph::SemanticGraph,
     config: &ProjectConfig,
     explicit: &[&str],
+    unbounded: bool,
 ) -> std::io::Result<String> {
     let (origin_ids, baseline_paths) = resolve_origins(root, graph, config, explicit)?;
     let mut classified = graph.classified_impact(&origin_ids).tests(graph);
@@ -436,29 +520,31 @@ pub(super) fn classified_from_graph(
             }
         }
     }
-    let sort_by_path = |ids: &mut Vec<NodeId>| {
-        ids.sort_by(|a, b| {
-            let left = graph.get(*a).map(|n| n.path.as_str()).unwrap_or_default();
-            let right = graph.get(*b).map(|n| n.path.as_str()).unwrap_or_default();
-            left.cmp(right).then_with(|| a.cmp(b))
-        });
-    };
-    sort_by_path(&mut classified.unknown);
+    sort_by_path(graph, &mut classified.unknown);
 
-    let names = |ids: &[NodeId]| -> serde_json::Value {
-        let mut names: Vec<&str> = ids
+    let paths = |ids: &[NodeId]| -> serde_json::Value {
+        let mut paths: Vec<&str> = ids
             .iter()
             .filter_map(|&id| graph.get(id))
-            .map(|n| n.name.as_str())
+            .map(|n| n.path.as_str())
             .collect();
-        names.sort_unstable();
-        let count = names.len();
-        let truncated = count > MAX_LISTED;
-        names.truncate(MAX_LISTED);
-        serde_json::json!({"count": count, "names": names, "truncated": truncated})
+        paths.sort_unstable();
+        let count = paths.len();
+        let truncated = !unbounded && count > MAX_LISTED;
+        if !unbounded {
+            paths.truncate(MAX_LISTED);
+        }
+        serde_json::json!({"count": count, "paths": paths, "truncated": truncated})
     };
     let boundary_count = classified.boundaries.len();
     let boundary_truncated = boundary_count > MAX_LISTED;
+    let mut by_category: std::collections::BTreeMap<&'static str, usize> =
+        std::collections::BTreeMap::new();
+    for boundary in &classified.boundaries {
+        *by_category
+            .entry(boundary_category(&boundary.reason, boundary.coverage_gap))
+            .or_insert(0) += 1;
+    }
     let boundaries: Vec<_> = classified
         .boundaries
         .into_iter()
@@ -468,10 +554,15 @@ pub(super) fn classified_from_graph(
 
     let document = serde_json::json!({
         "schema_version": 1,
-        "must": names(&classified.must),
-        "may": names(&classified.may),
-        "unknown": names(&classified.unknown),
-        "boundaries": {"count": boundary_count, "items": boundaries, "truncated": boundary_truncated},
+        "must": paths(&classified.must),
+        "may": paths(&classified.may),
+        "unknown": paths(&classified.unknown),
+        "boundaries": {
+            "count": boundary_count,
+            "by_category": by_category,
+            "items": boundaries,
+            "truncated": boundary_truncated,
+        },
     });
     serde_json::to_string_pretty(&document)
         .map(|s| s + "\n")

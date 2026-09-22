@@ -1342,8 +1342,16 @@ fn source_read_failures_abort_analysis_without_replacing_the_durable_graph() {
     }
 }
 
+/// `--quiet` now returns the classified must∪may∪unknown union
+/// (docs/call-classification-policy.md), not a targeted answer. Both tests
+/// in this fixture carry an `assert_eq!` macro invocation, which the
+/// extractor cannot certify (`unexpanded-macro-or-decorator`); that boundary
+/// makes `unrelated_test` unexcludable too, so it is conservatively included
+/// alongside `test_add` even though it does not call `add`. This is the
+/// intended Stage 1 behavior, not a targeting regression — narrowing this
+/// back down is Stage 3 (dispatch-hole-closing) work, not a test-fixture fix.
 #[test]
-fn test_impact_quiet_prints_only_selected_test_names() {
+fn test_impact_quiet_is_the_conservative_union_not_a_targeted_answer() {
     let repo = TempRepo::new("test-impact-quiet");
     repo.write(
         "src/lib.rs",
@@ -1383,7 +1391,7 @@ fn unrelated_test() {
     let output = run_girder_output(&["test-impact", repo.path().to_str().unwrap(), "--quiet"]);
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert_eq!(stdout, "test_add\n", "{stdout}");
+    assert_eq!(stdout, "test_add\nunrelated_test\n", "{stdout}");
     for header in [
         "Building",
         "nodes",
@@ -1398,6 +1406,13 @@ fn unrelated_test() {
     ] {
         assert!(!stdout.contains(header), "{stdout}");
     }
+    // The boundary notice belongs on stderr, never mixed into the
+    // name-per-line stdout `cargo test -- $(...)` depends on.
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("unresolved call-evidence boundar"),
+        "{stderr}"
+    );
 }
 
 #[test]

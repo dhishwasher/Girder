@@ -32,12 +32,20 @@ try:
         acquire_artifact,
         extract_archive,
     )
+    from tools.core_trustworthiness_oracle import (
+        classified_metrics,
+        parse_bitcode_classified_selection,
+    )
     from tools.harness_support import BoundedProcessResult, run_bounded
 except ModuleNotFoundError:  # Direct execution via `python tools/<script>.py`.
     from core_representative_benchmark import (
         DEFAULT_CACHE,
         acquire_artifact,
         extract_archive,
+    )
+    from core_trustworthiness_oracle import (
+        classified_metrics,
+        parse_bitcode_classified_selection,
     )
     from harness_support import BoundedProcessResult, run_bounded
 
@@ -256,6 +264,38 @@ def measure_mutation(
     selected_paths = parse_bitcode_selected_paths(static.stdout)
     node_id_to_selected: dict[str, bool] = {}
 
+    classified_command = run(
+        (str(bitcode), "test-impact", str(static_project), "--quiet", "--classified"),
+        cwd=REPO_ROOT,
+        **command_options,
+    )
+    classified_names = parse_bitcode_classified_selection(classified_command.stdout)
+    # classified_from_graph resolves to bare test names (n.name), same as the
+    # graph-path resolution in _selected_for_node but one segment shorter;
+    # translate the declared node ids the same way, then narrow the flooded
+    # whole-repository buckets down to this mutation's declared tests only —
+    # Click's real test suite is far larger than the three declared here.
+    node_id_by_name = {node_id.rsplit("::", 1)[-1]: node_id for node_id in
+                        (test.node_id for test in mutation.tests)}
+    declared_node_ids = set(node_id_by_name.values())
+    classified_for_declared = {
+        bucket: {node_id_by_name[name] for name in names if name in node_id_by_name}
+        for bucket, names in (
+            ("must", classified_names["must"]),
+            ("may", classified_names["may"]),
+            ("unknown", classified_names["unknown"]),
+        )
+    }
+    unclassified = declared_node_ids - (
+        classified_for_declared["must"]
+        | classified_for_declared["may"]
+        | classified_for_declared["unknown"]
+    )
+    if unclassified:
+        raise RuntimeError(
+            f"declared test(s) missing from every classified bucket: {sorted(unclassified)}"
+        )
+
     executed: dict[str, bool] = {}
     for index, test in enumerate(mutation.tests):
         project = initialize_checkout(
@@ -323,6 +363,13 @@ def measure_mutation(
         else:
             true_negatives.append(node_id)
 
+    dynamically_executed = {
+        test.node_id for test in mutation.tests if executed[test.node_id]
+    }
+    classified_for_declared["boundary_count"] = classified_names["boundary_count"]
+    classified = classified_metrics(classified_for_declared, dynamically_executed)
+    classified["executed_count"] = len(dynamically_executed)
+
     return {
         "id": mutation.id,
         "graph_path": mutation.graph_path,
@@ -336,6 +383,7 @@ def measure_mutation(
         "recall": _ratio(
             len(true_positives), len(true_positives) + len(false_negatives)
         ),
+        "classified": classified,
     }
 
 
@@ -364,6 +412,43 @@ def aggregate_metrics(results: Sequence[Mapping[str, object]]) -> Mapping[str, o
         "true_negatives": tn,
         "precision": _ratio(tp, tp + fp),
         "recall": _ratio(tp, tp + fn),
+    }
+
+
+def aggregate_classified_metrics(
+    results: Sequence[Mapping[str, object]],
+) -> Mapping[str, object]:
+    """Pool the per-mutation classified numerators/denominators, same
+    null-on-zero-denominator convention as classified_metrics itself."""
+    must_tp = must_fp = may_tp = must_or_may_tp = 0
+    must_denominator = executed_denominator = 0
+    unknown_count = boundary_count = 0
+    for result in results:
+        c = result["classified"]
+        must_tp += len(c["must_true_positives"])
+        must_fp += len(c["must_false_positives"])
+        may_tp += len(c["may_true_positives"])
+        must_or_may_tp += len(c["must_or_may_true_positives"])
+        must_denominator += len(c["must"])
+        executed_denominator += c["executed_count"]
+        unknown_count += c["unknown_count"]
+        boundary_count += c["boundary_count"]
+    return {
+        "must_true_positives": must_tp,
+        "must_false_positives": must_fp,
+        "must_precision": round(must_tp / must_denominator, 6)
+        if must_denominator
+        else None,
+        "may_true_positives": may_tp,
+        "may_only_recall": round(may_tp / executed_denominator, 6)
+        if executed_denominator
+        else None,
+        "must_or_may_true_positives": must_or_may_tp,
+        "must_or_may_recall": round(must_or_may_tp / executed_denominator, 6)
+        if executed_denominator
+        else None,
+        "unknown_count": unknown_count,
+        "boundary_count": boundary_count,
     }
 
 
@@ -420,10 +505,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
             )
     document = {
-        "schema_version": 1,
+        "schema_version": 2,
         "repository": REPOSITORY_ID,
         "mutations": results,
         "aggregate": aggregate_metrics(results),
+        "classified_aggregate": aggregate_classified_metrics(results),
     }
     if args.output:
         atomic_write_json(args.output, document)
@@ -438,6 +524,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"fp={result['false_positives']} fn={result['false_negatives']}"
             )
         print(f"aggregate: {document['aggregate']}")
+        print(f"classified_aggregate: {document['classified_aggregate']}")
     return 0
 
 

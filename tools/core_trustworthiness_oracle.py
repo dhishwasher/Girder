@@ -247,6 +247,101 @@ def assert_isolated_test_executed(
         )
 
 
+def parse_bitcode_classified_selection(output: str) -> dict[str, object]:
+    """Parse `girder test-impact --quiet --classified` JSON: test *names*
+    (not graph paths — classified_from_graph already resolves to n.name, the
+    same identifier the flat --quiet parser above matches) labeled Must/May/
+    Unknown, per docs/call-classification-policy.md."""
+    document = json.loads(output)
+    if document.get("schema_version") != 1:
+        raise RuntimeError(
+            f"unsupported classified test-impact schema_version: {document.get('schema_version')!r}"
+        )
+    return {
+        "must": set(document["must"]["names"]),
+        "may": set(document["may"]["names"]),
+        "unknown": set(document["unknown"]["names"]),
+        "truncated": (
+            document["must"]["truncated"]
+            or document["may"]["truncated"]
+            or document["unknown"]["truncated"]
+        ),
+        "boundary_count": document["boundaries"]["count"],
+    }
+
+
+def classified_metrics(
+    classified: Mapping[str, object], executed: set[str]
+) -> dict[str, object]:
+    """Must precision, May-only recall, and Must-or-May recall per the frozen
+    measurement methodology. A zero denominator is null, never a synthetic
+    1.000 — this deliberately does not reuse metrics()'s vacuous-truth
+    convention, which the frozen policy explicitly rejects for these three."""
+    must: set[str] = classified["must"]  # type: ignore[assignment]
+    may: set[str] = classified["may"]  # type: ignore[assignment]
+    unknown: set[str] = classified["unknown"]  # type: ignore[assignment]
+    must_tp = must & executed
+    must_fp = must - executed
+    may_tp = may & executed
+    must_or_may_tp = (must | may) & executed
+    return {
+        "must": sorted(must),
+        "may": sorted(may),
+        "unknown": sorted(unknown),
+        "unknown_count": len(unknown),
+        "boundary_count": classified["boundary_count"],
+        "must_true_positives": sorted(must_tp),
+        "must_false_positives": sorted(must_fp),
+        "must_precision": round(len(must_tp) / len(must), 6) if must else None,
+        "may_true_positives": sorted(may_tp),
+        "may_only_recall": (
+            round(len(may_tp) / len(executed), 6) if executed else None
+        ),
+        "must_or_may_true_positives": sorted(must_or_may_tp),
+        "must_or_may_recall": (
+            round(len(must_or_may_tp) / len(executed), 6) if executed else None
+        ),
+    }
+
+
+def aggregate_classified_metrics(
+    results: Mapping[str, Mapping[str, object]],
+) -> dict[str, object]:
+    """Pool numerators/denominators across fixtures before dividing — never
+    average per-fixture ratios. A metric is null overall only when every
+    fixture's denominator for it was zero."""
+    must_tp = must_fp = may_tp = must_or_may_tp = 0
+    must_denominator = executed_denominator = 0
+    unknown_count = boundary_count = 0
+    for result in results.values():
+        c = result["classified"]
+        must_tp += len(c["must_true_positives"])
+        must_fp += len(c["must_false_positives"])
+        may_tp += len(c["may_true_positives"])
+        must_or_may_tp += len(c["must_or_may_true_positives"])
+        must_denominator += len(c["must"])
+        executed_denominator += len(result["executed"])
+        unknown_count += c["unknown_count"]
+        boundary_count += c["boundary_count"]
+    return {
+        "must_true_positives": must_tp,
+        "must_false_positives": must_fp,
+        "must_precision": round(must_tp / must_denominator, 6)
+        if must_denominator
+        else None,
+        "may_true_positives": may_tp,
+        "may_only_recall": round(may_tp / executed_denominator, 6)
+        if executed_denominator
+        else None,
+        "must_or_may_true_positives": must_or_may_tp,
+        "must_or_may_recall": round(must_or_may_tp / executed_denominator, 6)
+        if executed_denominator
+        else None,
+        "unknown_count": unknown_count,
+        "boundary_count": boundary_count,
+    }
+
+
 def metrics(
     universe: set[str],
     selected: set[str],
@@ -373,6 +468,38 @@ def measure_fixture(
         )
     selected = {path_to_test[path] for path in selected_paths}
 
+    classified_command = run(
+        (str(bitcode), "test-impact", str(static_project), "--quiet", "--classified"),
+        cwd=REPO_ROOT,
+        **command_options,
+    )
+    if verbose:
+        print(
+            f"\n--- Bit Code {fixture.name} classified output ---\n"
+            f"{classified_command.stdout.rstrip()}"
+        )
+    classified_selection = parse_bitcode_classified_selection(classified_command.stdout)
+    if classified_selection["truncated"]:
+        # These are small, purpose-built fixtures (single file each); a
+        # truncated must/may/unknown section here would mean something
+        # unexpected leaked into scope, unlike a real repository (see
+        # core_representative_mutations.py, where truncation is routine and
+        # declared tests are narrowed out of the flooded whole-repo listing).
+        raise RuntimeError(
+            f"{fixture.name} classified selection is truncated in a corpus "
+            "fixture; the corpus is too small for this to be expected"
+        )
+    unknown_classified_names = (
+        classified_selection["must"]  # type: ignore[operator]
+        | classified_selection["may"]  # type: ignore[operator]
+        | classified_selection["unknown"]  # type: ignore[operator]
+    ) - set(fixture.tests)
+    if unknown_classified_names:
+        raise RuntimeError(
+            "Bit Code's classified selection names tests outside this fixture: "
+            f"{sorted(unknown_classified_names)}"
+        )
+
     executed: set[str] = set()
     for index, test in enumerate(fixture.tests):
         project = initialize_fixture(
@@ -395,13 +522,15 @@ def measure_fixture(
         ).splitlines():
             executed.add(test)
 
-    return metrics(
+    result = metrics(
         set(fixture.tests),
         selected,
         executed,
         reported_impacted=reported_impacted,
         reported_skipped=reported_skipped,
     )
+    result["classified"] = classified_metrics(classified_selection, executed)
+    return result
 
 
 def render_table(results: Mapping[str, Mapping[str, object]]) -> str:
@@ -517,9 +646,10 @@ def main() -> int:
     if file_sha256(bitcode) != binary_sha256:
         raise RuntimeError("the measured Bit Code binary changed during the oracle run")
     document = {
-        "schema_version": 1,
+        "schema_version": 2,
         "results": results,
         "aggregate": aggregate_metrics(results),
+        "classified_aggregate": aggregate_classified_metrics(results),
     }
 
     if not args.no_check:
@@ -538,6 +668,15 @@ def main() -> int:
             )
         if not args.no_check:
             print(f"baseline: matches {args.baseline.resolve()}")
+        ca = document["classified_aggregate"]
+        print(
+            "classified: must_precision="
+            f"{ca['must_precision']} (tp={ca['must_true_positives']}, "
+            f"fp={ca['must_false_positives']}) may_only_recall="
+            f"{ca['may_only_recall']} (tp={ca['may_true_positives']}) "
+            f"must_or_may_recall={ca['must_or_may_recall']} "
+            f"unknown_count={ca['unknown_count']} boundary_count={ca['boundary_count']}"
+        )
     return 0
 
 

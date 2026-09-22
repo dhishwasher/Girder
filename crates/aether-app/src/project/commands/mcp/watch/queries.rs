@@ -32,13 +32,20 @@ pub(super) fn execute(root: &Path, generation: &Generation, argv: &[String]) -> 
         }
         "test-impact" => {
             let classified = args[1..].iter().any(|a| a == "--classified");
+            let unbounded = args[1..].iter().any(|a| a == "--unbounded");
             let explicit: Vec<_> = args[1..]
                 .iter()
-                .filter(|a| *a != "--quiet" && *a != "--classified")
+                .filter(|a| !matches!(a.as_str(), "--quiet" | "--classified" | "--unbounded"))
                 .map(String::as_str)
                 .collect();
             return if classified {
-                test_impact::classified_from_graph(root, source, &generation.config, &explicit)
+                test_impact::classified_from_graph(
+                    root,
+                    source,
+                    &generation.config,
+                    &explicit,
+                    unbounded,
+                )
             } else {
                 test_impact::quiet_from_graph(root, source, &generation.config, &explicit)
             };
