@@ -1,0 +1,1106 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "rust-direct-same-file",
+      "language": "rust",
+      "fixture_dir": "fixtures/dispatch-corpus/rust/direct-same-file",
+      "origin": {
+        "file": "src/lib.rs",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_direct",
+          "framework_id": "test_direct",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "Rust Must: proven direct/concrete dispatch with one viable target",
+      "rationale": "test_direct calls target() directly, same file, single top-level candidate, no shadowing.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "rust-direct-cross-file",
+      "language": "rust",
+      "fixture_dir": "fixtures/dispatch-corpus/rust/direct-cross-file",
+      "origin": {
+        "file": "src/lib.rs",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_cross_file",
+          "framework_id": "test_cross_file",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "Rust Must: proven direct/concrete dispatch with one viable target",
+      "rationale": "test_cross_file calls target() directly and unambiguously; it is a single resolved call with no alternate target. True ground truth is Must. This is a KNOWN extractor limitation (crates/aether-builder/src/mapper/claims.rs proves bindings only within one file's own syntax tree, before project-wide resolve_calls runs) expected to score 'conservative' (actual Unknown) against this Must expectation, not 'unsound'.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "rust-negative-unreachable",
+      "language": "rust",
+      "fixture_dir": "fixtures/dispatch-corpus/rust/negative-unreachable",
+      "origin": {
+        "file": "src/lib.rs",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_unrelated",
+          "framework_id": "test_unrelated",
+          "expected": "excluded"
+        }
+      ],
+      "policy_row": "N/A (true negative, not a Must/May/Unknown class)",
+      "rationale": "test_unrelated never calls target(), directly or transitively. A sound classifier must not claim Must for this pair; Unknown (safe over-inclusion) scores 'conservative', Must would score 'unsound'.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "rust-dyn-trait-2-impls",
+      "language": "rust",
+      "fixture_dir": "fixtures/dispatch-corpus/rust/dyn-trait-2-impls",
+      "origin": {
+        "file": "src/lib.rs",
+        "symbol": "greet",
+        "qualifier": "English"
+      },
+      "tests": [
+        {
+          "id": "test_via_english",
+          "framework_id": "test_via_english",
+          "expected": "may"
+        },
+        {
+          "id": "test_via_french",
+          "framework_id": "test_via_french",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "Rust May: enumerated trait/inherent implementation candidates for dyn dispatch",
+      "rationale": "dispatch()'s g.greet() call is a dyn Greeter vtable call; English::greet and French::greet are both structurally viable targets regardless of which concrete type a given test actually passes at runtime (the graph has no per-call-site argument-flow analysis). Both tests are therefore May relative to the origin symbol 'greet' generically (the corpus scores the overload-set symbol, not one impl in isolation, since Rust allows multiple items sharing a trait method name).",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-cross-crate-additional-implementors-considered"
+      ]
+    },
+    {
+      "id": "rust-generic-bound-dispatch",
+      "language": "rust",
+      "fixture_dir": "fixtures/dispatch-corpus/rust/generic-bound-dispatch",
+      "origin": {
+        "file": "src/lib.rs",
+        "symbol": "speak",
+        "qualifier": "Dog"
+      },
+      "tests": [
+        {
+          "id": "test_dog",
+          "framework_id": "test_dog",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "Rust May: enumerated generic-bound dispatch candidates",
+      "rationale": "announce<S: Speaker> monomorphizes per call site, but the graph (built from unmonomorphized source) sees s.speak() as resolving to any Speaker implementor; Dog::speak and Cat::speak are both structurally viable. Genuinely May, distinct from the dyn case (static generic dispatch is knowable per-instantiation in principle, unlike a true vtable call), but this extractor makes no such distinction \u2014 both are recorded as trait-method dispatch May.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "rust-trait-default-vs-override",
+      "language": "rust",
+      "fixture_dir": "fixtures/dispatch-corpus/rust/trait-default-vs-override",
+      "origin": {
+        "file": "src/lib.rs",
+        "symbol": "describe",
+        "qualifier": "Describable"
+      },
+      "tests": [
+        {
+          "id": "test_widget_default",
+          "framework_id": "test_widget_default",
+          "expected": "may"
+        },
+        {
+          "id": "test_gadget_override",
+          "framework_id": "test_gadget_override",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "Rust May: enumerated trait/inherent implementation candidates for dyn dispatch",
+      "rationale": "render()'s d.describe() is a dyn dispatch call; the default trait method body and Gadget's override are both viable targets structurally. Neither test proves the other's variant is unreachable from the graph's point of view, so both are May, whether the concrete call uses the default body or an override.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "rust-fn-pointer-stored",
+      "language": "rust",
+      "fixture_dir": "fixtures/dispatch-corpus/rust/fn-pointer-stored",
+      "origin": {
+        "file": "src/lib.rs",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_via_pointer",
+          "framework_id": "test_via_pointer",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Rust Unknown: unresolved function pointers/closures",
+      "rationale": "run(f) invokes an opaque fn() -> i32 value; the graph cannot bound the set of functions ever assigned to such a pointer without value-flow analysis this extractor does not perform. Per policy, an unresolved function pointer is Unknown, not May with one candidate (the candidate set itself is unproven, not just its cardinality).",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "rust-macro-generated-call",
+      "language": "rust",
+      "fixture_dir": "fixtures/dispatch-corpus/rust/macro-generated-call",
+      "origin": {
+        "file": "src/lib.rs",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_via_macro",
+          "framework_id": "test_via_macro",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Rust Unknown: unexpanded macros",
+      "rationale": "run()'s body is a macro invocation (call_target!()); the extractor does not expand declarative macros to see the target() call textually inside it, so this is Unknown by the policy's explicit 'unexpanded macros' clause, even though the expansion is a simple direct call.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "rust-operator-overload-concrete",
+      "language": "rust",
+      "fixture_dir": "fixtures/dispatch-corpus/rust/operator-overload-concrete",
+      "origin": {
+        "file": "src/lib.rs",
+        "symbol": "add"
+      },
+      "tests": [
+        {
+          "id": "test_add_meters",
+          "framework_id": "test_add_meters",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "Rust Must: proven direct/concrete dispatch with one viable target",
+      "rationale": "Meters(2) + Meters(3) resolves, at the concrete type Meters, to exactly one impl Add for Meters \u2014 genuinely unambiguous (Rust has no operator overload sets the way C++ does; a concrete type has at most one Add impl). True ground truth is Must. The current extractor flags every binary_expression in a Rust file as an unconditional coverage gap ('implicit-drop-or-operator-dispatch-not-certified'), so this is expected to score 'conservative' (actual Unknown), not 'unsound' \u2014 a real, measured extractor gap, not a corpus-authoring error.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "rust-name-shadowing-parameter",
+      "language": "rust",
+      "fixture_dir": "fixtures/dispatch-corpus/rust/name-shadowing-parameter",
+      "origin": {
+        "file": "src/lib.rs",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_shadowed",
+          "framework_id": "test_shadowed",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Rust Unknown: unresolved function pointers/closures; a unique spelling match never qualifies as Must",
+      "rationale": "run's own parameter is named `target`, shadowing the top-level function; the call target() inside run's body calls the PARAMETER, not necessarily the top-level function (test_shadowed happens to pass the top-level target, but the graph must not assume that from the name alone). A same-named call inside a shadowing scope must not be certified Must from a bare name match.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "rust-call-inside-closure-body",
+      "language": "rust",
+      "fixture_dir": "fixtures/dispatch-corpus/rust/call-inside-closure-body",
+      "origin": {
+        "file": "src/lib.rs",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_via_closure",
+          "framework_id": "test_via_closure",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "Rust Must: proven direct/concrete dispatch with one viable target",
+      "rationale": "The call target(x) textually inside the closure |x| target(x) is an ordinary direct call syntactically (a call_expression whose function is the identifier 'target'); the closure being passed to .map() as a value does not make the CALL INSIDE its body dispatch-ambiguous -- only how the closure itself is invoked would be. This distinguishes 'call inside a closure' (should be Must, same as any other same-file direct call) from 'stored/invoked closure value' (fn-pointer-stored, Unknown).",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "rust-boxed-dyn-fn-closure",
+      "language": "rust",
+      "fixture_dir": "fixtures/dispatch-corpus/rust/boxed-dyn-fn-closure",
+      "origin": {
+        "file": "src/lib.rs",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_boxed_closure",
+          "framework_id": "test_boxed_closure",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Rust Unknown: unresolved function pointers/closures",
+      "rationale": "Runner::run invokes self.callback, a boxed trait-object closure value; the graph cannot bound which function(s) are ever boxed into a Runner.callback across the program without value-flow analysis. Distinct from call-inside-closure-body: here the closure/fn ITSELF is the thing being called indirectly, not a call textually inside a closure body.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "python-direct-same-file",
+      "language": "python",
+      "fixture_dir": "fixtures/dispatch-corpus/python/direct-same-file",
+      "origin": {
+        "file": "test_app.py",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_direct",
+          "framework_id": "app.py::test_direct",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "Python Must: proven binding with explicit source-snapshot/no-runtime-rebinding assumptions",
+      "rationale": "test_direct calls target() directly, same file, single top-level candidate, no shadowing, no decorators anywhere in the file. [Corpus note: the fixture file was renamed app.py -> test_app.py after the debug run found it was never marked is_test at all -- Girder's Python extractor requires the FILE itself to match pytest/unittest discovery (test*.py or *_test.py), not just the function name; this is a mechanical naming-convention fact, not a dispatch-classification judgment, so the fix is legitimate under the same rule that allowed the Go same-file fix -- see docs/dispatch-corpus-changelog.md.]",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching"
+      ]
+    },
+    {
+      "id": "python-direct-cross-file",
+      "language": "python",
+      "fixture_dir": "fixtures/dispatch-corpus/python/direct-cross-file",
+      "origin": {
+        "file": "app.py",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_cross_file",
+          "framework_id": "test_app.py::test_cross_file",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "Python Must: proven binding with explicit source-snapshot/no-runtime-rebinding assumptions",
+      "rationale": "test_cross_file imports and calls target() directly and unambiguously. True ground truth is Must. Known extractor limitation (same-file-only proof) expected to score 'conservative' (actual Unknown), not 'unsound'.",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching"
+      ]
+    },
+    {
+      "id": "python-negative-unreachable",
+      "language": "python",
+      "fixture_dir": "fixtures/dispatch-corpus/python/negative-unreachable",
+      "origin": {
+        "file": "test_app.py",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_unrelated",
+          "framework_id": "app.py::test_unrelated",
+          "expected": "excluded"
+        }
+      ],
+      "policy_row": "N/A (true negative)",
+      "rationale": "test_unrelated never calls target(), directly or transitively. [Corpus note: the fixture file was renamed app.py -> test_app.py after the debug run found it was never marked is_test at all -- Girder's Python extractor requires the FILE itself to match pytest/unittest discovery (test*.py or *_test.py), not just the function name; this is a mechanical naming-convention fact, not a dispatch-classification judgment, so the fix is legitimate under the same rule that allowed the Go same-file fix -- see docs/dispatch-corpus-changelog.md.]",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching"
+      ]
+    },
+    {
+      "id": "python-same-class-method-no-subclass",
+      "language": "python",
+      "fixture_dir": "fixtures/dispatch-corpus/python/same-class-method-no-subclass",
+      "origin": {
+        "file": "test_app.py",
+        "symbol": "render"
+      },
+      "tests": [
+        {
+          "id": "test_render",
+          "framework_id": "app.py::test_render",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "Python Must: proven binding with explicit source-snapshot/no-runtime-rebinding assumptions",
+      "rationale": "Widget has exactly one render method in the entire indexed source, no subclasses exist anywhere in the snapshot to override it, and w's static construction (Widget()) is unambiguous. True ground truth is Must. Methods are structurally excluded from this extractor's proof rule regardless (crates/aether-builder/src/mapper/claims.rs only walks top-level declarations), so this is expected to score 'conservative' (actual Unknown). [Corpus note: the fixture file was renamed app.py -> test_app.py after the debug run found it was never marked is_test at all -- Girder's Python extractor requires the FILE itself to match pytest/unittest discovery (test*.py or *_test.py), not just the function name; this is a mechanical naming-convention fact, not a dispatch-classification judgment, so the fix is legitimate under the same rule that allowed the Go same-file fix -- see docs/dispatch-corpus-changelog.md.]",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching"
+      ]
+    },
+    {
+      "id": "python-override-via-subclass",
+      "language": "python",
+      "fixture_dir": "fixtures/dispatch-corpus/python/override-via-subclass",
+      "origin": {
+        "file": "test_app.py",
+        "symbol": "area",
+        "qualifier": "Shape"
+      },
+      "tests": [
+        {
+          "id": "test_square",
+          "framework_id": "app.py::test_square",
+          "expected": "may"
+        },
+        {
+          "id": "test_base_shape",
+          "framework_id": "app.py::test_base_shape",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "Python May: proven possible inherited/overridden methods, super/MRO targets",
+      "rationale": "render(shape) calls shape.area() on a parameter with no type constraint; both Shape.area and Square.area (which overrides it) are structurally viable targets from the graph's point of view, regardless of which concrete instance a given test constructs. [Corpus note: the fixture file was renamed app.py -> test_app.py after the debug run found it was never marked is_test at all -- Girder's Python extractor requires the FILE itself to match pytest/unittest discovery (test*.py or *_test.py), not just the function name; this is a mechanical naming-convention fact, not a dispatch-classification judgment, so the fix is legitimate under the same rule that allowed the Go same-file fix -- see docs/dispatch-corpus-changelog.md.]",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching"
+      ]
+    },
+    {
+      "id": "python-super-mro-diamond",
+      "language": "python",
+      "fixture_dir": "fixtures/dispatch-corpus/python/super-mro-diamond",
+      "origin": {
+        "file": "test_app.py",
+        "symbol": "greet",
+        "qualifier": "Base"
+      },
+      "tests": [
+        {
+          "id": "test_diamond_mro",
+          "framework_id": "app.py::test_diamond_mro",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "Python May: proven possible inherited/overridden methods, super/MRO targets",
+      "rationale": "Left.greet's super().greet() resolves via Diamond's C3 MRO (Left -> Right -> Base), which depends on the full class hierarchy at the call site's use, not on Left alone; Right.greet and Base.greet are both structurally viable targets for that super() call without full MRO resolution, which this extractor does not perform. [Corpus note: the fixture file was renamed app.py -> test_app.py after the debug run found it was never marked is_test at all -- Girder's Python extractor requires the FILE itself to match pytest/unittest discovery (test*.py or *_test.py), not just the function name; this is a mechanical naming-convention fact, not a dispatch-classification judgment, so the fix is legitimate under the same rule that allowed the Go same-file fix -- see docs/dispatch-corpus-changelog.md.]",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching"
+      ]
+    },
+    {
+      "id": "python-getattr-dynamic",
+      "language": "python",
+      "fixture_dir": "fixtures/dispatch-corpus/python/getattr-dynamic",
+      "origin": {
+        "file": "test_app.py",
+        "symbol": "add"
+      },
+      "tests": [
+        {
+          "id": "test_getattr",
+          "framework_id": "app.py::test_getattr",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Python Unknown: getattr/reflection",
+      "rationale": "dispatch() resolves its call target via getattr(obj, name) with a runtime string; the graph cannot bound this to Ops.add without string-value analysis, which this extractor explicitly does not perform (classified 'python-reflection'). [Corpus note: the fixture file was renamed app.py -> test_app.py after the debug run found it was never marked is_test at all -- Girder's Python extractor requires the FILE itself to match pytest/unittest discovery (test*.py or *_test.py), not just the function name; this is a mechanical naming-convention fact, not a dispatch-classification judgment, so the fix is legitimate under the same rule that allowed the Go same-file fix -- see docs/dispatch-corpus-changelog.md.]",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching"
+      ]
+    },
+    {
+      "id": "python-unconstrained-duck-typing",
+      "language": "python",
+      "fixture_dir": "fixtures/dispatch-corpus/python/unconstrained-duck-typing",
+      "origin": {
+        "file": "test_app.py",
+        "symbol": "quack",
+        "qualifier": "Duck"
+      },
+      "tests": [
+        {
+          "id": "test_duck",
+          "framework_id": "app.py::test_duck",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Python Unknown: unconstrained duck typing",
+      "rationale": "make_it_quack(quacker) has no type annotation or other constraint bounding quacker's type; any class in the whole indexed source defining quack() (Duck, Person, or any future addition) is a structurally viable target, an unbounded candidate set per policy's 'unconstrained duck typing' Unknown clause, not a boundable May set. [Corpus note: the fixture file was renamed app.py -> test_app.py after the debug run found it was never marked is_test at all -- Girder's Python extractor requires the FILE itself to match pytest/unittest discovery (test*.py or *_test.py), not just the function name; this is a mechanical naming-convention fact, not a dispatch-classification judgment, so the fix is legitimate under the same rule that allowed the Go same-file fix -- see docs/dispatch-corpus-changelog.md.]",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching"
+      ]
+    },
+    {
+      "id": "python-decorator-on-call-site",
+      "language": "python",
+      "fixture_dir": "fixtures/dispatch-corpus/python/decorator-on-call-site",
+      "origin": {
+        "file": "test_app.py",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_decorated",
+          "framework_id": "app.py::test_decorated",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Python Unknown: decorators with unproven effects",
+      "rationale": "target is wrapped by @log; the call test_decorated -> target() actually invokes wrapper(), which the decorator installed in target's place, not target's own body directly. The decorator's effect on the call binding is unproven without evaluating functools.wraps and the wrapper's forwarding behavior, which this extractor does not do. [Corpus note: the fixture file was renamed app.py -> test_app.py after the debug run found it was never marked is_test at all -- Girder's Python extractor requires the FILE itself to match pytest/unittest discovery (test*.py or *_test.py), not just the function name; this is a mechanical naming-convention fact, not a dispatch-classification judgment, so the fix is legitimate under the same rule that allowed the Go same-file fix -- see docs/dispatch-corpus-changelog.md.]",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching"
+      ]
+    },
+    {
+      "id": "python-dunder-call",
+      "language": "python",
+      "fixture_dir": "fixtures/dispatch-corpus/python/dunder-call",
+      "origin": {
+        "file": "test_app.py",
+        "symbol": "__call__"
+      },
+      "tests": [
+        {
+          "id": "test_callable_instance",
+          "framework_id": "app.py::test_callable_instance",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Python Unknown: unresolved dispatch (not a syntactic call to a named function)",
+      "rationale": "add(2, 3) is a call on a plain identifier bound to an Adder instance, not a call_expression whose function is a resolvable name in this extractor's proof rule (it only proves target() style calls to identifiers matching a known top-level function, not dunder-call dispatch on an arbitrary value). Even a hypothetical extractor that resolved `add`'s static type could only do so with value-flow analysis this one does not have. [Corpus note: the fixture file was renamed app.py -> test_app.py after the debug run found it was never marked is_test at all -- Girder's Python extractor requires the FILE itself to match pytest/unittest discovery (test*.py or *_test.py), not just the function name; this is a mechanical naming-convention fact, not a dispatch-classification judgment, so the fix is legitimate under the same rule that allowed the Go same-file fix -- see docs/dispatch-corpus-changelog.md.]",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching"
+      ]
+    },
+    {
+      "id": "python-decorator-elsewhere-in-file",
+      "language": "python",
+      "fixture_dir": "fixtures/dispatch-corpus/python/decorator-elsewhere-in-file",
+      "origin": {
+        "file": "test_app.py",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_direct",
+          "framework_id": "app.py::test_direct",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "Python Must: proven binding with explicit source-snapshot/no-runtime-rebinding assumptions",
+      "rationale": "test_direct's call to target() is itself a plain, unambiguous direct call with no decorator anywhere near it. True ground truth is Must. But this extractor's transformed_scope check (crates/aether-builder/src/mapper/claims.rs) disqualifies Must proofs for an ENTIRE FILE if any decorator appears anywhere in it \u2014 here, @functools.lru_cache on the unrelated unrelated_cached function, far from target()/test_direct. Expected to score 'conservative' (actual Unknown) due to this whole-file blast radius, a real measured extractor gap. [Corpus note: the fixture file was renamed app.py -> test_app.py after the debug run found it was never marked is_test at all -- Girder's Python extractor requires the FILE itself to match pytest/unittest discovery (test*.py or *_test.py), not just the function name; this is a mechanical naming-convention fact, not a dispatch-classification judgment, so the fix is legitimate under the same rule that allowed the Go same-file fix -- see docs/dispatch-corpus-changelog.md.]",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching"
+      ]
+    },
+    {
+      "id": "python-name-shadowing-parameter",
+      "language": "python",
+      "fixture_dir": "fixtures/dispatch-corpus/python/name-shadowing-parameter",
+      "origin": {
+        "file": "test_app.py",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_shadowed",
+          "framework_id": "app.py::test_shadowed",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Python Unknown: a unique spelling match never qualifies as Must",
+      "rationale": "run's own parameter is named target, shadowing the module-level function inside run's body; the call target() there calls the PARAMETER, not necessarily the top-level function. Must not be certified Must from a bare name match. [Corpus note: the fixture file was renamed app.py -> test_app.py after the debug run found it was never marked is_test at all -- Girder's Python extractor requires the FILE itself to match pytest/unittest discovery (test*.py or *_test.py), not just the function name; this is a mechanical naming-convention fact, not a dispatch-classification judgment, so the fix is legitimate under the same rule that allowed the Go same-file fix -- see docs/dispatch-corpus-changelog.md.]",
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching"
+      ]
+    },
+    {
+      "id": "typescript-direct-same-file",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/direct-same-file",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_direct",
+          "framework_id": "test_direct",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "TypeScript Must: proven lexical binding/concrete implementation without viable structural/overload alternatives",
+      "rationale": "test_direct calls target() directly, same file, single exported candidate, no shadowing.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "typescript-direct-cross-file",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/direct-cross-file",
+      "origin": {
+        "file": "app.ts",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_cross_file",
+          "framework_id": "test_cross_file",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "TypeScript Must: proven lexical binding/concrete implementation without viable structural/overload alternatives",
+      "rationale": "test_cross_file imports and calls target() directly and unambiguously. True ground truth is Must. Known extractor limitation (same-file-only proof) expected to score 'conservative' (actual Unknown).",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "typescript-negative-unreachable",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/negative-unreachable",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_unrelated",
+          "framework_id": "test_unrelated",
+          "expected": "excluded"
+        }
+      ],
+      "policy_row": "N/A (true negative)",
+      "rationale": "test_unrelated never calls target(), directly or transitively.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "typescript-interface-implementors-2",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/interface-implementors-2",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "greet",
+        "qualifier": "English"
+      },
+      "tests": [
+        {
+          "id": "test_via_english",
+          "framework_id": "test_via_english",
+          "expected": "may"
+        },
+        {
+          "id": "test_via_french",
+          "framework_id": "test_via_french",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "dispatch(g: Greeter) calls g.greet() on an interface-typed parameter; English.greet and French.greet are both structurally viable targets regardless of which concrete class a given test constructs.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "typescript-structural-object-literal",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/structural-object-literal",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name"
+      },
+      "tests": [
+        {
+          "id": "test_alice",
+          "framework_id": "test_alice",
+          "expected": "may"
+        },
+        {
+          "id": "test_bob",
+          "framework_id": "test_bob",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "announce(n: Named) is satisfied structurally by any object literal shaped like Named; alice's and bob's name() methods are both anonymous arrow functions with no named-symbol identity distinguishing them from the call site's point of view \u2014 structurally ambiguous, May. [Corpus note: an earlier draft of this case, before any scoring run, used real class methods instead of object-literal-valued arrow functions, but that was reverted per the rule against tuning a case to what the product can see -- see docs/dispatch-corpus-changelog.md. The class-based variant is kept as its own separate case, typescript-structural-class-no-implements.]",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "typescript-union-type-dispatch",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/union-type-dispatch",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "area",
+        "qualifier": "Circle"
+      },
+      "tests": [
+        {
+          "id": "test_circle",
+          "framework_id": "test_circle",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "measure(shape: Circle | Square) calls shape.area() on a union-typed parameter; Circle.area and Square.area are both structurally viable targets for that call site regardless of which member of the union a given test actually passes.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "typescript-class-inheritance-override",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/class-inheritance-override",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "area",
+        "qualifier": "Shape"
+      },
+      "tests": [
+        {
+          "id": "test_square",
+          "framework_id": "test_square",
+          "expected": "may"
+        },
+        {
+          "id": "test_base_shape",
+          "framework_id": "test_base_shape",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "render(shape: Shape) calls shape.area() on a base-class-typed parameter; Shape.area and Square.area (its override) are both structurally viable targets regardless of which concrete instance a given test constructs.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "typescript-any-receiver",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/any-receiver",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "add"
+      },
+      "tests": [
+        {
+          "id": "test_any",
+          "framework_id": "test_any",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "TypeScript Unknown: any/unknown receivers",
+      "rationale": "run(obj: any) calls obj.add(2, 3) on an any-typed receiver; the type system (and this extractor) has no bound on which class's add(), if any, this resolves to.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "typescript-stored-callback",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/stored-callback",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_via_callback",
+          "framework_id": "test_via_callback",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "TypeScript Unknown: unresolved declarations/generated/runtime code (unbounded callback value)",
+      "rationale": "run(callback) invokes an opaque function value; the graph cannot bound the set of functions ever assigned to such a callback parameter without value-flow analysis this extractor does not perform.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "typescript-dynamic-property-access",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/dynamic-property-access",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "add"
+      },
+      "tests": [
+        {
+          "id": "test_dynamic_key",
+          "framework_id": "test_dynamic_key",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "TypeScript Unknown: computed properties",
+      "rationale": "dispatch resolves its call target via (obj as any)[key](...), a computed member access with a runtime string key; the graph cannot bound this to Ops.add without string-value analysis.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "typescript-decorator-elsewhere-in-file",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/decorator-elsewhere-in-file",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_direct",
+          "framework_id": "test_direct",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "TypeScript Must: proven lexical binding/concrete implementation without viable structural/overload alternatives",
+      "rationale": "test_direct's call to target() is itself a plain, unambiguous direct call. True ground truth is Must. But this extractor's transformed_scope check disqualifies Must proofs for an ENTIRE FILE if any decorator appears anywhere in it (the decorator/decorated_definition check is not language-gated) \u2014 here, @logged on the unrelated Unrelated.method, far from target()/test_direct. Expected to score 'conservative' (actual Unknown) due to this whole-file blast radius, the same class of gap measured for Rust attributes and Python decorators.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "typescript-name-shadowing-parameter",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/name-shadowing-parameter",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "target"
+      },
+      "tests": [
+        {
+          "id": "test_shadowed",
+          "framework_id": "test_shadowed",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "TypeScript Unknown: a unique spelling match never qualifies as Must",
+      "rationale": "run's own parameter is named target, shadowing the module-level function inside run's body; the call target() there calls the PARAMETER, not necessarily the top-level function.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "go-direct-same-file",
+      "language": "go",
+      "fixture_dir": "fixtures/dispatch-corpus/go/direct-same-file",
+      "origin": {
+        "file": "app_test.go",
+        "symbol": "Target"
+      },
+      "tests": [
+        {
+          "id": "TestDirect",
+          "framework_id": "TestDirect",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "Go Must: proven direct function or concrete method",
+      "rationale": "TestDirect calls Target() directly, same file (app_test.go), single top-level candidate, no shadowing. [Corpus note: an earlier draft split Target into a separate app.go, which is Go's own cross-file convention and made this indistinguishable from go-direct-cross-file; moved into app_test.go so this case actually tests the same-file case -- see docs/dispatch-corpus-changelog.md.]",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "go-direct-cross-file",
+      "language": "go",
+      "fixture_dir": "fixtures/dispatch-corpus/go/direct-cross-file",
+      "origin": {
+        "file": "app.go",
+        "symbol": "Target"
+      },
+      "tests": [
+        {
+          "id": "TestCrossFile",
+          "framework_id": "TestCrossFile",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "Go Must: proven direct function or concrete method",
+      "rationale": "TestCrossFile calls Target() directly and unambiguously, from a separate file in the same package. True ground truth is Must. Known extractor limitation (same-file-only proof, since annotate() proves bindings per file before any cross-file resolution) expected to score 'conservative' (actual Unknown), not 'unsound'.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "go-negative-unreachable",
+      "language": "go",
+      "fixture_dir": "fixtures/dispatch-corpus/go/negative-unreachable",
+      "origin": {
+        "file": "app.go",
+        "symbol": "Target"
+      },
+      "tests": [
+        {
+          "id": "TestUnrelated",
+          "framework_id": "TestUnrelated",
+          "expected": "excluded"
+        }
+      ],
+      "policy_row": "N/A (true negative)",
+      "rationale": "TestUnrelated never calls Target(), directly or transitively.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "go-interface-2-impls",
+      "language": "go",
+      "fixture_dir": "fixtures/dispatch-corpus/go/interface-2-impls",
+      "origin": {
+        "file": "app.go",
+        "symbol": "Greet",
+        "qualifier": "English"
+      },
+      "tests": [
+        {
+          "id": "TestViaEnglish",
+          "framework_id": "TestViaEnglish",
+          "expected": "may"
+        },
+        {
+          "id": "TestViaFrench",
+          "framework_id": "TestViaFrench",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "Go May: enumerated interface implementors and method sets",
+      "rationale": "Dispatch(g Greeter) calls g.Greet() on an interface-typed parameter; English.Greet and French.Greet are both structurally viable targets regardless of which concrete type a given test constructs.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "go-embedding-promotion",
+      "language": "go",
+      "fixture_dir": "fixtures/dispatch-corpus/go/embedding-promotion",
+      "origin": {
+        "file": "app.go",
+        "symbol": "Describe",
+        "qualifier": "Base"
+      },
+      "tests": [
+        {
+          "id": "TestPlainPromoted",
+          "framework_id": "TestPlainPromoted",
+          "expected": "may"
+        },
+        {
+          "id": "TestOverridden",
+          "framework_id": "TestOverridden",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "Go May: enumerated interface implementors and method sets",
+      "rationale": "Render(d Describer) calls d.Describe(); Plain promotes Base.Describe unchanged while Overriding shadows it with its own Describe \u2014 both are structurally viable Describe implementations satisfying the Describer interface at this call site.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "go-method-value",
+      "language": "go",
+      "fixture_dir": "fixtures/dispatch-corpus/go/method-value",
+      "origin": {
+        "file": "app.go",
+        "symbol": "Add"
+      },
+      "tests": [
+        {
+          "id": "TestMethodValue",
+          "framework_id": "TestMethodValue",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Go Unknown: unresolved function values",
+      "rationale": "a.Add is a bound method VALUE stored in f and invoked indirectly through Run's opaque func(int) int parameter; the graph cannot bind Run's call to Adder.Add without value-flow analysis this extractor does not perform.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "go-function-variable",
+      "language": "go",
+      "fixture_dir": "fixtures/dispatch-corpus/go/function-variable",
+      "origin": {
+        "file": "app.go",
+        "symbol": "Target"
+      },
+      "tests": [
+        {
+          "id": "TestFunctionVariable",
+          "framework_id": "TestFunctionVariable",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Go Unknown: unresolved function values",
+      "rationale": "Run(f) invokes an opaque func() int value; the graph cannot bound the set of functions ever assigned to such a variable without value-flow analysis.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "go-reflect-based-call",
+      "language": "go",
+      "fixture_dir": "fixtures/dispatch-corpus/go/reflect-based-call",
+      "origin": {
+        "file": "app.go",
+        "symbol": "Add"
+      },
+      "tests": [
+        {
+          "id": "TestReflectDispatch",
+          "framework_id": "TestReflectDispatch",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Go Unknown: reflect",
+      "rationale": "Dispatch resolves its call target via reflect.ValueOf(obj).MethodByName(name), a runtime string lookup; the graph cannot bound this to Ops.Add without string-value analysis, which this extractor explicitly classifies Unknown ('go-reflection-or-ffi').",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "go-interface-implicit-satisfaction",
+      "language": "go",
+      "fixture_dir": "fixtures/dispatch-corpus/go/interface-implicit-satisfaction",
+      "origin": {
+        "file": "app.go",
+        "symbol": "String",
+        "qualifier": "Meters"
+      },
+      "tests": [
+        {
+          "id": "TestMeters",
+          "framework_id": "TestMeters",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "Go May: enumerated interface implementors and method sets",
+      "rationale": "Meters and Feet both implicitly satisfy Stringer (Go has no 'implements' declaration); Format(s Stringer) calls s.String(), which Meters.String and Feet.String are both structurally viable targets for, regardless of which concrete type a given test constructs.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "go-closure-captures-direct-call",
+      "language": "go",
+      "fixture_dir": "fixtures/dispatch-corpus/go/closure-captures-direct-call",
+      "origin": {
+        "file": "app.go",
+        "symbol": "Target"
+      },
+      "tests": [
+        {
+          "id": "TestViaClosure",
+          "framework_id": "TestViaClosure",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "Go Must: proven direct function or concrete method",
+      "rationale": "The call Target(x) textually inside the closure literal is an ordinary direct call; the closure being assigned to a local variable and invoked in a loop does not make the CALL INSIDE its body dispatch-ambiguous, only how the closure itself is stored/invoked would be.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "go-name-shadowing-parameter",
+      "language": "go",
+      "fixture_dir": "fixtures/dispatch-corpus/go/name-shadowing-parameter",
+      "origin": {
+        "file": "app.go",
+        "symbol": "Target"
+      },
+      "tests": [
+        {
+          "id": "TestShadowed",
+          "framework_id": "TestShadowed",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "Go Unknown: a unique spelling match never qualifies as Must",
+      "rationale": "Run's own parameter is named target (lowercase, but the same identifier concept), shadowing the top-level Target inside run's body via the parameter; the call target() there calls the PARAMETER value, not necessarily the top-level function bound to it at any one call site.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "go-generic-function-type-param",
+      "language": "go",
+      "fixture_dir": "fixtures/dispatch-corpus/go/generic-function-type-param",
+      "origin": {
+        "file": "app.go",
+        "symbol": "Speak",
+        "qualifier": "Dog"
+      },
+      "tests": [
+        {
+          "id": "TestAnnounceDog",
+          "framework_id": "TestAnnounceDog",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "Go May: enumerated interface implementors and method sets (generic type-bound dispatch)",
+      "rationale": "Announce[S Speaker] instantiates per call site, but the graph (built from unmonomorphized source) sees s.Speak() as resolving to any Speaker implementor; Dog.Speak and Cat.Speak are both structurally viable targets from the graph's point of view.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "typescript-structural-class-no-implements",
+      "language": "typescript",
+      "fixture_dir": "fixtures/dispatch-corpus/typescript/structural-class-no-implements",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "Alice"
+      },
+      "tests": [
+        {
+          "id": "test_alice",
+          "framework_id": "test_alice",
+          "expected": "may"
+        },
+        {
+          "id": "test_bob",
+          "framework_id": "test_bob",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "Added after the initial debug scoring run (see docs/dispatch-corpus-changelog.md), as a class-based companion to structural-object-literal once that case was found unresolvable (Girder does not index object-literal-valued arrow function properties as callable nodes). announce(n: Named) calls n.name() on an interface-typed parameter; Alice and Bob satisfy Named structurally (no 'implements Named' declaration) via ordinary class methods, which the extractor DOES index. Alice.name and Bob.name are both structurally viable targets regardless of which concrete class a given test constructs.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    }
+  ]
+}

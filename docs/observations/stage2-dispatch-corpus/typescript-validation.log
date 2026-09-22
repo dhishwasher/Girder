@@ -1,0 +1,266 @@
+=== any-receiver ===
+TAP version 13
+# Subtest: test_any
+ok 1 - test_any
+  ---
+  duration_ms: 4.695418
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 325.540406
+=== class-inheritance-override ===
+TAP version 13
+# Subtest: test_square
+ok 1 - test_square
+  ---
+  duration_ms: 6.11847
+  type: 'test'
+  ...
+# Subtest: test_base_shape
+ok 2 - test_base_shape
+  ---
+  duration_ms: 0.501762
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 384.054973
+=== decorator-elsewhere-in-file ===
+TAP version 13
+# file:///home/corymaynard370/Bit-code/fixtures/dispatch-corpus/typescript/decorator-elsewhere-in-file/app.test.ts:17
+#   @logged
+#   ^
+# SyntaxError: Invalid or unexpected token
+#     at compileSourceTextModule (node:internal/modules/esm/utils:346:16)
+#     at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:110:18)
+#     at ModuleLoader.<anonymous> (node:internal/modules/esm/translators:657:10)
+#     at \#translate (node:internal/modules/esm/loader:559:20)
+#     at afterLoad (node:internal/modules/esm/loader:612:29)
+#     at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:617:12)
+#     at \#createModuleJob (node:internal/modules/esm/loader:640:36)
+#     at \#getJobFromResolveResult (node:internal/modules/esm/loader:353:34)
+#     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:321:41)
+#     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:680:25)
+# Node.js v22.23.1
+# Subtest: app.test.ts
+not ok 1 - app.test.ts
+  ---
+  duration_ms: 207.680071
+  type: 'test'
+  location: '/home/corymaynard370/Bit-code/fixtures/dispatch-corpus/typescript/decorator-elsewhere-in-file/app.test.ts:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 227.195181
+=== direct-cross-file ===
+TAP version 13
+# Subtest: test_cross_file
+ok 1 - test_cross_file
+  ---
+  duration_ms: 2.049009
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 290.081148
+=== direct-same-file ===
+TAP version 13
+# Subtest: test_direct
+ok 1 - test_direct
+  ---
+  duration_ms: 5.186574
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 278.560015
+=== dynamic-property-access ===
+TAP version 13
+# Subtest: test_dynamic_key
+ok 1 - test_dynamic_key
+  ---
+  duration_ms: 6.243728
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 286.483617
+=== interface-implementors-2 ===
+TAP version 13
+# Subtest: test_via_english
+ok 1 - test_via_english
+  ---
+  duration_ms: 6.137637
+  type: 'test'
+  ...
+# Subtest: test_via_french
+ok 2 - test_via_french
+  ---
+  duration_ms: 0.63127
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 300.761645
+=== name-shadowing-parameter ===
+TAP version 13
+# Subtest: test_shadowed
+ok 1 - test_shadowed
+  ---
+  duration_ms: 4.38567
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 266.019756
+=== negative-unreachable ===
+TAP version 13
+# Subtest: test_unrelated
+ok 1 - test_unrelated
+  ---
+  duration_ms: 4.268241
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 294.91459
+=== stored-callback ===
+TAP version 13
+# Subtest: test_via_callback
+ok 1 - test_via_callback
+  ---
+  duration_ms: 4.315345
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 286.21608
+=== structural-class-no-implements ===
+TAP version 13
+# Subtest: test_alice
+ok 1 - test_alice
+  ---
+  duration_ms: 4.703606
+  type: 'test'
+  ...
+# Subtest: test_bob
+ok 2 - test_bob
+  ---
+  duration_ms: 0.482193
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 287.79117
+=== structural-object-literal ===
+TAP version 13
+# Subtest: test_alice
+ok 1 - test_alice
+  ---
+  duration_ms: 6.100337
+  type: 'test'
+  ...
+# Subtest: test_bob
+ok 2 - test_bob
+  ---
+  duration_ms: 0.464883
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 295.317063
+=== union-type-dispatch ===
+TAP version 13
+# Subtest: test_circle
+ok 1 - test_circle
+  ---
+  duration_ms: 4.566775
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 278.832066

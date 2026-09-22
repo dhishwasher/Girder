@@ -1,0 +1,6 @@
+[package]
+name = "boxed-dyn-fn-closure"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
