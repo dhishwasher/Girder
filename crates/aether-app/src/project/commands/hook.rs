@@ -12,7 +12,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Mutex};
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 const MAX_INPUT_BYTES: usize = 64 * 1024;
 const COMPUTATION_TIMEOUT: Duration = Duration::from_millis(20);
@@ -22,6 +22,9 @@ const MAX_REACHED: usize = 32;
 const MAX_UNCOVERED: usize = 16;
 const IMPACT_CACHE_HEADER: &[u8] = b"GIRDER_HOOK_IMPACT_V2\n";
 const ADVISORY: &str = "Girder: consider `girder context . --nodes <node::path> --json --source-only` before this whole-file read.";
+const HOOK_LOG_ENV: &str = "GIRDER_HOOK_LOG";
+const HOOK_LOG_PATH: &str = ".girder/hook-log.jsonl";
+const LOG_WAIT_TIMEOUT: Duration = Duration::from_millis(200);
 
 static PANIC_HOOK_LOCK: Mutex<()> = Mutex::new(());
 
@@ -40,9 +43,33 @@ pub fn hook(args: &[String]) -> std::io::Result<()> {
     {
         return hook_observation();
     }
+    let logging_enabled = std::env::var_os(HOOK_LOG_ENV).is_some();
     let (sender, receiver) = mpsc::sync_channel(1);
+    let (log_sender, log_receiver) = mpsc::sync_channel::<(Option<PathBuf>, Vec<HookLogEntry>)>(1);
     let _ = std::thread::Builder::new().spawn(move || {
-        let _ = sender.send(catch_silently(hook_output).flatten());
+        let started = Instant::now();
+        let combined = catch_silently(|| {
+            let payload = read_payload();
+            let output = payload.as_ref().and_then(compute_hook_output);
+            let (log_cwd, log_entries) = if logging_enabled {
+                match &payload {
+                    Some(value) => (
+                        value.as_object().and_then(hook_cwd),
+                        build_log_entries(value, started.elapsed()),
+                    ),
+                    None => (None, Vec::new()),
+                }
+            } else {
+                (None, Vec::new())
+            };
+            Some((output, log_cwd, log_entries))
+        })
+        .flatten();
+        let (output, log_cwd, log_entries) = combined.unwrap_or((None, None, Vec::new()));
+        let _ = sender.send(output);
+        if logging_enabled {
+            let _ = log_sender.send((log_cwd, log_entries));
+        }
     });
     if let Ok(Some(output)) = receiver.recv_timeout(COMPUTATION_TIMEOUT) {
         if !output.stdout.is_empty() {
@@ -54,6 +81,16 @@ pub fn hook(args: &[String]) -> std::io::Result<()> {
             let mut stderr = std::io::stderr().lock();
             let _ = stderr.write_all(&output.stderr);
             let _ = stderr.flush();
+        }
+    }
+    // Deliberately after the primary response is already written: this wait
+    // (and the file write it guards) must never affect the timing the caller
+    // observes for stdout/stderr, only add best-effort work once that's done.
+    if logging_enabled {
+        if let Ok((Some(cwd), entries)) = log_receiver.recv_timeout(LOG_WAIT_TIMEOUT) {
+            if !entries.is_empty() {
+                append_hook_log(&cwd, &entries);
+            }
         }
     }
     Ok(())
@@ -92,9 +129,8 @@ fn catch_silently<T>(work: impl FnOnce() -> Option<T>) -> Option<Option<T>> {
     result
 }
 
-fn hook_output() -> Option<HookOutput> {
-    let payload = read_payload()?;
-    if let Some(response) = advisory_response_for_payload(&payload) {
+fn compute_hook_output(payload: &Value) -> Option<HookOutput> {
+    if let Some(response) = advisory_response_for_payload(payload) {
         let mut stdout = Vec::new();
         serde_json::to_writer(&mut stdout, &response).ok()?;
         stdout.push(b'\n');
@@ -103,7 +139,7 @@ fn hook_output() -> Option<HookOutput> {
             stderr: Vec::new(),
         });
     }
-    let report = post_edit_report_for_payload(&payload)?;
+    let report = post_edit_report_for_payload(payload)?;
     Some(HookOutput {
         stdout: Vec::new(),
         stderr: report.into_bytes(),
@@ -832,6 +868,220 @@ fn ready_whole_file_read(cwd: &Path, file_path: &str) -> bool {
         return false;
     }
     root.join("project.aether").is_file()
+}
+
+/// One opt-in diagnostic line per `girder hook` invocation. Never carries
+/// source content — only the requested path and outcome booleans/reason.
+#[derive(Debug, Clone, serde::Serialize)]
+struct HookLogEntry {
+    timestamp: u64,
+    event: &'static str,
+    file_path: String,
+    snapshot_available: bool,
+    advice_emitted: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reason: Option<&'static str>,
+}
+
+/// Mirrors `compute_hook_output`'s own dispatch order (try the read advisory
+/// path, fall back to the edit path) rather than switching on
+/// `hook_event_name` directly: `eligible_read_request` already tolerates a
+/// missing event name, so a strict top-level match here would silently drop
+/// entries `compute_hook_output` itself would have answered.
+fn build_log_entries(payload: &Value, duration: Duration) -> Vec<HookLogEntry> {
+    let read_entries = log_read_invocation(payload, duration);
+    if !read_entries.is_empty() {
+        return read_entries;
+    }
+    log_edit_invocation(payload, duration)
+}
+
+fn log_read_invocation(payload: &Value, duration: Duration) -> Vec<HookLogEntry> {
+    let Some(object) = payload.as_object() else {
+        return Vec::new();
+    };
+    let Some(tool_name) = object.get("tool_name").and_then(Value::as_str) else {
+        return Vec::new();
+    };
+    if !is_whole_file_read(tool_name) {
+        return Vec::new();
+    }
+    let Some(tool_input) = object.get("tool_input").and_then(Value::as_object) else {
+        return Vec::new();
+    };
+    let Some(file_path) = tool_input
+        .get("file_path")
+        .and_then(Value::as_str)
+        .or_else(|| tool_input.get("path").and_then(Value::as_str))
+    else {
+        return Vec::new();
+    };
+    let Some(cwd) = hook_cwd(object) else {
+        return Vec::new();
+    };
+
+    let bounded = ["offset", "limit", "start_line", "end_line"]
+        .iter()
+        .any(|key| tool_input.contains_key(*key));
+    let timed_out = duration >= COMPUTATION_TIMEOUT;
+    let (eligible_path, snapshot_available) = read_eligibility_snapshot(&cwd, file_path);
+    let advice_emitted = !timed_out && !bounded && eligible_path && snapshot_available;
+    let reason = if advice_emitted {
+        None
+    } else if timed_out {
+        Some("timeout")
+    } else if bounded || !eligible_path {
+        Some("ineligible_path")
+    } else {
+        Some("no_snapshot")
+    };
+
+    vec![HookLogEntry {
+        timestamp: unix_timestamp(),
+        event: "read",
+        file_path: file_path.to_owned(),
+        snapshot_available,
+        advice_emitted,
+        reason,
+    }]
+}
+
+fn log_edit_invocation(payload: &Value, duration: Duration) -> Vec<HookLogEntry> {
+    let Some(object) = payload.as_object() else {
+        return Vec::new();
+    };
+    let Some(tool_name) = object.get("tool_name").and_then(Value::as_str) else {
+        return Vec::new();
+    };
+    let tool_name = tool_name.to_ascii_lowercase();
+    if !matches!(
+        tool_name.as_str(),
+        "edit" | "write" | "apply_patch" | "applypatch"
+    ) {
+        return Vec::new();
+    }
+    let timed_out = duration >= COMPUTATION_TIMEOUT;
+
+    match eligible_edit_request(payload) {
+        None => {
+            let file_path = object
+                .get("tool_input")
+                .and_then(Value::as_object)
+                .and_then(|input| {
+                    input
+                        .get("file_path")
+                        .and_then(Value::as_str)
+                        .or_else(|| input.get("path").and_then(Value::as_str))
+                })
+                .unwrap_or_default()
+                .to_owned();
+            vec![HookLogEntry {
+                timestamp: unix_timestamp(),
+                event: "edit",
+                file_path,
+                snapshot_available: false,
+                advice_emitted: false,
+                reason: Some(if timed_out {
+                    "timeout"
+                } else {
+                    "ineligible_path"
+                }),
+            }]
+        }
+        Some(request) => {
+            let snapshot = source::load_hook_snapshot(&request.cwd).ok().flatten();
+            let snapshot_available = snapshot.is_some();
+            let reports = snapshot
+                .as_deref()
+                .and_then(|bytes| decode_impact_cache(bytes, &request.paths));
+            request
+                .paths
+                .iter()
+                .map(|path| {
+                    let has_node = reports
+                        .as_ref()
+                        .is_some_and(|reports| reports.iter().any(|r| &r.file_path == path));
+                    let advice_emitted = !timed_out && snapshot_available && has_node;
+                    let reason = if advice_emitted {
+                        None
+                    } else if timed_out {
+                        Some("timeout")
+                    } else if !snapshot_available {
+                        Some("no_snapshot")
+                    } else {
+                        Some("no_matching_node")
+                    };
+                    HookLogEntry {
+                        timestamp: unix_timestamp(),
+                        event: "edit",
+                        file_path: path.clone(),
+                        snapshot_available,
+                        advice_emitted,
+                        reason,
+                    }
+                })
+                .collect()
+        }
+    }
+}
+
+/// Mirrors `ready_whole_file_read`'s checks but reports eligibility and
+/// snapshot presence separately, since logging distinguishes them.
+fn read_eligibility_snapshot(cwd: &Path, file_path: &str) -> (bool, bool) {
+    let Ok(root) = cwd.canonicalize() else {
+        return (false, false);
+    };
+    let snapshot_available = root.join("project.aether").is_file();
+    let requested = Path::new(file_path);
+    let candidate = if requested.is_absolute() {
+        requested.to_path_buf()
+    } else {
+        root.join(requested)
+    };
+    let eligible = candidate.canonicalize().is_ok_and(|candidate| {
+        candidate.starts_with(&root)
+            && matches!(
+                candidate
+                    .extension()
+                    .and_then(|extension| extension.to_str()),
+                Some("rs" | "py" | "ts" | "tsx" | "go")
+            )
+    });
+    (eligible, snapshot_available)
+}
+
+fn unix_timestamp() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_secs())
+        .unwrap_or(0)
+}
+
+/// Best-effort JSONL append; a write failure (missing `.girder`, permissions,
+/// full disk) is silently ignored to keep this diagnostic strictly opt-in and
+/// never fail-closed.
+fn append_hook_log(cwd: &Path, entries: &[HookLogEntry]) {
+    let path = cwd.join(HOOK_LOG_PATH);
+    let Some(parent) = path.parent() else {
+        return;
+    };
+    if std::fs::create_dir_all(parent).is_err() {
+        return;
+    }
+    let Ok(mut file) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&path)
+    else {
+        return;
+    };
+    for entry in entries {
+        let Ok(mut line) = serde_json::to_vec(entry) else {
+            continue;
+        };
+        line.push(b'\n');
+        let _ = file.write_all(&line);
+    }
 }
 
 #[cfg(test)]

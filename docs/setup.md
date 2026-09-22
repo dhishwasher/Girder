@@ -60,6 +60,31 @@ recognized `PreToolUse` event, allow post-edit native stderr through,
 and always exit successfully. MCP startup and tool calls remain JSON-RPC on
 MCP stdout; the two protocols must not be mixed.
 
+## Hook-effectiveness log
+
+Set `GIRDER_HOOK_LOG=1` in the environment the hook runs in to have `girder
+hook` append one JSON line per invocation to `.girder/hook-log.jsonl` in the
+project root. Unset (the default), nothing is logged and no file is created;
+this never changes the hook's stdout, stderr, timing, or fail-open behavior —
+it only adds a best-effort write after the real response is already decided.
+
+Each line has:
+
+| Field | Meaning |
+| --- | --- |
+| `timestamp` | Unix seconds when the invocation was logged |
+| `event` | `"read"` (PreToolUse) or `"edit"` (PostToolUse) |
+| `file_path` | the path the client asked about |
+| `snapshot_available` | whether a saved graph existed (`project.aether` for reads, the hook-impact cache for edits) |
+| `advice_emitted` | whether this invocation produced advice |
+| `reason` | present only when `advice_emitted` is false: `no_snapshot`, `timeout`, `ineligible_path`, or `no_matching_node` (edits only) |
+
+Source content is never logged — only paths and these booleans/reason.
+
+This answers one question: what fraction of whole-file reads did the hook
+actually have something to say about? Filter logged lines to `event: "read"`
+and divide the count with `advice_emitted: true` by the total.
+
 For a client without setup detection, add the MCP entry to its documented
 config:
 

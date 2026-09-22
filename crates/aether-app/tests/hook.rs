@@ -245,3 +245,135 @@ fn edit_observation_is_stdout_only_and_distinguishes_missing_graph() {
     let duration_us = record["duration_us"].as_u64().expect("duration_us");
     assert_eq!(record["timed_out"], duration_us >= 20_000);
 }
+
+fn run_hook_with_log(root: &Path, payload: &[u8], log_enabled: bool) -> Output {
+    let mut command = Command::new(env!("CARGO_BIN_EXE_girder"));
+    command.arg("hook").current_dir(root);
+    if log_enabled {
+        command.env("GIRDER_HOOK_LOG", "1");
+    } else {
+        command.env_remove("GIRDER_HOOK_LOG");
+    }
+    run_with_input(command, payload)
+}
+
+fn edit_payload(root: &Path) -> Value {
+    json!({
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Edit",
+        "tool_input": {"file_path": root.join("src/lib.rs")},
+        "tool_response": {"success": true},
+        "cwd": root,
+    })
+}
+
+#[test]
+fn hook_log_env_var_never_changes_stdout_or_stderr() {
+    let root = TempRoot::new("hook-log-parity");
+    let outside = TempRoot::new("hook-log-parity-outside");
+    root.warm();
+    let cases: Vec<Vec<u8>> = vec![
+        b"not json".to_vec(),
+        serde_json::to_vec(&read_payload(root.path())).unwrap(),
+        serde_json::to_vec(&edit_payload(root.path())).unwrap(),
+        serde_json::to_vec(&json!({
+            "tool_name": "Read",
+            "tool_input": {"file_path": root.source(), "limit": 1},
+            "cwd": root.path(),
+        }))
+        .unwrap(),
+        serde_json::to_vec(&json!({
+            "tool_name": "Read",
+            "tool_input": {"file_path": outside.source()},
+            "cwd": root.path(),
+        }))
+        .unwrap(),
+    ];
+    for payload in &cases {
+        let disabled = run_hook_with_log(root.path(), payload, false);
+        let enabled = run_hook_with_log(root.path(), payload, true);
+        assert!(disabled.status.success());
+        assert!(enabled.status.success());
+        assert_eq!(
+            disabled.stdout, enabled.stdout,
+            "stdout differed for payload {payload:?}"
+        );
+        assert_eq!(
+            disabled.stderr, enabled.stderr,
+            "stderr differed for payload {payload:?}"
+        );
+    }
+}
+
+#[test]
+fn hook_log_is_silent_unless_enabled_and_never_contains_source() {
+    let disabled_root = TempRoot::new("hook-log-off");
+    disabled_root.warm();
+    let disabled_output = run_hook_with_log(
+        disabled_root.path(),
+        &serde_json::to_vec(&read_payload(disabled_root.path())).unwrap(),
+        false,
+    );
+    assert!(disabled_output.status.success());
+    assert!(!disabled_root.path().join(".girder/hook-log.jsonl").exists());
+
+    let enabled_root = TempRoot::new("hook-log-on");
+    enabled_root.warm();
+    let read_result = run_hook_with_log(
+        enabled_root.path(),
+        &serde_json::to_vec(&read_payload(enabled_root.path())).unwrap(),
+        true,
+    );
+    assert!(
+        read_result.status.success(),
+        "stderr: {:?}",
+        read_result.stderr
+    );
+    let edit_result = run_hook_with_log(
+        enabled_root.path(),
+        &serde_json::to_vec(&edit_payload(enabled_root.path())).unwrap(),
+        true,
+    );
+    assert!(
+        edit_result.status.success(),
+        "stderr: {:?}",
+        edit_result.stderr
+    );
+
+    let log_path = enabled_root.path().join(".girder/hook-log.jsonl");
+    let contents = std::fs::read_to_string(&log_path).expect("hook log written");
+    let lines: Vec<Value> = contents
+        .lines()
+        .map(|line| serde_json::from_str(line).expect("valid JSON line"))
+        .collect();
+    assert_eq!(lines.len(), 2, "{contents}");
+
+    for line in &lines {
+        assert!(line.get("timestamp").and_then(Value::as_u64).is_some());
+        assert!(matches!(
+            line["event"].as_str(),
+            Some("read") | Some("edit")
+        ));
+        assert!(line.get("file_path").and_then(Value::as_str).is_some());
+        assert!(line
+            .get("snapshot_available")
+            .and_then(Value::as_bool)
+            .is_some());
+        assert!(line
+            .get("advice_emitted")
+            .and_then(Value::as_bool)
+            .is_some());
+        let text = line.to_string();
+        assert!(!text.contains("pub fn answer"), "log leaked source: {text}");
+    }
+
+    assert_eq!(lines[0]["event"], "read");
+    assert_eq!(lines[0]["advice_emitted"], true);
+    assert_eq!(lines[0]["snapshot_available"], true);
+    assert!(lines[0].get("reason").is_none());
+
+    assert_eq!(lines[1]["event"], "edit");
+    assert_eq!(lines[1]["advice_emitted"], false);
+    assert_eq!(lines[1]["snapshot_available"], false);
+    assert_eq!(lines[1]["reason"], "no_snapshot");
+}
