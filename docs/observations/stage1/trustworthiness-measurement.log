@@ -1,6 +1,6 @@
 
 --- Bit Code rust output ---
-Building semantic graph for /tmp/bitcode-core-trust-8nvb_egn/rust/static ...
+Building semantic graph for /tmp/bitcode-core-trust-8awtmxly/rust/static ...
   5 file(s), 22 nodes, 35 edges
   changed files: src/operations.rs
 
@@ -660,7 +660,7 @@ Commands to run impacted tests only:
 }
 
 --- Bit Code python output ---
-Building semantic graph for /tmp/bitcode-core-trust-8nvb_egn/python/static ...
+Building semantic graph for /tmp/bitcode-core-trust-8awtmxly/python/static ...
   6 file(s), 24 nodes, 29 edges
   changed files: models.py
 
@@ -1188,5 +1188,4 @@ Commands to run impacted tests only:
 | Combined | 7 | 0 | 0 | 4 | 1.000 | 1.000 |
 rust: selected=rust_cli_selected,rust_custom_bin_selected,rust_direct_selected,rust_raii_drop_selected; executed=rust_cli_selected,rust_custom_bin_selected,rust_direct_selected,rust_raii_drop_selected; fp=-; fn=-
 python: selected=test_python_cross_module_selected,test_python_direct_selected,test_python_optional_selected; executed=test_python_cross_module_selected,test_python_direct_selected,test_python_optional_selected; fp=-; fn=-
-baseline: matches /home/corymaynard370/Bit-code/docs/core-trustworthiness-baseline.json
 classified: must_precision=None (tp=0, fp=0) may_only_recall=0.0 (tp=0) must_or_may_recall=0.0 unknown_count=11 boundary_count=102

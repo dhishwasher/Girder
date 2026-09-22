@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "kind": "stage-criterion-measurement",
+  "stage": 1,
+  "date": "2026-09-22",
+  "supersedes": "measurement-summary.json",
+  "supersedes_note": "measurement-summary.json (candidate c927122) is preserved unedited per the resume contract, but its candidate/binary predate a review pass that found: (1) a live overclaim in mcp.rs's MCP server INSTRUCTIONS string and in CLAUDE.md/npm docs, unrelated to the file it was fixed in at the time; (2) its claimed gate run was actually from an earlier tree, and the logs were never committed; (3) the observation was missing per-corpus boundary-category breakdowns, total-vs-declared Unknown counts, and false-negative lists the frozen policy's measurement methodology asks for; (4) a factual error in its root-cause analysis (see measurement-correction.json). This file is the corrected replacement, measured fresh against the candidate that fixes all four.",
+  "candidate_commit": "f53f6dd43c643962f5906764d949b47d53da1685",
+  "candidate_commit_note": "The binary was built from this exact commit's working tree before this file (and the rest of this commit's siblings) existed; the measurement and the four gates above were both run and confirmed against it before this observation and the commit that adds it were written.",
+  "binary": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+  "binary_sha256": "f74eea37666cb9a0943cc2383d62aedad840d7db056a8a3e0e5bcb6f4f7a1bbe",
+  "policy": "docs/call-classification-policy.md",
+  "policy_sha256": "d6d686a9033c5a9e44665e8134707a8074296352ec3af28507286d925d96befb",
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target",
+    "cargo": "1.97.1",
+    "rustc": "1.97.1",
+    "python": "3.11.2"
+  },
+  "reproducibility": "Every classification number below (must/may/unknown counts, precision, recall, true/false positives) is byte-identical to the original c927122-candidate measurement; only the fixed overclaim text and the newly-added observation fields (boundary_by_category, *_total_count, *_false_negatives, explicit denominators) differ. Confirmed by direct field-by-field comparison, not re-asserted.",
+  "measurements": [
+    {
+      "name": "core-trustworthiness fixtures (Rust + Python, synthetic, dynamic-probe-verified)",
+      "command": "python3 tools/core_trustworthiness_oracle.py --bitcode <binary> --json",
+      "exit_code": 0,
+      "result_file": "trustworthiness-measurement.json",
+      "verbose_log": "trustworthiness-measurement.log",
+      "baseline_matched": "docs/core-trustworthiness-baseline.json (schema_version 3, regenerated from this run)",
+      "flat_aggregate": {
+        "true_positives": 7,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "true_negatives": 4,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "classified_aggregate": {
+        "must_true_positives": 0,
+        "must_false_positives": 0,
+        "must_denominator": 0,
+        "must_precision": null,
+        "may_true_positives": 0,
+        "executed_denominator": 7,
+        "may_only_recall": 0.0,
+        "must_or_may_true_positives": 0,
+        "must_or_may_recall": 0.0,
+        "unknown_count": 11,
+        "unknown_total_count": 11,
+        "boundary_count": 102,
+        "boundary_by_category": {
+          "coverage_gap": 30,
+          "missing_or_invalid_evidence": 21,
+          "unresolved_call_site": 51
+        }
+      },
+      "unknown_total_vs_declared_note": "unknown_total_count equals unknown_count (11) here because each fixture project is an isolated checkout containing only that fixture's own files — the declared universe and the whole graph's discovered universe are the same closed set. This is NOT true for the representative-mutations measurement below (Click is a real repository)."
+    },
+    {
+      "name": "core-representative-mutations (Click 8.4.1, real repository, one declared dynamic-dispatch mutation)",
+      "command": "python3 tools/core_representative_mutations.py --bitcode <binary> --offline --json",
+      "exit_code": 0,
+      "result_file": "representative-mutations-measurement.json",
+      "offline_source": "pinned cache .benchmark-cache/core-representative-v1/918b5633eddf6b41c32d4f454bf0de810065c74e3f7dbf8ee5452f8be88d3e96.tar.gz, sha256-verified against docs/core-representative-corpus.json before use; no network fetch performed",
+      "flat_aggregate": {
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 2,
+        "true_negatives": 1,
+        "precision": 1.0,
+        "recall": 0.0
+      },
+      "flat_aggregate_note": "This 0.000 recall on the flat/legacy mechanism is the pre-existing, already-documented dynamic-dispatch gap (docs/core-representative-mutations.md); unchanged by Stage 1 work.",
+      "classified_aggregate": {
+        "must_true_positives": 0,
+        "must_false_positives": 0,
+        "must_denominator": 0,
+        "must_precision": null,
+        "may_true_positives": 0,
+        "executed_denominator": 2,
+        "may_only_recall": 0.0,
+        "must_or_may_true_positives": 0,
+        "must_or_may_recall": 0.0,
+        "unknown_count": 3,
+        "unknown_total_count": 472,
+        "boundary_count": 7499,
+        "boundary_by_category": {
+          "coverage_gap": 1095,
+          "missing_or_invalid_evidence": 766,
+          "unresolved_call_site": 5638
+        }
+      },
+      "unknown_total_vs_declared_note": "unknown_total_count (472) is Click's true discovered Unknown-test count across its whole indexed test suite; unknown_count (3) is that narrowed to only the three tests this mutation declares. The gap (469 tests) is real: this measurement says nothing about them, and a naive read of only unknown_count would understate how much of Click's suite this graph currently cannot exclude for ANY change, not just this one."
+    }
+  ],
+  "pooled_classified_result": {
+    "must_denominator": 0,
+    "must_precision": null,
+    "must_true_positives": 0,
+    "must_false_positives": 0,
+    "executed_denominator": 9,
+    "may_only_recall": 0.0,
+    "must_or_may_recall": 0.0,
+    "unknown_count": 14,
+    "unknown_total_count": 483,
+    "boundary_count": 7601,
+    "boundary_by_category": {
+      "coverage_gap": 1125,
+      "missing_or_invalid_evidence": 787,
+      "unresolved_call_site": 5689
+    }
+  },
+  "trustworthy_must_gate": {
+    "criterion": "precision 1.000 with a nonempty Must set and zero false Must claims",
+    "result": "FAILED-AND-PUBLISHED",
+    "reason": "Must set is empty on every corpus measured (synthetic fixtures and the one real-repository mutation); precision is therefore undefined (null), not met. May is empty in every case too (0.000 recall wherever a positive existed) because the extractor does not yet enumerate any May candidates at all."
+  },
+  "root_causes_observed": [
+    "Cross-file calls cannot reach Must: annotate() (crates/aether-builder/src/mapper/claims.rs) runs once per file during extraction, before project-wide resolve_calls, so a call's target must be declared in the SAME file's syntax tree to be provable. Verified directly against the fixture layout (find fixtures/core-trustworthiness -type f): both the Rust and Python trustworthiness fixtures' tests live in a different file from the function they cover (tests/impact.rs vs src/operations.rs; tests/test_service.py vs models.py), and Click's declared mutation (Group.invoke in src/click/core.py) is called from tests/test_commands.py and tests/test_chain.py.",
+    "Python and (by the same top-level-only rule) any other language's test METHODS on a class cannot reach Must even when same-file: the extractor's proof rule only walks direct children of the module root (or an export_statement at that level), not class/impl-body methods. Click and the trustworthiness Python fixture both declare tests as methods (OracleTests::test_*, and Click's pytest-style module-level functions are the exception that does qualify structurally, but still fails on the cross-file rule above).",
+    "The extractor never emits CallClass::May: it has no enumeration logic yet for trait objects, generics, interface implementors, overloads, inheritance, or structural typing (Stage 3 work, per docs/roadmap.md); every non-Must call site is currently classified Unknown rather than May.",
+    "classified_impact's flood rule (aether-graph/src/claims.rs) marks every Function node in the WHOLE graph as at least Unknown once a single Unknown-classified call exists anywhere in the graph, not just near the queried origin — so on any real codebase the practical result is close to 'everything is at least Unknown, at minimum'. This is what makes unknown_total_count (472 on Click) so much larger than any single query's declared-relevant set (3)."
+  ],
+  "limitations": [
+    "Only Rust and Python fixtures are exercised by core-trustworthiness; the corpus has no TypeScript or Go cases yet, so this measurement says nothing about those two languages' Must/May behavior.",
+    "core-representative-mutations has exactly one declared mutation (group-invoke) against one repository (Click); it is evidence that the dynamic comparison harness runs end-to-end against real code, not a general accuracy claim (see docs/core-gap-analysis.md's own framing, unchanged here).",
+    "This is not yet the dedicated dispatch corpus Stage 2 requires (40+ cases weighted to trait objects/generics/inheritance/structural typing/interfaces); it is the existing mutation corpus named in Stage 1's precommitted criterion.",
+    "The boundary flood makes Unknown counts and boundary counts a property of the whole indexed graph, not a tight measure of origin-local uncertainty; docs/roadmap.md records this as a named consequence, not a hidden one.",
+    "classified_impact(&[]) (an origin set with no function nodes, e.g. a const-only or type-only edit) returns empty with no boundary notice at all — not measured here, but named as a known gap in docs/roadmap.md."
+  ]
+}

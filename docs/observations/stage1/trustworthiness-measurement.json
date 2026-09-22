@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "results": {
     "rust": {
       "universe": [
@@ -50,14 +50,36 @@
           "rust_unrelated"
         ],
         "unknown_count": 6,
+        "must_total_count": 0,
+        "may_total_count": 0,
+        "unknown_total_count": 6,
         "boundary_count": 63,
+        "boundary_by_category": {
+          "coverage_gap": 24,
+          "missing_or_invalid_evidence": 11,
+          "unresolved_call_site": 28
+        },
         "must_true_positives": [],
         "must_false_positives": [],
+        "must_denominator": 0,
         "must_precision": null,
         "may_true_positives": [],
+        "may_false_negatives": [
+          "rust_cli_selected",
+          "rust_custom_bin_selected",
+          "rust_direct_selected",
+          "rust_raii_drop_selected"
+        ],
         "may_only_recall": 0.0,
         "must_or_may_true_positives": [],
-        "must_or_may_recall": 0.0
+        "must_or_may_false_negatives": [
+          "rust_cli_selected",
+          "rust_custom_bin_selected",
+          "rust_direct_selected",
+          "rust_raii_drop_selected"
+        ],
+        "must_or_may_recall": 0.0,
+        "executed_denominator": 4
       }
     },
     "python": {
@@ -104,14 +126,34 @@
           "test_python_third_party_decoy"
         ],
         "unknown_count": 5,
+        "must_total_count": 0,
+        "may_total_count": 0,
+        "unknown_total_count": 5,
         "boundary_count": 39,
+        "boundary_by_category": {
+          "coverage_gap": 6,
+          "missing_or_invalid_evidence": 10,
+          "unresolved_call_site": 23
+        },
         "must_true_positives": [],
         "must_false_positives": [],
+        "must_denominator": 0,
         "must_precision": null,
         "may_true_positives": [],
+        "may_false_negatives": [
+          "test_python_cross_module_selected",
+          "test_python_direct_selected",
+          "test_python_optional_selected"
+        ],
         "may_only_recall": 0.0,
         "must_or_may_true_positives": [],
-        "must_or_may_recall": 0.0
+        "must_or_may_false_negatives": [
+          "test_python_cross_module_selected",
+          "test_python_direct_selected",
+          "test_python_optional_selected"
+        ],
+        "must_or_may_recall": 0.0,
+        "executed_denominator": 3
       }
     }
   },
@@ -126,12 +168,20 @@
   "classified_aggregate": {
     "must_true_positives": 0,
     "must_false_positives": 0,
+    "must_denominator": 0,
     "must_precision": null,
     "may_true_positives": 0,
+    "executed_denominator": 7,
     "may_only_recall": 0.0,
     "must_or_may_true_positives": 0,
     "must_or_may_recall": 0.0,
     "unknown_count": 11,
-    "boundary_count": 102
+    "unknown_total_count": 11,
+    "boundary_count": 102,
+    "boundary_by_category": {
+      "coverage_gap": 30,
+      "missing_or_invalid_evidence": 21,
+      "unresolved_call_site": 51
+    }
   }
 }

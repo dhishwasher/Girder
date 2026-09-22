@@ -8,36 +8,61 @@
     "true_positives": 0
   },
   "classified_aggregate": {
+    "boundary_by_category": {
+      "coverage_gap": 1095,
+      "missing_or_invalid_evidence": 766,
+      "unresolved_call_site": 5638
+    },
     "boundary_count": 7499,
+    "executed_denominator": 2,
     "may_only_recall": 0.0,
     "may_true_positives": 0,
+    "must_denominator": 0,
     "must_false_positives": 0,
     "must_or_may_recall": 0.0,
     "must_or_may_true_positives": 0,
     "must_precision": null,
     "must_true_positives": 0,
-    "unknown_count": 3
+    "unknown_count": 3,
+    "unknown_total_count": 472
   },
   "mutations": [
     {
       "classified": {
+        "boundary_by_category": {
+          "coverage_gap": 1095,
+          "missing_or_invalid_evidence": 766,
+          "unresolved_call_site": 5638
+        },
         "boundary_count": 7499,
-        "executed_count": 2,
+        "executed_denominator": 2,
         "may": [],
+        "may_false_negatives": [
+          "tests/test_chain.py::test_basic_chaining",
+          "tests/test_commands.py::test_other_command_forward"
+        ],
         "may_only_recall": 0.0,
+        "may_total_count": 0,
         "may_true_positives": [],
         "must": [],
+        "must_denominator": 0,
         "must_false_positives": [],
+        "must_or_may_false_negatives": [
+          "tests/test_chain.py::test_basic_chaining",
+          "tests/test_commands.py::test_other_command_forward"
+        ],
         "must_or_may_recall": 0.0,
         "must_or_may_true_positives": [],
         "must_precision": null,
+        "must_total_count": 0,
         "must_true_positives": [],
         "unknown": [
           "tests/test_chain.py::test_basic_chaining",
           "tests/test_commands.py::test_other_command_forward",
           "tests/test_commands.py::test_other_command_invoke"
         ],
-        "unknown_count": 3
+        "unknown_count": 3,
+        "unknown_total_count": 472
       },
       "false_negatives": [
         "tests/test_chain.py::test_basic_chaining",
@@ -55,5 +80,5 @@
     }
   ],
   "repository": "click-8.4.1",
-  "schema_version": 2
+  "schema_version": 3
 }

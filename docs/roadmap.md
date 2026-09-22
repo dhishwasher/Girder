@@ -70,21 +70,30 @@ real, deliberate behavior change: `--quiet` now frequently returns close to
 the full test inventory rather than a scoped-but-sometimes-wrong one, until
 Stage 3 closes dispatch holes).
 
-**Measured** (`c927122`, full detail in
-[measurement-summary.json](observations/stage1/measurement-summary.json)):
-on both the core-trustworthiness fixtures (Rust + Python, dynamic-probe-
-verified) and the one core-representative-mutations case against Click (a
-real repository), the **Must set is empty** (precision undefined/null, not
-1.000) and **May is empty** (0.000 recall wherever a positive existed) —
-the extractor never emits `CallClass::May` yet; that enumeration is Stage 3
-work. Pooled: `unknown_count=14`, `boundary_count=7601`. Root causes
-recorded in the observation: Must proofs are same-file/top-level-only
-(cross-file calls, e.g. Click's `Group.invoke` mutation and Go's
-file-split test/impl pair, can never reach Must under this extractor); any
-non-`#[test]`/`#[tokio::test]` Rust attribute or any Python decorator
-anywhere in a file zeroes that file's proofs; `classified_impact`'s flood
-rule marks every function in the whole graph Unknown once a single
-unresolved call exists anywhere, which is near-universal on real code.
+**Measured** (`f53f6dd`, full detail in
+[measurement-summary-final.json](observations/stage1/measurement-summary-final.json),
+superseding the earlier `c927122` run in
+[measurement-summary.json](observations/stage1/measurement-summary.json) —
+identical classification numbers, corrected overclaims and completed fields;
+see that file's own `supersedes_note`): on both the core-trustworthiness
+fixtures (Rust + Python, dynamic-probe-verified) and the one
+core-representative-mutations case against Click (a real repository), the
+**Must set is empty** (precision undefined/null, not 1.000) and **May is
+empty** (0.000 recall wherever a positive existed) — the extractor never
+emits `CallClass::May` yet; that enumeration is Stage 3 work. Pooled:
+`unknown_count=14` (declared-universe), `unknown_total_count=483` (Click's
+whole discovered-Unknown universe alone is 472 — see the observation for
+why that gap matters), `boundary_count=7601`. Root causes, corrected on
+review (see
+[measurement-correction.json](observations/stage1/measurement-correction.json)):
+Must proofs are same-file *and* top-level-only — cross-file calls (verified
+against the fixture layout: both trustworthiness fixtures' tests live in a
+different file from the function they cover, and so does Click's declared
+`Group.invoke` caller) can never reach Must, and test *methods* on a class
+(not just cross-file) are excluded by the top-level-only rule regardless of
+file; `classified_impact`'s flood rule marks every function in the whole
+graph Unknown once a single unresolved call exists anywhere, which is
+near-universal on real code.
 
 **The trustworthy Must threshold (1.000, nonempty set) is UNMET.** Per the
 precommitted criterion this is published as failure, not hidden or softened,
@@ -97,7 +106,22 @@ advisory hook still consumes the unclassified `tests_for_nodes`/`impact_of`
 path, not the classified one; `orient`'s classification section has no
 `--unbounded`-equivalent escape hatch (its existing 50-item cap policy is
 unchanged, matching its other sections); there is no continuation offset for
-a truncated classified list, only a truncated flag and true count.
+a truncated classified list, only a truncated flag and true count; `test-impact`'s
+non-quiet human-readable listing (its "skipped" count) and `--run`, plus
+`planfile/checks/test_checks.rs::run_tests_impacted`, all still call the
+legacy `tests_for_nodes` directly and so can disagree with `--quiet`, which
+does not (a real gap — `--run` can still silently skip a test reached only
+through the kind of unresolved call `--quiet` would now conservatively
+include); `classified_impact(&[])` (a change with no function-node origins,
+e.g. a const-only or type-only edit) returns empty with no boundary notice
+and no reasoning performed at all, the same as the pre-existing legacy path
+for that case, so an agent reading only the "empty means nothing needs
+testing" framing has no signal that constants aren't modeled as impact
+origins in the first place.
+
+An error was found and corrected in the first measurement's root-cause
+analysis (not its numbers) after review; see
+[measurement-correction.json](observations/stage1/measurement-correction.json).
 
 Precommit a separate language-specific classification policy for Rust, Python,
 TypeScript/TSX, and Go. Must means a proven resolved call without a viable
@@ -119,13 +143,18 @@ The trustworthy Must threshold is 1.000 with a nonempty set. If unmet, publish
 the failure and continue to Stage 2; do not hide or soften it.
 
 **Gate:** mutation-oracle measurement and classification/API tests, then all
-common gates — all run against `c927122`, all passing:
+common gates — all run against `f53f6dd` (the final candidate, after the
+corrections below), all passing:
 `cargo test --workspace -j1 --quiet` (24 suites, 0 failed),
 `cargo clippy --workspace --all-targets -j1 -- -D warnings` (clean),
 `cargo fmt --all --check` (clean),
 `node --test npm/test/*.test.js` (29 passed, 2 pre-existing skips, 0 failed).
 **Observation:**
-[measurement-summary.json](observations/stage1/measurement-summary.json),
+[measurement-summary-final.json](observations/stage1/measurement-summary-final.json)
+(current),
+[measurement-summary.json](observations/stage1/measurement-summary.json)
+(superseded, preserved),
+[measurement-correction.json](observations/stage1/measurement-correction.json),
 [trustworthiness-measurement.json](observations/stage1/trustworthiness-measurement.json),
 [representative-mutations-measurement.json](observations/stage1/representative-mutations-measurement.json).
 **Blockers:** none; the criterion was measured and failed honestly.
@@ -274,11 +303,15 @@ gates. **Observation:** none. **Blockers:** capable agent not yet established.
 - 2026-09-22: Stage 1 is complete and **FAILED-AND-PUBLISHED**: extractor call
   evidence, classified CLI/MCP answers (including the `--quiet` honesty fix),
   and the frozen mutation measurement are all implemented, run, and committed
-  (`6b11d28`, `48a9713`, `d1706d6`, `c927122`). The trustworthy-Must gate
-  (precision 1.000, nonempty set) was not met — Must is empty on every
-  corpus measured; see
-  [measurement-summary.json](observations/stage1/measurement-summary.json)
-  for root causes. All four common gates pass on `c927122`. Stages 2–7
+  (`6b11d28`, `48a9713`, `d1706d6`, `c927122`, `f53f6dd`). A review pass
+  after `c927122` found and fixed a second live overclaim (the MCP server's
+  own `INSTRUCTIONS` string, plus CLAUDE.md/npm docs) and completed missing
+  observation fields; `f53f6dd` is the corrected final candidate, with
+  identical classification numbers to `c927122` (reproducibility confirmed).
+  The trustworthy-Must gate (precision 1.000, nonempty set) was not met —
+  Must is empty on every corpus measured; see
+  [measurement-summary-final.json](observations/stage1/measurement-summary-final.json)
+  for root causes. All four common gates pass on `f53f6dd`. Stages 2–7
   remain NOT STARTED.
 - MOVESPEED is available: approximately 291 GB free; system reports approximately
   2 GB available RAM and no swap. Cargo and rustc are available from its cache.
@@ -287,7 +320,7 @@ gates. **Observation:** none. **Blockers:** capable agent not yet established.
   48, 12 per language, weighted to Rust trait objects/generics, Python
   inheritance/super/getattr, TypeScript structural typing/unions, Go
   interfaces) and score Girder against every case, publishing every failure.
-  Stage 1's measured root causes (same-file-only proofs, no May enumeration
+  Stage 1's measured root causes (same-file/top-level-only proofs, no May enumeration
   at all, the whole-graph flood rule) are exactly what Stage 3's per-language
   work will need to address once Stage 2's corpus exists to measure against.
 - Completion remains unproven until every criterion above has committed evidence.

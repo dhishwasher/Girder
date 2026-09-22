@@ -8,30 +8,57 @@
     "true_positives": 7
   },
   "classified_aggregate": {
+    "boundary_by_category": {
+      "coverage_gap": 30,
+      "missing_or_invalid_evidence": 21,
+      "unresolved_call_site": 51
+    },
     "boundary_count": 102,
+    "executed_denominator": 7,
     "may_only_recall": 0.0,
     "may_true_positives": 0,
+    "must_denominator": 0,
     "must_false_positives": 0,
     "must_or_may_recall": 0.0,
     "must_or_may_true_positives": 0,
     "must_precision": null,
     "must_true_positives": 0,
-    "unknown_count": 11
+    "unknown_count": 11,
+    "unknown_total_count": 11
   },
   "results": {
     "python": {
       "bitcode_reported_impacted": 3,
       "bitcode_reported_skipped": 2,
       "classified": {
+        "boundary_by_category": {
+          "coverage_gap": 6,
+          "missing_or_invalid_evidence": 10,
+          "unresolved_call_site": 23
+        },
         "boundary_count": 39,
+        "executed_denominator": 3,
         "may": [],
+        "may_false_negatives": [
+          "test_python_cross_module_selected",
+          "test_python_direct_selected",
+          "test_python_optional_selected"
+        ],
         "may_only_recall": 0.0,
+        "may_total_count": 0,
         "may_true_positives": [],
         "must": [],
+        "must_denominator": 0,
         "must_false_positives": [],
+        "must_or_may_false_negatives": [
+          "test_python_cross_module_selected",
+          "test_python_direct_selected",
+          "test_python_optional_selected"
+        ],
         "must_or_may_recall": 0.0,
         "must_or_may_true_positives": [],
         "must_precision": null,
+        "must_total_count": 0,
         "must_true_positives": [],
         "unknown": [
           "test_python_cross_module_selected",
@@ -40,7 +67,8 @@
           "test_python_optional_selected",
           "test_python_third_party_decoy"
         ],
-        "unknown_count": 5
+        "unknown_count": 5,
+        "unknown_total_count": 5
       },
       "executed": [
         "test_python_cross_module_selected",
@@ -77,15 +105,36 @@
       "bitcode_reported_impacted": 4,
       "bitcode_reported_skipped": 2,
       "classified": {
+        "boundary_by_category": {
+          "coverage_gap": 24,
+          "missing_or_invalid_evidence": 11,
+          "unresolved_call_site": 28
+        },
         "boundary_count": 63,
+        "executed_denominator": 4,
         "may": [],
+        "may_false_negatives": [
+          "rust_cli_selected",
+          "rust_custom_bin_selected",
+          "rust_direct_selected",
+          "rust_raii_drop_selected"
+        ],
         "may_only_recall": 0.0,
+        "may_total_count": 0,
         "may_true_positives": [],
         "must": [],
+        "must_denominator": 0,
         "must_false_positives": [],
+        "must_or_may_false_negatives": [
+          "rust_cli_selected",
+          "rust_custom_bin_selected",
+          "rust_direct_selected",
+          "rust_raii_drop_selected"
+        ],
         "must_or_may_recall": 0.0,
         "must_or_may_true_positives": [],
         "must_precision": null,
+        "must_total_count": 0,
         "must_true_positives": [],
         "unknown": [
           "rust_cli_selected",
@@ -95,7 +144,8 @@
           "rust_raii_drop_selected",
           "rust_unrelated"
         ],
-        "unknown_count": 6
+        "unknown_count": 6,
+        "unknown_total_count": 6
       },
       "executed": [
         "rust_cli_selected",
@@ -133,5 +183,5 @@
       ]
     }
   },
-  "schema_version": 2
+  "schema_version": 3
 }
