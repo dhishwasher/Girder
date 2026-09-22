@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "kind": "gate-run",
+  "date": "2026-09-22",
+  "candidate_commit": "32bd5d2",
+  "candidate_commit_note": "Gates ran directly against this exact committed HEAD (no Rust/JS code changed after it), so there is no candidate-vs-later-commit gap to reconcile this time.",
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target",
+    "cargo": "1.97.1",
+    "rustc": "1.97.1"
+  },
+  "gates": [
+    {
+      "command": "cargo test --workspace -j1 --quiet",
+      "log": "01-cargo-test-workspace.log",
+      "log_sha256": "215a71d69a2ddb9764ade980b21c2aafcee7955cf3e7cf3980e5fd53e1872446",
+      "exit_code": 0,
+      "exit_code_source": "background task notification (task id bouivcu70): 'completed (exit code 0)'",
+      "result_note": "24 test suites, 0 failed."
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -j1 -- -D warnings",
+      "log": "02-cargo-clippy.log",
+      "log_sha256": "f237201b72d9c751bd19aea32ccddbbca227b8c10d4520b28e09801b4b4acde3",
+      "exit_code": 0,
+      "exit_code_source": "background task notification (task id b5mnkvsu1): 'completed (exit code 0)'",
+      "result_note": "Clean, no warnings/errors."
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "log": "03-cargo-fmt-check.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "exit_code_source": "foreground shell, captured via `result=$?; echo \"fmt-check exit=$result\"`, printed 'fmt-check exit=0'",
+      "result_note": "Empty log (0 bytes) is the correct passing signal."
+    },
+    {
+      "command": "node --test npm/test/*.test.js",
+      "log": "04-npm-test.log",
+      "log_sha256": "e3123e8be309a62fe87bc767f7b085d825e9fb3db1cfaf65ae7ec2ee97ef24d7",
+      "exit_code": 0,
+      "exit_code_source": "foreground shell, captured via `result=$?; echo \"exit=$result\"`, printed 'exit=0'",
+      "result_note": "31 tests: 29 passed, 0 failed, 2 pre-existing skips (no vendored binary)."
+    }
+  ]
+}

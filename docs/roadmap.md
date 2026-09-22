@@ -167,21 +167,72 @@ corrections below), all passing:
 
 ## Stage 2 — The dispatch corpus
 
-**Status: NOT STARTED**
+**Status: DONE**
 
-Commit a versioned independent oracle before scoring: at least 40 cases,
-initially 48 (12 per language), weighted to Rust trait objects/generics, Python
-inheritance/super/getattr, TypeScript structural typing/unions, and Go interfaces.
-Record sources, queries, expected sets, assumptions, rationale, controls, and
-negative targets.
+Committed a versioned independent oracle before any scoring run:
+[docs/dispatch-corpus.json](dispatch-corpus.json), 49 cases (12 each Rust/
+Python/Go, 13 TypeScript — see
+[docs/dispatch-corpus-changelog.md](dispatch-corpus-changelog.md) item 1 for
+why TypeScript has 13), weighted to the hard forms named in the program
+goal: Rust trait objects/generics/operator traits/macro-generated calls;
+Python inheritance/super-MRO/getattr/unconstrained duck typing/decorators/
+`__call__`; TypeScript interface implementors/structural typing/unions/`any`
+receivers; Go interfaces/embedding/method values/function variables/
+reflect/generics. Each case: an isolated mini-project, a source-level
+origin (file + symbol, optional qualifier), declared tests with an expected
+class per [docs/call-classification-policy.md](call-classification-policy.md)
+or `excluded` (true negative), a policy-table citation, and a rationale
+derived from language semantics alone — not from running Girder.
+Dynamically validated (tests compile and pass) for every case except one
+TypeScript case whose decorator syntax this environment's toolchain cannot
+execute (recorded blocked, not faked).
+
+Every edit made after Girder's classified answer was first seen for any
+case, while developing the scorer, is in the changelog with a justification
+checked against "visible from the fixture/spec alone" — including the most
+consequential one: 11 Python fixtures were never marked as tests at all
+because the extractor requires the *file* to match pytest/unittest
+discovery, not just the function name, found via `girder orient` (not by
+adjusting an expectation to match an answer).
 
 **Precommitted criterion:** score Girder against every case and publish all
 expected/actual results, including every failure or unavailable execution.
 Never tune cases to the product. When the product starts passing a case, retain
 it and append a harder case; publish fixed-cohort scores separately.
 
-**Gate:** oracle/harness validation, complete corpus run, then all common gates.
-**Observation:** none. **Blockers:** Stage 1 checkpoint.
+**Met.** [tools/dispatch_corpus_scorer.py](../tools/dispatch_corpus_scorer.py)
+scored all 49 cases (57 test cells) against
+[docs/dispatch-corpus.json](dispatch-corpus.json); every result — including
+the one unresolvable case — is published in
+[scoring-results.json](observations/stage2-dispatch-corpus/scoring-results.json),
+summarized in
+[scoring-summary.json](observations/stage2-dispatch-corpus/scoring-summary.json).
+Headline: **zero unsound cells** (no false Must, no false May, no wrongful
+exclusion) across all 57; `must_precision_on_corpus` 1.000 (3/3, Python/
+TypeScript/Go's cleanest same-file cases); 36 cells conservative (safe
+Unknown flooding, concentrated exactly where Stage 1 predicted);
+`must_or_may_recall_on_corpus` 0.086 (3/35) — expected and named as the
+number Stage 3 exists to move, not a Stage 2 failure. New finding beyond
+Stage 1: Rust's own `assert_eq!`/`assert!` macros hide even a trivial
+same-file direct call from Must certification (the call's argument is an
+opaque macro token, never its own `call_expression` node) — Python/
+TypeScript/Go's non-macro assertion styles don't have this problem, so the
+identical direct-call pattern scores exact Must in all three but
+conservative in Rust. Full explanation in scoring-summary.json's
+`new_finding_not_in_stage1`.
+
+**Gate:** all four common gates, run against `32bd5d2` (the exact committed
+candidate — no later commit changed any Rust/JS code, so there is no
+candidate-vs-gate-run gap to reconcile this time):
+`cargo test --workspace -j1 --quiet` (24 suites, 0 failed),
+`cargo clippy --workspace --all-targets -j1 -- -D warnings` (clean),
+`cargo fmt --all --check` (clean),
+`node --test npm/test/*.test.js` (29 passed, 2 pre-existing skips, 0 failed).
+Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
+**Observation:**
+[scoring-summary.json](observations/stage2-dispatch-corpus/scoring-summary.json),
+[scoring-results.json](observations/stage2-dispatch-corpus/scoring-results.json).
+**Blockers:** none.
 
 ## Stage 3 — Close dispatch holes one language at a time
 
@@ -322,16 +373,30 @@ benchmark, don't run it against the stale snapshot.
   The trustworthy-Must gate (precision 1.000, nonempty set) was not met —
   Must is empty on every corpus measured; see
   [measurement-summary-final.json](observations/stage1/measurement-summary-final.json)
-  for root causes. All four common gates pass on `f53f6dd`. Stages 2–7
-  remain NOT STARTED.
+  for root causes. All four common gates pass on `f53f6dd`.
+- 2026-09-22: Stage 2 is **DONE**: the 49-case dispatch corpus
+  (`af82959`), its scorer (`e35c298`), and every scored result
+  (`32bd5d2`) are committed. Zero unsound cells across all 57 test cells —
+  Girder never overclaimed on this corpus. `must_precision_on_corpus` 1.000
+  (3/3); `must_or_may_recall_on_corpus` 0.086 (3/35), the number Stage 3
+  exists to move. One case unresolvable (TypeScript object-literal methods
+  aren't indexed at all) and published as a failure, not tuned away. New
+  finding beyond Stage 1: Rust's `assert_eq!`/`assert!` hide even a trivial
+  same-file direct call from Must (the call is an opaque macro token, never
+  its own node) — see
+  [scoring-summary.json](observations/stage2-dispatch-corpus/scoring-summary.json).
+  All four common gates pass on `32bd5d2`
+  ([gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/)).
+  Stages 3–7 remain NOT STARTED.
 - MOVESPEED is available: approximately 291 GB free; system reports approximately
   2 GB available RAM and no swap. Cargo and rustc are available from its cache.
 - Stage 4 requires Claude Code, Cursor, and Codex adapters plus raw MCP JSON fallback.
-- Next: Stage 2 — commit the versioned dispatch corpus (≥40 cases, initially
-  48, 12 per language, weighted to Rust trait objects/generics, Python
-  inheritance/super/getattr, TypeScript structural typing/unions, Go
-  interfaces) and score Girder against every case, publishing every failure.
-  Stage 1's measured root causes (same-file/top-level-only proofs, no May enumeration
-  at all, the whole-graph flood rule) are exactly what Stage 3's per-language
-  work will need to address once Stage 2's corpus exists to measure against.
+- Next: Stage 3 — close dispatch holes one language at a time, Rust first
+  (`docs/roadmap.md` Stage 3's own order: Rust → Python → TypeScript → Go).
+  The dispatch corpus now exists to measure improvement against. Stage 2's
+  measured findings name concrete Rust starting points: the same-file/
+  top-level-only proof restriction, the total absence of May enumeration,
+  the whole-graph flood rule, and the newly found assert!/assert_eq!
+  macro-argument gap. Freeze a before-observation on the corpus before
+  changing the Rust resolver, per Stage 3's own precommitted criterion.
 - Completion remains unproven until every criterion above has committed evidence.

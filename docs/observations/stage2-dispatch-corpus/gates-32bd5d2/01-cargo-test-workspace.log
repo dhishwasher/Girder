@@ -1,0 +1,149 @@
+
+running 9 tests
+.........
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+
+running 23 tests
+.......................
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+
+running 363 tests
+....................................................................................... 87/363
+................................................igirder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.415129373}
+..girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.413420507}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.401787777}
+.girder watch: {"discarded_candidates":0,"event":"published","event_reasons":["unknown_rename"],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":100.0,"fallback_reasons":{"dirty_set_exceeds_half":1,"uncertain_event_mapping":1},"full_parsing_count":1,"full_rebuild_reasons":["uncertain_event_mapping","dirty_set_exceeds_half"],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":3,"published_updates":1,"reused_files":0,"total_parsed_files":3,"total_reused_files":0,"update_attempts":1,"update_latency_seconds":0.416067768}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.409758424}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":["unknown_rename"],"failed_attempts":0,"fallback_denominator":2,"fallback_percentage":100.0,"fallback_reasons":{"dirty_set_exceeds_half":2,"uncertain_event_mapping":2},"full_parsing_count":2,"full_rebuild_reasons":["uncertain_event_mapping","dirty_set_exceeds_half"],"generation":3,"initial":false,"initial_attempts":1,"parsed_files":3,"published_updates":2,"reused_files":0,"total_parsed_files":6,"total_reused_files":0,"update_attempts":2,"update_latency_seconds":0.436393967}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":3,"fallback_percentage":100.0,"fallback_reasons":{"dirty_set_exceeds_half":3,"uncertain_event_mapping":2},"full_parsing_count":3,"full_rebuild_reasons":["dirty_set_exceeds_half"],"generation":4,"initial":false,"initial_attempts":1,"parsed_files":2,"published_updates":3,"reused_files":0,"total_parsed_files":8,"total_reused_files":0,"update_attempts":3,"update_latency_seconds":0.40460947}
+..girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.438752447}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.437509071}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":["overflow"],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":100.0,"fallback_reasons":{"uncertain_event_mapping":1},"full_parsing_count":1,"full_rebuild_reasons":["uncertain_event_mapping"],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":3,"published_updates":1,"reused_files":0,"total_parsed_files":3,"total_reused_files":0,"update_attempts":1,"update_latency_seconds":0.380864147}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":0.0,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":1,"published_updates":1,"reused_files":2,"total_parsed_files":1,"total_reused_files":2,"update_attempts":1,"update_latency_seconds":0.631126119}
+.girder watch: {"discarded_candidates":0,"event":"published","event_reasons":["unknown_rename"],"failed_attempts":0,"fallback_denominator":2,"fallback_percentage":100.0,"fallback_reasons":{"uncertain_event_mapping":2},"full_parsing_count":2,"full_rebuild_reasons":["uncertain_event_mapping"],"generation":3,"initial":false,"initial_attempts":1,"parsed_files":3,"published_updates":2,"reused_files":0,"total_parsed_files":6,"total_reused_files":0,"update_attempts":2,"update_latency_seconds":0.367980424}
+.girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":4,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.413649572}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":4,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.409386365}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":["directory_deletion"],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":100.0,"fallback_reasons":{"ownership_changed":1},"full_parsing_count":1,"full_rebuild_reasons":["ownership_changed"],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":3,"published_updates":1,"reused_files":0,"total_parsed_files":3,"total_reused_files":0,"update_attempts":1,"update_latency_seconds":0.414280048}
+.girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":100.0,"fallback_reasons":{"cache_inconsistent":1,"configuration_changed":1},"full_parsing_count":1,"full_rebuild_reasons":["configuration_changed","cache_inconsistent"],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":4,"published_updates":1,"reused_files":0,"total_parsed_files":4,"total_reused_files":0,"update_attempts":1,"update_latency_seconds":0.388386258}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.537184337}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":1,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.48504385}
+.girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.406777394}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":["directory_deletion"],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":100.0,"fallback_reasons":{"cache_inconsistent":1,"dirty_set_exceeds_half":1,"ownership_changed":1},"full_parsing_count":1,"full_rebuild_reasons":["ownership_changed","cache_inconsistent","dirty_set_exceeds_half"],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":1,"published_updates":1,"reused_files":0,"total_parsed_files":1,"total_reused_files":0,"update_attempts":1,"update_latency_seconds":0.446635122}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":100.0,"fallback_reasons":{"configuration_changed":1},"full_parsing_count":1,"full_rebuild_reasons":["configuration_changed"],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":4,"published_updates":1,"reused_files":0,"total_parsed_files":4,"total_reused_files":0,"update_attempts":1,"update_latency_seconds":0.437621669}
+.girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":1,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.375122643}
+............................ 174/363
+....................................................................................... 261/363
+....................................................................................... 348/363
+...............
+test result: ok. 362 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 32.49s
+
+
+running 70 tests
+...................................................................kill: (28017): No such process
+...
+test result: ok. 70 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 88.25s
+
+
+running 6 tests
+......
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.30s
+
+
+running 10 tests
+..........
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.66s
+
+
+running 8 tests
+........
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.91s
+
+
+running 58 tests
+..........................................................
+test result: ok. 58 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+
+running 2 tests
+..
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+
+running 2 tests
+..
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+
+running 1 test
+.
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+
+running 4 tests
+....
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+
+running 12 tests
+............
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+
+running 1 test
+i
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+test: debugpy_launch_breakpoint_stacktrace_disconnect, ignore_message: requires python3 with debugpy installed
+
+
+running 5 tests
+.....
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+
+running 22 tests
+......................
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+
+running 76 tests
+............................................................................
+test result: ok. 76 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
