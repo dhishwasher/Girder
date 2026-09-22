@@ -170,6 +170,7 @@ fn orient_one(
     let callers = traverse(graph, id, depth, true);
     let callees = traverse(graph, id, depth, false);
     let test_ids = graph.tests_for(id);
+    let classification = classified_tests(graph, id);
     // `impact_of` is the same unbounded backward-reachability BFS
     // `review`/`impacted_tests` use — it is not subject to `--depth`, which
     // only bounds the callers/callees sections above. It is also, like
@@ -190,6 +191,7 @@ fn orient_one(
         "callees": section(graph, callees, depth),
         "tests": section(graph, test_ids, 0),
         "impact": section(graph, impact_ids, 0),
+        "classification": classification,
     });
 
     if let Some(score) = selected.score {
@@ -273,6 +275,39 @@ fn section(graph: &SemanticGraph, ids: Vec<NodeId>, depth: u32) -> Value {
     } else {
         json!({"count": count, "paths": paths, "truncated": truncated})
     }
+}
+
+/// Labeled Must/May/Unknown test coverage for `id`, per the frozen
+/// classification policy (`docs/call-classification-policy.md`): the tests
+/// that cover `id` split by the strength of the call evidence connecting
+/// them, plus every unresolved boundary that could hide a reachable test.
+/// Additive alongside the existing unlabeled `tests` section above — this is
+/// the schema-versioned classification response the policy calls for,
+/// without changing `tests`' established shape.
+fn classified_tests(graph: &SemanticGraph, id: NodeId) -> Value {
+    let classified = graph.classified_impact(&[id]).tests(graph);
+    let paths = |ids: &[NodeId]| section(graph, ids.to_vec(), 0);
+    let boundary_count = classified.boundaries.len();
+    let boundary_truncated = boundary_count > MAX_LISTED_PER_SECTION;
+    let boundaries: Vec<Value> = classified
+        .boundaries
+        .into_iter()
+        .take(MAX_LISTED_PER_SECTION)
+        .filter_map(|b| serde_json::to_value(b).ok())
+        .collect();
+    json!({
+        "schema_version": 1,
+        "tests": {
+            "must": paths(&classified.must),
+            "may": paths(&classified.may),
+            "unknown": paths(&classified.unknown),
+        },
+        "boundaries": {
+            "count": boundary_count,
+            "items": boundaries,
+            "truncated": boundary_truncated,
+        },
+    })
 }
 
 #[cfg(test)]

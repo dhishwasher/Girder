@@ -11,6 +11,7 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     let root = PathBuf::from(args.first().map(String::as_str).unwrap_or("."));
     let run = args.iter().any(|a| a == "--run");
     let quiet = args.iter().any(|a| a == "--quiet");
+    let classified = args.iter().any(|a| a == "--classified");
     let out_path = args
         .windows(2)
         .find(|w| w[0] == "--out")
@@ -24,7 +25,7 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
                 continue;
             }
             match arg.as_str() {
-                "--run" | "--quiet" => continue,
+                "--run" | "--quiet" | "--classified" => continue,
                 "--out" => {
                     skip_next = true;
                     continue;
@@ -51,6 +52,10 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
     }
     let config = ProjectConfig::load(&root)?;
     let (graph, _builder, files) = build_from_dir_with_config(&root, &config)?;
+    if quiet && classified && !run && out_path.is_none() {
+        print!("{}", classified_from_graph(&root, &graph, &config, &explicit)?);
+        return Ok(());
+    }
     if quiet && !run && out_path.is_none() {
         print!("{}", quiet_from_graph(&root, &graph, &config, &explicit)?);
         return Ok(());
@@ -335,14 +340,16 @@ fn run_command(
     }
 }
 
-/// The read-only quiet command shared with MCP; no test subprocess is launched.
-pub(super) fn quiet_from_graph(
+/// Resolves the same origin set `quiet_from_graph`/`classified_from_graph` and
+/// the non-quiet `test_impact` path all start from: explicit node paths when
+/// given, otherwise the current git diff.
+fn resolve_origins(
     root: &Path,
     graph: &aether_graph::SemanticGraph,
     config: &ProjectConfig,
     explicit: &[&str],
-) -> std::io::Result<String> {
-    let (origin_ids, baseline_paths) = if explicit.is_empty() {
+) -> std::io::Result<(Vec<NodeId>, Vec<String>)> {
+    if explicit.is_empty() {
         let impact = crate::project::git::semantic_changed_impact_with_config(root, graph, config)?
             .ok_or_else(|| {
                 std::io::Error::new(
@@ -350,7 +357,7 @@ pub(super) fn quiet_from_graph(
             "automatic test-impact requires a Git repository; pass explicit node paths instead",
         )
             })?;
-        (impact.origin_ids, impact.baseline_test_paths)
+        Ok((impact.origin_ids, impact.baseline_test_paths))
     } else {
         let mut ids = Vec::new();
         let mut missing = Vec::new();
@@ -367,8 +374,18 @@ pub(super) fn quiet_from_graph(
                 format!("unknown explicit node path(s): {}", missing.join(", ")),
             ));
         }
-        (ids, Vec::new())
-    };
+        Ok((ids, Vec::new()))
+    }
+}
+
+/// The read-only quiet command shared with MCP; no test subprocess is launched.
+pub(super) fn quiet_from_graph(
+    root: &Path,
+    graph: &aether_graph::SemanticGraph,
+    config: &ProjectConfig,
+    explicit: &[&str],
+) -> std::io::Result<String> {
+    let (origin_ids, baseline_paths) = resolve_origins(root, graph, config, explicit)?;
     let mut ids = graph.tests_for_nodes(&origin_ids);
     let mut seen: HashSet<_> = ids.iter().copied().collect();
     for path in baseline_paths {
@@ -383,4 +400,80 @@ pub(super) fn quiet_from_graph(
         .filter_map(|id| graph.get(id))
         .map(|n| format!("{}\n", n.name))
         .collect())
+}
+
+/// Cap on how many paths or boundary records one section lists in full before
+/// degrading to a count — mirrors `orient`'s `MAX_LISTED_PER_SECTION`. `count`
+/// is always the true total; only the listed items are capped.
+const MAX_LISTED: usize = 50;
+
+/// Labeled Must/May/Unknown test selection, per the frozen classification
+/// policy (`docs/call-classification-policy.md`): the tests reachable from
+/// `origin_ids` via independently certified call evidence, split by the
+/// strength of that evidence, plus every unresolved boundary that could hide
+/// a reachable test. A test reached only through a removed origin's baseline
+/// coverage has no evidence path to classify, so it is conservatively placed
+/// in `unknown` rather than silently dropped.
+pub(super) fn classified_from_graph(
+    root: &Path,
+    graph: &aether_graph::SemanticGraph,
+    config: &ProjectConfig,
+    explicit: &[&str],
+) -> std::io::Result<String> {
+    let (origin_ids, baseline_paths) = resolve_origins(root, graph, config, explicit)?;
+    let mut classified = graph.classified_impact(&origin_ids).tests(graph);
+    let mut seen: HashSet<NodeId> = classified
+        .must
+        .iter()
+        .chain(&classified.may)
+        .chain(&classified.unknown)
+        .copied()
+        .collect();
+    for path in baseline_paths {
+        if let Some(node) = graph.find_by_path(&path) {
+            if seen.insert(node.id) {
+                classified.unknown.push(node.id);
+            }
+        }
+    }
+    let sort_by_path = |ids: &mut Vec<NodeId>| {
+        ids.sort_by(|a, b| {
+            let left = graph.get(*a).map(|n| n.path.as_str()).unwrap_or_default();
+            let right = graph.get(*b).map(|n| n.path.as_str()).unwrap_or_default();
+            left.cmp(right).then_with(|| a.cmp(b))
+        });
+    };
+    sort_by_path(&mut classified.unknown);
+
+    let names = |ids: &[NodeId]| -> serde_json::Value {
+        let mut names: Vec<&str> = ids
+            .iter()
+            .filter_map(|&id| graph.get(id))
+            .map(|n| n.name.as_str())
+            .collect();
+        names.sort_unstable();
+        let count = names.len();
+        let truncated = count > MAX_LISTED;
+        names.truncate(MAX_LISTED);
+        serde_json::json!({"count": count, "names": names, "truncated": truncated})
+    };
+    let boundary_count = classified.boundaries.len();
+    let boundary_truncated = boundary_count > MAX_LISTED;
+    let boundaries: Vec<_> = classified
+        .boundaries
+        .into_iter()
+        .take(MAX_LISTED)
+        .filter_map(|b| serde_json::to_value(b).ok())
+        .collect();
+
+    let document = serde_json::json!({
+        "schema_version": 1,
+        "must": names(&classified.must),
+        "may": names(&classified.may),
+        "unknown": names(&classified.unknown),
+        "boundaries": {"count": boundary_count, "items": boundaries, "truncated": boundary_truncated},
+    });
+    serde_json::to_string_pretty(&document)
+        .map(|s| s + "\n")
+        .map_err(std::io::Error::other)
 }

@@ -31,12 +31,17 @@ pub(super) fn execute(root: &Path, generation: &Generation, argv: &[String]) -> 
             out!(sink, "{}", query::query_answer(source, &args[1]));
         }
         "test-impact" => {
+            let classified = args[1..].iter().any(|a| a == "--classified");
             let explicit: Vec<_> = args[1..]
                 .iter()
-                .filter(|a| *a != "--quiet")
+                .filter(|a| *a != "--quiet" && *a != "--classified")
                 .map(String::as_str)
                 .collect();
-            return test_impact::quiet_from_graph(root, source, &generation.config, &explicit);
+            return if classified {
+                test_impact::classified_from_graph(root, source, &generation.config, &explicit)
+            } else {
+                test_impact::quiet_from_graph(root, source, &generation.config, &explicit)
+            };
         }
         "review" => {
             let since = args

@@ -463,12 +463,20 @@ that do not exist). Prefer it over grepping for call sites.",
         title: "List tests affected by a change",
         description: "\
 Paid license required. \
-Name only the tests that can reach the functions that changed, detected from \
-the git diff or from explicit node paths. One test name per line, ready to \
-pass to a test runner. An empty result means nothing needs testing — it does \
-NOT mean run everything. Treat this as advisory: it is known to over-select \
-unrelated tests and to miss tests reached only through dynamic dispatch, so \
-a full run remains the authority before you claim a change is safe.",
+Name the tests that can reach the functions that changed, detected from the \
+git diff or from explicit node paths. One test name per line, ready to pass \
+to a test runner. An empty result means nothing needs testing — it does NOT \
+mean run everything. This selection is a conservative union: it is known to \
+over-select unrelated tests and, for any test not backed by a resolved call, \
+to include it rather than risk missing one reached only through dynamic \
+dispatch — so a full run remains the authority before you claim a change is \
+safe. Set `classified: true` to see *why* each test was selected instead of \
+one flat list: which tests are reachable through a resolved call with no \
+alternate target (`must`), which are reachable only through an unresolved \
+alternative like a trait object, interface, or override (`may`), and which \
+are reachable only through a boundary this graph could not resolve at all — \
+reflection, an unexpanded macro, an unproven dispatch — and are therefore \
+included solely to avoid a silent miss (`unknown`).",
         schema: || {
             json!({
                 "type": "object",
@@ -477,6 +485,10 @@ a full run remains the authority before you claim a change is safe.",
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "Exact node paths to analyze. Omit to use the current git diff."
+                    },
+                    "classified": {
+                        "type": "boolean",
+                        "description": "Return {must, may, unknown, boundaries} instead of a flat name list. See the tool description."
                     }
                 },
                 "additionalProperties": false
@@ -488,6 +500,9 @@ a full run remains the authority before you claim a change is safe.",
                 root.to_string(),
                 "--quiet".to_string(),
             ];
+            if optional_bool(arguments, "classified")?.unwrap_or(false) {
+                argv.push("--classified".to_string());
+            }
             if let Some(nodes) = optional_string_array(arguments, "nodes")? {
                 argv.extend(nodes);
             }
@@ -548,7 +563,13 @@ codebase resolves correctly only part of the time, see \
 docs/description-search-accuracy.md), not a verified answer, and \
 `find_definition` or `search_code` first is the safer path. Large \
 caller/callee/test/impact sections report a true count and are capped \
-rather than silently dropped.",
+rather than silently dropped. Each node also carries `classification`: the \
+same tests as `tests`, split into `must` (reachable through a resolved call \
+with no alternate target), `may` (reachable only through an unresolved \
+alternative like a trait object, interface, or override), and `unknown` \
+(reachable only through a boundary this graph could not resolve at all), \
+plus the unresolved `boundaries` that produced any `may`/`unknown` result — \
+see docs/call-classification-policy.md.",
         schema: || {
             json!({
                 "type": "object",
