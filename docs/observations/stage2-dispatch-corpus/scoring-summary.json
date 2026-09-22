@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "kind": "stage-criterion-measurement",
+  "stage": 2,
+  "date": "2026-09-22",
+  "candidate_commit": "e35c2984224d73f0f39135d40c31502dee168b7e",
+  "binary": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+  "binary_sha256": "f74eea37666cb9a0943cc2383d62aedad840d7db056a8a3e0e5bcb6f4f7a1bbe",
+  "binary_note": "Same binary measured for Stage 1's f53f6dd candidate; no Rust source has changed since d1706d6, so this is still current.",
+  "corpus": "docs/dispatch-corpus.json",
+  "corpus_sha256": "9e3208a8f3fdc8faaee55cece63c1b5e25526322ebebbba915652f4f526ccd0a",
+  "scorer": "tools/dispatch_corpus_scorer.py",
+  "scorer_sha256": "8ddd746526c64406363a0fbff67ffd7f9c70c0feccd93e18fa6a2c7fd9a6b4c7",
+  "policy": "docs/call-classification-policy.md",
+  "policy_sha256": "d6d686a9033c5a9e44665e8134707a8074296352ec3af28507286d925d96befb",
+  "command": "python3 tools/dispatch_corpus_scorer.py --bitcode <binary> --output docs/observations/stage2-dispatch-corpus/scoring-results.json",
+  "exit_code": 0,
+  "full_results": "scoring-results.json",
+  "confusion_matrix": {
+    "pooled": {
+      "exact": 20,
+      "conservative": 36,
+      "unsafe_exclusion": 0,
+      "overclaim": 0,
+      "failed": 1
+    },
+    "pooled_unsound_total": 0,
+    "total_test_cells": 57,
+    "exact_match_rate": 0.350877,
+    "must_true_positives": 3,
+    "must_false_positives": 0,
+    "must_precision_on_corpus": 1.0,
+    "must_or_may_true_positives": 3,
+    "must_or_may_positive_denominator": 35,
+    "must_or_may_recall_on_corpus": 0.085714
+  },
+  "per_language": {
+    "rust": {"exact": 4, "conservative": 10, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0},
+    "python": {"exact": 6, "conservative": 7, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0},
+    "typescript": {"exact": 5, "conservative": 10, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0},
+    "go": {"exact": 5, "conservative": 9, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0}
+  },
+  "failed_case": {
+    "id": "typescript-structural-object-literal",
+    "reason": "could not resolve origin symbol 'name'",
+    "meaning": "Girder's TypeScript extractor does not index object-literal-valued arrow function properties as callable nodes at all -- a real gap, worse than an Unknown answer (it cannot even locate the node to classify). See docs/dispatch-corpus-changelog.md item 1 for how this was found and why it was kept as a failure rather than edited away."
+  },
+  "headline_finding": "Zero unsound cells: on every one of the 57 scored test cells, Girder never claimed more certainty than the truth supports (no false Must, no false May, no wrongful exclusion). This matches Stage 1's measurement -- Must is essentially never emitted -- but for a structural reason distinct from Stage 1's real-code flood: 3 of the corpus's clean same-file, unambiguous, top-level direct-call cases (the ones designed to be trivially provable) DID score exact-match Must with perfect precision (3/3, no false positives). The corpus's 36 'conservative' cells are concentrated in exactly the categories Stage 1 already named as root causes: cross-file calls, decorator/attribute-anywhere-in-file, concrete-type operator overloads, and every genuinely ambiguous dispatch case (dyn/interface/generic/duck-typing/override), where Girder currently answers Unknown instead of the true Must or May because the extractor has no May-enumeration logic at all yet (must_or_may_recall_on_corpus 0.086 -- 3 of 35 true must-or-may cases were classified as such; the other 32 were safely but imprecisely flooded to Unknown).",
+  "new_finding_not_in_stage1": "rust-direct-same-file scored conservative (Unknown), not exact Must, while the identical pattern in Python/TypeScript/Go all scored exact Must. Verified with `girder orient --nodes crate::lib::target`: test_direct's only recorded call evidence is the assert_eq!(target(), 42) macro invocation itself ('unexpanded-macro-or-decorator') plus a legacy 'uncertified-Calls-edge' -- there is no CallClaim at all for a target() call. Rust's tree-sitter grammar parses a macro invocation's arguments as an opaque token stream, so target() inside assert_eq!(...) never becomes its own call_expression node for the extractor's direct-call walk to find, even though the legacy project-wide resolver (a different code path) does find the edge. This means Rust's own idiomatic assertion macros (assert_eq!, assert!, assert_ne!) make even the simplest, most unambiguous same-file direct call invisible to Must certification -- a more specific and more common root cause than the general 'any macro anywhere in the file' flood already named in Stage 1, worth flagging explicitly for Stage 3's Rust work.",
+  "corpus_coverage_note": "This measurement is 57 test cells across 49 cases (48 scored + 1 recorded failure), not 48/48 as originally planned -- see docs/dispatch-corpus-changelog.md for the TypeScript case split and the Go/Python fixture corrections that changed the case count and file layout after authoring.",
+  "limitations": [
+    "This is pass/fail dynamic validation (declared tests compile and their own assertions pass), not full probe-based reachability instrumentation confirming a must-expected test actually executes its origin or an excluded-expected test does not. Recorded as a scope decision in docs/dispatch-corpus-changelog.md, not a hidden gap.",
+    "typescript-decorator-elsewhere-in-file's dynamic validation is blocked: no TypeScript toolchain in this environment supports executing experimental decorator syntax (Node's built-in type-stripping only erases types). Its Girder-side static classification is unaffected and was scored normally.",
+    "The corpus is a ruler, not a scoreboard: per docs/roadmap.md Stage 2's own rule, when the product starts passing a case it is retained and a harder one is appended in a new corpus revision, scored as a separate fixed cohort -- this run is the corpus's first (and so far only) revision.",
+    "Must-or-May recall (0.086) is expected to be low right now: it is exactly the number Stage 3's per-language work is meant to move, and Stage 3 cannot start language work until this corpus exists to measure improvement against -- which is why Stage 2's own criterion is satisfied by having scored and published this ruler, not by any particular pass rate."
+  ]
+}
