@@ -11,6 +11,7 @@ use aether_graph::{Edge, EdgeKind, Node, NodeId, NodeKind, Span};
 use std::collections::{HashMap, HashSet};
 use tree_sitter::{Node as TsNode, Tree};
 
+mod claims;
 mod go;
 mod typescript;
 
@@ -222,6 +223,17 @@ pub fn module_path_for(file: &str) -> String {
 
 /// Extract a [`BuildOutput`] from a parsed tree.
 pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput {
+    let mut out = extract_definitions_and_references(tree, source, file, lang);
+    claims::annotate(tree, source, lang, &mut out);
+    out
+}
+
+fn extract_definitions_and_references(
+    tree: &Tree,
+    source: &str,
+    file: &str,
+    lang: Lang,
+) -> BuildOutput {
     if lang.is_typescript() {
         return typescript::extract(tree, source, file, lang);
     }

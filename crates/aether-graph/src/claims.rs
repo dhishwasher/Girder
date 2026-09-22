@@ -145,9 +145,10 @@ impl SemanticGraph {
         let mut incoming: HashMap<NodeId, Vec<(NodeId, CallClass)>> = HashMap::new();
         let mut represented = HashSet::new();
         let mut boundaries = Vec::new();
-        for node in self.nodes().filter(|node| {
-            node.kind == NodeKind::Function || node.attr("source_projection") == Some("file-v1")
-        }) {
+        for node in self
+            .nodes()
+            .filter(|node| node.kind == NodeKind::Function || node.kind == NodeKind::Module)
+        {
             match self.call_evidence(node.id) {
                 Ok(evidence) => {
                     for call in evidence.calls {
