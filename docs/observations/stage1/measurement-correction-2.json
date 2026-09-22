@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "kind": "correction",
+  "corrects": "measurement-summary-final.json",
+  "date": "2026-09-22",
+  "note": "Per docs/roadmap.md's resume contract: never edit a committed observation. This is a second, small correction, found on a further review pass; the measured numbers are unaffected and unchanged.",
+  "corrections": [
+    {
+      "original_claim": "root_causes_observed[1]: \"Click and the trustworthiness Python fixture both declare tests as methods (OracleTests::test_*, and Click's pytest-style module-level functions are the exception that does qualify structurally, but still fails on the cross-file rule above).\"",
+      "problem": "Self-contradictory as written: it opens by grouping Click with 'tests as methods', then immediately says Click's tests are module-level functions, not methods.",
+      "corrected_statement": "The trustworthiness Python fixture declares its tests as methods of a class (OracleTests::test_*), which the extractor's top-level-only rule excludes regardless of file. Click's declared tests (tests/test_commands.py, tests/test_chain.py) are ordinary module-level pytest functions, not methods — they qualify under the top-level-only rule but still cannot reach Must because they are in a different file from Group.invoke (src/click/core.py), the cross-file limitation already stated as its own root cause. The two fixtures fail for two different, independently-sufficient reasons; Click's failure is not an example of the top-level/method restriction at all."
+    }
+  ]
+}

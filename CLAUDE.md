@@ -106,10 +106,14 @@ To run tests:
 This is the conservative must∪may∪unknown union (docs/call-classification-policy.md),
 not a targeted answer: it includes any test that cannot be proven unreachable,
 which as of Stage 1 is frequently close to the full suite (see
-docs/observations/stage1/measurement-summary.json). Pass --classified to see
-why each test was included. The empty-selection guard still matters: an
-empty selection means nothing needs testing, and a bare `cargo test $(...)`
-would run everything instead.
+docs/observations/stage1/measurement-summary-final.json). Pass --classified to
+see why each test was included. An empty selection means nothing *reachable
+via a function-node origin* needs testing — it does NOT cover a change with
+no function-node origins at all (e.g. a const-only or type-only edit;
+classified_impact(&[]) returns empty with no boundary notice, a known gap,
+see docs/roadmap.md). The guard still matters for the common case: a bare
+`cargo test $(...)` would run everything instead of respecting an empty
+selection.
 
 To answer a question about the codebase: girder query . "<question>"
 No file reading required.

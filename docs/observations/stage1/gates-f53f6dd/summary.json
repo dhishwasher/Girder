@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "kind": "gate-run",
+  "date": "2026-09-22",
+  "candidate_commit": "f53f6dd43c643962f5906764d949b47d53da1685",
+  "candidate_commit_note": "Gates ran against f53f6dd's working tree, before the observation-only commit cb696db existed. Confirmed the code tree is unchanged between the two: `git diff --stat f53f6dd cb696db -- . ':!docs'` is empty, so this gate evidence remains valid for cb696db (and this commit) unchanged.",
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target",
+    "cargo": "1.97.1",
+    "rustc": "1.97.1"
+  },
+  "gates": [
+    {
+      "command": "cargo test --workspace -j1 --quiet",
+      "log": "01-cargo-test-workspace.log",
+      "log_sha256": "738705f2d1d53b3f0b391c0c252ee4fa694bfd9134402ab25164d568b0eb1487",
+      "exit_code": 0,
+      "exit_code_source": "background task notification (task id b808liodf): 'completed (exit code 0)'",
+      "result_note": "24 test suites, 0 failed (grep-confirmed against the log: 'test result: FAILED' count = 0, 'test result: ok' count = 24)."
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -j1 -- -D warnings",
+      "log": "02-cargo-clippy.log",
+      "log_sha256": "bfa481c0bcc739c8e1f65cf944bc4e1bdf7bc1e0c75ac87744cbb87aa125e3e6",
+      "exit_code": 0,
+      "exit_code_source": "background task notification (task id bpp4hcvh2): 'completed (exit code 0)'",
+      "result_note": "Log ends 'Finished `dev` profile [optimized + debuginfo] target(s) in 52.23s' with no warning/error lines — clean."
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "log": "03-cargo-fmt-check.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "exit_code_source": "foreground shell, captured via `result=$?; echo \"fmt-check exit=$result\"` in the same turn, printed 'fmt-check exit=0'",
+      "result_note": "Empty log (0 bytes) is the correct passing signal for `cargo fmt --check`: it prints a diff only on a formatting mismatch."
+    },
+    {
+      "command": "node --test npm/test/*.test.js",
+      "log": "04-npm-test.log",
+      "log_sha256": "3172bbf768bf67b5a397c5b2a2d18aedf958f564ab7e333a427f7d509a2d39cc",
+      "exit_code": 0,
+      "exit_code_source": "foreground shell, captured via `result=$?; echo \"exit=$result\"` in the same turn, printed 'exit=0'",
+      "result_note": "31 tests: 29 passed, 0 failed, 2 skipped (pre-existing: 'no vendored binary found; set GIRDER_TEST_BIN or run the postinstall first' — unrelated to this program's changes)."
+    }
+  ]
+}

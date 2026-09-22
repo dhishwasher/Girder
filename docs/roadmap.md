@@ -117,7 +117,13 @@ e.g. a const-only or type-only edit) returns empty with no boundary notice
 and no reasoning performed at all, the same as the pre-existing legacy path
 for that case, so an agent reading only the "empty means nothing needs
 testing" framing has no signal that constants aren't modeled as impact
-origins in the first place.
+origins in the first place. CLAUDE.md's guidance was qualified for this in
+`cb696db`'s follow-up, but the `impacted_tests` MCP tool description in
+`mcp.rs` still says unqualified "An empty result means nothing needs
+testing — it does NOT mean run everything"; queued as a small wording fix
+(or a stderr notice when a diff touches files but resolves no function-node
+origins) for the next commit that touches Rust, not worth a rebuild+gate
+cycle on its own.
 
 An error was found and corrected in the first measurement's root-cause
 analysis (not its numbers) after review; see
@@ -296,7 +302,12 @@ Compare pairs only where both succeed. No capable agent means a published
 blocker and no comparative claim, not substitution with a weak model.
 
 **Gate:** harness/evaluator validation, capable-agent campaign, then all common
-gates. **Observation:** none. **Blockers:** capable agent not yet established.
+gates. **Observation:** none. **Blockers:** capable agent not yet established;
+additionally, `docs/agentic-grep-tools.json` (the tool schema
+`tools/agentic_grep_benchmark.py` feeds to its Girder arm) is a stale
+checked-in snapshot that still contains the pre-`d1706d6` `impacted_tests`
+overclaim — regenerate it from the live tool list before any run of this
+benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
