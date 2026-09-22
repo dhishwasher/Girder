@@ -1,0 +1,782 @@
+{
+  "schema_version": 1,
+  "corpus_schema_version": 1,
+  "case_count": 48,
+  "results": [
+    {
+      "id": "rust-direct-same-file",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "test_direct",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_direct'"
+        }
+      ]
+    },
+    {
+      "id": "rust-direct-cross-file",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 2,
+      "tests": [
+        {
+          "test_id": "test_cross_file",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_cross_file'"
+        }
+      ]
+    },
+    {
+      "id": "rust-negative-unreachable",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "test_unrelated",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_unrelated'"
+        }
+      ]
+    },
+    {
+      "id": "rust-dyn-trait-2-impls",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::French::greet",
+      "boundary_count": 8,
+      "tests": [
+        {
+          "test_id": "test_via_english",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_via_english'"
+        },
+        {
+          "test_id": "test_via_french",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_via_french'"
+        }
+      ]
+    },
+    {
+      "id": "rust-generic-bound-dispatch",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::Dog::speak",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_dog",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_dog'"
+        }
+      ]
+    },
+    {
+      "id": "rust-trait-default-vs-override",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::Describable::describe",
+      "boundary_count": 10,
+      "tests": [
+        {
+          "test_id": "test_widget_default",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_widget_default'"
+        },
+        {
+          "test_id": "test_gadget_override",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_gadget_override'"
+        }
+      ]
+    },
+    {
+      "id": "rust-fn-pointer-stored",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_via_pointer",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_via_pointer'"
+        }
+      ]
+    },
+    {
+      "id": "rust-macro-generated-call",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_via_macro",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_via_macro'"
+        }
+      ]
+    },
+    {
+      "id": "rust-operator-overload-concrete",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::Meters::add",
+      "boundary_count": 6,
+      "tests": [
+        {
+          "test_id": "test_add_meters",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_add_meters'"
+        }
+      ]
+    },
+    {
+      "id": "rust-name-shadowing-parameter",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_shadowed",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_shadowed'"
+        }
+      ]
+    },
+    {
+      "id": "rust-call-inside-closure-body",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 7,
+      "tests": [
+        {
+          "test_id": "test_via_closure",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_via_closure'"
+        }
+      ]
+    },
+    {
+      "id": "rust-boxed-dyn-fn-closure",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 6,
+      "tests": [
+        {
+          "test_id": "test_boxed_closure",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_boxed_closure'"
+        }
+      ]
+    },
+    {
+      "id": "python-direct-same-file",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 1,
+      "tests": [
+        {
+          "test_id": "test_direct",
+          "status": "scored",
+          "origin_path": "crate::app::target",
+          "test_path": "crate::app::test_direct",
+          "expected": "must",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-direct-cross-file",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_cross_file",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_app.py::test_cross_file'"
+        }
+      ]
+    },
+    {
+      "id": "python-negative-unreachable",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 1,
+      "tests": [
+        {
+          "test_id": "test_unrelated",
+          "status": "scored",
+          "origin_path": "crate::app::target",
+          "test_path": "crate::app::test_unrelated",
+          "expected": "excluded",
+          "observed": "excluded",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "python-same-class-method-no-subclass",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::Widget::render",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_render",
+          "status": "scored",
+          "origin_path": "crate::app::Widget::render",
+          "test_path": "crate::app::test_render",
+          "expected": "must",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-override-via-subclass",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::Shape::area",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_square",
+          "status": "scored",
+          "origin_path": "crate::app::Shape::area",
+          "test_path": "crate::app::test_square",
+          "expected": "may",
+          "observed": "excluded",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_base_shape",
+          "status": "scored",
+          "origin_path": "crate::app::Shape::area",
+          "test_path": "crate::app::test_base_shape",
+          "expected": "may",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-super-mro-diamond",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::Base::greet",
+      "boundary_count": 7,
+      "tests": [
+        {
+          "test_id": "test_diamond_mro",
+          "status": "scored",
+          "origin_path": "crate::app::Base::greet",
+          "test_path": "crate::app::test_diamond_mro",
+          "expected": "may",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-getattr-dynamic",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::Ops::add",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_getattr",
+          "status": "scored",
+          "origin_path": "crate::app::Ops::add",
+          "test_path": "crate::app::test_getattr",
+          "expected": "unknown",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-unconstrained-duck-typing",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::Duck::quack",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "test_duck",
+          "status": "scored",
+          "origin_path": "crate::app::Duck::quack",
+          "test_path": "crate::app::test_duck",
+          "expected": "unknown",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-decorator-on-call-site",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 7,
+      "tests": [
+        {
+          "test_id": "test_decorated",
+          "status": "scored",
+          "origin_path": "crate::app::target",
+          "test_path": "crate::app::test_decorated",
+          "expected": "unknown",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-dunder-call",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::Adder::__call__",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "test_callable_instance",
+          "status": "scored",
+          "origin_path": "crate::app::Adder::__call__",
+          "test_path": "crate::app::test_callable_instance",
+          "expected": "unknown",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-decorator-elsewhere-in-file",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_direct",
+          "status": "scored",
+          "origin_path": "crate::app::target",
+          "test_path": "crate::app::test_direct",
+          "expected": "must",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-name-shadowing-parameter",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 2,
+      "tests": [
+        {
+          "test_id": "test_shadowed",
+          "status": "scored",
+          "origin_path": "crate::app::target",
+          "test_path": "crate::app::test_shadowed",
+          "expected": "unknown",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "typescript-direct-same-file",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "test_direct",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_direct'"
+        }
+      ]
+    },
+    {
+      "id": "typescript-direct-cross-file",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 6,
+      "tests": [
+        {
+          "test_id": "test_cross_file",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_cross_file'"
+        }
+      ]
+    },
+    {
+      "id": "typescript-negative-unreachable",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "test_unrelated",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_unrelated'"
+        }
+      ]
+    },
+    {
+      "id": "typescript-interface-implementors-2",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::French::greet",
+      "boundary_count": 8,
+      "tests": [
+        {
+          "test_id": "test_via_english",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_via_english'"
+        },
+        {
+          "test_id": "test_via_french",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_via_french'"
+        }
+      ]
+    },
+    {
+      "id": "typescript-structural-object-literal",
+      "status": "failed",
+      "reason": "could not resolve origin symbol 'name' in /home/corymaynard370/Bit-code/fixtures/dispatch-corpus/typescript/structural-object-literal"
+    },
+    {
+      "id": "typescript-union-type-dispatch",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::Square::area",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_circle",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_circle'"
+        }
+      ]
+    },
+    {
+      "id": "typescript-class-inheritance-override",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::Shape::area",
+      "boundary_count": 8,
+      "tests": [
+        {
+          "test_id": "test_square",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_square'"
+        },
+        {
+          "test_id": "test_base_shape",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_base_shape'"
+        }
+      ]
+    },
+    {
+      "id": "typescript-any-receiver",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::Ops::add",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_any",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_any'"
+        }
+      ]
+    },
+    {
+      "id": "typescript-stored-callback",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_via_callback",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_via_callback'"
+        }
+      ]
+    },
+    {
+      "id": "typescript-dynamic-property-access",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::Ops::add",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_dynamic_key",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_dynamic_key'"
+        }
+      ]
+    },
+    {
+      "id": "typescript-decorator-elsewhere-in-file",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::target",
+      "boundary_count": 6,
+      "tests": [
+        {
+          "test_id": "test_direct",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_direct'"
+        }
+      ]
+    },
+    {
+      "id": "typescript-name-shadowing-parameter",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::target",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_shadowed",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'test_shadowed'"
+        }
+      ]
+    },
+    {
+      "id": "go-direct-same-file",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "TestDirect",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestDirect'"
+        }
+      ]
+    },
+    {
+      "id": "go-direct-cross-file",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "TestCrossFile",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestCrossFile'"
+        }
+      ]
+    },
+    {
+      "id": "go-negative-unreachable",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "TestUnrelated",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestUnrelated'"
+        }
+      ]
+    },
+    {
+      "id": "go-interface-2-impls",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Greeter::Greet",
+      "boundary_count": 8,
+      "tests": [
+        {
+          "test_id": "TestViaEnglish",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestViaEnglish'"
+        },
+        {
+          "test_id": "TestViaFrench",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestViaFrench'"
+        }
+      ]
+    },
+    {
+      "id": "go-embedding-promotion",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Base::Describe",
+      "boundary_count": 8,
+      "tests": [
+        {
+          "test_id": "TestPlainPromoted",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestPlainPromoted'"
+        },
+        {
+          "test_id": "TestOverridden",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestOverridden'"
+        }
+      ]
+    },
+    {
+      "id": "go-method-value",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Adder::Add",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "TestMethodValue",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestMethodValue'"
+        }
+      ]
+    },
+    {
+      "id": "go-function-variable",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "TestFunctionVariable",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestFunctionVariable'"
+        }
+      ]
+    },
+    {
+      "id": "go-reflect-based-call",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Ops::Add",
+      "boundary_count": 10,
+      "tests": [
+        {
+          "test_id": "TestReflectDispatch",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestReflectDispatch'"
+        }
+      ]
+    },
+    {
+      "id": "go-interface-implicit-satisfaction",
+      "status": "failed",
+      "reason": "could not resolve origin symbol 'String' in /home/corymaynard370/Bit-code/fixtures/dispatch-corpus/go/interface-implicit-satisfaction"
+    },
+    {
+      "id": "go-closure-captures-direct-call",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Target",
+      "boundary_count": 7,
+      "tests": [
+        {
+          "test_id": "TestViaClosure",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestViaClosure'"
+        }
+      ]
+    },
+    {
+      "id": "go-name-shadowing-parameter",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "TestShadowed",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestShadowed'"
+        }
+      ]
+    },
+    {
+      "id": "go-generic-function-type-param",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Speaker::Speak",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "TestAnnounceDog",
+          "status": "failed",
+          "reason": "could not resolve test symbol 'TestAnnounceDog'"
+        }
+      ]
+    }
+  ],
+  "confusion_matrix": {
+    "pooled": {
+      "exact": 1,
+      "conservative": 11,
+      "unsound": 0,
+      "failed": 43
+    },
+    "per_language": {
+      "rust": {
+        "exact": 0,
+        "conservative": 0,
+        "unsound": 0,
+        "failed": 14
+      },
+      "python": {
+        "exact": 1,
+        "conservative": 11,
+        "unsound": 0,
+        "failed": 1
+      },
+      "typescript": {
+        "exact": 0,
+        "conservative": 0,
+        "unsound": 0,
+        "failed": 13
+      },
+      "go": {
+        "exact": 0,
+        "conservative": 0,
+        "unsound": 0,
+        "failed": 13
+      }
+    },
+    "total_test_cells": 55,
+    "exact_match_rate": 0.018182,
+    "must_precision_on_corpus": null,
+    "may_recall_on_corpus": 0.0
+  }
+}

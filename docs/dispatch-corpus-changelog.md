@@ -114,3 +114,76 @@ observed class in the corpus's favor (from a false "the test doesn't even
 exist" signal to whatever the real must/may/unknown answer is) — the exact
 kind of authoring bug the dynamic pass-fail validation step exists to catch,
 even without full probe instrumentation.
+
+The signal that found this was independent of Girder: `python3 -m pytest`
+run with default discovery against each fixture directory collected zero
+tests from any `app.py` file (pytest's own discovery rule, not Girder's).
+The bypass — passing the file explicitly, `python3 -m pytest app.py` — is
+what let the earlier `python-validation.log` show "1 passed" and mask the
+problem: the test ran fine under pytest given an explicit path, but neither
+pytest's own default discovery nor Girder's `is_test_fn` would ever find it
+in real use. That the fix was a rename (matching the convention) rather
+than a change to how tests were invoked is itself worth recording: the
+corpus's test-running convention was quietly nonstandard from the start.
+
+## 5. Origin qualifiers added to 14 cases (13 kept; 1 later removed with its case)
+
+**What happened:** the debug run (debug2, timestamped after the resolver
+switch in item 6) found that `girder names` returns every same-named
+candidate when a bare symbol is ambiguous — e.g. two trait/interface
+implementors both defining a method called `greet`. This is visible from
+the fixture alone (two classes/impls/structs in one file declaring the same
+method name) and needed no reference to what Girder classified any call as;
+it is a resolution mechanic, not a dispatch judgment. An `origin.qualifier`
+field (a receiver type or enclosing scope) was added to each ambiguous
+case's manifest entry so the scorer resolves the one specific implementor
+the rationale already named:
+
+| Case | Qualifier |
+| --- | --- |
+| `rust-dyn-trait-2-impls` | `English` |
+| `rust-generic-bound-dispatch` | `Dog` |
+| `rust-trait-default-vs-override` | `Describable` (the trait's default body) |
+| `python-override-via-subclass` | `Shape` (the base class) |
+| `python-super-mro-diamond` | `Base` |
+| `python-unconstrained-duck-typing` | `Duck` |
+| `typescript-interface-implementors-2` | `English` |
+| `typescript-union-type-dispatch` | `Circle` |
+| `typescript-class-inheritance-override` | `Shape` |
+| `typescript-structural-class-no-implements` (added, item 1) | `Alice` |
+| `go-interface-2-impls` | `English` |
+| `go-embedding-promotion` | `Base` |
+| `go-interface-implicit-satisfaction` | `Meters` |
+| `go-generic-function-type-param` | `Dog` |
+
+(`typescript-structural-object-literal` was also qualifier-patched at the
+same time, then reverted along with the rest of that case per item 1; it
+carries no qualifier in the committed manifest.)
+
+## 6. Scorer resolver switched from `girder search` to `girder names`
+
+**What happened:** the first debug run (`debug1`) used `girder search`
+(concept/similarity search) to resolve symbols to graph paths, expecting
+substring-style behavior. It returned "no matches" for the large majority
+of exact test-function-name lookups — a short, unremarkable identifier like
+`test_direct` can score below `search`'s relevance floor in a two-function
+project. This is a scorer-tooling defect, not a corpus edit: no case's
+fixture or expectation was touched. Switched to `girder names <dir>
+<identifier> --json` (documented as "Exact name match (not substring)"),
+which resolved correctly. The corpus's expectations were authored, and
+never revised, independent of which resolution mechanism the scorer used to
+read them back.
+
+## 7. Scorer: a non-matching qualifier now fails instead of silently falling back
+
+**What happened:** found on a later review of the scorer's own code, not
+from any scoring result. `resolve_symbol`'s qualifier filter only replaced
+the candidate list when the filter matched *something*; a qualifier that
+matched nothing left the original, unqualified candidate list in place,
+which could silently return the wrong node (never raising an error) if
+exactly one unqualified candidate happened to exist. No case in the
+committed corpus is affected today — all 14 qualifiers currently in the
+manifest do match — confirmed by re-running the scorer after the fix and
+diffing its full confusion matrix against the committed
+`scoring-results.json`: byte-identical. Fixed as a guard for Stage 3, where
+new or edited qualifiers are more likely.

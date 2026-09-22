@@ -76,9 +76,11 @@ def resolve_symbol(
         return None
     paths = [c["path"] for c in candidates]
     if qualifier:
-        qualified = [p for p in paths if f"::{qualifier}::{bare}" in p or p == f"crate::{qualifier}::{bare}"]
-        if qualified:
-            paths = qualified
+        # A qualifier that matches nothing is a resolution failure, not a
+        # silent fall-through to the unqualified candidates -- with exactly
+        # one unqualified candidate left, that fallback would have returned
+        # the wrong node without ever raising an error.
+        paths = [p for p in paths if f"::{qualifier}::{bare}" in p or p == f"crate::{qualifier}::{bare}"]
     if len(paths) == 1:
         return paths[0]
     if not paths:

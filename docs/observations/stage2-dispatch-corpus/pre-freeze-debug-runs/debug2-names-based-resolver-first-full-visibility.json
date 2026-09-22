@@ -1,0 +1,981 @@
+{
+  "schema_version": 1,
+  "corpus_schema_version": 1,
+  "case_count": 48,
+  "results": [
+    {
+      "id": "rust-direct-same-file",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "test_direct",
+          "status": "scored",
+          "origin_path": "crate::lib::target",
+          "test_path": "crate::lib::test_direct",
+          "expected": "must",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "rust-direct-cross-file",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 2,
+      "tests": [
+        {
+          "test_id": "test_cross_file",
+          "status": "scored",
+          "origin_path": "crate::lib::target",
+          "test_path": "crate::tests::impact::test_cross_file",
+          "expected": "must",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "rust-negative-unreachable",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "test_unrelated",
+          "status": "scored",
+          "origin_path": "crate::lib::target",
+          "test_path": "crate::lib::test_unrelated",
+          "expected": "excluded",
+          "observed": "unknown",
+          "cell": "unsound"
+        }
+      ]
+    },
+    {
+      "id": "rust-dyn-trait-2-impls",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::English::greet",
+      "boundary_count": 8,
+      "tests": [
+        {
+          "test_id": "test_via_english",
+          "status": "scored",
+          "origin_path": "crate::lib::English::greet",
+          "test_path": "crate::lib::test_via_english",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_via_french",
+          "status": "scored",
+          "origin_path": "crate::lib::English::greet",
+          "test_path": "crate::lib::test_via_french",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "rust-generic-bound-dispatch",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::Dog::speak",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_dog",
+          "status": "scored",
+          "origin_path": "crate::lib::Dog::speak",
+          "test_path": "crate::lib::test_dog",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "rust-trait-default-vs-override",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::Describable::describe",
+      "boundary_count": 10,
+      "tests": [
+        {
+          "test_id": "test_widget_default",
+          "status": "scored",
+          "origin_path": "crate::lib::Describable::describe",
+          "test_path": "crate::lib::test_widget_default",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_gadget_override",
+          "status": "scored",
+          "origin_path": "crate::lib::Describable::describe",
+          "test_path": "crate::lib::test_gadget_override",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "rust-fn-pointer-stored",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_via_pointer",
+          "status": "scored",
+          "origin_path": "crate::lib::target",
+          "test_path": "crate::lib::test_via_pointer",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "rust-macro-generated-call",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_via_macro",
+          "status": "scored",
+          "origin_path": "crate::lib::target",
+          "test_path": "crate::lib::test_via_macro",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "rust-operator-overload-concrete",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::Meters::add",
+      "boundary_count": 6,
+      "tests": [
+        {
+          "test_id": "test_add_meters",
+          "status": "scored",
+          "origin_path": "crate::lib::Meters::add",
+          "test_path": "crate::lib::test_add_meters",
+          "expected": "must",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "rust-name-shadowing-parameter",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_shadowed",
+          "status": "scored",
+          "origin_path": "crate::lib::target",
+          "test_path": "crate::lib::test_shadowed",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "rust-call-inside-closure-body",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 7,
+      "tests": [
+        {
+          "test_id": "test_via_closure",
+          "status": "scored",
+          "origin_path": "crate::lib::target",
+          "test_path": "crate::lib::test_via_closure",
+          "expected": "must",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "rust-boxed-dyn-fn-closure",
+      "language": "rust",
+      "status": "scored",
+      "origin_path": "crate::lib::target",
+      "boundary_count": 6,
+      "tests": [
+        {
+          "test_id": "test_boxed_closure",
+          "status": "scored",
+          "origin_path": "crate::lib::target",
+          "test_path": "crate::lib::test_boxed_closure",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "python-direct-same-file",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 1,
+      "tests": [
+        {
+          "test_id": "test_direct",
+          "status": "scored",
+          "origin_path": "crate::app::target",
+          "test_path": "crate::app::test_direct",
+          "expected": "must",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-direct-cross-file",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_cross_file",
+          "status": "scored",
+          "origin_path": "crate::app::target",
+          "test_path": "crate::test_app::test_cross_file",
+          "expected": "must",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-negative-unreachable",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 1,
+      "tests": [
+        {
+          "test_id": "test_unrelated",
+          "status": "scored",
+          "origin_path": "crate::app::target",
+          "test_path": "crate::app::test_unrelated",
+          "expected": "excluded",
+          "observed": "excluded",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "python-same-class-method-no-subclass",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::Widget::render",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_render",
+          "status": "scored",
+          "origin_path": "crate::app::Widget::render",
+          "test_path": "crate::app::test_render",
+          "expected": "must",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-override-via-subclass",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::Shape::area",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_square",
+          "status": "scored",
+          "origin_path": "crate::app::Shape::area",
+          "test_path": "crate::app::test_square",
+          "expected": "may",
+          "observed": "excluded",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_base_shape",
+          "status": "scored",
+          "origin_path": "crate::app::Shape::area",
+          "test_path": "crate::app::test_base_shape",
+          "expected": "may",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-super-mro-diamond",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::Base::greet",
+      "boundary_count": 7,
+      "tests": [
+        {
+          "test_id": "test_diamond_mro",
+          "status": "scored",
+          "origin_path": "crate::app::Base::greet",
+          "test_path": "crate::app::test_diamond_mro",
+          "expected": "may",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-getattr-dynamic",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::Ops::add",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_getattr",
+          "status": "scored",
+          "origin_path": "crate::app::Ops::add",
+          "test_path": "crate::app::test_getattr",
+          "expected": "unknown",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-unconstrained-duck-typing",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::Duck::quack",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "test_duck",
+          "status": "scored",
+          "origin_path": "crate::app::Duck::quack",
+          "test_path": "crate::app::test_duck",
+          "expected": "unknown",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-decorator-on-call-site",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 7,
+      "tests": [
+        {
+          "test_id": "test_decorated",
+          "status": "scored",
+          "origin_path": "crate::app::target",
+          "test_path": "crate::app::test_decorated",
+          "expected": "unknown",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-dunder-call",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::Adder::__call__",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "test_callable_instance",
+          "status": "scored",
+          "origin_path": "crate::app::Adder::__call__",
+          "test_path": "crate::app::test_callable_instance",
+          "expected": "unknown",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-decorator-elsewhere-in-file",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_direct",
+          "status": "scored",
+          "origin_path": "crate::app::target",
+          "test_path": "crate::app::test_direct",
+          "expected": "must",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "python-name-shadowing-parameter",
+      "language": "python",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 2,
+      "tests": [
+        {
+          "test_id": "test_shadowed",
+          "status": "scored",
+          "origin_path": "crate::app::target",
+          "test_path": "crate::app::test_shadowed",
+          "expected": "unknown",
+          "observed": "excluded",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "typescript-direct-same-file",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "test_direct",
+          "status": "scored",
+          "origin_path": "crate::app.test::target",
+          "test_path": "crate::app.test::test_direct",
+          "expected": "must",
+          "observed": "must",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "typescript-direct-cross-file",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app::target",
+      "boundary_count": 6,
+      "tests": [
+        {
+          "test_id": "test_cross_file",
+          "status": "scored",
+          "origin_path": "crate::app::target",
+          "test_path": "crate::app.test::test_cross_file",
+          "expected": "must",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "typescript-negative-unreachable",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "test_unrelated",
+          "status": "scored",
+          "origin_path": "crate::app.test::target",
+          "test_path": "crate::app.test::test_unrelated",
+          "expected": "excluded",
+          "observed": "unknown",
+          "cell": "unsound"
+        }
+      ]
+    },
+    {
+      "id": "typescript-interface-implementors-2",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::English::greet",
+      "boundary_count": 8,
+      "tests": [
+        {
+          "test_id": "test_via_english",
+          "status": "scored",
+          "origin_path": "crate::app.test::English::greet",
+          "test_path": "crate::app.test::test_via_english",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_via_french",
+          "status": "scored",
+          "origin_path": "crate::app.test::English::greet",
+          "test_path": "crate::app.test::test_via_french",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "typescript-structural-object-literal",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::Alice::name",
+      "boundary_count": 8,
+      "tests": [
+        {
+          "test_id": "test_alice",
+          "status": "scored",
+          "origin_path": "crate::app.test::Alice::name",
+          "test_path": "crate::app.test::test_alice",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_bob",
+          "status": "scored",
+          "origin_path": "crate::app.test::Alice::name",
+          "test_path": "crate::app.test::test_bob",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "typescript-union-type-dispatch",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::Circle::area",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_circle",
+          "status": "scored",
+          "origin_path": "crate::app.test::Circle::area",
+          "test_path": "crate::app.test::test_circle",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "typescript-class-inheritance-override",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::Shape::area",
+      "boundary_count": 8,
+      "tests": [
+        {
+          "test_id": "test_square",
+          "status": "scored",
+          "origin_path": "crate::app.test::Shape::area",
+          "test_path": "crate::app.test::test_square",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_base_shape",
+          "status": "scored",
+          "origin_path": "crate::app.test::Shape::area",
+          "test_path": "crate::app.test::test_base_shape",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "typescript-any-receiver",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::Ops::add",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_any",
+          "status": "scored",
+          "origin_path": "crate::app.test::Ops::add",
+          "test_path": "crate::app.test::test_any",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "typescript-stored-callback",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "test_via_callback",
+          "status": "scored",
+          "origin_path": "crate::app.test::target",
+          "test_path": "crate::app.test::test_via_callback",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "typescript-dynamic-property-access",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::Ops::add",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_dynamic_key",
+          "status": "scored",
+          "origin_path": "crate::app.test::Ops::add",
+          "test_path": "crate::app.test::test_dynamic_key",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "typescript-decorator-elsewhere-in-file",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::target",
+      "boundary_count": 6,
+      "tests": [
+        {
+          "test_id": "test_direct",
+          "status": "scored",
+          "origin_path": "crate::app.test::target",
+          "test_path": "crate::app.test::test_direct",
+          "expected": "must",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "typescript-name-shadowing-parameter",
+      "language": "typescript",
+      "status": "scored",
+      "origin_path": "crate::app.test::target",
+      "boundary_count": 5,
+      "tests": [
+        {
+          "test_id": "test_shadowed",
+          "status": "scored",
+          "origin_path": "crate::app.test::target",
+          "test_path": "crate::app.test::test_shadowed",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "go-direct-same-file",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "TestDirect",
+          "status": "scored",
+          "origin_path": "crate::Target",
+          "test_path": "crate::TestDirect",
+          "expected": "must",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "go-direct-cross-file",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "TestCrossFile",
+          "status": "scored",
+          "origin_path": "crate::Target",
+          "test_path": "crate::TestCrossFile",
+          "expected": "must",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "go-negative-unreachable",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Target",
+      "boundary_count": 3,
+      "tests": [
+        {
+          "test_id": "TestUnrelated",
+          "status": "scored",
+          "origin_path": "crate::Target",
+          "test_path": "crate::TestUnrelated",
+          "expected": "excluded",
+          "observed": "unknown",
+          "cell": "unsound"
+        }
+      ]
+    },
+    {
+      "id": "go-interface-2-impls",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::English::Greet",
+      "boundary_count": 8,
+      "tests": [
+        {
+          "test_id": "TestViaEnglish",
+          "status": "scored",
+          "origin_path": "crate::English::Greet",
+          "test_path": "crate::TestViaEnglish",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "TestViaFrench",
+          "status": "scored",
+          "origin_path": "crate::English::Greet",
+          "test_path": "crate::TestViaFrench",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "go-embedding-promotion",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Base::Describe",
+      "boundary_count": 8,
+      "tests": [
+        {
+          "test_id": "TestPlainPromoted",
+          "status": "scored",
+          "origin_path": "crate::Base::Describe",
+          "test_path": "crate::TestPlainPromoted",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "TestOverridden",
+          "status": "scored",
+          "origin_path": "crate::Base::Describe",
+          "test_path": "crate::TestOverridden",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "go-method-value",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Adder::Add",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "TestMethodValue",
+          "status": "scored",
+          "origin_path": "crate::Adder::Add",
+          "test_path": "crate::TestMethodValue",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "go-function-variable",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "TestFunctionVariable",
+          "status": "scored",
+          "origin_path": "crate::Target",
+          "test_path": "crate::TestFunctionVariable",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "go-reflect-based-call",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Ops::Add",
+      "boundary_count": 10,
+      "tests": [
+        {
+          "test_id": "TestReflectDispatch",
+          "status": "scored",
+          "origin_path": "crate::Ops::Add",
+          "test_path": "crate::TestReflectDispatch",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "go-interface-implicit-satisfaction",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Meters::String",
+      "boundary_count": 6,
+      "tests": [
+        {
+          "test_id": "TestMeters",
+          "status": "scored",
+          "origin_path": "crate::Meters::String",
+          "test_path": "crate::TestMeters",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "go-closure-captures-direct-call",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Target",
+      "boundary_count": 7,
+      "tests": [
+        {
+          "test_id": "TestViaClosure",
+          "status": "scored",
+          "origin_path": "crate::Target",
+          "test_path": "crate::TestViaClosure",
+          "expected": "must",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "go-name-shadowing-parameter",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Target",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "TestShadowed",
+          "status": "scored",
+          "origin_path": "crate::Target",
+          "test_path": "crate::TestShadowed",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "go-generic-function-type-param",
+      "language": "go",
+      "status": "scored",
+      "origin_path": "crate::Dog::Speak",
+      "boundary_count": 4,
+      "tests": [
+        {
+          "test_id": "TestAnnounceDog",
+          "status": "scored",
+          "origin_path": "crate::Dog::Speak",
+          "test_path": "crate::TestAnnounceDog",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    }
+  ],
+  "confusion_matrix": {
+    "pooled": {
+      "exact": 14,
+      "conservative": 39,
+      "unsound": 3,
+      "failed": 0
+    },
+    "per_language": {
+      "rust": {
+        "exact": 4,
+        "conservative": 9,
+        "unsound": 1,
+        "failed": 0
+      },
+      "python": {
+        "exact": 1,
+        "conservative": 12,
+        "unsound": 0,
+        "failed": 0
+      },
+      "typescript": {
+        "exact": 5,
+        "conservative": 9,
+        "unsound": 1,
+        "failed": 0
+      },
+      "go": {
+        "exact": 4,
+        "conservative": 9,
+        "unsound": 1,
+        "failed": 0
+      }
+    },
+    "total_test_cells": 56,
+    "exact_match_rate": 0.25,
+    "must_precision_on_corpus": 1.0,
+    "may_recall_on_corpus": 0.028571
+  }
+}

@@ -169,8 +169,9 @@ corrections below), all passing:
 
 **Status: DONE**
 
-Committed a versioned independent oracle before any scoring run:
-[docs/dispatch-corpus.json](dispatch-corpus.json), 49 cases (12 each Rust/
+Committed a versioned independent oracle before any *official* scoring run
+against a frozen corpus: [docs/dispatch-corpus.json](dispatch-corpus.json),
+49 cases (12 each Rust/
 Python/Go, 13 TypeScript — see
 [docs/dispatch-corpus-changelog.md](dispatch-corpus-changelog.md) item 1 for
 why TypeScript has 13), weighted to the hard forms named in the program
@@ -182,15 +183,23 @@ reflect/generics. Each case: an isolated mini-project, a source-level
 origin (file + symbol, optional qualifier), declared tests with an expected
 class per [docs/call-classification-policy.md](call-classification-policy.md)
 or `excluded` (true negative), a policy-table citation, and a rationale
-derived from language semantics alone — not from running Girder.
-Dynamically validated (tests compile and pass) for every case except one
-TypeScript case whose decorator syntax this environment's toolchain cannot
-execute (recorded blocked, not faked).
+authored from language semantics alone, before Girder was ever run against
+any case. Dynamically validated (tests compile and pass) for every case
+except one TypeScript case whose decorator syntax this environment's
+toolchain cannot execute (recorded blocked, not faked).
 
-Every edit made after Girder's classified answer was first seen for any
-case, while developing the scorer, is in the changelog with a justification
-checked against "visible from the fixture/spec alone" — including the most
-consequential one: 11 Python fixtures were never marked as tests at all
+While developing the scorer against the still-unfrozen corpus, four debug
+scoring passes did run before the corpus was committed, and from the second
+pass onward they showed real classified answers, not just resolution
+failures — see
+[docs/dispatch-corpus-changelog.md](dispatch-corpus-changelog.md), which
+records every edit made after that point (including the qualifiers added
+to disambiguate same-named methods and the switch from `search` to `names`
+for symbol resolution) with a justification checked against "visible from
+the fixture/spec alone," and the four raw debug outputs themselves, kept
+for the record
+([pre-freeze-debug-runs/](observations/stage2-dispatch-corpus/pre-freeze-debug-runs/)).
+The most consequential edit: 11 Python fixtures were never marked as tests at all
 because the extractor requires the *file* to match pytest/unittest
 discovery, not just the function name, found via `girder orient` (not by
 adjusting an expectation to match an answer).
@@ -220,6 +229,19 @@ TypeScript/Go's non-macro assertion styles don't have this problem, so the
 identical direct-call pattern scores exact Must in all three but
 conservative in Rust. Full explanation in scoring-summary.json's
 `new_finding_not_in_stage1`.
+
+"Zero unsound" is guaranteed, not earned, under the current implementation:
+while `classified_impact`'s whole-graph flood is active (any single
+Unknown-classified call anywhere makes every function at least Unknown),
+`observed=excluded` cannot happen at all, so `unsafe_exclusion` cannot
+fire; `overclaim` can only fire through a genuine Must (or, once Stage 3
+implements it, May) path actually being found. The corpus has only 4
+`excluded`-expected cells (one true negative per language) to even exercise
+that path. This number becomes informative, not just structurally
+guaranteed, once Stage 3 narrows the flood — recorded here so a future
+session doesn't read 0 unsound as evidence the classifier is already
+trustworthy on ambiguous dispatch; Stage 1 and this corpus's own recall
+numbers say otherwise.
 
 **Gate:** all four common gates, run against `32bd5d2` (the exact committed
 candidate — no later commit changed any Rust/JS code, so there is no
