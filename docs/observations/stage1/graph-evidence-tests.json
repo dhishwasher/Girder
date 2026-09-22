@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "kind": "development-unit-check",
+  "date": "2026-09-22",
+  "candidate_commit": "eb120c139160632bc945efe1792af61a9ff46c5e",
+  "policy": "docs/call-classification-policy.md",
+  "policy_sha256": "d6d686a9033c5a9e44665e8134707a8074296352ec3af28507286d925d96befb",
+  "command": "cargo test -p aether-graph claims::tests -j1 --quiet",
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target",
+    "cargo": "1.97.1",
+    "rustc": "1.97.1"
+  },
+  "test_executable": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/deps/aether_graph-5c21df0f962c7a54",
+  "test_executable_sha256": "6bf0dadd91bbbe95cbde860a46e4c082fd58dfe0ac51745a26f3032ef705f3ec",
+  "executable_identification": "Most recently modified executable aether_graph-* in the serial Cargo target after the completed check.",
+  "exit_code": 0,
+  "passed": 7,
+  "failed": 0,
+  "filtered_out": 69,
+  "log": "graph-evidence-tests.log",
+  "log_sha256": "8164b2e4785e0a7e9d3aab74ac57325a8f79744731d757dfb0dcbfced146433d",
+  "limitations": [
+    "Development unit check only, not a Stage 1 success observation.",
+    "No extractor integration, CLI/MCP classification, mutation measurement, or common stage gate has run."
+  ]
+}

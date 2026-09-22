@@ -56,7 +56,11 @@ weaken thresholds or change expectations to improve a reported score.
 **Status: IN PROGRESS**
 
 The [v1 classification policy](call-classification-policy.md) is specified for
-separate preimplementation commitment. No classified API or measurement exists yet.
+separate preimplementation commitment (`4745a5c`). Shared graph evidence and
+classified reachability are implemented (`eb120c1`);
+[seven development unit checks passed](observations/stage1/graph-evidence-tests.json).
+Extractor integration, public CLI/MCP answers, and mutation measurements remain
+unimplemented. This is not stage-completion evidence.
 
 Precommit a separate language-specific classification policy for Rust, Python,
 TypeScript/TSX, and Go. Must means a proven resolved call without a viable
@@ -221,11 +225,12 @@ gates. **Observation:** none. **Blockers:** capable agent not yet established.
 
 ## Current checkpoint
 
-- 2026-09-22: roadmap and project resume instructions committed. Stage 1 policy
-  specified; remaining stages NOT STARTED. No stage measurements or gates run.
+- 2026-09-22: Stage 1 policy and shared graph evidence committed. Seven graph
+  unit checks passed; remaining stages NOT STARTED. No stage measurements or
+  common stage gates run.
 - MOVESPEED is available: approximately 291 GB free; system reports approximately
   2 GB available RAM and no swap. Cargo and rustc are available from its cache.
 - Stage 4 requires Claude Code, Cursor, and Codex adapters plus raw MCP JSON fallback.
-- Next: commit the Stage 1 policy separately, then implement shared call evidence
-  and classified reachability before changing CLI/MCP presentation.
+- Next: attach fresh extractor/resolver call evidence, then wire classified
+  CLI/MCP answers and run the frozen mutation measurement and common gates.
 - Completion remains unproven until every criterion above has committed evidence.
