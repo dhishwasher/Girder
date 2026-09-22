@@ -248,19 +248,21 @@ def assert_isolated_test_executed(
 
 
 def parse_bitcode_classified_selection(output: str) -> dict[str, object]:
-    """Parse `girder test-impact --quiet --classified` JSON: test *names*
-    (not graph paths — classified_from_graph already resolves to n.name, the
-    same identifier the flat --quiet parser above matches) labeled Must/May/
-    Unknown, per docs/call-classification-policy.md."""
+    """Parse `girder test-impact --quiet --classified` JSON: graph *paths*
+    (classified_from_graph resolves to n.path, sorted, per the frozen
+    identity/ordering policy — not the bare names the flat --quiet parser
+    above matches) labeled Must/May/Unknown, per
+    docs/call-classification-policy.md. Callers translate paths to their own
+    test identifiers via their own graph_paths mapping."""
     document = json.loads(output)
     if document.get("schema_version") != 1:
         raise RuntimeError(
             f"unsupported classified test-impact schema_version: {document.get('schema_version')!r}"
         )
     return {
-        "must": set(document["must"]["names"]),
-        "may": set(document["may"]["names"]),
-        "unknown": set(document["unknown"]["names"]),
+        "must": set(document["must"]["paths"]),
+        "may": set(document["may"]["paths"]),
+        "unknown": set(document["unknown"]["paths"]),
         "truncated": (
             document["must"]["truncated"]
             or document["may"]["truncated"]
@@ -469,7 +471,14 @@ def measure_fixture(
     selected = {path_to_test[path] for path in selected_paths}
 
     classified_command = run(
-        (str(bitcode), "test-impact", str(static_project), "--quiet", "--classified"),
+        (
+            str(bitcode),
+            "test-impact",
+            str(static_project),
+            "--quiet",
+            "--classified",
+            "--unbounded",
+        ),
         cwd=REPO_ROOT,
         **command_options,
     )
@@ -489,16 +498,21 @@ def measure_fixture(
             f"{fixture.name} classified selection is truncated in a corpus "
             "fixture; the corpus is too small for this to be expected"
         )
-    unknown_classified_names = (
+    unknown_classified_paths = (
         classified_selection["must"]  # type: ignore[operator]
         | classified_selection["may"]  # type: ignore[operator]
         | classified_selection["unknown"]  # type: ignore[operator]
-    ) - set(fixture.tests)
-    if unknown_classified_names:
+    ) - path_to_test.keys()
+    if unknown_classified_paths:
         raise RuntimeError(
-            "Bit Code's classified selection names tests outside this fixture: "
-            f"{sorted(unknown_classified_names)}"
+            "Bit Code's classified selection names graph paths outside this "
+            f"fixture: {sorted(unknown_classified_paths)}"
         )
+    classified_by_test = {
+        bucket: {path_to_test[path] for path in classified_selection[bucket]}  # type: ignore[index]
+        for bucket in ("must", "may", "unknown")
+    }
+    classified_by_test["boundary_count"] = classified_selection["boundary_count"]
 
     executed: set[str] = set()
     for index, test in enumerate(fixture.tests):
@@ -529,7 +543,7 @@ def measure_fixture(
         reported_impacted=reported_impacted,
         reported_skipped=reported_skipped,
     )
-    result["classified"] = classified_metrics(classified_selection, executed)
+    result["classified"] = classified_metrics(classified_by_test, executed)
     return result
 
 

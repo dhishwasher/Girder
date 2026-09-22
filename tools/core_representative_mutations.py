@@ -265,26 +265,37 @@ def measure_mutation(
     node_id_to_selected: dict[str, bool] = {}
 
     classified_command = run(
-        (str(bitcode), "test-impact", str(static_project), "--quiet", "--classified"),
+        (
+            str(bitcode),
+            "test-impact",
+            str(static_project),
+            "--quiet",
+            "--classified",
+            "--unbounded",
+        ),
         cwd=REPO_ROOT,
         **command_options,
     )
-    classified_names = parse_bitcode_classified_selection(classified_command.stdout)
-    # classified_from_graph resolves to bare test names (n.name), same as the
-    # graph-path resolution in _selected_for_node but one segment shorter;
-    # translate the declared node ids the same way, then narrow the flooded
-    # whole-repository buckets down to this mutation's declared tests only —
-    # Click's real test suite is far larger than the three declared here.
-    node_id_by_name = {node_id.rsplit("::", 1)[-1]: node_id for node_id in
-                        (test.node_id for test in mutation.tests)}
-    declared_node_ids = set(node_id_by_name.values())
+    classified_paths = parse_bitcode_classified_selection(classified_command.stdout)
+    # classified_from_graph resolves to graph *paths*; translate each declared
+    # pytest node id the same way _selected_for_node does, then narrow the
+    # flooded whole-repository buckets down to this mutation's declared tests
+    # only — Click's real test suite is far larger than the three declared
+    # here. --unbounded (passed above) is what makes this safe: without it,
+    # the display cap could hide a declared test outside the first 50 paths.
+    node_id_by_graph_path = {
+        f"crate::{node_id.split('::', 1)[0][: -len('.py')].replace('/', '::')}"
+        f"::{node_id.split('::', 1)[1]}": node_id
+        for node_id in (test.node_id for test in mutation.tests)
+    }
+    declared_node_ids = set(node_id_by_graph_path.values())
     classified_for_declared = {
-        bucket: {node_id_by_name[name] for name in names if name in node_id_by_name}
-        for bucket, names in (
-            ("must", classified_names["must"]),
-            ("may", classified_names["may"]),
-            ("unknown", classified_names["unknown"]),
-        )
+        bucket: {
+            node_id_by_graph_path[path]
+            for path in classified_paths[bucket]  # type: ignore[index]
+            if path in node_id_by_graph_path
+        }
+        for bucket in ("must", "may", "unknown")
     }
     unclassified = declared_node_ids - (
         classified_for_declared["must"]
@@ -366,7 +377,7 @@ def measure_mutation(
     dynamically_executed = {
         test.node_id for test in mutation.tests if executed[test.node_id]
     }
-    classified_for_declared["boundary_count"] = classified_names["boundary_count"]
+    classified_for_declared["boundary_count"] = classified_paths["boundary_count"]
     classified = classified_metrics(classified_for_declared, dynamically_executed)
     classified["executed_count"] = len(dynamically_executed)
 
