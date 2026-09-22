@@ -6,7 +6,7 @@ Guidance for working in this repository.
 
 Read `docs/roadmap.md` at the beginning of every session and update its checkpoint
 before ending. It is the committed resume contract: preserve stage order, frozen
-policies, failed observations, resource constraints, and scope freeze. A stage is
+policies, failed observations, and resource constraints. A stage is
 not DONE without committed passing evidence. Stage 4 is client-agnostic (Claude
 Code, Cursor, and Codex at minimum), with raw MCP JSON as the universal fallback.
 The program's full stage gates override advisory test selection below.

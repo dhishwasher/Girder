@@ -12,6 +12,7 @@ __pycache__/
 **/*.rs.bk
 /target
 /BLUEPRINT.md
+/PROGRAM.md
 /docs/commercialization.md
 /LICENSE_KEYGEN.md
 /.claude/settings.local.json

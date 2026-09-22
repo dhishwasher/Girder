@@ -1,8 +1,8 @@
-# Girder soundness program
+# Girder technical roadmap
 
-Girder certifies what a code graph may claim: resolved calls, explicit dispatch
-assumptions, verified edit boundaries, and visible uncertainty. Soundness takes
-priority over surface area. This is a continuing program, not a release checklist.
+Status, acceptance criteria, measurement evidence, failures, blockers, and next
+actions for call classification, dispatch resolution, client integration, and
+verified edits.
 
 ## Resume contract
 
@@ -85,7 +85,7 @@ Commit a versioned independent oracle before scoring: at least 40 cases,
 initially 48 (12 per language), weighted to Rust trait objects/generics, Python
 inheritance/super/getattr, TypeScript structural typing/unions, and Go interfaces.
 Record sources, queries, expected sets, assumptions, rationale, controls, and
-negative targets. This corpus is a ruler, not a scoreboard to win.
+negative targets.
 
 **Precommitted criterion:** score Girder against every case and publish all
 expected/actual results, including every failure or unavailable execution.
@@ -127,10 +127,9 @@ common gates. **Observation:** none. **Blockers:** Stage 2 and language order.
 
 **Status: NOT STARTED**
 
-Girder is an MCP server, not a Claude-only product. Ship **one shared bundle with
-per-client adapters**, covering **Claude Code, Cursor, and Codex** at minimum.
-Claude Code goes first only because its advisory hook already exists and its
-format is documented, not because it is the target client.
+Build **one shared MCP bundle with per-client adapters**, covering **Claude Code,
+Cursor, and Codex** at minimum. Start with Claude Code because the advisory hook
+already exists; verify its current documented format before packaging it.
 
 Maintain one canonical instruction: in a repository with a graph, call `orient`
 before broad reads or grep; disclose low confidence and fall back to source
@@ -165,7 +164,7 @@ promised node/edge delta. Girder projects a minimal patch, reparses/re-resolves,
 compares the complete actual delta, and refuses transaction commit on mismatch,
 wrong overload, ambiguity, stale input, or insufficient evidence. Preserve the
 original source and graph on refusal. Keep old plans compatible without calling
-them certified. Use existing paid-feature enforcement; do not alter license text.
+them certified. Do not alter license text.
 
 Print Must/May/Unknown impact and changes in test reachability. Report actual
 test execution separately; predicted reachability is not execution evidence.
@@ -176,18 +175,18 @@ without source or graph changes, while the correct-target counterpart succeeds.
 **Gate:** wrong-target/correct-target, stale-input, unexpected-edge, and rollback
 checks, then all common gates. **Observation:** none. **Blockers:** preceding stages.
 
-## Stage 6 — The benchmark as an institution
+## Stage 6 — Recurring comparative measurements
 
 **Status: NOT STARTED**
 
-Extend the existing competitor harness and retain its published baseline.
+Extend the existing comparative harness and retain its published baseline.
 Schedule at most one campaign every 30 days, starting at this stage; defer
 unavailable runs explicitly, without catch-up bursts. Runs take over three hours
 and have OOM-killed a session. Freeze all versions, source SHAs, artifact hashes,
 adapters, corpus, resource limits, and Girder candidate commit before running.
-Reuse existing competitor pins for the first comparison. Execute serially.
+Reuse existing external-runner pins for the first comparison. Execute serially.
 Girder is never the only runner. Keep passing tasks forever and append harder
-successors. Retain resource-blocked competitors in reporting.
+successors. Retain resource-blocked runners in reporting.
 
 **Precommitted criterion:** at least one fresh rerun with Girder and an external
 runner, pinned identities, published deltas including regressions, raw evidence,
@@ -217,20 +216,12 @@ blocker and no comparative claim, not substitution with a weak model.
 **Gate:** harness/evaluator validation, capable-agent campaign, then all common
 gates. **Observation:** none. **Blockers:** capable agent not yet established.
 
-## Scope freeze
-
-For the duration, no new work on native GUI/force layout, the eight-role swarm,
-CRDT collaboration, generative marketplace, recipe extensions, or time-travel
-debugger. Do not delete or polish them. The only exception is a small
-`girder doctor` reporting unresolved calls, dispatch holes, graph staleness, and
-language coverage; defer it until the shared soundness data exists.
-
 ## Current checkpoint
 
-- 2026-09-22: program resumed with the user's client-agnostic Stage 4 correction.
-- Worktree inspected at `2350b8b`; it was clean. No stages have observations yet.
-- MOVESPEED is now visible; capacity, cached toolchain, and build preflight still
-  need verification. Earlier planning could not see the mount.
-- Next: commit/push this roadmap first, add the project resume instruction, then
-  commit the Stage 1 classification policy separately before implementation.
+- 2026-09-22: roadmap and project resume instructions committed; all seven
+  implementation stages remain NOT STARTED. No stage measurements or gates run.
+- MOVESPEED is available: approximately 291 GB free; system reports approximately
+  2 GB available RAM and no swap. Cargo and rustc are available from its cache.
+- Stage 4 requires Claude Code, Cursor, and Codex adapters plus raw MCP JSON fallback.
+- Next: commit the Stage 1 classification policy separately before implementation.
 - Completion remains unproven until every criterion above has committed evidence.
