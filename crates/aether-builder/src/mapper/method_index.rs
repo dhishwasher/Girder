@@ -455,8 +455,12 @@ pub(super) fn collect(
                         let mut cur = item.walk();
                         let first_child = item.children(&mut cur).next();
                         let is_pub = first_child.is_some_and(|first| {
+                            // Exact "pub" only -- `pub(crate)`, `pub(super)`
+                            // and `pub(in ...)` are all restricted
+                            // visibility, not the plain public the design
+                            // requires, but all three also start with "pub".
                             first.kind() == "visibility_modifier"
-                                && node_text(first, source).starts_with("pub")
+                                && node_text(first, source).trim() == "pub"
                         });
                         let target_id = out
                             .nodes
@@ -571,8 +575,19 @@ pub(super) fn collect(
             continue; // No enclosing function: not a call this design proves.
         };
         let receiver_name = node_text(value, source).to_string();
-        let annotated_type =
-            binding_type_if_unique(&syntax, out, owner_index, &receiver_name, source);
+        let mut annotated_type =
+            binding_type_if_unique(&syntax, out, owner_index, &receiver_name, *n, source);
+        if annotated_type
+            .as_deref()
+            .and_then(bare_head)
+            .is_some_and(|bare| owner_generic_param_names(*n, source).contains(bare))
+        {
+            // The owning function or its enclosing impl block declares a
+            // generic type parameter with this exact bare name (e.g.
+            // `fn t<Graph: Build + Default>()`) -- the annotation names
+            // that parameter, not the crate-wide type of the same name.
+            annotated_type = None;
+        }
         facts.candidate_calls.push(CandidateMethodCall {
             call_span: span_of(*n),
             receiver_name,
@@ -646,21 +661,65 @@ fn collect_use_clause(node: TsNode, source: &str, prefix: &str, facts: &mut Rust
     }
 }
 
+/// Whether `name` is bound anywhere within a pattern subtree -- recurses
+/// through every destructuring form the grammar has (`tuple_pattern`,
+/// `tuple_struct_pattern`, `struct_pattern`, `slice_pattern`, `ref_pattern`,
+/// `mut_pattern`, `reference_pattern`, `captured_pattern`, `or_pattern`),
+/// not just a top-level bare identifier. `struct_pattern`/
+/// `tuple_struct_pattern`'s own `type` field (the enum variant or struct
+/// name being matched) is explicitly excluded -- it names a type, not a
+/// binding. `field_pattern`'s `name` field is a binding only in shorthand
+/// form (`Foo { graph }`); when it has its own `pattern` field
+/// (`Foo { graph: g }`), only that nested pattern is a binding site.
+fn pattern_binds_name(pattern: TsNode, source: &str, name: &str) -> bool {
+    match pattern.kind() {
+        "identifier" => node_text(pattern, source) == name,
+        "field_pattern" => {
+            if let Some(inner) = pattern.child_by_field_name("pattern") {
+                pattern_binds_name(inner, source, name)
+            } else {
+                pattern
+                    .child_by_field_name("name")
+                    .is_some_and(|n| node_text(n, source) == name)
+            }
+        }
+        "tuple_struct_pattern" | "struct_pattern" => {
+            let type_field_id = pattern.child_by_field_name("type").map(|t| t.id());
+            let mut cursor = pattern.walk();
+            let children: Vec<TsNode> = pattern.named_children(&mut cursor).collect();
+            children.into_iter().any(|child| {
+                type_field_id != Some(child.id()) && pattern_binds_name(child, source, name)
+            })
+        }
+        _ => {
+            let mut cursor = pattern.walk();
+            let children: Vec<TsNode> = pattern.named_children(&mut cursor).collect();
+            children
+                .into_iter()
+                .any(|child| pattern_binds_name(child, source, name))
+        }
+    }
+}
+
 /// The receiver's declared type text, only when `name`'s only binding
 /// occurrence anywhere in the owning function is exactly one explicitly
-/// typed `let` pattern -- every other name-binding position (function/
-/// closure parameters, `for`/`match`/`if let`/`while let` patterns, a second
-/// `let` of the same name) makes this `None`, since any of those could be
-/// the one actually reaching the call, or could shadow the annotated one.
+/// typed `let` pattern that textually precedes `call` and whose own
+/// enclosing block contains `call` -- every other name-binding position
+/// (function/closure parameters, destructured patterns anywhere, `for`/
+/// `match`/`if let`/`while let` patterns, a second `let` of the same name,
+/// a `let` whose scope doesn't reach the call) makes this `None`, since any
+/// of those could be the one actually reaching the call, or could shadow
+/// the annotated one.
 fn binding_type_if_unique(
     syntax: &[TsNode],
     out: &BuildOutput,
     owner_index: usize,
     name: &str,
+    call: TsNode,
     source: &str,
 ) -> Option<String> {
     let owner_span = out.nodes.get(owner_index)?.span;
-    let mut annotated: Option<(usize, String)> = None; // (start_byte, type text)
+    let mut annotated: Option<String> = None;
     let mut binding_count = 0usize;
     for n in syntax {
         if n.start_byte() < owner_span.start_byte || n.end_byte() > owner_span.end_byte {
@@ -671,25 +730,36 @@ fn binding_type_if_unique(
                 let Some(pattern) = n.child_by_field_name("pattern") else {
                     continue;
                 };
-                if pattern.kind() != "identifier" || node_text(pattern, source) != name {
+                if !pattern_binds_name(pattern, source, name) {
                     continue;
                 }
                 binding_count += 1;
-                if let Some(type_field) = n.child_by_field_name("type") {
-                    annotated = Some((n.start_byte(), node_text(type_field, source).to_string()));
+                if pattern.kind() != "identifier" {
+                    continue; // A destructured let never annotates a single name's type.
+                }
+                let Some(type_field) = n.child_by_field_name("type") else {
+                    continue;
+                };
+                let reaches_call = n.end_byte() <= call.start_byte()
+                    && n.parent().is_some_and(|block| {
+                        block.start_byte() <= call.start_byte()
+                            && block.end_byte() >= call.end_byte()
+                    });
+                if reaches_call {
+                    annotated = Some(node_text(type_field, source).to_string());
                 }
             }
             "parameter" | "self_parameter" => {
                 let pattern = n.child_by_field_name("pattern").unwrap_or(*n);
-                if pattern.kind() == "identifier" && node_text(pattern, source) == name {
+                if pattern_binds_name(pattern, source, name) {
                     binding_count += 1;
                 }
             }
             "closure_parameters" => {
                 // Direct patterns here have no enclosing field (grammar.js:
-                // `sepBy(',', choice($._pattern, $.parameter))`); an
-                // identifier pattern is a named child directly, a typed one
-                // is a `parameter` with its own `pattern` field.
+                // `sepBy(',', choice($._pattern, $.parameter))`); a bare
+                // pattern is a named child directly, a typed one is a
+                // `parameter` with its own `pattern` field.
                 let mut inner = n.walk();
                 for child in n.named_children(&mut inner) {
                     let bound = if child.kind() == "parameter" {
@@ -697,14 +767,19 @@ fn binding_type_if_unique(
                     } else {
                         Some(child)
                     };
-                    if bound
-                        .is_some_and(|b| b.kind() == "identifier" && node_text(b, source) == name)
-                    {
+                    if bound.is_some_and(|b| pattern_binds_name(b, source, name)) {
                         binding_count += 1;
                     }
                 }
             }
-            "for_expression" | "match_pattern" | "let_condition"
+            "for_expression" => {
+                if n.child_by_field_name("pattern")
+                    .is_some_and(|p| pattern_binds_name(p, source, name))
+                {
+                    binding_count += 1;
+                }
+            }
+            "match_pattern" | "let_condition"
                 if node_text(*n, source)
                     .split(|c: char| !(c == '_' || c.is_ascii_alphanumeric()))
                     .any(|word| word == name) =>
@@ -717,5 +792,59 @@ fn binding_type_if_unique(
     if binding_count != 1 {
         return None;
     }
-    annotated.map(|(_, type_text)| type_text)
+    annotated
+}
+
+/// Bare head of a type annotation's text (strips generics/whitespace),
+/// mirroring `sync/rust_methods.rs::bare_type_name`'s own extraction but not
+/// its rejection rules -- used here only to compare against a generic
+/// parameter name, so a conservative extraction (not a full re-validation)
+/// is enough.
+fn bare_head(annotated: &str) -> Option<&str> {
+    let trimmed = annotated.trim();
+    let head = trimmed.split(['<', ' ']).next().unwrap_or(trimmed);
+    (!head.is_empty() && !head.contains("::")).then_some(head)
+}
+
+/// Every generic type-parameter name declared on the function enclosing
+/// `call` and, if that function is a method, on the impl block enclosing
+/// it -- `fn t<Graph: Build + Default>()`'s `Graph` shadows the crate-wide
+/// struct of the same name for the whole function body.
+fn owner_generic_param_names(call: TsNode, source: &str) -> HashSet<String> {
+    let mut names = HashSet::new();
+    let collect_from = |node: TsNode, names: &mut HashSet<String>| {
+        let Some(type_params) = node.child_by_field_name("type_parameters") else {
+            return;
+        };
+        let mut cursor = type_params.walk();
+        for child in type_params.named_children(&mut cursor) {
+            match child.kind() {
+                "type_identifier" => {
+                    names.insert(node_text(child, source).to_string());
+                }
+                "constrained_type_parameter" | "optional_type_parameter" => {
+                    if let Some(left) = child.child_by_field_name("left") {
+                        names.insert(node_text(left, source).to_string());
+                    }
+                }
+                _ => {}
+            }
+        }
+    };
+    let mut current = Some(call);
+    while let Some(n) = current {
+        if n.kind() == "function_item" {
+            collect_from(n, &mut names);
+            if let Some(impl_block) = n
+                .parent()
+                .and_then(|body| body.parent())
+                .filter(|p| p.kind() == "impl_item")
+            {
+                collect_from(impl_block, &mut names);
+            }
+            break;
+        }
+        current = n.parent();
+    }
+    names
 }

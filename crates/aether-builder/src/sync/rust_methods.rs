@@ -19,35 +19,160 @@ use std::collections::{HashMap, HashSet};
 /// extractor cannot see (the trait's declaration is external), so the
 /// method name is disqualifying regardless of what the crate-wide index
 /// otherwise shows.
+/// Hand-compiled (the `rust-src` rustup component is not installed in this
+/// environment, so this was not generated from the toolchain's own std
+/// source as the design intended -- disclosed here rather than fetched
+/// mid-stage). Deliberately erred broad: every method of every prelude
+/// trait (`Iterator`, `IntoIterator`, `Clone`, `Copy`, `Default`,
+/// `PartialEq`/`Eq`, `PartialOrd`/`Ord`, `Hash`, `Debug`/`Display`, `Drop`,
+/// `Deref`/`DerefMut`, `From`/`Into`, `TryFrom`/`TryInto`, `AsRef`/`AsMut`,
+/// `Borrow`/`BorrowMut`, `ToString`, `ToOwned`, `Index`/`IndexMut`, the
+/// arithmetic/bitwise operator traits and their `*Assign` variants,
+/// `Extend`, `FromIterator`, `Error`) plus `std::io::Read`/`Write`'s methods
+/// (not technically prelude, but common enough to be worth the same
+/// caution). Over-inclusion only costs a conservative Unknown, never a
+/// false Must, so an unused entry here is harmless.
 const STD_PRELUDE_METHOD_NAMES: &[&str] = &[
+    // Iterator (and IntoIterator)
+    "next",
+    "size_hint",
+    "count",
+    "last",
+    "nth",
+    "step_by",
+    "chain",
+    "zip",
+    "map",
+    "filter",
+    "filter_map",
+    "enumerate",
+    "peekable",
+    "skip_while",
+    "take_while",
+    "map_while",
+    "skip",
+    "take",
+    "scan",
+    "flat_map",
+    "flatten",
+    "fuse",
+    "inspect",
+    "by_ref",
+    "collect",
+    "partition",
+    "unzip",
+    "copied",
+    "cloned",
+    "cycle",
+    "sum",
+    "product",
+    "fold",
+    "reduce",
+    "all",
+    "any",
+    "find",
+    "find_map",
+    "position",
+    "rposition",
+    "max",
+    "min",
+    "max_by_key",
+    "max_by",
+    "min_by_key",
+    "min_by",
+    "rev",
+    "try_fold",
+    "try_for_each",
+    "for_each",
+    "into_iter",
+    "iter",
+    "iter_mut",
+    // Clone / Copy / Default
     "clone",
     "clone_from",
-    "into",
+    "default",
+    // PartialEq/Eq, PartialOrd/Ord
+    "eq",
+    "ne",
+    "lt",
+    "le",
+    "gt",
+    "ge",
+    "cmp",
+    "partial_cmp",
+    "clamp",
+    // Hash
+    "hash",
+    "hash_slice",
+    // Debug/Display
+    "fmt",
+    // Drop
+    "drop",
+    // Deref/DerefMut
+    "deref",
+    "deref_mut",
+    // From/Into, TryFrom/TryInto
     "from",
-    "try_into",
+    "into",
     "try_from",
+    "try_into",
+    // AsRef/AsMut, Borrow/BorrowMut
     "as_ref",
     "as_mut",
     "borrow",
     "borrow_mut",
-    "eq",
-    "ne",
-    "cmp",
-    "partial_cmp",
-    "fmt",
-    "hash",
-    "default",
-    "drop",
-    "next",
-    "iter",
-    "iter_mut",
-    "into_iter",
-    "deref",
-    "deref_mut",
-    "index",
-    "index_mut",
+    // ToString, ToOwned
     "to_string",
     "to_owned",
+    "clone_into",
+    // Index/IndexMut
+    "index",
+    "index_mut",
+    // Arithmetic/bitwise operators and their *Assign variants
+    "add",
+    "sub",
+    "mul",
+    "div",
+    "rem",
+    "neg",
+    "not",
+    "bitand",
+    "bitor",
+    "bitxor",
+    "shl",
+    "shr",
+    "add_assign",
+    "sub_assign",
+    "mul_assign",
+    "div_assign",
+    "rem_assign",
+    "bitand_assign",
+    "bitor_assign",
+    "bitxor_assign",
+    "shl_assign",
+    "shr_assign",
+    // Extend, FromIterator
+    "extend",
+    "from_iter",
+    // Error
+    "source",
+    "description",
+    "cause",
+    // std::io::Read / Write (not prelude, same caution)
+    "read",
+    "read_to_string",
+    "read_to_end",
+    "read_exact",
+    "read_vectored",
+    "write",
+    "write_all",
+    "write_vectored",
+    "write_fmt",
+    "flush",
+    "bytes",
+    "chain",
+    "take",
+    "lines",
 ];
 
 /// External crate items a named (non-glob) import may safely bring into
@@ -144,7 +269,14 @@ fn build_crate_facts(
             *entry = *entry && clean;
         }
         for import in &facts.named_imports {
-            if !in_crate(&import.first_segment) {
+            // A verified-safe external import (std::collections::HashMap,
+            // etc.) must not itself count as "externally aliased" here --
+            // otherwise every file that safely imports e.g. HashMap would
+            // make "HashMap" crate-wide-unsafe for this check, which would
+            // then immediately re-disqualify that same file's own (already
+            // independently verified) import via
+            // `file_has_unverifiable_external_import`'s separate check.
+            if !in_crate(&import.first_segment) && !import_is_verified_safe(import) {
                 externally_aliased_names.insert(import.local.clone());
             }
         }
@@ -228,13 +360,21 @@ fn file_globs_are_in_crate(
 /// whose source the extractor cannot positively rule out as a trait --
 /// i.e. any external named import not on the small known-safe list. A glob
 /// bringing an unindexed trait into scope is handled separately.
+/// Safe only when BOTH the local name is on the known-safe list AND the
+/// import's own first segment is std/core/alloc -- matching the local name
+/// alone would also accept e.g. `use some_crate::HashMap;` for an
+/// unrelated, possibly-trait-bearing type of the same name.
+fn import_is_verified_safe(import: &crate::mapper::method_index::ImportFact) -> bool {
+    let from_std = matches!(import.first_segment.as_str(), "std" | "core" | "alloc");
+    from_std && KNOWN_SAFE_EXTERNAL_IMPORTS.contains(&import.local.as_str())
+}
+
 fn file_has_unverifiable_external_import(
     facts: &RustMethodFacts,
     in_crate_first_segment: impl Fn(&str) -> bool,
 ) -> bool {
     facts.named_imports.iter().any(|import| {
-        !in_crate_first_segment(&import.first_segment)
-            && !KNOWN_SAFE_EXTERNAL_IMPORTS.contains(&import.local.as_str())
+        !in_crate_first_segment(&import.first_segment) && !import_is_verified_safe(import)
     })
 }
 
@@ -317,8 +457,23 @@ pub(super) fn upgrade_method_call_evidence(
     graph: &mut SemanticGraph,
     rust_package_name: Option<&str>,
 ) {
+    // A bare `use` path segment resolves against local scope before the
+    // extern prelude: `pub use floyd_warshall::floyd_warshall;` in a file
+    // that also has `pub mod floyd_warshall;` is genuinely in-crate, valid,
+    // and common in real code (petgraph's own `src/algo/mod.rs` does
+    // exactly this) -- a bare segment matching ANY `mod` declared anywhere
+    // in the crate is therefore also treated as in-crate here, a safe
+    // over-approximation for this purpose (it only makes more imports
+    // *eligible*, and every downstream check still applies independently).
+    let mod_names: HashSet<String> = files
+        .values()
+        .flat_map(|state| state.extraction.rust_method_facts.mod_decls.iter())
+        .map(|m| m.name.clone())
+        .collect();
     let in_crate = |segment: &str| -> bool {
-        matches!(segment, "crate" | "self" | "super") || Some(segment) == rust_package_name
+        matches!(segment, "crate" | "self" | "super")
+            || Some(segment) == rust_package_name
+            || mod_names.contains(segment)
     };
     let crate_facts = build_crate_facts(files, in_crate);
 
@@ -349,7 +504,18 @@ pub(super) fn upgrade_method_call_evidence(
             continue;
         }
         let globs_safe = file_globs_are_in_crate(facts, in_crate);
-        let unverifiable_import = file_has_unverifiable_external_import(facts, in_crate);
+        // A named import bound anywhere in THIS file whose bare local
+        // name is ALSO bound to something external somewhere else in
+        // the crate (e.g. this file imports the in-crate `Itertools`
+        // by name, but another file's `use mycrate::Itertools;`
+        // re-exports the external trait of the same bare name) is a
+        // bare-name ambiguity this design's simplified, non-path-aware
+        // resolution can't rule out.
+        let unverifiable_import = file_has_unverifiable_external_import(facts, in_crate)
+            || facts
+                .named_imports
+                .iter()
+                .any(|import| crate_facts.externally_aliased_names.contains(&import.local));
         // The caller's own same-file gates annotate() already computed:
         // an unexpanded macro/proc-macro attribute, a duplicate semantic
         // path, or a parse error anywhere in this file could rewrite or
@@ -1059,21 +1225,35 @@ mod tests {
             "setup: expected the positive case to prove Must first: {before:?}"
         );
 
-        // Add a second inherent add_node for Graph<Ty> in a different file:
-        // (type_name, method_name) is no longer a singleton crate-wide.
-        let second_impl_source = "impl<Ty> Graph<Ty> {\n\
+        // Edit src/lib.rs itself (adding a second inherent add_node in the
+        // SAME file the first one is in) rather than only adding a new
+        // file: this specifically exercises the reset-then-upgrade step on
+        // a file the incremental path reuses without reparsing --
+        // tests/positive.rs (the caller) is untouched by this edit, so if
+        // the reset loop weren't wired in, its cached graph evidence would
+        // never be touched by this update at all, and the Must claim would
+        // wrongly survive.
+        let lib_source = "pub struct Graph<Ty> { _p: std::marker::PhantomData<Ty> }\n\
+             impl<Ty> Graph<Ty> {\n\
              \x20\x20\x20\x20pub fn add_node(&mut self, weight: i32) -> i32 { weight }\n\
-             }\n";
-        builder
+             \x20\x20\x20\x20pub fn add_node_second(&mut self, weight: i32) -> i32 { weight }\n\
+             }\n\
+             impl<Ty> Graph<Ty> {\n\
+             \x20\x20\x20\x20pub fn add_node(&mut self, weight: i32) -> i32 { weight * 2 }\n\
+             }\n\
+             pub struct Directed;\n";
+        let report = builder
             .update_files(
                 &mut graph,
-                &[FileChange::replace(
-                    "src/second_impl.rs",
-                    second_impl_source,
-                )],
+                &[FileChange::replace("src/lib.rs", lib_source)],
                 &[],
             )
             .unwrap();
+        assert!(
+            report.reused_files.iter().any(|f| f == "tests/positive.rs"),
+            "setup: expected tests/positive.rs to be reused, not reparsed, \
+             so this genuinely exercises the reset step: {report:?}"
+        );
 
         let after = graph.call_evidence(caller_id).unwrap();
         assert!(
@@ -1082,6 +1262,470 @@ mod tests {
                 .iter()
                 .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
             "expected the Must claim to revert once add_node became ambiguous: {after:?}"
+        );
+    }
+
+    #[test]
+    fn a_target_reached_through_a_nested_mod_declaration_is_proven() {
+        // The only other positive test's target is src/lib.rs, whose own
+        // module-path segment list is empty -- module_path_chain_is_clean
+        // is vacuously true there. This exercises it non-vacuously: the
+        // target lives in src/graph_impl.rs, reached via `mod graph_impl;`
+        // in lib.rs.
+        let files = [
+            (
+                "src/lib.rs",
+                "mod graph_impl;\n\
+                 pub use crate::graph_impl::Graph;\n\
+                 pub struct Directed;\n",
+            ),
+            (
+                "src/graph_impl.rs",
+                "pub struct Graph<Ty> { _p: std::marker::PhantomData<Ty> }\n\
+                 impl<Ty> Graph<Ty> {\n\
+                 \x20\x20\x20\x20pub fn add_node(&mut self, weight: i32) -> i32 { weight }\n\
+                 }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::{Graph, Directed};\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph<Directed> = Graph { _p: std::marker::PhantomData };\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence.calls.iter().any(|c| c.class == CallClass::Must
+                && c.reason == "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn cfg_gated_mod_declaration_blocks_a_nested_target() {
+        let files = [
+            (
+                "src/lib.rs",
+                "#[cfg(feature = \"x\")]\n\
+                 mod graph_impl;\n\
+                 pub use crate::graph_impl::Graph;\n\
+                 pub struct Directed;\n",
+            ),
+            (
+                "src/graph_impl.rs",
+                "pub struct Graph<Ty> { _p: std::marker::PhantomData<Ty> }\n\
+                 impl<Ty> Graph<Ty> {\n\
+                 \x20\x20\x20\x20pub fn add_node(&mut self, weight: i32) -> i32 { weight }\n\
+                 }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::{Graph, Directed};\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph<Directed> = Graph { _p: std::marker::PhantomData };\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn path_attr_on_mod_declaration_blocks_a_nested_target() {
+        let files = [
+            (
+                "src/lib.rs",
+                "#[path = \"impl.rs\"]\n\
+                 mod graph_impl;\n\
+                 pub use crate::graph_impl::Graph;\n\
+                 pub struct Directed;\n",
+            ),
+            (
+                "src/graph_impl.rs",
+                "pub struct Graph<Ty> { _p: std::marker::PhantomData<Ty> }\n\
+                 impl<Ty> Graph<Ty> {\n\
+                 \x20\x20\x20\x20pub fn add_node(&mut self, weight: i32) -> i32 { weight }\n\
+                 }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::{Graph, Directed};\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph<Directed> = Graph { _p: std::marker::PhantomData };\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn a_target_with_no_recorded_mod_declaration_stays_unproven() {
+        // src/graph_impl.rs exists as a file but lib.rs never declares
+        // `mod graph_impl;` at all -- the segment has no recorded
+        // declaration anywhere, so it cannot be positively confirmed clean.
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Directed;\n",
+            ),
+            (
+                "src/graph_impl.rs",
+                "pub struct Graph<Ty> { _p: std::marker::PhantomData<Ty> }\n\
+                 impl<Ty> Graph<Ty> {\n\
+                 \x20\x20\x20\x20pub fn add_node(&mut self, weight: i32) -> i32 { weight }\n\
+                 }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::graph_impl::Graph;\n\
+                 use crate::Directed;\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph<Directed> = Graph { _p: std::marker::PhantomData };\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn a_parse_error_in_the_caller_file_blocks_proof() {
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::Graph;\n\
+                 #[test]\n\
+                 fn t( {\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let all_claims: Vec<_> = graph
+            .nodes()
+            .filter_map(|n| graph.call_evidence(n.id).ok())
+            .flat_map(|e| e.calls)
+            .collect();
+        assert!(
+            all_claims
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{all_claims:?}"
+        );
+    }
+
+    #[test]
+    fn destructured_receiver_binding_is_not_proven() {
+        // `graph` is bound by a tuple-destructuring `let`, not a plain
+        // identifier -- pattern_binds_name must count this as a binding
+        // (so a same-named plain-identifier `let` elsewhere wouldn't wrongly
+        // look unique), but it must never be treated as an annotated single
+        // binding to prove from.
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::Graph;\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let (mut graph, _extra): (Graph, i32) = (Graph, 0);\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn a_generic_param_shadowing_the_type_name_is_not_proven() {
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n\
+                 pub trait Build { fn add_node(&mut self, w: i32) -> i32; }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::Build;\n\
+                 #[test]\n\
+                 fn t<Graph: Build + Default>() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph::default();\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn a_prelude_named_method_is_never_proven() {
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 impl Graph { pub fn next(&mut self) -> i32 { 0 } }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::Graph;\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+                 \x20\x20\x20\x20graph.next();\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn a_restricted_visibility_inherent_method_is_not_proven() {
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 impl Graph { pub(crate) fn add_node(&mut self, w: i32) -> i32 { w } }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::Graph;\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn a_non_std_import_sharing_a_safe_list_name_blocks_proof() {
+        // "HashMap" is on the known-safe-external-imports list, but only
+        // when it actually comes from std/core/alloc -- an unrelated
+        // external crate's own `HashMap` (which could carry arbitrary
+        // trait implementations) must not be waved through just because
+        // the local name matches.
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::Graph;\n\
+                 use some_external_crate::HashMap;\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let _unused: Option<HashMap<i32, i32>> = None;\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn a_caller_import_sharing_an_externally_aliased_bare_name_blocks_proof() {
+        // Some OTHER file in the crate imports an external item under the
+        // bare name "Helper"; this file's own named import of an in-crate
+        // "Helper" must not be trusted, since the bare-name index can't
+        // tell the two apart.
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n\
+                 pub struct Helper;\n",
+            ),
+            ("src/other.rs", "use some_external_crate::Helper;\n"),
+            (
+                "tests/positive.rs",
+                "use crate::{Graph, Helper};\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let _unused = Helper;\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn a_bare_use_path_naming_a_sibling_mod_is_recognized_as_in_crate() {
+        // Mirrors the real petgraph regression this design was actually
+        // measured against: `src/algo/mod.rs` has both `pub mod
+        // floyd_warshall;` and `pub use floyd_warshall::floyd_warshall;` in
+        // the same file -- a bare `use` path segment naming a sibling `mod`
+        // declared in that same file, valid and common real Rust (`use`
+        // paths resolve against local scope, including sibling `mod`s,
+        // before falling back to the extern prelude). Caught during
+        // real-repository measurement: an earlier version of `in_crate`
+        // only recognized `crate`/`self`/`super`/the package name, so this
+        // bare "floyd_warshall" import was wrongly treated as an external
+        // crate, which flagged the bare name "floyd_warshall" as
+        // externally aliased crate-wide and, through the caller-import
+        // aliasing guard, blocked every other file that also imports it --
+        // including files with no relationship to the actual issue.
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph<Ty> { _p: std::marker::PhantomData<Ty> }\n\
+                 impl<Ty> Graph<Ty> {\n\
+                 \x20\x20\x20\x20pub fn add_node(&mut self, weight: i32) -> i32 { weight }\n\
+                 }\n\
+                 pub struct Directed;\n\
+                 pub struct Undirected;\n\
+                 pub mod algo { pub fn floyd_warshall() {} }\n",
+            ),
+            (
+                "tests/floyd_warshall.rs",
+                "use crate::algo::floyd_warshall;\n\
+                 use crate::{Directed, Graph, Undirected};\n\
+                 use std::collections::HashMap;\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph<Directed> = Graph { _p: std::marker::PhantomData };\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence.calls.iter().any(|c| c.class == CallClass::Must
+                && c.reason == "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
         );
     }
 }
