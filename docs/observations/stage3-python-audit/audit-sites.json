@@ -1,0 +1,780 @@
+{
+  "schema_version": 1,
+  "seed": 20260923,
+  "requested_total": 105,
+  "selected_total": 105,
+  "total_sites_discovered": 45321,
+  "packages": [
+    "click-8.4.1",
+    "pydantic-2.13.4",
+    "requests-2.34.2"
+  ],
+  "masking": {
+    "method": "tokenize-based STRING/COMMENT span masking before line classification (see mask_strings_and_comments); a whole-pool check before this was added found 33% of matched lines fell inside a string/comment token",
+    "tokenize_failure_count": 0,
+    "tokenize_failure_files": []
+  },
+  "shape_counts_discovered": {
+    "decorator": 3962,
+    "dynamic_dispatch": 611,
+    "qualified_attribute_call": 1571,
+    "method_call": 11744,
+    "operator_dunder": 3219,
+    "plain_call": 24214
+  },
+  "shape_counts_selected": {
+    "decorator": 18,
+    "dynamic_dispatch": 18,
+    "qualified_attribute_call": 17,
+    "method_call": 18,
+    "operator_dunder": 17,
+    "plain_call": 17
+  },
+  "package_counts_discovered": {
+    "click-8.4.1": 7357,
+    "pydantic-2.13.4": 34542,
+    "requests-2.34.2": 3422
+  },
+  "package_counts_selected": {
+    "click-8.4.1": 19,
+    "pydantic-2.13.4": 81,
+    "requests-2.34.2": 5
+  },
+  "sites": [
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_decorators.py",
+      "line": 389,
+      "shape": "dynamic_dispatch",
+      "text": "return getattr(tp, name)"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_termui.py",
+      "line": 1229,
+      "shape": "method_call",
+      "text": "self.fail(f\"rejected: {value}\", param, ctx)"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_discriminated_union.py",
+      "line": 299,
+      "shape": "operator_dunder",
+      "text": "return inner_discriminator == self.discriminator or ("
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_construction.py",
+      "line": 37,
+      "shape": "operator_dunder",
+      "text": "assert m.a == 3"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/typing.py",
+      "line": 144,
+      "shape": "dynamic_dispatch",
+      "text": "return _typing_get_origin(tp) or getattr(tp, '__origin__', None)"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_type_alias_type.py",
+      "line": 50,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == ["
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "tests/testserver/server.py",
+      "line": 162,
+      "shape": "qualified_attribute_call",
+      "text": "self.ssl_context.load_cert_chain(self.cert_chain, keyfile=self.keyfile)"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_pickle.py",
+      "line": 41,
+      "shape": "qualified_attribute_call",
+      "text": "cloudpickle_pypy_xfail = pytest.mark.xfail("
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/mypy/outputs/pyproject-plugin-strict_toml/plugin_success.py",
+      "line": 305,
+      "shape": "plain_call",
+      "text": "class OuterModel(InnerModel):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/mypy/outputs/pyproject-plugin-strict_toml/plugin_success.py",
+      "line": 63,
+      "shape": "method_call",
+      "text": "ForwardReferencingModel.model_rebuild()"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/dataclasses.py",
+      "line": 186,
+      "shape": "qualified_attribute_call",
+      "text": "decorators = _decorators.DecoratorInfos.build(cls, replace_wrapped_methods=True)"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/core.py",
+      "line": 1764,
+      "shape": "method_call",
+      "text": "self.add_command(cmd)"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/types.py",
+      "line": 2888,
+      "shape": "dynamic_dispatch",
+      "text": "return object.__getattribute__(self, item)"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_generics.py",
+      "line": 2248,
+      "shape": "plain_call",
+      "text": "class MessageWrapper(BaseModel, Generic[T]):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_type_adapter.py",
+      "line": 375,
+      "shape": "plain_call",
+      "text": "class ModelFromAttributesFalse(Model):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 2924,
+      "shape": "decorator",
+      "text": "@contextmanager"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_deprecated.py",
+      "line": 231,
+      "shape": "dynamic_dispatch",
+      "text": "assert not hasattr(model, 'y')"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/mypy/modules/plugin_fail_baseConfig.py",
+      "line": 232,
+      "shape": "plain_call",
+      "text": "class CoverageTester(Missing):  # noqa F821"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_testing.py",
+      "line": 408,
+      "shape": "decorator",
+      "text": "@click.command()"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_pipeline.py",
+      "line": 398,
+      "shape": "method_call",
+      "text": "with pytest.raises(ValidationError):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_generics.py",
+      "line": 1014,
+      "shape": "plain_call",
+      "text": "class MyGeneric(BaseModel, Generic[t]):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/typing.py",
+      "line": 175,
+      "shape": "dynamic_dispatch",
+      "text": "if hasattr(tp, '_nparams'):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_json_schema.py",
+      "line": 7103,
+      "shape": "decorator",
+      "text": "@pytest.mark.parametrize('valid_decimal', ['0.1', '000.1', '0.001000', '0000.001000', '111', '100', '00100', '011.10'])"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/core.py",
+      "line": 1107,
+      "shape": "operator_dunder",
+      "text": "def get_help_option(self, ctx: Context) -> Option | None:"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_deprecated.py",
+      "line": 271,
+      "shape": "plain_call",
+      "text": "deprecated_from_orm(State, SimpleNamespace(user=SimpleNamespace(first_name='John', last_name='Appleseed')))"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_dataclasses.py",
+      "line": 3199,
+      "shape": "decorator",
+      "text": "@pydantic.dataclasses.dataclass(config=ConfigDict(frozen=True, validate_assignment=True))"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/types.py",
+      "line": 846,
+      "shape": "operator_dunder",
+      "text": "item_type: type[HashableItemType], *, min_length: int | None = None, max_length: int | None = None"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 559,
+      "shape": "method_call",
+      "text": "lax_schema=core_schema.union_schema("
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "src/requests/auth.py",
+      "line": 321,
+      "shape": "dynamic_dispatch",
+      "text": "def __call__(self, r: PreparedRequest) -> PreparedRequest:"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/functional_validators.py",
+      "line": 340,
+      "shape": "dynamic_dispatch",
+      "text": "def __call__(self, cls: Any, value: Any, handler: core_schema.ValidatorFunctionWrapHandler, /) -> Any: ..."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validate_call.py",
+      "line": 923,
+      "shape": "operator_dunder",
+      "text": "return a + c"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_generics.py",
+      "line": 2519,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == ["
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_json_schema.py",
+      "line": 228,
+      "shape": "method_call",
+      "text": "with pytest.raises(ValidationError):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/benchmarks/basemodel_eq_performance.py",
+      "line": 117,
+      "shape": "method_call",
+      "text": "model_fields = type(self).model_fields.keys()"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_deprecated.py",
+      "line": 427,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == ["
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_config.py",
+      "line": 314,
+      "shape": "qualified_attribute_call",
+      "text": "marks=pytest.mark.thread_unsafe(reason='`pytest.raises()` is thread unsafe'),"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_annotated.py",
+      "line": 336,
+      "shape": "method_call",
+      "text": "assert AnnotatedModel(one=1).model_dump() == {'one': 1}"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/main.py",
+      "line": 1392,
+      "shape": "decorator",
+      "text": "@typing_extensions.deprecated("
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "tests/test_utils.py",
+      "line": 919,
+      "shape": "dynamic_dispatch",
+      "text": "monkeypatch.setattr(winreg, \"QueryValueEx\", QueryValueEx)"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_deprecated.py",
+      "line": 581,
+      "shape": "plain_call",
+      "text": "def test_v1_get_validators():"
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "tests/testserver/server.py",
+      "line": 130,
+      "shape": "qualified_attribute_call",
+      "text": "self.wait_to_close_event.set()"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validate_call.py",
+      "line": 53,
+      "shape": "operator_dunder",
+      "text": "assert validate_call(func).__qualname__ == func.__qualname__"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_deprecated_validate_arguments.py",
+      "line": 27,
+      "shape": "decorator",
+      "text": "@validate_arguments"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_config.py",
+      "line": 38,
+      "shape": "operator_dunder",
+      "text": "title: str | None"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_stream_lifecycle.py",
+      "line": 402,
+      "shape": "qualified_attribute_call",
+      "text": "assert result.stdout.strip() == \"\""
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 1492,
+      "shape": "dynamic_dispatch",
+      "text": "extra_items = getattr(typed_dict_cls, '__extra_items__', typing_extensions.NoExtraItems)"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/benchmarks/test_imports.py",
+      "line": 13,
+      "shape": "decorator",
+      "text": "@pytest.mark.benchmark"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_main.py",
+      "line": 324,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == ["
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_main.py",
+      "line": 3193,
+      "shape": "decorator",
+      "text": "@classmethod"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_serialize.py",
+      "line": 78,
+      "shape": "operator_dunder",
+      "text": "assert m.inner.y == 2"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_testing.py",
+      "line": 197,
+      "shape": "decorator",
+      "text": "@click.command()"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_context.py",
+      "line": 491,
+      "shape": "operator_dunder",
+      "text": "assert debug_logger_name == ctx.command.params[0].logger_name"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_arguments.py",
+      "line": 473,
+      "shape": "plain_call",
+      "text": "frozenset([1, 2, 3]),"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validate_call.py",
+      "line": 137,
+      "shape": "plain_call",
+      "text": "validate_call(func)"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/shell_completion.py",
+      "line": 83,
+      "shape": "operator_dunder",
+      "text": "help: str | None = None,"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/main.py",
+      "line": 1214,
+      "shape": "method_call",
+      "text": "other_fields_proxy = _utils.SafeGetItemProxy(other.__dict__)"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_type_alias_type.py",
+      "line": 253,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == ["
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "tests/test_requests.py",
+      "line": 633,
+      "shape": "plain_call",
+      "text": "with override_environ(http_proxy=INVALID_PROXY):"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/testing.py",
+      "line": 55,
+      "shape": "plain_call",
+      "text": "def __iter__(self) -> cabc.Iterator[bytes]:"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_types_namedtuple.py",
+      "line": 243,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == ["
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_basic.py",
+      "line": 15,
+      "shape": "plain_call",
+      "text": "def cli():"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/dataclasses.py",
+      "line": 175,
+      "shape": "dynamic_dispatch",
+      "text": "if not has_dataclass_base and config is not None and hasattr(cls, '__pydantic_config__'):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_serialize.py",
+      "line": 250,
+      "shape": "method_call",
+      "text": "assert MyModel(x=1234).model_dump_json() == '{\"x\":\"1,234\"}'"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_dataclasses.py",
+      "line": 1689,
+      "shape": "decorator",
+      "text": "@create_module"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_arguments.py",
+      "line": 11,
+      "shape": "decorator",
+      "text": "@click.command()"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_discriminated_union.py",
+      "line": 585,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == ["
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_plugins.py",
+      "line": 86,
+      "shape": "operator_dunder",
+      "text": "extra: ExtraValues | None = None,"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/_compat.py",
+      "line": 225,
+      "shape": "operator_dunder",
+      "text": "return stream_value == value or (value is None and stream_value is not None)"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/main.py",
+      "line": 1563,
+      "shape": "qualified_attribute_call",
+      "text": "extra = self.__pydantic_extra__.copy()"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_known_annotated_metadata.py",
+      "line": 298,
+      "shape": "dynamic_dispatch",
+      "text": "partial(validator, {constraint: getattr(annotation, constraint)}), schema"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/mypy/outputs/mypy-plugin-very-strict_ini/metaclass_args.py",
+      "line": 27,
+      "shape": "plain_call",
+      "text": "MetaclassArgumentsWithDefault(i=None)"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/fields.py",
+      "line": 1277,
+      "shape": "method_call",
+      "text": "const = extra.pop('const', None)  # type: ignore"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_types.py",
+      "line": 3663,
+      "shape": "decorator",
+      "text": "@pytest.mark.parametrize('value', ['nonexistentfile', Path('nonexistentfile'), 'tests', Path('tests')])"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_exports.py",
+      "line": 16,
+      "shape": "dynamic_dispatch",
+      "text": "getattr(pydantic, name)"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/fields.py",
+      "line": 888,
+      "shape": "operator_dunder",
+      "text": "elif self.shape == SHAPE_GENERIC:"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/utils.py",
+      "line": 167,
+      "shape": "dynamic_dispatch",
+      "text": "if getattr(base, field_name, None):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_generics.py",
+      "line": 796,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == ["
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/mypy/outputs/pyproject-plugin_toml/pydantic_settings.py",
+      "line": 4,
+      "shape": "plain_call",
+      "text": "class Settings(BaseSettings):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validate_call.py",
+      "line": 1136,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == ["
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_discriminated_union.py",
+      "line": 390,
+      "shape": "operator_dunder",
+      "text": "self, choice: core_schema.ModelFieldsSchema, source_name: str | None = None"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_main.py",
+      "line": 570,
+      "shape": "operator_dunder",
+      "text": "assert m.a == 10"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_types.py",
+      "line": 4015,
+      "shape": "method_call",
+      "text": "with pytest.raises(ValidationError) as exc_info:"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_utils.py",
+      "line": 295,
+      "shape": "method_call",
+      "text": "if value is None or cls.is_true(value):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 2295,
+      "shape": "method_call",
+      "text": "schema = self._apply_single_annotation(schema, field_metadata)"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validate_call.py",
+      "line": 1026,
+      "shape": "plain_call",
+      "text": "def test_methods_are_not_rebound():"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_edge_cases.py",
+      "line": 2570,
+      "shape": "method_call",
+      "text": "Operation.model_validate({'callbacks': [PathItem()]})"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/errors.py",
+      "line": 237,
+      "shape": "plain_call",
+      "text": "def __str__(self) -> str:"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/_winconsole.py",
+      "line": 200,
+      "shape": "decorator",
+      "text": "@property"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 1738,
+      "shape": "method_call",
+      "text": "elif typing_objects.is_typevar(type_param):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/json_schema.py",
+      "line": 2488,
+      "shape": "qualified_attribute_call",
+      "text": "for defs_refs in self._prioritized_defsref_choices.values():"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_model_signature.py",
+      "line": 162,
+      "shape": "dynamic_dispatch",
+      "text": "assert not hasattr(Model(), '__signature__')"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/type_adapter.py",
+      "line": 578,
+      "shape": "operator_dunder",
+      "text": "polymorphic_serialization: bool | None = None,"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_networks_ipaddress.py",
+      "line": 83,
+      "shape": "plain_call",
+      "text": "IPv4Address('0.0.0.0'),"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_arguments.py",
+      "line": 413,
+      "shape": "decorator",
+      "text": "@click.command()"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/mypy.py",
+      "line": 250,
+      "shape": "dynamic_dispatch",
+      "text": "setattr(self, key, setting)"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/utils.py",
+      "line": 534,
+      "shape": "dynamic_dispatch",
+      "text": "return getattr(self.wrapped, attr)"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_arguments.py",
+      "line": 284,
+      "shape": "operator_dunder",
+      "text": "assert value == processed_value"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/networks.py",
+      "line": 310,
+      "shape": "decorator",
+      "text": "@staticmethod"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 320,
+      "shape": "dynamic_dispatch",
+      "text": "for base in (tp, *getattr(tp, '__mro__', tp.__class__.__mro__)[:-1]):"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validate_call.py",
+      "line": 982,
+      "shape": "method_call",
+      "text": "with pytest.raises(ValidationError, match=\"type=int_parsing, input_value='x', input_type=str\"):"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_options.py",
+      "line": 1079,
+      "shape": "decorator",
+      "text": "@click.command()"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 670,
+      "shape": "method_call",
+      "text": "return core_schema.any_schema()"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/types.py",
+      "line": 424,
+      "shape": "decorator",
+      "text": "@classmethod"
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_stream_lifecycle.py",
+      "line": 160,
+      "shape": "dynamic_dispatch",
+      "text": "has_del = hasattr(StreamMixer, \"__del__\")"
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/functional_validators.py",
+      "line": 323,
+      "shape": "decorator",
+      "text": "@classmethod"
+    }
+  ]
+}
