@@ -258,16 +258,16 @@ Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
 
 ## Stage 3 — Close dispatch holes one language at a time
 
-**Status: IN PROGRESS** (policy frozen for Rust; before-observation, one
-resolver change, and its after-observation are done; criterion not yet fully
-met — see "Not yet done" below)
+**Status: IN PROGRESS** (Rust: DONE, all four criterion legs met with
+committed evidence, after five correction rounds; Python next per the
+language-order rule below)
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
 
 | Language | Status | Before / after evidence | Dependency |
 | --- | --- | --- | --- |
-| Rust | IN PROGRESS | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-assert-macro-fix/after-observation.md) | Stage 2 |
+| Rust | **DONE** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
 | Python | NOT STARTED | none / none | Rust trustworthy on a real repository |
 | TypeScript | NOT STARTED | none / none | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
@@ -386,16 +386,48 @@ two disclosed-but-unfixed properties (crate-wide macro shadowing, checked
 absent from both corpora; control-flow insensitivity, consistent with the
 policy's binding-certainty definition of Must), in
 [after-observation.md](observations/stage3-rust-audit/after-assert-macro-fix/after-observation.md).
-Stage 3 (Rust) is **not DONE** (audit leg and real-repository nonempty-Must-
-precision leg unmet) and **not FAILED** (a specific next resolver step is
-identified, not a dead end).
+This first resolver change alone left Stage 3 (Rust) **not DONE** (audit leg
+and real-repository nonempty-Must-precision leg unmet) and **not FAILED** (a
+specific next resolver step was identified, not a dead end).
+
+**Second resolver change done, after-observation done, criterion fully
+met — Stage 3 (Rust): DONE.** `d0ce300`/`c436dbd`/`62141a9`/`2452bc1` prove
+`x.m()` Must when the receiver has a single explicit `let x: T<...>`
+binding and `m` resolves to a unique, safe, non-cfg-gated public inherent
+impl with no earlier- or unsafely-same-step trait competitor (full
+constraint list in
+[gate-profile-correction-2.md](observations/stage3-rust-audit/after-assert-macro-fix/gate-profile-correction-2.md)).
+This closed both remaining gaps, but only after **five correction rounds**,
+two of which each found a genuine unsoundness in the immediately prior
+round's own fix — not merely a missing test — caught by an `advisor` review
+of the "DONE" draft before it was trusted, twice. The real-repository audit
+moved from 27/25 to **28/24 exact/conservative, 0 unsound**, exactly the
+predicted single site (`tests/floyd_warshall.rs:11`, target verified as
+`Graph::add_node`, diffed programmatically against the prior result — not
+just re-summarized); dispatch corpus and Stage 1 oracle held unchanged; 49
+supplementary Must claims across the real petgraph checkout all resolve to
+the three correct targets. Full detail, including every mutation-test
+result proving each guard actually does something (not vacuous), in
+[after-observation.md](observations/stage3-rust-audit/after-method-call-fix/after-observation.md)
+and
+[supplementary-hand-verification.md](observations/stage3-rust-audit/after-method-call-fix/supplementary-hand-verification.md).
+All four Stage 3 Rust criterion legs (`measured_dispatch_corpus_improvement`,
+`zero_classification_errors_on_audit`,
+`audit_shows_fewer_conservative_more_exact_cells`,
+`nonempty_must_precision_1000_on_real_repository`) are **Met**. Disclosed,
+carried-forward limitations (glob-import safety is a deviation from the
+frozen design spec's constraint 6, not fully traced recursively;
+hand-compiled prelude method list; bare-name rather than full
+semantic-path type resolution; textual rather than solved trait-bounds
+comparison; no macro-token-tree binding rule) are in the after-observation
+in full, none of them blocking DONE.
 
 **Gate per language:** before/after corpus and real-repository audit, then all
 common gates. **Observation:**
 [audit-scoring-summary-v2.json](observations/stage3-rust-audit/audit-scoring-summary-v2.json)
 (before) and
-[after-observation.md](observations/stage3-rust-audit/after-assert-macro-fix/after-observation.md)
-(after — one resolver change measured, criterion not yet fully met).
+[after-observation.md](observations/stage3-rust-audit/after-method-call-fix/after-observation.md)
+(after — Rust DONE, all four criterion legs met).
 **Blockers:** none — next action is narrowing `transformed_scope`'s
 whole-file scope (see "Next" below), not a missing dependency.
 
@@ -810,4 +842,41 @@ benchmark, don't run it against the stale snapshot.
     established in the two correction documents) as an `#[ignore]`d test
     reading the checkout path from an env var, kept out of the four
     common gates.
+- 2026-09-23: **Stage 3 (Rust): DONE.** Implemented in `d0ce300`, then
+  corrected four more times before trusting a "DONE" measurement:
+  `c436dbd` wired in guards the first commit collected but never used;
+  `62141a9` closed seven more soundness gaps (that commit's own message
+  miscounts them as six) found by a review specifically hunting for
+  realistic false-Must paths, then found and fixed two implementation
+  bugs its own fixes introduced (an over-broad "externally aliased"
+  check, and `in_crate` not recognizing a bare sibling-`mod` re-export);
+  `2452bc1` found and fixed two further genuine unsoundnesses via two
+  separate `advisor` reviews of the "DONE" draft, each catching a real
+  false-Must path the immediately prior round's own fix had introduced or
+  missed (widening `in_crate` to crate-wide mod recognition, then to
+  file-scoped, both unsound — the correct rule is module-scoped, via a
+  new `scope` field on `ModDeclFact`/`ImportFact`), plus a corrected claim
+  about the evidence-reset loop's necessity (load-bearing on
+  `load_file`/`load_files`, not on `update_files`, as an earlier draft of
+  this checkpoint would have said). Every fix in the final round verified
+  by mutation (revert the fix, confirm the relevant test fails; restore,
+  confirm it passes), not just by compiling and passing its own test.
+  Measured: real-repository audit 27/25 → **28/24 exact/conservative, 0
+  unsound**, the single predicted site
+  (`tests/floyd_warshall.rs:11`, target verified as `Graph::add_node`,
+  diffed programmatically against the prior result); dispatch corpus and
+  Stage 1 oracle unchanged; 49 supplementary Must claims across real
+  petgraph, all resolving to the three correct targets, 0 in
+  serde_json/regex. All four common gates pass. All four Stage 3 Rust
+  criterion legs met. Full history and every mutation-test result in
+  [after-observation.md](observations/stage3-rust-audit/after-method-call-fix/after-observation.md)
+  and
+  [supplementary-hand-verification.md](observations/stage3-rust-audit/after-method-call-fix/supplementary-hand-verification.md).
+  Per the language-order rule ("do not start Python before Rust is
+  trustworthy on a real repository"), **Stage 3 Python may now begin** —
+  next session should start there: pin a Python real-repository corpus
+  (Click, per the existing plan reference), build its own frozen
+  before-observation audit methodology mirroring Rust's, and expect the
+  same discipline (measure honestly, publish FAILED-AND-PUBLISHED if a
+  criterion leg isn't met, never weaken the frozen policy to pass).
 - Completion remains unproven until every criterion above has committed evidence.
