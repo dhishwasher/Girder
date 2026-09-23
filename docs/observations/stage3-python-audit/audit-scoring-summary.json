@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "kind": "stage-criterion-measurement",
+  "stage": 3,
+  "language": "python",
+  "phase": "before-observation",
+  "revision": 1,
+  "date": "2026-09-23",
+  "binary_sha256": "dd5ae79a222d2a98b42e6b9221a263ceed5dbd85d4b83f10e2deedf14c9ac17f",
+  "labels": "docs/observations/stage3-python-audit/audit-sites-labeled.json",
+  "scorer": "tools/dispatch_audit_scorer_python.py",
+  "raw_results": "docs/observations/stage3-python-audit/audit-scored-results.json",
+  "method": "Byte-offset-precise matching: each site's byte offset (recomputed from its shape-pattern match on the MASKED line, then read off the raw line at that column) is looked up against every CallClaim's [start_byte, end_byte) span across the whole package, via `girder analyze --json` + `girder inspect --json`'s call_evidence_v1 attribute. A module-level coverage-gap claim whose span covers the site counts as an honest disclosure (observed Unknown) UNLESS its reason is implicit-runtime-dispatch-not-certified, which is attached unconditionally to every Python module and would otherwise make every offset in every file always covered, collapsing unsafe_exclusion to permanently unreachable -- mirrors Rust's own NEVER_COVERS treatment of its analogous whole-file gap exactly. duplicate-semantic-path IS treated as a legitimate covering claim, matching Rust's own methodology note that it counts as honest disclosure, not a silent drop.",
+  "results": {
+    "total_sites": 105,
+    "not_a_call_site": 20,
+    "scored": 85
+  },
+  "confusion_matrix": {
+    "exact": 70,
+    "conservative": 13,
+    "unsafe_exclusion": 2,
+    "overclaim": 0,
+    "unsound_total": 2
+  },
+  "exact_breakdown": {
+    "unknown": 70
+  },
+  "conservative_breakdown": {
+    "must": 13,
+    "may": 0
+  },
+  "unsafe_exclusion_sites": [
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_construction.py",
+      "line": 37,
+      "text": "assert m.a == 3",
+      "root_cause": "The enclosing function's call_evidence_v1 has claims for the two calls in the function (Model.model_construct(...) and m.model_dump()) but NONE for the `m.a == 3` comparison expression between them -- Girder's Python extractor does not emit a CallClaim for this binary_expression at all, not even an Unknown one. The always-present whole-module implicit-runtime-dispatch-not-certified claim exists but is correctly excluded from counting as coverage (see method note), so nothing covers this byte offset."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_arguments.py",
+      "line": 284,
+      "text": "assert value == processed_value",
+      "root_cause": "Same root cause as the pydantic site: no per-site CallClaim exists for this comparison expression, and this file has no duplicate-semantic-path claim (unlike 8 of the other 10 operator_dunder sites in this sample) to coincidentally cover it."
+    }
+  ],
+  "headline_finding": "0 overclaim (no false Must/May anywhere) but 2 unsafe_exclusion: two operator/comparison expressions get NO call evidence at all, not even a conservative Unknown claim. Root-caused, not guessed: Girder's Python extractor simply does not emit a CallClaim for a binary_expression used as a bare statement/assert argument in these two cases. 8 of 10 operator_dunder sites in this sample score 'exact' (observed Unknown) only because their files ALSO happen to carry an unrelated duplicate-semantic-path claim spanning the whole module -- not because operator dispatch itself is evidenced. Recall is 0%: all 13 true Must sites score conservative (Girder currently proves no cross-file/class-hierarchy Must binding for Python at all, matching the known same-file/top-level-only Rust limitation before Stage 3 Rust resolver work began). 0 May sites in this sample -- disclosed as a property of the specific 105-site sample, not assumed to generalize.",
+  "root_cause_tally": {
+    "method": "Derived from source facts per site (class hierarchies read directly in the extracted packages, not inferred from Girder's reason string), matching Rust's audit-correction.md's own discipline.",
+    "cross_file_or_class_hierarchy_must_not_attempted": {
+      "count": 13,
+      "fraction": 1.0,
+      "description": "All 13 true-Must sites require either a cross-file import resolution (e.g. deprecated_from_orm imported into a test file) or a class-hierarchy override check (self.fail(...), self._apply_single_annotation(...), Model.model_rebuild()) that Girder's current Python extractor does not attempt -- it proves only same-file, non-dispatch bindings (python-binding-or-dispatch-unproven is the observed reason on all 13)."
+    },
+    "operator_dispatch_never_evidenced_per_site": {
+      "count": 2,
+      "fraction": "2/10 operator_dunder sites scored (8/10 covered coincidentally via duplicate-semantic-path)",
+      "description": "No CallClaim is ever emitted for a binary_expression itself; the 8 sites that scored exact did so only because an unrelated whole-module duplicate-semantic-path claim happened to also be present in those specific files."
+    }
+  },
+  "stage3_criterion_status": {
+    "nonempty_must_precision_1000": "Not yet applicable -- no Must was observed (0/13 proven), so precision is undefined on this audit alone; the frozen dispatch corpus's own Python numbers remain the reference until Python resolver work begins.",
+    "zero_classification_errors_on_audit": "NOT met at this before-observation: 2/85 unsound cells (2 unsafe_exclusion, 0 overclaim). This is the honest baseline, not a target already hit -- Rust's own before-observation happened to already show 0 unsound cells; Python's does not, and that gap is real information, not softened here.",
+    "measured_dispatch_corpus_improvement": "Not applicable yet -- no resolver change has been made. This is the before-observation."
+  },
+  "next_action": "Two concrete gaps, both root-caused: (1) emit a CallClaim (even an Unknown one) for binary_expression/comparison call sites, closing the 2 unsafe_exclusion cells and giving Python's operator coverage the same disclosed-but-honest treatment Rust's own operator/drop-dispatch gap already has; (2) attempt cross-file import resolution and class-hierarchy override checking for self/cls/plain-call Must proofs -- the highest-leverage next step, moving both the audit's 13 conservative cells AND the existing Python dispatch corpus's 7 conservative cells (direct-cross-file, both override-via-subclass tests, super-mro-diamond, decorator-elsewhere-in-file, same-class-method-no-subclass) toward exact. Any resolver change must be re-verified against: this audit (re-run with tools/dispatch_audit_scorer_python.py, expect fewer conservative/more exact and 0 unsafe_exclusion) and the existing Python dispatch corpus (must stay 0 unsound).",
+  "dispatch_corpus_baseline": {
+    "note": "A 12-case Python dispatch corpus already exists from Stage 2 (fixtures/dispatch-corpus/python/, docs/dispatch-corpus.json), pooled with Rust/TypeScript/Go in the same corpus scorer. Corrects this document, which originally (wrongly) said none existed.",
+    "raw_results": "corpus-baseline.json",
+    "python_cells": {
+      "exact": 6,
+      "conservative": 7,
+      "unsafe_exclusion": 0,
+      "overclaim": 0
+    },
+    "must_true_positives": 1,
+    "must_false_positives": 0,
+    "headline": "python-direct-same-file is the only Must proven (same-file, non-dispatch). Every override/subclass/MRO case (May-true) and the cross-file case (Must-true) scores conservative -- Unknown. 0 unsound. Matches the real-repository audit's own finding: no cross-file or class-hierarchy Must/May proof exists yet for Python."
+  }
+}
