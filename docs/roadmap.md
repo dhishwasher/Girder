@@ -612,33 +612,61 @@ benchmark, don't run it against the stale snapshot.
   Must. Full design spec, with an explicit before-implementing
   prediction (moves exactly one of the 52 scored sites), in
   [gate-profile.md](observations/stage3-rust-audit/after-assert-macro-fix/gate-profile.md).
-- Next: implement the design in `gate-profile.md` — method-call Must
-  proof restricted to (1) an explicit, unshadowed `let x: T<...>`
-  receiver binding in the same function (no type inference), (2) `T`
-  resolved through the file's imports to exactly one crate-indexed
-  struct (keyed by semantic path, not bare name), (3) exactly one
-  inherent method of that name across all `impl T` blocks crate-wide
-  (Unknown if a `duplicate-semantic-path` gap touches either), (4)
-  inherent-over-trait resolution encoded directly (a fixed Rust rule);
-  a method reachable only through a trait, or through an unindexed
-  external crate, stays Unknown. Lives in or after `resolve_calls`
-  (project-wide), since it needs a crate-wide inherent-impl index —
-  `annotate()`'s per-file pass can't build this alone. Guard with:
-  adversarial unit tests (the 7 guard-checked std/external/non-unique
-  cases from `gate-profile.md`, plus the inherent-vs-trait case); the
-  dispatch corpus must stay 0 unsound; the Stage 1 oracle's union
-  recall must stay 4/4; the audit must show 0 unsound and, this time,
-  actually fewer conservative / more exact cells (the prediction is
-  exactly one: `tests/floyd_warshall.rs:11`, 28 exact / 24 conservative
-  and a nonempty real-repository Must set) — if the implementation
-  produces a different count than predicted, that is itself a signal
-  to stop and re-examine before trusting the result. After
-  implementing, hand-verify a random sample of every new Must claim
-  across all three crates (it will fire beyond the 52 audited sites)
-  and publish that as a supplementary check, kept out of the frozen
-  audit. If constraint 4 turns out unsound in practice, or the
-  predicted site doesn't survive implementation and no other frozen
-  site does either, that is the point to apply FAILED-AND-PUBLISHED
-  once and stop — do not start Python before Rust is trustworthy on a
-  real repository.
+- 2026-09-23: **Correction to constraint 4** (`gate-profile.md`'s
+  "inherent-over-trait resolution encoded directly (a fixed Rust rule)"
+  was wrong as a general rule — Rust matches candidate receiver types in
+  order (`T`, `&T`, `&mut T`, then the deref chain), and inherent only
+  beats trait *within the same step*; a trait method matching an
+  *earlier* step wins outright). `tests/floyd_warshall.rs:11` still
+  survives — verified, not assumed: every `add_node` in petgraph
+  (eleven definitions, grepped) is `&mut self`, including
+  `Build::add_node`, so both the inherent method and the only in-crate
+  trait competitor sit at the identical step. Full correction, and the
+  additional guards a sound implementation needs (named-import-only type
+  resolution via the actual `use`-tree AST, exact `T<...>` receiver
+  syntax with no `&`/`Box`/`dyn` wrapping, single-binding-with-shadow
+  counting, generic-bounds coherence, replacing rather than appending
+  the existing Unknown claim, and a call-expression-start span matching
+  where the scorer's byte offset actually lands), in
+  [gate-profile-correction.md](observations/stage3-rust-audit/after-assert-macro-fix/gate-profile-correction.md).
+  The prediction is unchanged (moves exactly `tests/floyd_warshall.rs:11`).
+- Next: implement the corrected design — method-call Must proof
+  restricted to (1) an explicit, unshadowed `let x: T<...>` receiver
+  binding in the same function (no type inference, exact `T<...>` syntax
+  only), (2) `T` resolved through a **named, non-glob** import walked
+  via the real `use`-tree AST to exactly one crate-indexed type-namespace
+  item (struct/enum/union/trait/type-alias, keyed by semantic path, not
+  bare name), (3) exactly one inherent method of that name across all
+  `impl T` blocks crate-wide, generic over all of `T`'s own parameters
+  (Unknown if a `duplicate-semantic-path` gap touches either), (4) no
+  in-crate trait declaring that method name matches an earlier autoref
+  step than the inherent method's own receiver, and the method name is
+  not in the std prelude's fixed method-name set. Lives in or after
+  `resolve_calls` (project-wide), since it needs a crate-wide inherent-
+  impl index — `annotate()`'s per-file pass can't build this alone;
+  persist the per-file gates (`transformed_scope`, `duplicate_paths`,
+  parse-error, `macro_owners`) on `BuildOutput` rather than re-deriving
+  them, and recompute on every resolve (including the incremental path)
+  so a change elsewhere in the crate can flip an untouched file's claim.
+  Guard with: adversarial unit tests across a multi-file `GraphBuilder`
+  (the positive cross-file case; an external crate's same-named type; an
+  in-crate `&self` trait method beside a `&mut self` inherent one; two
+  non-generic inherent methods of the same name; a `&mut T`/`Box<T>`
+  receiver; `x` shadowed in a nested block; an unannotated `let`; the
+  incremental staleness flip), plus the 7 guard-checked std/external/
+  non-unique cases from `gate-profile.md`; the dispatch corpus must stay
+  0 unsound; the Stage 1 oracle's union recall must stay 4/4; the audit
+  must show 0 unsound and, this time, actually fewer conservative / more
+  exact cells (the prediction is exactly one: `tests/floyd_warshall.rs:11`,
+  28 exact / 24 conservative and a nonempty real-repository Must set) —
+  if the implementation produces a different count than predicted, that
+  is itself a signal to stop and re-examine before trusting the result.
+  After implementing, hand-verify a random sample of every new Must
+  claim across all three crates (it will fire beyond the 52 audited
+  sites) and publish that as a supplementary check, kept out of the
+  frozen audit. If constraint 4 turns out unsound in practice even after
+  this correction, or the predicted site doesn't survive implementation
+  and no other frozen site does either, that is the point to apply
+  FAILED-AND-PUBLISHED once and stop — do not start Python before Rust
+  is trustworthy on a real repository.
 - Completion remains unproven until every criterion above has committed evidence.
