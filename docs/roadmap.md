@@ -269,7 +269,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | Language | Status | Before / after evidence | Dependency |
 | --- | --- | --- | --- |
 | Rust | **DONE** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
-| Python | IN PROGRESS (methodology frozen, no site labeled yet) | [methodology](observations/stage3-python-audit/methodology.md) / none | Rust trustworthy on a real repository |
+| Python | IN PROGRESS (before-observation done, resolver work not started) | [methodology](observations/stage3-python-audit/methodology.md) / [before-observation](observations/stage3-python-audit/before-observation.md) | Rust trustworthy on a real repository |
 | TypeScript | NOT STARTED | none / none | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
@@ -995,11 +995,54 @@ benchmark, don't run it against the stale snapshot.
   to each package's own size, not rebalanced, to keep the algorithm
   identical to Rust's own precedent), in
   [methodology.md](observations/stage3-python-audit/methodology.md).
-  **Still not done**: no site has been read or labeled; no scorer run; no
-  before-observation. Next session: read `audit-sites.json`'s 105 sites
-  one at a time against `labeling-rubric.md`, write
-  `audit-sites-labeled.json` with `true_class` + rationale per site (same
-  shape as Rust's own `audit-sites-labeled-v2.json`), then run
-  `dispatch_audit_scorer.py` against it for the first, frozen
-  before-observation.
+- 2026-09-23: **Stage 3 Python: all 105 sites hand-labeled
+  ([audit-sites-labeled.json](observations/stage3-python-audit/audit-sites-labeled.json)),
+  verified before scoring
+  ([labeling-verification.md](observations/stage3-python-audit/labeling-verification.md)),
+  and the first before-observation measured
+  ([before-observation.md](observations/stage3-python-audit/before-observation.md)).**
+  Labeling done by a forked agent applying `labeling-rubric.md`; an
+  `advisor` review before trusting it found and this session fixed: a
+  scorer bug (`site_byte_offset` searched the raw line, not the masked
+  one the selector used to choose sites — fixed, verified to have
+  affected 0 of the 105 real sites though the bug was real and general);
+  one rationale that leaked this session's own earlier Girder smoke-test
+  output into its stated reasoning (rewritten on a rubric-only basis, the
+  label itself was already correct and unchanged); confirmed via direct
+  grep that none of the 13 Must sites' names are touched by
+  `setattr`/`monkeypatch`/`patch` anywhere in the snapshot; confirmed all
+  10 `operator_dunder` sites compare primitive values, never an
+  in-snapshot class's own dunder. **Result: 85 scored, 70 exact, 13
+  conservative, 2 unsafe_exclusion, 0 overclaim.** The 2 unsafe_exclusion
+  sites are root-caused, not guessed: two bare comparison expressions
+  inside `assert` statements get NO `CallClaim` at all from Girder's
+  Python extractor — confirmed by reading the enclosing function's full
+  `call_evidence_v1` directly. All 13 true-Must sites score conservative
+  (Girder's Python extractor proves Must only for same-file, non-dispatch
+  bindings; every real Must site needed cross-file import resolution or a
+  class-hierarchy override check, neither attempted yet) — independently
+  confirmed against the existing 12-case Python dispatch corpus from
+  Stage 2 (`fixtures/dispatch-corpus/python/`, re-run here for the first
+  time as a Stage 3 baseline:
+  [corpus-baseline.json](observations/stage3-python-audit/corpus-baseline.json),
+  6 exact / 7 conservative / 0 unsound, `must_true_positives: 1`, same
+  finding). 0 May observed in this specific sample, disclosed as a sample
+  property, not assumed to generalize. **Stage 3 Python criterion status,
+  stated plainly, not softened**:
+  `measured_dispatch_corpus_improvement` not applicable yet (no resolver
+  change), `nonempty_must_precision_1000_on_real_repository` not met
+  (empty Must set), `zero_classification_errors_on_audit` **NOT met**
+  (2/85 unsound) — unlike Rust's own before-observation, which happened
+  to already show 0 unsound cells, Python's does not, and that is real
+  information, not smoothed over. Next step (not started): implement a
+  Python resolver change closing the 2 unsafe_exclusion sites (emit at
+  least an Unknown `CallClaim` for comparison/binary-expression call
+  sites) and/or attempting cross-file import resolution and
+  class-hierarchy override checking for Must proofs — the two concrete,
+  root-caused gaps this before-observation found. Re-verify any change
+  against both baselines measured here (this audit and the existing
+  Python dispatch corpus), the same discipline every Rust resolver round
+  in this program used, including the mutation-verification and
+  advisor-review-before-trusting-DONE discipline the Rust rounds needed
+  repeatedly.
 - Completion remains unproven until every criterion above has committed evidence.
