@@ -259,8 +259,9 @@ Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
 ## Stage 3 — Close dispatch holes one language at a time
 
 **Status: IN PROGRESS** (Rust: DONE, all four criterion legs met with
-committed evidence, after five correction rounds; Python next per the
-language-order rule below)
+committed evidence, after seven correction rounds; Python next per the
+language-order rule below — labeling rubric and masking check not yet
+frozen, see "Current checkpoint")
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
@@ -392,24 +393,26 @@ specific next resolver step was identified, not a dead end).
 
 **Second resolver change done, after-observation done, criterion fully
 met — Stage 3 (Rust): DONE.**
-`d0ce300`/`c436dbd`/`62141a9`/`2452bc1`/`facc21c` prove `x.m()` Must when
-the receiver has a single explicit `let x: T<...>` binding and `m`
-resolves to a unique, safe, non-cfg-gated public inherent impl with no
+`d0ce300`/`c436dbd`/`62141a9`/`2452bc1`/`facc21c`/`777c2a7` prove `x.m()`
+Must when the receiver has a single explicit `let x: T<...>` binding and
+`m` resolves to a unique, safe, non-cfg-gated public inherent impl with no
 earlier- or unsafely-same-step trait competitor (full constraint list in
 [gate-profile-correction-2.md](observations/stage3-rust-audit/after-assert-macro-fix/gate-profile-correction-2.md)).
-This closed both remaining gaps, but only after **six correction rounds**,
-three of which each found a genuine unsoundness in the immediately prior
-round's own fix — not merely a missing test — caught by an `advisor`
-review of the "DONE" draft before it was trusted, three times in a row.
-The real-repository audit moved from 27/25 to **28/24 exact/conservative,
-0 unsound**, exactly the predicted single site
+This closed both remaining gaps, but only after **seven correction
+rounds**, four of which each found a genuine unsoundness in the
+immediately prior round's own fix (three of the four in the same
+function, `enclosing_mod_scope`) — not merely a missing test — caught by
+an `advisor` review of the "DONE" draft before it was trusted, four times
+in a row. The real-repository audit moved from 27/25 to **28/24
+exact/conservative, 0 unsound**, exactly the predicted single site
 (`tests/floyd_warshall.rs:11`, target verified as `Graph::add_node`,
 diffed programmatically against the prior result — not just
 re-summarized); dispatch corpus and Stage 1 oracle held unchanged; 49
 supplementary Must claims across the real petgraph checkout all resolve to
 the three correct targets — all of this reconfirmed byte-identical after
-the sixth round's fix
-([correction-1/correction.md](observations/stage3-rust-audit/after-method-call-fix/correction-1/correction.md)).
+both the sixth and seventh rounds' fixes
+([correction-1/correction.md](observations/stage3-rust-audit/after-method-call-fix/correction-1/correction.md),
+[correction-2/correction.md](observations/stage3-rust-audit/after-method-call-fix/correction-2/correction.md)).
 Full detail, including every mutation-test result proving each guard
 actually does something (not vacuous), in
 [after-observation.md](observations/stage3-rust-audit/after-method-call-fix/after-observation.md)
@@ -924,4 +927,53 @@ benchmark, don't run it against the stale snapshot.
   needed (measure honestly, publish FAILED-AND-PUBLISHED if a criterion
   leg isn't met, never weaken the frozen policy to pass, and don't assume
   a design is sound just because it compiles and its own tests pass).
+- 2026-09-23: **Second correction** (`777c2a7`,
+  [correction-2/correction.md](observations/stage3-rust-audit/after-method-call-fix/correction-2/correction.md)):
+  a FOURTH `advisor` review, re-checking `correction-1`'s own
+  "under-recognize only" claim specifically, found a THIRD distinct
+  collision source in `enclosing_mod_scope`: it returned `0` both for "no
+  enclosing container found" (true file-root scope) and for a real
+  container whose own `start_byte()` happens to be `0` (a `mod`/`block`
+  that is the very first thing in a file) — reproduced live with `mod m {
+  use quickcheck::Gen; ... }` as a file's first bytes, colliding with a
+  sibling top-level `mod quickcheck {}`. Fixed by using `u64::MAX` as the
+  "no container" sentinel instead of `0`; verified by mutation. Also
+  started this same session: Stage 3 Python's site selector
+  (`tools/dispatch_audit_site_selector_python.py`), NOT yet committed —
+  an `advisor` review of the staged files, before commit, flagged that the
+  Python labeling rubric must be frozen (tied to the Python policy row's
+  assumptions: self/cls dispatch under the source-snapshot assumption,
+  rebinding definition, annotation-only receivers, decorator effects,
+  `super()`, targets outside the indexed package) and a docstring/example
+  masking check run (via `tokenize`, on the whole discovered pool, not the
+  sample) BEFORE any site is read — none of that is done yet, so no
+  Python site has been read and no Python commit exists. **Re-measured:
+  all numbers held identical** to `correction-1` (28/24 audit, 0 unsound;
+  corpus/oracle unchanged; 49 supplementary claims, same split). All four
+  common gates and the build pass. **Stage 3 (Rust) remains DONE** — the
+  fourth round (of seven total) where a review found a genuine
+  unsoundness in an immediately prior round's own fix or safety-direction
+  claim, all four in the same function (`enclosing_mod_scope`/`in_crate`).
+  That function should be treated with particular suspicion in any future
+  change, not assumed sound because it compiles.
+- **Next session must resume Stage 3 Python from here, not from a fresh
+  read of the roadmap's older "may now begin" framing above**: the site
+  selector exists (uncommitted, working-tree only) but the labeling
+  rubric and masking check it depends on do not. Before committing
+  anything or reading any site: (1) write and freeze a Python ground-truth
+  labeling rubric addressing every case advisor listed (self/cls dispatch,
+  rebinding, annotation-only receivers, `Foo(); x.m()` with `__new__`/
+  metaclass/override interactions, decorated names replacing the
+  function object, `super()`, non-indexed targets, whether decorator
+  lines and text inside strings/docstrings count as call sites); (2) run
+  a Girder-independent, whole-pool (not sample) check of how much of the
+  49,953 discovered sites fall inside a string/docstring/comment via
+  `tokenize`, and mask those spans before re-running the selector if the
+  share is large; (3) decide whether `docs/`/`examples/` in the sdists are
+  in scope; (4) confirm Python nodes carry per-call-site `call_evidence_v1`
+  spans at all (check on a small fixture, never on click/pydantic/requests
+  before labeling); (5) commit the frozen rubric and masking decision to
+  the roadmap FIRST, then the site selector/tests/regenerated sample
+  second — in that order, per the same precommitment discipline Rust's
+  own Stage 3 used.
 - Completion remains unproven until every criterion above has committed evidence.
