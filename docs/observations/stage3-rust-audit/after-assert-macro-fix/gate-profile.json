@@ -1,0 +1,640 @@
+{
+  "schema_version": 1,
+  "rows": [
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/matching.rs",
+      "line": 100,
+      "shape": "path_or_associated_call",
+      "true_class": "must",
+      "caller": "crate::tests::matching::maximum_odd_path",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 2362,
+      "shape": "path_or_associated_call",
+      "true_class": "must",
+      "caller": "crate::tests::test::test_borrowed_raw_value",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "allow",
+        "cfg",
+        "deny",
+        "derive",
+        "macro_use",
+        "repr",
+        "serde"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg",
+        "macro_use"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regex/bytes.rs",
+      "line": 1203,
+      "shape": "method_call",
+      "true_class": "must",
+      "caller": "crate::regex::bytes::Regex::captures_read",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "derive",
+        "doc",
+        "inline"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": true,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 594,
+      "shape": "method_call",
+      "true_class": "must",
+      "caller": "crate::matrix_graph::NodeIdentifiers<'a, Ix>::next",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "derive",
+        "doc",
+        "inline",
+        "should_panic"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": true,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/lexical/bhcomp.rs",
+      "line": 146,
+      "shape": "path_or_associated_call",
+      "true_class": "must",
+      "caller": "crate::lexical::bhcomp::small_atof",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "inline"
+      ],
+      "transformed_scope_cfg_like_attrs": [],
+      "transformed_scope_trips_narrowly": false,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 194,
+      "shape": "method_call",
+      "true_class": "must",
+      "caller": "crate::tests::graph::cyclic",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "derive",
+        "should_panic"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/csr.rs",
+      "line": 995,
+      "shape": "path_or_associated_call",
+      "true_class": "must",
+      "caller": "crate::csr::test_bellman_ford_neg_cycle",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "derive",
+        "doc",
+        "inline",
+        "should_panic"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": true,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 414,
+      "shape": "path_or_associated_call",
+      "true_class": "must",
+      "caller": "crate::tests::graph::dijk",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "derive",
+        "should_panic"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": true,
+      "untrusted_macros_in_caller": [
+        "println!(\"{:?}\", g)",
+        "println!(\"Visit {:?} = {:?}\", no, g.node_weight(no))"
+      ],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 2092,
+      "shape": "plain_call",
+      "true_class": "must",
+      "caller": "crate::tests::graph::dfs_visit",
+      "identifier_filter_pass": true,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "derive",
+        "should_panic"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": true,
+      "untrusted_macros_in_caller": [
+        "vec![invalid_time; gr.node_count()]",
+        "vec![invalid_time; gr.node_count()]",
+        "println!(\"Event: {:?}\", evt)",
+        "println!(\"{:?}\", discover_time)",
+        "println!(\"{:?}\", finish_time)",
+        "vec![NodeIndex::end(); gr.node_count()]",
+        "vec![next]"
+      ],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 819,
+      "shape": "path_or_associated_call",
+      "true_class": "must",
+      "caller": "crate::tests::graph::scc",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "derive",
+        "should_panic"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": true,
+      "untrusted_macros_in_caller": [
+        "vec![",
+        "vec![",
+        "vec![",
+        "vec![vec![n(0)], vec![n(1)], vec![n(2)], vec![n(3)]]",
+        "vec![vec![n(0)], vec![n(1)], vec![n(2)], vec![n(3)]]"
+      ],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/floyd_warshall.rs",
+      "line": 11,
+      "shape": "method_call",
+      "true_class": "must",
+      "caller": "crate::tests::floyd_warshall::floyd_warshall_uniform_weight",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [],
+      "transformed_scope_cfg_like_attrs": [],
+      "transformed_scope_trips_narrowly": false,
+      "transformed_scope_trips_currently": false,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/quickcheck.rs",
+      "line": 197,
+      "shape": "path_or_associated_call",
+      "true_class": "must",
+      "caller": "crate::quickcheck::GraphMap<N, E, Ty>::arbitrary",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/mod.rs",
+      "line": 335,
+      "shape": "method_call",
+      "true_class": "must",
+      "caller": "crate::algo::mod::kosaraju_scc",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "deprecated",
+        "derive"
+      ],
+      "transformed_scope_cfg_like_attrs": [],
+      "transformed_scope_trips_narrowly": false,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 547,
+      "shape": "plain_call",
+      "true_class": "must",
+      "caller": "crate::tests::quickcheck",
+      "identifier_filter_pass": true,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "derive",
+        "macro_use"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg",
+        "macro_use"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": true,
+      "untrusted_macros_in_caller": [
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "defmac!(iter_eq a, b => a.eq(b))",
+        "defmac!(nodes_eq ref a, ref b => a.node_references().eq(b.no",
+        "defmac!(edgew_eq ref a, ref b => a.edge_references().eq(b.ed",
+        "defmac!(edges_eq ref a, ref b =>",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {",
+        "quickcheck! {"
+      ],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/data.rs",
+      "line": 206,
+      "shape": "method_call",
+      "true_class": "may",
+      "caller": "crate::data::GraphMap<N, E, Ty>::add_edge",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "derive"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": true,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 2261,
+      "shape": "path_or_associated_call",
+      "true_class": "must",
+      "caller": "crate::tests::graph::test_edge_filtered",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "derive",
+        "should_panic"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/read.rs",
+      "line": 600,
+      "shape": "method_call",
+      "true_class": "must",
+      "caller": "crate::read::SliceRead<'a>::ignore_str",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "cfg_attr",
+        "cold",
+        "doc",
+        "inline"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg",
+        "cfg_attr"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": true,
+      "parse_error": false,
+      "macro_owners_blocks_caller": true,
+      "untrusted_macros_in_caller": [
+        "tri!(ignore_escape(self))"
+      ],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/builders.rs",
+      "line": 2093,
+      "shape": "method_call",
+      "true_class": "must",
+      "caller": "crate::builders::RegexSetBuilder::case_insensitive",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "allow",
+        "derive"
+      ],
+      "transformed_scope_cfg_like_attrs": [],
+      "transformed_scope_trips_narrowly": false,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": true,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 348,
+      "shape": "method_call",
+      "true_class": "must",
+      "caller": "crate::tests::quickcheck::graph_remove_edge::prop",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "derive",
+        "macro_use"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg",
+        "macro_use"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 504,
+      "shape": "method_call",
+      "true_class": "may",
+      "caller": "crate::ser",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "cfg_attr",
+        "derive",
+        "doc",
+        "inline"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg",
+        "cfg_attr"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": true,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "benches/bellman_ford.rs",
+      "line": 53,
+      "shape": "method_call",
+      "true_class": "must",
+      "caller": "crate::benches::bellman_ford::find_negative_cycle_bench",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "bench",
+        "feature"
+      ],
+      "transformed_scope_cfg_like_attrs": [],
+      "transformed_scope_trips_narrowly": false,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/suite_string_set.rs",
+      "line": 73,
+      "shape": "method_call",
+      "true_class": "must",
+      "caller": "crate::tests::suite_string_set::compiler",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [],
+      "transformed_scope_cfg_like_attrs": [],
+      "transformed_scope_trips_narrowly": false,
+      "transformed_scope_trips_currently": false,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": true,
+      "untrusted_macros_in_caller": [
+        "matches!(test.search_kind(), regex_test::SearchKind::Overlap",
+        "matches!(test.match_kind(), regex_test::MatchKind::All)",
+        "cfg!(feature = \"unicode\")"
+      ],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/serialization.rs",
+      "line": 321,
+      "shape": "method_call",
+      "true_class": "may",
+      "caller": "crate::graph_impl::serialization::Graph<N, E, Ty, Ix>::from_deserialized",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "allow",
+        "derive",
+        "serde"
+      ],
+      "transformed_scope_cfg_like_attrs": [],
+      "transformed_scope_trips_narrowly": false,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "benches/matrix_graph.rs",
+      "line": 166,
+      "shape": "method_call",
+      "true_class": "must",
+      "caller": "crate::benches::matrix_graph::parse_matrix",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "bench",
+        "feature"
+      ],
+      "transformed_scope_cfg_like_attrs": [],
+      "transformed_scope_trips_narrowly": false,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": false,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1030,
+      "shape": "path_or_associated_call",
+      "true_class": "must",
+      "caller": "crate::matrix_graph::MatrixGraph<N, E, Directed>::new",
+      "identifier_filter_pass": false,
+      "transformed_scope_all_attrs": [
+        "cfg",
+        "derive",
+        "doc",
+        "inline",
+        "should_panic"
+      ],
+      "transformed_scope_cfg_like_attrs": [
+        "cfg"
+      ],
+      "transformed_scope_trips_narrowly": true,
+      "transformed_scope_trips_currently": true,
+      "duplicate_paths": true,
+      "parse_error": false,
+      "macro_owners_blocks_caller": false,
+      "untrusted_macros_in_caller": [],
+      "inside_trusted_assert_macro": false
+    }
+  ]
+}
