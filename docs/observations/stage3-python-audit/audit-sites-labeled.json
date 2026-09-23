@@ -1,0 +1,1054 @@
+{
+  "sites": [
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_decorators.py",
+      "line": 389,
+      "shape": "dynamic_dispatch",
+      "text": "return getattr(tp, name)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "getattr(tp, name) calls the builtin getattr(); reflection target is external to the three-package snapshot."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_termui.py",
+      "line": 1229,
+      "shape": "method_call",
+      "text": "self.fail(f\"rejected: {value}\", param, ctx)",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "self.fail(...) inside ParamType subclass _CustomTypeWithRawValue.convert; ParamType.fail (types.py) is the only fail() on the ParamType hierarchy in the snapshot (Context.fail in core.py is an unrelated class), no override anywhere."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_discriminated_union.py",
+      "line": 299,
+      "shape": "operator_dunder",
+      "text": "return inner_discriminator == self.discriminator or (",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "== comparing dict value (str/list) to self.discriminator (str); builtin __eq__, external to snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_construction.py",
+      "line": 37,
+      "shape": "operator_dunder",
+      "text": "assert m.a == 3",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "m.a == 3 compares a plain int field value via builtin int.__eq__, external to snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/typing.py",
+      "line": 144,
+      "shape": "dynamic_dispatch",
+      "text": "return _typing_get_origin(tp) or getattr(tp, '__origin__', None)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "getattr(tp, '__origin__', None) calls the builtin getattr(); external target."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_type_alias_type.py",
+      "line": 50,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == [",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "exc_info.value is a pydantic_core.ValidationError instance (pydantic/__init__.py aliases ValidationError = pydantic_core.ValidationError); .errors() targets a type outside the three-package snapshot (pydantic_core is a separate, compiled package)."
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "tests/testserver/server.py",
+      "line": 162,
+      "shape": "qualified_attribute_call",
+      "text": "self.ssl_context.load_cert_chain(self.cert_chain, keyfile=self.keyfile)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "self.ssl_context is a stdlib ssl.SSLContext; .load_cert_chain() is a stdlib method, external to the snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_pickle.py",
+      "line": 41,
+      "shape": "qualified_attribute_call",
+      "text": "cloudpickle_pypy_xfail = pytest.mark.xfail(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "pytest.mark.xfail(...) targets pytest, external to the snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/mypy/outputs/pyproject-plugin-strict_toml/plugin_success.py",
+      "line": 305,
+      "shape": "plain_call",
+      "text": "class OuterModel(InnerModel):",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`class OuterModel(InnerModel):` is a class definition; the base-class parenthesis list regex-matches like a call but is not one (plain_call shape false positive)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/mypy/outputs/pyproject-plugin-strict_toml/plugin_success.py",
+      "line": 63,
+      "shape": "method_call",
+      "text": "ForwardReferencingModel.model_rebuild()",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "ForwardReferencingModel.model_rebuild() -- model_rebuild is defined exactly once, on BaseModel (pydantic/main.py:633), no override anywhere in the snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/dataclasses.py",
+      "line": 186,
+      "shape": "qualified_attribute_call",
+      "text": "decorators = _decorators.DecoratorInfos.build(cls, replace_wrapped_methods=True)",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "_decorators.DecoratorInfos.build(...) -- fully qualified to the DecoratorInfos class in pydantic's own in-snapshot _internal._decorators module; only one `build` method exists on DecoratorInfos (a second `build` at line 240 belongs to the unrelated Decorator class)."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/core.py",
+      "line": 1764,
+      "shape": "method_call",
+      "text": "self.add_command(cmd)",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "self.add_command(cmd) inside Group.group()'s inner decorator function, so self is a Group; add_command is defined exactly once in the snapshot (click/core.py:1661), no override."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/types.py",
+      "line": 2888,
+      "shape": "dynamic_dispatch",
+      "text": "return object.__getattribute__(self, item)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "object.__getattribute__(self, item) explicitly targets the builtin `object` type, external to the snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_generics.py",
+      "line": 2248,
+      "shape": "plain_call",
+      "text": "class MessageWrapper(BaseModel, Generic[T]):",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`class MessageWrapper(BaseModel, Generic[T]):` is a class definition; regex false positive (plain_call)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_type_adapter.py",
+      "line": 375,
+      "shape": "plain_call",
+      "text": "class ModelFromAttributesFalse(Model):",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`class ModelFromAttributesFalse(Model):` is a class definition; regex false positive (plain_call)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 2924,
+      "shape": "decorator",
+      "text": "@contextmanager",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@contextmanager decorates _ModelTypeStack.push; contextmanager is imported from stdlib contextlib, external to the snapshot (case 8: bare decorator name, one call: contextmanager(push))."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_deprecated.py",
+      "line": 231,
+      "shape": "dynamic_dispatch",
+      "text": "assert not hasattr(model, 'y')",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "hasattr(model, 'y') calls the builtin hasattr(); reflection, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/mypy/modules/plugin_fail_baseConfig.py",
+      "line": 232,
+      "shape": "plain_call",
+      "text": "class CoverageTester(Missing):  # noqa F821",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`class CoverageTester(Missing):` is a class definition (a deliberately-broken mypy-plugin test fixture); regex false positive (plain_call), not a real call regardless of Missing being undefined."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_testing.py",
+      "line": 408,
+      "shape": "decorator",
+      "text": "@click.command()",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@click.command() -- the selected span is the decorator-application call itself (applying click.command()'s return value to the decorated function). click.command is in-snapshot, but per rubric case 5 its effect (wrapping the function in a Command object) is not a proven passthrough -- the callee this call actually invokes (whatever click.command() returns) can't be traced from the snapshot alone, so Unknown."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_pipeline.py",
+      "line": 398,
+      "shape": "method_call",
+      "text": "with pytest.raises(ValidationError):",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "pytest.raises(ValidationError) targets pytest, external to the snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_generics.py",
+      "line": 1014,
+      "shape": "plain_call",
+      "text": "class MyGeneric(BaseModel, Generic[t]):",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`class MyGeneric(BaseModel, Generic[t]):` is a class definition; regex false positive (plain_call)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/typing.py",
+      "line": 175,
+      "shape": "dynamic_dispatch",
+      "text": "if hasattr(tp, '_nparams'):",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "hasattr(tp, '_nparams') calls the builtin hasattr(); external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_json_schema.py",
+      "line": 7103,
+      "shape": "decorator",
+      "text": "@pytest.mark.parametrize('valid_decimal', ['0.1', '000.1', '0.001000', '0000.001000', '111', '100', '00100', '011.10'])",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@pytest.mark.parametrize(...) targets pytest, external to the snapshot."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/core.py",
+      "line": 1107,
+      "shape": "operator_dunder",
+      "text": "def get_help_option(self, ctx: Context) -> Option | None:",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`def get_help_option(self, ctx: Context) -> Option | None:` is a function definition; the `Option | None` return-type union regex-matches the operator_dunder `|` pattern but is a type annotation, not an operator call."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_deprecated.py",
+      "line": 271,
+      "shape": "plain_call",
+      "text": "deprecated_from_orm(State, SimpleNamespace(user=SimpleNamespace(first_name='John', last_name='Appleseed')))",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "deprecated_from_orm(...) is defined exactly once, at module level in this same test file (tests/test_deprecated.py:40), unambiguous, not rebound."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_dataclasses.py",
+      "line": 3199,
+      "shape": "decorator",
+      "text": "@pydantic.dataclasses.dataclass(config=ConfigDict(frozen=True, validate_assignment=True))",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@pydantic.dataclasses.dataclass(...) -- in-snapshot factory, but its transformation (turning a class into a pydantic dataclass with validation) is not a proven passthrough; decorator effect untraced (case 5)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/types.py",
+      "line": 846,
+      "shape": "operator_dunder",
+      "text": "item_type: type[HashableItemType], *, min_length: int | None = None, max_length: int | None = None",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`item_type: type[HashableItemType], *, min_length: int | None = None, ...` is a function parameter list with `|` type-union annotations; operator_dunder false positive, not an operator call."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 559,
+      "shape": "method_call",
+      "text": "lax_schema=core_schema.union_schema(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "core_schema.union_schema(...) -- core_schema refers to pydantic_core.core_schema, a separate compiled package outside the three-package snapshot."
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "src/requests/auth.py",
+      "line": 321,
+      "shape": "dynamic_dispatch",
+      "text": "def __call__(self, r: PreparedRequest) -> PreparedRequest:",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`def __call__(self, r: PreparedRequest) -> PreparedRequest:` is a method definition; dynamic_dispatch's __call__ pattern matches the def signature, not an actual call."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/functional_validators.py",
+      "line": 340,
+      "shape": "dynamic_dispatch",
+      "text": "def __call__(self, cls: Any, value: Any, handler: core_schema.ValidatorFunctionWrapHandler, /) -> Any: ...",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`def __call__(self, cls: Any, value: Any, handler: ...) -> Any: ...` is a Protocol method signature (TYPE_CHECKING-only, body is `...`), never actually called; dynamic_dispatch false positive on the def line."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validate_call.py",
+      "line": 923,
+      "shape": "operator_dunder",
+      "text": "return a + c",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "`return a + c` -- a and c are plain ints by the time this body executes (after validate_call's own validation); builtin int.__add__, external to snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_generics.py",
+      "line": 2519,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == [",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "exc_info.value.errors(...) -- ValidationError is pydantic_core.ValidationError, external to the snapshot (see site 5)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_json_schema.py",
+      "line": 228,
+      "shape": "method_call",
+      "text": "with pytest.raises(ValidationError):",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "pytest.raises(ValidationError) targets pytest, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/benchmarks/basemodel_eq_performance.py",
+      "line": 117,
+      "shape": "method_call",
+      "text": "model_fields = type(self).model_fields.keys()",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "type(self).model_fields.keys() -- model_fields is a dict classvar; .keys() is the builtin dict method, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_deprecated.py",
+      "line": 427,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == [",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "exc_info.value.errors(...) -- external pydantic_core.ValidationError (see site 5)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_config.py",
+      "line": 314,
+      "shape": "qualified_attribute_call",
+      "text": "marks=pytest.mark.thread_unsafe(reason='`pytest.raises()` is thread unsafe'),",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "pytest.mark.thread_unsafe(...) targets pytest, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_annotated.py",
+      "line": 336,
+      "shape": "method_call",
+      "text": "assert AnnotatedModel(one=1).model_dump() == {'one': 1}",
+      "true_class": "unknown",
+      "confidence": "medium",
+      "rationale": "AnnotatedModel(one=1) calls typing.Annotated[Model, ...]'s own runtime call delegation, which forwards to Model's construction machinery via typing internals not traced by this rubric; genuinely dynamic/duck-typed dispatch through stdlib typing, not a proven single target."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/main.py",
+      "line": 1392,
+      "shape": "decorator",
+      "text": "@typing_extensions.deprecated(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@typing_extensions.deprecated(...) -- typing_extensions is a separate PyPI package, external to the snapshot."
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "tests/test_utils.py",
+      "line": 919,
+      "shape": "dynamic_dispatch",
+      "text": "monkeypatch.setattr(winreg, \"QueryValueEx\", QueryValueEx)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "monkeypatch.setattr(winreg, ...) -- monkeypatch is pytest's fixture object, external; also literally monkey-patching, explicitly Unknown per the policy."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_deprecated.py",
+      "line": 581,
+      "shape": "plain_call",
+      "text": "def test_v1_get_validators():",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`def test_v1_get_validators():` is a function definition; plain_call false positive."
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "tests/testserver/server.py",
+      "line": 130,
+      "shape": "qualified_attribute_call",
+      "text": "self.wait_to_close_event.set()",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "self.wait_to_close_event.set() -- wait_to_close_event is a threading.Event (stdlib, consistent with sibling .wait() calls on ready_event/stop_event in the same class); external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validate_call.py",
+      "line": 53,
+      "shape": "operator_dunder",
+      "text": "assert validate_call(func).__qualname__ == func.__qualname__",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "== comparing __qualname__ strings; builtin str.__eq__, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_deprecated_validate_arguments.py",
+      "line": 27,
+      "shape": "decorator",
+      "text": "@validate_arguments",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@validate_arguments -- the bare name resolves to a function defined in this same test file, but its body calls a different function (validate_arguments_deprecated) whose own transformation isn't traced, so the decorator's effect on `foo` isn't proven a passthrough (case 5)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_config.py",
+      "line": 38,
+      "shape": "operator_dunder",
+      "text": "title: str | None",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`title: str | None` is a class-body attribute type annotation (ConfigWrapper's __slots__-style declarations), not an operator call; operator_dunder false positive."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_stream_lifecycle.py",
+      "line": 402,
+      "shape": "qualified_attribute_call",
+      "text": "assert result.stdout.strip() == \"\"",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "result.stdout.strip() -- result.stdout is a str; .strip() is the builtin str method, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 1492,
+      "shape": "dynamic_dispatch",
+      "text": "extra_items = getattr(typed_dict_cls, '__extra_items__', typing_extensions.NoExtraItems)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "getattr(typed_dict_cls, '__extra_items__', ...) calls the builtin getattr(); external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/benchmarks/test_imports.py",
+      "line": 13,
+      "shape": "decorator",
+      "text": "@pytest.mark.benchmark",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@pytest.mark.benchmark targets pytest, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_main.py",
+      "line": 324,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == [",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "exc_info.value.errors(...) -- external pydantic_core.ValidationError (see site 5)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_main.py",
+      "line": 3193,
+      "shape": "decorator",
+      "text": "@classmethod",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@classmethod -- bare decorator, builtin classmethod(), external (case 8/7)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_serialize.py",
+      "line": 78,
+      "shape": "operator_dunder",
+      "text": "assert m.inner.y == 2",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "m.inner.y == 2 compares a plain int field value; builtin int.__eq__, external."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_testing.py",
+      "line": 197,
+      "shape": "decorator",
+      "text": "@click.command()",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@click.command() -- decorator effect untraced (see site 18)."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_context.py",
+      "line": 491,
+      "shape": "operator_dunder",
+      "text": "assert debug_logger_name == ctx.command.params[0].logger_name",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "debug_logger_name == ctx.command.params[0].logger_name compares string values via builtin str.__eq__, external."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_arguments.py",
+      "line": 473,
+      "shape": "plain_call",
+      "text": "frozenset([1, 2, 3]),",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "frozenset([1, 2, 3]) constructs the builtin frozenset type, external to the snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validate_call.py",
+      "line": 137,
+      "shape": "plain_call",
+      "text": "validate_call(func)",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "validate_call(func) -- validate_call has two @overload stub signatures (no body) plus exactly one real implementation in pydantic/validate_call_decorator.py; import is unambiguous, not rebound."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/shell_completion.py",
+      "line": 83,
+      "shape": "operator_dunder",
+      "text": "help: str | None = None,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`help: str | None = None,` is a function parameter default with a `|` type-union annotation; operator_dunder false positive."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/main.py",
+      "line": 1214,
+      "shape": "method_call",
+      "text": "other_fields_proxy = _utils.SafeGetItemProxy(other.__dict__)",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "_utils.SafeGetItemProxy(other.__dict__) -- SafeGetItemProxy is a plain __slots__ class in pydantic's own _internal._utils module with no __new__ override and no custom metaclass; single in-snapshot definition."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_type_alias_type.py",
+      "line": 253,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == [",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "exc_info.value.errors(...) -- external pydantic_core.ValidationError (see site 5)."
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "tests/test_requests.py",
+      "line": 633,
+      "shape": "plain_call",
+      "text": "with override_environ(http_proxy=INVALID_PROXY):",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "override_environ(...) is defined exactly once, in tests/utils.py, imported unambiguously into this test file, not rebound."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/testing.py",
+      "line": 55,
+      "shape": "plain_call",
+      "text": "def __iter__(self) -> cabc.Iterator[bytes]:",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`def __iter__(self) -> cabc.Iterator[bytes]:` is a method definition; plain_call false positive on the signature."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_types_namedtuple.py",
+      "line": 243,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == [",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "exc_info.value.errors(...) -- external pydantic_core.ValidationError (see site 5)."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_basic.py",
+      "line": 15,
+      "shape": "plain_call",
+      "text": "def cli():",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`def cli():` is a function definition; plain_call false positive (the def signature `cli()` looks like a call)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/dataclasses.py",
+      "line": 175,
+      "shape": "dynamic_dispatch",
+      "text": "if not has_dataclass_base and config is not None and hasattr(cls, '__pydantic_config__'):",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "hasattr(cls, '__pydantic_config__') calls the builtin hasattr(); external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_serialize.py",
+      "line": 250,
+      "shape": "method_call",
+      "text": "assert MyModel(x=1234).model_dump_json() == '{\"x\":\"1,234\"}'",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "MyModel(x=1234).model_dump_json() -- model_dump_json is defined exactly once, on BaseModel (pydantic/main.py:493), no override; MyModel's own construction is Must-eligible the same way (BaseModel has no __new__ override and its metaclass has no __call__ override, see site 70), so the whole chain resolves, but the classified call site is specifically .model_dump_json()."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_dataclasses.py",
+      "line": 1689,
+      "shape": "decorator",
+      "text": "@create_module",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@create_module is a pytest fixture (function parameter, injected proxy); its behavior isn't determined by a traceable definition in the snapshot -- explicitly 'unresolved fixtures' per the policy's Unknown column."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_arguments.py",
+      "line": 11,
+      "shape": "decorator",
+      "text": "@click.command()",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@click.command() -- decorator effect untraced (see site 18)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_discriminated_union.py",
+      "line": 585,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == [",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "exc_info.value.errors(...) -- external pydantic_core.ValidationError (see site 5)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_plugins.py",
+      "line": 86,
+      "shape": "operator_dunder",
+      "text": "extra: ExtraValues | None = None,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`extra: ExtraValues | None = None,` is a function parameter default with a `|` type-union annotation; operator_dunder false positive."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/_compat.py",
+      "line": 225,
+      "shape": "operator_dunder",
+      "text": "return stream_value == value or (value is None and stream_value is not None)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "stream_value == value or (...) compares str/None values via builtin __eq__/is; external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/main.py",
+      "line": 1563,
+      "shape": "qualified_attribute_call",
+      "text": "extra = self.__pydantic_extra__.copy()",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "self.__pydantic_extra__.copy() -- __pydantic_extra__ is a dict; .copy() is the builtin dict method, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_known_annotated_metadata.py",
+      "line": 298,
+      "shape": "dynamic_dispatch",
+      "text": "partial(validator, {constraint: getattr(annotation, constraint)}), schema",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "getattr(annotation, constraint) calls the builtin getattr(); external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/mypy/outputs/mypy-plugin-very-strict_ini/metaclass_args.py",
+      "line": 27,
+      "shape": "plain_call",
+      "text": "MetaclassArgumentsWithDefault(i=None)",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "MetaclassArgumentsWithDefault(i=None) -- BaseModel defines no __new__ override, and its metaclass ModelMetaclass (ABCMeta subclass) defines no __call__ override (the __call__ found elsewhere in the same file belongs to the unrelated _PydanticWeakRef class), so construction resolves to ordinary type.__call__ -> MetaclassArgumentsWithDefault.__init__, unambiguous in the snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/fields.py",
+      "line": 1277,
+      "shape": "method_call",
+      "text": "const = extra.pop('const', None)  # type: ignore",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "extra.pop('const', None) -- extra is a dict (kwargs-style usage); .pop() is the builtin dict method, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_types.py",
+      "line": 3663,
+      "shape": "decorator",
+      "text": "@pytest.mark.parametrize('value', ['nonexistentfile', Path('nonexistentfile'), 'tests', Path('tests')])",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@pytest.mark.parametrize(...) targets pytest, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_exports.py",
+      "line": 16,
+      "shape": "dynamic_dispatch",
+      "text": "getattr(pydantic, name)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "getattr(pydantic, name) calls the builtin getattr(); this is literally the dynamic-imports/reflection case named in the policy's Unknown column."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/fields.py",
+      "line": 888,
+      "shape": "operator_dunder",
+      "text": "elif self.shape == SHAPE_GENERIC:",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "self.shape == SHAPE_GENERIC compares an int/enum-like constant via builtin __eq__; external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/utils.py",
+      "line": 167,
+      "shape": "dynamic_dispatch",
+      "text": "if getattr(base, field_name, None):",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "getattr(base, field_name, None) calls the builtin getattr(); external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_generics.py",
+      "line": 796,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == [",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "exc_info.value.errors(...) -- external pydantic_core.ValidationError (see site 5)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/mypy/outputs/pyproject-plugin_toml/pydantic_settings.py",
+      "line": 4,
+      "shape": "plain_call",
+      "text": "class Settings(BaseSettings):",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`class Settings(BaseSettings):` is a class definition; plain_call false positive."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validate_call.py",
+      "line": 1136,
+      "shape": "qualified_attribute_call",
+      "text": "assert exc_info.value.errors(include_url=False) == [",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "exc_info.value.errors(...) -- external pydantic_core.ValidationError (see site 5)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_discriminated_union.py",
+      "line": 390,
+      "shape": "operator_dunder",
+      "text": "self, choice: core_schema.ModelFieldsSchema, source_name: str | None = None",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`self, choice: core_schema.ModelFieldsSchema, source_name: str | None = None` is a function parameter list with a `|` type-union annotation; operator_dunder false positive."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_main.py",
+      "line": 570,
+      "shape": "operator_dunder",
+      "text": "assert m.a == 10",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "m.a == 10 compares a plain int field value; builtin int.__eq__, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_types.py",
+      "line": 4015,
+      "shape": "method_call",
+      "text": "with pytest.raises(ValidationError) as exc_info:",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "pytest.raises(ValidationError) targets pytest, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_utils.py",
+      "line": 295,
+      "shape": "method_call",
+      "text": "if value is None or cls.is_true(value):",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "cls.is_true(value) -- is_true is defined exactly once, on ValueItems (pydantic/_internal/_utils.py), and its base class Representation (_internal/_repr.py) defines no is_true, so no override exists anywhere in the snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 2295,
+      "shape": "method_call",
+      "text": "schema = self._apply_single_annotation(schema, field_metadata)",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "self._apply_single_annotation(schema, field_metadata) -- defined exactly once, on GenerateSchema (_generate_schema.py:2258), no override anywhere in the snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validate_call.py",
+      "line": 1026,
+      "shape": "plain_call",
+      "text": "def test_methods_are_not_rebound():",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`def test_methods_are_not_rebound():` is a function definition; plain_call false positive."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_edge_cases.py",
+      "line": 2570,
+      "shape": "method_call",
+      "text": "Operation.model_validate({'callbacks': [PathItem()]})",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "Operation.model_validate(...) -- model_validate is defined exactly once, on BaseModel (pydantic/main.py:694), no override."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/errors.py",
+      "line": 237,
+      "shape": "plain_call",
+      "text": "def __str__(self) -> str:",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`def __str__(self) -> str:` is a method definition; plain_call false positive."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/_winconsole.py",
+      "line": 200,
+      "shape": "decorator",
+      "text": "@property",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@property on ConsoleStream.name -- property is a builtin, external to the snapshot (case 8/7)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 1738,
+      "shape": "method_call",
+      "text": "elif typing_objects.is_typevar(type_param):",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "typing_objects.is_typevar(...) -- typing_objects is imported `from typing_inspection import typing_objects`, a separate PyPI package outside the three-package snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/json_schema.py",
+      "line": 2488,
+      "shape": "qualified_attribute_call",
+      "text": "for defs_refs in self._prioritized_defsref_choices.values():",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "self._prioritized_defsref_choices.values() -- a dict; .values() is the builtin dict method, external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_model_signature.py",
+      "line": 162,
+      "shape": "dynamic_dispatch",
+      "text": "assert not hasattr(Model(), '__signature__')",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "hasattr(Model(), '__signature__') calls the builtin hasattr(); external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/type_adapter.py",
+      "line": 578,
+      "shape": "operator_dunder",
+      "text": "polymorphic_serialization: bool | None = None,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`polymorphic_serialization: bool | None = None,` is a function parameter default with a `|` type-union annotation; operator_dunder false positive."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_networks_ipaddress.py",
+      "line": 83,
+      "shape": "plain_call",
+      "text": "IPv4Address('0.0.0.0'),",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "IPv4Address('0.0.0.0') constructs stdlib ipaddress.IPv4Address, external to the snapshot."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_arguments.py",
+      "line": 413,
+      "shape": "decorator",
+      "text": "@click.command()",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@click.command() -- decorator effect untraced (see site 18)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/mypy.py",
+      "line": 250,
+      "shape": "dynamic_dispatch",
+      "text": "setattr(self, key, setting)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "setattr(self, key, setting) calls the builtin setattr(); this is literally monkey-patching config values, explicitly named Unknown per the policy."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/utils.py",
+      "line": 534,
+      "shape": "dynamic_dispatch",
+      "text": "return getattr(self.wrapped, attr)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "getattr(self.wrapped, attr) inside __getattr__ calls the builtin getattr(); external, and the canonical reflection example."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_arguments.py",
+      "line": 284,
+      "shape": "operator_dunder",
+      "text": "assert value == processed_value",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "value == processed_value compares parametrized test values (str/bool-typed) via builtin __eq__; external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/networks.py",
+      "line": 310,
+      "shape": "decorator",
+      "text": "@staticmethod",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@staticmethod -- bare decorator, builtin staticmethod(), external (case 8/7)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 320,
+      "shape": "dynamic_dispatch",
+      "text": "for base in (tp, *getattr(tp, '__mro__', tp.__class__.__mro__)[:-1]):",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "getattr(tp, '__mro__', tp.__class__.__mro__) calls the builtin getattr(); external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validate_call.py",
+      "line": 982,
+      "shape": "method_call",
+      "text": "with pytest.raises(ValidationError, match=\"type=int_parsing, input_value='x', input_type=str\"):",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "pytest.raises(ValidationError, match=...) targets pytest, external."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_options.py",
+      "line": 1079,
+      "shape": "decorator",
+      "text": "@click.command()",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@click.command() -- decorator effect untraced (see site 18)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_generate_schema.py",
+      "line": 670,
+      "shape": "method_call",
+      "text": "return core_schema.any_schema()",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "core_schema.any_schema() -- core_schema is pydantic_core.core_schema, external to the snapshot (see site 27)."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/v1/types.py",
+      "line": 424,
+      "shape": "decorator",
+      "text": "@classmethod",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@classmethod -- bare decorator, builtin classmethod(), external (case 8/7)."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_stream_lifecycle.py",
+      "line": 160,
+      "shape": "dynamic_dispatch",
+      "text": "has_del = hasattr(StreamMixer, \"__del__\")",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "hasattr(StreamMixer, '__del__') calls the builtin hasattr(); external."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/functional_validators.py",
+      "line": 323,
+      "shape": "decorator",
+      "text": "@classmethod",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "@classmethod -- bare decorator, builtin classmethod(), external (case 8/7)."
+    }
+  ]
+}
