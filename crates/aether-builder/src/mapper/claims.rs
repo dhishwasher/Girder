@@ -280,6 +280,51 @@ pub(super) fn annotate(
                     reason: "unexpanded-macro-or-decorator".into(),
                     coverage_gap: true,
                 });
+        } else if lang == Lang::Python
+            && matches!(
+                n.kind(),
+                "binary_operator" | "comparison_operator" | "unary_operator" | "not_operator"
+            )
+        {
+            // Each of these can invoke a dunder method implicitly
+            // (`__add__`/`__eq__`/`__neg__`/`__bool__`, etc.) whose target
+            // depends on the operand's runtime type -- exactly the kind of
+            // dispatch the whole-module `implicit-runtime-dispatch-not-
+            // certified` gap already discloses, but that gap is excluded
+            // from "covering" any specific site by every scorer that reads
+            // it (it would otherwise make every byte offset in every
+            // Python file always covered, hiding a genuine absence of
+            // per-site evidence). Without a per-site claim here, a bare
+            // operator expression used as a statement/assert argument gets
+            // NO CallClaim at all -- not even an honest Unknown one -- an
+            // unsafe_exclusion, not a disclosed gap.
+            //
+            // Two deliberate imprecisions, both toward over-disclosure
+            // (never toward hiding a gap), matching this module's own
+            // stated "coarse, textual over-approximation" design:
+            // `boolean_operator` (`and`/`or`) is excluded entirely --
+            // short-circuit control flow, not an operator-overload
+            // dispatch point, so flagging it would misrepresent ordinary
+            // control flow as uncertain dispatch. `comparison_operator` is
+            // flagged as a whole node even when its only operator is
+            // `is`/`is not` (identity comparison, no dunder involved) --
+            // Python's grammar bundles a chained comparison
+            // (`a == b is None`) into one node, and distinguishing "this
+            // node's only operator is is/is not" from "it also has a real
+            // comparison" would need per-token inspection this coarse,
+            // node-kind-only design doesn't do anywhere else. A pure
+            // `is`/`is not` comparison gets an unnecessary but harmless
+            // Unknown boundary record, not a wrong answer.
+            claims
+                .entry(owner(*n, out, module))
+                .or_default()
+                .push(CallClaim {
+                    site: span_of(*n),
+                    class: CallClass::Unknown,
+                    targets: vec![],
+                    reason: "implicit-operator-dispatch-not-certified".into(),
+                    coverage_gap: true,
+                });
         }
     }
     let mut gaps = Vec::new();
@@ -591,6 +636,65 @@ mod tests {
                 "{file}: {claims:?}"
             );
         }
+    }
+
+    #[test]
+    fn a_bare_comparison_expression_gets_an_unknown_claim_not_no_claim_at_all() {
+        // Reproduces the exact real-world gap Stage 3 Python's before-
+        // observation found (docs/observations/stage3-python-audit/
+        // before-observation.md): a function with two real calls and a
+        // bare `assert x == y` between them used to leave NO CallClaim at
+        // all covering the comparison -- not even an honest Unknown one --
+        // scoring as unsafe_exclusion rather than a disclosed gap.
+        let g = graph(
+            "app.py",
+            "def make():\n    pass\ndef dump(m):\n    pass\ndef caller():\n    m = make()\n    assert m.a == 3\n    dump(m)\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        let operator_claims: Vec<_> = claims
+            .calls
+            .iter()
+            .filter(|c| c.reason == "implicit-operator-dispatch-not-certified")
+            .collect();
+        assert_eq!(operator_claims.len(), 1, "{claims:?}");
+        assert_eq!(operator_claims[0].class, CallClass::Unknown);
+        assert!(operator_claims[0].targets.is_empty());
+        assert!(operator_claims[0].coverage_gap);
+    }
+
+    #[test]
+    fn boolean_and_or_are_not_flagged_as_operator_dispatch() {
+        // `and`/`or` are short-circuit control flow, not an
+        // operator-overload dispatch point (no `__and__`/`__or__` call
+        // involved) -- flagging them would misrepresent ordinary control
+        // flow as uncertain dispatch.
+        let g = graph("app.py", "def caller(a, b):\n    return a and b\n");
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims
+                .calls
+                .iter()
+                .all(|c| c.reason != "implicit-operator-dispatch-not-certified"),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn unary_and_not_operators_are_flagged_as_operator_dispatch() {
+        let g = graph(
+            "app.py",
+            "def caller(a, b):\n    x = -a\n    y = not b\n    return x, y\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        let count = claims
+            .calls
+            .iter()
+            .filter(|c| c.reason == "implicit-operator-dispatch-not-certified")
+            .count();
+        assert_eq!(count, 2, "{claims:?}");
     }
 
     #[test]
