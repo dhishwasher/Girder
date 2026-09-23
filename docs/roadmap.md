@@ -258,15 +258,16 @@ Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
 
 ## Stage 3 — Close dispatch holes one language at a time
 
-**Status: IN PROGRESS** (policy frozen for Rust; audit and resolver work not
-yet started)
+**Status: IN PROGRESS** (policy frozen for Rust; before-observation, one
+resolver change, and its after-observation are done; criterion not yet fully
+met — see "Not yet done" below)
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
 
 | Language | Status | Before / after evidence | Dependency |
 | --- | --- | --- | --- |
-| Rust | IN PROGRESS | none / none | Stage 2 |
+| Rust | IN PROGRESS | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-assert-macro-fix/after-observation.md) | Stage 2 |
 | Python | NOT STARTED | none / none | Rust trustworthy on a real repository |
 | TypeScript | NOT STARTED | none / none | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
@@ -366,19 +367,37 @@ identifier-shaped calls whose target is imported rather than defined
 top-level in the calling file — the already-documented same-file/
 top-level-only limitation, not a new cause.
 
-**Not yet done:** the resolver change, and the after-observation (re-run
-this audit with `tools/dispatch_audit_scorer.py`, the dispatch corpus, and
-the Stage 1 trustworthiness oracle, all three must show no regression and
-the audit must show fewer conservative / more exact cells) that "measured
-dispatch-corpus improvement" requires. Stage 3 (Rust) cannot be marked DONE
-on the before-observation alone.
+**First resolver change done, after-observation done, criterion partially
+met.** `47c3a06` proves bare-identifier calls found textually inside
+trusted, unshadowed `assert!`/`assert_eq!`/`assert_ne!`/`debug_assert*`
+macros the same way a same-file top-level direct call is proven (walking the
+macro's token-tree leaves directly, since tree-sitter does not parse macro
+arguments as expressions). `3f5ed5e` measures it: dispatch corpus improved
+(pooled 20/36 → 21/35, Rust 4/10 → 5/9, `rust-direct-same-file` conservative
+→ exact, probe-verified against the actual fixture), zero classification
+errors held (0 unsound audit cells, oracle 1.0/1.0 precision/recall, both
+unchanged) — but **the audit itself is unchanged** (27 exact / 25
+conservative, byte-identical). Root-caused, not guessed: the audit sample
+has essentially no genuinely eligible same-file/non-doctest sites for this
+proof category, and the one real candidate found is blocked by the same
+whole-file `transformed_scope` `#[cfg]` gate already shown to independently
+block most of the method/path-call misses too. Full details, including the
+two disclosed-but-unfixed properties (crate-wide macro shadowing, checked
+absent from both corpora; control-flow insensitivity, consistent with the
+policy's binding-certainty definition of Must), in
+[after-observation.md](observations/stage3-rust-audit/after-assert-macro-fix/after-observation.md).
+Stage 3 (Rust) is **not DONE** (audit leg and real-repository nonempty-Must-
+precision leg unmet) and **not FAILED** (a specific next resolver step is
+identified, not a dead end).
 
 **Gate per language:** before/after corpus and real-repository audit, then all
 common gates. **Observation:**
-[audit-scoring-summary.json](observations/stage3-rust-audit/audit-scoring-summary.json)
-(before-observation only; after-observation pending). **Blockers:** none —
-Stage 2 and language order satisfied; next action is the resolver change
-named above.
+[audit-scoring-summary-v2.json](observations/stage3-rust-audit/audit-scoring-summary-v2.json)
+(before) and
+[after-observation.md](observations/stage3-rust-audit/after-assert-macro-fix/after-observation.md)
+(after — one resolver change measured, criterion not yet fully met).
+**Blockers:** none — next action is narrowing `transformed_scope`'s
+whole-file scope (see "Next" below), not a missing dependency.
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 
@@ -534,19 +553,52 @@ benchmark, don't run it against the stale snapshot.
 - MOVESPEED is available: approximately 291 GB free; system reports approximately
   2 GB available RAM and no swap. Cargo and rustc are available from its cache.
 - Stage 4 requires Claude Code, Cursor, and Codex adapters plus raw MCP JSON fallback.
-- Next: the resolver change. The identifier-only filter is the
-  highest-leverage target (92% of the audit's conservative cells), but
-  extending it to method/path calls needs care — syntax alone can't give
-  receiver types; the provable subset is `self.m()`/`Self::m()` inside an
-  inherent `impl T` (or `T::m()`) where `T` has exactly one inherent `m`
-  across the whole crate, which needs a crate-wide index of inherent impls
-  (project-level work, not something per-file `annotate()` can do alone).
-  Guard any change with: adversarial unit tests (a local macro shadowing
-  `assert_eq!`, a `#[cfg]` attribute, an attribute macro); the dispatch
-  corpus must stay 0 unsound and any false Must fails the gate; the Stage 1
-  trustworthiness oracle's union recall must stay 4/4; the audit
-  (`tools/dispatch_audit_scorer.py`, re-run) must show 0 unsound. If Rust's
-  full criterion (including "measured dispatch-corpus improvement," which
-  needs an actual before/after) isn't met, mark FAILED-AND-PUBLISHED and
-  stop — do not start Python before Rust is trustworthy on a real repository.
+- 2026-09-22: First Stage 3 Rust resolver change committed and measured.
+  `47c3a06` proves bare-identifier calls inside trusted, unshadowed
+  `assert!`/`assert_eq!`/`assert_ne!`/`debug_assert*` macros (walking the
+  macro's token-tree leaves directly; fails closed on shadowing, blocks,
+  closures, nested macros, and any other untrusted macro in the same
+  function — 13 unit tests, including an earlier, over-broad version of the
+  fix caught and reverted in review before commit). `3f5ed5e` measured it:
+  dispatch corpus improved by exactly the predicted single cell
+  (`rust-direct-same-file` conservative → exact, probe-verified against the
+  real fixture; pooled 20/36 → 21/35), zero classification errors held (0
+  unsound, oracle 1.0/1.0 unchanged) — but the 105-site real-repository
+  audit is byte-identical before and after (27 exact / 25 conservative).
+  Root-caused: the audit sample has almost no genuinely eligible sites for
+  this proof category (most textual matches are doctest comments or
+  cross-file calls), and the one real candidate is blocked by the same
+  whole-file `transformed_scope` `#[cfg]` gate that independently blocks
+  most of the method/path-call misses too. Full detail, including two
+  disclosed-but-unfixed properties (crate-wide macro shadowing — checked
+  absent from both corpora; control-flow insensitivity — consistent with
+  the policy's binding-certainty definition of Must, not a new gap), in
+  [after-observation.md](observations/stage3-rust-audit/after-assert-macro-fix/after-observation.md).
+  Two of three criterion legs met; audit-improvement and real-repository
+  nonempty-Must-precision legs not met. Stage 3 (Rust) stays **IN
+  PROGRESS** — not DONE (criterion unmet), not FAILED (next step
+  identified, not exhausted).
+- Next: narrow `transformed_scope`'s whole-file blast radius. Both proof
+  categories examined so far (method/path calls, 92% of the audit's original
+  conservative cells; and this commit's assert-macro-wrapped calls) are
+  independently blocked by the same whole-file gate on most of the audit's
+  real-repository sites — it is now the confirmed tightest constraint, not
+  the specific proof category. Scope it to something narrower than "any
+  attribute other than `#[test]`/`#[tokio::test]` anywhere in the file"
+  (e.g. the enclosing item rather than the whole file, or an explicit
+  allowlist for attributes demonstrably free of expression-rewriting
+  semantics such as `#[cfg]` combined with `#[inline]`) before or alongside
+  extending Must-proof to method/path calls (`self.m()`/`Self::m()` inside
+  an inherent `impl T` where `T` has exactly one inherent `m` crate-wide,
+  which needs a crate-wide index of inherent impls — project-level work,
+  not something per-file `annotate()` can do alone). Guard any change with:
+  adversarial unit tests; the dispatch corpus must stay 0 unsound; the
+  Stage 1 oracle's union recall must stay 4/4; the audit must show 0
+  unsound and, this time, actually fewer conservative / more exact cells —
+  a change that only narrows a gate without any real-repository site
+  benefiting from it is not yet "measured... improvement" either. If
+  Rust's full criterion still isn't met after a change targeted at
+  `transformed_scope` specifically, that is the point to seriously weigh
+  FAILED-AND-PUBLISHED rather than continuing to iterate — do not start
+  Python before Rust is trustworthy on a real repository.
 - Completion remains unproven until every criterion above has committed evidence.
