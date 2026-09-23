@@ -43,9 +43,9 @@ CALL_RE = re.compile(
 )
 
 try:
-    from tools.dispatch_audit_site_selector_python import SHAPE_PATTERNS
+    from tools.dispatch_audit_site_selector_python import SHAPE_PATTERNS, mask_strings_and_comments
 except ModuleNotFoundError:  # Direct execution via `python tools/<script>.py`.
-    from dispatch_audit_site_selector_python import SHAPE_PATTERNS
+    from dispatch_audit_site_selector_python import SHAPE_PATTERNS, mask_strings_and_comments
 
 
 def run(binary: Path, args: Sequence[str]) -> subprocess.CompletedProcess:
@@ -54,24 +54,60 @@ def run(binary: Path, args: Sequence[str]) -> subprocess.CompletedProcess:
     )
 
 
+def line_text_matches(pkg_root: Path, site: dict) -> bool:
+    """Whether `site["line"]`'s actual current text in the extracted package
+    still matches the `text` the selector recorded when it picked this
+    site. A mismatch means the file or the extraction has drifted since the
+    frozen sample was generated (a different tarball, a different `--root`,
+    a hand-edited labeled-sites file) -- this must be caught explicitly
+    rather than silently scoring whatever line now happens to be there."""
+    path = pkg_root / site["file"]
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return False
+    if site["line"] - 1 >= len(lines):
+        return False
+    return lines[site["line"] - 1].strip()[:200] == site["text"]
+
+
 def site_byte_offset(pkg_root: Path, site: dict) -> int | None:
     """Byte offset (into the whole file) of the start of the shape pattern's
-    match on the site's sampled line. Matches against the RAW (unmasked)
-    line -- the selector already used the masked text to decide whether a
-    line counted as a call site at all, but the site's own recorded `line`
-    number and `shape` were chosen from real code, and the actual call
-    text at that position is what Girder's own claim span will cover."""
+    match on the site's sampled line.
+
+    Matches against the MASKED line, not the raw one -- the selector chose
+    this site by matching the masked text (see
+    `dispatch_audit_site_selector_python.collect_sites`), so a string or
+    comment earlier on the same line that happens to ALSO match the shape
+    pattern (e.g. `"a + b" if x else y - z`, an operator_dunder-shaped
+    string literal preceding a real `-` operator) must not let the raw-line
+    search find that earlier, spurious match instead of the real one the
+    site actually records. Masking preserves every character's column
+    position (see `mask_strings_and_comments`), so the matched column is
+    valid on the raw line too, and byte-offset computation still reads the
+    RAW line's own bytes (not the masked spaces) for the prefix.
+
+    Uses `splitlines()`, matching the selector's own line-splitting exactly
+    -- `text.split("\\n")` (the prior version of this function) diverges
+    from `splitlines()` on form feeds and other separators `splitlines()`
+    recognizes, which could silently misalign line numbers on a file
+    containing one.
+    """
     path = pkg_root / site["file"]
     text = path.read_text(encoding="utf-8", errors="replace")
-    lines = text.split("\n")
+    lines = text.splitlines()
+    masked_text, _ok = mask_strings_and_comments(text)
+    masked_lines = masked_text.splitlines()
+    if site["line"] - 1 >= len(lines) or site["line"] - 1 >= len(masked_lines):
+        return None
     line = lines[site["line"] - 1]
+    masked_line = masked_lines[site["line"] - 1]
     pattern = dict(SHAPE_PATTERNS)[site["shape"]]
-    match = pattern.search(line.strip())
+    match = pattern.search(masked_line.strip())
     if match is None:
         return None
-    stripped = line.strip()
-    lead = len(line) - len(line.lstrip())
-    col = lead + line.lstrip().index(match.group())
+    lead = len(masked_line) - len(masked_line.lstrip())
+    col = lead + masked_line.lstrip().index(match.group())
     prefix = "\n".join(lines[: site["line"] - 1])
     return len(prefix.encode("utf-8")) + (1 if site["line"] > 1 else 0) + len(
         line[:col].encode("utf-8")
@@ -159,6 +195,10 @@ def score(
         }
         if s["true_class"] == "not_a_call_site":
             entry["status"] = "not_a_call_site"
+            results.append(entry)
+            continue
+        if not line_text_matches(extracted_roots[s["package"]], s):
+            entry["status"] = "site_relocation_failed"
             results.append(entry)
             continue
         offset = site_byte_offset(extracted_roots[s["package"]], s)

@@ -4,6 +4,7 @@ from tools.dispatch_audit_scorer_python import (
     cell_label,
     extract_call_claims,
     find_covering_claim,
+    line_text_matches,
     site_byte_offset,
 )
 
@@ -103,6 +104,66 @@ class SiteByteOffsetUnitTests(unittest.TestCase):
             (root / "a.py").write_text("def f():\n    pass\n")
             site = {"file": "a.py", "line": 2, "shape": "method_call"}
             self.assertIsNone(site_byte_offset(root, site))
+
+    def test_ignores_a_call_shaped_string_earlier_on_the_line(self):
+        # The selector classified this line by its MASKED text, so the
+        # real match is the `+` operator, not the call-looking text inside
+        # the string literal earlier on the same line. A raw-line search
+        # (the pre-fix behavior) finds the string's match first, landing
+        # the offset inside the string instead of on the real operator.
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = '    x = "call_looking(1, 2)" if flag else a + b\n'
+            (root / "a.py").write_text(source)
+            site = {"file": "a.py", "line": 1, "shape": "operator_dunder"}
+            offset = site_byte_offset(root, site)
+            self.assertIsNotNone(offset)
+            self.assertTrue(source.encode("utf-8")[offset:].startswith(b"a + b"))
+
+    def test_offset_is_none_past_the_end_of_the_file(self):
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "a.py").write_text("x = 1\n")
+            site = {"file": "a.py", "line": 50, "shape": "method_call"}
+            self.assertIsNone(site_byte_offset(root, site))
+
+
+class LineTextMatchesUnitTests(unittest.TestCase):
+    def test_matches_when_text_is_unchanged(self):
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "a.py").write_text("x = 1\n    real_call(1)\n")
+            site = {"file": "a.py", "line": 2, "text": "real_call(1)"}
+            self.assertTrue(line_text_matches(root, site))
+
+    def test_mismatches_when_the_file_has_drifted(self):
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "a.py").write_text("x = 1\n    different_call(1)\n")
+            site = {"file": "a.py", "line": 2, "text": "real_call(1)"}
+            self.assertFalse(line_text_matches(root, site))
+
+    def test_mismatches_past_the_end_of_the_file(self):
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "a.py").write_text("x = 1\n")
+            site = {"file": "a.py", "line": 50, "text": "real_call(1)"}
+            self.assertFalse(line_text_matches(root, site))
 
 
 class ExtractCallClaimsUnitTests(unittest.TestCase):
