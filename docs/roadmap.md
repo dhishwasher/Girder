@@ -323,45 +323,55 @@ closed is Unknown, never omitted" being an acceptable outcome.
   `coverage_gap`, `targets` per call site) — confirmed present on this
   binary; no new command needed for the audit itself.
 
-**Rust before-observation complete.** All 105 audit sites labeled with
-ground truth read from source before Girder was run on any of them, then
-scored against Girder's actual per-site `call_evidence_v1` answer (via
-`girder analyze --json` + `girder inspect --json`). Full detail in
-[audit-scoring-summary.json](observations/stage3-rust-audit/audit-scoring-summary.json),
-raw per-site results in
-[audit-scored-results.json](observations/stage3-rust-audit/audit-scored-results.json),
-labels in
-[audit-sites-labeled.json](observations/stage3-rust-audit/audit-sites-labeled.json).
+**Rust before-observation complete, corrected.** All 105 audit sites
+labeled with ground truth read from source before Girder was run on any of
+them, then scored against Girder's actual per-site `call_evidence_v1`
+answer. The first scoring pass (`f3e9f56`) had four real errors, found on
+review and corrected in `c601a5e` — full explanation in
+[audit-correction.md](observations/stage3-rust-audit/audit-correction.md).
+`f3e9f56`'s files are preserved unedited per the resume contract; the
+corrected, current numbers are in
+[audit-scoring-summary-v2.json](observations/stage3-rust-audit/audit-scoring-summary-v2.json)
+and
+[audit-scored-results-v2.json](observations/stage3-rust-audit/audit-scored-results-v2.json),
+using the corrected labels in
+[audit-sites-labeled-v2.json](observations/stage3-rust-audit/audit-sites-labeled-v2.json)
+and the now-committed, tested
+[tools/dispatch_audit_scorer.py](../tools/dispatch_audit_scorer.py)
+(byte-precise matching, replacing the original run's uncommitted
+row-proximity scratch scripts).
 
 An honest property of the sampling method itself, disclosed rather than
 hidden: **53 of 105 (50%) sampled sites were not real call sites at all**
 (match-arm patterns, generic bounds, function definitions, doc prose,
 `macro_rules!` bodies, one comment block, and raw-string false positives) —
-this was precommitted as a known risk of "crude but independent" regex
-sampling before any site was read, and it means the `operator_usage` and
-`fn_pointer_or_closure` shape categories contributed almost no real signal.
-Of the 49 sites that could be scored: **zero unsound cells** (0 overclaim,
-0 unsafe_exclusion) — converging with the dispatch corpus's own
-zero-unsound result. But recall is 0%: all 31 true must/may sites (28
-must, 3 may) scored conservative, and **every single one carries the
-identical reason `rust-binding-or-dispatch-unproven`**. Traced to the exact
-line: `crates/aether-builder/src/mapper/claims.rs:122`,
-`function.filter(|f| f.kind() == "identifier")` — Must-proof eligibility
-only ever considers bare-identifier calls; method calls
-(`receiver.method()`) and path/associated calls (`Type::method()`) are
-categorically excluded regardless of whether they're genuinely unambiguous
-(e.g. `gr.add_node(...)` on a concrete `Graph<...>`, provably Must,
-currently never even attempted). This is a more specific, more directly
-actionable root cause than the previously-named cross-file and
-attribute-disqualification gaps — on this real-code sample, it explains
-100% of the misses, not those two.
+precommitted as a known risk of "crude but independent" regex sampling
+before any site was read. Of the 52 sites that could be scored: **zero
+unsound cells** (0 overclaim, 0 unsafe_exclusion), now confirmed by
+byte-precise matching rather than asserted over an incomplete 49/52 —
+converging with the dispatch corpus's own zero-unsound result. Recall is
+still 0%: all 25 true must/may sites scored conservative. Root-cause tally,
+this time derived from source facts (imports and definitions actually
+present per file) rather than inferred from Girder's generic reason string
+(the original claim that one reason string "explains 100% of the misses"
+was itself wrong — the string is identical for every unproven Rust call
+regardless of cause): **23/25 (92%)** trace to
+`crates/aether-builder/src/mapper/claims.rs:122`,
+`function.filter(|f| f.kind() == "identifier")` — method calls
+(`receiver.method()`) and path/associated calls (`Type::method()`)
+categorically excluded from Must-proof eligibility regardless of actual
+resolvability (e.g. `gr.add_node(...)` on a concrete `Graph<...>`, provably
+Must, never even attempted). The remaining **2/25 (8%)** are
+identifier-shaped calls whose target is imported rather than defined
+top-level in the calling file — the already-documented same-file/
+top-level-only limitation, not a new cause.
 
 **Not yet done:** the resolver change, and the after-observation (re-run
-this audit, the dispatch corpus, and the Stage 1 trustworthiness oracle,
-all three must show no regression and the audit must show fewer
-conservative / more exact cells) that "measured dispatch-corpus
-improvement" requires. Stage 3 (Rust) cannot be marked DONE on the
-before-observation alone.
+this audit with `tools/dispatch_audit_scorer.py`, the dispatch corpus, and
+the Stage 1 trustworthiness oracle, all three must show no regression and
+the audit must show fewer conservative / more exact cells) that "measured
+dispatch-corpus improvement" requires. Stage 3 (Rust) cannot be marked DONE
+on the before-observation alone.
 
 **Gate per language:** before/after corpus and real-repository audit, then all
 common gates. **Observation:**
@@ -496,8 +506,8 @@ benchmark, don't run it against the stale snapshot.
   All four common gates pass on `32bd5d2`
   ([gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/)).
   Stages 3–7 remain NOT STARTED.
-- 2026-09-22: Stage 3 (Rust) is **IN PROGRESS**, policy and audit site
-  selection done, labeling and resolver work not started. `25f7572` froze,
+- 2026-09-22: Stage 3 (Rust) is **IN PROGRESS**, before-observation done
+  (see below), resolver work not started. `25f7572` froze,
   before any site was read: "zero classification errors" = zero unsound
   audit cells (overclaim/unsafe_exclusion, matching the corpus's own scoring
   rule — an honest Unknown on an unclosable hole is conservative, not an
@@ -510,23 +520,33 @@ benchmark, don't run it against the stale snapshot.
   syntactic shapes (~17-18 each). Confirmed `girder analyze --json` +
   `girder inspect --json` already exposes per-site `call_evidence_v1`
   (class/reason/coverage_gap/targets) — no new read command needed.
+- 2026-09-22: Rust audit labeling + scoring done (`f3e9f56`), then
+  corrected (`361dd08` scorer tool committed properly with tests,
+  `c601a5e` fixes four real errors: 8 mislabeled external-target sites, a
+  row-proximity matching bug, 3 sites wrongly filed as a neutral status
+  instead of being properly investigated, and a wrong "one reason string
+  explains everything" root-cause claim). Corrected, verified result: 52
+  scored, 0 unsound (0 overclaim, 0 unsafe_exclusion), 25 conservative —
+  23/25 (92%) trace to the identifier-only Must-proof filter
+  (`mapper/claims.rs:122`), 2/25 (8%) to the already-documented same-file/
+  top-level-only limitation via imports. See
+  [audit-correction.md](observations/stage3-rust-audit/audit-correction.md).
 - MOVESPEED is available: approximately 291 GB free; system reports approximately
   2 GB available RAM and no swap. Cargo and rustc are available from its cache.
 - Stage 4 requires Claude Code, Cursor, and Codex adapters plus raw MCP JSON fallback.
-- Next: label each of the 105 audit-sites.json sites with true must/may/
-  unknown ground truth, read from source, before running Girder on any of
-  them (same discipline as the dispatch corpus). Then read Girder's actual
-  per-site answers via `girder analyze`/`inspect --json`, score against the
-  labels using the frozen unsound/conservative rule, and publish a
-  before-observation. Only then start Rust resolver changes — tally the
-  audit's conservative cells by root cause first (Stage 2 already suggests
-  file-wide attribute disqualification and the assert!/assert_eq!
-  macro-argument gap as likely dominant; verify with the tally rather than
-  assuming) and close the highest-tally hole first. Re-run the Stage 1
-  trustworthiness oracle as part of the Rust gate — its must-or-may-or-
-  unknown union recall is 4/4 today only because of the flood; any change
-  that narrows the flood must keep both that and the corpus's
-  unsafe_exclusion count at 0. If Rust's criterion isn't met, mark
-  FAILED-AND-PUBLISHED and stop — do not start Python before Rust is
-  trustworthy on a real repository.
+- Next: the resolver change. The identifier-only filter is the
+  highest-leverage target (92% of the audit's conservative cells), but
+  extending it to method/path calls needs care — syntax alone can't give
+  receiver types; the provable subset is `self.m()`/`Self::m()` inside an
+  inherent `impl T` (or `T::m()`) where `T` has exactly one inherent `m`
+  across the whole crate, which needs a crate-wide index of inherent impls
+  (project-level work, not something per-file `annotate()` can do alone).
+  Guard any change with: adversarial unit tests (a local macro shadowing
+  `assert_eq!`, a `#[cfg]` attribute, an attribute macro); the dispatch
+  corpus must stay 0 unsound and any false Must fails the gate; the Stage 1
+  trustworthiness oracle's union recall must stay 4/4; the audit
+  (`tools/dispatch_audit_scorer.py`, re-run) must show 0 unsound. If Rust's
+  full criterion (including "measured dispatch-corpus improvement," which
+  needs an actual before/after) isn't met, mark FAILED-AND-PUBLISHED and
+  stop — do not start Python before Rust is trustworthy on a real repository.
 - Completion remains unproven until every criterion above has committed evidence.
