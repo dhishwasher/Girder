@@ -269,7 +269,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | Language | Status | Before / after evidence | Dependency |
 | --- | --- | --- | --- |
 | Rust | **DONE** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
-| Python | NOT STARTED | none / none | Rust trustworthy on a real repository |
+| Python | IN PROGRESS (methodology frozen, no site labeled yet) | [methodology](observations/stage3-python-audit/methodology.md) / none | Rust trustworthy on a real repository |
 | TypeScript | NOT STARTED | none / none | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
@@ -956,24 +956,50 @@ benchmark, don't run it against the stale snapshot.
   claim, all four in the same function (`enclosing_mod_scope`/`in_crate`).
   That function should be treated with particular suspicion in any future
   change, not assumed sound because it compiles.
-- **Next session must resume Stage 3 Python from here, not from a fresh
-  read of the roadmap's older "may now begin" framing above**: the site
-  selector exists (uncommitted, working-tree only) but the labeling
-  rubric and masking check it depends on do not. Before committing
-  anything or reading any site: (1) write and freeze a Python ground-truth
-  labeling rubric addressing every case advisor listed (self/cls dispatch,
-  rebinding, annotation-only receivers, `Foo(); x.m()` with `__new__`/
-  metaclass/override interactions, decorated names replacing the
-  function object, `super()`, non-indexed targets, whether decorator
-  lines and text inside strings/docstrings count as call sites); (2) run
-  a Girder-independent, whole-pool (not sample) check of how much of the
-  49,953 discovered sites fall inside a string/docstring/comment via
-  `tokenize`, and mask those spans before re-running the selector if the
-  share is large; (3) decide whether `docs/`/`examples/` in the sdists are
-  in scope; (4) confirm Python nodes carry per-call-site `call_evidence_v1`
-  spans at all (check on a small fixture, never on click/pydantic/requests
-  before labeling); (5) commit the frozen rubric and masking decision to
-  the roadmap FIRST, then the site selector/tests/regenerated sample
-  second — in that order, per the same precommitment discipline Rust's
-  own Stage 3 used.
+- 2026-09-23: **Stage 3 Python audit methodology frozen, before any site
+  read.** All five items the prior checkpoint entry required are done:
+  (1) [labeling-rubric.md](observations/stage3-python-audit/labeling-rubric.md)
+  -- self/cls dispatch (Must only with no in-snapshot override anywhere in
+  the hierarchy, else May with a bounded candidate set, else Unknown),
+  rebinding (defined once, generously toward disqualifying Must),
+  annotation-only receivers (never Must, per the policy's own text), direct
+  construction (`__new__`/metaclass interactions checked, not assumed
+  absent), decorated names (Unknown unless the decorator's effect is
+  traced), `super()` (always May, per the policy's explicit "super/MRO
+  targets"), targets outside the snapshot (labeled `unknown` with an
+  external-target note, the exact mislabeling Rust's own
+  `audit-correction.md` had to fix after the fact -- fixed here in
+  advance), decorator lines as call sites (yes, `@property` is a real
+  call), and `not_a_call_site` criteria. (2) Whole-pool (not sample)
+  `tokenize`-based check found **33% of the 49,953 initially-matched
+  lines fell inside a string/comment token** (Click/pydantic docstrings
+  are full of code examples) -- fixed by masking STRING/COMMENT spans
+  before classification (`mask_strings_and_comments`, 5 new unit tests
+  including a regression test for a real bug the masking logic itself had
+  — an early version dropped the newline on a multi-line token's first
+  line, shifting every subsequent line number), not just disclosed;
+  `tokenize_failure_count: 0` across all three packages. (3) File set:
+  `docs/`/`examples/` are negligible (checked directly: one `conf.py`
+  across all three packages, not application code) so no exclusion rule
+  was needed; `tests/` IS included, matching Rust's own precedent where
+  the frozen audit site itself was a test file. (4) Confirmed on a small
+  throwaway fixture (never on click/pydantic/requests before labeling):
+  Python nodes expose the identical `call_evidence_v1` structure Rust's
+  scorer already reads byte-precisely, so no scorer rewrite is needed, only
+  a Python-specific selector and labeled-sites file. (5) This commit
+  (rubric + methodology +roadmap) lands first; the selector tool, its
+  tests, and the regenerated 105-site sample land as a separate, second
+  commit — per the precommitment order. Full detail, including the
+  disclosed (not corrected) package-imbalance in stratify-by-shape-only
+  sampling (pydantic 81/105 selected, click 19, requests 5 — proportional
+  to each package's own size, not rebalanced, to keep the algorithm
+  identical to Rust's own precedent), in
+  [methodology.md](observations/stage3-python-audit/methodology.md).
+  **Still not done**: no site has been read or labeled; no scorer run; no
+  before-observation. Next session: read `audit-sites.json`'s 105 sites
+  one at a time against `labeling-rubric.md`, write
+  `audit-sites-labeled.json` with `true_class` + rationale per site (same
+  shape as Rust's own `audit-sites-labeled-v2.json`), then run
+  `dispatch_audit_scorer.py` against it for the first, frozen
+  before-observation.
 - Completion remains unproven until every criterion above has committed evidence.
