@@ -630,37 +630,87 @@ benchmark, don't run it against the stale snapshot.
   where the scorer's byte offset actually lands), in
   [gate-profile-correction.md](observations/stage3-rust-audit/after-assert-macro-fix/gate-profile-correction.md).
   The prediction is unchanged (moves exactly `tests/floyd_warshall.rs:11`).
+- 2026-09-23: **Second correction**, before any implementation code
+  (`gate-profile-correction-2.md`): three gaps the first correction left
+  unaddressed (impl-applicability/bounds checking for the same-step rule;
+  target-side `cfg`-gating on the struct/impl/module, entirely missing
+  from the original spec; external glob imports, not just "non-glob,
+  non-prelude"), the type-resolution choice pinned in writing (bare-name
+  uniqueness across the indexed crate, not full semantic-path/re-export
+  resolution — a deliberate simplification, not an oversight), and two
+  factual slips (12 `fn add_node(` definitions in petgraph, not 11;
+  `adj.rs:205` is a different method, `add_node_from_edges`, not a
+  `&self`-shaped `add_node`). All checked directly against the whole
+  checkout (not just `src/`): `tests/floyd_warshall.rs:11` still
+  survives every gap — the inherent and `Build for Graph` impls have
+  identical bounds, no blanket trait impl or `Deref` impl for `Graph`
+  exists anywhere, nothing on the path from the struct/impl to the crate
+  root carries `cfg`, and `prelude::*`'s own `pub use` lines are all
+  in-crate. Also notes a scorer blind spot for measurement time:
+  `dispatch_audit_scorer.py` compares claim class only, never `targets`,
+  so the after-observation and the implementation's own tests must
+  explicitly assert the produced claim's target is
+  `graph_impl/mod.rs:525`'s inherent `add_node`, not `Build::add_node` or
+  another type's `add_node`.
 - Next: implement the corrected design — method-call Must proof
   restricted to (1) an explicit, unshadowed `let x: T<...>` receiver
   binding in the same function (no type inference, exact `T<...>` syntax
-  only), (2) `T` resolved through a **named, non-glob** import walked
-  via the real `use`-tree AST to exactly one crate-indexed type-namespace
-  item (struct/enum/union/trait/type-alias, keyed by semantic path, not
-  bare name), (3) exactly one inherent method of that name across all
+  only), (2) `T` resolved through a **named, non-glob** import (or
+  in-file definition) whose first path segment is `crate`/`self`/`super`
+  or the crate's own package/`[lib]` name, walked via the real `use`-tree
+  AST, to the *bare name* being the only type-namespace item
+  (struct/enum/union/trait/type-alias) of that name anywhere in the
+  indexed crate, with nothing in the crate `use`ing or `pub use`ing an
+  external item of the same bare name (bare-name uniqueness, a deliberate
+  simplification of full re-export resolution — see the second
+  correction), (3) exactly one inherent method of that name across all
   `impl T` blocks crate-wide, generic over all of `T`'s own parameters
-  (Unknown if a `duplicate-semantic-path` gap touches either), (4) no
-  in-crate trait declaring that method name matches an earlier autoref
-  step than the inherent method's own receiver, and the method name is
-  not in the std prelude's fixed method-name set. Lives in or after
+  (Unknown if a `duplicate-semantic-path` gap touches either), (4) for
+  any in-crate trait declaring that method name: its bounds on any impl
+  covering `T` must be a superset of the inherent impl's bounds (so
+  inherent-over-trait only applies when both actually apply), no blanket
+  impl of that trait over a bare type parameter may exist, no in-crate
+  `Deref`/`DerefMut` impl may exist for `T`, and the method name must not
+  be in the std prelude's fixed method-name set; (5) neither the struct,
+  the inherent impl, any competing trait impl, nor any enclosing module
+  declaration from the crate root down may carry `cfg`/`cfg_attr`; (6)
+  any glob import in scope (including the crate's own "prelude", no
+  exception by name) must resolve entirely within the indexed crate,
+  checked recursively through any module it points at. Lives in or after
   `resolve_calls` (project-wide), since it needs a crate-wide inherent-
   impl index — `annotate()`'s per-file pass can't build this alone;
   persist the per-file gates (`transformed_scope`, `duplicate_paths`,
   parse-error, `macro_owners`) on `BuildOutput` rather than re-deriving
   them, and recompute on every resolve (including the incremental path)
   so a change elsewhere in the crate can flip an untouched file's claim.
-  Guard with: adversarial unit tests across a multi-file `GraphBuilder`
-  (the positive cross-file case; an external crate's same-named type; an
-  in-crate `&self` trait method beside a `&mut self` inherent one; two
-  non-generic inherent methods of the same name; a `&mut T`/`Box<T>`
-  receiver; `x` shadowed in a nested block; an unannotated `let`; the
-  incremental staleness flip), plus the 7 guard-checked std/external/
-  non-unique cases from `gate-profile.md`; the dispatch corpus must stay
-  0 unsound; the Stage 1 oracle's union recall must stay 4/4; the audit
-  must show 0 unsound and, this time, actually fewer conservative / more
-  exact cells (the prediction is exactly one: `tests/floyd_warshall.rs:11`,
-  28 exact / 24 conservative and a nonempty real-repository Must set) —
-  if the implementation produces a different count than predicted, that
-  is itself a signal to stop and re-examine before trusting the result.
+  Stage as two pieces landed together once all four gates pass: (A) the
+  crate-wide index itself (type-namespace items, inherent impls with
+  normalized bounds, trait method declarations with receiver kind, trait
+  impls with bounds, `Deref` impls, `cfg` marks), with its own unit tests
+  verified to reproduce every fact established in both correction
+  documents against the real petgraph checkout before moving on; (B) the
+  post-`resolve_calls` pass that replaces (never appends alongside) the
+  existing Unknown claim with the Must claim, span starting at the call
+  expression (not the method name, to match where the scorer's byte
+  offset lands). Guard with: adversarial unit tests across a multi-file
+  `GraphBuilder` (the positive cross-file case; an external crate's
+  same-named type; an in-crate `&self` trait method beside a `&mut self`
+  inherent one at an earlier step; a same-step trait method whose impl
+  bounds are narrower than the inherent impl's; a blanket trait impl; a
+  `cfg`-gated inherent impl; an external glob import; two non-generic
+  inherent methods of the same name; a `&mut T`/`Box<T>` receiver; `x`
+  shadowed in a nested block; an unannotated `let`; the incremental
+  staleness flip; and asserting the produced claim's `targets` NodeId is
+  the correct inherent method, not a same-named trait or sibling-type
+  method), plus the 7 guard-checked std/external/non-unique cases from
+  `gate-profile.md`; the dispatch corpus must stay 0 unsound; the Stage 1
+  oracle's union recall must stay 4/4; the audit must show 0 unsound and,
+  this time, actually fewer conservative / more exact cells (the
+  prediction is exactly one: `tests/floyd_warshall.rs:11`, 28 exact / 24
+  conservative and a nonempty real-repository Must set, with `targets`
+  pointing at `graph_impl/mod.rs:525`) — if the implementation produces a
+  different count than predicted, or the wrong target, that is itself a
+  signal to stop and re-examine before trusting the result.
   After implementing, hand-verify a random sample of every new Must
   claim across all three crates (it will fire beyond the 52 audited
   sites) and publish that as a supplementary check, kept out of the
