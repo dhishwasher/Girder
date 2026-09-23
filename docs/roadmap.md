@@ -719,4 +719,95 @@ benchmark, don't run it against the stale snapshot.
   and no other frozen site does either, that is the point to apply
   FAILED-AND-PUBLISHED once and stop — do not start Python before Rust
   is trustworthy on a real repository.
+- 2026-09-23: **Implementation-plan addendum**, found before writing code
+  (banked here first so it survives a session boundary mid-implementation):
+  - **Architecture: extract facts in `claims.rs`, don't re-parse in
+    `resolve_calls`.** `annotate()` already has the tree and already
+    computes `transformed_scope`/`duplicate_paths`/parse-error/
+    `macro_owners`; a second, `resolve_calls`-side re-parse would be a
+    second implementation of those same gates that could drift from the
+    first, which is itself a false-Must path. Record per-file facts on a
+    new `BuildOutput` field instead: type-namespace item names; impl
+    blocks (inherent vs. trait via the `trait` field, type name/params,
+    normalized bounds, cfg marks, and per method: name, receiver kind,
+    visibility, span-matched NodeId); trait declarations (every method's
+    receiver kind, including bodyless `function_signature_item`
+    declarations, not just `function_item` — a scan over `function_item`
+    alone would miss `Build::add_node` itself); `Deref`/`DerefMut` impls;
+    `mod` declarations with their cfg and `#[path]` attributes; use-tree
+    imports (named vs. glob, first segment, introduced name, `as`
+    aliases); candidate method calls (call span, receiver identifier,
+    method name, the qualifying same-function `let` if exactly one, and
+    the owner's gates). In `resolve_calls`: build the crate index from
+    every file's stored facts, then restore each Rust node's
+    `call_evidence_v1` from its file's cached extraction before writing
+    upgrades — mirror the existing route-evidence reset-then-rebuild
+    pattern already in `resolve_calls`. This gives incremental staleness
+    handling for free. Read `aether-graph/src/claims.rs` first (decode/
+    attach/fingerprinting) and check whether `apply()`/`UpdateReport`
+    diffs node attributes, since a re-encoded record rejected as stale
+    would silently surface as Unknown and kill the prediction.
+  - **Narrow only what's proven, never the competitor scan.** Restricting
+    *provable receivers* to structs is fine; the uniqueness count, trait
+    scan, and `Deref` scan must still cover every struct/enum/union/
+    trait/type-alias, or a narrowed competitor set creates a false-Must
+    path. Receiver steps order as `self`/`mut self`, then `&self`, then
+    `&mut self`; a competitor with a typed self (`self: Box<Self>`,
+    `Pin<...>`) gives Unknown, and the inherent method must not be proven
+    if it itself has a typed self. Add a visibility guard: the inherent
+    method must be plain `pub` (rustc's method probe skips an
+    inaccessible inherent candidate and keeps probing, which could let a
+    private inherent method lose to an accessible trait method at the
+    same step).
+  - **cfg chain: fail closed unless every link is positively confirmed** —
+    the item's own attributes, enclosing inline `mod` items in the same
+    file, `#![cfg]` at the top of that file, and every ancestor `mod X;`
+    declaration (at least one must be found for each ancestor segment,
+    and every declaration found with that name must itself be cfg-free).
+    Any `#[path]` on a `mod` declaration, or a target unreachable from
+    `src/lib.rs` through ordinary `mod` declarations, gives Unknown.
+  - **Four facts to confirm before coding, all required for the
+    prediction to hold, none yet confirmed:** (a) duplicate-path checking
+    must be node-level (the inherent method's own path not duplicated
+    within its file's extraction, matched by span like `annotate()`
+    already does), not file-level like the existing `duplicate_paths`
+    flag — `gate-profile.json` already shows `data.rs` (a different file)
+    as `dup=Y`, which must not disqualify `graph_impl/mod.rs`; (b) the
+    crate's package name (from `Cargo.toml`, `-` mapped to `_`, `[lib]
+    name` override respected) must count as in-crate, the way
+    `go_module_path` already does for Go — check whether `girder analyze`
+    already reads `Cargo.toml` for anything; (c) external named imports in
+    the caller (`floyd_warshall.rs` imports `std::collections::HashMap`)
+    must be treated as known non-trait items via an explicit allowlist, or
+    the site fails closed on the caller's own imports; (d) glob checking
+    must confirm, flatly: the target module has no glob `pub use` of its
+    own, no external-rooted `use` anywhere in the index introduces a name
+    it re-exports (as either the last segment or an `as` alias), and no
+    external-rooted `pub use ext::*` exists anywhere in the index — apply
+    this to the caller's named in-crate imports too
+    (`Directed`/`Graph`/`Undirected`/`floyd_warshall`), not just its glob.
+  - **Grammar fields to verify in `grammar.js` before relying on them**
+    (the way `impl_item`'s `trait` field was verified before use):
+    `let_declaration`, `mutable_specifier`, `generic_type`,
+    `field_expression`, `self_parameter` (and how a typed self parses),
+    `where_clause`, `type_parameters`, `mod_item`, `scoped_use_list`,
+    `use_as_clause`, and the wildcard/glob node kind.
+  - **Binding rule:** the receiver must be a bare `identifier`; its `let`
+    must be in the same owning function, in a block containing the call,
+    and textually before the call; `x` may have exactly one binding
+    occurrence in the function, counting `let` patterns, fn/closure
+    params, and `for`/`match`/`if let`/`while let` patterns — any
+    occurrence this can't classify makes the result Unknown.
+  - **If a soundness guard above blocks `floyd_warshall.rs:11` once
+    implemented, that is the FAILED-AND-PUBLISHED trigger — don't loosen
+    the guard to pass it.** If only plumbing (e.g. package-name reading)
+    is missing, build the plumbing; a missing-plumbing gap is not itself
+    a failure.
+  - **Sequencing:** write the positive test and the full adversarial list
+    (both the `crate::`-from-`src/` and package-name-from-`tests/` import
+    forms) before implementing, since each compile on this machine takes
+    minutes. Run the real-petgraph verification (reproducing every fact
+    established in the two correction documents) as an `#[ignore]`d test
+    reading the checkout path from an env var, kept out of the four
+    common gates.
 - Completion remains unproven until every criterion above has committed evidence.
