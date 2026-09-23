@@ -1,0 +1,10 @@
+   Compiling direct-same-file v0.1.0 (/home/corymaynard370/Bit-code/fixtures/dispatch-corpus/rust/direct-same-file)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.13s
+     Running unittests src/lib.rs (/mnt/chromeos/removable/MOVESPEED/aetherforge-target/probe-direct-same-file/debug/deps/direct_same_file-c28436bab96e2ace)
+
+running 1 test
+test test_direct ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+EXIT:0
