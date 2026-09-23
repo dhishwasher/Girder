@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "kind": "stage-criterion-measurement",
+  "stage": 3,
+  "language": "rust",
+  "phase": "before-observation",
+  "revision": 2,
+  "supersedes": "audit-scoring-summary.json",
+  "correction_document": "audit-correction.md",
+  "date": "2026-09-22",
+  "candidate_commit_note": "The scorer tool (361dd08) and this correction were authored and run before this file's own commit exists; see that commit's message for its SHA. No Rust source changed since f53f6dd/32bd5d2 (binary unchanged).",
+  "binary_sha256": "f74eea37666cb9a0943cc2383d62aedad840d7db056a8a3e0e5bcb6f4f7a1bbe",
+  "labels": "docs/observations/stage3-rust-audit/audit-sites-labeled-v2.json",
+  "scorer": "tools/dispatch_audit_scorer.py",
+  "raw_results": "docs/observations/stage3-rust-audit/audit-scored-results-v2.json",
+  "method": "Byte-offset-precise matching: each site's byte offset (recomputed from its shape-pattern match on the sampled line) is looked up against every CallClaim's [start_byte, end_byte) span across the whole crate, via `girder analyze --json` + `girder inspect --json`'s call_evidence_v1 attribute. A module-level coverage-gap claim (e.g. unexpanded-macro-or-decorator, duplicate-semantic-path) whose span covers the site counts as an honest disclosure (observed Unknown), not a silent drop, per audit-correction.md item 3.",
+  "results": {
+    "total_sites": 105,
+    "not_a_call_site": 53,
+    "scored": 52
+  },
+  "confusion_matrix": {
+    "exact": 27,
+    "conservative": 25,
+    "unsafe_exclusion": 0,
+    "overclaim": 0,
+    "unsound_total": 0
+  },
+  "exact_breakdown": {
+    "unknown": 27
+  },
+  "conservative_breakdown": {
+    "must": 22,
+    "may": 3
+  },
+  "headline_finding": "Zero unsound cells (0 overclaim, 0 unsafe_exclusion) across all 52 scorable real-world sites, confirmed by byte-precise matching after correcting 8 mislabeled external-target sites -- converges with the dispatch corpus's own zero-unsound result. Recall remains 0%: all 25 true must/may sites scored conservative.",
+  "root_cause_tally": {
+    "method": "Derived from source facts per site (import statements, function definitions actually present or absent in the calling file), not inferred from Girder's reason string -- see audit-correction.md item 4 for why the reason string alone cannot support this tally.",
+    "identifier_only_filter_excluded": {
+      "count": 23,
+      "fraction": 0.92,
+      "description": "Callee is a method call or path/associated call; crates/aether-builder/src/mapper/claims.rs:122 (`function.filter(|f| f.kind() == \"identifier\")`) categorically excludes these from Must-proof eligibility regardless of actual resolvability."
+    },
+    "same_file_top_level_only": {
+      "count": 2,
+      "fraction": 0.08,
+      "description": "Identifier-shaped calls whose target is imported (via `use`, including `use X as alias`), not defined top-level in the calling file -- the already-documented same-file/top-level-only limitation (Stage 1, Stage 2), not a new cause. Sites: n(0) via `use petgraph::graph::node_index as n;`, kosaraju_scc(...) via `use petgraph::algo::{..., kosaraju_scc, ...};`."
+    }
+  },
+  "stage3_criterion_status": {
+    "nonempty_must_precision_1000": "Met, inherited from the dispatch corpus (3/3, unchanged) -- no must/may was observed at all on this audit, so this audit contributes no new evidence either way.",
+    "zero_classification_errors_on_audit": "Met and now verified: 0 unsound cells (0 overclaim + 0 unsafe_exclusion) out of 52 scored, confirmed by byte-precise matching, not row-proximity matching.",
+    "measured_dispatch_corpus_improvement": "Still NOT met -- no resolver change has been made. This corrected document is still the before-observation."
+  },
+  "next_action": "Unchanged in substance from the original before-observation: the identifier-only filter is the dominant (92%) explainable cause and the highest-leverage next fix for method/path calls; the remaining 8% traces to the already-documented same-file/top-level-only limitation. Any resolver change must be re-verified against: this audit (re-run with tools/dispatch_audit_scorer.py, expect fewer conservative/more exact, still 0 unsound), the dispatch corpus (must stay 0 unsound, must_precision 1.000), and the Stage 1 trustworthiness oracle (union recall must not regress from 4/4)."
+}

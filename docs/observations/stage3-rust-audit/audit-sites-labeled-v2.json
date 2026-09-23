@@ -1,0 +1,1090 @@
+{
+  "schema_version": 3,
+  "seed": 20260922,
+  "requested_total": 105,
+  "selected_total": 105,
+  "total_sites_discovered": 16062,
+  "crates": [
+    "petgraph-0.6.5",
+    "serde_json-1.0.150",
+    "regex-1.12.4"
+  ],
+  "shape_counts_discovered": {
+    "macro_invocation": 2864,
+    "path_or_associated_call": 1746,
+    "method_call": 5670,
+    "fn_pointer_or_closure": 24,
+    "operator_usage": 857,
+    "plain_call": 4901
+  },
+  "shape_counts_selected": {
+    "macro_invocation": 18,
+    "path_or_associated_call": 17,
+    "method_call": 18,
+    "fn_pointer_or_closure": 18,
+    "operator_usage": 17,
+    "plain_call": 17
+  },
+  "sites": [
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/pattern.rs",
+      "line": 57,
+      "shape": "path_or_associated_call",
+      "text": "SearchStep::Match(s, e)",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "SearchStep::Match(s, e) is an enum tuple-variant constructor, not a call needing dispatch resolution."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/mod.rs",
+      "line": 428,
+      "shape": "macro_invocation",
+      "text": "trait_template! {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "trait_template! is a genuine macro invocation; per policy, unexpanded macros are Unknown."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/replace.rs",
+      "line": 55,
+      "shape": "fn_pointer_or_closure",
+      "text": "r\"([a-z]+) ([a-z]+)\",",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Regex false positive: raw string literal r\"([a-z]+) ([a-z]+)\" contains ') (' matching the fn-pointer-or-closure regex; not code at all."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "benches/bellman_ford.rs",
+      "line": 46,
+      "shape": "operator_usage",
+      "text": "let j_to = min(NODE_COUNT, j_from + neighbour_count);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "min(...) is a plain call to std::cmp::min, single resolvable target (sampler mislabeled shape as operator_usage).",
+      "correction_note": "Corrected from 'must' after review: min(...) is std::cmp::min, imported -- external to the indexed crate snapshot. See docs/observations/stage3-rust-audit/audit-correction.md."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/matching.rs",
+      "line": 100,
+      "shape": "path_or_associated_call",
+      "text": "let g: UnGraph<(), ()> = UnGraph::from_edges(&[(0, 1), (1, 2), (2, 3)]);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "UnGraph::from_edges(...) is an associated function call on a concrete type alias, single target."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 2362,
+      "shape": "path_or_associated_call",
+      "text": "serde_json::from_str(r#\"[\"a\", 42, {\"foo\": \"bar\"}, null]\"#).unwrap();",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "serde_json::from_str(...) is a module-qualified call to one specific function; generic in its return type only, not dispatch-ambiguous."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 1435,
+      "shape": "plain_call",
+      "text": "fn serialize_unit_variant(",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn serialize_unit_variant( is a function definition line, not a call."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 1289,
+      "shape": "operator_usage",
+      "text": "but rather, a standalone zero-dependency simpler version of `regex` that",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Doc comment prose."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/filter.rs",
+      "line": 366,
+      "shape": "fn_pointer_or_closure",
+      "text": "(*self)(n)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "(*self)(n) calls an opaque Fn(N) -> bool value through a generic bound; unresolved closure/fn-pointer call."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/suite_string.rs",
+      "line": 16,
+      "shape": "path_or_associated_call",
+      "text": ".test_iter(crate::suite()?.iter(), compiler)",
+      "true_class": "unknown",
+      "confidence": "medium",
+      "rationale": ".test_iter(...) is a method call on a concrete TestRunner builder; not independently verified against TestRunner's full impl.",
+      "correction_note": "Corrected from 'must' after review: TestRunner is from the regex_test dev-dependency crate (confirmed: tests/lib.rs and suite_*.rs import it as `regex_test::...`), not regex-1.12.4's own source. See docs/observations/stage3-rust-audit/audit-correction.md."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/ser.rs",
+      "line": 995,
+      "shape": "operator_usage",
+      "text": "T: ?Sized + Serialize,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "T: ?Sized + Serialize is a generic bound declaration, not a call."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 484,
+      "shape": "operator_usage",
+      "text": "let digit = (c - b'0') as u64;",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "(c - b'0') as u64 is primitive arithmetic on u8, a compiler intrinsic, not trait-method dispatch in any meaningful audit sense."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/page_rank.rs",
+      "line": 68,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(expected_ranks(), output_ranks);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert_eq! is a genuine macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 198,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident ($($key:tt)+) (:) $copy:tt) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "macro_rules! definition arm (json_internal!), not a call site."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/mod.rs",
+      "line": 438,
+      "shape": "macro_invocation",
+      "text": "node![v].rootindex = node![w].rootindex;",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "node![...] is a genuine macro invocation (indexing macro)."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/csr.rs",
+      "line": 900,
+      "shape": "macro_invocation",
+      "text": "println!(\"{:?}\", m);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "println! is a genuine macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 993,
+      "shape": "macro_invocation",
+      "text": "tri!(self",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "tri!(...) is a genuine macro invocation (custom error-propagation macro)."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1709,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(v, bytes);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert_eq! is a genuine macro invocation."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 121,
+      "shape": "operator_usage",
+      "text": "Finished dev [unoptimized + debuginfo] target(s) in 4.22s",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Doc comment prose (rustdoc example output block)."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 1555,
+      "shape": "operator_usage",
+      "text": "W: ?Sized + io::Write,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "W: ?Sized + io::Write is a generic bound declaration."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/astar.rs",
+      "line": 120,
+      "shape": "plain_call",
+      "text": "Occupied(mut entry) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Occupied(mut entry) => { is a match-arm enum pattern, not a call."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regex/bytes.rs",
+      "line": 1203,
+      "shape": "method_call",
+      "text": "self.captures_read_at(locs, haystack, 0)",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "self.captures_read_at(...) is a method call on &Regex, a concrete type, single impl."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/replace.rs",
+      "line": 44,
+      "shape": "macro_invocation",
+      "text": "replace!(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "replace!(...) is a genuine custom test-generation macro invocation."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 594,
+      "shape": "method_call",
+      "text": "self.iter.next().map(NodeIndex::new)",
+      "true_class": "must",
+      "confidence": "medium",
+      "rationale": "self.iter.next() -- iterator adaptor struct field, conventionally a concrete (if complex) iterator type in petgraph; not independently verified against the struct's field type declaration."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 66,
+      "shape": "macro_invocation",
+      "text": "assert!(!is_cyclic_undirected(&mst));",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert!(...) is a genuine macro invocation."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 2216,
+      "shape": "macro_invocation",
+      "text": "println!(\"{:#?}\", g);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "println! is a genuine macro invocation."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/find_byte.rs",
+      "line": 11,
+      "shape": "operator_usage",
+      "text": "#[cfg(feature = \"perf-literal\")]",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "#[cfg(feature = \"perf-literal\")] is an attribute, not a call."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 1115,
+      "shape": "operator_usage",
+      "text": "G: Visitable + IntoNodeIdentifiers + IntoNeighbors,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "G: Visitable + IntoNodeIdentifiers + IntoNeighbors is a generic bound declaration."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 630,
+      "shape": "operator_usage",
+      "text": "features](#crate-features).",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Doc comment prose."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/lexical/math.rs",
+      "line": 41,
+      "shape": "plain_call",
+      "text": "fn compare_test() {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn compare_test() { is a function definition line."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 1586,
+      "shape": "macro_invocation",
+      "text": "println!(\"{:?}\", g);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "println! is a genuine macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/lexical/float.rs",
+      "line": 109,
+      "shape": "plain_call",
+      "text": "Algorithm: FnOnce(&mut ExtendedFloat, i32),",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Algorithm: FnOnce(&mut ExtendedFloat, i32) is a generic bound declaration (Fn-trait bound), not a call."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/adj.rs",
+      "line": 342,
+      "shape": "plain_call",
+      "text": "fn add_edge(&mut self, a: NodeIndex<Ix>, b: NodeIndex<Ix>, weight: E) -> Option<EdgeIndex<Ix>> {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn add_edge(...) -> ... { is a function definition line."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/lexical/bhcomp.rs",
+      "line": 146,
+      "shape": "path_or_associated_call",
+      "text": "let mut theor_digits = Bigint::from_u64(theor.mant);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "Bigint::from_u64(theor.mant) is an associated function call on a concrete type, single target."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 547,
+      "shape": "operator_usage",
+      "text": "To get ASCII-only word boundaries, use `(?-u:\\b)` and `(?-u:\\B)`. This also",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Doc comment prose."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 183,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident ($($key:tt)+) (: {$($map:tt)*} $($rest:tt)*) $copy:tt) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "macro_rules! definition arm (json_internal!), not a call site."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 2231,
+      "shape": "operator_usage",
+      "text": "T: ?Sized + Serialize,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "T: ?Sized + Serialize is a generic bound declaration."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 194,
+      "shape": "method_call",
+      "text": "let c = gr.add_node(\"C\");",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "gr.add_node(\"C\") is a method call on a concrete Graph<...>, single impl."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/de.rs",
+      "line": 1365,
+      "shape": "plain_call",
+      "text": "crate::raw::TOKEN => Ok(KeyClass::RawValue),",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "crate::raw::TOKEN => ... is a match-arm pattern against a constant path, not a call."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/serialization.rs",
+      "line": 184,
+      "shape": "operator_usage",
+      "text": "Ix: Serialize + IndexType,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Ix: Serialize + IndexType is a generic bound declaration."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 1356,
+      "shape": "plain_call",
+      "text": "fn test_ford_fulkerson_flows(gr: Graph<usize, u32>) -> bool {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn test_ford_fulkerson_flows(...) -> bool { is a function definition line."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/dot.rs",
+      "line": 127,
+      "shape": "path_or_associated_call",
+      "text": "let mut conf = Self::default();",
+      "true_class": "not_a_call_site",
+      "confidence": "medium",
+      "rationale": "Self::default() appears inside a macro_rules! template body (surrounding $($variant: bool,)* repetition syntax); this is macro-definition source, not directly-compiled code, so its call semantics only exist post-expansion."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/lexical/float.rs",
+      "line": 259,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(x.into_float::<f32>(), 1e-45);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert_eq! is a genuine macro invocation."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/csr.rs",
+      "line": 995,
+      "shape": "path_or_associated_call",
+      "text": "let m: Csr<(), _> = Csr::from_sorted_edges(&[",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "Csr::from_sorted_edges(&[...]) is an associated function call on a concrete type."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/bytes.rs",
+      "line": 41,
+      "shape": "fn_pointer_or_closure",
+      "text": "r\"(?-u)\\x7b\\xa9(?:[\\x80-\\xfe]|[\\x40-\\xff].)(?u:(.*))\"",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Raw string literal inside a rustdoc /// example code block, not compiled call-site code at the sampled location."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/misc.rs",
+      "line": 95,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(None, cap.name(\"a\"));",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert_eq!(None, cap.name(\"a\")) -- outer macro invocation; per the same rule confirmed in this session's own Rust dispatch-corpus fixtures, a call textually inside a macro's argument tokens (cap.name(\"a\")) is not seen as its own call_expression by this extractor, so ground truth for this sampled site is Unknown via the macro."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 418,
+      "shape": "path_or_associated_call",
+      "text": "quickcheck::quickcheck(prop as fn(StableGraph<_, _, Undirected>, _) -> bool);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "quickcheck::quickcheck(...) is a plain path-qualified function call, single target.",
+      "correction_note": "Corrected from 'must' after review: quickcheck::quickcheck is from the external `quickcheck` dev-dependency crate, not petgraph's own source. See docs/observations/stage3-rust-audit/audit-correction.md."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 414,
+      "shape": "path_or_associated_call",
+      "text": "for no in Bfs::new(&g, a).iter(&g) {",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "Bfs::new(&g, a).iter(&g) -- Bfs::new is an associated function call on a concrete type; chained .iter is likewise a concrete-type method."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/feedback_arc_set.rs",
+      "line": 384,
+      "shape": "plain_call",
+      "text": "pub fn push_front(&mut self, push_ix: Ix, container: &mut Container) {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "pub fn push_front(...) { is a function definition line."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 113,
+      "shape": "plain_call",
+      "text": "#[cfg(feature = \"arbitrary_precision\")]",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "#[cfg(feature = \"arbitrary_precision\")] is an attribute before an enum variant, not a call."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/partial_eq.rs",
+      "line": 14,
+      "shape": "path_or_associated_call",
+      "text": "Value::Number(n) => n.as_f32() == Some(other),",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Value::Number(n) => ... is a match-arm enum pattern, not a call (sampler matched pattern syntax that looks like a path call)."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 2092,
+      "shape": "plain_call",
+      "text": "let start = n(0);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "n(0) is a plain call to a local test-helper function with one definition in scope."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 819,
+      "shape": "path_or_associated_call",
+      "text": "petgraph::algo::kosaraju_scc(&gr),",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "petgraph::algo::kosaraju_scc(&gr) is a path-qualified plain function call, single target."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/floyd_warshall.rs",
+      "line": 11,
+      "shape": "method_call",
+      "text": "let d = graph.add_node(());",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "graph.add_node(()) is a method call on a concrete Graph<...>."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/quickcheck.rs",
+      "line": 197,
+      "shape": "path_or_associated_call",
+      "text": "let mut gr = GraphMap::with_capacity(nodes.len(), edges);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "GraphMap::with_capacity(...) is an associated function call on a concrete type."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regexset/string.rs",
+      "line": 721,
+      "shape": "plain_call",
+      "text": "fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn fmt(&self, ...) { is a function definition line (Debug trait impl)."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/mod.rs",
+      "line": 335,
+      "shape": "method_call",
+      "text": "dfs.move_to(i);",
+      "true_class": "must",
+      "confidence": "medium",
+      "rationale": "dfs.move_to(i) -- dfs is conventionally a concrete Dfs<...> struct field in petgraph's internal algorithms; not independently verified against the enclosing function's local variable declaration."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/mod.rs",
+      "line": 1944,
+      "shape": "plain_call",
+      "text": "fn is_node_index() -> bool {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn is_node_index() -> bool { is a function definition line."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/lexical/rounding.rs",
+      "line": 11,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(lower_n_mask(0u64), 0b0);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert_eq! is a genuine macro invocation."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 547,
+      "shape": "plain_call",
+      "text": "let mut tsccs = kosaraju_scc(Reversed(&g));",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "kosaraju_scc(Reversed(&g)) is a plain call to an imported single-definition function (Reversed(&g) is also a single-target tuple-struct construction)."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 485,
+      "shape": "macro_invocation",
+      "text": "test_pretty_encode_ok(&[((5,), pretty_str!([5]))]);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "pretty_str!(...) is a genuine macro invocation (matched before the plain-call test_pretty_encode_ok on the same line)."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 333,
+      "shape": "macro_invocation",
+      "text": "tri!(self.parse_integer(false)).visit(visitor)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "tri!(...) is a genuine macro invocation."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/data.rs",
+      "line": 206,
+      "shape": "method_call",
+      "text": "let r = self.add_edge(a, b, weight);",
+      "true_class": "may",
+      "confidence": "medium",
+      "rationale": "self.add_edge(a, b, weight) is called from what reads as a trait default/generic method body (Build-like data trait pattern); if add_edge is itself a trait method, dispatch depends on which concrete Self implements it -- not independently verified against the full trait definition."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 1429,
+      "shape": "path_or_associated_call",
+      "text": "Reference::Borrowed(s) => visitor.visit_borrowed_str(s),",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Reference::Borrowed(s) => ... is a match-arm enum pattern (sampler matched pattern syntax, not the nearby real call visitor.visit_borrowed_str(s))."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 2261,
+      "shape": "path_or_associated_call",
+      "text": "let mut dfs = DfsPostOrder::new(&positive_edges, n(0));",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "DfsPostOrder::new(...) is an associated function call on a concrete type."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/stable_graph.rs",
+      "line": 327,
+      "shape": "method_call",
+      "text": "connecting_edges.insert(gr.add_edge(a, b, ()));",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "connecting_edges.insert(...) is a method call on a concrete std::collections::HashSet.",
+      "correction_note": "Corrected from 'must' after review: connecting_edges.insert(...) targets std::collections::HashSet::insert, external to the indexed crate snapshot. See docs/observations/stage3-rust-audit/audit-correction.md."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/read.rs",
+      "line": 600,
+      "shape": "method_call",
+      "text": "self.skip_to_escape(true);",
+      "true_class": "must",
+      "confidence": "medium",
+      "rationale": "self.skip_to_escape(true) -- conventionally an inherent method on a concrete reader struct in serde_json's read.rs; not independently verified against the enclosing impl block's header."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 224,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident () (($key:expr) : $($rest:tt)*) $copy:tt) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "macro_rules! definition arm, not a call site."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 859,
+      "shape": "macro_invocation",
+      "text": "debug_assert!(new_pos + old_node_capacity < node_adjacencies.len());",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "debug_assert! is a genuine macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 949,
+      "shape": "method_call",
+      "text": "if let Ok(signed) = buf.parse() {",
+      "true_class": "unknown",
+      "confidence": "medium",
+      "rationale": "buf.parse() is a generic FromStr::from_str call; the target type is inferable as i64 from the enclosing ParserNumber::I64(signed) usage, which would make this Must under full type inference, but this extractor does not perform that inference -- labeled May to reflect the genuinely-generic trait dispatch as written, with this ambiguity flagged explicitly rather than resolved confidently either way.",
+      "correction_note": "Corrected from 'may' after review: buf.parse() resolves to <T as std::str::FromStr>::from_str, external to the indexed crate snapshot regardless of which T is inferred. See docs/observations/stage3-rust-audit/audit-correction.md."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/mod.rs",
+      "line": 2268,
+      "shape": "plain_call",
+      "text": "#[derive(Debug, Clone)]",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "#[derive(Debug, Clone)] is a struct-level attribute, not a call site."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/replace.rs",
+      "line": 47,
+      "shape": "fn_pointer_or_closure",
+      "text": "r\"([a-z]) ([a-z])\",",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Regex false positive: raw string literal containing ') (' pattern."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 178,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident ($($key:tt)+) (: [$($array:tt)*] $($rest:tt)*) $copy:tt) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "macro_rules! definition arm, not a call site."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 205,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident ($($key:tt)+) () $copy:tt) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "macro_rules! definition arm, not a call site."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/builders.rs",
+      "line": 2093,
+      "shape": "method_call",
+      "text": "self.builder.case_insensitive(yes);",
+      "true_class": "must",
+      "confidence": "medium",
+      "rationale": "self.builder.case_insensitive(yes) -- self.builder conventionally a concrete builder struct field; not independently verified against the struct's field type declaration."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graphmap.rs",
+      "line": 853,
+      "shape": "operator_usage",
+      "text": "N: 'a + NodeTrait,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "N: 'a + NodeTrait, is a generic bound declaration."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/replace.rs",
+      "line": 63,
+      "shape": "fn_pointer_or_closure",
+      "text": "r\"([a-z]+) ([a-z]+)\",",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Regex false positive: raw string literal containing ') (' pattern."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/mod.rs",
+      "line": 427,
+      "shape": "path_or_associated_call",
+      "text": "Value::Array(array) => Some(array),",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Value::Array(array) => Some(array), is a match-arm enum pattern, not a call."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/replace.rs",
+      "line": 29,
+      "shape": "fn_pointer_or_closure",
+      "text": "r\"(?P<first>[^ ]+)[ ]+(?P<last>[^ ]+)(?P<space>[ ]*)\",",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Regex false positive: raw string literal (named capture group syntax) resembling call syntax."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 188,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident ($($key:tt)+) (: $value:expr , $($rest:tt)*) $copy:tt) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "macro_rules! definition arm, not a call site."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/csr.rs",
+      "line": 195,
+      "shape": "macro_invocation",
+      "text": "debug_assert!(node <= n.index(),",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "This line is inside a /* ... */ block comment (commented-out debug_assert!), not live code."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/serde_utils.rs",
+      "line": 59,
+      "shape": "fn_pointer_or_closure",
+      "text": "match (self.f)(elem) {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "(self.f)(elem) calls an opaque closure/fn value stored in a struct field; unresolved fn-pointer/closure call."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regex/string.rs",
+      "line": 2204,
+      "shape": "method_call",
+      "text": ".next()",
+      "true_class": "unknown",
+      "confidence": "medium",
+      "rationale": "self.it.next() -- iterator adaptor struct field, conventionally concrete; not independently verified against the struct's field type declaration.",
+      "correction_note": "Corrected from 'must' after review: self.it: meta::FindMatches is re-exported from the external regex-automata dependency (confirmed: no `mod meta` in regex-1.12.4's own src/, and Cargo.toml declares regex-automata as a dependency), not defined in regex-1.12.4's own source. See docs/observations/stage3-rust-audit/audit-correction.md."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 163,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident ($($key:tt)+) (: null $($rest:tt)*) $copy:tt) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "macro_rules! definition arm, not a call site."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 234,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident ($($key:tt)*) ($tt:tt $($rest:tt)*) $copy:tt) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "macro_rules! definition arm, not a call site."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 348,
+      "shape": "method_call",
+      "text": "if !g.is_directed() {",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "g.is_directed() is an inherent method on petgraph's Graph<N,E,Ty> (Ty a compile-time marker type, not a dynamic-dispatch parameter), single resolvable target."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 1283,
+      "shape": "operator_usage",
+      "text": "sense to spend some effort de-coupling parts of this crate and making them",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Doc comment prose."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/bytes.rs",
+      "line": 59,
+      "shape": "operator_usage",
+      "text": "is part of the overall match, then the capture is *guaranteed* to be valid",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Doc comment prose."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/lexical/num.rs",
+      "line": 408,
+      "shape": "plain_call",
+      "text": "fn from_bits(u: u64) -> f64 {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn from_bits(u: u64) -> f64 { is a function definition line (trait impl for f64: Float)."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 504,
+      "shape": "method_call",
+      "text": ".end_array_value(&mut ser.writer)",
+      "true_class": "may",
+      "confidence": "medium",
+      "rationale": "ser.formatter.end_array_value(...) -- formatter: F where F: Formatter is a generic trait bound; serde_json ships multiple Formatter implementors (Compact/Pretty), so dispatch genuinely depends on the caller's chosen F."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 217,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident ($($key:tt)*) (, $($rest:tt)*) ($comma:tt $($copy:tt)*)) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "macro_rules! definition arm, not a call site."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "benches/bellman_ford.rs",
+      "line": 53,
+      "shape": "method_call",
+      "text": "g.add_edge(n1, n2, distance);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "g.add_edge(n1, n2, distance) is a method call on a concrete Graph<...>."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/suite_string_set.rs",
+      "line": 73,
+      "shape": "method_call",
+      "text": ".case_insensitive(test.case_insensitive())",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": ".case_insensitive(...) is a method call in a concrete builder chain (RegexSetBuilder)."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/serialization.rs",
+      "line": 321,
+      "shape": "method_call",
+      "text": "if nodes.len() >= <Ix as IndexType>::max().index() {",
+      "true_class": "may",
+      "confidence": "high",
+      "rationale": "<Ix as IndexType>::max() is an explicitly-qualified trait call, but Ix is a generic type parameter -- the concrete IndexType impl depends on instantiation, genuinely May."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/traversal.rs",
+      "line": 188,
+      "shape": "method_call",
+      "text": "self.stack.clear();",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "self.stack.clear() is a method call on a Vec field (concrete std type).",
+      "correction_note": "Corrected from 'must' after review: self.stack.clear() targets std::vec::Vec::clear, external to the indexed crate snapshot. See docs/observations/stage3-rust-audit/audit-correction.md."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 2074,
+      "shape": "plain_call",
+      "text": "fn unit_variant(self) -> Result<()> {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn unit_variant(self) -> Result<()> { is a function definition line."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/min_spanning_tree.rs",
+      "line": 105,
+      "shape": "plain_call",
+      "text": "(Some(a_id), Some(b_id)) => (a_id, b_id),",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "(Some(a_id), Some(b_id)) => ... is a match-arm tuple-of-patterns, not a call."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/generate.rs",
+      "line": 101,
+      "shape": "operator_usage",
+      "text": "if i == j && !self.selfloops {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "i == j && !self.selfloops is primitive boolean/comparison logic, not dispatch-relevant."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "benches/matrix_graph.rs",
+      "line": 166,
+      "shape": "method_call",
+      "text": "gr.add_node(());",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "gr.add_node(()) is a method call on a concrete graph type (benchmark harness convention)."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 193,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident ($($key:tt)+) (: $value:expr) $copy:tt) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "macro_rules! definition arm, not a call site."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1030,
+      "shape": "path_or_associated_call",
+      "text": "MatrixGraph::default()",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "MatrixGraph::default() is an associated function call on a concrete type."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 287,
+      "shape": "macro_invocation",
+      "text": "\"b\".to_owned() => treemap![],",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "treemap![...] is a genuine custom test-helper macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 2387,
+      "shape": "path_or_associated_call",
+      "text": "Ok(RawMapKey::ref_cast(raw_value))",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "RawMapKey::ref_cast(raw_value) is an associated function call on a concrete type (wrapped in Ok(...), itself unambiguous).",
+      "correction_note": "Corrected from 'must' after review: RawMapKey::ref_cast(...) is generated by the external `ref-cast` crate's derive macro; the struct RawMapKey is crate-local but the method itself is external/generated code. See docs/observations/stage3-rust-audit/audit-correction.md."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/ser.rs",
+      "line": 702,
+      "shape": "operator_usage",
+      "text": "T: ?Sized + Serialize,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "T: ?Sized + Serialize is a generic bound declaration."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 168,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident ($($key:tt)+) (: true $($rest:tt)*) $copy:tt) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "macro_rules! definition arm, not a call site."
+    }
+  ],
+  "labeling_note": "true_class and rationale were authored by reading each site's source context (file + surrounding lines) BEFORE running Girder on any site, per the frozen Stage 3 audit methodology. 'not_a_call_site' is a category this crude regex-based sampler could not avoid: enum-variant patterns/constructors, generic bound declarations, function definitions, doc-comment prose, macro_rules! definition bodies, commented-out code, and raw string literals that happen to contain call-like character sequences. These are published, not discarded, because the sampler's false-positive rate is itself part of an honest account of what a crude, Girder-independent site-selection method actually produces. confidence='medium' marks sites whose true class depends on a struct/trait field's declared type that was not visible in the sampled context window and was not independently re-verified against the full source; these are still best-effort judgments, not guesses, but carry more uncertainty than the 'high' confidence sites.",
+  "correction_applied": "audit-correction.md item 1 (external-target relabeling)"
+}
