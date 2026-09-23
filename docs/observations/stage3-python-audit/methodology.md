@@ -18,10 +18,21 @@ pinned sha256 hashes before use -- no network fetch was needed or made.
 Confirmed on a small, throwaway fixture (not click/pydantic/requests)
 before any real corpus work: `girder analyze`/`inspect --json` exposes the
 same `call_evidence_v1` structure for Python as for Rust -- byte-precise
-`site` spans, `class`, `targets`, `reason`, per call. The existing
-`dispatch_audit_scorer.py` (byte-offset matching against this attribute)
-needs no Python-specific rewrite to work; only a Python-specific site
-selector and a Python-specific labeled-sites file are new.
+`site` spans, `class`, `targets`, `reason`, per call. **Correction to this
+document's own first draft**: it originally said the existing
+`dispatch_audit_scorer.py` "needs no Python-specific rewrite to work."
+That was checked afterward and found false: `site_byte_offset` imports
+`SHAPE_PATTERNS` from the RUST site selector specifically to relocate a
+site's match span, and Python's shape names aren't keys in that dict at
+all (`KeyError` on the first Python-shaped site). A parallel
+`tools/dispatch_audit_scorer_python.py` was written instead (same
+structure, importing Python's own `SHAPE_PATTERNS` and a
+`package`-keyed site schema instead of `crate`-keyed), smoke-tested
+end-to-end against three real click sites before being trusted, with its
+own unit tests including a Python-specific `NEVER_COVERS` entry
+(`implicit-runtime-dispatch-not-certified`, Python's whole-module
+coverage-gap reason, the analogue of Rust's own
+`implicit-drop-or-operator-dispatch-not-certified`).
 
 ## 3. Site enumeration is independent of Girder's own parser
 
@@ -107,10 +118,10 @@ not renegotiated here.
 
 - The 105 selected sites have not been read or labeled. `audit-sites.json`
   has no `true_class`/rationale fields yet.
-- No Python-specific scorer changes have been made (the existing
-  `dispatch_audit_scorer.py` is expected to work unchanged per item 2, but
-  this is unverified against a real labeled-sites file until labeling is
-  done).
+- The Python-specific scorer (`tools/dispatch_audit_scorer_python.py`,
+  see the correction in item 2 above) exists and is smoke-tested against
+  three real click sites, but has not been run against a full,
+  hand-labeled 105-site file yet.
 - No before-observation measurement has been run.
 - The `#[ignore]`d-equivalent real-package verification step Rust's design
   used (reproducing design-spec facts against the real checkout) has no
