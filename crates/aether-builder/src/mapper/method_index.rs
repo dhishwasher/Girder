@@ -110,6 +110,14 @@ pub struct ModDeclFact {
     /// `#[path = "..."]`: the module's file location isn't derivable from
     /// its name alone, which the crate-wide cfg-chain check relies on.
     pub has_path_attr: bool,
+    /// Identifies the lexical module this `mod X;` declaration itself sits
+    /// in (the start byte of the nearest enclosing `mod_item`'s body, or 0
+    /// for the file's own top-level module) -- see `enclosing_mod_scope`.
+    /// A bare `use` segment naming this `mod` is only in-crate for a `use`
+    /// declared in the SAME scope; matching by name alone across scopes is
+    /// unsound (an inline `mod m { use foo::Gen; }` next to a top-level
+    /// `mod foo;` names the *external* crate `foo`, not the sibling module).
+    pub scope: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -119,6 +127,9 @@ pub struct ImportFact {
     /// (`crate`, `self`, `super`, or an external-looking crate name).
     pub first_segment: String,
     pub full_path: String,
+    /// The lexical module this `use` declaration itself sits in -- see
+    /// `ModDeclFact::scope` and `enclosing_mod_scope`.
+    pub scope: u64,
 }
 
 /// A method call whose receiver is a bare identifier -- the only shape this
@@ -218,6 +229,24 @@ fn cfg_gated_including_inline_mod_ancestors(node: TsNode, source: &str) -> bool 
         current = n.parent();
     }
     false
+}
+
+/// The lexical module `node` itself sits in: the start byte of the nearest
+/// enclosing `mod_item`, or 0 for the file's own top-level module. Used to
+/// scope `ModDeclFact`/`ImportFact` so a bare `use` segment naming a `mod`
+/// is only treated as in-crate when the `mod` is declared in the SAME
+/// module, not merely the same file -- `mod m { use foo::Gen; }` next to a
+/// top-level `mod foo;` names the external crate `foo`, not the sibling
+/// module, even though both are textually in one file.
+fn enclosing_mod_scope(node: TsNode) -> u64 {
+    let mut current = node.parent();
+    while let Some(n) = current {
+        if n.kind() == "mod_item" {
+            return n.start_byte() as u64;
+        }
+        current = n.parent();
+    }
+    0
 }
 
 /// Whether the file carries a `#![cfg(...)]`/`#![cfg_attr(...)]` inner
@@ -409,6 +438,7 @@ pub(super) fn collect(
                     name: node_text(name_field, source).to_string(),
                     cfg_gated: has_cfg_attribute(*n, source),
                     has_path_attr,
+                    scope: enclosing_mod_scope(*n),
                 });
             }
             "impl_item" => {
@@ -537,7 +567,8 @@ pub(super) fn collect(
         let Some(argument) = n.child_by_field_name("argument") else {
             continue;
         };
-        collect_use_clause(argument, source, "", &mut facts);
+        let scope = enclosing_mod_scope(*n);
+        collect_use_clause(argument, source, "", scope, &mut facts);
     }
 
     // Candidate method calls: `x.m()` where `x` is a bare identifier.
@@ -600,7 +631,13 @@ pub(super) fn collect(
     facts
 }
 
-fn collect_use_clause(node: TsNode, source: &str, prefix: &str, facts: &mut RustMethodFacts) {
+fn collect_use_clause(
+    node: TsNode,
+    source: &str,
+    prefix: &str,
+    scope: u64,
+    facts: &mut RustMethodFacts,
+) {
     fn combine(prefix: &str, suffix: &str) -> String {
         let suffix = suffix.trim();
         if prefix.is_empty() || suffix == "crate" || suffix.starts_with("crate::") {
@@ -616,13 +653,13 @@ fn collect_use_clause(node: TsNode, source: &str, prefix: &str, facts: &mut Rust
                 .map(|p| combine(prefix, node_text(p, source)))
                 .unwrap_or_else(|| prefix.to_string());
             if let Some(list) = node.child_by_field_name("list") {
-                collect_use_clause(list, source, &path, facts);
+                collect_use_clause(list, source, &path, scope, facts);
             }
         }
         "use_list" => {
             let mut cursor = node.walk();
             for child in node.named_children(&mut cursor) {
-                collect_use_clause(child, source, prefix, facts);
+                collect_use_clause(child, source, prefix, scope, facts);
             }
         }
         "use_as_clause" => {
@@ -638,6 +675,7 @@ fn collect_use_clause(node: TsNode, source: &str, prefix: &str, facts: &mut Rust
                 local: node_text(alias, source).trim().to_string(),
                 first_segment,
                 full_path,
+                scope,
             });
         }
         "use_wildcard" => {
@@ -655,6 +693,7 @@ fn collect_use_clause(node: TsNode, source: &str, prefix: &str, facts: &mut Rust
                     local,
                     first_segment,
                     full_path,
+                    scope,
                 });
             }
         }
