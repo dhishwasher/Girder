@@ -231,17 +231,32 @@ fn cfg_gated_including_inline_mod_ancestors(node: TsNode, source: &str) -> bool 
     false
 }
 
-/// The lexical module `node` itself sits in: the start byte of the nearest
-/// enclosing `mod_item`, or 0 for the file's own top-level module. Used to
-/// scope `ModDeclFact`/`ImportFact` so a bare `use` segment naming a `mod`
-/// is only treated as in-crate when the `mod` is declared in the SAME
-/// module, not merely the same file -- `mod m { use foo::Gen; }` next to a
-/// top-level `mod foo;` names the external crate `foo`, not the sibling
-/// module, even though both are textually in one file.
+/// The lexical container `node` itself sits in: the start byte of the
+/// nearest enclosing `mod_item` OR `block`, or 0 for the file's own
+/// top-level module. Used to scope `ModDeclFact`/`ImportFact` so a bare
+/// `use` segment naming a `mod` is only treated as in-crate when the `mod`
+/// is declared in the SAME container, not merely the same file -- `mod m {
+/// use foo::Gen; }` next to a top-level `mod foo;` names the external
+/// crate `foo`, not the sibling module, even though both are textually in
+/// one file. Stopping at `block` too (not just `mod_item`) matters
+/// because a `mod` declared inside a function/closure/`unsafe`/`async`/
+/// `const` body is block-scoped, not module-scoped -- a module-level `use`
+/// cannot see it, so it must not share that block's scope id with
+/// anything outside the block. Two items directly in the same immediate
+/// module body or the same immediate block are always mutually visible in
+/// Rust regardless of declaration order (checked by construction, and
+/// against the specific counter-example this fix was added for -- not
+/// exhaustively verified against every corner of Rust's real resolution,
+/// e.g. an item in an outer block referenced from a nested inner block,
+/// which this conservatively treats as NOT sharing scope even where real
+/// Rust would allow it). Two nodes with a DIFFERENT nearest enclosing
+/// module-or-block are always treated as not sharing scope, which can only
+/// make `in_crate` under-recognize (fail closed to Unknown), never
+/// over-recognize a bare segment as in-crate that Rust would not.
 fn enclosing_mod_scope(node: TsNode) -> u64 {
     let mut current = node.parent();
     while let Some(n) = current {
-        if n.kind() == "mod_item" {
+        if n.kind() == "mod_item" || n.kind() == "block" {
             return n.start_byte() as u64;
         }
         current = n.parent();

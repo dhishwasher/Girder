@@ -1942,6 +1942,54 @@ mod tests {
     }
 
     #[test]
+    fn a_mod_declared_inside_a_function_body_does_not_make_its_bare_name_in_crate_at_module_level()
+    {
+        // `enclosing_mod_scope` originally stopped only at `mod_item`, not at
+        // `block` -- so a `mod` declared INSIDE a function body (block-scoped,
+        // not module-scoped in real Rust) computed the same scope id (0, the
+        // file's own top-level module) as a completely unrelated top-level
+        // `use` in the SAME FILE (splitting them across two files would be
+        // caught by the file-scoping fix alone and never reach this bug --
+        // both must be in one file, as here). `helper`'s own body declares
+        // `mod quickcheck {}`; that must not make the module-level
+        // `use quickcheck::Gen;` above it (referring to the EXTERNAL crate)
+        // look in-crate just because both happen to compute to file-root
+        // scope under the unfixed walk.
+        let files = [
+            ("src/lib.rs", "pub mod gens;\n"),
+            (
+                "src/gens.rs",
+                "pub struct Gen;\n\
+                 impl Gen { pub fn size(&mut self) -> usize { 0 } }\n",
+            ),
+            (
+                "tests/q.rs",
+                "use quickcheck::Gen;\n\
+                 fn helper() {\n\
+                 \x20\x20\x20\x20mod quickcheck {}\n\
+                 }\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut g: Gen = Gen::new();\n\
+                 \x20\x20\x20\x20g.size();\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
     fn a_for_loop_pattern_shadowing_the_annotated_receiver_blocks_proof() {
         // A real false-Must shape: the annotated binding's name is rebound
         // by a `for` loop's destructuring pattern, and the call under test
