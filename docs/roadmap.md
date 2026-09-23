@@ -269,7 +269,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | Language | Status | Before / after evidence | Dependency |
 | --- | --- | --- | --- |
 | Rust | **DONE** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
-| Python | IN PROGRESS (before-observation done, resolver work not started) | [methodology](observations/stage3-python-audit/methodology.md) / [before-observation](observations/stage3-python-audit/before-observation.md) | Rust trustworthy on a real repository |
+| Python | IN PROGRESS (1st resolver change done: operator-dispatch claim, 0 unsound on sample; Must-proof not started) | [methodology](observations/stage3-python-audit/methodology.md) / [after-operator-claim-fix](observations/stage3-python-audit/after-operator-claim-fix/after-observation.md) | Rust trustworthy on a real repository |
 | TypeScript | NOT STARTED | none / none | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
@@ -1045,4 +1045,51 @@ benchmark, don't run it against the stale snapshot.
   in this program used, including the mutation-verification and
   advisor-review-before-trusting-DONE discipline the Rust rounds needed
   repeatedly.
+- 2026-09-23: **Stage 3 Python first resolver change: per-site
+  operator-dispatch claim (`d4d8d8f`), measured
+  (`b7ad01a`).** Closed both unsafe_exclusion cells the before-observation
+  found (`tests/test_construction.py:37`, `tests/test_arguments.py:284`)
+  by emitting a per-node Unknown claim for
+  `binary_operator`/`comparison_operator`/`unary_operator`/`not_operator`
+  nodes — the same pattern already used for macros/decorators, gated to
+  `lang == Lang::Python`. An `advisor` review before trusting this found
+  the before-observation's own "8 of 10 operator sites covered only
+  coincidentally" claim would very likely flip once this landed (spans
+  overlap: the new per-site claim is narrower than the
+  `duplicate-semantic-path` claim it competes with) — checked, confirmed
+  true: all 10 operator sites now carry real per-site evidence, not just
+  the 2 predicted. **Result: 85 scored, 72 exact, 13 conservative, 0
+  unsound** (was 70/13/2/0). Corpus and Stage 1 oracle precision/recall
+  unchanged; oracle `boundary_count` impact (+2, one real `is None` in the
+  oracle's own fixture) traced and disclosed, not assumed away. Rust's own
+  audit re-checked empirically (shared `claims.rs` code) — unchanged,
+  28/24/0-unsound. `zero_classification_errors_on_audit` is now **Met for
+  this 105-site sample** — explicitly not a claim that every
+  implicit-dispatch Python construct is covered:
+  `augmented_assignment`/subscripts/`for`/`with`/attribute access still
+  get no per-site claim, disclosed in
+  [after-operator-claim-fix/after-observation.md](observations/stage3-python-audit/after-operator-claim-fix/after-observation.md).
+  `measured_dispatch_corpus_improvement` is **not met by this change**
+  (stated plainly, not softened to "not applicable" — a resolver change
+  was made and the existing corpus's cells didn't move, because its
+  fixtures don't construct this fix's target shape).
+  `nonempty_must_precision_1000_on_real_repository` still not met (0/13
+  Must proven, unaffected by design). Missing items an `advisor` review
+  found in the prior `before-observation.md` entry (per-package
+  breakdown, the smoke-test-site sensitivity check, the `not_a_call_site`
+  cause tally, the Python 3.11.2 masking dependency) are now in
+  [before-observation-addendum.md](observations/stage3-python-audit/before-observation-addendum.md),
+  added rather than editing the already-committed original. **Stage 3
+  Python remains IN PROGRESS, not DONE.** Next step, per the same
+  `advisor` review: **gate-profile the 13 conservative audit sites and 7
+  conservative corpus cells against every existing extractor gate**
+  (mirroring `dispatch_audit_gate_profile.py`'s role for Rust) *before*
+  designing a Must-proof rule for cross-file/class-hierarchy dispatch —
+  `transformed_scope` (set by any decorator anywhere in a Python file)
+  may already block most of the 13 regardless of what a new rule proves,
+  and finding that out before writing code is exactly what the Rust
+  gate-profile step (`7dde679`) did before its own method-call resolver
+  design. Plan mutation tests for any new scope/rebinding logic from the
+  start — Rust's own module-scope logic needed four separate corrections
+  because this wasn't done early enough there.
 - Completion remains unproven until every criterion above has committed evidence.
