@@ -3,7 +3,7 @@
 
 use super::{node_text, span_of, BuildOutput};
 use crate::parser::Lang;
-use aether_graph::{CallClaim, CallClass, CallEvidence, NodeId, NodeKind};
+use aether_graph::{CallClaim, CallClass, CallEvidence, NodeId, NodeKind, Span};
 use std::collections::{HashMap, HashSet};
 use tree_sitter::{Node as TsNode, Tree};
 
@@ -29,6 +29,77 @@ pub(super) fn annotate(tree: &Tree, source: &str, lang: Lang, out: &mut BuildOut
                 && !matches!(node_text(*n, source).trim(), "#[test]" | "#[tokio::test]"))
             || (n.kind() == "macro_invocation" && owner(*n, out, module) == module)
     });
+    // Standard library assertion macros have known, fixed semantics: they
+    // evaluate their arguments as ordinary expressions and compare/check
+    // them, with no other hidden effect on what gets called. A bare call
+    // textually inside one of them is therefore provable the same way a
+    // same-file top-level direct call is, UNLIKE an arbitrary macro (which
+    // could do anything with its arguments, including never evaluating
+    // them). Trusted only when the file does not itself define or import
+    // something under one of these exact names — checked conservatively
+    // (AST-based, whole-file) so an unrecognized shadowing pattern fails
+    // closed, not open.
+    const TRUSTED_ASSERT_MACROS: &[&str] = &[
+        "assert",
+        "assert_eq",
+        "assert_ne",
+        "debug_assert",
+        "debug_assert_eq",
+        "debug_assert_ne",
+    ];
+    let shadowed_assert_macros = syntax.iter().any(|n| match n.kind() {
+        "macro_definition" => n
+            .child_by_field_name("name")
+            .is_some_and(|name| TRUSTED_ASSERT_MACROS.contains(&node_text(name, source))),
+        "use_declaration" | "use_as_clause" => {
+            let text = node_text(*n, source);
+            TRUSTED_ASSERT_MACROS
+                .iter()
+                .any(|macro_name| use_declaration_names(text).any(|name| name == *macro_name))
+        }
+        _ => false,
+    });
+    let is_trusted_assert_macro = |n: &TsNode<'_>| -> bool {
+        !shadowed_assert_macros
+            && lang == Lang::Rust
+            && n.child_by_field_name("macro")
+                .is_some_and(|m| TRUSTED_ASSERT_MACROS.contains(&node_text(m, source)))
+    };
+    // Call-shaped bare-identifier occurrences (`name(...)`, not `.name(...)`
+    // or `Path::name(...)`) found by walking a trusted, unshadowed assert
+    // macro's argument token tree directly -- tree-sitter does not parse
+    // macro arguments as ordinary expressions, so there is no call_expression
+    // node to find inside one; this walks the raw token leaves instead. Each
+    // trusted macro's *entire* argument list is rejected outright (not just
+    // the offending spot) when it contains anything this simple structural
+    // walk cannot see through: a block (`{`), a closure or bitwise-or (`|`),
+    // a `let`/`fn` keyword, or another macro invocation (`ident!`) -- any of
+    // which could introduce local shadowing, or rewrite/never-evaluate the
+    // arguments, in a way this walk has no way to detect. The scan runs over
+    // masked text (comments/string/char literals blanked out, same masking
+    // the legacy textual resolver uses) so a keyword or brace appearing only
+    // inside a string literal doesn't trigger the rejection. Fails closed:
+    // whatever this rejects simply gets no proof, exactly like today.
+    let mut trusted_macro_calls: Vec<(TsNode<'_>, TsNode<'_>, usize)> = Vec::new();
+    for n in &syntax {
+        if n.kind() != "macro_invocation" || !is_trusted_assert_macro(n) {
+            continue;
+        }
+        let mut cursor = n.walk();
+        let Some(tokens) = n.children(&mut cursor).find(|c| c.kind() == "token_tree") else {
+            continue;
+        };
+        let masked = super::mask_rust_macro_non_code(node_text(tokens, source));
+        if !is_safe_to_trust_macro_arguments(&masked) {
+            continue;
+        }
+        let index = owner(*n, out, module);
+        collect_call_shaped_identifiers(tokens, source, index, &mut trusted_macro_calls);
+    }
+    let exempt_call_shaped_ids: HashSet<usize> = trusted_macro_calls
+        .iter()
+        .map(|(identifier, _, _)| identifier.id())
+        .collect();
     // Direct-call proof is deliberately restricted to top-level declarations.
     // Do not certify nested functions, methods, imports, aliases or factories
     // until their binding/dispatch rules are implemented and measured.
@@ -97,6 +168,7 @@ pub(super) fn annotate(tree: &Tree, source: &str, lang: Lang, out: &mut BuildOut
                 })
                 .all(|n| {
                     n.id() == declaration
+                        || exempt_call_shaped_ids.contains(&n.id())
                         || n.parent().is_some_and(|p| {
                             callable(&p)
                                 && p.kind() != "new_expression"
@@ -111,9 +183,38 @@ pub(super) fn annotate(tree: &Tree, source: &str, lang: Lang, out: &mut BuildOut
     }
     let macro_owners: HashSet<usize> = syntax
         .iter()
-        .filter(|n| n.kind() == "macro_invocation")
+        .filter(|n| n.kind() == "macro_invocation" && !is_trusted_assert_macro(n))
         .map(|n| owner(*n, out, module))
         .collect();
+    // Emit Must claims for the call-shaped identifiers collected above, now
+    // that both `proven` and `macro_owners` exist. A call inside a trusted
+    // assert is proven exactly like an ordinary same-file direct call: the
+    // callee must be the sole in-file top-level definition of that name
+    // (`proven`), and the owning function must not also contain some OTHER,
+    // untrusted macro invocation elsewhere (`macro_owners`) -- a
+    // hygiene-breaking proc or declarative macro there could still rebind
+    // the name before this assert runs, even though this assert's own
+    // arguments are individually clean.
+    for (identifier, call_tokens, index) in &trusted_macro_calls {
+        if macro_owners.contains(index) {
+            continue;
+        }
+        let Some(&target) = proven.get(node_text(*identifier, source)) else {
+            continue;
+        };
+        claims.entry(*index).or_default().push(CallClaim {
+            site: Span {
+                start_byte: identifier.start_byte(),
+                end_byte: call_tokens.end_byte(),
+                start_row: identifier.start_position().row,
+                start_col: identifier.start_position().column,
+            },
+            class: CallClass::Must,
+            targets: vec![target],
+            reason: "proven-call-inside-trusted-assertion-macro".into(),
+            coverage_gap: false,
+        });
+    }
     for n in &syntax {
         if callable(n) {
             let index = owner(*n, out, module);
@@ -206,12 +307,23 @@ pub(super) fn annotate(tree: &Tree, source: &str, lang: Lang, out: &mut BuildOut
         .enumerate()
         .filter(|(_, node)| node.kind == NodeKind::Function || node.kind == NodeKind::Module)
     {
+        let node_claims = claims.remove(&index).unwrap_or_default();
         let mut assumptions = vec!["indexed-source-snapshot".into()];
         if lang == Lang::Python || lang.is_typescript() {
             assumptions.push("no-runtime-rebinding-or-monkey-patching".into());
         }
-        let evidence =
-            CallEvidence::new(node, claims.remove(&index).unwrap_or_default(), assumptions);
+        if node_claims
+            .iter()
+            .any(|c| c.reason == "proven-call-inside-trusted-assertion-macro")
+        {
+            // Shadow detection for assert/assert_eq/etc. is whole-file, not
+            // whole-crate: a `macro_rules!` redefinition in a different file
+            // brought into scope via textual (`#[macro_use]`) or 2018-style
+            // path scoping leaves no trace this file's syntax tree can see.
+            // Disclosed here rather than silently assumed away.
+            assumptions.push("assert-macro-not-shadowed-crate-wide".into());
+        }
+        let evidence = CallEvidence::new(node, node_claims, assumptions);
         // All fields are strings/integers/enums supported by RON. Should encoding
         // nevertheless fail, missing evidence is surfaced as Unknown by queries.
         let _ = evidence.attach(node);
@@ -237,6 +349,97 @@ fn owner(node: TsNode<'_>, out: &BuildOutput, module: usize) -> usize {
         })
         .min_by_key(|(_, candidate)| candidate.span.end_byte - candidate.span.start_byte)
         .map_or(module, |(index, _)| index)
+}
+
+/// Every identifier a `use` declaration's text could bind into scope --
+/// deliberately over-inclusive (splits on `::`, `,`, `{`, `}`, whitespace,
+/// and treats every remaining word as a possibly-bound name, including
+/// path segments that are not the final binding) so that shadow detection
+/// fails closed: a name this misses could wrongly permit trust in a
+/// shadowed macro, but a name this over-reports only costs an unrelated
+/// file the (safe, unchanged) fallback behavior.
+fn use_declaration_names(text: &str) -> impl Iterator<Item = &str> {
+    text.split(|c: char| {
+        c == ':' || c == ',' || c == '{' || c == '}' || c == ';' || c.is_whitespace()
+    })
+    .filter(|word| !word.is_empty() && *word != "use" && *word != "as" && *word != "pub")
+}
+
+/// Whole-argument-list backstop for trusting calls found by walking a trusted
+/// assert macro's token tree: refuses the *entire* macro invocation, not just
+/// one occurrence, when its (masked) argument text contains anything this
+/// simple structural walk cannot reason about. Over-rejection is safe here --
+/// it only means an occurrence falls back to no proof, never a wrong one.
+fn is_safe_to_trust_macro_arguments(masked: &str) -> bool {
+    if masked.contains('{') || masked.contains('|') {
+        return false; // a block or closure/bitwise-or: could bind or rewrite locally.
+    }
+    if contains_word(masked, "let") || contains_word(masked, "fn") {
+        return false; // a local binding or nested item definition.
+    }
+    !contains_bang_macro_invocation(masked)
+}
+
+fn contains_word(text: &str, word: &str) -> bool {
+    text.split(|c: char| !(c == '_' || c.is_ascii_alphanumeric()))
+        .any(|token| token == word)
+}
+
+/// True if the text contains an `identifier!` sequence (a nested macro
+/// invocation), which could rewrite or never evaluate what follows it. `!=`
+/// is excluded so a plain inequality comparison is not mistaken for one.
+fn contains_bang_macro_invocation(text: &str) -> bool {
+    let bytes = text.as_bytes();
+    let mut chars = text.char_indices().peekable();
+    while let Some((start, ch)) = chars.next() {
+        if !(ch == '_' || ch.is_ascii_alphabetic()) {
+            continue;
+        }
+        let mut end = start + ch.len_utf8();
+        while let Some(&(idx, next)) = chars.peek() {
+            if next == '_' || next.is_ascii_alphanumeric() {
+                end = idx + next.len_utf8();
+                chars.next();
+            } else {
+                break;
+            }
+        }
+        if bytes.get(end) == Some(&b'!') && bytes.get(end + 1) != Some(&b'=') {
+            return true;
+        }
+    }
+    false
+}
+
+/// Recursively finds call-shaped bare-identifier occurrences (`name(...)`,
+/// not `.name(...)` or `Path::name(...)`) among a trusted macro's argument
+/// token-tree leaves. Tree-sitter does not parse macro arguments as ordinary
+/// expressions, so there is no `call_expression` node to find here; this
+/// walks the raw tokens directly, using the surrounding source text (not
+/// grammar-specific anonymous-node kinds) to check for a `.`/`::` qualifier
+/// immediately before the identifier and a `(...)` token tree immediately
+/// after it.
+fn collect_call_shaped_identifiers<'a>(
+    node: TsNode<'a>,
+    source: &str,
+    owner_index: usize,
+    out: &mut Vec<(TsNode<'a>, TsNode<'a>, usize)>,
+) {
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        if child.kind() == "identifier" {
+            let before = source[..child.start_byte()].trim_end();
+            let qualified = before.ends_with('.') || before.ends_with("::");
+            if !qualified {
+                if let Some(next) = child.next_sibling() {
+                    if next.kind() == "token_tree" && node_text(next, source).starts_with('(') {
+                        out.push((child, next, owner_index));
+                    }
+                }
+            }
+        }
+        collect_call_shaped_identifiers(child, source, owner_index, out);
+    }
 }
 
 fn unresolved_reason(node: TsNode<'_>, source: &str, lang: Lang) -> &'static str {
@@ -368,5 +571,193 @@ mod tests {
             .calls
             .iter()
             .all(|c| c.class == CallClass::Unknown));
+    }
+
+    #[test]
+    fn a_bare_call_inside_assert_eq_is_proven_must() {
+        let g = graph(
+            "src/lib.rs",
+            "fn target() -> i32 { 42 }\n#[test]\nfn test_caller() { assert_eq!(target(), 42); }\n",
+        );
+        let target = g.nodes().find(|n| n.name == "target").unwrap();
+        let caller = g.nodes().find(|n| n.name == "test_caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().any(|c| c.class == CallClass::Must
+                && c.reason == "proven-call-inside-trusted-assertion-macro"
+                && c.targets == vec![target.id]),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_local_binding_inside_the_assert_itself_blocks_must() {
+        // `target` here is a closure bound INSIDE the assert's own arguments,
+        // not a call to the top-level fn of the same name -- the whole-block
+        // backstop (rejects on `{`) must refuse the entire macro invocation.
+        let g = graph(
+            "src/lib.rs",
+            "fn target() -> i32 { 1 }\n#[test]\nfn test_x() { assert!({ let target = || 2; target() } == 2); }\n",
+        );
+        let claims: Vec<_> = g
+            .nodes()
+            .filter_map(|n| g.call_evidence(n.id).ok())
+            .flat_map(|e| e.calls)
+            .collect();
+        assert!(
+            claims
+                .iter()
+                .all(|c| c.reason != "proven-call-inside-trusted-assertion-macro"),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_nested_macro_invocation_inside_the_assert_blocks_must() {
+        // `m!` could rewrite or never evaluate `target()` inside it -- the
+        // nested-`ident!` backstop must refuse the whole macro invocation.
+        let g = graph(
+            "src/lib.rs",
+            "fn target() -> i32 { 1 }\n#[test]\nfn test_x() { assert!(m!(target()) == 1); }\n",
+        );
+        let claims: Vec<_> = g
+            .nodes()
+            .filter_map(|n| g.call_evidence(n.id).ok())
+            .flat_map(|e| e.calls)
+            .collect();
+        assert!(
+            claims
+                .iter()
+                .all(|c| c.reason != "proven-call-inside-trusted-assertion-macro"),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn an_untrusted_macro_elsewhere_in_the_same_function_blocks_must() {
+        // Even though assert_eq!'s own arguments are clean, `opaque!()`
+        // elsewhere in test_x's body means the owning function is in
+        // macro_owners -- an unrelated hygiene-breaking macro there could
+        // still rebind `target` before the assert runs.
+        let g = graph(
+            "src/lib.rs",
+            "fn target() -> i32 { 1 }\n#[test]\nfn test_x() { opaque!(); assert_eq!(target(), 1); }\n",
+        );
+        let claims: Vec<_> = g
+            .nodes()
+            .filter_map(|n| g.call_evidence(n.id).ok())
+            .flat_map(|e| e.calls)
+            .collect();
+        assert!(
+            claims
+                .iter()
+                .all(|c| c.reason != "proven-call-inside-trusted-assertion-macro"),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn the_must_claim_span_is_the_call_not_the_whole_macro() {
+        // A second, unproven call in the same assert (`other()`, a
+        // never-defined-in-file bare call so it stays unresolved either
+        // way) must not fall inside the tight Must span meant for `target`.
+        let source =
+            "fn target() -> i32 { 1 }\n#[test]\nfn test_x() { assert_eq!(target(), other()); }\n";
+        let g = graph("src/lib.rs", source);
+        let caller = g.nodes().find(|n| n.name == "test_x").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        let must = claims
+            .calls
+            .iter()
+            .find(|c| c.reason == "proven-call-inside-trusted-assertion-macro")
+            .unwrap_or_else(|| panic!("{claims:?}"));
+        let call_text = &source[must.site.start_byte..must.site.end_byte];
+        assert_eq!(call_text, "target()", "{claims:?}");
+        let whole_macro_span = claims
+            .calls
+            .iter()
+            .find(|c| c.reason == "unexpanded-macro-or-decorator")
+            .unwrap_or_else(|| panic!("{claims:?}"));
+        assert!(
+            must.site.start_byte > whole_macro_span.site.start_byte
+                && must.site.end_byte < whole_macro_span.site.end_byte,
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_local_macro_rules_shadowing_assert_eq_blocks_must() {
+        let g = graph(
+            "src/lib.rs",
+            "macro_rules! assert_eq { () => {} }\nfn target() {}\n#[test]\nfn test_caller() { assert_eq!(target(), 42); }\n",
+        );
+        let claims: Vec<_> = g
+            .nodes()
+            .filter_map(|n| g.call_evidence(n.id).ok())
+            .flat_map(|e| e.calls)
+            .collect();
+        assert!(
+            claims
+                .iter()
+                .all(|c| c.reason != "proven-call-inside-trusted-assertion-macro"),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_use_import_aliased_to_assert_eq_blocks_must() {
+        let g = graph(
+            "src/lib.rs",
+            "use custom::foo as assert_eq;\nfn target() {}\n#[test]\nfn test_caller() { assert_eq!(target(), 42); }\n",
+        );
+        let claims: Vec<_> = g
+            .nodes()
+            .filter_map(|n| g.call_evidence(n.id).ok())
+            .flat_map(|e| e.calls)
+            .collect();
+        assert!(
+            claims
+                .iter()
+                .all(|c| c.reason != "proven-call-inside-trusted-assertion-macro"),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_cfg_attribute_anywhere_in_the_file_blocks_must_even_inside_assert_eq() {
+        let g = graph(
+            "src/lib.rs",
+            "#[cfg(feature = \"x\")]\nfn unused() {}\nfn target() {}\n#[test]\nfn test_caller() { assert_eq!(target(), 42); }\n",
+        );
+        let claims: Vec<_> = g
+            .nodes()
+            .filter_map(|n| g.call_evidence(n.id).ok())
+            .flat_map(|e| e.calls)
+            .collect();
+        assert!(
+            claims
+                .iter()
+                .all(|c| c.reason != "proven-call-inside-trusted-assertion-macro"),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn an_attribute_macro_anywhere_in_the_file_blocks_must_even_inside_assert_eq() {
+        let g = graph(
+            "src/lib.rs",
+            "#[derive(Debug)]\nstruct S;\nfn target() {}\n#[test]\nfn test_caller() { assert_eq!(target(), 42); }\n",
+        );
+        let claims: Vec<_> = g
+            .nodes()
+            .filter_map(|n| g.call_evidence(n.id).ok())
+            .flat_map(|e| e.calls)
+            .collect();
+        assert!(
+            claims
+                .iter()
+                .all(|c| c.reason != "proven-call-inside-trusted-assertion-macro"),
+            "{claims:?}"
+        );
     }
 }
