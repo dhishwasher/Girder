@@ -111,8 +111,9 @@ pub struct ModDeclFact {
     /// its name alone, which the crate-wide cfg-chain check relies on.
     pub has_path_attr: bool,
     /// Identifies the lexical module this `mod X;` declaration itself sits
-    /// in (the start byte of the nearest enclosing `mod_item`'s body, or 0
-    /// for the file's own top-level module) -- see `enclosing_mod_scope`.
+    /// in (the start byte of the nearest enclosing `mod_item` or `block`,
+    /// or `u64::MAX` for the file's own top-level module) -- see
+    /// `enclosing_mod_scope`.
     /// A bare `use` segment naming this `mod` is only in-crate for a `use`
     /// declared in the SAME scope; matching by name alone across scopes is
     /// unsound (an inline `mod m { use foo::Gen; }` next to a top-level
@@ -232,27 +233,40 @@ fn cfg_gated_including_inline_mod_ancestors(node: TsNode, source: &str) -> bool 
 }
 
 /// The lexical container `node` itself sits in: the start byte of the
-/// nearest enclosing `mod_item` OR `block`, or 0 for the file's own
-/// top-level module. Used to scope `ModDeclFact`/`ImportFact` so a bare
-/// `use` segment naming a `mod` is only treated as in-crate when the `mod`
-/// is declared in the SAME container, not merely the same file -- `mod m {
-/// use foo::Gen; }` next to a top-level `mod foo;` names the external
-/// crate `foo`, not the sibling module, even though both are textually in
-/// one file. Stopping at `block` too (not just `mod_item`) matters
-/// because a `mod` declared inside a function/closure/`unsafe`/`async`/
-/// `const` body is block-scoped, not module-scoped -- a module-level `use`
-/// cannot see it, so it must not share that block's scope id with
-/// anything outside the block. Two items directly in the same immediate
-/// module body or the same immediate block are always mutually visible in
-/// Rust regardless of declaration order (checked by construction, and
-/// against the specific counter-example this fix was added for -- not
+/// nearest enclosing `mod_item` OR `block`, or `u64::MAX` (never a real
+/// byte offset) for the file's own top-level module. Used to scope
+/// `ModDeclFact`/`ImportFact` so a bare `use` segment naming a `mod` is
+/// only treated as in-crate when the `mod` is declared in the SAME
+/// container, not merely the same file -- `mod m { use foo::Gen; }` next
+/// to a top-level `mod foo;` names the external crate `foo`, not the
+/// sibling module, even though both are textually in one file. The
+/// sentinel for "no enclosing container" must never be a value a real
+/// container's own `start_byte()` could produce: an earlier version of
+/// this function used `0` for both, which collided whenever a `mod`/
+/// `block` was the very first thing in the file (its own `start_byte()`
+/// is then also `0`) -- a `use` genuinely at file-root and an unrelated
+/// `mod`'s own child could then wrongly compute the same scope id purely
+/// from that coincidence of position, not from actually sharing scope.
+/// Stopping at `block` too (not just `mod_item`) matters because a `mod`
+/// declared inside a function/closure/`unsafe`/`async`/`const` body is
+/// block-scoped, not module-scoped -- a module-level `use` cannot see it,
+/// so it must not share that block's scope id with anything outside the
+/// block. Two items directly in the same immediate module body or the
+/// same immediate block are always mutually visible in Rust regardless of
+/// declaration order (checked by construction, and against the specific
+/// counter-examples this function's fixes were added for -- not
 /// exhaustively verified against every corner of Rust's real resolution,
 /// e.g. an item in an outer block referenced from a nested inner block,
 /// which this conservatively treats as NOT sharing scope even where real
 /// Rust would allow it). Two nodes with a DIFFERENT nearest enclosing
 /// module-or-block are always treated as not sharing scope, which can only
 /// make `in_crate` under-recognize (fail closed to Unknown), never
-/// over-recognize a bare segment as in-crate that Rust would not.
+/// over-recognize a bare segment as in-crate that Rust would not -- this
+/// specific claim has been wrong twice before for this same function
+/// (widening `in_crate` to crate-wide, then file-wide, mod recognition),
+/// so it is stated here only once every known collision source (file vs.
+/// crate scope, block vs. module scope, and now the root-sentinel
+/// collision) has been found and fixed, not as an a priori guarantee.
 fn enclosing_mod_scope(node: TsNode) -> u64 {
     let mut current = node.parent();
     while let Some(n) = current {
@@ -261,7 +275,7 @@ fn enclosing_mod_scope(node: TsNode) -> u64 {
         }
         current = n.parent();
     }
-    0
+    u64::MAX
 }
 
 /// Whether the file carries a `#![cfg(...)]`/`#![cfg_attr(...)]` inner

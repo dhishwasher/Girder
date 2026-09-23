@@ -1990,6 +1990,56 @@ mod tests {
     }
 
     #[test]
+    fn a_mod_starting_at_byte_zero_does_not_collide_with_the_file_root_scope_sentinel() {
+        // `enclosing_mod_scope` returns 0 both for "no enclosing container
+        // found" (true file-root scope) AND for a container whose own
+        // `start_byte()` happens to BE 0 -- which happens whenever a
+        // `mod`/`block` is the very first thing in the file (no leading
+        // attribute, no leading whitespace). Here `mod m { ... }` is the
+        // very first thing in the file (starts at byte 0), so everything
+        // directly inside it -- including `use quickcheck::Gen;` -- computes
+        // scope 0, the SAME id `enclosing_mod_scope` returns for a truly
+        // top-level (no enclosing container at all) declaration -- like the
+        // SIBLING, top-level `mod quickcheck {}` that follows `mod m`'s
+        // closing brace. These are two different scopes in real Rust (`use
+        // quickcheck::Gen;` inside `mod m` cannot see a `mod quickcheck`
+        // declared as `mod m`'s OWN sibling, one level up) that must not
+        // collide just because both compute to 0.
+        let files = [
+            (
+                "src/lib.rs",
+                "mod m {\n\
+                 \x20\x20\x20\x20use quickcheck::Gen;\n\
+                 \x20\x20\x20\x20#[test]\n\
+                 \x20\x20\x20\x20fn t() {\n\
+                 \x20\x20\x20\x20\x20\x20\x20\x20let mut g: Gen = Gen::new();\n\
+                 \x20\x20\x20\x20\x20\x20\x20\x20g.size();\n\
+                 \x20\x20\x20\x20}\n\
+                 }\n\
+                 mod quickcheck {}\n\
+                 pub mod gens;\n",
+            ),
+            (
+                "src/gens.rs",
+                "pub struct Gen;\n\
+                 impl Gen { pub fn size(&mut self) -> usize { 0 } }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
     fn a_for_loop_pattern_shadowing_the_annotated_receiver_blocks_proof() {
         // A real false-Must shape: the annotated binding's name is rebound
         // by a `for` loop's destructuring pattern, and the call under test
