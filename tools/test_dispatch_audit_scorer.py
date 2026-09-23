@@ -28,9 +28,26 @@ class CellLabelUnitTests(unittest.TestCase):
 
 
 class FindCoveringClaimUnitTests(unittest.TestCase):
-    def _claim(self, file, start, end, cls="unknown"):
+    def _claim(self, file, start, end, cls="unknown", reason="r"):
         return {"file": file, "start_byte": start, "end_byte": end, "class": cls,
-                "reason": "r", "coverage_gap": False, "targets": [], "caller": "c"}
+                "reason": reason, "coverage_gap": False, "targets": [], "caller": "c"}
+
+    def test_implicit_drop_or_operator_gap_never_covers(self):
+        # This gap is attached with a whole-file span on nearly every real
+        # Rust file (any let/binary/unary/try/index/for expression or
+        # impl_item triggers it) and discloses nothing about this specific
+        # call -- it must never be treated as covering a site, or
+        # unsafe_exclusion becomes permanently unreachable for Rust.
+        claims = [
+            self._claim(
+                "a.rs", 0, 100000, reason="implicit-drop-or-operator-dispatch-not-certified"
+            )
+        ]
+        self.assertIsNone(find_covering_claim(claims, "a.rs", 50))
+
+    def test_a_real_macro_gap_still_covers(self):
+        claims = [self._claim("a.rs", 10, 20, reason="unexpanded-macro-or-decorator")]
+        self.assertIsNotNone(find_covering_claim(claims, "a.rs", 15))
 
     def test_finds_claim_containing_offset(self):
         claims = [self._claim("a.rs", 10, 20)]

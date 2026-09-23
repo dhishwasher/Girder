@@ -100,9 +100,23 @@ def extract_call_claims(inspect_path: Path) -> list[dict]:
     return claims
 
 
+# Reasons that do NOT count as covering a site, even when their claim's byte
+# span contains it. This one is attached with span_of(root) -- the WHOLE
+# FILE -- on almost every Rust file (any let/binary/unary/try/index/for
+# expression or impl_item triggers it), so treating it as "covering"
+# anything would make every offset in every real Rust file always covered,
+# collapsing unsafe_exclusion to permanently unreachable. It discloses
+# nothing about implicit (drop/operator) dispatch near THIS specific call.
+NEVER_COVERS = {"implicit-drop-or-operator-dispatch-not-certified"}
+
+
 def find_covering_claim(claims: list[dict], file: str, byte_offset: int) -> dict | None:
     covering = [
-        c for c in claims if c["file"] == file and c["start_byte"] <= byte_offset < c["end_byte"]
+        c
+        for c in claims
+        if c["file"] == file
+        and c["start_byte"] <= byte_offset < c["end_byte"]
+        and c["reason"] not in NEVER_COVERS
     ]
     if not covering:
         return None
