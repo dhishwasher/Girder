@@ -9,6 +9,7 @@ use crate::parser::{IncrementalParser, Lang};
 use aether_graph::{Edge, EdgeKind, NodeId, NodeKind, SemanticGraph};
 use std::collections::{HashMap, HashSet};
 
+mod rust_methods;
 mod update;
 pub use update::{normalize_source_path, FileChange, FullRebuildReason, UpdateError, UpdateReport};
 
@@ -700,6 +701,12 @@ pub struct GraphBuilder {
     /// import strings verbatim; project-wide resolution maps only imports below
     /// this module to Girder's directory-addressed `crate::...` paths.
     go_module_path: Option<String>,
+    /// The package (or `[lib]` name override) declared by a project-root
+    /// Cargo.toml, `-` mapped to `_` as rustc does. `use petgraph::Foo` in an
+    /// integration test names the crate under this published name, not
+    /// `crate::`; project-wide resolution that needs to recognize such an
+    /// import as in-crate (not external) needs this to make that call.
+    rust_package_name: Option<String>,
     configuration_changed: bool,
 }
 
@@ -720,6 +727,12 @@ impl GraphBuilder {
         self.configuration_changed |=
             !self.files.is_empty() && self.go_module_path != go_module_path;
         self.go_module_path = go_module_path;
+    }
+
+    pub fn set_rust_package_name(&mut self, rust_package_name: Option<String>) {
+        self.configuration_changed |=
+            !self.files.is_empty() && self.rust_package_name != rust_package_name;
+        self.rust_package_name = rust_package_name;
     }
 
     /// Initial load of a file. Full parse + extract + insert.
@@ -1028,6 +1041,16 @@ impl GraphBuilder {
                 let _ = graph.add_edge(from, to, edge);
             }
         }
+
+        // Crate-wide method-call Must-proof (Rust only). Upgrades specific
+        // existing Unknown claims in place using facts every file's own
+        // annotate() pass already collected; never invents evidence outside
+        // what call_evidence already governs. See sync/rust_methods.rs.
+        rust_methods::upgrade_method_call_evidence(
+            &self.files,
+            graph,
+            self.rust_package_name.as_deref(),
+        );
 
         self.resolve_inherits(graph);
     }

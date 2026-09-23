@@ -13,6 +13,7 @@ use tree_sitter::{Node as TsNode, Tree};
 
 mod claims;
 mod go;
+pub(crate) mod method_index;
 mod typescript;
 
 /// A callable used to infer the type of a local binding from its return type.
@@ -186,6 +187,9 @@ pub struct BuildOutput {
     /// project resolver's narrow RAII model: a resolved `Self`-returning
     /// constructor call for one of these types also calls its `drop`.
     pub drop_impls: Vec<String>,
+    /// Facts for crate-wide method-call Must-proof (Rust only; see
+    /// `method_index.rs`). Empty for every other language.
+    pub rust_method_facts: method_index::RustMethodFacts,
 }
 
 impl BuildOutput {
@@ -225,6 +229,9 @@ pub fn module_path_for(file: &str) -> String {
 pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput {
     let mut out = extract_definitions_and_references(tree, source, file, lang);
     claims::annotate(tree, source, lang, &mut out);
+    if lang == Lang::Rust {
+        out.rust_method_facts = method_index::collect(tree, source, &out);
+    }
     out
 }
 

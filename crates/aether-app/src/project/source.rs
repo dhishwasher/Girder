@@ -287,6 +287,29 @@ pub(crate) fn is_supported_source_path(path: &str) -> bool {
     )
 }
 
+/// The crate's published name from Cargo.toml, `-` mapped to `_` as rustc
+/// does when generating the crate's own root path. `[lib].name` overrides
+/// `[package].name` when present, matching how cargo actually names the
+/// compiled library. `use petgraph::Foo` in an integration test or a
+/// dependent crate names the crate under this published name, not `crate::`;
+/// a missing, unreadable, or unparseable manifest contributes nothing.
+fn read_rust_package_name(root: &Path) -> Option<String> {
+    let text = std::fs::read_to_string(root.join("Cargo.toml")).ok()?;
+    let manifest: toml::Value = text.parse().ok()?;
+    let lib_name = manifest
+        .get("lib")
+        .and_then(|lib| lib.get("name"))
+        .and_then(toml::Value::as_str);
+    let package_name = manifest
+        .get("package")
+        .and_then(|package| package.get("name"))
+        .and_then(toml::Value::as_str);
+    lib_name
+        .or(package_name)
+        .filter(|name| !name.is_empty())
+        .map(|name| name.replace('-', "_"))
+}
+
 fn read_go_module_path(root: &Path) -> std::io::Result<Option<String>> {
     let path = root.join("go.mod");
     let source = match std::fs::read_to_string(&path) {
@@ -522,6 +545,7 @@ pub(crate) fn build_from_dir_with_config(
     let mut builder = GraphBuilder::new();
     builder.set_bin_targets(cargo_bin_targets(root));
     builder.set_go_module_path(read_go_module_path(root)?);
+    builder.set_rust_package_name(read_rust_package_name(root));
     let sources = collect_sources_with_config(root, config)?;
     let mut contents = Vec::with_capacity(sources.len());
     for (absolute, relative) in &sources {
