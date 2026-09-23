@@ -228,9 +228,9 @@ pub fn module_path_for(file: &str) -> String {
 /// Extract a [`BuildOutput`] from a parsed tree.
 pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput {
     let mut out = extract_definitions_and_references(tree, source, file, lang);
-    claims::annotate(tree, source, lang, &mut out);
+    let gates = claims::annotate(tree, source, lang, &mut out);
     if lang == Lang::Rust {
-        out.rust_method_facts = method_index::collect(tree, source, &out);
+        out.rust_method_facts = method_index::collect(tree, source, file, &out, &gates);
     }
     out
 }

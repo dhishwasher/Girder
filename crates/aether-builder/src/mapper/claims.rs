@@ -7,14 +7,40 @@ use aether_graph::{CallClaim, CallClass, CallEvidence, NodeId, NodeKind, Span};
 use std::collections::{HashMap, HashSet};
 use tree_sitter::{Node as TsNode, Tree};
 
-pub(super) fn annotate(tree: &Tree, source: &str, lang: Lang, out: &mut BuildOutput) {
+/// The same-file gates `annotate()` already computes, exposed so the
+/// crate-wide method-call pass (`sync/rust_methods.rs`) can check them for a
+/// call's own caller instead of re-deriving them -- two implementations of
+/// `transformed_scope`/`duplicate_paths`/`macro_owners` could drift apart,
+/// which is itself a false-Must path.
+#[derive(Debug, Default, Clone)]
+pub(crate) struct AnnotateGates {
+    pub transformed_scope: bool,
+    pub duplicate_paths: bool,
+    pub parse_error: bool,
+    /// Function-node indices (into `BuildOutput::nodes`) whose body contains
+    /// some untrusted macro invocation elsewhere -- mirrors `annotate()`'s
+    /// own `macro_owners`.
+    pub macro_owners: HashSet<usize>,
+}
+
+pub(super) fn annotate(
+    tree: &Tree,
+    source: &str,
+    lang: Lang,
+    out: &mut BuildOutput,
+) -> AnnotateGates {
     let root = tree.root_node();
     let Some(module) = out
         .nodes
         .iter()
         .position(|n| n.kind == NodeKind::Module && n.source == source)
     else {
-        return;
+        // No module node to attach evidence to at all: fail closed rather
+        // than report gates a caller might trust.
+        return AnnotateGates {
+            transformed_scope: true,
+            ..AnnotateGates::default()
+        };
     };
     let mut syntax = Vec::new();
     walk(root, &mut syntax);
@@ -327,6 +353,12 @@ pub(super) fn annotate(tree: &Tree, source: &str, lang: Lang, out: &mut BuildOut
         // All fields are strings/integers/enums supported by RON. Should encoding
         // nevertheless fail, missing evidence is surfaced as Unknown by queries.
         let _ = evidence.attach(node);
+    }
+    AnnotateGates {
+        transformed_scope,
+        duplicate_paths,
+        parse_error: root.has_error(),
+        macro_owners,
     }
 }
 

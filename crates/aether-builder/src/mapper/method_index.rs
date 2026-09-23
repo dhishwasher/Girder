@@ -20,6 +20,7 @@
 
 use super::{node_text, span_of, BuildOutput};
 use aether_graph::{NodeId, Span};
+use std::collections::HashSet;
 use tree_sitter::{Node as TsNode, Tree};
 
 /// How a method/function's first parameter binds its receiver, in Rust's own
@@ -43,9 +44,11 @@ pub enum ReceiverKind {
 #[derive(Debug, Clone)]
 pub struct TypeItemFact {
     pub name: String,
-    /// This item's own attributes only (module-chain cfg is a separate,
-    /// crate-wide check in `sync.rs`, since it needs every file's `mod`
-    /// declarations).
+    /// This item's own attributes, any enclosing *inline* `mod { ... }`
+    /// ancestor's attributes, and whether the file carries a file-level
+    /// `#![cfg]` anywhere. Does NOT cover ancestor `mod X;` *declarations*
+    /// in other files -- that needs the crate-wide `mod_decls` index and is
+    /// checked separately, in `sync/rust_methods.rs`.
     pub cfg_gated: bool,
 }
 
@@ -71,6 +74,10 @@ pub struct InherentMethodFact {
     /// available), not carried as a raw span -- avoids needing cross-file
     /// span matching in the crate-wide pass.
     pub target_id: Option<NodeId>,
+    /// The file this impl block was found in -- needed to check its
+    /// ancestor `mod X;` declaration chain crate-wide (`cfg_gated` above
+    /// covers only this file's own attributes and inline `mod` ancestors).
+    pub file: String,
 }
 
 #[derive(Debug, Clone)]
@@ -145,6 +152,16 @@ pub struct RustMethodFacts {
     /// `use petgraph::prelude::*;`.
     pub glob_imports: Vec<String>,
     pub candidate_calls: Vec<CandidateMethodCall>,
+    /// This file's own `annotate()` gates (`claims::AnnotateGates`), copied
+    /// rather than re-derived: a call whose *caller's* file trips
+    /// `transformed_scope`/`duplicate_paths`/a parse error, or whose caller
+    /// function is itself in `macro_owners`, must not be proven regardless
+    /// of what the crate-wide index otherwise shows -- an unexpanded macro
+    /// or proc-macro attribute on the caller could rewrite or duplicate it.
+    pub file_transformed_scope: bool,
+    pub file_duplicate_paths: bool,
+    pub file_parse_error: bool,
+    pub macro_owner_function_indices: HashSet<usize>,
 }
 
 fn walk<'tree>(node: TsNode<'tree>, nodes: &mut Vec<TsNode<'tree>>) {
@@ -180,6 +197,38 @@ fn has_cfg_attribute(node: TsNode, source: &str) -> bool {
         sibling = n.prev_sibling();
     }
     false
+}
+
+/// `has_cfg_attribute` on `node` itself, plus every enclosing inline
+/// `mod_item` ancestor's own attributes (a `struct`/`impl` inside
+/// `#[cfg(feature = "x")] mod y { ... }` is only compiled under that
+/// configuration even though the item's own attributes are clean). Does
+/// NOT check ancestor `mod X;` *declarations* in other files -- that needs
+/// the crate-wide `mod_decls` index and is checked separately, in
+/// `sync/rust_methods.rs`.
+fn cfg_gated_including_inline_mod_ancestors(node: TsNode, source: &str) -> bool {
+    if has_cfg_attribute(node, source) {
+        return true;
+    }
+    let mut current = node.parent();
+    while let Some(n) = current {
+        if n.kind() == "mod_item" && has_cfg_attribute(n, source) {
+            return true;
+        }
+        current = n.parent();
+    }
+    false
+}
+
+/// Whether the file carries a `#![cfg(...)]`/`#![cfg_attr(...)]` inner
+/// attribute anywhere at all (crate root or nested inside an inline `mod`'s
+/// body) -- conservatively disqualifies every item in the file, rather than
+/// trying to determine which items a given inner attribute actually scopes
+/// over.
+fn file_has_inner_cfg(syntax: &[TsNode], source: &str) -> bool {
+    syntax
+        .iter()
+        .any(|n| n.kind() == "inner_attribute_item" && is_cfg_attr_text(node_text(*n, source)))
 }
 
 fn receiver_kind_of_parameters(params: TsNode, source: &str) -> Option<ReceiverKind> {
@@ -307,11 +356,24 @@ fn generic_over_all_params(impl_node: TsNode, source: &str) -> bool {
         .all(|param| impl_params.contains(param))
 }
 
-pub(super) fn collect(tree: &Tree, source: &str, out: &BuildOutput) -> RustMethodFacts {
-    let mut facts = RustMethodFacts::default();
+pub(super) fn collect(
+    tree: &Tree,
+    source: &str,
+    file: &str,
+    out: &BuildOutput,
+    gates: &super::claims::AnnotateGates,
+) -> RustMethodFacts {
+    let mut facts = RustMethodFacts {
+        file_transformed_scope: gates.transformed_scope,
+        file_duplicate_paths: gates.duplicate_paths,
+        file_parse_error: gates.parse_error,
+        macro_owner_function_indices: gates.macro_owners.clone(),
+        ..RustMethodFacts::default()
+    };
     let root = tree.root_node();
     let mut syntax = Vec::new();
     walk(root, &mut syntax);
+    let file_inner_cfg = file_has_inner_cfg(&syntax, source);
 
     for n in &syntax {
         match n.kind() {
@@ -321,7 +383,8 @@ pub(super) fn collect(tree: &Tree, source: &str, out: &BuildOutput) -> RustMetho
                 };
                 facts.type_items.push(TypeItemFact {
                     name: node_text(name_field, source).to_string(),
-                    cfg_gated: has_cfg_attribute(*n, source),
+                    cfg_gated: file_inner_cfg
+                        || cfg_gated_including_inline_mod_ancestors(*n, source),
                 });
             }
             "mod_item" => {
@@ -352,7 +415,8 @@ pub(super) fn collect(tree: &Tree, source: &str, out: &BuildOutput) -> RustMetho
                 let Some((type_name, is_blanket)) = impl_type_name(*n, source) else {
                     continue;
                 };
-                let cfg_gated = has_cfg_attribute(*n, source);
+                let cfg_gated =
+                    file_inner_cfg || cfg_gated_including_inline_mod_ancestors(*n, source);
                 let bounds = normalized_bounds(*n, source);
                 let trait_field = n.child_by_field_name("trait");
                 if let Some(trait_node) = trait_field {
@@ -412,6 +476,7 @@ pub(super) fn collect(tree: &Tree, source: &str, out: &BuildOutput) -> RustMetho
                             generic_over_all_type_params: generic_ok,
                             cfg_gated,
                             target_id,
+                            file: file.to_string(),
                         });
                     }
                 }
@@ -431,7 +496,7 @@ pub(super) fn collect(tree: &Tree, source: &str, out: &BuildOutput) -> RustMetho
             continue;
         };
         let trait_name = node_text(name_field, source).to_string();
-        let trait_cfg = has_cfg_attribute(*n, source);
+        let trait_cfg = file_inner_cfg || cfg_gated_including_inline_mod_ancestors(*n, source);
         let Some(body) = n.child_by_field_name("body") else {
             continue;
         };

@@ -111,6 +111,14 @@ struct CrateFacts {
     trait_impls_by_trait: HashMap<String, Vec<crate::mapper::method_index::TraitImplFact>>,
     /// Bare type name -> true if any Deref/DerefMut impl exists for it.
     deref_types: HashSet<String>,
+    /// Bare `mod` name -> true only if EVERY declaration of that name
+    /// anywhere in the crate is cfg-free and carries no `#[path]`. Deliberately
+    /// bare-name-keyed, not per-file: if any module anywhere named "tests"
+    /// is cfg-gated, every file whose own path chain includes a "tests"
+    /// segment is treated as unverifiable, even if the actual declaring
+    /// `mod tests;` for that file is a different, clean one. Over-rejection
+    /// only, matching the rest of this design's bare-name simplifications.
+    mod_name_clean: HashMap<String, bool>,
 }
 
 fn build_crate_facts(
@@ -123,11 +131,17 @@ fn build_crate_facts(
     let mut trait_decls_by_method: HashMap<String, Vec<_>> = HashMap::new();
     let mut trait_impls_by_trait: HashMap<String, Vec<_>> = HashMap::new();
     let mut deref_types: HashSet<String> = HashSet::new();
+    let mut mod_name_clean: HashMap<String, bool> = HashMap::new();
 
     for state in files.values() {
         let facts: &RustMethodFacts = &state.extraction.rust_method_facts;
         for item in &facts.type_items {
             *type_item_counts.entry(item.name.clone()).or_insert(0) += 1;
+        }
+        for m in &facts.mod_decls {
+            let clean = !m.cfg_gated && !m.has_path_attr;
+            let entry = mod_name_clean.entry(m.name.clone()).or_insert(true);
+            *entry = *entry && clean;
         }
         for import in &facts.named_imports {
             if !in_crate(&import.first_segment) {
@@ -164,7 +178,34 @@ fn build_crate_facts(
         trait_decls_by_method,
         trait_impls_by_trait,
         deref_types,
+        mod_name_clean,
     }
+}
+
+/// Whether `file`'s ancestor `mod X;` declaration chain is entirely clean:
+/// every path segment (excluding the crate root itself) has at least one
+/// declaration recorded crate-wide, and every declaration of that bare name
+/// anywhere is cfg-free and has no `#[path]`. A segment with no recorded
+/// declaration at all fails closed -- it cannot be positively confirmed
+/// clean, so it is not treated as clean by default.
+fn module_path_chain_is_clean(file: &str, mod_name_clean: &HashMap<String, bool>) -> bool {
+    let path = super::rust_module_path_for(file);
+    path.strip_prefix("crate")
+        .unwrap_or(&path)
+        .split("::")
+        .filter(|segment| !segment.is_empty())
+        .all(|segment| mod_name_clean.get(segment).copied().unwrap_or(false))
+}
+
+/// Mirrors `GraphBuilder::path_occurrences` (counted before graph upsert, so
+/// a genuine crate-wide semantic-path collision isn't hidden by upsert
+/// silently merging two distinct declarations into one node).
+fn path_occurrences(files: &HashMap<String, FileState>, path: &str) -> usize {
+    files
+        .values()
+        .flat_map(|state| state.paths.iter())
+        .filter(|candidate| candidate.as_str() == path)
+        .count()
 }
 
 /// Whether every glob import in `facts` resolves within the indexed crate.
@@ -281,6 +322,27 @@ pub(super) fn upgrade_method_call_evidence(
     };
     let crate_facts = build_crate_facts(files, in_crate);
 
+    // Reset every candidate call's caller to this file's own fresh,
+    // pristine evidence before evaluating anything, so a Must upgrade from
+    // a prior resolve doesn't survive once the crate-wide facts that
+    // justified it no longer hold (e.g. a second inherent impl appears
+    // elsewhere, making the target newly ambiguous) -- the loop below only
+    // ever adds/replaces a claim, it never reverts one on its own.
+    for state in files.values() {
+        let facts = &state.extraction.rust_method_facts;
+        for call in &facts.candidate_calls {
+            let Some(pristine) = state.extraction.nodes.get(call.owner_index) else {
+                continue;
+            };
+            let Some(value) = pristine.attr(aether_graph::CALL_EVIDENCE_ATTRIBUTE) else {
+                continue;
+            };
+            if let Some(node) = graph.get_mut(pristine.id) {
+                node.set_attr(aether_graph::CALL_EVIDENCE_ATTRIBUTE, value.to_string());
+            }
+        }
+    }
+
     for state in files.values() {
         let facts = &state.extraction.rust_method_facts;
         if facts.candidate_calls.is_empty() {
@@ -288,10 +350,23 @@ pub(super) fn upgrade_method_call_evidence(
         }
         let globs_safe = file_globs_are_in_crate(facts, in_crate);
         let unverifiable_import = file_has_unverifiable_external_import(facts, in_crate);
+        // The caller's own same-file gates annotate() already computed:
+        // an unexpanded macro/proc-macro attribute, a duplicate semantic
+        // path, or a parse error anywhere in this file could rewrite or
+        // duplicate the caller regardless of what the crate-wide index
+        // otherwise shows about the receiver's type.
+        let caller_file_unsafe =
+            facts.file_transformed_scope || facts.file_duplicate_paths || facts.file_parse_error;
 
         for call in &facts.candidate_calls {
-            if !globs_safe || unverifiable_import {
+            if !globs_safe || unverifiable_import || caller_file_unsafe {
                 continue;
+            }
+            if facts
+                .macro_owner_function_indices
+                .contains(&call.owner_index)
+            {
+                continue; // Caller function itself contains an untrusted macro invocation.
             }
             if STD_PRELUDE_METHOD_NAMES.contains(&call.method_name.as_str()) {
                 continue;
@@ -343,9 +418,18 @@ pub(super) fn upgrade_method_call_evidence(
             {
                 continue;
             }
+            if !module_path_chain_is_clean(&inherent.file, &crate_facts.mod_name_clean) {
+                continue; // Target's own ancestor `mod X;` chain isn't positively confirmed clean.
+            }
             let Some(target_id) = inherent.target_id else {
                 continue;
             };
+            if graph
+                .get(target_id)
+                .is_some_and(|node| path_occurrences(files, &node.path) != 1)
+            {
+                continue; // The target's own semantic path is duplicated somewhere crate-wide.
+            }
 
             // Constraint 4: no earlier- or unsafely-same-step trait competitor.
             if !inherent_wins(inherent, &crate_facts) {
@@ -409,19 +493,30 @@ mod tests {
     /// `tests/floyd_warshall.rs:11`, `graph.add_node(())`): an explicitly
     /// annotated receiver, a single inherent method, and a same-step trait
     /// competitor with identical bounds that must not block it.
-    fn positive_case_files() -> [(&'static str, &'static str); 2] {
+    /// Mirrors the real petgraph layout exactly, not just its syntax: the
+    /// inherent impl and the same-step trait impl live in *different*
+    /// files/module scopes (`graph_impl.rs` vs `data.rs`, like petgraph's
+    /// `src/graph_impl/mod.rs` vs `src/data.rs`), so their computed
+    /// semantic paths don't collide the way they would if both impls sat
+    /// in the same file's module scope (an artificial collision an earlier
+    /// version of this fixture had, caught by the target-side
+    /// duplicate-path guard correctly rejecting it).
+    fn positive_case_files() -> [(&'static str, &'static str); 3] {
         [
             (
                 "src/lib.rs",
-                "pub mod data { pub trait Build { fn add_node(&mut self, w: i32) -> i32; } }\n\
-                 pub struct Graph<Ty> { _p: std::marker::PhantomData<Ty> }\n\
+                "pub struct Graph<Ty> { _p: std::marker::PhantomData<Ty> }\n\
                  impl<Ty> Graph<Ty> {\n\
                  \x20\x20\x20\x20pub fn add_node(&mut self, weight: i32) -> i32 { weight }\n\
                  }\n\
-                 impl<Ty> data::Build for Graph<Ty> {\n\
-                 \x20\x20\x20\x20fn add_node(&mut self, weight: i32) -> i32 { self.add_node(weight) }\n\
-                 }\n\
                  pub struct Directed;\n",
+            ),
+            (
+                "src/data.rs",
+                "pub trait Build { fn add_node(&mut self, w: i32) -> i32; }\n\
+                 impl<Ty> Build for crate::Graph<Ty> {\n\
+                 \x20\x20\x20\x20fn add_node(&mut self, weight: i32) -> i32 { self.add_node(weight) }\n\
+                 }\n",
             ),
             (
                 "tests/positive.rs",
@@ -518,22 +613,39 @@ mod tests {
     }
 
     #[test]
-    fn two_non_generic_inherent_methods_of_same_name_block_proof() {
+    fn two_inherent_methods_of_the_same_name_block_proof() {
         let files = [
             (
                 "src/lib.rs",
                 "pub struct Graph;\n\
-                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n\
-                 impl Graph { pub fn add_node_dup(&mut self, w: i32) -> i32 { w } }\n",
+             impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n\
+             impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w * 2 } }\n",
             ),
-            ("src/other.rs", "pub struct Graph;\n"),
+            (
+                "tests/positive.rs",
+                "use crate::Graph;\n\
+             #[test]\n\
+             fn t() {\n\
+             \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+             \x20\x20\x20\x20graph.add_node(1);\n\
+             }\n",
+            ),
         ];
         let mut graph = SemanticGraph::new();
         let mut builder = GraphBuilder::new();
         builder.load_files(&mut graph, files);
-        // Two distinct `struct Graph` definitions crate-wide: bare-name
-        // uniqueness must fail, independent of the duplicate method check.
-        assert_eq!(graph.nodes().filter(|n| n.name == "Graph").count(), 2);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        // Two inherent add_node definitions for the same type: candidates
+        // for (Graph, add_node) is not a singleton, so the call must stay
+        // unproven regardless of receiver/bounds/step reasoning.
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
     }
 
     #[test]
@@ -607,7 +719,7 @@ mod tests {
     #[test]
     fn package_name_import_is_recognized_as_in_crate() {
         let mut files = positive_case_files();
-        files[1] = (
+        files[2] = (
             "tests/positive.rs",
             "use pkg::{Graph, Directed};\n\
              #[test]\n\
@@ -626,6 +738,350 @@ mod tests {
             evidence.calls.iter().any(|c| c.class == CallClass::Must
                 && c.reason == "proven-inherent-method-on-annotated-receiver"),
             "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn external_import_of_same_named_type_blocks_proof() {
+        // An in-crate `Graph` exists, but the bare name "Graph" is ALSO
+        // bound by a named import whose first segment isn't in-crate --
+        // the bare-name-uniqueness simplification requires nothing
+        // anywhere aliases the same bare name externally.
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n",
+            ),
+            ("src/other.rs", "use some_external_crate::Graph;\n"),
+            (
+                "tests/positive.rs",
+                "use crate::Graph;\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn same_step_trait_impl_with_narrower_bounds_blocks_proof() {
+        // Both impls are &mut self (same step), but the trait impl's bounds
+        // (none) aren't textually identical to the inherent impl's (T:
+        // Clone) -- the simplified applicability check requires exact
+        // equality, not subset/superset reasoning.
+        let files = [
+            (
+                "src/lib.rs",
+                "pub trait Build { fn add_node(&mut self, w: i32) -> i32; }\n\
+                 pub struct Graph<T> { _p: std::marker::PhantomData<T> }\n\
+                 impl<T> Graph<T> where T: Clone {\n\
+                 \x20\x20\x20\x20pub fn add_node(&mut self, w: i32) -> i32 { w }\n\
+                 }\n\
+                 impl<T> Build for Graph<T> {\n\
+                 \x20\x20\x20\x20fn add_node(&mut self, w: i32) -> i32 { w }\n\
+                 }\n\
+                 pub struct Marker;\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::{Graph, Marker};\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph<Marker> = Graph { _p: std::marker::PhantomData };\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn blanket_trait_impl_blocks_proof() {
+        let files = [
+            (
+                "src/lib.rs",
+                "pub trait Build { fn add_node(&mut self, w: i32) -> i32; }\n\
+                 impl<X> Build for X {\n\
+                 \x20\x20\x20\x20fn add_node(&mut self, w: i32) -> i32 { w }\n\
+                 }\n\
+                 pub struct Graph;\n\
+                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::Graph;\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn non_exact_receiver_syntax_is_not_proven() {
+        // `&mut Graph` and `Box<Graph>` are both rejected: the design only
+        // proves an exact `T<...>` binding, no autoref/autoderef reasoning.
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::Graph;\n\
+                 #[test]\n\
+                 fn ref_receiver() {\n\
+                 \x20\x20\x20\x20let mut owner = Graph;\n\
+                 \x20\x20\x20\x20let graph: &mut Graph = &mut owner;\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n\
+                 #[test]\n\
+                 fn box_receiver() {\n\
+                 \x20\x20\x20\x20let mut graph: Box<Graph> = Box::new(Graph);\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        for name in ["ref_receiver", "box_receiver"] {
+            let caller = graph.nodes().find(|n| n.name == name).unwrap();
+            let evidence = graph.call_evidence(caller.id).unwrap();
+            assert!(
+                evidence
+                    .calls
+                    .iter()
+                    .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+                "{name}: {evidence:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn shadowing_in_a_nested_block_blocks_proof() {
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 pub struct Other;\n\
+                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::{Graph, Other};\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+                 \x20\x20\x20\x20{\n\
+                 \x20\x20\x20\x20\x20\x20\x20\x20let graph: Other = Other;\n\
+                 \x20\x20\x20\x20\x20\x20\x20\x20let _ = graph;\n\
+                 \x20\x20\x20\x20}\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn transformed_scope_on_the_caller_file_blocks_proof() {
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::Graph;\n\
+                 #[derive(Debug)]\n\
+                 pub struct Unrelated;\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn an_untrusted_macro_elsewhere_in_the_caller_function_blocks_proof() {
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::Graph;\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20opaque!();\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "t").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn duplicate_semantic_path_in_the_caller_file_blocks_proof() {
+        let files = [
+            (
+                "src/lib.rs",
+                "pub struct Graph;\n\
+                 impl Graph { pub fn add_node(&mut self, w: i32) -> i32 { w } }\n",
+            ),
+            (
+                "tests/positive.rs",
+                "use crate::Graph;\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n\
+                 #[test]\n\
+                 fn t() {\n\
+                 \x20\x20\x20\x20let mut graph: Graph = Graph;\n\
+                 \x20\x20\x20\x20graph.add_node(1);\n\
+                 }\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let all_claims: Vec<_> = graph
+            .nodes()
+            .filter_map(|n| graph.call_evidence(n.id).ok())
+            .flat_map(|e| e.calls)
+            .collect();
+        assert!(
+            all_claims
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "{all_claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_second_inherent_impl_added_later_reverts_a_prior_must_to_unknown() {
+        use crate::FileChange;
+        let files = positive_case_files();
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller_id = graph.nodes().find(|n| n.name == "t").unwrap().id;
+        let before = graph.call_evidence(caller_id).unwrap();
+        assert!(
+            before
+                .calls
+                .iter()
+                .any(|c| c.reason == "proven-inherent-method-on-annotated-receiver"),
+            "setup: expected the positive case to prove Must first: {before:?}"
+        );
+
+        // Add a second inherent add_node for Graph<Ty> in a different file:
+        // (type_name, method_name) is no longer a singleton crate-wide.
+        let second_impl_source = "impl<Ty> Graph<Ty> {\n\
+             \x20\x20\x20\x20pub fn add_node(&mut self, weight: i32) -> i32 { weight }\n\
+             }\n";
+        builder
+            .update_files(
+                &mut graph,
+                &[FileChange::replace(
+                    "src/second_impl.rs",
+                    second_impl_source,
+                )],
+                &[],
+            )
+            .unwrap();
+
+        let after = graph.call_evidence(caller_id).unwrap();
+        assert!(
+            after
+                .calls
+                .iter()
+                .all(|c| c.reason != "proven-inherent-method-on-annotated-receiver"),
+            "expected the Must claim to revert once add_node became ambiguous: {after:?}"
         );
     }
 }
