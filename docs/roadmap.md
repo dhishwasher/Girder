@@ -578,27 +578,36 @@ benchmark, don't run it against the stale snapshot.
   nonempty-Must-precision legs not met. Stage 3 (Rust) stays **IN
   PROGRESS** — not DONE (criterion unmet), not FAILED (next step
   identified, not exhausted).
-- Next: narrow `transformed_scope`'s whole-file blast radius. Both proof
-  categories examined so far (method/path calls, 92% of the audit's original
-  conservative cells; and this commit's assert-macro-wrapped calls) are
-  independently blocked by the same whole-file gate on most of the audit's
-  real-repository sites — it is now the confirmed tightest constraint, not
-  the specific proof category. Scope it to something narrower than "any
-  attribute other than `#[test]`/`#[tokio::test]` anywhere in the file"
-  (e.g. the enclosing item rather than the whole file, or an explicit
-  allowlist for attributes demonstrably free of expression-rewriting
-  semantics such as `#[cfg]` combined with `#[inline]`) before or alongside
-  extending Must-proof to method/path calls (`self.m()`/`Self::m()` inside
-  an inherent `impl T` where `T` has exactly one inherent `m` crate-wide,
-  which needs a crate-wide index of inherent impls — project-level work,
-  not something per-file `annotate()` can do alone). Guard any change with:
-  adversarial unit tests; the dispatch corpus must stay 0 unsound; the
-  Stage 1 oracle's union recall must stay 4/4; the audit must show 0
-  unsound and, this time, actually fewer conservative / more exact cells —
-  a change that only narrows a gate without any real-repository site
-  benefiting from it is not yet "measured... improvement" either. If
-  Rust's full criterion still isn't met after a change targeted at
-  `transformed_scope` specifically, that is the point to seriously weigh
-  FAILED-AND-PUBLISHED rather than continuing to iterate — do not start
-  Python before Rust is trustworthy on a real repository.
+- Corrected (see
+  [correction.md](observations/stage3-rust-audit/after-assert-macro-fix/correction.md)):
+  the previous version of this entry proposed narrowing `transformed_scope`
+  as the next step, reasoning from a single supplementary candidate
+  (`serde_json`'s `math.rs:632`) that turned out to be double-blocked —
+  it also sits inside `mod large { }`, so the pre-existing `top_level`
+  check would reject it independently, narrowed `transformed_scope` or not.
+  Checked directly against the frozen 25 conservative audit sites instead:
+  23 are method/path-shaped (blocked by the identifier-only filter,
+  regardless of `transformed_scope`) and 2 are bare-identifier calls to an
+  imported (cross-file) target (blocked by the same-file-only restriction
+  on `proven`, regardless of `transformed_scope`). No path through the 25
+  frozen sites is solely blocked by `transformed_scope`, so narrowing it
+  first cannot move the frozen audit either.
+- Next: build a per-site gate profile for all 25 conservative audit sites
+  before choosing what to implement. For each site, record: whether it
+  passes the identifier-only filter; whether its callee is same-file and
+  top-level; which attribute (if any) trips `transformed_scope`; whether
+  the enclosing function is in `macro_owners`; whether the file has
+  `duplicate_paths`; the enclosing `mod`/`impl` nesting. Then pick the
+  smallest change that would move at least one frozen site, and bring that
+  specific design back before implementing it — don't implement against a
+  single supplementary example again. Guard any change with: adversarial
+  unit tests; the dispatch corpus must stay 0 unsound; the Stage 1 oracle's
+  union recall must stay 4/4; the audit must show 0 unsound and, this time,
+  actually fewer conservative / more exact cells on the frozen sample — a
+  change that only narrows a gate without any frozen site benefiting from
+  it is not yet "measured... improvement" either. If Rust's full criterion
+  still isn't met after a change whose profile-predicted site actually
+  moves, that is the point to seriously weigh FAILED-AND-PUBLISHED rather
+  than continuing to iterate — do not start Python before Rust is
+  trustworthy on a real repository.
 - Completion remains unproven until every criterion above has committed evidence.
