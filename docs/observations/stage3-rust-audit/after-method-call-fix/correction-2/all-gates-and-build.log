@@ -1,0 +1,356 @@
+
+running 9 tests
+.........
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+
+
+running 23 tests
+.......................
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+
+running 363 tests
+....................................................................................... 87/363
+................................................igirder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.413426639}
+..girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.403258718}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.41274558}
+.girder watch: {"discarded_candidates":0,"event":"published","event_reasons":["unknown_rename"],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":100.0,"fallback_reasons":{"dirty_set_exceeds_half":1,"uncertain_event_mapping":1},"full_parsing_count":1,"full_rebuild_reasons":["uncertain_event_mapping","dirty_set_exceeds_half"],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":3,"published_updates":1,"reused_files":0,"total_parsed_files":3,"total_reused_files":0,"update_attempts":1,"update_latency_seconds":0.431905462}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.407078549}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":["unknown_rename"],"failed_attempts":0,"fallback_denominator":2,"fallback_percentage":100.0,"fallback_reasons":{"dirty_set_exceeds_half":2,"uncertain_event_mapping":2},"full_parsing_count":2,"full_rebuild_reasons":["uncertain_event_mapping","dirty_set_exceeds_half"],"generation":3,"initial":false,"initial_attempts":1,"parsed_files":3,"published_updates":2,"reused_files":0,"total_parsed_files":6,"total_reused_files":0,"update_attempts":2,"update_latency_seconds":0.420857959}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":3,"fallback_percentage":100.0,"fallback_reasons":{"dirty_set_exceeds_half":3,"uncertain_event_mapping":2},"full_parsing_count":3,"full_rebuild_reasons":["dirty_set_exceeds_half"],"generation":4,"initial":false,"initial_attempts":1,"parsed_files":2,"published_updates":3,"reused_files":0,"total_parsed_files":8,"total_reused_files":0,"update_attempts":3,"update_latency_seconds":0.422369951}
+..girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.409361505}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.426386037}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":["overflow"],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":100.0,"fallback_reasons":{"uncertain_event_mapping":1},"full_parsing_count":1,"full_rebuild_reasons":["uncertain_event_mapping"],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":3,"published_updates":1,"reused_files":0,"total_parsed_files":3,"total_reused_files":0,"update_attempts":1,"update_latency_seconds":0.389234711}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":0.0,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":1,"published_updates":1,"reused_files":2,"total_parsed_files":1,"total_reused_files":2,"update_attempts":1,"update_latency_seconds":0.636110061}
+.girder watch: {"discarded_candidates":0,"event":"published","event_reasons":["unknown_rename"],"failed_attempts":0,"fallback_denominator":2,"fallback_percentage":100.0,"fallback_reasons":{"uncertain_event_mapping":2},"full_parsing_count":2,"full_rebuild_reasons":["uncertain_event_mapping"],"generation":3,"initial":false,"initial_attempts":1,"parsed_files":3,"published_updates":2,"reused_files":0,"total_parsed_files":6,"total_reused_files":0,"update_attempts":2,"update_latency_seconds":0.374493213}
+.girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":4,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.40477459}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":4,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.405180568}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":["directory_deletion"],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":100.0,"fallback_reasons":{"ownership_changed":1},"full_parsing_count":1,"full_rebuild_reasons":["ownership_changed"],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":3,"published_updates":1,"reused_files":0,"total_parsed_files":3,"total_reused_files":0,"update_attempts":1,"update_latency_seconds":0.414355724}
+.girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":100.0,"fallback_reasons":{"cache_inconsistent":1,"configuration_changed":1},"full_parsing_count":1,"full_rebuild_reasons":["configuration_changed","cache_inconsistent"],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":4,"published_updates":1,"reused_files":0,"total_parsed_files":4,"total_reused_files":0,"update_attempts":1,"update_latency_seconds":0.396536833}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.496639653}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":1,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.390457278}
+.girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":3,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.39603639}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":["directory_deletion"],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":100.0,"fallback_reasons":{"cache_inconsistent":1,"dirty_set_exceeds_half":1,"ownership_changed":1},"full_parsing_count":1,"full_rebuild_reasons":["ownership_changed","cache_inconsistent","dirty_set_exceeds_half"],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":1,"published_updates":1,"reused_files":0,"total_parsed_files":1,"total_reused_files":0,"update_attempts":1,"update_latency_seconds":0.45102776}
+girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":1,"fallback_percentage":100.0,"fallback_reasons":{"configuration_changed":1},"full_parsing_count":1,"full_rebuild_reasons":["configuration_changed"],"generation":2,"initial":false,"initial_attempts":1,"parsed_files":4,"published_updates":1,"reused_files":0,"total_parsed_files":4,"total_reused_files":0,"update_attempts":1,"update_latency_seconds":0.427221064}
+.girder watch: {"discarded_candidates":0,"event":"published","event_reasons":[],"failed_attempts":0,"fallback_denominator":0,"fallback_percentage":null,"fallback_reasons":{},"full_parsing_count":0,"full_rebuild_reasons":[],"generation":1,"initial":true,"initial_attempts":1,"parsed_files":1,"published_updates":0,"reused_files":0,"total_parsed_files":0,"total_reused_files":0,"update_attempts":0,"update_latency_seconds":0.366073107}
+............................ 174/363
+....................................................................................... 261/363
+....................................................................................... 348/363
+...............
+test result: ok. 362 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 32.63s
+
+
+running 70 tests
+...................................................................kill: (8147): No such process
+...
+test result: ok. 70 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 82.34s
+
+
+running 6 tests
+......
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.89s
+
+
+running 10 tests
+..........
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.45s
+
+
+running 8 tests
+........
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.32s
+
+
+running 108 tests
+....................................................................................... 87/108
+.....................
+test result: ok. 108 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+
+
+running 2 tests
+..
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+
+running 2 tests
+..
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+
+running 1 test
+.
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+
+running 4 tests
+....
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+
+running 12 tests
+............
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+
+running 1 test
+i
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+test: debugpy_launch_breakpoint_stacktrace_disconnect, ignore_message: requires python3 with debugpy installed
+
+
+running 5 tests
+.....
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+
+running 22 tests
+......................
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+
+running 76 tests
+............................................................................
+test result: ok. 76 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+GATE1 TEST EXIT:0
+    Checking aether-builder v0.2.7 (/home/corymaynard370/Bit-code/crates/aether-builder)
+    Checking aether-agents v0.2.7 (/home/corymaynard370/Bit-code/crates/aether-agents)
+    Checking aether-app v0.2.7 (/home/corymaynard370/Bit-code/crates/aether-app)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 1m 25s
+GATE2 CLIPPY EXIT:0
+GATE3 FMT EXIT:0
+TAP version 13
+# Subtest: launcher forwards stdin and native stdout unchanged
+ok 1 - launcher forwards stdin and native stdout unchanged
+  ---
+  duration_ms: 43.770483
+  type: 'test'
+  ...
+# Subtest: launcher fails open when the pinned native executable is unavailable
+ok 2 - launcher fails open when the pinned native executable is unavailable
+  ---
+  duration_ms: 10.039006
+  type: 'test'
+  ...
+# Subtest: launcher forwards post-edit native stderr but suppresses post-edit stdout
+ok 3 - launcher forwards post-edit native stderr but suppresses post-edit stdout
+  ---
+  duration_ms: 21.785301
+  type: 'test'
+  ...
+# Subtest: launcher stays silent when native hook fails after writing both streams
+ok 4 - launcher stays silent when native hook fails after writing both streams
+  ---
+  duration_ms: 15.275675
+  type: 'test'
+  ...
+# Subtest: Python launcher forwards stdin and fails open
+ok 5 - Python launcher forwards stdin and fails open
+  ---
+  duration_ms: 272.297038
+  type: 'test'
+  ...
+# Subtest: Python launcher forwards post-edit native stderr but suppresses post-edit stdout
+ok 6 - Python launcher forwards post-edit native stderr but suppresses post-edit stdout
+  ---
+  duration_ms: 124.153197
+  type: 'test'
+  ...
+# Subtest: Python launcher stays silent when native hook fails after writing both streams
+ok 7 - Python launcher stays silent when native hook fails after writing both streams
+  ---
+  duration_ms: 144.227136
+  type: 'test'
+  ...
+# Subtest: npm package allowlist includes the advisory hook
+ok 8 - npm package allowlist includes the advisory hook
+  ---
+  duration_ms: 1.402111
+  type: 'test'
+  ...
+# Subtest: a verified asset is installed
+ok 9 - a verified asset is installed
+  ---
+  duration_ms: 469.636706
+  type: 'test'
+  ...
+# Subtest: a missing checksum installs nothing
+ok 10 - a missing checksum installs nothing
+  ---
+  duration_ms: 231.402902
+  type: 'test'
+  ...
+# Subtest: a mismatched checksum installs nothing
+ok 11 - a mismatched checksum installs nothing
+  ---
+  duration_ms: 244.822347
+  type: 'test'
+  ...
+# Subtest: a checksum file that is not a checksum is called malformed
+ok 12 - a checksum file that is not a checksum is called malformed
+  ---
+  duration_ms: 243.970435
+  type: 'test'
+  ...
+# Subtest: the skip flag is the only way to install unverified
+ok 13 - the skip flag is the only way to install unverified
+  ---
+  duration_ms: 240.958477
+  type: 'test'
+  ...
+# Subtest: a failed download still falls back rather than failing
+ok 14 - a failed download still falls back rather than failing
+  ---
+  duration_ms: 202.397251
+  type: 'test'
+  ...
+# Subtest: GIRDER_SKIP_DOWNLOAD=1 downloads nothing
+ok 15 - GIRDER_SKIP_DOWNLOAD=1 downloads nothing
+  ---
+  duration_ms: 130.481543
+  type: 'test'
+  ...
+# Subtest: Linux x64 downloads the static musl release
+ok 16 - Linux x64 downloads the static musl release
+  ---
+  duration_ms: 4.560494
+  type: 'test'
+  ...
+# Subtest: resolves nothing when PATH is empty and no binary was vendored
+ok 17 - resolves nothing when PATH is empty and no binary was vendored
+  ---
+  duration_ms: 5.148285
+  type: 'test'
+  ...
+# Subtest: prefers a real binary found on PATH
+ok 18 - prefers a real binary found on PATH
+  ---
+  duration_ms: 7.291326
+  type: 'test'
+  ...
+# Subtest: a global-install symlink pointing back into this package is not resolved
+ok 19 - a global-install symlink pointing back into this package is not resolved
+  ---
+  duration_ms: 5.492
+  type: 'test'
+  ...
+# Subtest: skips this package's own shim but still finds a real binary behind it
+ok 20 - skips this package's own shim but still finds a real binary behind it
+  ---
+  duration_ms: 5.93276
+  type: 'test'
+  ...
+# Subtest: a shim launched by another shim ignores PATH and uses the vendored binary
+ok 21 - a shim launched by another shim ignores PATH and uses the vendored binary
+  ---
+  duration_ms: 4.884193
+  type: 'test'
+  ...
+# Subtest: childEnv marks the chain so the next shim cannot loop
+ok 22 - childEnv marks the chain so the next shim cannot loop
+  ---
+  duration_ms: 4.104584
+  type: 'test'
+  ...
+# Subtest: GIRDER_FORCE_VENDORED=1 uses the vendored binary even with a real one on PATH
+ok 23 - GIRDER_FORCE_VENDORED=1 uses the vendored binary even with a real one on PATH
+  ---
+  duration_ms: 4.10284
+  type: 'test'
+  ...
+# Subtest: GIRDER_FORCE_VENDORED=1 fails loudly naming the missing vendored path
+ok 24 - GIRDER_FORCE_VENDORED=1 fails loudly naming the missing vendored path
+  ---
+  duration_ms: 6.860641
+  type: 'test'
+  ...
+# Subtest: resolutionNotice is silent about a second binary when only the vendored one exists
+ok 25 - resolutionNotice is silent about a second binary when only the vendored one exists
+  ---
+  duration_ms: 4.989953
+  type: 'test'
+  ...
+# Subtest: resolutionNotice names both paths and both --version outputs when PATH wins over an existing vendored copy
+ok 26 - resolutionNotice names both paths and both --version outputs when PATH wins over an existing vendored copy
+  ---
+  duration_ms: 15.147113
+  type: 'test'
+  ...
+# Subtest: when a PATH binary wins over an existing vendored copy, stdout carries only the child's bytes and stderr names both
+ok 27 - when a PATH binary wins over an existing vendored copy, stdout carries only the child's bytes and stderr names both
+  ---
+  duration_ms: 128.88367
+  type: 'test'
+  ...
+# Subtest: when only the vendored binary exists, stderr says nothing about a second binary
+ok 28 - when only the vendored binary exists, stderr says nothing about a second binary
+  ---
+  duration_ms: 95.069139
+  type: 'test'
+  ...
+# Subtest: setup goes to the Rust CLI while ordinary invocation still starts MCP
+ok 29 - setup goes to the Rust CLI while ordinary invocation still starts MCP
+  ---
+  duration_ms: 207.820261
+  type: 'test'
+  ...
+# Subtest: the vendored binary's --version matches npm/package.json
+ok 30 - the vendored binary's --version matches npm/package.json # SKIP no vendored binary found; set GIRDER_TEST_BIN or run the postinstall first
+  ---
+  duration_ms: 1.836039
+  type: 'test'
+  ...
+# Subtest: the vendored binary's MCP serverInfo.version matches npm/package.json
+ok 31 - the vendored binary's MCP serverInfo.version matches npm/package.json # SKIP no vendored binary found; set GIRDER_TEST_BIN or run the postinstall first
+  ---
+  duration_ms: 0.342714
+  type: 'test'
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 29
+# fail 0
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 3715.668916
+GATE4 NODE EXIT:0
+    Finished `dev` profile [optimized + debuginfo] target(s) in 21.57s
+BUILD EXIT:0
