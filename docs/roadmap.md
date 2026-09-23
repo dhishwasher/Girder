@@ -592,22 +592,53 @@ benchmark, don't run it against the stale snapshot.
   on `proven`, regardless of `transformed_scope`). No path through the 25
   frozen sites is solely blocked by `transformed_scope`, so narrowing it
   first cannot move the frozen audit either.
-- Next: build a per-site gate profile for all 25 conservative audit sites
-  before choosing what to implement. For each site, record: whether it
-  passes the identifier-only filter; whether its callee is same-file and
-  top-level; which attribute (if any) trips `transformed_scope`; whether
-  the enclosing function is in `macro_owners`; whether the file has
-  `duplicate_paths`; the enclosing `mod`/`impl` nesting. Then pick the
-  smallest change that would move at least one frozen site, and bring that
-  specific design back before implementing it — don't implement against a
-  single supplementary example again. Guard any change with: adversarial
-  unit tests; the dispatch corpus must stay 0 unsound; the Stage 1 oracle's
-  union recall must stay 4/4; the audit must show 0 unsound and, this time,
-  actually fewer conservative / more exact cells on the frozen sample — a
-  change that only narrows a gate without any frozen site benefiting from
-  it is not yet "measured... improvement" either. If Rust's full criterion
-  still isn't met after a change whose profile-predicted site actually
-  moves, that is the point to seriously weigh FAILED-AND-PUBLISHED rather
-  than continuing to iterate — do not start Python before Rust is
-  trustworthy on a real repository.
+- 2026-09-22: Per-site gate profile done (`7dde679`), covering all 25
+  frozen conservative sites against every extractor gate, read from
+  Girder's own evidence (no build needed). Finding: `transformed_scope`
+  moves zero of the 25 regardless of how it's narrowed — it was never
+  the primary blocker for any of them (23 blocked by the identifier-only
+  filter, which fires first; 2 blocked by the same-file-only restriction
+  and independently also carry real `#[cfg(feature = ...)]`). Checked
+  the policy's Rust row first ("exact concrete dispatch" is explicitly
+  in scope for Must), then hand-verified 5 method/path candidates that
+  clear every other gate: exactly one, `tests/floyd_warshall.rs:11`
+  (`graph.add_node(())`, `Graph<(), (), Directed>` explicitly annotated,
+  `add_node` has exactly one inherent impl, and `petgraph::data::Build`'s
+  same-named trait method is confirmed moot since Rust always prefers an
+  inherent method on the exact type), survives a no-inference design
+  (explicit receiver-type annotation, crate-wide single inherent impl,
+  inherent-beats-trait). Guard-checked against all 7 method/path-shaped
+  sites among the 27 currently-exact cells — none would become a false
+  Must. Full design spec, with an explicit before-implementing
+  prediction (moves exactly one of the 52 scored sites), in
+  [gate-profile.md](observations/stage3-rust-audit/after-assert-macro-fix/gate-profile.md).
+- Next: implement the design in `gate-profile.md` — method-call Must
+  proof restricted to (1) an explicit, unshadowed `let x: T<...>`
+  receiver binding in the same function (no type inference), (2) `T`
+  resolved through the file's imports to exactly one crate-indexed
+  struct (keyed by semantic path, not bare name), (3) exactly one
+  inherent method of that name across all `impl T` blocks crate-wide
+  (Unknown if a `duplicate-semantic-path` gap touches either), (4)
+  inherent-over-trait resolution encoded directly (a fixed Rust rule);
+  a method reachable only through a trait, or through an unindexed
+  external crate, stays Unknown. Lives in or after `resolve_calls`
+  (project-wide), since it needs a crate-wide inherent-impl index —
+  `annotate()`'s per-file pass can't build this alone. Guard with:
+  adversarial unit tests (the 7 guard-checked std/external/non-unique
+  cases from `gate-profile.md`, plus the inherent-vs-trait case); the
+  dispatch corpus must stay 0 unsound; the Stage 1 oracle's union
+  recall must stay 4/4; the audit must show 0 unsound and, this time,
+  actually fewer conservative / more exact cells (the prediction is
+  exactly one: `tests/floyd_warshall.rs:11`, 28 exact / 24 conservative
+  and a nonempty real-repository Must set) — if the implementation
+  produces a different count than predicted, that is itself a signal
+  to stop and re-examine before trusting the result. After
+  implementing, hand-verify a random sample of every new Must claim
+  across all three crates (it will fire beyond the 52 audited sites)
+  and publish that as a supplementary check, kept out of the frozen
+  audit. If constraint 4 turns out unsound in practice, or the
+  predicted site doesn't survive implementation and no other frozen
+  site does either, that is the point to apply FAILED-AND-PUBLISHED
+  once and stop — do not start Python before Rust is trustworthy on a
+  real repository.
 - Completion remains unproven until every criterion above has committed evidence.
