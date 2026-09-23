@@ -1,0 +1,7 @@
+    Blocking waiting for file lock on build directory
+    Checking aether-builder v0.2.7 (/home/corymaynard370/Bit-code/crates/aether-builder)
+    Checking aether-agents v0.2.7 (/home/corymaynard370/Bit-code/crates/aether-agents)
+    Checking aether-app v0.2.7 (/home/corymaynard370/Bit-code/crates/aether-app)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 11m 46s
+CLIPPY EXIT:0
+FMT EXIT:0
