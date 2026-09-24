@@ -133,10 +133,31 @@ def site_byte_offset(pkg_root: Path, site: dict) -> int | None:
     For a `decorator` site, the match itself starts at `@` (the shape
     pattern's own anchor), but the actual call site is the callee's own
     name -- see `_decorator_callee_column`.
+
+    **CRLF correctness, found live against the real typescript-6.0.3
+    corpus, not assumed**: `Path.read_text()` performs Python's default
+    universal-newline translation, silently converting every `\\r\\n` in
+    the file to `\\n` in the returned string -- but Girder's own reported
+    byte offsets are against the RAW, untranslated file bytes, which for
+    this corpus (`typescript-6.0.3` uses CRLF line endings throughout --
+    54,434 occurrences in `checker.ts` alone) still contain the `\\r`
+    byte on every line. Reconstructing the prefix's byte length by
+    re-joining `splitlines()`'s own (translation-blind, always `\\r`-free)
+    output with a single `\\n` therefore undercounts by exactly one byte
+    per preceding line -- confirmed directly: a real site 29877 lines into
+    `checker.ts` computed an offset 29,876 bytes short of the verified
+    ground truth (`bytes.find()` on the raw file), an exact match to the
+    line count. Fixed by reading the file as bytes and decoding directly
+    (`decode()` never translates newlines, unlike text-mode file reading),
+    and reconstructing the prefix from `text.split("\\n")` (which leaves
+    any `\\r` attached to the end of each line, reproducing the file's
+    exact original bytes when re-joined) rather than from
+    `splitlines()`'s `\\r`-stripped entries.
     """
     path = pkg_root / site["file"]
-    text = path.read_text(encoding="utf-8", errors="replace")
+    text = path.read_bytes().decode("utf-8", errors="replace")
     lines = text.splitlines()
+    raw_split = text.split("\n")  # keeps a trailing \r attached, unlike splitlines()
     masked_text = mask_ts_source(text)
     masked_lines = masked_text.splitlines()
     if site["line"] - 1 >= len(lines) or site["line"] - 1 >= len(masked_lines):
@@ -156,7 +177,7 @@ def site_byte_offset(pkg_root: Path, site: dict) -> int | None:
         col = _decorator_callee_column(masked_line, match_col, match.group())
     else:
         col = match_col
-    prefix = "\n".join(lines[: site["line"] - 1])
+    prefix = "\n".join(raw_split[: site["line"] - 1])
     return len(prefix.encode("utf-8")) + (1 if site["line"] > 1 else 0) + len(
         line[:col].encode("utf-8")
     )

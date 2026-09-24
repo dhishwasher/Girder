@@ -80,6 +80,29 @@ class SiteByteOffsetUnitTests(unittest.TestCase):
             )
             self.assertEqual(content.encode("utf-8")[offset : offset + 7].decode(), "IsEmail")
 
+    def test_crlf_line_endings_do_not_corrupt_the_byte_offset(self):
+        # Found live against the real typescript-6.0.3 corpus (CRLF
+        # throughout): reconstructing the prefix from `splitlines()`'s own
+        # \r-stripped lines undercounts by one byte per preceding line.
+        # Three CRLF-terminated lines before the real call is enough to
+        # expose a 3-byte error, the same class of bug that produced a
+        # 29,876-byte error 29,877 lines into the real file.
+        with TemporaryDirectory() as td:
+            tmp = Path(td)
+            content = "const a = 1;\r\nconst b = 2;\r\nconst c = 3;\r\nreal(1);\r\n"
+            (tmp / "a.ts").write_bytes(content.encode("utf-8"))
+            offset = site_byte_offset(
+                tmp,
+                {"file": "a.ts", "line": 4, "shape": "plain_call", "text": "real(1);"},
+            )
+            raw_bytes = content.encode("utf-8")
+            self.assertIsNotNone(offset)
+            self.assertEqual(raw_bytes[offset : offset + 4].decode(), "real")
+            # Sanity: prove this test would have caught the original bug --
+            # the LF-only-assuming computation would have landed 3 bytes
+            # short (one missing \r per of the 3 preceding lines).
+            self.assertNotEqual(raw_bytes[offset - 3 : offset + 1].decode(), "real")
+
     def test_utf8_byte_offset_after_non_ascii_line(self):
         # A preceding line with multibyte UTF-8 characters must not throw
         # off the byte-offset computation for a later line -- this is the
