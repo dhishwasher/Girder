@@ -208,6 +208,41 @@ mod tests {
     }
 
     #[test]
+    fn a_same_file_must_claim_is_reverted_when_a_different_file_rebinds_the_target_by_tuple_assignment(
+    ) {
+        let files = [
+            (
+                "pkg/module.py",
+                "def target():\n\
+                 \x20\x20\x20\x20return 42\n\
+                 def caller():\n\
+                 \x20\x20\x20\x20return target()\n",
+            ),
+            (
+                "tests/test_module.py",
+                "def test_it():\n\
+                 \x20\x20\x20\x20unused, pkg.module.target = 1, lambda: 0\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "caller").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence.calls.iter().all(|c| c.class != CallClass::Must),
+            "{evidence:?}"
+        );
+        assert!(
+            evidence
+                .calls
+                .iter()
+                .any(|c| c.reason == "python-target-string-rebound-elsewhere-in-crate"),
+            "{evidence:?}"
+        );
+    }
+
+    #[test]
     fn an_unrelated_name_in_another_file_does_not_revert_this_target() {
         let files = [
             (

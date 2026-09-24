@@ -36,20 +36,26 @@ pub(crate) struct AnnotateGates {
     /// possible).
     pub python_string_literals: HashSet<String>,
     /// Bare attribute names (Python only) that are ever the target of an
-    /// attribute assignment (`mod.target = ...`), augmented assignment
-    /// (`mod.target += ...`), or `del` (`del mod.target`) anywhere in this
-    /// file -- the same rebinding hazard as `setattr(mod, "target", ...)`,
-    /// just spelled without a string literal. `globals()[...]`/
-    /// `vars()[...]` subscript assignment is already covered: the subscript
-    /// key is itself a `string` node (`string_content` already collected
-    /// above). This set is NOT consulted by this file's own same-file
-    /// `proven` computation -- it is already redundant with `clean` there
-    /// (the grammar's `attribute` field is itself an `identifier` node, so
-    /// `clean`'s blanket identifier scan already rejects it; verified by
-    /// mutation, not assumed). It exists purely for the project-wide pass
-    /// (`sync/python_rebinding.rs`), which needs this to check a target
-    /// rebound from a DIFFERENT file, where no such same-file `clean` scan
-    /// exists.
+    /// attribute assignment (`mod.target = ...`, including tuple targets),
+    /// augmented assignment (`mod.target += ...`), `del` (`del mod.target`,
+    /// including multi-target `del`), a `for` loop target, or a `with ...
+    /// as` alias, anywhere in this file -- the same rebinding hazard as
+    /// `setattr(mod, "target", ...)`, just spelled without a string
+    /// literal. `globals()[...]`/`vars()[...]` subscript assignment is
+    /// already covered: the subscript key is itself a `string` node
+    /// (`string_content` already collected above). This set is NOT
+    /// consulted by this file's own same-file `proven` computation -- the
+    /// grammar's `attribute` field is itself an `identifier` node, so
+    /// `clean`'s blanket identifier scan there already rejects it too. Both
+    /// protections were verified together with a JOINT mutation (`clean`
+    /// forced true AND this set removed from the project-wide pass at the
+    /// same time); a single-mutation check of either one alone is
+    /// insufficient evidence on its own, since the project-wide pass runs
+    /// end-to-end even in `claims.rs`'s own unit tests and can mask a
+    /// same-file protection that isn't actually doing anything. This set's
+    /// real purpose is the project-wide pass (`sync/python_rebinding.rs`),
+    /// which needs it to check a target rebound from a DIFFERENT file,
+    /// where no same-file `clean` scan exists at all.
     pub python_attribute_rebind_targets: HashSet<String>,
 }
 
@@ -260,35 +266,59 @@ pub(super) fn annotate(
         }
     }
     // Same disqualifying effect as `setattr(mod, "target", ...)`, spelled as
-    // `mod.target = ...` / `mod.target += ...` / `del mod.target` instead --
-    // confirmed against the grammar directly: `assignment`/
-    // `augmented_assignment` have a `left` field that is an `attribute` node
-    // (`object`/`attribute` fields) when the target is dotted, and
-    // `delete_statement` contains the deleted `attribute` node the same way.
-    // Collected here even though the SAME-FILE case is already redundant
-    // with `clean` below (the grammar's `attribute` field is itself an
-    // `identifier` node, so `clean`'s blanket identifier scan already
-    // rejects `target` in `mod.target = ...` as neither the declaration nor
-    // a direct call -- verified by mutation: removing this set from
-    // `string_rebound` below left the same-file tests passing). This set
-    // exists for the PROJECT-WIDE pass (`sync/python_rebinding.rs`), which
-    // has no visibility into another file's `clean` scan at all.
+    // `mod.target = ...` / `mod.target += ...` / `del mod.target` /
+    // `for mod.target in ...` / `with ctx() as mod.target` instead --
+    // confirmed against the grammar directly for each shape (including
+    // tuple targets and multi-target `del`, both checked, not assumed):
+    // `assignment`/`augmented_assignment`/`for_statement` have a `left`
+    // field that may be a bare `attribute` OR a `pattern_list` containing
+    // one; `with_item`'s alias position is a nested `as_pattern_target`;
+    // `delete_statement` may directly contain an `attribute` (single
+    // target) or an `expression_list` of them (multi-target `del a.x,
+    // mod.target`). Rather than special-case each container shape, walk
+    // the WHOLE subtree of each target position and collect every
+    // `attribute` node found -- deliberately coarse: this can also flag a
+    // pure item-mutation like `mod.target[0] = x` (which doesn't actually
+    // rebind `target` to a new object), but over-flagging only ever
+    // demotes an otherwise-Must claim to Unknown, never the reverse,
+    // matching this whole design's stated "err toward excluding a name
+    // that's actually safe" philosophy. Collected here even though the
+    // SAME-FILE case is already redundant with `clean` below (the
+    // grammar's `attribute` field is itself an `identifier` node, so
+    // `clean`'s blanket identifier scan already rejects `target` in
+    // `mod.target = ...` as neither the declaration nor a direct call --
+    // verified by a JOINT mutation: with `clean` forced true AND this set
+    // removed from the project-wide pass together, the same-file tests
+    // fail; with only this set removed from `string_rebound` below, they
+    // still pass because the project-wide pass alone protects them, so
+    // that earlier single-mutation check proved nothing on its own). This
+    // set exists for the PROJECT-WIDE pass (`sync/python_rebinding.rs`),
+    // which has no visibility into another file's `clean` scan at all.
     let mut python_attribute_rebind_targets: HashSet<String> = HashSet::new();
     if lang == Lang::Python {
-        for n in &syntax {
-            let target = match n.kind() {
-                "assignment" | "augmented_assignment" => n
-                    .child_by_field_name("left")
-                    .filter(|l| l.kind() == "attribute"),
-                "delete_statement" => {
-                    let mut cursor = n.walk();
-                    let children: Vec<_> = n.named_children(&mut cursor).collect();
-                    children.into_iter().find(|c| c.kind() == "attribute")
+        let mut collect_attrs = |root: TsNode<'_>| {
+            let mut stack = vec![root];
+            while let Some(n) = stack.pop() {
+                if n.kind() == "attribute" {
+                    if let Some(attr) = n.child_by_field_name("attribute") {
+                        python_attribute_rebind_targets.insert(node_text(attr, source).to_string());
+                    }
                 }
-                _ => None,
-            };
-            if let Some(attr) = target.and_then(|t| t.child_by_field_name("attribute")) {
-                python_attribute_rebind_targets.insert(node_text(attr, source).to_string());
+                let mut cursor = n.walk();
+                for child in n.children(&mut cursor) {
+                    stack.push(child);
+                }
+            }
+        };
+        for n in &syntax {
+            match n.kind() {
+                "assignment" | "augmented_assignment" | "for_statement" => {
+                    if let Some(left) = n.child_by_field_name("left") {
+                        collect_attrs(left);
+                    }
+                }
+                "delete_statement" | "as_pattern_target" => collect_attrs(*n),
+                _ => {}
             }
         }
     }
@@ -983,12 +1013,19 @@ mod tests {
 
     #[test]
     fn a_same_file_attribute_assignment_matching_the_name_blocks_proof_via_clean() {
-        // Exercises `clean`'s pre-existing identifier scan on a shape it had
-        // never been tested against, not the new
-        // `python_attribute_rebind_targets` set: the grammar's `attribute`
-        // field is itself an `identifier` node, so `clean` already rejects
-        // this (verified: this test still passes with
-        // `python_attribute_rebind_targets` removed from `string_rebound`).
+        // This same-file case is protected TWICE: `clean`'s pre-existing
+        // identifier scan (the grammar's `attribute` field is itself an
+        // `identifier` node, so `clean` already rejects it independent of
+        // `python_attribute_rebind_targets`), AND the project-wide pass
+        // (`sync/python_rebinding.rs`), which the `graph()` test helper
+        // also runs end-to-end. Removing either protection ALONE leaves
+        // this test passing via the other -- a single-mutation check would
+        // wrongly "confirm" whichever protection was left untouched.
+        // Verified with a JOINT mutation instead: forcing `clean = true`
+        // in this function AND removing the attribute set from the
+        // project-wide pass's `rebound` check AT THE SAME TIME does make
+        // this test fail, confirming at least one of the two actually
+        // matters (not that both independently do).
         let g = graph(
             "app.py",
             "def target():\n\
@@ -1008,7 +1045,9 @@ mod tests {
 
     #[test]
     fn a_same_file_del_of_a_dotted_attribute_matching_the_name_blocks_proof_via_clean() {
-        // Same as above: exercises `clean`, not the new project-wide set.
+        // Same double-protection caveat as the test above: verified only
+        // by the joint mutation (`clean = true` AND the project-wide
+        // attribute check removed together), not by either alone.
         let g = graph(
             "app.py",
             "def target():\n\
