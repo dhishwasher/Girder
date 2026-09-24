@@ -1,0 +1,1054 @@
+{
+  "sites": [
+    {
+      "package": "class-validator-0.15.1",
+      "file": "sample/sample2-using-groups/Post.ts",
+      "line": 23,
+      "shape": "decorator",
+      "text": "@IsEmail(undefined, {",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@IsEmail(undefined, {...}) is the decorator factory call (rubric case 5: the site is the factory call, not the implicit __decorate application). IsEmail has a single definition (src/decorator/string/IsEmail.ts), re-exported via src/decorator/decorators.ts's barrel `export * from './string/IsEmail'`, imported cross-file into Post.ts via a relative path. No rebinding (0 prototype/defineProperty hits in this repo)."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/custom-decorators.spec.ts",
+      "line": 49,
+      "shape": "decorator",
+      "text": "@IsLongerThan('lastName', {",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@IsLongerThan(...) factory call. IsLongerThan is a same-file local function (custom-decorators.spec.ts:11), single definition, no override, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/custom-decorators.spec.ts",
+      "line": 134,
+      "shape": "decorator",
+      "text": "@IsLonger('lastName')",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@IsLonger('lastName') factory call. IsLonger is a same-file local function (custom-decorators.spec.ts:109), single definition, no override, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/nested-validation.spec.ts",
+      "line": 200,
+      "shape": "new_expression",
+      "text": "const submodel1 = new MySubClass();",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "new MySubClass() direct construction. MySubClass is a same-file locally-defined class (nested-validation.spec.ts), single definition, no subclass overriding its constructor, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/promise-validation.spec.ts",
+      "line": 21,
+      "shape": "decorator",
+      "text": "@ValidateNested()",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@ValidateNested() factory call. ValidateNested has a single definition (src/decorator/common/ValidateNested.ts), imported cross-file, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/promise-validation.spec.ts",
+      "line": 49,
+      "shape": "decorator",
+      "text": "@ValidatePromise()",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@ValidatePromise() factory call. ValidatePromise has a single definition (src/decorator/common/ValidatePromise.ts), imported cross-file, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/promise-validation.spec.ts",
+      "line": 113,
+      "shape": "decorator",
+      "text": "@ValidateNested()",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@ValidateNested() factory call, same as index 4 -- single definition, imported cross-file, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-error.spec.ts",
+      "line": 34,
+      "shape": "decorator",
+      "text": "@IsString()",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@IsString() factory call. IsString has a single definition (src/decorator/typechecker/IsString.ts), imported cross-file, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 1342,
+      "shape": "decorator",
+      "text": "@IsNumberString()",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@IsNumberString() factory call. IsNumberString has a single definition (src/decorator/string/IsNumberString.ts), imported cross-file, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 2901,
+      "shape": "decorator",
+      "text": "@IsISBN(10)",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@IsISBN(10) factory call. IsISBN has a single definition (src/decorator/string/IsISBN.ts), imported cross-file, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 3264,
+      "shape": "decorator",
+      "text": "@IsNotEmptyObject({ nullable: false })",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@IsNotEmptyObject({...}) factory call. IsNotEmptyObject has a single definition (src/decorator/object/IsNotEmptyObject.ts), imported cross-file, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 3373,
+      "shape": "decorator",
+      "text": "@IsMultibyte()",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@IsMultibyte() factory call. IsMultibyte has a single definition (src/decorator/string/IsMultibyte.ts), imported cross-file, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-options.spec.ts",
+      "line": 204,
+      "shape": "decorator",
+      "text": "@ValidatorConstraint({ name: 'customIsNotArrayConstraint', async: false })",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@ValidatorConstraint({...}) factory call (class decorator). ValidatorConstraint has a single definition (src/decorator/common/Validate.ts), imported cross-file, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-options.spec.ts",
+      "line": 1077,
+      "shape": "decorator",
+      "text": "@ValidateNested({ groups: ['always'], always: true })",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@ValidateNested({...}) factory call, same definition as index 4 -- single, imported cross-file, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-options.spec.ts",
+      "line": 1201,
+      "shape": "decorator",
+      "text": "@MinLength(20, {",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@MinLength(20, {...}) factory call. MinLength has a single definition (src/decorator/string/MinLength.ts), imported cross-file, no rebinding."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validator-options.spec.ts",
+      "line": 36,
+      "shape": "method_call",
+      "text": "expect(errors[0].constraints).toEqual({ unknownValue: 'an unknown value was passed to the validate function' });",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "expect(...).toEqual(...) -- .toEqual is a Jest matcher method; Jest is a third-party test framework, external to the four-repo snapshot (case 8)."
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/whitelist-validation.spec.ts",
+      "line": 32,
+      "shape": "decorator",
+      "text": "@Allow()",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "@Allow() factory call. Allow has a single definition (src/decorator/common/Allow.ts), imported cross-file, no rebinding."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "scripts/build/localeSnapshots/_lib/distanceDates.ts",
+      "line": 53,
+      "shape": "new_expression",
+      "text": "new Date(2000, 0, 5),",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "new Date(2000, 0, 5) -- Date is a built-in JS/lib.d.ts global, declared only in ambient .d.ts lib files with no implementation body in this four-repo snapshot (case 8/9)."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/addISOWeekYears/test.ts",
+      "line": 30,
+      "shape": "method_call",
+      "text": "initialDate.setHours(0, 0, 0, 0);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "initialDate.setHours(...) -- Date.prototype.setHours is a built-in method, external to the snapshot (case 8)."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/endOfWeek/test.ts",
+      "line": 121,
+      "shape": "new_expression",
+      "text": "const date = new Date(\"2014-09-01T00:00:00Z\");",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "new Date('2014-09-01T00:00:00Z') -- built-in Date constructor, external to the snapshot, same as index 17."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/format/test.ts",
+      "line": 811,
+      "shape": "dynamic_dispatch",
+      "text": "expect(format.bind(null, date, \"yyyy-MM-dd-nnnn\")).toThrow(RangeError);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "format.bind(null, date, ...) -- the call site targets Function.prototype.bind (a built-in), external to the snapshot (case 8); the call does not target `format` itself, only binds it."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/fp/_lib/convertToFP/test.ts",
+      "line": 87,
+      "shape": "new_expression",
+      "text": "const result = fn2(new Date(1987, 1));",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "new Date(1987, 1) -- built-in Date constructor, external to the snapshot, same as index 17."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/intlFormatDistance/test.ts",
+      "line": 64,
+      "shape": "new_expression",
+      "text": "new Date(1986, 3, 5, 10, 30),",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "new Date(1986, 3, 5, 10, 30) -- built-in Date constructor, external to the snapshot, same as index 17."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/intlFormatDistance/test.ts",
+      "line": 109,
+      "shape": "new_expression",
+      "text": "new Date(1986, 3, 4, 10, 30, 0),",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "new Date(1986, 3, 4, 10, 30, 0) -- built-in Date constructor, external to the snapshot, same as index 17."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/parse/_lib/parsers/StandAloneQuarterParser.ts",
+      "line": 48,
+      "shape": "method_call",
+      "text": "match.quarter(dateString, {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "match.quarter(dateString, {...}) -- `match` is typed via `import type { Match }` (an interface), and Match is date-fns's own public locale-plugin interface: any external consumer can supply a custom locale object satisfying it, so the implementor set is not bounded by the snapshot (case 3: structural/interface receiver, never Must from the annotation alone; unbounded here, not just multi-candidate, so Unknown rather than May)."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/parse/test.ts",
+      "line": 2385,
+      "shape": "new_expression",
+      "text": "const expected = new Date(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "new Date(referenceDate.getFullYear(), ...) -- built-in Date constructor, external to the snapshot, same as index 17."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/setWeekYear/test.ts",
+      "line": 22,
+      "shape": "new_expression",
+      "text": "const date = new Date(2008, 11 /* Dec */, 29);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "new Date(2008, 11, 29) -- built-in Date constructor, external to the snapshot, same as index 17."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/startOfWeek/test.ts",
+      "line": 31,
+      "shape": "new_expression",
+      "text": "const date = new Date(2014, 8 /* Sep */, 2, 11, 55, 0);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "new Date(2014, 8, 2, 11, 55, 0) -- built-in Date constructor, external to the snapshot, same as index 17."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/startOfWeek/test.ts",
+      "line": 97,
+      "shape": "new_expression",
+      "text": "const result = startOfWeek(new UTCDate());",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "new UTCDate() -- UTCDate is imported from '@date-fns/utc', a third-party npm package not pinned in this four-repo snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 5521,
+      "shape": "optional_chaining_call",
+      "text": "tracing?.recordType(result);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "tracing?.recordType(result) -- tracing: typeof tracingEnabled | undefined (compiler/tracing.ts:30); tracingEnabled is a TypeScript namespace (not a class), so once `?.` excludes the undefined case there is no polymorphism vector at all -- tracing.recordType unambiguously refers to the single recordType function inside the tracingEnabled namespace (case 6: optional chaining doesn't change target-uniqueness once null is excluded)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 7873,
+      "shape": "optional_chaining_call",
+      "text": "const jsdocPropertyTag = propertySymbol.declarations?.find((d): d is JSDocPropertyTag => d.kind === SyntaxKind.JSDocPropertyTag);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "propertySymbol.declarations?.find(...) -- .find is Array.prototype.find, a built-in method, external to the snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 8561,
+      "shape": "optional_chaining_call",
+      "text": "if (context.typeParameterSymbolList?.has(symbolId)) {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "context.typeParameterSymbolList?.has(symbolId) -- typeParameterSymbolList is a Set (line 8566: `new Set(...)`); .has is Set.prototype.has, a built-in, external to the snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 29877,
+      "shape": "plain_call",
+      "text": "return type.flags & TypeFlags.Any ? type : narrowTypeByTypeFacts(type, globalFunctionType, TypeFacts.TypeofEQFunction);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "narrowTypeByTypeFacts(type, globalFunctionType, ...) -- same-file function defined a few lines below (checker.ts:29884) within the same enclosing closure, single definition, no override, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 46392,
+      "shape": "optional_chaining_call",
+      "text": "const isGeneratorMethod = globalGeneratorType.symbol?.members?.get(methodName as __String) === methodType.symbol;",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "globalGeneratorType.symbol?.members?.get(...) -- `members` is a SymbolTable (ESMap<__String, Symbol>); .get is Map.prototype.get, a built-in, external to the snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 49555,
+      "shape": "optional_chaining_call",
+      "text": "tracing?.pop();",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "tracing?.pop() -- same tracing: typeof tracingEnabled | undefined variable as index 29; tracingEnabled.pop (tracing.ts:160) is a namespace function, no polymorphism possible once `?.` excludes undefined (case 6)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/commandLineParser.ts",
+      "line": 2725,
+      "shape": "plain_call",
+      "text": "function matchesSpecs(path: string, includeSpecs: readonly string[] | undefined, excludeSpecs: readonly string[] | undefined, host: ConvertToTSConfigHost): (path: string) => boolean {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`function matchesSpecs(path: string, ...): (path: string) => boolean {` is the function's own declaration signature, not a call -- the selector's plain_call shape picked up the declaration's own name(...) the same way it does for any function declaration (methodology.md \u00a75, disclosed and deliberate at the selector level)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/core.ts",
+      "line": 598,
+      "shape": "plain_call",
+      "text": "export function mapEntries<K1, V1, K2, V2>(map: ReadonlyMap<K1, V1> | undefined, f: (key: K1, value: V1) => readonly [K2, V2]): Map<K2, V2> | undefined;",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`export function mapEntries<K1, V1, K2, V2>(map: ReadonlyMap<K1, V1> | undefined, ...)` is an overload declaration signature (one of three for mapEntries), not a call."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/emitter.ts",
+      "line": 2282,
+      "shape": "plain_call",
+      "text": "popNameGenerationScope(node);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "popNameGenerationScope(node) -- same-file function (emitter.ts:5313), single definition within the same closure, no override, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/emitter.ts",
+      "line": 2798,
+      "shape": "plain_call",
+      "text": "emitExpression(node.expression, parenthesizer.parenthesizeOperandOfPrefixUnary);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "emitExpression(node.expression, ...) -- same-file function within emitter.ts's own closure, single definition, extremely commonly used throughout the file with no override/shadowing found."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/emitter.ts",
+      "line": 4280,
+      "shape": "plain_call",
+      "text": "writePunctuation(\"{\");",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "writePunctuation(\"{\") -- same-file function (emitter.ts:4877) within the same closure, single definition, no override, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/moduleNameResolver.ts",
+      "line": 467,
+      "shape": "method_call",
+      "text": "const keyRange = VersionRange.tryParse(key);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "VersionRange.tryParse(key) -- VersionRange is a single class (compiler/semver.ts:206) with no subclasses anywhere in the snapshot (grep confirmed), tryParse is a static method, single definition."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/moduleSpecifiers.ts",
+      "line": 347,
+      "shape": "optional_chaining_call",
+      "text": "const cache = host.getModuleSpecifierCache?.();",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "host.getModuleSpecifierCache?.() -- `host` is typed as `ModuleSpecifierResolutionHost`, a public interface any external LanguageService consumer can implement; the implementor set is not bounded by the snapshot (case 3, unbounded structural receiver)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/program.ts",
+      "line": 618,
+      "shape": "dynamic_dispatch",
+      "text": "originalCreateDirectory.call(host, directory);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "originalCreateDirectory.call(host, directory) -- .call is Function.prototype.call, a built-in, external to the snapshot (case 8); the call does not target originalCreateDirectory's own body, only invokes it via .call."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/program.ts",
+      "line": 2029,
+      "shape": "method_call",
+      "text": "return getPackagesMap().has(getTypesPackageName(packageName));",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "getPackagesMap().has(...) -- the method_call shape's own match targets `.has(`, on getPackagesMap()'s Map-typed return value; Map.prototype.has is a built-in, external to the snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/sourcemap.ts",
+      "line": 701,
+      "shape": "plain_call",
+      "text": "const sourceRoot = map.sourceRoot ? getNormalizedAbsolutePath(map.sourceRoot, mapDirectory) : mapDirectory;",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "getNormalizedAbsolutePath(map.sourceRoot, mapDirectory) -- single definition (compiler/path.ts:627), imported cross-file via the compiler's own _namespaces barrel re-export pattern, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/sys.ts",
+      "line": 213,
+      "shape": "optional_chaining_call",
+      "text": "callbackOnWatchFileStat?.(watchedFile, pollIndex, fileChanged);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "callbackOnWatchFileStat?.(...) -- a plain function-typed parameter (`(watchedFile: T, pollIndex: number, fileChanged: boolean) => void`), identity determined by whatever the caller passes, not resolvable within this file (case 3's spirit: unbounded, unproven callable)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/transformers/jsx.ts",
+      "line": 142,
+      "shape": "qualified_attribute_call",
+      "text": "let specifierSourceImports = currentFileState.utilizedImplicitRuntimeImports.get(importSource);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "currentFileState.utilizedImplicitRuntimeImports.get(importSource) -- utilizedImplicitRuntimeImports is a Map (`new Map()` a few lines above); .get is Map.prototype.get, a built-in, external to the snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/transformers/module/esnextAnd2015.ts",
+      "line": 231,
+      "shape": "method_call",
+      "text": "const requireHelperName = factory.createUniqueName(\"__require\", GeneratedIdentifierFlags.Optimistic | GeneratedIdentifierFlags.FileLevel);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "factory.createUniqueName(...) -- `const { factory } = context` destructures factory from `context: TransformationContext`, an interface parameter; multiple distinct NodeFactory instances exist in the snapshot (the canonical export in nodeFactory.ts, parser.ts's parseNodeFactory, a local parser.ts factory, and one in services/textChanges.ts), so the receiver's concrete identity is not fixed at this call site (case 3, unbounded structural receiver)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/visitorPublic.ts",
+      "line": 751,
+      "shape": "qualified_attribute_call",
+      "text": "return context.factory.updateClassStaticBlockDeclaration(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "context.factory.updateClassStaticBlockDeclaration(...) -- same interface-typed `context: TransformationContext` parameter as index 47, same reasoning: multiple NodeFactory instances exist, receiver not resolvable to one."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/visitorPublic.ts",
+      "line": 891,
+      "shape": "method_call",
+      "text": "Debug.checkDefined(nodeVisitor(node.typeParameter, visitor, isTypeParameterDeclaration)),",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "Debug.checkDefined(...) -- the method_call shape's leftmost match is `.checkDefined(` (Debug.checkDefined has only one dot before the paren, so it's method_call not qualified_attribute_call). Debug.checkDefined (compiler/debug.ts:255) is a namespace function, single definition, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/visitorPublic.ts",
+      "line": 1155,
+      "shape": "qualified_attribute_call",
+      "text": "return context.factory.updatePrefixUnaryExpression(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "context.factory.updatePrefixUnaryExpression(...) -- same interface-typed `context: TransformationContext` parameter as index 47/48, same reasoning."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/collectionsImpl.ts",
+      "line": 34,
+      "shape": "dynamic_dispatch",
+      "text": "public get [Symbol.toStringTag]() {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`public get [Symbol.toStringTag]() {` is a class getter's own declaration using a computed property name, not a call -- the dynamic_dispatch shape's bracket-call regex incidentally matched the computed property name syntax."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/evaluatorImpl.ts",
+      "line": 197,
+      "shape": "dynamic_dispatch",
+      "text": "evaluateThunk.call(this.globals, module, module.exports, localRequire, vpath.dirname(file), file, ...globalArgs);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "evaluateThunk.call(this.globals, ...) -- .call is Function.prototype.call, a built-in, external to the snapshot (case 8); evaluateThunk itself comes from a runtime eval() (line 196), doubly external/dynamic."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/fourslashImpl.ts",
+      "line": 3091,
+      "shape": "qualified_attribute_call",
+      "text": "Harness.IO.log(this.spanInfoToString(this.getNameOrDottedNameSpan(pos)!, \"**\"));",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "Harness.IO.log(...) -- IO (harness/harnessIO.ts:46) is declared `export let IO: IO` (interface-typed, mutable) and is assigned to different concrete implementations in different branches (`IO = io` at one point, `IO = createNodeIO()` at another) -- a real multi-implementation rebinding case, not just theoretical."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/fourslashInterfaceImpl.ts",
+      "line": 76,
+      "shape": "qualified_attribute_call",
+      "text": "this.state.setCompilerOptionsForInferredProjects(options);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "this.state.setCompilerOptionsForInferredProjects(options) -- `state: FourSlash.TestState` is a constructor-parameter-typed property; TestState (fourslashImpl.ts:243) has zero subclasses anywhere in the snapshot (grep confirmed empty), single class, no override for this method, no rebinding -- case 1 applied to a class type resolves to Must even though the receiver comes from a parameter, since the class itself has no polymorphism vector in the snapshot."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/fourslashInterfaceImpl.ts",
+      "line": 492,
+      "shape": "qualified_attribute_call",
+      "text": "this.state.verifyTodoComments(descriptors, this.state.getRanges());",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "this.state.verifyTodoComments(...) -- same `state: FourSlash.TestState` property as index 54; TestState (fourslashImpl.ts:243) has no subclasses anywhere in the snapshot, single class, no override, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/harnessLanguageService.ts",
+      "line": 316,
+      "shape": "qualified_attribute_call",
+      "text": "this.scriptInfos.forEach((scriptInfo, key) => {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "this.scriptInfos.forEach(...) -- scriptInfos is a Map (constructed via `new Map` elsewhere in the class); .forEach is Map.prototype.forEach, a built-in, external to the snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/watchUtils.ts",
+      "line": 220,
+      "shape": "optional_chaining_call",
+      "text": "const existing = old?.get(key);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "old?.get(key) -- `old: Map<string, T[]> | undefined` (function parameter); .get is Map.prototype.get, a built-in, external to the snapshot (case 8) -- the `?.` doesn't change this, the target itself is external regardless."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/lib/dom.generated.d.ts",
+      "line": 33249,
+      "shape": "plain_call",
+      "text": "removeEventListener<K extends keyof SVGElementEventMap>(type: K, listener: (this: SVGMetadataElement, ev: SVGElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`removeEventListener<K extends keyof SVGElementEventMap>(type: K, listener: ..., options?: ...): void;` is an interface method signature inside a .d.ts file (src/lib/dom.generated.d.ts) -- case 9: a .d.ts file can never contain a real call under any circumstance."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/lib/dom.generated.d.ts",
+      "line": 44854,
+      "shape": "dynamic_dispatch",
+      "text": "[Symbol.iterator](): ArrayIterator<SourceBuffer>;",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`[Symbol.iterator](): ArrayIterator<SourceBuffer>;` is an interface method signature (computed property name) inside a .d.ts file (src/lib/dom.generated.d.ts) -- case 9, same as index 58."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/lib/es2015.iterable.d.ts",
+      "line": 553,
+      "shape": "dynamic_dispatch",
+      "text": "[Symbol.iterator](): ArrayIterator<number>;",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`[Symbol.iterator](): ArrayIterator<number>;` is an interface method signature (computed property name) inside a .d.ts file (src/lib/es2015.iterable.d.ts) -- case 9."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/lib/es2018.asynciterable.d.ts",
+      "line": 27,
+      "shape": "dynamic_dispatch",
+      "text": "[Symbol.asyncIterator](): AsyncIterableIterator<T, TReturn, TNext>;",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`[Symbol.asyncIterator](): AsyncIterableIterator<...>;` is an interface method signature inside a .d.ts file (src/lib/es2018.asynciterable.d.ts) -- case 9."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/lib/webworker.generated.d.ts",
+      "line": 15357,
+      "shape": "dynamic_dispatch",
+      "text": "[Symbol.iterator](): ArrayIterator<ImageTrack>;",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "`[Symbol.iterator](): ArrayIterator<ImageTrack>;` is an interface method signature inside a .d.ts file (src/lib/webworker.generated.d.ts) -- case 9."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/server/editorServices.ts",
+      "line": 2181,
+      "shape": "optional_chaining_call",
+      "text": "if (!this.pendingOpenFileProjectUpdates?.has(path)) {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "this.pendingOpenFileProjectUpdates?.has(path) -- declared `Map<Path, ConfigFileForOpenFile> | undefined` (editorServices.ts:1380); .has is Map.prototype.has, a built-in, external to the snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/server/editorServices.ts",
+      "line": 3030,
+      "shape": "optional_chaining_call",
+      "text": "configFileExistenceInfo.watcher?.close();",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "configFileExistenceInfo.watcher?.close() -- watcher: FileWatcher, an interface with at least 3 distinct concrete construction sites in the snapshot (different watch mechanisms), receiver identity not bounded to one implementation (case 3)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/server/project.ts",
+      "line": 2355,
+      "shape": "optional_chaining_call",
+      "text": "this.getScriptInfo(rootFile)?.editContent(0, originalText.length, updatedText);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "this.getScriptInfo(rootFile)?.editContent(...) -- ScriptInfo has zero subclasses anywhere in the snapshot (grep confirmed empty), single class, no rebinding; `?.` only guards the undefined-from-getScriptInfo case (case 6), doesn't change target-uniqueness once that's excluded."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/server/session.ts",
+      "line": 2179,
+      "shape": "plain_call",
+      "text": "const file = toNormalizedPath(args.file);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "toNormalizedPath(args.file) -- single definition (server/utilitiesPublic.ts:71), imported cleanly cross-file into session.ts, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/codefixes/fixUnreachableCode.ts",
+      "line": 34,
+      "shape": "plain_call",
+      "text": "getAllCodeActions: context => codeFixAll(context, errorCodes, (changes, diag) => doChange(changes, diag.file, diag.start, diag.length, diag.code)),",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "codeFixAll(context, errorCodes, ...) -- single definition (services/codeFixProvider.ts:108), no rebinding found."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/codefixes/inferFromUsage.ts",
+      "line": 1161,
+      "shape": "dynamic_dispatch",
+      "text": "return builtinConstructors[type.symbol.escapedName as string](combineTypes(types));",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "builtinConstructors[type.symbol.escapedName as string](...) -- a computed property lookup selecting which constructor to call at runtime based on a string key; the policy's Unknown column names \"computed properties\" explicitly."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/codefixes/removeAccidentalCallParentheses.ts",
+      "line": 24,
+      "shape": "qualified_attribute_call",
+      "text": "const changes = textChanges.ChangeTracker.with(context, t => {",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "textChanges.ChangeTracker.with(context, ...) -- ChangeTracker has zero subclasses anywhere in the snapshot (grep confirmed empty), `with` is a static method, single definition, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/completions.ts",
+      "line": 1658,
+      "shape": "method_call",
+      "text": "uniqueNames.add(realName);",
+      "true_class": "unknown",
+      "confidence": "medium",
+      "rationale": "uniqueNames.add(realName) -- uniqueNames: UniqueNameSet, an interface (services/completions.ts:574); could not confirm within this pass whether exactly one object satisfies it in the snapshot or several, so left conservative rather than guessed (case 3's default for an interface-typed parameter whose implementor count isn't confirmed bounded)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/completions.ts",
+      "line": 4693,
+      "shape": "new_expression",
+      "text": "const existing = new Set(importAttributes.elements.map(getNameFromImportAttribute));",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "new Set(...) -- Set is a built-in JS global, external to the snapshot (case 8), same as the Date cases in the date-fns batch."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/exportInfoMap.ts",
+      "line": 480,
+      "shape": "optional_chaining_call",
+      "text": "host.log?.(`forEachExternalModuleToImportFrom autoImportProvider: ${timestamp() - start}`);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "host.log?.(...) -- `host` is an interface-typed parameter with an optional function-valued `log` member; not resolvable to one function within this file (case 3, same reasoning as index 45's callback parameter)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/refactors/extractSymbol.ts",
+      "line": 245,
+      "shape": "method_call",
+      "text": "if (!usedFunctionNames.has(description)) {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "usedFunctionNames.has(description) -- usedFunctionNames is a Map (`new Map<string, boolean>()`, same pattern as the visible usedConstantNames declaration); .has is Map.prototype.has, a built-in, external to the snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/textChanges.ts",
+      "line": 1520,
+      "shape": "method_call",
+      "text": "writer.rawWrite(s);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "writer.rawWrite(s) -- writer: TextChangesWriter extends EmitTextWriter, PrintHandlers (both interfaces); EmitTextWriter is implemented by multiple distinct writer objects in the compiler (used by both the main emitter and textChanges independently), receiver identity not bounded to one (case 3)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/utilities.ts",
+      "line": 1500,
+      "shape": "plain_call",
+      "text": "return skipOuterExpressions(parent.expression);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "skipOuterExpressions(parent.expression) -- single implementation (compiler/factory/utilities.ts:660, several overload signatures collapsing to one body per case 7), imported cross-file into services/utilities.ts, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/evaluation/forOf.ts",
+      "line": 104,
+      "shape": "method_call",
+      "text": "const result = evaluator.evaluateTypeScript(",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "evaluator.evaluateTypeScript(...) -- evaluator is imported via `import * as evaluator from \"../../_namespaces/evaluator.js\"`, the compiler's own internal namespace-barrel re-export pattern (a single canonical module aggregate, not a runtime-polymorphic interface); evaluateTypeScript has a single definition."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/helpers/baseline.ts",
+      "line": 282,
+      "shape": "optional_chaining_call",
+      "text": "changeFileSet: buildInfo.changeFileSet?.map(toFileName),",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "buildInfo.changeFileSet?.map(toFileName) -- .map is Array.prototype.map, a built-in, external to the snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/helpers/tsc.ts",
+      "line": 229,
+      "shape": "optional_chaining_call",
+      "text": "incrementalReadableBuildInfo.affectedFilesPendingEmit?.forEach(([actualFileOrArray]) => {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "incrementalReadableBuildInfo.affectedFilesPendingEmit?.forEach(...) -- .forEach is Array.prototype.forEach, a built-in, external to the snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/incrementalParser.ts",
+      "line": 35,
+      "shape": "method_call",
+      "text": "assert.equal(d1.length, d2.length, \"d1.length !== d2.length\");",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert.equal(d1.length, d2.length, ...) -- `assert` is Node's built-in assert module (or an equivalent test-framework assert), external to the four-repo snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/incrementalParser.ts",
+      "line": 333,
+      "shape": "qualified_attribute_call",
+      "text": "const oldText = ts.ScriptSnapshot.fromString(source);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "ts.ScriptSnapshot.fromString(source) -- ScriptSnapshot is a namespace (services/types.ts:218), fromString is a single namespace function, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/incrementalParser.ts",
+      "line": 988,
+      "shape": "qualified_attribute_call",
+      "text": "const oldText = ts.ScriptSnapshot.fromString(textWithIgnoreCommentFrom(source, singleIgnore));",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "ts.ScriptSnapshot.fromString(...) -- same as index 80."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/services/convertToAsyncFunction.ts",
+      "line": 1662,
+      "shape": "plain_call",
+      "text": "_testConvertToAsyncFunctionFailed(",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "_testConvertToAsyncFunctionFailed(...) -- same-file module-level const (convertToAsyncFunction.ts:432), bound once to createTestWrapper(...)'s return value, never reassigned; the binding identity is provably fixed (case 1's lexical-binding analogue for a const-bound closure)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/compileOnSave.ts",
+      "line": 739,
+      "shape": "plain_call",
+      "text": "test(\"\\n\", logger);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "test(\"\\n\", logger) -- `test` is a same-file locally-defined function (compileOnSave.ts:743, declared once inside the same `it` callback's scope), single definition, no shadowing."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/configuredProjects.ts",
+      "line": 808,
+      "shape": "dynamic_dispatch",
+      "text": "host.getFileSize = (filePath: string) => filePath === f2.path ? ts.server.maxProgramSizeForNonTsFiles + 1 : originalGetFileSize.call(host, filePath);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "originalGetFileSize.call(host, filePath) -- .call is Function.prototype.call, a built-in, external to the snapshot (case 8)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/events/projectLoading.ts",
+      "line": 126,
+      "shape": "plain_call",
+      "text": "baselineTsserverLogs(\"events/projectLoading\", `opening original location project${disableSourceOfProjectReferenceRedirect ? \" disableSourceOfProjectReferenceRedirect\" : \"\"} ${sessionType}`, session);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "baselineTsserverLogs(...) -- single definition (testRunner/unittests/helpers/tsserver.ts), imported cross-file, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/externalProjects.ts",
+      "line": 75,
+      "shape": "method_call",
+      "text": "const proxy = LanguageService.makeDefaultProxy(info);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "LanguageService.makeDefaultProxy(info) -- makeDefaultProxy has a single definition (harness/harnessLanguageService.ts:21), accessed via the compiler's internal `_namespaces` barrel import pattern (a single module aggregate, same as index 76), no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/forceConsistentCasingInFileNames.ts",
+      "line": 227,
+      "shape": "new_expression",
+      "text": "const session = new TestSession(host);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "new TestSession(host) -- explicitly constructs the named base class TestSession; an anonymous subclass exists elsewhere in the snapshot (session.ts:499, `new class extends TestSession {...}`) but that doesn't affect what `new TestSession(...)` itself resolves to -- the constructed type is unambiguously TestSession's own constructor (case 4)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/partialSemanticServer.ts",
+      "line": 87,
+      "shape": "qualified_attribute_call",
+      "text": "session.logger.info(e.message);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "session.logger.info(e.message) -- `logger` is assigned from multiple different concrete factories across the snapshot's test setup code (nullLogger(), createHasErrorMessageLogger(), createLoggerWithInMemoryLogs(), seen directly in this file and site 83's context) -- the concrete Logger implementation is not bounded to one at this call site (case 3)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/pluginsAsync.ts",
+      "line": 214,
+      "shape": "qualified_attribute_call",
+      "text": "session.logger.log(`fulfill import ${moduleName}`);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "session.logger.log(...) -- same session.logger pattern as index 88, multiple concrete Logger implementations in the snapshot, not bounded to one."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/projectErrors.ts",
+      "line": 271,
+      "shape": "new_expression",
+      "text": "const session = new TestSession(host);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "new TestSession(host) -- same reasoning as index 87: explicitly constructs the named base class, unaffected by the unrelated anonymous subclass elsewhere in the snapshot."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/projectReferences.ts",
+      "line": 1189,
+      "shape": "plain_call",
+      "text": "verifySolutionScenario({",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "verifySolutionScenario({...}) -- same-file function (projectReferences.ts:1082), single definition, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/typeReferenceDirectives.ts",
+      "line": 62,
+      "shape": "new_expression",
+      "text": "const session = new TestSession(host);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "new TestSession(host) -- same reasoning as index 87/90."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/tsserver/nodeServer.ts",
+      "line": 531,
+      "shape": "qualified_attribute_call",
+      "text": "this.logger.info(`eventPort: event \"${eventName}\" queued, but socket not yet initialized`);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "this.logger.info(...) -- IOSession's `logger` property is typed `ts.server.Logger`, an interface with multiple concrete implementations in the snapshot (nullLogger(), createHasErrorMessageLogger(), createLoggerWithInMemoryLogs(), createLogger()), not bounded to one at this call site (case 3)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/tsserver/nodeServer.ts",
+      "line": 607,
+      "shape": "qualified_attribute_call",
+      "text": "const commandLineTraceDir = ts.server.findArgument(\"--traceDirectory\");",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "ts.server.findArgument(\"--traceDirectory\") -- single definition (jsTyping/shared.ts:53), accessed via the compiler's internal _namespaces barrel re-export pattern, no rebinding."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/typingsInstallerCore/typingsInstaller.ts",
+      "line": 464,
+      "shape": "qualified_attribute_call",
+      "text": "this.missingTypingsSet.add(packageName);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "this.missingTypingsSet.add(packageName) -- missingTypingsSet is a Set; .add is Set.prototype.add, a built-in, external to the snapshot (case 8)."
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/__tests__/coerce.test.ts",
+      "line": 103,
+      "shape": "method_call",
+      "text": "expect(() => schema.parse([\"item\", \"another_item\"])).toThrow(); // not a z.ZodError!",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "schema.parse([...]) -- .parse has a single, non-overridden implementation on the ZodType base class (src/types.ts:238); every Zod schema subclass overrides the internal _parse hook, not .parse itself (grep for other `parse(` method definitions in types.ts found none), so this resolves the same way regardless of schema's concrete subclass."
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/__tests__/number.test.ts",
+      "line": 43,
+      "shape": "method_call",
+      "text": "lteFive.parse(-Infinity);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "lteFive.parse(-Infinity) -- same .parse reasoning as index 96."
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/__tests__/preprocess.test.ts",
+      "line": 167,
+      "shape": "optional_chaining_call",
+      "text": "(data: any) => data?.trim(),",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "data?.trim() -- `data: any` is explicitly typed `any` in the preprocess callback signature; the policy's Unknown column names \"any/unknown receivers\" directly."
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/types.ts",
+      "line": 413,
+      "shape": "dynamic_dispatch",
+      "text": "this.promise = this.promise.bind(this);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "this.promise = this.promise.bind(this) -- .bind is Function.prototype.bind, a built-in, external to the snapshot (case 8); this is a constructor-time method-binding idiom repeated many times in this class."
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/types.ts",
+      "line": 2259,
+      "shape": "new_expression",
+      "text": "return new ZodArray({",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "new ZodArray({...}) -- ZodArray has zero subclasses anywhere in the snapshot (grep confirmed empty), single class, no rebinding."
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "src/types.ts",
+      "line": 402,
+      "shape": "dynamic_dispatch",
+      "text": "this.safeParse = this.safeParse.bind(this);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "this.safeParse = this.safeParse.bind(this) -- same .bind reasoning as index 99."
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "src/types.ts",
+      "line": 406,
+      "shape": "dynamic_dispatch",
+      "text": "this.refine = this.refine.bind(this);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "this.refine = this.refine.bind(this) -- same .bind reasoning as index 99."
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "src/types.ts",
+      "line": 407,
+      "shape": "dynamic_dispatch",
+      "text": "this.refinement = this.refinement.bind(this);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "this.refinement = this.refinement.bind(this) -- same .bind reasoning as index 99."
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "src/types.ts",
+      "line": 408,
+      "shape": "dynamic_dispatch",
+      "text": "this.superRefine = this.superRefine.bind(this);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "this.superRefine = this.superRefine.bind(this) -- same .bind reasoning as index 99."
+    }
+  ]
+}
