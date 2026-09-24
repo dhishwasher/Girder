@@ -271,7 +271,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | --- | --- | --- | --- |
 | Rust | **DONE** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
 | Python | **DONE** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) | Rust trustworthy on a real repository |
-| TypeScript | IN PROGRESS (repos pinned, methodology frozen, 105 sites selected; not yet labeled) | [methodology](observations/stage3-typescript-audit/methodology.md) + [addendum](observations/stage3-typescript-audit/methodology-addendum.md) / none | Python trustworthy on a real repository |
+| TypeScript | IN PROGRESS (repos pinned, methodology frozen, 105 sites selected AND labeled; scorer not yet written, no measurement run) | [methodology](observations/stage3-typescript-audit/methodology.md) + 2 addenda + [rubric](observations/stage3-typescript-audit/labeling-rubric.md) / none | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
 Use existing pinned Rust repositories and Click first; pin TypeScript compiler
@@ -1270,4 +1270,45 @@ benchmark, don't run it against the stale snapshot.
   --json` output size on `typescript-6.0.3` should be measured before any
   script loads it wholesale (pydantic's own output was already 22MB at a
   much smaller source size).
+- 2026-09-24: **Stage 3 TypeScript: labeling rubric frozen, all 105 sites
+  hand-labeled (`a20afd8`, `c5f4c45`, `675528d`).** Rubric quotes
+  `docs/call-classification-policy.md`'s TypeScript row directly (not
+  derived from Python's by analogy) and resolves TypeScript-specific
+  cases neither Rust nor Python needed: structural/interface receivers
+  are never Must from the interface type alone; `obj?.m()` is scored by
+  the same target-binding rule as `obj.m()` (the policy describes which
+  target is called if the call happens, not whether it happens);
+  overloaded functions resolve Must if the single shared implementation
+  is otherwise unique; legacy-decorator lines are the factory call itself
+  (scored ordinarily), not the implicit application; `.d.ts` files can
+  never contain a real call under any circumstance. A further review
+  found two internal contradictions before any site was labeled (case 5
+  didn't say explicitly that the selected site IS the factory call; case
+  10 wrongly called a bare `@name` `not_a_call_site`, contradicting
+  Python's own rubric case 8) — fixed in `c5f4c45`, checked that neither
+  contradiction actually mislabels any of the 105 sites in this specific
+  sample (zero bare-`@name` sites exist in it) before moving on.
+  Labeling itself: every Must candidate's target definition was opened
+  and checked for overriding subclasses (grep, not assumed) before
+  labeling Must; every interface-typed receiver was checked for how many
+  concrete implementations actually exist in the snapshot before deciding
+  Unknown; built-in targets (`Date`, `Map`/`Set` methods,
+  `Function.prototype.bind`/`.call`, Jest matchers) labeled Unknown as
+  external to the four-repository snapshot. Distribution: **47 must, 50
+  unknown, 8 not_a_call_site, 0 may** — matching every other language
+  audited in this whole program (May has never occurred naturally in a
+  random sample for any language measured so far). Confirmed directly
+  before committing: no `dispatch_audit_scorer_typescript.py` and no
+  scoring output exist anywhere in the repo, so these labels are
+  genuinely frozen before any comparison against Girder's own answer.
+  **Next step**: write `tools/dispatch_audit_scorer_typescript.py`,
+  reusing the Python scorer's corrected byte-offset logic (mask the file,
+  find the match column on the masked line, read the offset from the raw
+  line, fail closed on drift) but computing UTF-8 byte offsets rather
+  than character offsets and testing against a non-ASCII file before
+  trusting it (the compiler source has locale/contributor-credit strings
+  with non-ASCII text) — then run the before-observation. No resolver
+  design work has started; this stage is still entirely at the
+  measurement-before-any-code-change phase, matching where Rust's and
+  Python's Stage 3 rounds each began.
 - Completion remains unproven until every criterion above has committed evidence.
