@@ -65,7 +65,12 @@ except ModuleNotFoundError:
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CORPUS_PATH = REPO_ROOT / "docs" / "stage3-typescript-corpus.json"
-TYPESCRIPT_REPO_IDS = ("typescript-6.0.3", "zod-3.23.8", "date-fns-4.1.0")
+TYPESCRIPT_REPO_IDS = (
+    "typescript-6.0.3",
+    "zod-3.23.8",
+    "date-fns-4.1.0",
+    "class-validator-0.15.1",
+)
 
 # Applied to a single trimmed, MASKED source line. Order matters: more
 # specific shapes are checked before the generic "plain_call" fallback so a
@@ -92,9 +97,16 @@ SHAPE_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 ]
 
 KEYWORDS_NOT_CALLS = {
+    # `super` and `import` are deliberately NOT here, unlike a first draft
+    # of this set: `super(args)` (a parent-constructor call) and
+    # `import("x")` (a dynamic import expression) are both real call
+    # sites, not syntax this selector should reject. Static
+    # `import { x } from 'y'` has no `identifier(` shape at all (no paren
+    # directly follows "import" in that form), so this doesn't cause it
+    # to be wrongly picked up either.
     "if", "while", "for", "function", "return", "switch", "else", "with",
-    "catch", "do", "try", "finally", "throw", "import", "export", "from",
-    "as", "default", "extends", "implements", "super", "this", "typeof",
+    "catch", "do", "try", "finally", "throw", "export", "from",
+    "as", "default", "extends", "implements", "this", "typeof",
     "instanceof", "in", "of", "yield", "await", "async", "const", "let",
     "var", "case", "break", "continue", "delete", "void", "static",
     "public", "private", "protected", "readonly", "abstract", "declare",
@@ -461,6 +473,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             package_counts_pool[repo_id] = len(sites)
             all_sites.extend(sites)
 
+    shape_counts_pool: dict[str, int] = {}
+    for site in all_sites:
+        shape_counts_pool[site["shape"]] = shape_counts_pool.get(site["shape"], 0) + 1
+
     selected = stratified_sample(all_sites, args.total, args.seed)
     package_counts_selected: dict[str, int] = {}
     shape_counts_selected: dict[str, int] = {}
@@ -473,6 +489,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "seed": args.seed,
         "pool_size": len(all_sites),
         "package_counts_pool": package_counts_pool,
+        "shape_counts_pool": shape_counts_pool,
         "selected_count": len(selected),
         "package_counts_selected": package_counts_selected,
         "shape_counts_selected": shape_counts_selected,

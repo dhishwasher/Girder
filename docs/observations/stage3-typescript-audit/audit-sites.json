@@ -1,187 +1,255 @@
 {
   "schema_version": 1,
   "seed": 20260924,
-  "pool_size": 132578,
+  "pool_size": 136471,
   "package_counts_pool": {
-    "typescript-6.0.3": 103672,
-    "zod-3.23.8": 9806,
-    "date-fns-4.1.0": 19100
+    "typescript-6.0.3": 103711,
+    "zod-3.23.8": 9808,
+    "date-fns-4.1.0": 19103,
+    "class-validator-0.15.1": 3849
+  },
+  "shape_counts_pool": {
+    "plain_call": 85464,
+    "new_expression": 7190,
+    "method_call": 37938,
+    "optional_chaining_call": 784,
+    "qualified_attribute_call": 4408,
+    "dynamic_dispatch": 372,
+    "decorator": 315
   },
   "selected_count": 105,
   "package_counts_selected": {
-    "date-fns-4.1.0": 21,
-    "typescript-6.0.3": 78,
-    "zod-3.23.8": 6
+    "class-validator-0.15.1": 17,
+    "date-fns-4.1.0": 12,
+    "typescript-6.0.3": 67,
+    "zod-3.23.8": 9
   },
   "shape_counts_selected": {
-    "new_expression": 18,
-    "dynamic_dispatch": 18,
-    "plain_call": 17,
-    "method_call": 18,
-    "optional_chaining_call": 17,
-    "qualified_attribute_call": 17
+    "decorator": 15,
+    "new_expression": 15,
+    "method_call": 15,
+    "dynamic_dispatch": 15,
+    "optional_chaining_call": 15,
+    "plain_call": 15,
+    "qualified_attribute_call": 15
   },
   "sites": [
     {
+      "package": "class-validator-0.15.1",
+      "file": "sample/sample2-using-groups/Post.ts",
+      "line": 23,
+      "shape": "decorator",
+      "text": "@IsEmail(undefined, {"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/custom-decorators.spec.ts",
+      "line": 49,
+      "shape": "decorator",
+      "text": "@IsLongerThan('lastName', {"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/custom-decorators.spec.ts",
+      "line": 134,
+      "shape": "decorator",
+      "text": "@IsLonger('lastName')"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/nested-validation.spec.ts",
+      "line": 200,
+      "shape": "new_expression",
+      "text": "const submodel1 = new MySubClass();"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/promise-validation.spec.ts",
+      "line": 21,
+      "shape": "decorator",
+      "text": "@ValidateNested()"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/promise-validation.spec.ts",
+      "line": 49,
+      "shape": "decorator",
+      "text": "@ValidatePromise()"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/promise-validation.spec.ts",
+      "line": 113,
+      "shape": "decorator",
+      "text": "@ValidateNested()"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-error.spec.ts",
+      "line": 34,
+      "shape": "decorator",
+      "text": "@IsString()"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 1342,
+      "shape": "decorator",
+      "text": "@IsNumberString()"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 2901,
+      "shape": "decorator",
+      "text": "@IsISBN(10)"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 3264,
+      "shape": "decorator",
+      "text": "@IsNotEmptyObject({ nullable: false })"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 3373,
+      "shape": "decorator",
+      "text": "@IsMultibyte()"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-options.spec.ts",
+      "line": 204,
+      "shape": "decorator",
+      "text": "@ValidatorConstraint({ name: 'customIsNotArrayConstraint', async: false })"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-options.spec.ts",
+      "line": 1077,
+      "shape": "decorator",
+      "text": "@ValidateNested({ groups: ['always'], always: true })"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-options.spec.ts",
+      "line": 1201,
+      "shape": "decorator",
+      "text": "@MinLength(20, {"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validator-options.spec.ts",
+      "line": 36,
+      "shape": "method_call",
+      "text": "expect(errors[0].constraints).toEqual({ unknownValue: 'an unknown value was passed to the validate function' });"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/whitelist-validation.spec.ts",
+      "line": 32,
+      "shape": "decorator",
+      "text": "@Allow()"
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "scripts/build/localeSnapshots/_lib/distanceDates.ts",
+      "line": 53,
+      "shape": "new_expression",
+      "text": "new Date(2000, 0, 5),"
+    },
+    {
       "package": "date-fns-4.1.0",
       "file": "src/addISOWeekYears/test.ts",
-      "line": 24,
-      "shape": "new_expression",
-      "text": "expect(date).toEqual(new Date(2014, 8 /* Sep */, 1));"
+      "line": 30,
+      "shape": "method_call",
+      "text": "initialDate.setHours(0, 0, 0, 0);"
     },
     {
       "package": "date-fns-4.1.0",
-      "file": "src/differenceInISOWeekYears/test.ts",
-      "line": 35,
+      "file": "src/endOfWeek/test.ts",
+      "line": 121,
       "shape": "new_expression",
-      "text": "const secondDate = new Date(0);"
-    },
-    {
-      "package": "date-fns-4.1.0",
-      "file": "src/differenceInWeeks/test.ts",
-      "line": 134,
-      "shape": "new_expression",
-      "text": "new Date(2017, 0 /* Jan */, 1),"
-    },
-    {
-      "package": "date-fns-4.1.0",
-      "file": "src/eachQuarterOfInterval/test.ts",
-      "line": 22,
-      "shape": "new_expression",
-      "text": "start: new Date(2014, 2 /* Mar */, 6).getTime(),"
-    },
-    {
-      "package": "date-fns-4.1.0",
-      "file": "src/eachWeekendOfInterval/test.ts",
-      "line": 44,
-      "shape": "new_expression",
-      "text": "new Date(2018, 8 /* Sept */, 22),"
+      "text": "const date = new Date(\"2014-09-01T00:00:00Z\");"
     },
     {
       "package": "date-fns-4.1.0",
       "file": "src/format/test.ts",
-      "line": 333,
+      "line": 811,
+      "shape": "dynamic_dispatch",
+      "text": "expect(format.bind(null, date, \"yyyy-MM-dd-nnnn\")).toThrow(RangeError);"
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/fp/_lib/convertToFP/test.ts",
+      "line": 87,
       "shape": "new_expression",
-      "text": "const date = new Date(1986, 3 /* Apr */, 6);"
-    },
-    {
-      "package": "date-fns-4.1.0",
-      "file": "src/formatDistanceStrict/test.ts",
-      "line": 431,
-      "shape": "dynamic_dispatch",
-      "text": "formatDistanceStrict.bind("
-    },
-    {
-      "package": "date-fns-4.1.0",
-      "file": "src/formatRFC3339/test.ts",
-      "line": 51,
-      "shape": "dynamic_dispatch",
-      "text": "expect(formatRFC3339.bind(null, new Date(NaN))).toThrow(RangeError);"
+      "text": "const result = fn2(new Date(1987, 1));"
     },
     {
       "package": "date-fns-4.1.0",
       "file": "src/intlFormatDistance/test.ts",
-      "line": 600,
+      "line": 64,
       "shape": "new_expression",
-      "text": "new Date(1987, 3, 11, 10, 30, 0),"
+      "text": "new Date(1986, 3, 5, 10, 30),"
     },
     {
       "package": "date-fns-4.1.0",
       "file": "src/intlFormatDistance/test.ts",
-      "line": 776,
-      "shape": "dynamic_dispatch",
-      "text": "intlFormatDistance.bind("
+      "line": 109,
+      "shape": "new_expression",
+      "text": "new Date(1986, 3, 4, 10, 30, 0),"
     },
     {
       "package": "date-fns-4.1.0",
-      "file": "src/isSameYear/test.ts",
-      "line": 36,
-      "shape": "plain_call",
-      "text": "it(\"returns false if the second date is `Invalid Date`\", () => {"
-    },
-    {
-      "package": "date-fns-4.1.0",
-      "file": "src/lastDayOfQuarter/test.ts",
-      "line": 49,
+      "file": "src/parse/_lib/parsers/StandAloneQuarterParser.ts",
+      "line": 48,
       "shape": "method_call",
-      "text": ").toBe(\"2024-06-30T00:00:00.000-07:00\");"
+      "text": "match.quarter(dateString, {"
     },
     {
       "package": "date-fns-4.1.0",
-      "file": "src/locale/oc/_lib/localize/index.ts",
-      "line": 191,
-      "shape": "plain_call",
-      "text": "month: buildLocalizeFn({"
-    },
-    {
-      "package": "date-fns-4.1.0",
-      "file": "src/parse/_lib/parsers/index.ts",
-      "line": 81,
+      "file": "src/parse/test.ts",
+      "line": 2385,
       "shape": "new_expression",
-      "text": "R: new ISOWeekYearParser(),"
+      "text": "const expected = new Date("
     },
     {
       "package": "date-fns-4.1.0",
-      "file": "src/parseISO/test.ts",
-      "line": 194,
+      "file": "src/setWeekYear/test.ts",
+      "line": 22,
       "shape": "new_expression",
-      "text": "expect(result).toEqual(new Date(\"2014-10-25T13:46:20+07:00\"));"
+      "text": "const date = new Date(2008, 11 /* Dec */, 29);"
     },
     {
       "package": "date-fns-4.1.0",
-      "file": "src/previousFriday/test.ts",
-      "line": 18,
+      "file": "src/startOfWeek/test.ts",
+      "line": 31,
       "shape": "new_expression",
-      "text": "new Date(2021, 5 /* Jun */, 4),"
+      "text": "const date = new Date(2014, 8 /* Sep */, 2, 11, 55, 0);"
     },
     {
       "package": "date-fns-4.1.0",
-      "file": "src/setDefaultOptions/index.ts",
-      "line": 57,
-      "shape": "dynamic_dispatch",
-      "text": "if (Object.prototype.hasOwnProperty.call(defaultOptions, property)) {"
-    },
-    {
-      "package": "date-fns-4.1.0",
-      "file": "src/setISOWeek/test.ts",
-      "line": 28,
+      "file": "src/startOfWeek/test.ts",
+      "line": 97,
       "shape": "new_expression",
-      "text": "const expectedResult = new Date(0);"
-    },
-    {
-      "package": "date-fns-4.1.0",
-      "file": "src/startOfISOWeekYear/test.ts",
-      "line": 15,
-      "shape": "new_expression",
-      "text": "new Date(2005, 0 /* Jan */, 1, 6, 0).getTime(),"
-    },
-    {
-      "package": "date-fns-4.1.0",
-      "file": "src/startOfYear/test.ts",
-      "line": 27,
-      "shape": "new_expression",
-      "text": "const initialDate = new Date(0);"
-    },
-    {
-      "package": "date-fns-4.1.0",
-      "file": "src/subMonths/test.ts",
-      "line": 9,
-      "shape": "new_expression",
-      "text": "const result = subMonths(new Date(2015, 1 /* Feb */, 1), 5);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/builder.ts",
-      "line": 1857,
-      "shape": "optional_chaining_call",
-      "text": "else state.affectedFilesPendingEmit?.delete(affectedSourceFile.resolvedPath);"
+      "text": "const result = startOfWeek(new UTCDate());"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/compiler/checker.ts",
-      "line": 2935,
-      "shape": "new_expression",
-      "text": "return symbolLinks[id] ??= new SymbolLinks();"
+      "line": 5521,
+      "shape": "optional_chaining_call",
+      "text": "tracing?.recordType(result);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 7873,
+      "shape": "optional_chaining_call",
+      "text": "const jsdocPropertyTag = propertySymbol.declarations?.find((d): d is JSDocPropertyTag => d.kind === SyntaxKind.JSDocPropertyTag);"
     },
     {
       "package": "typescript-6.0.3",
@@ -193,569 +261,513 @@
     {
       "package": "typescript-6.0.3",
       "file": "src/compiler/checker.ts",
-      "line": 26091,
-      "shape": "optional_chaining_call",
-      "text": "const valueDeclaration = p.declarations?.find(d => d.symbol.valueDeclaration?.parent === type.symbol.valueDeclaration);"
+      "line": 29877,
+      "shape": "plain_call",
+      "text": "return type.flags & TypeFlags.Any ? type : narrowTypeByTypeFacts(type, globalFunctionType, TypeFacts.TypeofEQFunction);"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/compiler/checker.ts",
-      "line": 32569,
-      "shape": "plain_call",
-      "text": "if (isArrayLikeType(t)) {"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/commandLineParser.ts",
-      "line": 3957,
-      "shape": "plain_call",
-      "text": "const supportedExtensions = getSupportedExtensions(options, extraFileExtensions);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/core.ts",
-      "line": 1067,
+      "line": 46392,
       "shape": "optional_chaining_call",
-      "text": "? (array, offset) => (array as any)?.at(offset)"
+      "text": "const isGeneratorMethod = globalGeneratorType.symbol?.members?.get(methodName as __String) === methodType.symbol;"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/compiler/factory/emitNode.ts",
-      "line": 154,
-      "shape": "plain_call",
-      "text": "export function setTokenSourceMapRange<T extends Node>(node: T, token: SyntaxKind, range: SourceMapRange | undefined): T {"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/moduleNameResolver.ts",
-      "line": 2244,
-      "shape": "optional_chaining_call",
-      "text": "const loadPackageJsonMainState = getTemporaryModuleResolutionState(cache?.getPackageJsonInfoCache(), host, options);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/moduleNameResolver.ts",
-      "line": 2331,
-      "shape": "optional_chaining_call",
-      "text": "const finalPath = getNormalizedAbsolutePath(resolvedTarget, state.host.getCurrentDirectory?.());"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/moduleNameResolver.ts",
-      "line": 2449,
-      "shape": "optional_chaining_call",
-      "text": "state.failedLookupLocations?.push(packageJsonPath);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/moduleNameResolver.ts",
-      "line": 2472,
-      "shape": "plain_call",
-      "text": "trace(host, Diagnostics.Found_package_json_at_0, packageJsonPath);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/moduleSpecifiers.ts",
-      "line": 810,
-      "shape": "optional_chaining_call",
-      "text": "const cache = host.getModuleResolutionCache?.();"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/program.ts",
-      "line": 542,
-      "shape": "dynamic_dispatch",
-      "text": "const newValue = originalReadFile.call(host, fileName);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/program.ts",
-      "line": 657,
-      "shape": "plain_call",
-      "text": "export function formatDiagnostics(diagnostics: readonly Diagnostic[], host: FormatDiagnosticsHost): string {"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/program.ts",
-      "line": 2090,
-      "shape": "optional_chaining_call",
-      "text": "tracing?.push(tracing.Phase.Program, \"resolveTypeReferenceDirectiveNamesWorker\", { containingFileName });"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/program.ts",
-      "line": 3881,
+      "file": "src/compiler/checker.ts",
+      "line": 49555,
       "shape": "optional_chaining_call",
       "text": "tracing?.pop();"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/compiler/program.ts",
-      "line": 4976,
-      "shape": "dynamic_dispatch",
-      "text": "isString(source.source) ? originalFileExists.call(host.compilerHost, source.source) as boolean : true :"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/resolutionCache.ts",
-      "line": 943,
-      "shape": "optional_chaining_call",
-      "text": "reusedNames?.forEach(entry =>"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/compiler/transformers/es2015.ts",
-      "line": 2959,
+      "file": "src/compiler/commandLineParser.ts",
+      "line": 2725,
       "shape": "plain_call",
-      "text": "return visitForStatement(node as ForStatement, outermostLabeledStatement);"
+      "text": "function matchesSpecs(path: string, includeSpecs: readonly string[] | undefined, excludeSpecs: readonly string[] | undefined, host: ConvertToTSConfigHost): (path: string) => boolean {"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/compiler/transformers/es2015.ts",
-      "line": 2984,
+      "file": "src/compiler/core.ts",
+      "line": 598,
       "shape": "plain_call",
-      "text": "return visitIterationStatementWithFacts("
+      "text": "export function mapEntries<K1, V1, K2, V2>(map: ReadonlyMap<K1, V1> | undefined, f: (key: K1, value: V1) => readonly [K2, V2]): Map<K2, V2> | undefined;"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/compiler/transformers/generators.ts",
-      "line": 1783,
+      "file": "src/compiler/emitter.ts",
+      "line": 2282,
       "shape": "plain_call",
-      "text": "return visitEachChild(node, visitor, context);"
+      "text": "popNameGenerationScope(node);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/compiler/transformers/ts.ts",
-      "line": 2454,
+      "file": "src/compiler/emitter.ts",
+      "line": 2798,
+      "shape": "plain_call",
+      "text": "emitExpression(node.expression, parenthesizer.parenthesizeOperandOfPrefixUnary);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/emitter.ts",
+      "line": 4280,
+      "shape": "plain_call",
+      "text": "writePunctuation(\"{\");"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/moduleNameResolver.ts",
+      "line": 467,
       "shape": "method_call",
-      "text": "factory.createVariableStatement("
+      "text": "const keyRange = VersionRange.tryParse(key);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/compiler/tsbuildPublic.ts",
-      "line": 1459,
+      "file": "src/compiler/moduleSpecifiers.ts",
+      "line": 347,
+      "shape": "optional_chaining_call",
+      "text": "const cache = host.getModuleSpecifierCache?.();"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/program.ts",
+      "line": 618,
+      "shape": "dynamic_dispatch",
+      "text": "originalCreateDirectory.call(host, directory);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/program.ts",
+      "line": 2029,
+      "shape": "method_call",
+      "text": "return getPackagesMap().has(getTypesPackageName(packageName));"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/sourcemap.ts",
+      "line": 701,
       "shape": "plain_call",
-      "text": "const tsconfigTime = getModifiedTime(state, configFile);"
+      "text": "const sourceRoot = map.sourceRoot ? getNormalizedAbsolutePath(map.sourceRoot, mapDirectory) : mapDirectory;"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/sys.ts",
+      "line": 213,
+      "shape": "optional_chaining_call",
+      "text": "callbackOnWatchFileStat?.(watchedFile, pollIndex, fileChanged);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/transformers/jsx.ts",
+      "line": 142,
+      "shape": "qualified_attribute_call",
+      "text": "let specifierSourceImports = currentFileState.utilizedImplicitRuntimeImports.get(importSource);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/transformers/module/esnextAnd2015.ts",
+      "line": 231,
+      "shape": "method_call",
+      "text": "const requireHelperName = factory.createUniqueName(\"__require\", GeneratedIdentifierFlags.Optimistic | GeneratedIdentifierFlags.FileLevel);"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/compiler/visitorPublic.ts",
-      "line": 1276,
+      "line": 751,
       "shape": "qualified_attribute_call",
-      "text": "return context.factory.updateBlock("
+      "text": "return context.factory.updateClassStaticBlockDeclaration("
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/visitorPublic.ts",
+      "line": 891,
+      "shape": "method_call",
+      "text": "Debug.checkDefined(nodeVisitor(node.typeParameter, visitor, isTypeParameterDeclaration)),"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/visitorPublic.ts",
+      "line": 1155,
+      "shape": "qualified_attribute_call",
+      "text": "return context.factory.updatePrefixUnaryExpression("
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/collectionsImpl.ts",
+      "line": 34,
+      "shape": "dynamic_dispatch",
+      "text": "public get [Symbol.toStringTag]() {"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/harness/evaluatorImpl.ts",
-      "line": 28,
-      "shape": "method_call",
-      "text": "if (!ts.hasProperty(FakeSymbol, symbolName)) {"
+      "line": 197,
+      "shape": "dynamic_dispatch",
+      "text": "evaluateThunk.call(this.globals, module, module.exports, localRequire, vpath.dirname(file), file, ...globalArgs);"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/harness/fourslashImpl.ts",
-      "line": 1501,
-      "shape": "method_call",
-      "text": "this.getFileContent(additionalSpan.fileName),"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/harness/fourslashImpl.ts",
-      "line": 2421,
+      "line": 3091,
       "shape": "qualified_attribute_call",
-      "text": "const item: ts.QuickInfo & { verbosityLevel?: number; } | undefined = this.languageService.getQuickInfoAtPosition("
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/harness/fourslashImpl.ts",
-      "line": 3570,
-      "shape": "qualified_attribute_call",
-      "text": "ts.Debug.assert(change.fileName === fileName);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/harness/fourslashImpl.ts",
-      "line": 4112,
-      "shape": "qualified_attribute_call",
-      "text": "const editInfo = this.languageService.getEditsForRefactor(this.activeFile.fileName, this.formatCodeSettings, range, refactorName, actionName, ts.emptyOptions)!;"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/harness/fourslashImpl.ts",
-      "line": 4163,
-      "shape": "qualified_attribute_call",
-      "text": "ts.Debug.fail(\"Did not expect to get 'move to a new file' refactor\");"
+      "text": "Harness.IO.log(this.spanInfoToString(this.getNameOrDottedNameSpan(pos)!, \"**\"));"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/harness/fourslashInterfaceImpl.ts",
-      "line": 117,
+      "line": 76,
       "shape": "qualified_attribute_call",
-      "text": "this.state.goToPosition(positionOrLineAndCharacter);"
+      "text": "this.state.setCompilerOptionsForInferredProjects(options);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/harness/tsserverLogger.ts",
-      "line": 77,
-      "shape": "dynamic_dispatch",
-      "text": "args.forEach(s => originaPush.call(logger.logs, (sanitizeLibs ? sanitizeLibFileText : ts.identity)(sanitizeLog(s))));"
+      "file": "src/harness/fourslashInterfaceImpl.ts",
+      "line": 492,
+      "shape": "qualified_attribute_call",
+      "text": "this.state.verifyTodoComments(descriptors, this.state.getRanges());"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/harnessLanguageService.ts",
+      "line": 316,
+      "shape": "qualified_attribute_call",
+      "text": "this.scriptInfos.forEach((scriptInfo, key) => {"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/watchUtils.ts",
+      "line": 220,
+      "shape": "optional_chaining_call",
+      "text": "const existing = old?.get(key);"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/lib/dom.generated.d.ts",
-      "line": 44510,
-      "shape": "dynamic_dispatch",
-      "text": "[Symbol.iterator](): ArrayIterator<string>;"
+      "line": 33249,
+      "shape": "plain_call",
+      "text": "removeEventListener<K extends keyof SVGElementEventMap>(type: K, listener: (this: SVGMetadataElement, ev: SVGElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/lib/dom.generated.d.ts",
-      "line": 44731,
+      "line": 44854,
+      "shape": "dynamic_dispatch",
+      "text": "[Symbol.iterator](): ArrayIterator<SourceBuffer>;"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/lib/es2015.iterable.d.ts",
+      "line": 553,
+      "shape": "dynamic_dispatch",
+      "text": "[Symbol.iterator](): ArrayIterator<number>;"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/lib/es2018.asynciterable.d.ts",
+      "line": 27,
+      "shape": "dynamic_dispatch",
+      "text": "[Symbol.asyncIterator](): AsyncIterableIterator<T, TReturn, TNext>;"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/lib/webworker.generated.d.ts",
+      "line": 15357,
       "shape": "dynamic_dispatch",
       "text": "[Symbol.iterator](): ArrayIterator<ImageTrack>;"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/lib/dom.generated.d.ts",
-      "line": 44774,
-      "shape": "dynamic_dispatch",
-      "text": "[Symbol.iterator](): ArrayIterator<Attr>;"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/lib/dom.generated.d.ts",
-      "line": 45103,
-      "shape": "dynamic_dispatch",
-      "text": "[Symbol.asyncIterator](): ReadableStreamAsyncIterator<T>;"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/lib/es2015.iterable.d.ts",
-      "line": 55,
-      "shape": "dynamic_dispatch",
-      "text": "[Symbol.iterator](): ArrayIterator<T>;"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/lib/webworker.generated.d.ts",
-      "line": 15239,
-      "shape": "dynamic_dispatch",
-      "text": "[Symbol.iterator](): ArrayIterator<File>;"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/lib/webworker.generated.d.ts",
-      "line": 15577,
-      "shape": "dynamic_dispatch",
-      "text": "[Symbol.asyncIterator](): FileSystemDirectoryHandleAsyncIterator<[string, FileSystemDirectoryHandle | FileSystemFileHandle]>;"
+      "file": "src/server/editorServices.ts",
+      "line": 2181,
+      "shape": "optional_chaining_call",
+      "text": "if (!this.pendingOpenFileProjectUpdates?.has(path)) {"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/server/editorServices.ts",
-      "line": 1772,
-      "shape": "qualified_attribute_call",
-      "text": "!project.projectRootPath || !this.compilerOptionsForInferredProjectsPerProjectRoot.has(project.projectRootPath)"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/server/editorServices.ts",
-      "line": 1884,
-      "shape": "method_call",
-      "text": "const info = this.getScriptInfoForNormalizedPath(file);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/server/editorServices.ts",
-      "line": 5369,
-      "shape": "qualified_attribute_call",
-      "text": "this.externalProjectToConfiguredProjectMap.set(proj.projectFileName, configuredProjects);"
+      "line": 3030,
+      "shape": "optional_chaining_call",
+      "text": "configFileExistenceInfo.watcher?.close();"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/server/project.ts",
-      "line": 1673,
-      "shape": "qualified_attribute_call",
-      "text": "this.program = this.languageService.getProgram(); // TODO: GH#18217"
+      "line": 2355,
+      "shape": "optional_chaining_call",
+      "text": "this.getScriptInfo(rootFile)?.editContent(0, originalText.length, updatedText);"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/server/session.ts",
-      "line": 1679,
-      "shape": "optional_chaining_call",
-      "text": "definitions?.forEach(d => definitionSet.add(d));"
+      "line": 2179,
+      "shape": "plain_call",
+      "text": "const file = toNormalizedPath(args.file);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/services/codefixes/fixUnusedIdentifier.ts",
-      "line": 119,
+      "file": "src/services/codefixes/fixUnreachableCode.ts",
+      "line": 34,
+      "shape": "plain_call",
+      "text": "getAllCodeActions: context => codeFixAll(context, errorCodes, (changes, diag) => doChange(changes, diag.file, diag.start, diag.length, diag.code)),"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/codefixes/inferFromUsage.ts",
+      "line": 1161,
+      "shape": "dynamic_dispatch",
+      "text": "return builtinConstructors[type.symbol.escapedName as string](combineTypes(types));"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/codefixes/removeAccidentalCallParentheses.ts",
+      "line": 24,
       "shape": "qualified_attribute_call",
-      "text": "createDeleteFix(textChanges.ChangeTracker.with(context, t => deleteDestructuringElements(t, sourceFile, token.parent as ObjectBindingPattern | ArrayBindingPattern)), diagnostic),"
+      "text": "const changes = textChanges.ChangeTracker.with(context, t => {"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/services/completions.ts",
-      "line": 3091,
-      "shape": "optional_chaining_call",
-      "text": "if (importAdder?.hasFixes() || eraseRange) {"
+      "line": 1658,
+      "shape": "method_call",
+      "text": "uniqueNames.add(realName);"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/services/completions.ts",
-      "line": 5204,
-      "shape": "plain_call",
-      "text": "function setSortTextToMemberDeclaredBySpreadAssignment(membersDeclaredBySpreadAssignment: Set<string>, contextualMemberSymbols: Symbol[]): void {"
+      "line": 4693,
+      "shape": "new_expression",
+      "text": "const existing = new Set(importAttributes.elements.map(getNameFromImportAttribute));"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/services/importTracker.ts",
-      "line": 593,
+      "file": "src/services/exportInfoMap.ts",
+      "line": 480,
       "shape": "optional_chaining_call",
-      "text": "return symbol.declarations?.some(d => d === parent) && isBinaryExpression(grandparent)"
+      "text": "host.log?.(`forEachExternalModuleToImportFrom autoImportProvider: ${timestamp() - start}`);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/services/navigationBar.ts",
-      "line": 175,
-      "shape": "plain_call",
-      "text": "return map(primaryNavBarMenuItems(rootNavigationBarNode(sourceFile)), convertToPrimaryNavBarMenuItem);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/services/organizeImports.ts",
-      "line": 402,
-      "shape": "qualified_attribute_call",
-      "text": "group.defaultImports.push(importDeclaration as ImportDeclarationWithDefaultImport);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/services/stringCompletions.ts",
-      "line": 1004,
+      "file": "src/services/refactors/extractSymbol.ts",
+      "line": 245,
       "shape": "method_call",
-      "text": "const typeChecker = program.getTypeChecker();"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/services/symbolDisplay.ts",
-      "line": 989,
-      "shape": "method_call",
-      "text": "displayParts.push(spacePart());"
+      "text": "if (!usedFunctionNames.has(description)) {"
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/services/textChanges.ts",
-      "line": 1480,
+      "line": 1520,
       "shape": "method_call",
-      "text": "writer.writePunctuation(s);"
+      "text": "writer.rawWrite(s);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/config/matchFiles.ts",
-      "line": 176,
-      "shape": "method_call",
-      "text": "baseline.push("
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/config/matchFiles.ts",
-      "line": 1001,
-      "shape": "method_call",
-      "text": "fs.symlinkSync(\"c:/dev/a\", \"c:/dev/a/b/parent\");"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/customTransforms.ts",
-      "line": 168,
+      "file": "src/services/utilities.ts",
+      "line": 1500,
       "shape": "plain_call",
-      "text": "emitsCorrectly(\"importDeclarationBeforeTransformElision\", ["
+      "text": "return skipOuterExpressions(parent.expression);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/diagnosticCollection.ts",
-      "line": 95,
+      "file": "src/testRunner/unittests/evaluation/forOf.ts",
+      "line": 104,
       "shape": "method_call",
-      "text": "const dyBetter = ts.createDiagnosticForNodeFromMessageChain(file, node, chain);"
+      "text": "const result = evaluator.evaluateTypeScript("
     },
     {
       "package": "typescript-6.0.3",
       "file": "src/testRunner/unittests/helpers/baseline.ts",
-      "line": 254,
+      "line": 282,
       "shape": "optional_chaining_call",
-      "text": "resolvedRoot: buildInfo.resolvedRoot?.map(toReadableIncrementalBuildInfoResolvedRoot),"
+      "text": "changeFileSet: buildInfo.changeFileSet?.map(toFileName),"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/transform.ts",
-      "line": 611,
+      "file": "src/testRunner/unittests/helpers/tsc.ts",
+      "line": 229,
+      "shape": "optional_chaining_call",
+      "text": "incrementalReadableBuildInfo.affectedFilesPendingEmit?.forEach(([actualFileOrArray]) => {"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/incrementalParser.ts",
+      "line": 35,
+      "shape": "method_call",
+      "text": "assert.equal(d1.length, d2.length, \"d1.length !== d2.length\");"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/incrementalParser.ts",
+      "line": 333,
       "shape": "qualified_attribute_call",
-      "text": "return ts.factory.updateMethodDeclaration("
+      "text": "const oldText = ts.ScriptSnapshot.fromString(source);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsbuildWatch/projectsBuilding.ts",
-      "line": 175,
-      "shape": "method_call",
-      "text": "edit: sys => sys.appendFile(`/user/username/projects/myproject/pkg0/index.ts`, `export const someConst3 = 10;`),"
+      "file": "src/testRunner/unittests/incrementalParser.ts",
+      "line": 988,
+      "shape": "qualified_attribute_call",
+      "text": "const oldText = ts.ScriptSnapshot.fromString(textWithIgnoreCommentFrom(source, singleIgnore));"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tscWatch/emit.ts",
-      "line": 142,
-      "shape": "optional_chaining_call",
-      "text": "const additionalFiles = getAdditionalFileOrFolder?.() || ts.emptyArray;"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tscWatch/emitAndErrorUpdates.ts",
-      "line": 326,
+      "file": "src/testRunner/unittests/services/convertToAsyncFunction.ts",
+      "line": 1662,
       "shape": "plain_call",
-      "text": "verifyTransitiveExports("
+      "text": "_testConvertToAsyncFunctionFailed("
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/cachingFileSystemInformation.ts",
-      "line": 574,
-      "shape": "method_call",
-      "text": "const project = session.getProjectService().configuredProjects.get(tsconfig.path)!;"
+      "file": "src/testRunner/unittests/tsserver/compileOnSave.ts",
+      "line": 739,
+      "shape": "plain_call",
+      "text": "test(\"\\n\", logger);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/completionsIncomplete.ts",
-      "line": 134,
-      "shape": "optional_chaining_call",
-      "text": "assert.lengthOf(completions.entries.filter(entry => (entry.data as any)?.moduleSpecifier?.startsWith(\"dep-a\")), 50);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/events/projectLanguageServiceState.ts",
-      "line": 33,
+      "file": "src/testRunner/unittests/tsserver/configuredProjects.ts",
+      "line": 808,
       "shape": "dynamic_dispatch",
       "text": "host.getFileSize = (filePath: string) => filePath === f2.path ? ts.server.maxProgramSizeForNonTsFiles + 1 : originalGetFileSize.call(host, filePath);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/jsdocTag.ts",
-      "line": 178,
-      "shape": "method_call",
-      "text": "session.executeCommandSeq<ts.server.protocol.CompletionDetailsRequest>({"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/packageJsonInfo.ts",
-      "line": 44,
-      "shape": "qualified_attribute_call",
-      "text": "let packageJsonInfo = projectService.packageJsonCache.getInDirectory(\"/home/src/projects/project/\")!;"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/packageJsonInfo.ts",
-      "line": 138,
-      "shape": "qualified_attribute_call",
-      "text": "session.host.baselineHost(`getPackageJsonsVisibleToFile:: ${fileName} ${rootDir}:: Result:: ${jsonToReadableText(result)}`);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/plugins.ts",
-      "line": 296,
-      "shape": "dynamic_dispatch",
-      "text": "const config = ts.readJsonConfigFile(configFile, project.readFile.bind(project));"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/plugins.ts",
-      "line": 300,
-      "shape": "dynamic_dispatch",
-      "text": "readFile: project.readFile.bind(project),"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/pluginsAsync.ts",
-      "line": 55,
-      "shape": "qualified_attribute_call",
-      "text": "session.logger.log(`pluginModuleInstantiated:: ${pluginModuleInstantiated}`);"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/projectErrors.ts",
-      "line": 23,
+      "file": "src/testRunner/unittests/tsserver/events/projectLoading.ts",
+      "line": 126,
       "shape": "plain_call",
-      "text": "it(\"external project - diagnostics for missing files\", () => {"
+      "text": "baselineTsserverLogs(\"events/projectLoading\", `opening original location project${disableSourceOfProjectReferenceRedirect ? \" disableSourceOfProjectReferenceRedirect\" : \"\"} ${sessionType}`, session);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/projectErrors.ts",
-      "line": 185,
+      "file": "src/testRunner/unittests/tsserver/externalProjects.ts",
+      "line": 75,
       "shape": "method_call",
-      "text": "session.executeCommandSeq<ts.server.protocol.SemanticDiagnosticsSyncRequest>({"
+      "text": "const proxy = LanguageService.makeDefaultProxy(info);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/projectErrors.ts",
-      "line": 225,
-      "shape": "new_expression",
-      "text": "const session = new TestSession({ host, useInferredProjectPerProjectRoot: true });"
-    },
-    {
-      "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/projects.ts",
-      "line": 1549,
+      "file": "src/testRunner/unittests/tsserver/forceConsistentCasingInFileNames.ts",
+      "line": 227,
       "shape": "new_expression",
       "text": "const session = new TestSession(host);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/projectsWithReferences.ts",
-      "line": 140,
-      "shape": "plain_call",
-      "text": "it(\"deleting referenced config file\", () => {"
+      "file": "src/testRunner/unittests/tsserver/partialSemanticServer.ts",
+      "line": 87,
+      "shape": "qualified_attribute_call",
+      "text": "session.logger.info(e.message);"
     },
     {
       "package": "typescript-6.0.3",
-      "file": "src/testRunner/unittests/tsserver/typingsInstaller.ts",
-      "line": 2502,
+      "file": "src/testRunner/unittests/tsserver/pluginsAsync.ts",
+      "line": 214,
       "shape": "qualified_attribute_call",
-      "text": "const hasError = ts.server.typingsInstaller.installNpmPackages(npmPath, tsVersion, packageNames, command => {"
+      "text": "session.logger.log(`fulfill import ${moduleName}`);"
     },
     {
-      "package": "zod-3.23.8",
-      "file": "deno/lib/__tests__/map.test.ts",
-      "line": 28,
-      "shape": "qualified_attribute_call",
-      "text": "expect(result.data.get(\"second\")).toEqual(\"bar\");"
-    },
-    {
-      "package": "zod-3.23.8",
-      "file": "deno/lib/__tests__/object.test.ts",
-      "line": 153,
-      "shape": "method_call",
-      "text": "first: z.string(),"
-    },
-    {
-      "package": "zod-3.23.8",
-      "file": "deno/lib/benchmarks/union.ts",
-      "line": 5,
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/projectErrors.ts",
+      "line": 271,
       "shape": "new_expression",
-      "text": "const doubleSuite = new Benchmark.Suite(\"z.union: double\");"
+      "text": "const session = new TestSession(host);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/projectReferences.ts",
+      "line": 1189,
+      "shape": "plain_call",
+      "text": "verifySolutionScenario({"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/typeReferenceDirectives.ts",
+      "line": 62,
+      "shape": "new_expression",
+      "text": "const session = new TestSession(host);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/tsserver/nodeServer.ts",
+      "line": 531,
+      "shape": "qualified_attribute_call",
+      "text": "this.logger.info(`eventPort: event \"${eventName}\" queued, but socket not yet initialized`);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/tsserver/nodeServer.ts",
+      "line": 607,
+      "shape": "qualified_attribute_call",
+      "text": "const commandLineTraceDir = ts.server.findArgument(\"--traceDirectory\");"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/typingsInstallerCore/typingsInstaller.ts",
+      "line": 464,
+      "shape": "qualified_attribute_call",
+      "text": "this.missingTypingsSet.add(packageName);"
     },
     {
       "package": "zod-3.23.8",
-      "file": "src/__tests__/nativeEnum.test.ts",
-      "line": 12,
+      "file": "deno/lib/__tests__/coerce.test.ts",
+      "line": 103,
       "shape": "method_call",
-      "text": "const fruitEnum = z.nativeEnum(Fruits);"
+      "text": "expect(() => schema.parse([\"item\", \"another_item\"])).toThrow(); // not a z.ZodError!"
     },
     {
       "package": "zod-3.23.8",
-      "file": "src/__tests__/pickomit.test.ts",
-      "line": 45,
+      "file": "deno/lib/__tests__/number.test.ts",
+      "line": 43,
       "shape": "method_call",
-      "text": "expect(bad4).toThrow();"
+      "text": "lteFive.parse(-Infinity);"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/__tests__/preprocess.test.ts",
+      "line": 167,
+      "shape": "optional_chaining_call",
+      "text": "(data: any) => data?.trim(),"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/types.ts",
+      "line": 413,
+      "shape": "dynamic_dispatch",
+      "text": "this.promise = this.promise.bind(this);"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/types.ts",
+      "line": 2259,
+      "shape": "new_expression",
+      "text": "return new ZodArray({"
     },
     {
       "package": "zod-3.23.8",
       "file": "src/types.ts",
-      "line": 417,
+      "line": 402,
       "shape": "dynamic_dispatch",
-      "text": "this.brand = this.brand.bind(this);"
+      "text": "this.safeParse = this.safeParse.bind(this);"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "src/types.ts",
+      "line": 406,
+      "shape": "dynamic_dispatch",
+      "text": "this.refine = this.refine.bind(this);"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "src/types.ts",
+      "line": 407,
+      "shape": "dynamic_dispatch",
+      "text": "this.refinement = this.refinement.bind(this);"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "src/types.ts",
+      "line": 408,
+      "shape": "dynamic_dispatch",
+      "text": "this.superRefine = this.superRefine.bind(this);"
     }
   ]
 }

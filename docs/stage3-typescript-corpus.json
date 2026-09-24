@@ -79,6 +79,32 @@
         "manifest_sha256": "8cff01e1ed7f2ea7f69b60a09e7b4889883f182be895eb253da18af0da2cf43b",
         "physical_lines": 100487
       }
+    },
+    {
+      "artifact": {
+        "bytes": 198264,
+        "format": "tar.gz",
+        "root": "class-validator-0.15.1",
+        "sha256": "100a22e535896aea8901c4b521b45bf25e778a41987df89dcc15054594859863",
+        "url": "https://github.com/typestack/class-validator/archive/refs/tags/v0.15.1.tar.gz"
+      },
+      "id": "class-validator-0.15.1",
+      "language": "typescript",
+      "license": {
+        "files": [
+          "LICENSE"
+        ],
+        "spdx": "MIT"
+      },
+      "sources": {
+        "bytes": 472294,
+        "extensions": [
+          ".ts"
+        ],
+        "files": 176,
+        "manifest_sha256": "27c81d40b9306797031c0e0909b5b53e207e5ae2ca83eca9f98da61fe0370595",
+        "physical_lines": 14455
+      }
     }
   ],
   "note": "Stage 3 TypeScript's own repository pins, deliberately separate from docs/core-representative-corpus.json. That file's validate_manifest() (tools/core_representative_benchmark.py) hard-codes 'exactly six repositories', a rust/python-only language allowlist, a single-extension-per-language assumption, and requires every entry to carry nonempty semantic_cases before it will run at all -- all Rust/Python-specific, none of which this repository's TypeScript pins need or satisfy (empty semantic_cases; TypeScript needs both .ts and .tsx). Adding these three entries there directly broke that file's own already-gated test suite (2 failures) before this manifest was split out - reverted in 00ba4b1, not left broken. No Stage 3 site-selector tool reads semantic_cases at all (confirmed by grep before either version of this pin was written), so this manifest omits the field entirely rather than populating it with placeholder data.",

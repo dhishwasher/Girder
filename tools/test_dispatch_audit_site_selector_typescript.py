@@ -62,6 +62,13 @@ class ClassifyLineUnitTests(unittest.TestCase):
     def test_keyword_immediately_followed_by_a_paren_is_not_a_call(self):
         self.assertIsNone(classify_line("    if (x) {"))
 
+    def test_super_call_is_a_real_plain_call(self):
+        # super(args) is a real parent-constructor call, unlike `if (x)`.
+        self.assertEqual(classify_line("    super(a, b);"), "plain_call")
+
+    def test_dynamic_import_is_a_real_plain_call(self):
+        self.assertEqual(classify_line("    const m = import('./mod');"), "plain_call")
+
     def test_function_declaration_is_still_plain_call_shaped_at_the_line_level(self):
         # Matches Python's own established precedent (labeling-rubric.md
         # case 9): a declaration's own `name(...)` is picked up as a
