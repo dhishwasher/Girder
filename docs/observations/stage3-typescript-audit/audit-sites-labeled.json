@@ -573,8 +573,8 @@
       "text": "this.state.setCompilerOptionsForInferredProjects(options);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "this.state.setCompilerOptionsForInferredProjects(options) -- `state: FourSlash.TestState`; TestState (fourslashImpl.ts:243) declares four `private` members (languageServiceAdapterHost, languageService, cancellationToken, assertTextConsistent). TypeScript's structural typing treats a class with private/protected members as effectively nominal -- no unrelated object can structurally satisfy it, closing the substitution risk a purely-structural class would have. Zero subclasses anywhere in the snapshot, no override, no rebinding.",
-      "true_target": "src/harness/fourslashImpl.ts:243"
+      "rationale": "this.state.setCompilerOptionsForInferredProjects(options) -- `state: FourSlash.TestState`; TestState (fourslashImpl.ts:243); the specific method setCompilerOptionsForInferredProjects is defined at fourslashImpl.ts:4520, corrected true_target to point there rather than the class declaration line declares four `private` members (languageServiceAdapterHost, languageService, cancellationToken, assertTextConsistent). TypeScript's structural typing treats a class with private/protected members as effectively nominal -- no unrelated object can structurally satisfy it, closing the substitution risk a purely-structural class would have. Zero subclasses anywhere in the snapshot, no override, no rebinding.",
+      "true_target": "src/harness/fourslashInterfaceImpl.ts -> src/harness/fourslashImpl.ts:4520"
     },
     {
       "package": "typescript-6.0.3",
@@ -584,8 +584,8 @@
       "text": "this.state.verifyTodoComments(descriptors, this.state.getRanges());",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "this.state.verifyTodoComments(...) -- same TestState reasoning as index 54 (private members close the structural-substitution risk), zero subclasses, no override, no rebinding.",
-      "true_target": "src/harness/fourslashImpl.ts:243"
+      "rationale": "this.state.verifyTodoComments(...) -- same TestState reasoning as index 54; verifyTodoComments is defined at fourslashImpl.ts:3304, corrected true_target to point there rather than the class declaration line (private members close the structural-substitution risk), zero subclasses, no override, no rebinding.",
+      "true_target": "src/harness/fourslashInterfaceImpl.ts -> src/harness/fourslashImpl.ts:3304"
     },
     {
       "package": "typescript-6.0.3",
@@ -861,10 +861,9 @@
       "line": 1662,
       "shape": "plain_call",
       "text": "_testConvertToAsyncFunctionFailed(",
-      "true_class": "must",
-      "confidence": "high",
-      "rationale": "_testConvertToAsyncFunctionFailed(...) -- same-file module-level const (convertToAsyncFunction.ts:432) bound once to createTestWrapper((it, caption, text) => {...})'s return value. Read createTestWrapper's body directly (line 289-296): it always returns the same statically-declared `wrapped` function, whose own body calls a fixed parameter `fn` -- no runtime branching in what gets constructed or returned. This is a directly-traced, deterministic binding, not an assumed precedent from another language's policy (an earlier draft of this rationale cited an unverified Rust analogy; dropped here in favor of the direct trace).",
-      "true_target": "src/testRunner/unittests/services/convertToAsyncFunction.ts:293"
+      "true_class": "unknown",
+      "confidence": "medium",
+      "rationale": "_testConvertToAsyncFunctionFailed(...) -- reconsidered from must: the const is bound to createTestWrapper(...)'s RETURN VALUE (the nested 'wrapped' function at convertToAsyncFunction.ts:293), not to a directly-named top-level definition. Resolving through a higher-order function's return value requires tracing what a generic factory call constructs and returns, which is a materially different (and more sophisticated) proof than same-file/cross-file lexical name binding -- no resolver design in this whole program (Rust, Python, or this stage's own not-yet-designed TypeScript resolver) has ever proven Must through this pattern. Matches Rust's own frozen policy row, which lists 'unresolved function pointers/closures' under Unknown -- the earlier must label leaned on an unverified analogy to that same policy row instead of taking its actual conclusion. Downgraded to Unknown."
     },
     {
       "package": "typescript-6.0.3",

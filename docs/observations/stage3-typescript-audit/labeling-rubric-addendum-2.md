@@ -90,3 +90,19 @@ regardless of how many times it's assigned; what changes the outcome here
 is whether excluding the falsy/undefined branch (via `?.` or an explicit
 guard) leaves exactly one remaining candidate, not the raw assignment
 count.
+
+## What the whole-package duplicate check actually covered, stated precisely
+
+The duplicate-name script above matched `function NAME`, `class NAME`, and
+`namespace NAME` declarations only -- it would not have found a
+`const NAME = ...` or arrow-function binding of the same name, an
+`export { x as y }` alias, or (checked separately, not by that script) a
+second parallel module tree the way zod's `src/`/`deno/lib/` split turned
+out to be. Every site this round's review specifically raised (the eleven
+decorator-factory Musts' barrel-export paths, `TestSession`'s four
+declarations, `ScriptInfo`'s two) was verified by reading the actual
+import statement or barrel `export * from` line directly, not solely by
+this script's pattern match -- but the script itself, taken alone, is not
+a complete duplicate-declaration search across every binding form
+TypeScript allows. Recorded as a real scope limit, not silently expanded
+into a stronger claim than what was run.
