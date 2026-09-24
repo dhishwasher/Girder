@@ -42,6 +42,10 @@ pub(super) fn revert_string_rebound_python_claims(
 
     for state in files.values() {
         for node in &state.extraction.nodes {
+            let caller_is_python = graph.get(node.id).is_some_and(|n| n.language == "python");
+            if !caller_is_python {
+                continue;
+            }
             let Ok(evidence) = graph.call_evidence(node.id) else {
                 continue;
             };
@@ -51,9 +55,9 @@ pub(super) fn revert_string_rebound_python_claims(
                 let should_revert = claim.class == CallClass::Must
                     && claim.reason == "proven-top-level-lexical-binding"
                     && claim.targets.iter().any(|target_id| {
-                        graph
-                            .get(*target_id)
-                            .is_some_and(|t| string_rebound(&t.name, &all_string_literals))
+                        graph.get(*target_id).is_some_and(|t| {
+                            t.language == "python" && string_rebound(&t.name, &all_string_literals)
+                        })
                     });
                 if should_revert {
                     changed = true;
@@ -115,6 +119,36 @@ mod tests {
                 .iter()
                 .any(|c| c.reason == "python-target-string-rebound-elsewhere-in-crate"),
             "{evidence:?}"
+        );
+    }
+
+    #[test]
+    fn a_rust_same_file_must_claim_is_never_reverted_by_an_unrelated_python_string_elsewhere() {
+        let files = [
+            (
+                "src/lib.rs",
+                "fn target() -> i32 {\n\
+                 \x20\x20\x2042\n\
+                 }\n\
+                 fn caller() -> i32 {\n\
+                 \x20\x20\x20\x20target()\n\
+                 }\n",
+            ),
+            (
+                "tools/thing.py",
+                "def test_it(mocker):\n\
+                 \x20\x20\x20\x20mocker.patch('pkg.module.target', side_effect=ImportError)\n",
+            ),
+        ];
+        let mut graph = SemanticGraph::new();
+        let mut builder = GraphBuilder::new();
+        builder.load_files(&mut graph, files);
+        let caller = graph.nodes().find(|n| n.name == "caller").unwrap();
+        let evidence = graph.call_evidence(caller.id).unwrap();
+        assert!(
+            evidence.calls.iter().any(|c| c.class == CallClass::Must),
+            "a Rust same-file Must claim must not be reverted by an unrelated \
+             Python string literal in a different file: {evidence:?}"
         );
     }
 
