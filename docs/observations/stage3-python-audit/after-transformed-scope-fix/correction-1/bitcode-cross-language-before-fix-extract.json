@@ -1,0 +1,38 @@
+{
+  "source_binary_note": "built from commit 8acde01 (introduced the python_rebinding.rs module, before the cross-language fix); this binary sha 7e58a7ed... was overwritten by a later build and cannot be re-verified",
+  "source_inspect_json_sha256": "4730071b79ac2823288e632fef61289be74dfab98c932fc35039984862a744e5",
+  "py_hits": 39,
+  "non_py_hits_count": 6,
+  "non_py_hits": [
+    {
+      "file": "fixtures/dispatch-corpus/rust/call-inside-closure-body/src/lib.rs",
+      "name": "run",
+      "count": 1
+    },
+    {
+      "file": "fixtures/dispatch-corpus/typescript/any-receiver/app.test.ts",
+      "name": "test_any",
+      "count": 1
+    },
+    {
+      "file": "fixtures/dispatch-corpus/typescript/direct-same-file/app.test.ts",
+      "name": "test_direct",
+      "count": 1
+    },
+    {
+      "file": "fixtures/dispatch-corpus/typescript/name-shadowing-parameter/app.test.ts",
+      "name": "test_shadowed",
+      "count": 1
+    },
+    {
+      "file": "fixtures/dispatch-corpus/typescript/stored-callback/app.test.ts",
+      "name": "test_via_callback",
+      "count": 1
+    },
+    {
+      "file": "sample-project/src/lib.rs",
+      "name": "sum_list",
+      "count": 1
+    }
+  ]
+}
