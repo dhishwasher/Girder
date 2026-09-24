@@ -8,7 +8,8 @@
       "text": "@IsEmail(undefined, {",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@IsEmail(undefined, {...}) is the decorator factory call (rubric case 5: the site is the factory call, not the implicit __decorate application). IsEmail has a single definition (src/decorator/string/IsEmail.ts), re-exported via src/decorator/decorators.ts's barrel `export * from './string/IsEmail'`, imported cross-file into Post.ts via a relative path. No rebinding (0 prototype/defineProperty hits in this repo)."
+      "rationale": "@IsEmail(undefined, {...}) is the decorator factory call (rubric case 5: the site is the factory call, not the implicit __decorate application). IsEmail has a single definition (src/decorator/string/IsEmail.ts), re-exported via src/decorator/decorators.ts's barrel `export * from './string/IsEmail'`, imported cross-file into Post.ts via a relative path. No rebinding (0 prototype/defineProperty hits in this repo).",
+      "true_target": "src/decorator/string/IsEmail.ts:20"
     },
     {
       "package": "class-validator-0.15.1",
@@ -18,7 +19,8 @@
       "text": "@IsLongerThan('lastName', {",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@IsLongerThan(...) factory call. IsLongerThan is a same-file local function (custom-decorators.spec.ts:11), single definition, no override, no rebinding."
+      "rationale": "@IsLongerThan(...) factory call. IsLongerThan is a same-file local function (custom-decorators.spec.ts:11), single definition, no override, no rebinding.",
+      "true_target": "test/functional/custom-decorators.spec.ts:11"
     },
     {
       "package": "class-validator-0.15.1",
@@ -28,7 +30,8 @@
       "text": "@IsLonger('lastName')",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@IsLonger('lastName') factory call. IsLonger is a same-file local function (custom-decorators.spec.ts:109), single definition, no override, no rebinding."
+      "rationale": "@IsLonger('lastName') factory call. IsLonger is a same-file local function (custom-decorators.spec.ts:109), single definition, no override, no rebinding.",
+      "true_target": "test/functional/custom-decorators.spec.ts:109"
     },
     {
       "package": "class-validator-0.15.1",
@@ -38,7 +41,8 @@
       "text": "const submodel1 = new MySubClass();",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "new MySubClass() -- this specific file (nested-validation.spec.ts) declares `class MySubClass` six times in six separate it() callbacks; checked directly which one is in scope here: the declaration at line 178 is inside the SAME it('should validate nested set', ...) callback as this call (line 200), no other MySubClass declaration is nested between them, and JS/TS block scoping means the other five declarations in sibling it() blocks are not visible here at all."
+      "rationale": "new MySubClass() -- this specific file (nested-validation.spec.ts) declares `class MySubClass` six times in six separate it() callbacks; checked directly which one is in scope here: the declaration at line 178 is inside the SAME it('should validate nested set', ...) callback as this call (line 200), no other MySubClass declaration is nested between them, and JS/TS block scoping means the other five declarations in sibling it() blocks are not visible here at all.",
+      "true_target": "test/functional/nested-validation.spec.ts:178"
     },
     {
       "package": "class-validator-0.15.1",
@@ -48,7 +52,8 @@
       "text": "@ValidateNested()",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@ValidateNested() factory call. ValidateNested has a single definition (src/decorator/common/ValidateNested.ts), imported cross-file, no rebinding."
+      "rationale": "@ValidateNested() factory call. ValidateNested has a single definition (src/decorator/common/ValidateNested.ts), imported cross-file, no rebinding.",
+      "true_target": "src/decorator/common/ValidateNested.ts:10"
     },
     {
       "package": "class-validator-0.15.1",
@@ -58,7 +63,8 @@
       "text": "@ValidatePromise()",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@ValidatePromise() factory call. ValidatePromise has a single definition (src/decorator/common/ValidatePromise.ts), imported cross-file, no rebinding."
+      "rationale": "@ValidatePromise() factory call. ValidatePromise has a single definition (src/decorator/common/ValidatePromise.ts), imported cross-file, no rebinding.",
+      "true_target": "src/decorator/common/ValidatePromise.ts:10"
     },
     {
       "package": "class-validator-0.15.1",
@@ -68,7 +74,8 @@
       "text": "@ValidateNested()",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@ValidateNested() factory call, same as index 4 -- single definition, imported cross-file, no rebinding."
+      "rationale": "@ValidateNested() factory call, same as index 4 -- single definition, imported cross-file, no rebinding.",
+      "true_target": "src/decorator/common/ValidateNested.ts:10"
     },
     {
       "package": "class-validator-0.15.1",
@@ -78,7 +85,8 @@
       "text": "@IsString()",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@IsString() factory call. IsString has a single definition (src/decorator/typechecker/IsString.ts), imported cross-file, no rebinding."
+      "rationale": "@IsString() factory call. IsString has a single definition (src/decorator/typechecker/IsString.ts), imported cross-file, no rebinding.",
+      "true_target": "src/decorator/typechecker/IsString.ts:16"
     },
     {
       "package": "class-validator-0.15.1",
@@ -88,7 +96,8 @@
       "text": "@IsNumberString()",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@IsNumberString() factory call. IsNumberString has a single definition (src/decorator/string/IsNumberString.ts), imported cross-file, no rebinding."
+      "rationale": "@IsNumberString() factory call. IsNumberString has a single definition (src/decorator/string/IsNumberString.ts), imported cross-file, no rebinding.",
+      "true_target": "src/decorator/string/IsNumberString.ts:20"
     },
     {
       "package": "class-validator-0.15.1",
@@ -98,7 +107,8 @@
       "text": "@IsISBN(10)",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@IsISBN(10) factory call. IsISBN has a single definition (src/decorator/string/IsISBN.ts), imported cross-file, no rebinding."
+      "rationale": "@IsISBN(10) factory call. IsISBN has a single definition (src/decorator/string/IsISBN.ts), imported cross-file, no rebinding.",
+      "true_target": "src/decorator/string/IsISBN.ts:23"
     },
     {
       "package": "class-validator-0.15.1",
@@ -108,7 +118,8 @@
       "text": "@IsNotEmptyObject({ nullable: false })",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@IsNotEmptyObject({...}) factory call. IsNotEmptyObject has a single definition (src/decorator/object/IsNotEmptyObject.ts), imported cross-file, no rebinding."
+      "rationale": "@IsNotEmptyObject({...}) factory call. IsNotEmptyObject has a single definition (src/decorator/object/IsNotEmptyObject.ts), imported cross-file, no rebinding.",
+      "true_target": "src/decorator/object/IsNotEmptyObject.ts:33"
     },
     {
       "package": "class-validator-0.15.1",
@@ -118,7 +129,8 @@
       "text": "@IsMultibyte()",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@IsMultibyte() factory call. IsMultibyte has a single definition (src/decorator/string/IsMultibyte.ts), imported cross-file, no rebinding."
+      "rationale": "@IsMultibyte() factory call. IsMultibyte has a single definition (src/decorator/string/IsMultibyte.ts), imported cross-file, no rebinding.",
+      "true_target": "src/decorator/string/IsMultibyte.ts:19"
     },
     {
       "package": "class-validator-0.15.1",
@@ -128,7 +140,8 @@
       "text": "@ValidatorConstraint({ name: 'customIsNotArrayConstraint', async: false })",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@ValidatorConstraint({...}) factory call (class decorator). ValidatorConstraint has a single definition (src/decorator/common/Validate.ts), imported cross-file, no rebinding."
+      "rationale": "@ValidatorConstraint({...}) factory call (class decorator). ValidatorConstraint has a single definition (src/decorator/common/Validate.ts), imported cross-file, no rebinding.",
+      "true_target": "src/decorator/common/Validate.ts:11"
     },
     {
       "package": "class-validator-0.15.1",
@@ -138,7 +151,8 @@
       "text": "@ValidateNested({ groups: ['always'], always: true })",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@ValidateNested({...}) factory call, same definition as index 4 -- single, imported cross-file, no rebinding."
+      "rationale": "@ValidateNested({...}) factory call, same definition as index 4 -- single, imported cross-file, no rebinding.",
+      "true_target": "src/decorator/common/ValidateNested.ts:10"
     },
     {
       "package": "class-validator-0.15.1",
@@ -148,7 +162,8 @@
       "text": "@MinLength(20, {",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@MinLength(20, {...}) factory call. MinLength has a single definition (src/decorator/string/MinLength.ts), imported cross-file, no rebinding."
+      "rationale": "@MinLength(20, {...}) factory call. MinLength has a single definition (src/decorator/string/MinLength.ts), imported cross-file, no rebinding.",
+      "true_target": "src/decorator/string/MinLength.ts:19"
     },
     {
       "package": "class-validator-0.15.1",
@@ -168,7 +183,8 @@
       "text": "@Allow()",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "@Allow() factory call. Allow has a single definition (src/decorator/common/Allow.ts), imported cross-file, no rebinding."
+      "rationale": "@Allow() factory call. Allow has a single definition (src/decorator/common/Allow.ts), imported cross-file, no rebinding.",
+      "true_target": "src/decorator/common/Allow.ts:10"
     },
     {
       "package": "date-fns-4.1.0",
@@ -298,7 +314,8 @@
       "text": "tracing?.recordType(result);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "tracing?.recordType(result) -- tracing: typeof tracingEnabled | undefined (compiler/tracing.ts:30); tracingEnabled is a TypeScript namespace (not a class), so once `?.` excludes the undefined case there is no polymorphism vector at all -- tracing.recordType unambiguously refers to the single recordType function inside the tracingEnabled namespace (case 6: optional chaining doesn't change target-uniqueness once null is excluded)."
+      "rationale": "tracing?.recordType(result) -- tracing: typeof tracingEnabled | undefined (compiler/tracing.ts:30); tracingEnabled is a TypeScript namespace (not a class), so once `?.` excludes the undefined case there is no polymorphism vector at all -- tracing.recordType unambiguously refers to the single recordType function inside the tracingEnabled namespace (case 6: optional chaining doesn't change target-uniqueness once null is excluded).",
+      "true_target": "src/compiler/tracing.ts:126"
     },
     {
       "package": "typescript-6.0.3",
@@ -328,7 +345,8 @@
       "text": "return type.flags & TypeFlags.Any ? type : narrowTypeByTypeFacts(type, globalFunctionType, TypeFacts.TypeofEQFunction);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "narrowTypeByTypeFacts(type, globalFunctionType, ...) -- exactly one definition in checker.ts (grep count: 1), same-file, no override, no rebinding."
+      "rationale": "narrowTypeByTypeFacts(type, globalFunctionType, ...) -- exactly one definition in checker.ts (grep count: 1), same-file, no override, no rebinding.",
+      "true_target": "src/compiler/checker.ts:29884"
     },
     {
       "package": "typescript-6.0.3",
@@ -348,7 +366,8 @@
       "text": "tracing?.pop();",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "tracing?.pop() -- same tracing: typeof tracingEnabled | undefined variable as index 29; tracingEnabled.pop (tracing.ts:160) is a namespace function, no polymorphism possible once `?.` excludes undefined (case 6)."
+      "rationale": "tracing?.pop() -- same tracing: typeof tracingEnabled | undefined variable as index 29; tracingEnabled.pop (tracing.ts:160) is a namespace function, no polymorphism possible once `?.` excludes undefined (case 6).",
+      "true_target": "src/compiler/tracing.ts:160"
     },
     {
       "package": "typescript-6.0.3",
@@ -378,7 +397,8 @@
       "text": "popNameGenerationScope(node);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "popNameGenerationScope(node) -- same-file function (emitter.ts:5313), single definition within the same closure, no override, no rebinding."
+      "rationale": "popNameGenerationScope(node) -- same-file function (emitter.ts:5313), single definition within the same closure, no override, no rebinding.",
+      "true_target": "src/compiler/emitter.ts:5313"
     },
     {
       "package": "typescript-6.0.3",
@@ -388,7 +408,8 @@
       "text": "emitExpression(node.expression, parenthesizer.parenthesizeOperandOfPrefixUnary);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "emitExpression(node.expression, ...) -- exactly one implementation in emitter.ts (two overload signatures plus one implementation at line 1463, collapsing to one body per case 7), same-file, no override, no rebinding."
+      "rationale": "emitExpression(node.expression, ...) -- exactly one implementation in emitter.ts (two overload signatures plus one implementation at line 1463, collapsing to one body per case 7), same-file, no override, no rebinding.",
+      "true_target": "src/compiler/emitter.ts:1463"
     },
     {
       "package": "typescript-6.0.3",
@@ -398,7 +419,8 @@
       "text": "writePunctuation(\"{\");",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "writePunctuation(\"{\") -- same-file function (emitter.ts:4877) within the same closure, single definition, no override, no rebinding."
+      "rationale": "writePunctuation(\"{\") -- same-file function (emitter.ts:4877) within the same closure, single definition, no override, no rebinding.",
+      "true_target": "src/compiler/emitter.ts:4877"
     },
     {
       "package": "typescript-6.0.3",
@@ -408,7 +430,8 @@
       "text": "const keyRange = VersionRange.tryParse(key);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "VersionRange.tryParse(key) -- VersionRange is a single class (compiler/semver.ts:206) with no subclasses anywhere in the snapshot (grep confirmed), tryParse is a static method, single definition."
+      "rationale": "VersionRange.tryParse(key) -- VersionRange is a single class (compiler/semver.ts:206) with no subclasses anywhere in the snapshot (grep confirmed), tryParse is a static method, single definition.",
+      "true_target": "src/compiler/semver.ts:213"
     },
     {
       "package": "typescript-6.0.3",
@@ -448,7 +471,8 @@
       "text": "const sourceRoot = map.sourceRoot ? getNormalizedAbsolutePath(map.sourceRoot, mapDirectory) : mapDirectory;",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "getNormalizedAbsolutePath(map.sourceRoot, mapDirectory) -- single definition (compiler/path.ts:627), imported cross-file via the compiler's own _namespaces barrel re-export pattern, no rebinding."
+      "rationale": "getNormalizedAbsolutePath(map.sourceRoot, mapDirectory) -- single definition (compiler/path.ts:627), imported cross-file via the compiler's own _namespaces barrel re-export pattern, no rebinding.",
+      "true_target": "src/compiler/path.ts:627"
     },
     {
       "package": "typescript-6.0.3",
@@ -498,7 +522,8 @@
       "text": "Debug.checkDefined(nodeVisitor(node.typeParameter, visitor, isTypeParameterDeclaration)),",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "Debug.checkDefined(...) -- the method_call shape's leftmost match is `.checkDefined(` (Debug.checkDefined has only one dot before the paren, so it's method_call not qualified_attribute_call). Debug.checkDefined (compiler/debug.ts:255) is a namespace function, single definition, no rebinding."
+      "rationale": "Debug.checkDefined(...) -- the method_call shape's leftmost match is `.checkDefined(` (Debug.checkDefined has only one dot before the paren, so it's method_call not qualified_attribute_call). Debug.checkDefined (compiler/debug.ts:255) is a namespace function, single definition, no rebinding.",
+      "true_target": "src/compiler/debug.ts:255"
     },
     {
       "package": "typescript-6.0.3",
@@ -548,7 +573,8 @@
       "text": "this.state.setCompilerOptionsForInferredProjects(options);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "this.state.setCompilerOptionsForInferredProjects(options) -- `state: FourSlash.TestState`; TestState (fourslashImpl.ts:243) declares four `private` members (languageServiceAdapterHost, languageService, cancellationToken, assertTextConsistent). TypeScript's structural typing treats a class with private/protected members as effectively nominal -- no unrelated object can structurally satisfy it, closing the substitution risk a purely-structural class would have. Zero subclasses anywhere in the snapshot, no override, no rebinding."
+      "rationale": "this.state.setCompilerOptionsForInferredProjects(options) -- `state: FourSlash.TestState`; TestState (fourslashImpl.ts:243) declares four `private` members (languageServiceAdapterHost, languageService, cancellationToken, assertTextConsistent). TypeScript's structural typing treats a class with private/protected members as effectively nominal -- no unrelated object can structurally satisfy it, closing the substitution risk a purely-structural class would have. Zero subclasses anywhere in the snapshot, no override, no rebinding.",
+      "true_target": "src/harness/fourslashImpl.ts:243"
     },
     {
       "package": "typescript-6.0.3",
@@ -558,7 +584,8 @@
       "text": "this.state.verifyTodoComments(descriptors, this.state.getRanges());",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "this.state.verifyTodoComments(...) -- same TestState reasoning as index 54 (private members close the structural-substitution risk), zero subclasses, no override, no rebinding."
+      "rationale": "this.state.verifyTodoComments(...) -- same TestState reasoning as index 54 (private members close the structural-substitution risk), zero subclasses, no override, no rebinding.",
+      "true_target": "src/harness/fourslashImpl.ts:243"
     },
     {
       "package": "typescript-6.0.3",
@@ -658,7 +685,8 @@
       "text": "this.getScriptInfo(rootFile)?.editContent(0, originalText.length, updatedText);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "this.getScriptInfo(rootFile)?.editContent(...) -- ScriptInfo (server/editorServices.ts) has no private/protected members, so it IS purely structurally typed in principle; but the actual value here comes from `this.projectService.getScriptInfo(...)`, an internal lookup against ProjectService's own registry (traced: Project.getScriptInfo -> ProjectService.getScriptInfo -> getScriptInfoForNormalizedPath), never a caller-supplied or externally-injected parameter -- the runtime value is controlled entirely by this codebase's own ScriptInfo construction, not by an arbitrary structurally-compatible caller. Zero subclasses, no rebinding."
+      "rationale": "this.getScriptInfo(rootFile)?.editContent(...) -- ScriptInfo (server/editorServices.ts) has no private/protected members, so it IS purely structurally typed in principle; but the actual value here comes from `this.projectService.getScriptInfo(...)`, an internal lookup against ProjectService's own registry (traced: Project.getScriptInfo -> ProjectService.getScriptInfo -> getScriptInfoForNormalizedPath), never a caller-supplied or externally-injected parameter -- the runtime value is controlled entirely by this codebase's own ScriptInfo construction, not by an arbitrary structurally-compatible caller. Zero subclasses, no rebinding.",
+      "true_target": "src/server/scriptInfo.ts:367"
     },
     {
       "package": "typescript-6.0.3",
@@ -668,7 +696,8 @@
       "text": "const file = toNormalizedPath(args.file);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "toNormalizedPath(args.file) -- single definition (server/utilitiesPublic.ts:71), imported cleanly cross-file into session.ts, no rebinding."
+      "rationale": "toNormalizedPath(args.file) -- single definition (server/utilitiesPublic.ts:71), imported cleanly cross-file into session.ts, no rebinding.",
+      "true_target": "src/server/utilitiesPublic.ts:71"
     },
     {
       "package": "typescript-6.0.3",
@@ -678,7 +707,8 @@
       "text": "getAllCodeActions: context => codeFixAll(context, errorCodes, (changes, diag) => doChange(changes, diag.file, diag.start, diag.length, diag.code)),",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "codeFixAll(context, errorCodes, ...) -- single definition (services/codeFixProvider.ts:108), no rebinding found."
+      "rationale": "codeFixAll(context, errorCodes, ...) -- single definition (services/codeFixProvider.ts:108), no rebinding found.",
+      "true_target": "src/services/codeFixProvider.ts:108"
     },
     {
       "package": "typescript-6.0.3",
@@ -698,7 +728,8 @@
       "text": "const changes = textChanges.ChangeTracker.with(context, t => {",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "textChanges.ChangeTracker.with(context, ...) -- ChangeTracker has zero subclasses anywhere in the snapshot (grep confirmed empty), `with` is a static method, single definition, no rebinding."
+      "rationale": "textChanges.ChangeTracker.with(context, ...) -- ChangeTracker has zero subclasses anywhere in the snapshot (grep confirmed empty), `with` is a static method, single definition, no rebinding.",
+      "true_target": "src/services/textChanges.ts:503"
     },
     {
       "package": "typescript-6.0.3",
@@ -758,7 +789,8 @@
       "text": "return skipOuterExpressions(parent.expression);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "skipOuterExpressions(parent.expression) -- single implementation (compiler/factory/utilities.ts:660, several overload signatures collapsing to one body per case 7), imported cross-file into services/utilities.ts, no rebinding."
+      "rationale": "skipOuterExpressions(parent.expression) -- single implementation (compiler/factory/utilities.ts:660, several overload signatures collapsing to one body per case 7), imported cross-file into services/utilities.ts, no rebinding.",
+      "true_target": "src/compiler/factory/utilities.ts:660"
     },
     {
       "package": "typescript-6.0.3",
@@ -768,7 +800,8 @@
       "text": "const result = evaluator.evaluateTypeScript(",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "evaluator.evaluateTypeScript(...) -- evaluateTypeScript has exactly one definition (harness/evaluatorImpl.ts:36), evaluator is imported via the compiler's internal `_namespaces/evaluator.js` barrel (a single module aggregate), no rebinding."
+      "rationale": "evaluator.evaluateTypeScript(...) -- evaluateTypeScript has exactly one definition (harness/evaluatorImpl.ts:36), evaluator is imported via the compiler's internal `_namespaces/evaluator.js` barrel (a single module aggregate), no rebinding.",
+      "true_target": "src/harness/evaluatorImpl.ts:36"
     },
     {
       "package": "typescript-6.0.3",
@@ -808,7 +841,8 @@
       "text": "const oldText = ts.ScriptSnapshot.fromString(source);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "ts.ScriptSnapshot.fromString(source) -- ScriptSnapshot is a namespace (services/types.ts:218), fromString is a single namespace function, no rebinding."
+      "rationale": "ts.ScriptSnapshot.fromString(source) -- ScriptSnapshot is a namespace (services/types.ts:218), fromString is a single namespace function, no rebinding.",
+      "true_target": "src/services/types.ts:218"
     },
     {
       "package": "typescript-6.0.3",
@@ -818,7 +852,8 @@
       "text": "const oldText = ts.ScriptSnapshot.fromString(textWithIgnoreCommentFrom(source, singleIgnore));",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "ts.ScriptSnapshot.fromString(...) -- same as index 80."
+      "rationale": "ts.ScriptSnapshot.fromString(...) -- same as index 80.",
+      "true_target": "src/services/types.ts:218"
     },
     {
       "package": "typescript-6.0.3",
@@ -828,7 +863,8 @@
       "text": "_testConvertToAsyncFunctionFailed(",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "_testConvertToAsyncFunctionFailed(...) -- same-file module-level const (convertToAsyncFunction.ts:432) bound once to createTestWrapper((it, caption, text) => {...})'s return value. Read createTestWrapper's body directly (line 289-296): it always returns the same statically-declared `wrapped` function, whose own body calls a fixed parameter `fn` -- no runtime branching in what gets constructed or returned. This is a directly-traced, deterministic binding, not an assumed precedent from another language's policy (an earlier draft of this rationale cited an unverified Rust analogy; dropped here in favor of the direct trace)."
+      "rationale": "_testConvertToAsyncFunctionFailed(...) -- same-file module-level const (convertToAsyncFunction.ts:432) bound once to createTestWrapper((it, caption, text) => {...})'s return value. Read createTestWrapper's body directly (line 289-296): it always returns the same statically-declared `wrapped` function, whose own body calls a fixed parameter `fn` -- no runtime branching in what gets constructed or returned. This is a directly-traced, deterministic binding, not an assumed precedent from another language's policy (an earlier draft of this rationale cited an unverified Rust analogy; dropped here in favor of the direct trace).",
+      "true_target": "src/testRunner/unittests/services/convertToAsyncFunction.ts:293"
     },
     {
       "package": "typescript-6.0.3",
@@ -838,7 +874,8 @@
       "text": "test(\"\\n\", logger);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "test(\"\\n\", logger) -- compileOnSave.ts declares TWO separate `function test(...)` (line 704 and line 743) in two non-overlapping describe/it block scopes; checked directly that this call (line 739) sits inside the SAME it('should respect line endings', ...) callback as the line-743 declaration, and the line-704 declaration's own enclosing describe block closes well before this one begins -- no overlap, no ambiguity."
+      "rationale": "test(\"\\n\", logger) -- compileOnSave.ts declares TWO separate `function test(...)` (line 704 and line 743) in two non-overlapping describe/it block scopes; checked directly that this call (line 739) sits inside the SAME it('should respect line endings', ...) callback as the line-743 declaration, and the line-704 declaration's own enclosing describe block closes well before this one begins -- no overlap, no ambiguity.",
+      "true_target": "src/testRunner/unittests/tsserver/compileOnSave.ts:743"
     },
     {
       "package": "typescript-6.0.3",
@@ -858,7 +895,8 @@
       "text": "baselineTsserverLogs(\"events/projectLoading\", `opening original location project${disableSourceOfProjectReferenceRedirect ? \" disableSourceOfProjectReferenceRedirect\" : \"\"} ${sessionType}`, session);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "baselineTsserverLogs(...) -- single definition (testRunner/unittests/helpers/tsserver.ts), imported cross-file, no rebinding."
+      "rationale": "baselineTsserverLogs(...) -- single definition (testRunner/unittests/helpers/tsserver.ts), imported cross-file, no rebinding.",
+      "true_target": "src/testRunner/unittests/helpers/tsserver.ts:28"
     },
     {
       "package": "typescript-6.0.3",
@@ -868,7 +906,8 @@
       "text": "const proxy = LanguageService.makeDefaultProxy(info);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "LanguageService.makeDefaultProxy(info) -- read the actual import in this file (externalProjects.ts:1): `import { LanguageService } from \"../../_namespaces/Harness.js\"`, the compiler's internal namespace-barrel pattern; makeDefaultProxy has exactly one definition (harness/harnessLanguageService.ts:21), no rebinding."
+      "rationale": "LanguageService.makeDefaultProxy(info) -- read the actual import in this file (externalProjects.ts:1): `import { LanguageService } from \"../../_namespaces/Harness.js\"`, the compiler's internal namespace-barrel pattern; makeDefaultProxy has exactly one definition (harness/harnessLanguageService.ts:21), no rebinding.",
+      "true_target": "src/harness/harnessLanguageService.ts:21"
     },
     {
       "package": "typescript-6.0.3",
@@ -878,7 +917,8 @@
       "text": "const session = new TestSession(host);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "new TestSession(host) -- explicitly constructs the named base class TestSession; an anonymous subclass exists elsewhere in the snapshot (session.ts:499, `new class extends TestSession {...}`) but that doesn't affect what `new TestSession(...)` itself resolves to -- the constructed type is unambiguously TestSession's own constructor (case 4)."
+      "rationale": "new TestSession(host) -- explicitly constructs the named base class TestSession; an anonymous subclass exists elsewhere in the snapshot (session.ts:499, `new class extends TestSession {...}`) but that doesn't affect what `new TestSession(...)` itself resolves to -- the constructed type is unambiguously TestSession's own constructor (case 4).",
+      "true_target": "src/testRunner/unittests/helpers/tsserver.ts:213"
     },
     {
       "package": "typescript-6.0.3",
@@ -908,7 +948,8 @@
       "text": "const session = new TestSession(host);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "new TestSession(host) -- same reasoning as index 87: explicitly constructs the named base class, unaffected by the unrelated anonymous subclass elsewhere in the snapshot."
+      "rationale": "new TestSession(host) -- same reasoning as index 87: explicitly constructs the named base class, unaffected by the unrelated anonymous subclass elsewhere in the snapshot.",
+      "true_target": "src/testRunner/unittests/helpers/tsserver.ts:213"
     },
     {
       "package": "typescript-6.0.3",
@@ -918,7 +959,8 @@
       "text": "verifySolutionScenario({",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "verifySolutionScenario({...}) -- same-file function (projectReferences.ts:1082), single definition, no rebinding."
+      "rationale": "verifySolutionScenario({...}) -- same-file function (projectReferences.ts:1082), single definition, no rebinding.",
+      "true_target": "src/testRunner/unittests/tsserver/projectReferences.ts:1082"
     },
     {
       "package": "typescript-6.0.3",
@@ -928,7 +970,8 @@
       "text": "const session = new TestSession(host);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "new TestSession(host) -- same reasoning as index 87/90."
+      "rationale": "new TestSession(host) -- same reasoning as index 87/90.",
+      "true_target": "src/testRunner/unittests/helpers/tsserver.ts:213"
     },
     {
       "package": "typescript-6.0.3",
@@ -948,7 +991,8 @@
       "text": "const commandLineTraceDir = ts.server.findArgument(\"--traceDirectory\");",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "ts.server.findArgument(\"--traceDirectory\") -- single definition (jsTyping/shared.ts:53), accessed via the compiler's internal _namespaces barrel re-export pattern, no rebinding."
+      "rationale": "ts.server.findArgument(\"--traceDirectory\") -- single definition (jsTyping/shared.ts:53), accessed via the compiler's internal _namespaces barrel re-export pattern, no rebinding.",
+      "true_target": "src/jsTyping/shared.ts:53"
     },
     {
       "package": "typescript-6.0.3",
@@ -968,7 +1012,8 @@
       "text": "expect(() => schema.parse([\"item\", \"another_item\"])).toThrow(); // not a z.ZodError!",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "schema.parse([...]) -- re-checked against the correct file this time: deno/lib/types.ts (not src/types.ts, a separate parallel tree in the same pinned zod-3.23.8 snapshot) has its own single, non-overridden `.parse` at line 238 and zero ZodArray subclasses within deno/lib. This test file imports `* as z from \"../index.ts\"`, a relative import staying entirely within deno/lib/, never reaching src/ -- so the two parallel trees' separate ZodType/.parse definitions never collide at this call site's own lexical scope."
+      "rationale": "schema.parse([...]) -- re-checked against the correct file this time: deno/lib/types.ts (not src/types.ts, a separate parallel tree in the same pinned zod-3.23.8 snapshot) has its own single, non-overridden `.parse` at line 238 and zero ZodArray subclasses within deno/lib. This test file imports `* as z from \"../index.ts\"`, a relative import staying entirely within deno/lib/, never reaching src/ -- so the two parallel trees' separate ZodType/.parse definitions never collide at this call site's own lexical scope.",
+      "true_target": "deno/lib/types.ts:238"
     },
     {
       "package": "zod-3.23.8",
@@ -978,7 +1023,8 @@
       "text": "lteFive.parse(-Infinity);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "lteFive.parse(-Infinity) -- same deno/lib/-scoped .parse reasoning as index 96."
+      "rationale": "lteFive.parse(-Infinity) -- same deno/lib/-scoped .parse reasoning as index 96.",
+      "true_target": "deno/lib/types.ts:238"
     },
     {
       "package": "zod-3.23.8",
@@ -1008,7 +1054,8 @@
       "text": "return new ZodArray({",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "new ZodArray({...}) -- this call is itself inside deno/lib/types.ts; checked that file's own ZodArray has zero subclasses (grep confirmed empty within deno/lib), same reasoning as index 96/97: deno/lib and src are separate module trees in the same pinned snapshot, this call resolves lexically to deno/lib's own ZodArray, never to src/'s separate definition."
+      "rationale": "new ZodArray({...}) -- this call is itself inside deno/lib/types.ts; checked that file's own ZodArray has zero subclasses (grep confirmed empty within deno/lib), same reasoning as index 96/97: deno/lib and src are separate module trees in the same pinned snapshot, this call resolves lexically to deno/lib's own ZodArray, never to src/'s separate definition.",
+      "true_target": "deno/lib/types.ts:2164"
     },
     {
       "package": "zod-3.23.8",
