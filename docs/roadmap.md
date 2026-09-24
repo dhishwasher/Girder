@@ -261,8 +261,8 @@ Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
 **Status: IN PROGRESS** (Rust: DONE, all four criterion legs met with
 committed evidence, after seven correction rounds; Python: DONE, all three
 criterion legs met with committed evidence, after a three-round correction
-chain; TypeScript next per the language-order rule below, see "Current
-checkpoint")
+chain; TypeScript: repositories pinned, methodology frozen, 105 sites
+selected, not yet labeled; see "Current checkpoint")
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
@@ -271,7 +271,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | --- | --- | --- | --- |
 | Rust | **DONE** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
 | Python | **DONE** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) | Rust trustworthy on a real repository |
-| TypeScript | NOT STARTED | none / none | Python trustworthy on a real repository |
+| TypeScript | IN PROGRESS (repos pinned, methodology frozen, 105 sites selected; not yet labeled) | [methodology](observations/stage3-typescript-audit/methodology.md) + [addendum](observations/stage3-typescript-audit/methodology-addendum.md) / none | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
 Use existing pinned Rust repositories and Click first; pin TypeScript compiler
@@ -1209,4 +1209,58 @@ benchmark, don't run it against the stale snapshot.
   TypeScript's own resolver design. `typescript-structural-object-literal`
   is the corpus's one pre-existing failed cell (origin symbol
   unresolved) and the first concrete item to fix.
+- 2026-09-24: **Stage 3 TypeScript: repositories pinned, methodology
+  frozen, 105 sites selected (`0b2ba8c`, `f0cf901`).** First attempt
+  (`fbd39f8`) pinned the three repos directly into the shared
+  `docs/core-representative-corpus.json` and broke that file's own
+  already-gated test suite (`validate_manifest()` hard-codes "exactly six
+  repositories", a rust/python-only language allowlist, and requires
+  nonempty `semantic_cases`) — reverted (`00ba4b1`), re-pinned in a
+  dedicated `docs/stage3-typescript-corpus.json` instead (`e7270bd`).
+  Four repositories: `typescript-6.0.3` (the compiler's own `src/`, the
+  "TypeScript compiler snapshot" this stage's order names explicitly —
+  memory-feasibility checked directly, 473MB peak RSS on this 2.7GB VM,
+  and the full upstream tarball's 84,334 members exceeded the shared
+  tooling's archive-member limit, needing a path-filtered subset
+  extraction rather than the whole repo), `zod-3.23.8`, `date-fns-4.1.0`,
+  and `class-validator-0.15.1` (added after a review found the original
+  three had ZERO genuinely-executing decorator usage — every apparent
+  hit was inside a template-literal test fixture — which would have made
+  the `transformed_scope` gate this stage's own "known lead" vacuously
+  unexercisable; corrected by adding a decorator-saturated fourth repo
+  rather than lowering the shape count).
+  `tools/dispatch_audit_site_selector_typescript.py`: a hand-written
+  character-level masker (`mask_ts_source`) handles comments,
+  strings, template literals with nested `${...}` interpolation tracking,
+  and JS's regex-vs-division ambiguity — there is no Python `tokenize`
+  equivalent for TypeScript and this repo's tooling has no third-party
+  dependency infrastructure to add tree-sitter-typescript bindings
+  instead. 46 unit tests; a masker over-masking spot-check against the
+  real corpus (20 lines read directly, fixed seed) found zero bugs. Seven
+  shapes (no `operator_dunder` analogue — TypeScript has no operator
+  overloading; `optional_chaining_call` is a TypeScript/JavaScript-
+  specific dispatch uncertainty neither Rust nor Python has), evenly
+  represented in the frozen 105-site sample (15 each).
+  All three criterion legs remain unmeasured — no before-observation, no
+  scorer, no gate-profile, no labeling rubric yet. **Next step, per the
+  frozen sequence**: the labeling rubric (`labeling-rubric.md`, quoting
+  `docs/call-classification-policy.md`'s TypeScript row directly, per the
+  Python precedent — not derived from Python's own rubric by analogy),
+  written before any site's `true_class` is decided, covering
+  TypeScript-specific cases the Python rubric has no analogue for:
+  interface/structural receivers (no nominal guarantee, so May at best),
+  `obj?.m()` with an otherwise-provable target (the call may simply not
+  execute), function/method overloads (several signatures, one
+  implementation), rebinding via `Foo.prototype.m = ...`/
+  `Object.defineProperty`/module augmentation/namespace merging,
+  `declare`/ambient targets (outside the snapshot), and `.d.ts`
+  declaration-only lines (`not_a_call_site`, `typescript-6.0.3` alone has
+  108 `.d.ts` files among its 709 matched files).
+  Before writing the scorer: the TypeScript compiler source contains
+  non-ASCII text (locale/contributor-credit strings), so byte-offset
+  matching must be tested against a non-ASCII file, not assumed to work
+  from the Python scorer's own byte-offset logic unchanged; `inspect
+  --json` output size on `typescript-6.0.3` should be measured before any
+  script loads it wholesale (pydantic's own output was already 22MB at a
+  much smaller source size).
 - Completion remains unproven until every criterion above has committed evidence.
