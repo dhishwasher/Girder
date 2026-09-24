@@ -190,6 +190,17 @@ pub struct BuildOutput {
     /// Facts for crate-wide method-call Must-proof (Rust only; see
     /// `method_index.rs`). Empty for every other language.
     pub rust_method_facts: method_index::RustMethodFacts,
+    /// Every string literal's inner content found anywhere in this file
+    /// (Python only; see `claims::AnnotateGates::python_string_literals`),
+    /// for a project-wide pass to revert a Python Must claim whose target
+    /// is named by a string-literal rebinding (`setattr`/`monkeypatch.
+    /// setattr`/`patch`) living in a DIFFERENT file than the target's own
+    /// definition -- checked, not just disclosed, after finding a real
+    /// case in the audited real-repository sample (a cross-file
+    /// `mocker.patch('pkg.module.target')` in a test file, naming a
+    /// function with same-file call sites in `pkg/module.py`). Empty for
+    /// every other language.
+    pub python_string_literals: std::collections::HashSet<String>,
 }
 
 impl BuildOutput {
@@ -231,6 +242,9 @@ pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput
     let gates = claims::annotate(tree, source, lang, &mut out);
     if lang == Lang::Rust {
         out.rust_method_facts = method_index::collect(tree, source, file, &out, &gates);
+    }
+    if lang == Lang::Python {
+        out.python_string_literals = gates.python_string_literals;
     }
     out
 }

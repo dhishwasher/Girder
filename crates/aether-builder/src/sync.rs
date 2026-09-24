@@ -9,6 +9,7 @@ use crate::parser::{IncrementalParser, Lang};
 use aether_graph::{Edge, EdgeKind, NodeId, NodeKind, SemanticGraph};
 use std::collections::{HashMap, HashSet};
 
+mod python_rebinding;
 mod rust_methods;
 mod update;
 pub use update::{normalize_source_path, FileChange, FullRebuildReason, UpdateError, UpdateReport};
@@ -1051,6 +1052,12 @@ impl GraphBuilder {
             graph,
             self.rust_package_name.as_deref(),
         );
+
+        // Project-wide revert pass for Python same-file Must proofs whose
+        // target is rebound by a string literal in a DIFFERENT file than
+        // the target's own definition -- claims.rs's own per-file pass
+        // cannot see this. See sync/python_rebinding.rs.
+        python_rebinding::revert_string_rebound_python_claims(&self.files, graph);
 
         self.resolve_inherits(graph);
     }

@@ -21,6 +21,20 @@ pub(crate) struct AnnotateGates {
     /// some untrusted macro invocation elsewhere -- mirrors `annotate()`'s
     /// own `macro_owners`.
     pub macro_owners: HashSet<usize>,
+    /// Every string literal's inner content (Python only) found anywhere in
+    /// this file -- exposed so a project-wide pass
+    /// (`sync/python_rebinding.rs`) can build a crate-wide string-rebinding
+    /// index. This file's own `annotate()` pass already excludes a
+    /// same-file string match from `proven` (see `string_rebound` in this
+    /// function); a rebinding string can also live in a DIFFERENT file
+    /// than the target's own definition (e.g. a test file's
+    /// `mocker.patch('pkg.module.target')` naming a function defined in
+    /// `pkg/module.py`), which this file-scoped pass alone cannot see --
+    /// closed by the project-wide pass instead, not left as a disclosed
+    /// gap, after this was checked directly against the real audited
+    /// packages and found to actually occur (not just theoretically
+    /// possible).
+    pub python_string_literals: HashSet<String>,
 }
 
 pub(super) fn annotate(
@@ -171,13 +185,86 @@ pub(super) fn annotate(
         || syntax
             .iter()
             .any(|n| matches!(n.kind(), "export_statement" | "import_statement"));
+    // Python only: `transformed_scope` (any decorator/decorated_definition
+    // ANYWHERE in the file) is too blunt a gate for Python's own
+    // same-file Must path -- a single unrelated `@pytest.mark.parametrize`
+    // on some other test function disqualified every other Must-eligible
+    // call in the file (Stage 3 Python's gate-profile found this blocks
+    // 12/13 real conservative audit sites, sole blocker for one of them).
+    // The machinery that actually needs to carry the soundness weight once
+    // `transformed_scope` stops gating Python -- `top_level`'s existing
+    // `parent.id() == root.id()` check (already excludes a candidate whose
+    // own parent is `decorated_definition`, so a decorated function was
+    // never eligible here to begin with) and the `clean` scan below -- is
+    // unit-tested against decorated-file fixtures specifically (not just
+    // assumed to still work), since neither had ever run on a file that
+    // wasn't already rejected wholesale by `transformed_scope` before this
+    // change. Two gaps the *existing* checks can't see, closed here
+    // instead: a wildcard import can rebind a name with no `identifier`
+    // node the `clean` scan would ever find, and a string-literal
+    // rebinding (`setattr(obj, "target", ...)`, `patch("pkg.target")`,
+    // `globals()["target"] = ...`) is invisible to the same `identifier`-
+    // only scan. Both fail closed at the whole-file or per-name level
+    // respectively, matching this design's existing philosophy elsewhere
+    // (erring toward Unknown, never toward guessing a target).
+    let python_wildcard_import =
+        lang == Lang::Python && syntax.iter().any(|n| n.kind() == "wildcard_import");
+    let python_exec_eval_compile = lang == Lang::Python
+        && syntax.iter().any(|n| {
+            n.kind() == "call"
+                && n.child_by_field_name("function")
+                    .is_some_and(|f| matches!(node_text(f, source), "exec" | "eval" | "compile"))
+        });
+    // Any string literal anywhere in the file equalling a candidate name,
+    // or ending `.name` (the dotted-path form `unittest.mock.patch(...)`
+    // uses), excludes that specific name -- deliberately not restricted to
+    // arguments of a setattr/patch-*looking* call, since a naive call-site
+    // check missed `delattr`, `exec`-built strings, `globals()`/`vars()`/
+    // `__dict__` subscript assignment, and multi-line/black-formatted
+    // calls in initial drafts of this check. Reads only `string_content`
+    // child nodes (the grammar's own non-quote text), not the whole
+    // `string` node's text with quotes stripped by hand, which breaks on
+    // raw/triple-quoted/f-strings.
+    let mut python_string_literals: HashSet<String> = HashSet::new();
+    if lang == Lang::Python {
+        for n in &syntax {
+            if n.kind() != "string" {
+                continue;
+            }
+            let mut cursor = n.walk();
+            let mut content = String::new();
+            for child in n.named_children(&mut cursor) {
+                if child.kind() == "string_content" {
+                    content.push_str(node_text(child, source));
+                }
+            }
+            if !content.is_empty() {
+                python_string_literals.insert(content);
+            }
+        }
+    }
+    let string_rebound = |name: &str| -> bool {
+        lang == Lang::Python
+            && python_string_literals
+                .iter()
+                .any(|s| s == name || s.ends_with(&format!(".{name}")))
+    };
+    let python_whole_file_blocked = python_wildcard_import || python_exec_eval_compile;
+    let effective_scope_gate = if lang == Lang::Python {
+        python_whole_file_blocked
+    } else {
+        transformed_scope
+    };
     let mut proven = HashMap::new();
-    if !root.has_error() && !duplicate_paths && !transformed_scope && ts_module {
+    if !root.has_error() && !duplicate_paths && !effective_scope_gate && ts_module {
         for (name, candidates) in top {
             if candidates.len() != 1 {
                 continue;
             }
             let (target, declaration) = candidates[0];
+            if string_rebound(&name) {
+                continue;
+            }
             // Every occurrence must be either the declaration or a direct call.
             // This rejects parameter/local/import shadowing, assignments,
             // escaping function values, and unmodeled name uses conservatively.
@@ -404,6 +491,7 @@ pub(super) fn annotate(
         duplicate_paths,
         parse_error: root.has_error(),
         macro_owners,
+        python_string_literals,
     }
 }
 
@@ -636,6 +724,250 @@ mod tests {
                 "{file}: {claims:?}"
             );
         }
+    }
+
+    #[test]
+    fn a_decorator_elsewhere_in_a_python_file_no_longer_blocks_an_unrelated_same_file_call() {
+        // Reproduces the exact shape Stage 3 Python's gate-profile found:
+        // one real audit site (deprecated_from_orm) and one dispatch-corpus
+        // fixture (decorator-elsewhere-in-file) were blocked SOLELY by the
+        // whole-file transformed_scope gate tripping on an unrelated
+        // decorator. This is the positive case this change targets.
+        let g = graph(
+            "app.py",
+            "import functools\n\
+             def target():\n\
+             \x20\x20\x20\x20return 42\n\
+             def caller():\n\
+             \x20\x20\x20\x20return target()\n\
+             @functools.lru_cache\n\
+             def unrelated_cached():\n\
+             \x20\x20\x20\x20return 1\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().any(|c| c.class == CallClass::Must),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_decorated_target_itself_is_still_never_proven_must() {
+        // The machinery this relies on now that transformed_scope no
+        // longer gates Python: `top_level`'s existing
+        // `parent.id() == root.id()` check already excludes a candidate
+        // whose own parent is `decorated_definition` -- a decorated
+        // function was never eligible for `top` at all. This is the FIRST
+        // time this specific protection is exercised on a file that isn't
+        // already rejected wholesale by transformed_scope -- mutation-
+        // verified below.
+        let g = graph(
+            "app.py",
+            "def dec(f):\n\
+             \x20\x20\x20\x20return f\n\
+             @dec\n\
+             def target():\n\
+             \x20\x20\x20\x20return 42\n\
+             def caller():\n\
+             \x20\x20\x20\x20return target()\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().all(|c| c.class != CallClass::Must),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_later_decorated_redefinition_blocks_proof_of_the_earlier_plain_one() {
+        // `def target()` then later `@dec def target()` -- the decorated
+        // redefinition is excluded from `top` (never eligible), so only
+        // the first, undecorated `target` is a `top` candidate with a
+        // unique count of 1. The `clean` scan must still reject it: the
+        // second definition's own name identifier is neither the first
+        // declaration nor a direct call.
+        let g = graph(
+            "app.py",
+            "def dec(f):\n\
+             \x20\x20\x20\x20return f\n\
+             def target():\n\
+             \x20\x20\x20\x20return 42\n\
+             @dec\n\
+             def target():\n\
+             \x20\x20\x20\x20return 43\n\
+             def caller():\n\
+             \x20\x20\x20\x20return target()\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().all(|c| c.class != CallClass::Must),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_name_used_as_a_decorator_argument_value_blocks_proof() {
+        // `@pytest.mark.parametrize("f", [target])` -- target appears as a
+        // VALUE inside decorator arguments, an identifier occurrence that
+        // is neither the declaration nor a direct call callee.
+        let g = graph(
+            "app.py",
+            "def target():\n\
+             \x20\x20\x20\x20return 42\n\
+             @mark.parametrize('f', [target])\n\
+             def test_x():\n\
+             \x20\x20\x20\x20pass\n\
+             def caller():\n\
+             \x20\x20\x20\x20return target()\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().all(|c| c.class != CallClass::Must),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_name_used_bare_as_a_decorator_blocks_proof() {
+        // `@target` (no parens) -- target used directly as a decorator on
+        // some other function, an identifier occurrence inside a
+        // `decorator` node, not a `call` node's function field.
+        let g = graph(
+            "app.py",
+            "def target(f):\n\
+             \x20\x20\x20\x20return f\n\
+             @target\n\
+             def wrapped():\n\
+             \x20\x20\x20\x20pass\n\
+             def caller():\n\
+             \x20\x20\x20\x20return target(wrapped)\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().all(|c| c.class != CallClass::Must),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn global_del_and_import_as_all_block_proof_in_a_decorated_file() {
+        for source in [
+            "def target():\n    return 42\n@mark.thing\ndef other():\n    global target\n    target = None\ndef caller():\n    return target()\n",
+            "def target():\n    return 42\n@mark.thing\ndef other():\n    del target\ndef caller():\n    return target()\n",
+            "def target():\n    return 42\n@mark.thing\ndef other():\n    pass\nimport helper as target\ndef caller():\n    return target()\n",
+        ] {
+            let g = graph("app.py", source);
+            let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+            let claims = g.call_evidence(caller.id).unwrap();
+            assert!(
+                claims.calls.iter().all(|c| c.class != CallClass::Must),
+                "{source}: {claims:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_wildcard_import_blocks_every_proof_in_that_file() {
+        let g = graph(
+            "app.py",
+            "from somewhere import *\n\
+             def target():\n\
+             \x20\x20\x20\x20return 42\n\
+             def caller():\n\
+             \x20\x20\x20\x20return target()\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().all(|c| c.class != CallClass::Must),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_string_literal_matching_the_name_blocks_proof_setattr_shape() {
+        let g = graph(
+            "app.py",
+            "def target():\n\
+             \x20\x20\x20\x20return 42\n\
+             def other():\n\
+             \x20\x20\x20\x20setattr(mod, 'target', None)\n\
+             def caller():\n\
+             \x20\x20\x20\x20return target()\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().all(|c| c.class != CallClass::Must),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_dotted_string_literal_ending_in_the_name_blocks_proof_patch_shape() {
+        let g = graph(
+            "app.py",
+            "def target():\n\
+             \x20\x20\x20\x20return 42\n\
+             def other():\n\
+             \x20\x20\x20\x20patch('pkg.mod.target')\n\
+             def caller():\n\
+             \x20\x20\x20\x20return target()\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().all(|c| c.class != CallClass::Must),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn an_exec_or_eval_call_anywhere_blocks_every_proof_in_that_file() {
+        let g = graph(
+            "app.py",
+            "def target():\n\
+             \x20\x20\x20\x20return 42\n\
+             def other():\n\
+             \x20\x20\x20\x20eval('1 + 1')\n\
+             def caller():\n\
+             \x20\x20\x20\x20return target()\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().all(|c| c.class != CallClass::Must),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_typescript_file_with_the_same_decorator_elsewhere_shape_is_unaffected() {
+        // This change is deliberately gated to Python only. A TypeScript
+        // file with the identical "unrelated decorator elsewhere in the
+        // file" shape must NOT newly prove Must -- TypeScript's own
+        // transformed_scope gating is untouched, and Stage 3 TypeScript
+        // hasn't started (the roadmap's own language-order rule).
+        let g = graph(
+            "app.ts",
+            "export function target() { return 42; }\n\
+             export function caller() { return target(); }\n\
+             class Foo {\n\
+             \x20\x20@bar\n\
+             \x20\x20unrelated() {}\n\
+             }\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().all(|c| c.class != CallClass::Must),
+            "{claims:?}"
+        );
     }
 
     #[test]
