@@ -1,0 +1,202 @@
+[
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "pydantic/_internal/_validators.py",
+    "caller": "less_than_or_equal_validator",
+    "site_start": 11191,
+    "site_end": 11205,
+    "row": 304,
+    "target_file": "pydantic/_internal/_validators.py",
+    "target": "_safe_repr"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "pydantic/_internal/_schema_gather.py",
+    "caller": "traverse_schema",
+    "site_start": 5069,
+    "site_end": 5099,
+    "row": 129,
+    "target_file": "pydantic/_internal/_schema_gather.py",
+    "target": "traverse_schema"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "pydantic/_internal/_schema_gather.py",
+    "caller": "traverse_schema",
+    "site_start": 7798,
+    "site_end": 7858,
+    "row": 184,
+    "target_file": "pydantic/_internal/_schema_gather.py",
+    "target": "traverse_schema"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "pydantic/plugin/_schema_validator.py",
+    "caller": "build_wrapper",
+    "site_start": 3867,
+    "site_end": 3899,
+    "row": 103,
+    "target_file": "pydantic/plugin/_schema_validator.py",
+    "target": "filter_handlers"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "pydantic/_internal/_schema_gather.py",
+    "caller": "traverse_schema",
+    "site_start": 4959,
+    "site_end": 4986,
+    "row": 126,
+    "target_file": "pydantic/_internal/_schema_gather.py",
+    "target": "traverse_schema"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "tests/benchmarks/generate_north_star_data.py",
+    "caller": "person",
+    "site_start": 2981,
+    "site_end": 2994,
+    "row": 118,
+    "target_file": "tests/benchmarks/generate_north_star_data.py",
+    "target": "date_string"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "tests/test_datetime.py",
+    "caller": "test_datetime",
+    "site_start": 6896,
+    "site_end": 6911,
+    "row": 171,
+    "target_file": "tests/test_datetime.py",
+    "target": "create_tz"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "pydantic/_internal/_fields.py",
+    "caller": "collect_model_fields",
+    "site_start": 19363,
+    "site_end": 19406,
+    "row": 422,
+    "target_file": "pydantic/_internal/_fields.py",
+    "target": "_update_fields_from_docstrings"
+  },
+  {
+    "pkg": "click-8.4.1",
+    "caller_file": "tests/test_shell_completion.py",
+    "caller": "test_argument_default",
+    "site_start": 4378,
+    "site_end": 4401,
+    "row": 137,
+    "target_file": "tests/test_shell_completion.py",
+    "target": "_get_words"
+  },
+  {
+    "pkg": "click-8.4.1",
+    "caller_file": "tests/test_shell_completion.py",
+    "caller": "test_argument_nargs",
+    "site_start": 8732,
+    "site_end": 8755,
+    "row": 281,
+    "target_file": "tests/test_shell_completion.py",
+    "target": "_get_words"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "tests/test_forward_ref.py",
+    "caller": "test_undefined_types_warning_raised_by_usage",
+    "site_start": 27618,
+    "site_end": 27688,
+    "row": 983,
+    "target_file": "tests/test_forward_ref.py",
+    "target": "pytest_raises_user_error_for_undefined_type"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "pydantic/_internal/_fields.py",
+    "caller": "rebuild_model_fields",
+    "site_start": 21012,
+    "site_end": 21071,
+    "row": 466,
+    "target_file": "pydantic/_internal/_fields.py",
+    "target": "update_field_from_config"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "tests/test_forward_ref.py",
+    "caller": "test_undefined_types_warning_1a_raised_by_default_2b_forward_ref",
+    "site_start": 25832,
+    "site_end": 25940,
+    "row": 930,
+    "target_file": "tests/test_forward_ref.py",
+    "target": "pytest_raises_user_error_for_undefined_type"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "tests/test_type_hints.py",
+    "caller": "test_parent_sub_model",
+    "site_start": 4342,
+    "site_end": 4405,
+    "row": 137,
+    "target_file": "tests/test_type_hints.py",
+    "target": "inspect_type_hints"
+  },
+  {
+    "pkg": "click-8.4.1",
+    "caller_file": "tests/test_shell_completion.py",
+    "caller": "test_chained",
+    "site_start": 3011,
+    "site_end": 3035,
+    "row": 97,
+    "target_file": "tests/test_shell_completion.py",
+    "target": "_get_words"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "tests/test_datetime.py",
+    "caller": "test_datetime",
+    "site_start": 5404,
+    "site_end": 5418,
+    "row": 137,
+    "target_file": "tests/test_datetime.py",
+    "target": "create_tz"
+  },
+  {
+    "pkg": "click-8.4.1",
+    "caller_file": "tests/test_shell_completion.py",
+    "caller": "test_command",
+    "site_start": 1072,
+    "site_end": 1098,
+    "row": 35,
+    "target_file": "tests/test_shell_completion.py",
+    "target": "_get_words"
+  },
+  {
+    "pkg": "click-8.4.1",
+    "caller_file": "tests/test_shell_completion.py",
+    "caller": "test_chained",
+    "site_start": 3236,
+    "site_end": 3272,
+    "row": 101,
+    "target_file": "tests/test_shell_completion.py",
+    "target": "_get_words"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "pydantic/_internal/_typing_extra.py",
+    "caller": "get_model_type_hints",
+    "site_start": 14707,
+    "site_end": 14746,
+    "row": 367,
+    "target_file": "pydantic/_internal/_typing_extra.py",
+    "target": "try_eval_type"
+  },
+  {
+    "pkg": "pydantic-2.13.4",
+    "caller_file": "pydantic/_internal/_schema_gather.py",
+    "caller": "traverse_definition_ref",
+    "site_start": 3153,
+    "site_end": 3206,
+    "row": 87,
+    "target_file": "pydantic/_internal/_schema_gather.py",
+    "target": "traverse_schema"
+  }
+]
