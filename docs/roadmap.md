@@ -1360,8 +1360,12 @@ benchmark, don't run it against the stale snapshot.
   architecture, and common more broadly) defeats the same-file proof
   mechanism in a way Rust/Python/Go's typically module-level-function
   code rarely hits — recorded as the next gate-profile step's own leading
-  hypothesis, to be checked against the full 12-site conservative sample,
-  not assumed from these 8 alone.
+  hypothesis, to be checked against the full 46-site conservative sample,
+  not assumed from these 8 alone (a further review round found only 6 of
+  these 8 are genuinely same-file — sites 29/34 are cross-file to
+  `tracing.ts` — and isolated `emitter.ts` specifically as a clean,
+  `duplicate_paths`-free test of the nesting hypothesis alone; see
+  `docs/observations/stage3-typescript-audit/before-observation-addendum.md`).
   **Criterion status**: `zero_classification_errors_on_audit` **Met**
   (0/97 unsound); `nonempty_must_precision_1000_on_real_repository`
   **Not Met** (zero Must currently proven, precision undefined on an
@@ -1370,7 +1374,7 @@ benchmark, don't run it against the stale snapshot.
   this is the honest baseline before any resolver design begins, exactly
   where Rust's and Python's own Stage 3 rounds each started. All four
   common gates pass (no Rust code changed this round).
-  **Next step**: gate-profile the 12 real-audit conservative sites and
+  **Next step**: gate-profile the 46 real-audit conservative sites and
   the pooled dispatch corpus's TypeScript-shaped conservative cells
   against every existing extractor gate (mirroring
   `dispatch_audit_gate_profile_python.py`'s role), checking specifically

@@ -185,6 +185,16 @@ class FindCoveringClaimUnitTests(unittest.TestCase):
         claim = find_covering_claim(claims, "a.ts", 25)
         self.assertIsNone(claim)
 
+    def test_parse_error_also_never_covers(self):
+        # Confirmed whole-module in typescript-6.0.3 (4 instances, each
+        # start_byte == 0 spanning the entire file) -- see
+        # before-observation-addendum.md.
+        claims = [
+            {"file": "a.ts", "start_byte": 0, "end_byte": 1000, "class": "unknown", "reason": "parse-error", "targets": [], "caller": "module"},
+        ]
+        claim = find_covering_claim(claims, "a.ts", 25)
+        self.assertIsNone(claim)
+
     def test_narrow_decorator_gap_claim_is_not_excluded(self):
         # unexpanded-macro-or-decorator is narrow (checked directly against
         # real inspect output, see the module docstring) and must still be

@@ -40,11 +40,24 @@ assumed to carry over unchanged:
    hide genuine per-site Unknown evidence the scorer should see and score
    against, not suppress. `duplicate-semantic-path` is emitted by the same
    shared `claims.rs` code path for every language (confirmed by reading
-   the extractor directly, not assumed TypeScript-specific) -- neither the
-   Rust nor the Python scorer's own `NEVER_COVERS` includes it, a latent
-   gap in both already-DONE audits that happened not to matter because
-   their specific sampled files never tripped `duplicate_paths`, recorded
-   here rather than silently carried forward unfixed for this language too.
+   the extractor directly, not assumed TypeScript-specific). CORRECTION
+   (see before-observation-addendum.md): neither the Rust nor the Python
+   scorer's own `NEVER_COVERS` includes it either, but this is NOT because
+   their sampled files never tripped `duplicate_paths` -- Rust's own
+   committed DONE audit
+   (docs/observations/stage3-rust-audit/after-method-call-fix/correction-1/audit-after.json,
+   index 89, serde_json `ser.rs:504`) has exactly one scored site with
+   `observed_reason: duplicate-semantic-path`, and that cell is
+   `conservative` (sound). Excluding it here matches Rust's/Python's own
+   scorers' existing behavior on a site that happens to be safe either way,
+   not an untested gap. `parse-error` is ALSO whole-module for this corpus
+   (confirmed: 4 instances in typescript-6.0.3, each `start_byte == 0` and
+   spanning the entire file) and is included in `NEVER_COVERS` below for
+   the same reason, even though this round's real measurement never had it
+   become any scored site's covering claim (confirmed by checking the
+   `observed_reason` distribution across all 97 scored sites: only
+   `typescript-binding-or-structural-dispatch-unproven` and
+   `unresolved-call-syntax` appear).
 
 Sites whose true_class is "not_a_call_site" are not scored. For every
 other site: if no CallClaim anywhere in the package contains the site's
@@ -240,7 +253,11 @@ def extract_target_locations(inspect_path: Path) -> dict[str, tuple[str, int]]:
 
 # See the module docstring for how this was determined from real
 # TypeScript inspect output, not copied from Python's own NEVER_COVERS.
-NEVER_COVERS = {"implicit-runtime-dispatch-not-certified", "duplicate-semantic-path"}
+NEVER_COVERS = {
+    "implicit-runtime-dispatch-not-certified",
+    "duplicate-semantic-path",
+    "parse-error",
+}
 
 
 def find_covering_claim(claims: list[dict], file: str, byte_offset: int) -> dict | None:
