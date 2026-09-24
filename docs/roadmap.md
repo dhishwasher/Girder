@@ -260,7 +260,7 @@ Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
 
 **Status: IN PROGRESS** (Rust: DONE, all four criterion legs met with
 committed evidence, after seven correction rounds; Python: DONE, all three
-criterion legs met with committed evidence, after a four-round correction
+criterion legs met with committed evidence, after a three-round correction
 chain; TypeScript next per the language-order rule below, see "Current
 checkpoint")
 
@@ -1111,8 +1111,8 @@ benchmark, don't run it against the stale snapshot.
   1000_on_real_repository`, `zero_classification_errors_on_audit`) Met
   for the first time.
   A three-round `advisor`-driven correction chain followed before trusting
-  that milestone (mirroring Rust's own seven-round pattern), each round
-  committed separately rather than editing a prior one:
+  that milestone, each round committed separately rather than editing a
+  prior one:
   [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md)
   found and fixed a real cross-language soundness bug (`cccbef3`): the
   project-wide rebinding-revert pass had no language gate, so an
