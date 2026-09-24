@@ -581,6 +581,89 @@
         "manifest_sha256": "28aee32f0f0028ae69b1207cb1a7b08771c3f4830fe325bde112b5e59a0bab27",
         "physical_lines": 11526
       }
+    },
+    {
+      "artifact": {
+        "bytes": 33894793,
+        "format": "tar.gz",
+        "root": "TypeScript-6.0.3",
+        "sha256": "c26953b79c1197e02f5666a0b612d5b9707339557aa9744097e7d5719de1a117",
+        "url": "https://github.com/microsoft/TypeScript/archive/refs/tags/v6.0.3.tar.gz"
+      },
+      "id": "typescript-6.0.3",
+      "language": "typescript",
+      "license": {
+        "files": [
+          "LICENSE.txt"
+        ],
+        "spdx": "Apache-2.0"
+      },
+      "semantic_cases": [],
+      "sources": {
+        "bytes": 21274222,
+        "extensions": [
+          ".ts"
+        ],
+        "files": 709,
+        "manifest_sha256": "c9122c3a6d108966914a27701a7801104b9d7b018f65ab6e25c60cb464d1355f",
+        "physical_lines": 452627
+      }
+    },
+    {
+      "artifact": {
+        "bytes": 586431,
+        "format": "tar.gz",
+        "root": "zod-3.23.8",
+        "sha256": "ecd3ac7eb5bac88202b1146c308c8bbd48e63fc64d6d7f14b5577dde5da02c48",
+        "url": "https://github.com/colinhacks/zod/archive/refs/tags/v3.23.8.tar.gz"
+      },
+      "id": "zod-3.23.8",
+      "language": "typescript",
+      "license": {
+        "files": [
+          "LICENSE"
+        ],
+        "spdx": "MIT"
+      },
+      "semantic_cases": [],
+      "sources": {
+        "bytes": 937060,
+        "extensions": [
+          ".ts",
+          ".tsx"
+        ],
+        "files": 165,
+        "manifest_sha256": "a8fc1683c9305317f458fea5e7f9523deec9cf55e30888e72431aa34dc8e637e",
+        "physical_lines": 30448
+      }
+    },
+    {
+      "artifact": {
+        "bytes": 1228521,
+        "format": "tar.gz",
+        "root": "date-fns-4.1.0",
+        "sha256": "a6694304fccc35587f954f4b79adbbeb9a0c66256a13e48ac0488b55f6616257",
+        "url": "https://github.com/date-fns/date-fns/archive/refs/tags/v4.1.0.tar.gz"
+      },
+      "id": "date-fns-4.1.0",
+      "language": "typescript",
+      "license": {
+        "files": [
+          "LICENSE.md"
+        ],
+        "spdx": "MIT"
+      },
+      "semantic_cases": [],
+      "sources": {
+        "bytes": 2864829,
+        "extensions": [
+          ".ts",
+          ".tsx"
+        ],
+        "files": 1529,
+        "manifest_sha256": "8cff01e1ed7f2ea7f69b60a09e7b4889883f182be895eb253da18af0da2cf43b",
+        "physical_lines": 100487
+      }
     }
   ],
   "schema_version": 1,
