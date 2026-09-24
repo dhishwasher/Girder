@@ -55,21 +55,33 @@ files existed on disk first, confirmed by mtime:
   (classes, reasons, targets) was not read or used for any
   classification, labeling, or prediction reasoning.
 - `scratchpad/class-validator-inspect.json` (mtime 2026-09-24 01:43:56).
-  This one's content WAS read, for the `NEVER_COVERS` investigation
-  documented in `dispatch_audit_scorer_typescript.py`'s own module
-  docstring: specifically, the reason strings and byte spans of
-  `implicit-runtime-dispatch-not-certified` and
-  `duplicate-semantic-path` claims (both whole-module), and the ~315
-  `unexpanded-macro-or-decorator` claims' narrow, per-decorator byte
-  spans, used to decide `NEVER_COVERS`'s membership. No site-level Must/
-  Unknown/May classification result from this file was read or used to
-  inform the prediction itself -- the investigation was scoped to
-  designing the scorer's coverage-gap exclusion set, not to previewing
-  real-repository answers. Recorded here because the prediction
-  document's specific claim ("no measurement output anywhere") is
-  factually wrong regardless of whether the content mattered to the
-  prediction's substance; the honest disclosure is the file existed and
-  what was actually read from it, not a claim that it didn't exist.
+  This one's content WAS read, via one script
+  (`python3 -c` inline, not saved) that walked every `call_evidence_v1`
+  attribute in the file, filtered to `coverage_gap: true` claims, and
+  printed, per distinct `reason` string: a count, the max span size, and
+  ONE sample `(file, start_byte, end_byte, span)` tuple. The exact
+  printed output was:
+  `implicit-runtime-dispatch-not-certified count: 176 max_span: 162878`,
+  `unexpanded-macro-or-decorator count: 315 max_span: 208`,
+  `duplicate-semantic-path count: 4 max_span: 162878` (each with one
+  sample). This was read from class-validator-0.15.1 only -- not from
+  any of the other three pinned repos, and not from typescript-6.0.3
+  specifically, where the 6 same-file predicted sites actually live.
+  **What this was and was not blind to, stated precisely rather than
+  asserted as fully blind**: the script never printed or read any
+  per-site `class` (must/may/unknown) value, any `targets`, or any
+  `caller` -- only reason-string aggregate counts and spans restricted
+  to gap claims. It therefore could not have previewed any specific
+  site's Must/Unknown answer. But it DID reveal, before the prediction
+  was committed, that `unexpanded-macro-or-decorator` gap claims are
+  narrow (max 208 bytes) while the other two reasons are whole-module --
+  a structural fact about this corpus's claim-span distribution that
+  directly shaped the scorer's `NEVER_COVERS` design one commit before
+  the prediction. Recorded here because the prediction document's
+  specific claim ("no measurement output anywhere") is factually wrong
+  regardless of how much this content mattered to the prediction's
+  substance -- the honest disclosure is exactly what was read, not a
+  characterization of how blind it left the process.
 
 ## 4. `duplicate-semantic-path` / Rust-audit docstring correction
 
@@ -81,8 +93,9 @@ to matter because their specific sampled files never tripped
 scorers' `NEVER_COVERS` definitions: Rust's is
 `{"implicit-drop-or-operator-dispatch-not-certified"}`, Python's is a
 single unrelated entry; neither includes `duplicate-semantic-path`). The
-second half is false: Rust's own committed DONE audit
-(`docs/observations/stage3-rust-audit/after-method-call-fix/correction-1/audit-after.json`)
+second half is false: Rust's own committed, final DONE audit
+(`docs/observations/stage3-rust-audit/after-method-call-fix/correction-2/audit-after.json`
+-- `correction-2` is the latest cited state per `docs/roadmap.md`)
 has exactly one scored site (index 89, serde_json `ser.rs:504`) with
 `observed_reason: duplicate-semantic-path`. That site's cell is
 `conservative` (`true_class: may`, `observed_class: unknown`) -- sound,
@@ -110,46 +123,97 @@ correctness gap for any future round where it might. A regression test
 `tools/test_dispatch_audit_scorer_typescript.py`) was added alongside
 the fix; full suite re-run clean (27 passed).
 
-## 5. Paren-balance / enclosing-claim-masking check: 2 flagged, both confirmed benign
+## 5. Paren-balance / enclosing-claim check: 2 flagged in TypeScript -- investigated further, found to be an established, safe, cross-language pattern, not a TypeScript-specific gap
 
 A proper enclosing-claim check (does each scored site's own covering
 claim actually start at the site's own byte offset, or does the site
 sit inside a larger claim's span with unbalanced open-parens between the
 claim's start and the site -- a pattern that would indicate the site is
-being scored against someone else's claim rather than its own) was run
-across all 97 scored sites. Exactly 2 were flagged:
+being scored against a claim that isn't its own) was run across all 97
+scored sites. Exactly 2 were flagged:
 
 - **Site 23** (date-fns-4.1.0, `src/intlFormatDistance/test.ts:109`):
   covering claim starts at byte 3093, site's own offset is 3269 (3
-  unbalanced open-parens between them).
+  unbalanced open-parens between them). The site itself is a
+  `new_expression` (`new Date(1986, 3, 4, 10, 30, 0)`) nested as an
+  argument inside a multi-line `intlFormatDistance(...)` call whose own
+  claim spans 3093-3601.
 - **Site 91** (typescript-6.0.3,
   `src/testRunner/unittests/tsserver/projectReferences.ts:1189`, the
   `verifySolutionScenario` Must site): covering claim starts at byte
-  41250, site's own offset is 50479 (2 unbalanced open-parens between
-  them). Direct inspection of nearby claims confirmed no narrower
-  per-call claim exists anywhere near this site's byte position -- the
-  covering claim is a single large (~16.7 KB) region.
+  41250 (a `describe(...)` call's own claim, spanning its entire
+  callback body to byte 57959), site's own offset is 50479.
 
-Both were investigated directly, not just flagged and left. Neither
-threatens `zero_classification_errors_on_audit`'s "Met" status: in both
-cases the enclosing claim's class matches the safe/conservative
-direction already recorded (site 91 is a Must site scored
-`conservative`, i.e. Girder reports `unknown` -- a large enclosing
-"unproven" claim covering it is still the conservative, correct-
-direction answer, not an overclaim). No false Must, no false May, and no
-genuinely reachable site was actually excluded by this.
+**Both were checked for an offset bug first, and ruled out.** Reading
+the raw bytes at each site's own computed offset confirms it lands
+exactly on the call's own callee token (`verifySolutionScenario({` at
+50479; inside `new Date(1986, 3, 4, 11, 30, 0),\n new Date(1986, 3, 4,
+10, 30, 0)` at site 23's line) -- not a masker or column-math error.
+**A search for any claim starting within +-1200 bytes of each site's own
+offset confirms neither call gets a claim starting at its own position**
+-- for site 91 specifically, claims exist ending at byte 50205 (a
+different, immediately-preceding call) and nothing starts again until
+inside the `describe(...)` claim's own later sub-claims; verified there
+are 56 other claims genuinely nested inside the `describe(...)` claim's
+41250-57959 span (i.e. many OTHER calls in that same callback body DO
+get their own claim) -- `verifySolutionScenario`'s specific call is a
+real, individual miss, not evidence that the whole region lacks
+per-call granularity.
 
-Site 91 does reveal a genuine, previously-undisclosed **extractor
-coverage-granularity gap**, worth recording as a real, non-blocking
-limitation rather than a soundness defect: Girder's TypeScript extractor
-does not emit a narrow per-call claim for calls nested deep inside test-
-framework callback structures (`describe()`/`it()` blocks, in this
-corpus's test-runner-heavy files); instead it covers a large region with
-one coarse "unproven" claim. This is conservative (never wrong-
-direction) but coarse -- a future resolver round targeting this file
-would need finer-grained claim boundaries before it could ever prove
-anything inside such a block, independent of whatever else blocks the
-proof (see section 6).
+**This is not a coverage-granularity story specific to TypeScript's test
+framework blocks -- it is corrected here from the earlier framing.**
+Re-running the identical "does this site's own covering claim start at
+its own recorded byte offset" check against Rust's and Python's own
+final, committed, DONE, gate-passed audits (per advisor's specific
+instruction) found the same "no own claim, attributed via containment to
+an enclosing claim" pattern is common, not rare, across both languages:
+
+- **Rust** (`docs/observations/stage3-rust-audit/after-method-call-fix/correction-2/audit-after.json`,
+  the currently-cited final state): **24 of 52 scored sites (46%)** have
+  no claim starting at their own recorded byte offset -- e.g. index 3
+  (`benches/bellman_ford.rs:46`), index 89 (`src/ser.rs:504`, the
+  `duplicate-semantic-path` site from section 4), and 22 others. All 24
+  score `exact` or `conservative`; **none score `overclaim` or
+  `unsafe_exclusion`**. Rust's own `cell_counts` for the whole audit is
+  `{"exact": 28, "conservative": 24}` -- zero unsound cells overall,
+  containment-attributed sites included.
+- **Python** (`docs/observations/stage3-python-audit/after-transformed-scope-fix/correction-1/audit-scored-results.json`):
+  **25 of 85 scored sites (29%)** show the same pattern. `cell_counts` is
+  `{"exact": 73, "conservative": 12}` -- again zero unsound cells, and
+  every one of the 25 containment-attributed sites is `exact` or
+  `conservative`.
+- **TypeScript** (this round): 2 of 97 (2%) -- the smallest share of the
+  three, not the only instance.
+
+**Conclusion, corrected from the original framing**: `find_covering_claim`'s
+containment-based attribution (score a site against whichever claim's
+byte range contains it, even when that claim's own `start_byte` differs
+from the site's) is an established, already-relied-upon part of this
+program's entire Stage 3 scoring methodology, used identically by all
+three language scorers, and empirically safe everywhere it has been
+checked (51 total containment-attributed sites across Rust, Python, and
+TypeScript combined, zero of them unsound). It is not a defect
+introduced by or unique to this round, and it does not retroactively
+threaten any of the three languages' "0 unsound cells" results --
+`zero_classification_errors_on_audit` stays **Met** for TypeScript, on
+the evidence above, not merely by asserting the two flagged sites are
+individually benign.
+
+**What remains a genuinely open, disclosed question, not resolved
+here**: whether containment-based attribution is the *right* long-term
+model for what "Girder's actual answer for this specific call" means,
+as opposed to a design that would instead report "no evidence" (a
+distinct outcome from `unknown`) when a call gets no claim of its own.
+This has not mattered to any of the 51 sites checked because in every
+case the enclosing claim's class happened to match the direction the
+call's own (non-existent) claim would very likely have carried too
+(driven by the same whole-file/whole-region gates, e.g.
+`duplicate_paths`, that would apply to a hypothetical own-claim just as
+much as to the enclosing one). A future resolver round that changes
+per-call claim granularity, or that scores a site whose enclosing claim's
+class does NOT match what a real own-claim would report, would need to
+revisit this -- flagged here as a precondition to watch for, not
+designed around now.
 
 ## 6. Nesting vs. `duplicate_paths`: competing hypotheses, not collapsed into one
 
@@ -196,10 +260,35 @@ isolated as the sole cause -- correctly recorded as competing,
 unresolved hypotheses for those three, not collapsed into a single claim
 the evidence doesn't support.
 
+## 7. Two small corrections
+
+- The commit that introduced this addendum's first draft (`7550683`)
+  says in its own message that the scorer's pytest suite has "28 tests."
+  The actual run showed **27 passed**. Not amended (this program commits
+  forward, not `--amend`); corrected here instead.
+- That same commit's addendum text originally said `parse-error` belongs
+  in `NEVER_COVERS` "for the same reason" as
+  `implicit-runtime-dispatch-not-certified` and `duplicate-semantic-path`.
+  That overstates the similarity: the other two are emitted on every
+  file (structural, unconditional coverage gaps), while `parse-error`
+  only appears on genuinely malformed/unparseable files -- arguably
+  itself a form of real, visible uncertainty rather than a pure coverage
+  artifact. Excluding it from scoring is still safe (it only makes the
+  scorer stricter about what counts as "covering," never looser), but
+  the rationale is "whole-module and therefore unusable as meaningful
+  per-site evidence," not "same reason as the other two."
+
 ## Still not started
 
 Per advisor's explicit instruction, the gate-profile step (over all 46
-Must sites, columns: `transformed_scope`, `duplicate_paths` with cause,
-target node path depth, cross-file, class construction, `parse-error`)
-has not been started. This addendum is the precondition for it, not the
-gate-profile itself.
+Must sites) has not been started. This addendum is the precondition for
+it, not the gate-profile itself. Its column list is extended by one
+entry from what was originally specified, per section 5 above: **"own
+claim present"** (does a claim start at this site's own byte offset, or
+is it only covered via containment) should be the FIRST column checked,
+since section 5 established a site without its own claim cannot be
+meaningfully attributed to `transformed_scope`, nesting, or
+`duplicate_paths` specifically -- those gates describe why a claim came
+out `unknown`, not why a claim exists at all. The remaining columns are
+unchanged: `transformed_scope`, `duplicate_paths` (with cause), target
+node path depth, cross-file, class construction, `parse-error`.
