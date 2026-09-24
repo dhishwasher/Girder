@@ -1226,9 +1226,16 @@ benchmark, don't run it against the stale snapshot.
   and `class-validator-0.15.1` (added after a review found the original
   three had ZERO genuinely-executing decorator usage — every apparent
   hit was inside a template-literal test fixture — which would have made
-  the `transformed_scope` gate this stage's own "known lead" vacuously
-  unexercisable; corrected by adding a decorator-saturated fourth repo
-  rather than lowering the shape count).
+  the `decorator` shape empty in the sample entirely; corrected by adding
+  a decorator-saturated fourth repo rather than lowering the shape count.
+  **Not production coverage**: all 15 sampled `decorator` sites are
+  factory calls in `class-validator`'s own `sample`/`test` files, not
+  `src/` — `transformed_scope` will trip for those 26 files, correctly
+  gating other same-file sites in them, but no `src/`-internal same-file
+  Must proof depends on it, so this doesn't make the gate-profile step
+  exercise it against production dispatch code, only against test/sample
+  code. See
+  [methodology-addendum-2.md](observations/stage3-typescript-audit/methodology-addendum-2.md)).
   `tools/dispatch_audit_site_selector_typescript.py`: a hand-written
   character-level masker (`mask_ts_source`) handles comments,
   strings, template literals with nested `${...}` interpolation tracking,
