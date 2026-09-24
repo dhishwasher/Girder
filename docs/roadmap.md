@@ -259,9 +259,10 @@ Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
 ## Stage 3 — Close dispatch holes one language at a time
 
 **Status: IN PROGRESS** (Rust: DONE, all four criterion legs met with
-committed evidence, after seven correction rounds; Python next per the
-language-order rule below — labeling rubric and masking check not yet
-frozen, see "Current checkpoint")
+committed evidence, after seven correction rounds; Python: DONE, all three
+criterion legs met with committed evidence, after a four-round correction
+chain; TypeScript next per the language-order rule below, see "Current
+checkpoint")
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
@@ -269,7 +270,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | Language | Status | Before / after evidence | Dependency |
 | --- | --- | --- | --- |
 | Rust | **DONE** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
-| Python | IN PROGRESS (1st resolver change done: operator-dispatch claim, 0 unsound on sample; Must-proof not started) | [methodology](observations/stage3-python-audit/methodology.md) / [after-operator-claim-fix](observations/stage3-python-audit/after-operator-claim-fix/after-observation.md) | Rust trustworthy on a real repository |
+| Python | **DONE** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) | Rust trustworthy on a real repository |
 | TypeScript | NOT STARTED | none / none | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
@@ -1092,4 +1093,120 @@ benchmark, don't run it against the stale snapshot.
   design. Plan mutation tests for any new scope/rebinding logic from the
   start — Rust's own module-scope logic needed four separate corrections
   because this wasn't done early enough there.
+- 2026-09-24: **Stage 3 Python: DONE.** Gate-profiled the 13 conservative
+  audit sites first (`c68587d`): `transformed_scope` (any decorator
+  anywhere in a Python file blocking the whole file's Must proofs) was
+  the sole blocker for 1 of 13, a co-blocker for most others. Designed a
+  narrowed rule (`38e3d1d`, written after the measurement it "predicted"
+  — file mtimes on the committed measurement artifacts predate this
+  commit; see correction-3), implemented it
+  (`8acde01`): removed `transformed_scope` from gating Python's proven-map
+  computation (the pre-existing `top_level`/`clean` checks already
+  excluded decorated targets and shadowing), added a same-file and
+  project-wide string-literal rebinding guard after finding a real
+  cross-file case (`mocker.patch(...)` naming a same-file-called
+  function) — not just a theoretical one. Result: **85 scored, 73 exact,
+  12 conservative, 0 unsound** (`9510863`), all three criterion legs
+  (`measured_dispatch_corpus_improvement`, `nonempty_must_precision_
+  1000_on_real_repository`, `zero_classification_errors_on_audit`) Met
+  for the first time.
+  A three-round `advisor`-driven correction chain followed before trusting
+  that milestone (mirroring Rust's own seven-round pattern), each round
+  committed separately rather than editing a prior one:
+  [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md)
+  found and fixed a real cross-language soundness bug (`cccbef3`): the
+  project-wide rebinding-revert pass had no language gate, so an
+  unrelated Python string anywhere in a mixed-language project could
+  wrongly revert a Rust or TypeScript same-file Must claim — quantified
+  directly against this repository itself (6 wrong reverts before, 0
+  after). Also closed a real attribute-assignment/`del`/`for`/`with`
+  rebinding gap the string-literal-only guards had missed (`9160402`,
+  widened in `86fd130` after the first implementation only matched the
+  simplest shape).
+  [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md)
+  found and fixed a hex-padding bug in correction-1's own verification
+  scripts (silently dropping ~1/16 of resolved Must targets from every
+  downstream check) and re-ran both soundness checks clean on the
+  corrected, complete population; re-ran the Rust audit against the
+  final binary instead of only asserting it unaffected (28/24/0,
+  matching precommitment, since none of the three audited Rust crates
+  contain any `.py` file); named the corpus's one pre-existing
+  non-Python failed cell.
+  [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md)
+  found that `design-and-prediction.md`'s prediction, while genuinely
+  committed before the code commit, was written with the actual
+  measurement numbers already on disk (file mtimes predate the
+  prediction's own commit) — not a blind prediction; recorded that the
+  stage's first genuinely blind, in-session-verified prediction is
+  `correction-1/prediction.md` (`f811daa`). Completed a hand-read
+  call-site sample that two prior rounds had each claimed was complete
+  while actually being partial (regenerated programmatically: 20/20
+  original-sample sites plus 8/8 previously-unresolved-target sites).
+  Ran the two checks required before declaring DONE: ground-truth labels
+  committed ~12 minutes before the first audit scoring (frozen before
+  any comparison — confirmed, not assumed), and no code has changed
+  since the last gated commit (`86fd130`, `correction-1/gates.log`,
+  `ALL_GATES_PASSED`) — `git diff --stat 86fd130 HEAD -- .
+  ':(exclude)docs'` is empty. Both pass.
+  Final measured state, binary `f87d1d058bb91418e817af35efb4956096a34e486ea39d7346a17477bb50d96f`
+  (commit `86fd130`): real-repository audit 73 exact / 12 conservative /
+  0 unsound; dispatch corpus 56 of 57 cells scored (pooled 22 exact / 34
+  conservative / 0 unsound) plus 1 pre-existing failed cell
+  (`typescript-structural-object-literal`, origin symbol unresolved —
+  confirmed unchanged since `after-operator-claim-fix`, not Python, the
+  first item to resolve when TypeScript's own Stage 3 work starts), Rust/
+  TypeScript/Go per-language cells unchanged from their pre-round
+  baseline (5/9, 5/10, 5/9), Python 6/7 → 7/6; Stage 1 oracle
+  precision/recall 1.0/1.0 for both Rust and Python. Disclosed,
+  not-yet-closed limitations carried forward:
+  class construction never proven Must; method-call/qualified-attribute-
+  call dispatch and cross-file import resolution unimplemented; May
+  never emitted for Python at all; `patch.multiple`/`__dict__.update`
+  keyword-argument rebinding and `setattr`/`globals()[...]` with a
+  non-literal name are unguarded (checked empty against the current
+  three-package snapshot, not closed); the same-file
+  `python_string_literals` guard treats any `__all__ = (...)` export
+  tuple as a rebinding risk for every name it lists, a likely-systematic
+  source of over-conservatism across any Python file using that common
+  idiom, newly disclosed this round and not fixed (would need its own
+  gate-profile-first design round).
+- **Stage 3 next language: TypeScript** (per the frozen `Rust → Python →
+  TypeScript → Go` order — Go is NOT next). Dependency
+  ("Python trustworthy on a real repository") is now satisfied. No
+  TypeScript-specific baseline, corpus extension beyond the existing
+  pooled dispatch-corpus TypeScript cells, or audit sites are frozen yet.
+  **First steps, from this stage's own text above:** pin a TypeScript
+  compiler snapshot and real TS repositories with sha256 in
+  `core-representative-corpus.json`; freeze a TypeScript methodology and
+  labeling rubric (mirroring `stage3-python-audit/methodology.md` and
+  `labeling-rubric.md`); select and commit at least 100 independently
+  audited real-repository call sites; only then run the before-observation
+  — labels committed before any scoring, this round's own late-checked
+  lesson (see below).
+  **Lessons from this correction chain, carried forward as one-liners:**
+  commit every prediction before any measurement file exists on disk (a
+  file's mtime, not just commit order, is the check — this round's own
+  `design-and-prediction.md` failed this and was only caught in
+  correction-3); check the label-commit-vs-first-scoring order while
+  labeling, not after the fact; the dispatch-corpus harness runs every
+  case in an isolated single-language directory, so it can validate a
+  same-file/per-file gate but can NEVER exercise a project-wide pass's
+  language handling on its own — any new project-wide resolver pass needs
+  its own mixed-language-root check, the same way this round's Bit-code
+  self-analysis was the only thing that caught `python_rebinding.rs`'s
+  bug; commit the known-good state before any mutation test, never rely
+  on `git checkout`/`cp`-from-backup to undo a mutation against
+  uncommitted work (this round lost and had to reconstruct real work
+  this way); reuse `correction-2/common.py`'s zero-padded hex `NodeId`
+  resolution for any new verification script reading `girder inspect`
+  output, rather than re-deriving it and re-hitting the same silent-drop
+  bug.
+  **Known leads for TypeScript's own gate-profile step:**
+  `transformed_scope` (any decorator anywhere in a file) still gates
+  TypeScript's whole-file Must computation exactly as it did for Python
+  before this round — deliberately left untouched this round to respect
+  language order, and the obvious first gate-profile suspect for
+  TypeScript's own resolver design. `typescript-structural-object-literal`
+  is the corpus's one pre-existing failed cell (origin symbol
+  unresolved) and the first concrete item to fix.
 - Completion remains unproven until every criterion above has committed evidence.
