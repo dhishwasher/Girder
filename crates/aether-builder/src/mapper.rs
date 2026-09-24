@@ -201,6 +201,12 @@ pub struct BuildOutput {
     /// function with same-file call sites in `pkg/module.py`). Empty for
     /// every other language.
     pub python_string_literals: std::collections::HashSet<String>,
+    /// Bare attribute names ever assigned/deleted via dotted access
+    /// (`mod.target = ...`, `del mod.target`) anywhere in this file (Python
+    /// only; see `claims::AnnotateGates::python_attribute_rebind_targets`) --
+    /// the same rebinding hazard as `python_string_literals`, spelled
+    /// without a string. Empty for every other language.
+    pub python_attribute_rebind_targets: std::collections::HashSet<String>,
 }
 
 impl BuildOutput {
@@ -245,6 +251,7 @@ pub fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> BuildOutput
     }
     if lang == Lang::Python {
         out.python_string_literals = gates.python_string_literals;
+        out.python_attribute_rebind_targets = gates.python_attribute_rebind_targets;
     }
     out
 }

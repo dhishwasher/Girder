@@ -35,6 +35,22 @@ pub(crate) struct AnnotateGates {
     /// packages and found to actually occur (not just theoretically
     /// possible).
     pub python_string_literals: HashSet<String>,
+    /// Bare attribute names (Python only) that are ever the target of an
+    /// attribute assignment (`mod.target = ...`), augmented assignment
+    /// (`mod.target += ...`), or `del` (`del mod.target`) anywhere in this
+    /// file -- the same rebinding hazard as `setattr(mod, "target", ...)`,
+    /// just spelled without a string literal. `globals()[...]`/
+    /// `vars()[...]` subscript assignment is already covered: the subscript
+    /// key is itself a `string` node (`string_content` already collected
+    /// above). This set is NOT consulted by this file's own same-file
+    /// `proven` computation -- it is already redundant with `clean` there
+    /// (the grammar's `attribute` field is itself an `identifier` node, so
+    /// `clean`'s blanket identifier scan already rejects it; verified by
+    /// mutation, not assumed). It exists purely for the project-wide pass
+    /// (`sync/python_rebinding.rs`), which needs this to check a target
+    /// rebound from a DIFFERENT file, where no such same-file `clean` scan
+    /// exists.
+    pub python_attribute_rebind_targets: HashSet<String>,
 }
 
 pub(super) fn annotate(
@@ -243,11 +259,44 @@ pub(super) fn annotate(
             }
         }
     }
+    // Same disqualifying effect as `setattr(mod, "target", ...)`, spelled as
+    // `mod.target = ...` / `mod.target += ...` / `del mod.target` instead --
+    // confirmed against the grammar directly: `assignment`/
+    // `augmented_assignment` have a `left` field that is an `attribute` node
+    // (`object`/`attribute` fields) when the target is dotted, and
+    // `delete_statement` contains the deleted `attribute` node the same way.
+    // Collected here even though the SAME-FILE case is already redundant
+    // with `clean` below (the grammar's `attribute` field is itself an
+    // `identifier` node, so `clean`'s blanket identifier scan already
+    // rejects `target` in `mod.target = ...` as neither the declaration nor
+    // a direct call -- verified by mutation: removing this set from
+    // `string_rebound` below left the same-file tests passing). This set
+    // exists for the PROJECT-WIDE pass (`sync/python_rebinding.rs`), which
+    // has no visibility into another file's `clean` scan at all.
+    let mut python_attribute_rebind_targets: HashSet<String> = HashSet::new();
+    if lang == Lang::Python {
+        for n in &syntax {
+            let target = match n.kind() {
+                "assignment" | "augmented_assignment" => n
+                    .child_by_field_name("left")
+                    .filter(|l| l.kind() == "attribute"),
+                "delete_statement" => {
+                    let mut cursor = n.walk();
+                    let children: Vec<_> = n.named_children(&mut cursor).collect();
+                    children.into_iter().find(|c| c.kind() == "attribute")
+                }
+                _ => None,
+            };
+            if let Some(attr) = target.and_then(|t| t.child_by_field_name("attribute")) {
+                python_attribute_rebind_targets.insert(node_text(attr, source).to_string());
+            }
+        }
+    }
     let string_rebound = |name: &str| -> bool {
         lang == Lang::Python
-            && python_string_literals
+            && (python_string_literals
                 .iter()
-                .any(|s| s == name || s.ends_with(&format!(".{name}")))
+                .any(|s| s == name || s.ends_with(&format!(".{name}"))))
     };
     let python_whole_file_blocked = python_wildcard_import || python_exec_eval_compile;
     let effective_scope_gate = if lang == Lang::Python {
@@ -492,6 +541,7 @@ pub(super) fn annotate(
         parse_error: root.has_error(),
         macro_owners,
         python_string_literals,
+        python_attribute_rebind_targets,
     }
 }
 
@@ -785,9 +835,13 @@ mod tests {
         // `def target()` then later `@dec def target()` -- the decorated
         // redefinition is excluded from `top` (never eligible), so only
         // the first, undecorated `target` is a `top` candidate with a
-        // unique count of 1. The `clean` scan must still reject it: the
-        // second definition's own name identifier is neither the first
-        // declaration nor a direct call.
+        // unique count of 1. Protection here is actually `duplicate_paths`,
+        // not `clean` as an earlier version of this comment claimed
+        // (verified by mutation: forcing `clean = true` left this test
+        // passing) -- both `target` definitions share the same path-derived
+        // NodeId, so `out.nodes.iter().any(|n| !seen.insert(n.id))` trips
+        // `duplicate_paths` for the whole file, which gates `proven`
+        // entirely before `clean` is ever reached for this name.
         let g = graph(
             "app.py",
             "def dec(f):\n\
@@ -916,6 +970,51 @@ mod tests {
              \x20\x20\x20\x20return 42\n\
              def other():\n\
              \x20\x20\x20\x20patch('pkg.mod.target')\n\
+             def caller():\n\
+             \x20\x20\x20\x20return target()\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().all(|c| c.class != CallClass::Must),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_same_file_attribute_assignment_matching_the_name_blocks_proof_via_clean() {
+        // Exercises `clean`'s pre-existing identifier scan on a shape it had
+        // never been tested against, not the new
+        // `python_attribute_rebind_targets` set: the grammar's `attribute`
+        // field is itself an `identifier` node, so `clean` already rejects
+        // this (verified: this test still passes with
+        // `python_attribute_rebind_targets` removed from `string_rebound`).
+        let g = graph(
+            "app.py",
+            "def target():\n\
+             \x20\x20\x20\x20return 42\n\
+             def other():\n\
+             \x20\x20\x20\x20mod.target = None\n\
+             def caller():\n\
+             \x20\x20\x20\x20return target()\n",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let claims = g.call_evidence(caller.id).unwrap();
+        assert!(
+            claims.calls.iter().all(|c| c.class != CallClass::Must),
+            "{claims:?}"
+        );
+    }
+
+    #[test]
+    fn a_same_file_del_of_a_dotted_attribute_matching_the_name_blocks_proof_via_clean() {
+        // Same as above: exercises `clean`, not the new project-wide set.
+        let g = graph(
+            "app.py",
+            "def target():\n\
+             \x20\x20\x20\x20return 42\n\
+             def other():\n\
+             \x20\x20\x20\x20del mod.target\n\
              def caller():\n\
              \x20\x20\x20\x20return target()\n",
         );
