@@ -261,8 +261,9 @@ Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
 **Status: IN PROGRESS** (Rust: DONE, all four criterion legs met with
 committed evidence, after seven correction rounds; Python: DONE, all three
 criterion legs met with committed evidence, after a three-round correction
-chain; TypeScript: repositories pinned, methodology frozen, 105 sites
-selected, not yet labeled; see "Current checkpoint")
+chain; TypeScript: before-observation measured (0/97 unsound, 0 Must
+currently proven, resolver design not yet started); see "Current
+checkpoint")
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
@@ -271,7 +272,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | --- | --- | --- | --- |
 | Rust | **DONE** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
 | Python | **DONE** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) | Rust trustworthy on a real repository |
-| TypeScript | IN PROGRESS (repos pinned, methodology frozen, 105 sites selected AND labeled; scorer not yet written, no measurement run) | [methodology](observations/stage3-typescript-audit/methodology.md) + 2 addenda + [rubric](observations/stage3-typescript-audit/labeling-rubric.md) / none | Python trustworthy on a real repository |
+| TypeScript | IN PROGRESS (before-observation measured: 0/97 unsound, 0 Must currently proven; resolver design not yet started) | [methodology](observations/stage3-typescript-audit/methodology.md) + addenda + [rubric](observations/stage3-typescript-audit/labeling-rubric.md) / [before-observation](observations/stage3-typescript-audit/before-observation.md) | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
 Use existing pinned Rust repositories and Click first; pin TypeScript compiler
@@ -1314,4 +1315,68 @@ benchmark, don't run it against the stale snapshot.
   design work has started; this stage is still entirely at the
   measurement-before-any-code-change phase, matching where Rust's and
   Python's Stage 3 rounds each began.
+- 2026-09-24: **Stage 3 TypeScript: before-observation measured
+  (`48b6c11`...`2c7f6e8`).** Wrote `dispatch_audit_scorer_typescript.py`
+  (innermost-covering-claim selection and `NEVER_COVERS` reused from the
+  Rust/Python scorers' own pattern, both confirmed to already pick the
+  tightest span among nested claims before trusting this — no re-audit of
+  either DONE stage needed; `NEVER_COVERS` built from a real
+  `girder inspect` run on `class-validator-0.15.1`, not copied from
+  Python's; a `true_target` field added to every Must label so a claim
+  resolving to a same-named-but-wrong definition scores `overclaim`, not
+  `exact` — a real risk in this corpus, given zod's parallel `src`/
+  `deno/lib` trees and `typescript-6.0.3`'s four separate `TestSession`
+  declarations). Precommitted a blind prediction
+  (`before-observation-prediction.md`, `a1428b4`) before running the
+  scorer: derived from `claims.rs`'s actual current TypeScript behavior
+  (the unmodified `transformed_scope` gate; no cross-file import
+  resolution for any language yet), checked per-candidate which of the 46
+  Must sites are same-file and in a decorator-free file (8, by direct
+  grep) — predicted those 8 provable, 0 unsound anywhere.
+  First real run: **24 `unsafe_exclusion` cells**, a severe deviation —
+  treated as the stop signal the prediction document itself committed to,
+  investigated before trusting it rather than reported as-is. Root cause:
+  `typescript-6.0.3` uses CRLF line endings throughout (54,434 in
+  `checker.ts` alone); `Path.read_text()`'s default universal-newline
+  translation silently converts them to LF while Girder's own byte
+  offsets are against the raw file, undercounting the scorer's
+  byte-offset reconstruction by one byte per preceding line — confirmed
+  exactly (a real site 29,877 lines in was 29,876 bytes short). Fixed by
+  reading bytes directly and reconstructing without translation, verified
+  against the raw-file ground truth exactly, a regression test added,
+  then re-run.
+  **Final result: 97 scored, 0 unsound cells** (0 `overclaim`, 0
+  `unsafe_exclusion`) — all 51 Unknown-labeled sites score exact, all 46
+  Must-labeled sites score conservative. The prediction's own 8-exact
+  count was still wrong (0 observed) — investigated rather than silently
+  adjusted: every one of the 8 predicted-provable sites' target functions
+  turned out to be nested inside another function's own closure (e.g.
+  `narrowTypeByTypeFacts` sits deep inside `createTypeChecker`'s own body,
+  confirmed by direct character-offset comparison), not at true module
+  scope — `claims.rs`'s shared `top_level` check (`parent.id() ==
+  root.id()`) was never eligible for them regardless of decorators. This
+  is a genuine, useful finding: TypeScript's "one giant factory function
+  with everything nested inside" idiom (pervasive in this compiler's own
+  architecture, and common more broadly) defeats the same-file proof
+  mechanism in a way Rust/Python/Go's typically module-level-function
+  code rarely hits — recorded as the next gate-profile step's own leading
+  hypothesis, to be checked against the full 12-site conservative sample,
+  not assumed from these 8 alone.
+  **Criterion status**: `zero_classification_errors_on_audit` **Met**
+  (0/97 unsound); `nonempty_must_precision_1000_on_real_repository`
+  **Not Met** (zero Must currently proven, precision undefined on an
+  empty set); `measured_dispatch_corpus_improvement` **Not Met** (no
+  resolver change made yet). **Stage 3 TypeScript remains IN PROGRESS** —
+  this is the honest baseline before any resolver design begins, exactly
+  where Rust's and Python's own Stage 3 rounds each started. All four
+  common gates pass (no Rust code changed this round).
+  **Next step**: gate-profile the 12 real-audit conservative sites and
+  the pooled dispatch corpus's TypeScript-shaped conservative cells
+  against every existing extractor gate (mirroring
+  `dispatch_audit_gate_profile_python.py`'s role), checking specifically
+  whether nested-closure scope (this round's own finding) or the
+  still-unmodified `transformed_scope` decorator gate is the dominant
+  blocker, **before** designing any TypeScript-specific Must-proof rule —
+  the same discipline every prior language's Stage 3 resolver round in
+  this program used.
 - Completion remains unproven until every criterion above has committed evidence.
