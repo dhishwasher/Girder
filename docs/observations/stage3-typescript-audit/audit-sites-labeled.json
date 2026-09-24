@@ -38,7 +38,7 @@
       "text": "const submodel1 = new MySubClass();",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "new MySubClass() direct construction. MySubClass is a same-file locally-defined class (nested-validation.spec.ts), single definition, no subclass overriding its constructor, no rebinding."
+      "rationale": "new MySubClass() -- this specific file (nested-validation.spec.ts) declares `class MySubClass` six times in six separate it() callbacks; checked directly which one is in scope here: the declaration at line 178 is inside the SAME it('should validate nested set', ...) callback as this call (line 200), no other MySubClass declaration is nested between them, and JS/TS block scoping means the other five declarations in sibling it() blocks are not visible here at all."
     },
     {
       "package": "class-validator-0.15.1",
@@ -328,7 +328,7 @@
       "text": "return type.flags & TypeFlags.Any ? type : narrowTypeByTypeFacts(type, globalFunctionType, TypeFacts.TypeofEQFunction);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "narrowTypeByTypeFacts(type, globalFunctionType, ...) -- same-file function defined a few lines below (checker.ts:29884) within the same enclosing closure, single definition, no override, no rebinding."
+      "rationale": "narrowTypeByTypeFacts(type, globalFunctionType, ...) -- exactly one definition in checker.ts (grep count: 1), same-file, no override, no rebinding."
     },
     {
       "package": "typescript-6.0.3",
@@ -388,7 +388,7 @@
       "text": "emitExpression(node.expression, parenthesizer.parenthesizeOperandOfPrefixUnary);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "emitExpression(node.expression, ...) -- same-file function within emitter.ts's own closure, single definition, extremely commonly used throughout the file with no override/shadowing found."
+      "rationale": "emitExpression(node.expression, ...) -- exactly one implementation in emitter.ts (two overload signatures plus one implementation at line 1463, collapsing to one body per case 7), same-file, no override, no rebinding."
     },
     {
       "package": "typescript-6.0.3",
@@ -548,7 +548,7 @@
       "text": "this.state.setCompilerOptionsForInferredProjects(options);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "this.state.setCompilerOptionsForInferredProjects(options) -- `state: FourSlash.TestState` is a constructor-parameter-typed property; TestState (fourslashImpl.ts:243) has zero subclasses anywhere in the snapshot (grep confirmed empty), single class, no override for this method, no rebinding -- case 1 applied to a class type resolves to Must even though the receiver comes from a parameter, since the class itself has no polymorphism vector in the snapshot."
+      "rationale": "this.state.setCompilerOptionsForInferredProjects(options) -- `state: FourSlash.TestState`; TestState (fourslashImpl.ts:243) declares four `private` members (languageServiceAdapterHost, languageService, cancellationToken, assertTextConsistent). TypeScript's structural typing treats a class with private/protected members as effectively nominal -- no unrelated object can structurally satisfy it, closing the substitution risk a purely-structural class would have. Zero subclasses anywhere in the snapshot, no override, no rebinding."
     },
     {
       "package": "typescript-6.0.3",
@@ -558,7 +558,7 @@
       "text": "this.state.verifyTodoComments(descriptors, this.state.getRanges());",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "this.state.verifyTodoComments(...) -- same `state: FourSlash.TestState` property as index 54; TestState (fourslashImpl.ts:243) has no subclasses anywhere in the snapshot, single class, no override, no rebinding."
+      "rationale": "this.state.verifyTodoComments(...) -- same TestState reasoning as index 54 (private members close the structural-substitution risk), zero subclasses, no override, no rebinding."
     },
     {
       "package": "typescript-6.0.3",
@@ -658,7 +658,7 @@
       "text": "this.getScriptInfo(rootFile)?.editContent(0, originalText.length, updatedText);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "this.getScriptInfo(rootFile)?.editContent(...) -- ScriptInfo has zero subclasses anywhere in the snapshot (grep confirmed empty), single class, no rebinding; `?.` only guards the undefined-from-getScriptInfo case (case 6), doesn't change target-uniqueness once that's excluded."
+      "rationale": "this.getScriptInfo(rootFile)?.editContent(...) -- ScriptInfo (server/editorServices.ts) has no private/protected members, so it IS purely structurally typed in principle; but the actual value here comes from `this.projectService.getScriptInfo(...)`, an internal lookup against ProjectService's own registry (traced: Project.getScriptInfo -> ProjectService.getScriptInfo -> getScriptInfoForNormalizedPath), never a caller-supplied or externally-injected parameter -- the runtime value is controlled entirely by this codebase's own ScriptInfo construction, not by an arbitrary structurally-compatible caller. Zero subclasses, no rebinding."
     },
     {
       "package": "typescript-6.0.3",
@@ -707,8 +707,8 @@
       "shape": "method_call",
       "text": "uniqueNames.add(realName);",
       "true_class": "unknown",
-      "confidence": "medium",
-      "rationale": "uniqueNames.add(realName) -- uniqueNames: UniqueNameSet, an interface (services/completions.ts:574); could not confirm within this pass whether exactly one object satisfies it in the snapshot or several, so left conservative rather than guessed (case 3's default for an interface-typed parameter whose implementor count isn't confirmed bounded)."
+      "confidence": "high",
+      "rationale": "uniqueNames.add(realName) -- uniqueNames: UniqueNameSet, an interface with exactly two members (`add(name: string): void; has(name: string): boolean;`, services/completions.ts:574-577) -- a shape a plain Map<string, boolean> satisfies (and the one confirmed construction site at completions.ts:2666-2680 does return a Map), but the interface itself could be satisfied by any other object with the same two methods; the function containing this call site takes `uniqueNames` as its own parameter, and this pass did not trace every call site supplying that argument to confirm it is always the same Map -- left Unknown rather than guessed Must (case 3, interface-typed parameter with an unconfirmed-bounded implementor set)."
     },
     {
       "package": "typescript-6.0.3",
@@ -768,7 +768,7 @@
       "text": "const result = evaluator.evaluateTypeScript(",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "evaluator.evaluateTypeScript(...) -- evaluator is imported via `import * as evaluator from \"../../_namespaces/evaluator.js\"`, the compiler's own internal namespace-barrel re-export pattern (a single canonical module aggregate, not a runtime-polymorphic interface); evaluateTypeScript has a single definition."
+      "rationale": "evaluator.evaluateTypeScript(...) -- evaluateTypeScript has exactly one definition (harness/evaluatorImpl.ts:36), evaluator is imported via the compiler's internal `_namespaces/evaluator.js` barrel (a single module aggregate), no rebinding."
     },
     {
       "package": "typescript-6.0.3",
@@ -828,7 +828,7 @@
       "text": "_testConvertToAsyncFunctionFailed(",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "_testConvertToAsyncFunctionFailed(...) -- same-file module-level const (convertToAsyncFunction.ts:432), bound once to createTestWrapper(...)'s return value, never reassigned; the binding identity is provably fixed (case 1's lexical-binding analogue for a const-bound closure)."
+      "rationale": "_testConvertToAsyncFunctionFailed(...) -- same-file module-level const (convertToAsyncFunction.ts:432) bound once to createTestWrapper((it, caption, text) => {...})'s return value. Read createTestWrapper's body directly (line 289-296): it always returns the same statically-declared `wrapped` function, whose own body calls a fixed parameter `fn` -- no runtime branching in what gets constructed or returned. This is a directly-traced, deterministic binding, not an assumed precedent from another language's policy (an earlier draft of this rationale cited an unverified Rust analogy; dropped here in favor of the direct trace)."
     },
     {
       "package": "typescript-6.0.3",
@@ -838,7 +838,7 @@
       "text": "test(\"\\n\", logger);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "test(\"\\n\", logger) -- `test` is a same-file locally-defined function (compileOnSave.ts:743, declared once inside the same `it` callback's scope), single definition, no shadowing."
+      "rationale": "test(\"\\n\", logger) -- compileOnSave.ts declares TWO separate `function test(...)` (line 704 and line 743) in two non-overlapping describe/it block scopes; checked directly that this call (line 739) sits inside the SAME it('should respect line endings', ...) callback as the line-743 declaration, and the line-704 declaration's own enclosing describe block closes well before this one begins -- no overlap, no ambiguity."
     },
     {
       "package": "typescript-6.0.3",
@@ -868,7 +868,7 @@
       "text": "const proxy = LanguageService.makeDefaultProxy(info);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "LanguageService.makeDefaultProxy(info) -- makeDefaultProxy has a single definition (harness/harnessLanguageService.ts:21), accessed via the compiler's internal `_namespaces` barrel import pattern (a single module aggregate, same as index 76), no rebinding."
+      "rationale": "LanguageService.makeDefaultProxy(info) -- read the actual import in this file (externalProjects.ts:1): `import { LanguageService } from \"../../_namespaces/Harness.js\"`, the compiler's internal namespace-barrel pattern; makeDefaultProxy has exactly one definition (harness/harnessLanguageService.ts:21), no rebinding."
     },
     {
       "package": "typescript-6.0.3",
@@ -968,7 +968,7 @@
       "text": "expect(() => schema.parse([\"item\", \"another_item\"])).toThrow(); // not a z.ZodError!",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "schema.parse([...]) -- .parse has a single, non-overridden implementation on the ZodType base class (src/types.ts:238); every Zod schema subclass overrides the internal _parse hook, not .parse itself (grep for other `parse(` method definitions in types.ts found none), so this resolves the same way regardless of schema's concrete subclass."
+      "rationale": "schema.parse([...]) -- re-checked against the correct file this time: deno/lib/types.ts (not src/types.ts, a separate parallel tree in the same pinned zod-3.23.8 snapshot) has its own single, non-overridden `.parse` at line 238 and zero ZodArray subclasses within deno/lib. This test file imports `* as z from \"../index.ts\"`, a relative import staying entirely within deno/lib/, never reaching src/ -- so the two parallel trees' separate ZodType/.parse definitions never collide at this call site's own lexical scope."
     },
     {
       "package": "zod-3.23.8",
@@ -978,7 +978,7 @@
       "text": "lteFive.parse(-Infinity);",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "lteFive.parse(-Infinity) -- same .parse reasoning as index 96."
+      "rationale": "lteFive.parse(-Infinity) -- same deno/lib/-scoped .parse reasoning as index 96."
     },
     {
       "package": "zod-3.23.8",
@@ -1008,7 +1008,7 @@
       "text": "return new ZodArray({",
       "true_class": "must",
       "confidence": "high",
-      "rationale": "new ZodArray({...}) -- ZodArray has zero subclasses anywhere in the snapshot (grep confirmed empty), single class, no rebinding."
+      "rationale": "new ZodArray({...}) -- this call is itself inside deno/lib/types.ts; checked that file's own ZodArray has zero subclasses (grep confirmed empty within deno/lib), same reasoning as index 96/97: deno/lib and src are separate module trees in the same pinned snapshot, this call resolves lexically to deno/lib's own ZodArray, never to src/'s separate definition."
     },
     {
       "package": "zod-3.23.8",

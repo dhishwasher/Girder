@@ -1295,10 +1295,13 @@ benchmark, don't run it against the stale snapshot.
   Unknown; built-in targets (`Date`, `Map`/`Set` methods,
   `Function.prototype.bind`/`.call`, Jest matchers) labeled Unknown as
   external to the four-repository snapshot. Distribution: **47 must, 50
-  unknown, 8 not_a_call_site, 0 may** — matching every other language
-  audited in this whole program (May has never occurred naturally in a
-  random sample for any language measured so far). Confirmed directly
-  before committing: no `dispatch_audit_scorer_typescript.py` and no
+  unknown, 8 not_a_call_site, 0 may**. **Correction to this entry's own
+  first draft**: it claimed May "has never occurred naturally in a random
+  sample for any language measured so far" — checked directly against the
+  committed labeled-sites files rather than assumed, and found false:
+  Rust's `audit-sites-labeled-v2.json` has 3 May sites (Python's has 0).
+  TypeScript's 0-May result matches Python's, not the whole program.
+  Confirmed directly before committing: no `dispatch_audit_scorer_typescript.py` and no
   scoring output exist anywhere in the repo, so these labels are
   genuinely frozen before any comparison against Girder's own answer.
   **Next step**: write `tools/dispatch_audit_scorer_typescript.py`,
