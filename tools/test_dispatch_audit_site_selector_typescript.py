@@ -241,5 +241,35 @@ class StratifiedSampleUnitTests(unittest.TestCase):
         self.assertEqual(len(selected), 10)
 
 
+class FrozenSiteTextReclassificationTests(unittest.TestCase):
+    """Every one of the 105 frozen sites' own recorded `text` must still
+    classify to its recorded `shape` when re-run through classify_line
+    directly -- this is the scorer's own relocation logic's basic
+    precondition (it calls the SAME function), and it catches any future
+    drift between the shape patterns and the frozen site file without
+    needing the real extracted source on disk."""
+
+    def test_all_105_frozen_sites_reclassify_to_their_recorded_shape(self):
+        import json
+        from pathlib import Path
+
+        sites_path = (
+            Path(__file__).resolve().parents[1]
+            / "docs"
+            / "observations"
+            / "stage3-typescript-audit"
+            / "audit-sites.json"
+        )
+        with open(sites_path) as f:
+            sites = json.load(f)["sites"]
+        self.assertEqual(len(sites), 105)
+        mismatches = []
+        for i, s in enumerate(sites):
+            observed = classify_line(s["text"])
+            if observed != s["shape"]:
+                mismatches.append((i, s["shape"], observed, s["text"]))
+        self.assertEqual(mismatches, [], f"shape mismatches: {mismatches}")
+
+
 if __name__ == "__main__":
     unittest.main()

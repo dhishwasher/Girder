@@ -287,7 +287,14 @@ def mask_ts_source(text: str) -> str:
     return "".join(out)
 
 
-def classify_line(line: str) -> str | None:
+def classify_line_with_match(line: str) -> tuple[str, "re.Match[str]"] | None:
+    """Like `classify_line`, but also returns the winning regex match --
+    needed by the scorer to relocate the exact byte offset a site's shape
+    was matched at, not just its name. `classify_line` is defined in terms
+    of this function so the two can never disagree (the scorer's own
+    relocation test re-classifies every frozen site and asserts the shape
+    still matches, which only means something if both code paths share one
+    implementation)."""
     stripped = line.strip()
     if not stripped:
         return None
@@ -297,8 +304,13 @@ def classify_line(line: str) -> str | None:
                 word = re.match(r"[A-Za-z_$][A-Za-z0-9_$]*", match.group())
                 if word and word.group() in KEYWORDS_NOT_CALLS:
                     continue
-            return shape
+            return shape, match
     return None
+
+
+def classify_line(line: str) -> str | None:
+    result = classify_line_with_match(line)
+    return result[0] if result else None
 
 
 def extract_archive_subset(
