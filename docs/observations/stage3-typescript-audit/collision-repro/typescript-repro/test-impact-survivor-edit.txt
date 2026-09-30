@@ -1,0 +1,4 @@
+test-impact: 20 unresolved call-evidence boundaries found; this selection is the conservative must∪may∪unknown union, not a targeted answer — pass --classified to see why each test is included (docs/call-classification-policy.md)
+disables looking into the child project
+when project is directly referenced by solution
+when project is indirectly referenced by solution

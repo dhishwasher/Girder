@@ -1,0 +1,168 @@
+{
+  "depth_applied": 1,
+  "depth_requested": 1,
+  "intent": "",
+  "nodes": [
+    {
+      "callees": {
+        "count": 0,
+        "depth": 1,
+        "paths": [],
+        "truncated": false
+      },
+      "callers": {
+        "count": 1,
+        "depth": 1,
+        "paths": [
+          "crate::lib::S::go"
+        ],
+        "truncated": false
+      },
+      "classification": {
+        "boundaries": {
+          "by_category": {
+            "coverage_gap": 6,
+            "missing_or_invalid_evidence": 1,
+            "unresolved_call_site": 1
+          },
+          "count": 8,
+          "items": [
+            {
+              "caller": "crate::lib",
+              "coverage_gap": true,
+              "file": "src/lib.rs",
+              "reason": "duplicate-semantic-path",
+              "site": {
+                "end_byte": 428,
+                "start_byte": 0,
+                "start_col": 0,
+                "start_row": 0
+              }
+            },
+            {
+              "caller": "crate::lib",
+              "coverage_gap": true,
+              "file": "src/lib.rs",
+              "reason": "implicit-drop-or-operator-dispatch-not-certified",
+              "site": {
+                "end_byte": 428,
+                "start_byte": 0,
+                "start_col": 0,
+                "start_row": 0
+              }
+            },
+            {
+              "caller": "crate::lib::S::go",
+              "coverage_gap": true,
+              "file": "src/lib.rs",
+              "reason": "uncertified-Calls-edge",
+              "site": {
+                "end_byte": 313,
+                "start_byte": 265,
+                "start_col": 4,
+                "start_row": 25
+              }
+            },
+            {
+              "caller": "crate::lib::S::go",
+              "coverage_gap": false,
+              "file": "src/lib.rs",
+              "reason": "rust-binding-or-dispatch-unproven",
+              "site": {
+                "end_byte": 307,
+                "start_byte": 295,
+                "start_col": 8,
+                "start_row": 26
+              }
+            },
+            {
+              "caller": "crate::lib",
+              "coverage_gap": true,
+              "file": "src/lib.rs",
+              "reason": "unexpanded-macro-or-decorator",
+              "site": {
+                "end_byte": 324,
+                "start_byte": 317,
+                "start_col": 0,
+                "start_row": 30
+              }
+            },
+            {
+              "caller": "crate::lib::calls_a",
+              "coverage_gap": true,
+              "file": "src/lib.rs",
+              "reason": "unexpanded-macro-or-decorator",
+              "site": {
+                "end_byte": 368,
+                "start_byte": 344,
+                "start_col": 4,
+                "start_row": 32
+              }
+            },
+            {
+              "caller": "crate::lib",
+              "coverage_gap": true,
+              "file": "src/lib.rs",
+              "reason": "unexpanded-macro-or-decorator",
+              "site": {
+                "end_byte": 380,
+                "start_byte": 373,
+                "start_col": 0,
+                "start_row": 35
+              }
+            },
+            {
+              "caller": "crate::lib::calls_b",
+              "coverage_gap": true,
+              "file": "src/lib.rs",
+              "reason": "unexpanded-macro-or-decorator",
+              "site": {
+                "end_byte": 424,
+                "start_byte": 400,
+                "start_col": 4,
+                "start_row": 37
+              }
+            }
+          ],
+          "truncated": false
+        },
+        "schema_version": 1,
+        "tests": {
+          "may": {
+            "count": 0,
+            "paths": [],
+            "truncated": false
+          },
+          "must": {
+            "count": 0,
+            "paths": [],
+            "truncated": false
+          },
+          "unknown": {
+            "count": 2,
+            "paths": [
+              "crate::lib::calls_a",
+              "crate::lib::calls_b"
+            ],
+            "truncated": false
+          }
+        }
+      },
+      "impact": {
+        "count": 1,
+        "paths": [
+          "crate::lib::S::go"
+        ],
+        "truncated": false
+      },
+      "language": "rust",
+      "path": "crate::lib::only_via_a",
+      "source": "pub fn only_via_a() -> i32 {\n    1\n}",
+      "tests": {
+        "count": 0,
+        "paths": [],
+        "truncated": false
+      }
+    }
+  ]
+}

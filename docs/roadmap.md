@@ -1383,4 +1383,88 @@ benchmark, don't run it against the stale snapshot.
   blocker, **before** designing any TypeScript-specific Must-proof rule —
   the same discipline every prior language's Stage 3 resolver round in
   this program used.
+- 2026-09-30: **PRIORITY FINDING, ahead of the gate-profile above: a
+  node-id-collision bug silently discards a losing node's entire call
+  evidence, AND produces a false-empty `test-impact` result for an
+  ordinary edit inside that node's body -- confirmed via direct
+  reproduction in BOTH TypeScript and Rust** (the already-DONE
+  language), not yet fixed. When two functions/closures in the same
+  file compute to an identical semantic path (TypeScript: two
+  `it("same description", ...)` blocks under different `describe`
+  scopes -- confirmed at scale in real code, e.g. 19 occurrences of
+  `it("works with future", ...)` in one date-fns test file; Rust: two
+  `impl Trait for Type` blocks providing the same method name, e.g.
+  `serde_json/src/ser.rs`'s two `fn serialize_element` -- confirmed
+  this is the true mechanism behind Rust's own DONE audit's one
+  `duplicate-semantic-path` hit, index 89), only the later-built
+  occurrence survives as a graph node; the earlier occurrence's node,
+  and everything attached to it, is silently dropped -- not disclosed
+  as a coverage gap, just gone. **Confirmed this is NOT merely an
+  annotation/scoring-methodology question**: a real source edit made
+  ONLY inside the lost occurrence's body (repro'd in both languages,
+  `docs/observations/stage3-typescript-audit/collision-repro/`) makes
+  `girder review --quiet` report only the module as changed (no
+  function-level node) and `girder test-impact --quiet` return **empty
+  -- zero tests selected**, not even the conservative must∪may∪unknown
+  union. A matched control edit inside the surviving occurrence's body
+  correctly flags the right test in both cases. This is the
+  `classified_impact(&[])` empty-selection gap already documented in
+  `CLAUDE.md`, but triggered here by an ordinary function-body edit,
+  not only by a const/type-only change -- a **false-empty test-impact
+  result on real, reachable code**, the central failure mode this
+  entire program exists to rule out. Checked and confirmed NOT to
+  affect the separate, project-wide resolved `Calls` graph
+  (`sync::resolve_calls`) that `orient`'s `callers`/`callees` actually
+  read: a function called only from inside the lost occurrence's body
+  still gets a correctly-resolved (path-collapsed) caller edge in both
+  languages -- the loss is specific to `call_evidence_v1` and to
+  `review`/`test-impact`'s function-level change detection, not to
+  basic reachability. Swept all 97 of this round's TypeScript scored
+  sites and all of Rust's/Python's own committed DONE audits for
+  further instances, using a validated criterion (covering claim
+  starts on an earlier source line than the site, excluding disclosed
+  whole-file gap claims): exactly 2 in TypeScript (sites 23, 91,
+  already known), 1 already-known instance in Rust (index 89; two
+  other row-mismatched Rust sites checked directly against source and
+  confirmed to be ordinary multi-line method chains, not collisions),
+  **zero in Python** (checked, not merely unconfirmed). Checked for the
+  most dangerous variant -- a lost-node site whose borrowed claim
+  happens to be `must`, scoring `exact` unnoticed: none exists in this
+  round for any language (TypeScript observed zero `must` sites at all
+  this round; Rust's and Python's borrowed sites were individually
+  checked and none is a masked false-must). Full details, including
+  the exact repro steps and commands to reproduce:
+  `docs/observations/stage3-typescript-audit/before-observation-addendum.md`,
+  `-addendum-2.md`, `-addendum-3.md`, `-addendum-4.md`. **Root cause
+  located in source**: `crates/aether-graph/src/lib.rs`'s
+  `SemanticGraph::upsert_node`/`upsert_projection_node` treat a
+  repeated `NodeId` as "update this node in place" (by design, for the
+  legitimate case of re-parsing the SAME logical entity after an edit)
+  -- `if let Some(&idx) = self.index.get(&id) { self.graph[idx] = node; }`
+  wholesale-overwrites whatever was at that index. `claims::annotate()`
+  itself sees both colliding occurrences correctly (confirmed: both get
+  their own, independently-correct claims at extraction time) --
+  the loss happens one layer up, in `crates/aether-builder/src/sync.rs`'s
+  `apply()` (`for node in &out.nodes { graph.upsert_projection_node(node.clone()); }`,
+  called from `load_file_unresolved`/`update_file`), which upserts every
+  extracted node in sequence with no collision check: the second
+  colliding node's upsert destroys the first's entry, attributes and
+  all. **Not yet fixed.** This is a
+  correctness gap in an already-DONE language (Rust), found by a
+  still-IN-PROGRESS language's (TypeScript's) own review process --
+  recorded here rather than only in the TypeScript stage's own
+  documents, since it is not specific to TypeScript. Recommended next
+  step, before the TypeScript gate-profile above: locate and fix the
+  node-insertion collision handling (either disambiguate colliding
+  paths, e.g. by including an impl-target/enclosing-scope discriminator
+  in the semantic path, or detect the collision and merge/preserve both
+  nodes' evidence instead of silently dropping one), then re-verify
+  with the same repro before resuming either language's Stage 3 work.
+  The pinned TypeScript corpus checkouts used for this round's
+  measurement lived in a session-scratchpad directory that does not
+  persist across sessions and is now gone; before any TypeScript
+  gate-profile or resolver work resumes, the corpus must be re-extracted
+  from `docs/stage3-typescript-corpus.json` to a path under the repo's
+  own working tree (or another persistent location), not the
+  scratchpad.
 - Completion remains unproven until every criterion above has committed evidence.

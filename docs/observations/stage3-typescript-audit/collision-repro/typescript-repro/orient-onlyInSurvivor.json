@@ -1,0 +1,303 @@
+{
+  "depth_applied": 1,
+  "depth_requested": 1,
+  "intent": "",
+  "nodes": [
+    {
+      "callees": {
+        "count": 0,
+        "depth": 1,
+        "paths": [],
+        "truncated": false
+      },
+      "callers": {
+        "count": 1,
+        "depth": 1,
+        "paths": [
+          "crate::sample::when project is indirectly referenced by solution"
+        ],
+        "truncated": false
+      },
+      "classification": {
+        "boundaries": {
+          "by_category": {
+            "coverage_gap": 2,
+            "missing_or_invalid_evidence": 3,
+            "unresolved_call_site": 14
+          },
+          "count": 19,
+          "items": [
+            {
+              "caller": "crate::sample",
+              "coverage_gap": true,
+              "file": "sample.ts",
+              "reason": "duplicate-semantic-path",
+              "site": {
+                "end_byte": 1459,
+                "start_byte": 0,
+                "start_col": 0,
+                "start_row": 0
+              }
+            },
+            {
+              "caller": "crate::sample",
+              "coverage_gap": true,
+              "file": "sample.ts",
+              "reason": "implicit-runtime-dispatch-not-certified",
+              "site": {
+                "end_byte": 1459,
+                "start_byte": 0,
+                "start_col": 0,
+                "start_row": 0
+              }
+            },
+            {
+              "caller": "crate::sample::verifySolutionScenario",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 94,
+                "start_byte": 67,
+                "start_col": 4,
+                "start_row": 1
+              }
+            },
+            {
+              "caller": "crate::sample::onlyInLost",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 250,
+                "start_byte": 223,
+                "start_col": 4,
+                "start_row": 9
+              }
+            },
+            {
+              "caller": "crate::sample::onlyInSurvivor",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 318,
+                "start_byte": 287,
+                "start_col": 4,
+                "start_row": 13
+              }
+            },
+            {
+              "caller": "crate::sample",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 1457,
+                "start_byte": 323,
+                "start_col": 0,
+                "start_row": 16
+              }
+            },
+            {
+              "caller": "crate::sample",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 1139,
+                "start_byte": 359,
+                "start_col": 4,
+                "start_row": 17
+              }
+            },
+            {
+              "caller": "crate::sample::when project is directly referenced by solution",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 625,
+                "start_byte": 428,
+                "start_col": 8,
+                "start_row": 18
+              }
+            },
+            {
+              "caller": "crate::sample::when project is directly referenced by solution",
+              "coverage_gap": true,
+              "file": "sample.ts",
+              "reason": "uncertified-Calls-edge",
+              "site": {
+                "end_byte": 625,
+                "start_byte": 428,
+                "start_col": 8,
+                "start_row": 18
+              }
+            },
+            {
+              "caller": "crate::sample::when project is directly referenced by solution",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 613,
+                "start_byte": 502,
+                "start_col": 12,
+                "start_row": 19
+              }
+            },
+            {
+              "caller": "crate::sample::disables looking into the child project",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 1131,
+                "start_byte": 968,
+                "start_col": 8,
+                "start_row": 33
+              }
+            },
+            {
+              "caller": "crate::sample::disables looking into the child project",
+              "coverage_gap": true,
+              "file": "sample.ts",
+              "reason": "uncertified-Calls-edge",
+              "site": {
+                "end_byte": 1131,
+                "start_byte": 968,
+                "start_col": 8,
+                "start_row": 33
+              }
+            },
+            {
+              "caller": "crate::sample::disables looking into the child project",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 1119,
+                "start_byte": 1034,
+                "start_col": 12,
+                "start_row": 34
+              }
+            },
+            {
+              "caller": "crate::sample",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 1453,
+                "start_byte": 1146,
+                "start_col": 4,
+                "start_row": 40
+              }
+            },
+            {
+              "caller": "crate::sample::when project is indirectly referenced by solution",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 1445,
+                "start_byte": 1188,
+                "start_col": 8,
+                "start_row": 41
+              }
+            },
+            {
+              "caller": "crate::sample::when project is indirectly referenced by solution",
+              "coverage_gap": true,
+              "file": "sample.ts",
+              "reason": "uncertified-Calls-edge",
+              "site": {
+                "end_byte": 1445,
+                "start_byte": 1188,
+                "start_col": 8,
+                "start_row": 41
+              }
+            },
+            {
+              "caller": "crate::sample::when project is indirectly referenced by solution",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 1280,
+                "start_byte": 1264,
+                "start_col": 12,
+                "start_row": 42
+              }
+            },
+            {
+              "caller": "crate::sample::when project is indirectly referenced by solution",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 1327,
+                "start_byte": 1304,
+                "start_col": 22,
+                "start_row": 43
+              }
+            },
+            {
+              "caller": "crate::sample::when project is indirectly referenced by solution",
+              "coverage_gap": false,
+              "file": "sample.ts",
+              "reason": "typescript-binding-or-structural-dispatch-unproven",
+              "site": {
+                "end_byte": 1433,
+                "start_byte": 1341,
+                "start_col": 12,
+                "start_row": 44
+              }
+            }
+          ],
+          "truncated": false
+        },
+        "schema_version": 1,
+        "tests": {
+          "may": {
+            "count": 0,
+            "paths": [],
+            "truncated": false
+          },
+          "must": {
+            "count": 0,
+            "paths": [],
+            "truncated": false
+          },
+          "unknown": {
+            "count": 3,
+            "paths": [
+              "crate::sample::disables looking into the child project",
+              "crate::sample::when project is directly referenced by solution",
+              "crate::sample::when project is indirectly referenced by solution"
+            ],
+            "truncated": false
+          }
+        }
+      },
+      "impact": {
+        "count": 1,
+        "paths": [
+          "crate::sample::when project is indirectly referenced by solution"
+        ],
+        "truncated": false
+      },
+      "language": "typescript",
+      "path": "crate::sample::onlyInSurvivor",
+      "source": "function onlyInSurvivor() {\n    console.log(\"only in survivor\");\n}",
+      "tests": {
+        "count": 1,
+        "paths": [
+          "crate::sample::when project is indirectly referenced by solution"
+        ],
+        "truncated": false
+      }
+    }
+  ]
+}
