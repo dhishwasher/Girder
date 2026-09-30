@@ -41,16 +41,31 @@ assumed to carry over unchanged:
    against, not suppress. `duplicate-semantic-path` is emitted by the same
    shared `claims.rs` code path for every language (confirmed by reading
    the extractor directly, not assumed TypeScript-specific). CORRECTION
-   (see before-observation-addendum.md): neither the Rust nor the Python
+   (see before-observation-addendum.md, before-observation-addendum-2.md,
+   before-observation-addendum-3.md): neither the Rust nor the Python
    scorer's own `NEVER_COVERS` includes it either, but this is NOT because
    their sampled files never tripped `duplicate_paths` -- Rust's own
    committed DONE audit
-   (docs/observations/stage3-rust-audit/after-method-call-fix/correction-1/audit-after.json,
+   (docs/observations/stage3-rust-audit/after-method-call-fix/correction-2/audit-after.json,
    index 89, serde_json `ser.rs:504`) has exactly one scored site with
-   `observed_reason: duplicate-semantic-path`, and that cell is
-   `conservative` (sound). Excluding it here matches Rust's/Python's own
-   scorers' existing behavior on a site that happens to be safe either way,
-   not an untested gap. `parse-error` is ALSO whole-module for this corpus
+   `observed_reason: duplicate-semantic-path`. Direct investigation (see
+   addendum-3) found this site is a genuine instance of the SAME
+   node-id-collision evidence loss this language's own scorer's
+   `duplicate-semantic-path` exclusion exists to guard against (`ser.rs`
+   has two `fn serialize_element` definitions at lines 491 and 538; only
+   the second survives as a Function node; the site at line 504 is inside
+   the first, lost one) -- NOT a merely-coincidental, structurally
+   different "legitimate disclosed gap" case as an earlier draft of this
+   correction claimed. Its cell is `conservative` (sound) UNDER RUST'S OWN
+   FROZEN SCORING RULE specifically (`duplicate-semantic-path` is not in
+   Rust's `NEVER_COVERS`), not because the underlying situation is "safe
+   either way" -- under THIS (TypeScript) scorer's own `NEVER_COVERS` rule,
+   the identical situation would correctly score `unsafe_exclusion`
+   instead, since this file's `NEVER_COVERS` does include
+   `duplicate-semantic-path`. Both scorers are internally consistent and
+   correct under their own frozen rules; the earlier claim that Rust's
+   result was "safe either way," independent of which rule is applied,
+   was wrong. `parse-error` is ALSO whole-module for this corpus
    (confirmed: 4 instances in typescript-6.0.3, each `start_byte == 0` and
    spanning the entire file) and is included in `NEVER_COVERS` below for
    the same reason, even though this round's real measurement never had it
