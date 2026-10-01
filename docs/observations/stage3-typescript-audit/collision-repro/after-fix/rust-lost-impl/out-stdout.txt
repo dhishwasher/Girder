@@ -1,0 +1,1 @@
+test-impact: 2 impacted test(s) -> /home/corymaynard370/Bit-code/docs/observations/stage3-typescript-audit/collision-repro/after-fix/rust-lost-impl/out-file.txt

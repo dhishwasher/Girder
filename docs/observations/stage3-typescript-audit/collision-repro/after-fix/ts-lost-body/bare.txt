@@ -1,0 +1,16 @@
+Building semantic graph for . ...
+  1 file(s), 8 nodes, 13 edges
+  changed files: sample.ts
+
+Changed functions (1):
+  · crate::sample
+
+20 unresolved call-evidence boundaries found; this selection fell back to the conservative must∪may∪unknown union because no test was reachable via a resolved call alone — pass --classified to see why each test is included.
+
+Impacted tests (3):
+  ✓ crate::sample::disables looking into the child project (typescript)
+  ✓ crate::sample::when project is directly referenced by solution (typescript)
+  ✓ crate::sample::when project is indirectly referenced by solution (typescript)
+
+Commands to run impacted tests only:
+  (test commands are disabled in girder.toml)

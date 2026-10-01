@@ -1597,4 +1597,42 @@ benchmark, don't run it against the stale snapshot.
   corpus must be re-extracted from `docs/stage3-typescript-corpus.json`
   to a path under the repo's own working tree (or another persistent
   location), not the scratchpad.
-- Completion remains unproven until every criterion above has committed evidence.
+- 2026-10-01: **Design decision for the actual node-collision fix,
+  recorded before writing code.** Two options were weighed: (a)
+  qualify every trait-impl method's path with its trait name
+  (semantically cleanest, stable, one-time id churn for every
+  trait-impl method in every language's corpus), or (b) qualify only
+  methods that actually collide with a same-named sibling in the same
+  file (minimal id churn, but adding a second colliding impl later
+  renames the first). **Chose (b)**, based on a concrete blast-radius
+  check, not a guess: `grep -rn 'format!("{}::'` across
+  `aether-builder`/`aether-app` found exactly one place that hardcodes
+  an unqualified trait-impl method path --
+  `crates/aether-builder/src/sync.rs:967`'s RAII-drop heuristic,
+  `NodeId::from_path(&format!("{}::drop", candidate.owner))`. `Drop` is
+  always a trait impl (there is no inherent `drop`), so option (a)
+  would have broken this specific, already-working, cross-cutting
+  heuristic for every `Drop` impl in every corpus -- confirmed by
+  reading the code, not assumed. Option (b) leaves this lookup (and
+  every other non-colliding trait method -- `fmt`, `next`, `clone`,
+  etc.) completely untouched, since those never collide with a
+  same-named sibling in the same file in ordinary code.
+  Also ran the cheap, no-build check on Rust's DONE Must set this
+  review round required: across `correction-2/audit-after.json`,
+  exactly **one** scored site has `observed_class: must` at all (index
+  53, `petgraph` `floyd_warshall.rs:11`, target `Graph::add_node`) --
+  confirmed via direct source grep that `add_node` has exactly one
+  definition (a plain inherent `impl<N,E,Ty,Ix> Graph<...> { ... }`
+  block, no competing trait impl), so this one Must claim is not
+  collision-affected. More broadly: `crates/aether-builder/src/sync/
+  rust_methods.rs`'s same-file method Must-proof mechanism (the one
+  that produced this claim, reason `proven-inherent-method-on-
+  annotated-receiver`) is already scoped to INHERENT methods
+  specifically (it explicitly checks for and refuses competing trait
+  declarations, `inherent_wins`) -- by construction, it never targets a
+  trait-impl method at all, so trait-impl-method collisions cannot
+  silently corrupt any currently-published Rust Must claim. The
+  node-collision bug's confirmed impact remains scoped to
+  `call_evidence_v1` fidelity and `review`/`test-impact`'s attribution
+  for the LOST occurrence specifically (per addenda 4/5/6/8/9), not to
+  any Must-proof correctness.

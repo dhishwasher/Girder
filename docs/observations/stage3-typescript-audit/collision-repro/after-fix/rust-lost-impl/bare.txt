@@ -1,0 +1,16 @@
+Building semantic graph for . ...
+  1 file(s), 9 nodes, 12 edges
+  changed files: src/lib.rs
+
+Changed functions (1):
+  · crate::lib
+
+9 unresolved call-evidence boundaries found; this selection fell back to the conservative must∪may∪unknown union because no test was reachable via a resolved call alone — pass --classified to see why each test is included.
+
+Impacted tests (2):
+  ✓ crate::lib::calls_a (rust)
+  ✓ crate::lib::calls_b (rust)
+
+Commands to run impacted tests only:
+  cargo test --workspace calls_a
+  cargo test --workspace calls_b

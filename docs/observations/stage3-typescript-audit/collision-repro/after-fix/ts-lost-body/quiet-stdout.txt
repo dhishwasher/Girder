@@ -1,0 +1,3 @@
+disables looking into the child project
+when project is directly referenced by solution
+when project is indirectly referenced by solution
