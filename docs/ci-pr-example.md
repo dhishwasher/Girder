@@ -16,27 +16,32 @@ baseline ref is hardcoded to `"HEAD"`, not configurable. There is no
 
 This matters for CI specifically: a typical `actions/checkout` on a pull
 request leaves the working tree identical to `HEAD` — there is no
-uncommitted change for `test-impact` to see. Run `test-impact` as-is in
-a GitHub Actions job on a clean PR checkout and **it will report an
-empty diff**, not "these tests may be affected by this PR." This is not
-a hypothetical: it is the direct, verified consequence of the baseline
-being hardcoded to `HEAD` with no ref parameter. **A `--base <ref>` flag
-does not exist yet** — it is part of the CI-gate design
-(`docs/roadmap.md`), not yet built.
+uncommitted change for `test-impact` to see. **Verified directly, not
+assumed:** run `test-impact --classified` against `demo-project/` with
+nothing modified (confirmed byte-identical to `HEAD` via `git status`
+immediately before) and it reports `must=0, may=0, unknown=0,
+boundaries=0` — a real empty result, captured in
+`docs/observations/ci-gate-design/classified-clean-tree.json`. Run it in
+a GitHub Actions job on a clean PR checkout today and you get exactly
+this: nothing, not "these tests may be affected by this PR." **A
+`--base <ref>` flag does not exist yet** — it is part of the CI-gate
+design (`docs/ci-gate-design.md`), not yet built.
 
 ## What DOES work today: local, working-tree-vs-HEAD usage
 
-This is real, captured output. An uncommitted one-line edit was made to
-`demo-project/greeter.py` (`farewell`'s return string), then reverted
-immediately after capture — nothing in `demo-project/` is actually
-changed by this document.
+This is real, captured output — see
+`docs/observations/ci-gate-design/README.md` for exact provenance
+(binary version, HEAD commit, the precise edit). A one-line edit to
+`demo-project/greeter.py` (`farewell`'s return string) was made,
+captured, and reverted immediately after.
 
 ```bash
 girder test-impact demo-project --classified --quiet
 ```
 
-produced (truncated; `boundaries.items` has 82 entries, shown here are
-the summary counts and the `unknown` test list):
+produced (full, unedited output in
+`docs/observations/ci-gate-design/classified-one-line-edit.json`;
+`boundaries.items`, 82 entries, omitted here for length):
 
 ```json
 {
@@ -69,12 +74,17 @@ the summary counts and the `unknown` test list):
 **Read this result carefully, because it is the exact reason a naive CI
 policy is dangerous:** for a one-line string-literal edit to a single
 function, Girder proved **zero** Must-reachable tests and put **every**
-affected test in `unknown`, backed by 82 unresolved-evidence boundaries
-in this small fixture. `docs/observations/stage3-typescript-audit/
-before-observation-addendum-9.md` documents a larger real case: **472**
-unknown-classified nodes graph-wide from one unresolved-dispatch edit in
-a real open-source repository. Unknown is not rare — on real code it is
-frequently the common case, not the exception.
+affected test in `unknown`, backed by 82 unresolved-evidence *boundary
+entries* in this small fixture — paired against the clean tree's
+verified 0, confirming this count tracks the diff, not the whole graph
+(`docs/observations/ci-gate-design/README.md`). A different,
+larger-scale measurement exists for a different quantity — not directly
+comparable, but pointing the same direction: `docs/observations/
+stage3-typescript-audit/before-observation-addendum-9.md` documents 472
+*unknown-classified graph nodes* (not boundary entries) from one
+unresolved-dispatch edit in a real open-source repository. Different
+units, same conclusion: on real code, Unknown is frequently the common
+case, not the exception.
 
 ## The CI mistake this rules out
 

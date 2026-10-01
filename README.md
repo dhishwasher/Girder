@@ -20,9 +20,9 @@ down ([TypeScript](./docs/typescript-support.md), [Go](./docs/go-support.md)).
 
 **Tiers:** the free tier is permanent and needs no account — `get_source`,
 `find_definition`, `search_code`, `ask_codebase`, `review_changes`, and
-`orient`, with no repository-count limit. The `impacted_tests` tool needs a
-[paid license](#buy-a-license). Keys are verified offline; the binary never phones
-home.
+`orient`. The `impacted_tests` tool needs a [paid license](#buy-a-license).
+Keys are verified offline; the binary never phones home. See
+[`LICENSE`](./LICENSE) for the exact terms of free-tier use.
 
 On the committed 15-task `orient` measurement, one bundled call per task
 returned **48,814 output bytes versus 101,302**, using **15 calls versus 78**
@@ -883,10 +883,12 @@ Verification is offline, and the key never expires.
 Girder is **source-available**, not open source, under the
 [Business Source License 1.1](./LICENSE).
 
-The free tier is genuinely free and permanent: it has no expiry, requires no
-account, and has no repository-count limit. It includes `get_source`,
-`find_definition`, `search_code`, `ask_codebase`, `review_changes`, and
-`orient`. The `impacted_tests` tool requires a paid license.
+The free tier is genuinely free and permanent: it has no expiry and requires
+no account. It includes `get_source`, `find_definition`, `search_code`,
+`ask_codebase`, `review_changes`, and `orient`. The `impacted_tests` tool
+requires a paid license. `LICENSE`'s own Additional Use Grant states the
+exact terms of free-tier use, including its one-repository condition; it
+is the authoritative text, not this summary.
 
 Licenses are signed keys verified locally by the Girder binary. The binary
 never phones home, makes no network call for licensing, and works fully offline

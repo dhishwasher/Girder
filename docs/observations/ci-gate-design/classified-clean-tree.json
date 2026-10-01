@@ -1,0 +1,24 @@
+{
+  "boundaries": {
+    "by_category": {},
+    "count": 0,
+    "items": [],
+    "truncated": false
+  },
+  "may": {
+    "count": 0,
+    "paths": [],
+    "truncated": false
+  },
+  "must": {
+    "count": 0,
+    "paths": [],
+    "truncated": false
+  },
+  "schema_version": 1,
+  "unknown": {
+    "count": 0,
+    "paths": [],
+    "truncated": false
+  }
+}

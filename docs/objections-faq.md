@@ -7,7 +7,7 @@ that's a documentation gap, not a reason to ask — file it as one.
 
 ## Does Girder phone home, collect telemetry, or need an account?
 
-No. `girder.rs`'s license check (`current_tier()` in
+No. `license.rs`'s license check (`current_tier()` in
 `crates/aether-app/src/project/license.rs`) reads an environment
 variable or a local key file and verifies the signature with a public
 key compiled into the binary — no network call, confirmed by reading
@@ -38,18 +38,30 @@ edited as part of this pass.)
 ## Is Girder's test selection sound — will it ever miss a test I needed?
 
 No formal soundness proof exists, and the documentation does not claim
-one. What exists is a disclosed, three-way classification — Must
-(proven reachable), May (bounded ambiguity), Unknown (can't be proven
-either way) — where the stated policy is that Unknown is never silently
-dropped: an unprovable call site makes Girder *include* the related
-tests rather than guess they're safe to skip. This means the honest
-failure mode is over-inclusion (running more tests than strictly
-necessary), not silent omission, and that guarantee is itself enforced
-by code paths with their own regression tests
-(`docs/call-classification-policy.md`,
-`docs/core-representative-mutations.md`). A full test run remains the
-authority before calling any change safe — Girder's own documentation
-says this explicitly (`CLAUDE.md`, `npm/README.md`).
+one — it can and does miss tests. What exists is a disclosed, three-way
+classification — Must (proven reachable), May (bounded ambiguity),
+Unknown (can't be proven either way) — where the stated policy is that
+Unknown is never *silently* dropped: an unprovable call site is
+supposed to make Girder include the related tests rather than guess
+they're safe to skip, and that policy is enforced by code with its own
+regression tests (`docs/call-classification-policy.md`,
+`docs/core-representative-mutations.md`).
+
+That policy does not cover every omission mode, and the honest list is:
+`npm/README.md` states plainly that `impacted_tests` "misses tests
+reached only through dynamic dispatch" — a real, currently open gap
+(e.g. polymorphic method resolution through an untyped parameter,
+`docs/core-representative-mutations.md`). Separately, this program found
+and fixed a node-identity collision bug where two distinct code
+entities could compute the same internal id and silently overwrite each
+other's graph node (`docs/observations/stage3-typescript-audit/`) —
+fixed for Rust's trait-impl shape, but TypeScript's own equivalent
+collision shape (duplicate `it()`/`describe()` description strings) is
+a different mechanism and remains unaddressed. See
+`docs/core-gap-analysis.md`'s "Prioritized open gaps" for the complete,
+maintained list. A full test run remains the authority before calling
+any change safe — Girder's own documentation says this explicitly
+(`CLAUDE.md`, `npm/README.md`).
 
 ## Which languages are actually ready?
 
