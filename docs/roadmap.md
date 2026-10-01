@@ -1493,22 +1493,63 @@ benchmark, don't run it against the stale snapshot.
   with a real removal once that removal's Module-level side effect is
   itself an origin -- changed to trigger off `baseline_test_paths`
   directly instead.
-  **The underlying node-id-collision data loss itself is still NOT
+  **A third, independent gap in the same symptom was found and fixed**
+  (`docs/observations/stage3-typescript-audit/before-observation-
+  addendum-8.md`): a precommitted prediction, then confirmed exactly,
+  showed Go -- unlike Python/TypeScript (an unconditional whole-file
+  gap claim) and Rust (the `#[test]` attribute's own claim) -- has NO
+  language construct that unconditionally produces an Unknown claim,
+  so a same-file Go call can be Must-proven with ZERO boundaries
+  anywhere in the file (confirmed against the existing cross-language
+  unit test `direct_local_bindings_have_evidence_in_all_four_languages`,
+  `crates/aether-builder/src/mapper/claims.rs`, which already proves
+  this). A package-level Go var change with no function body touched
+  produced a FULLY silent empty `test-impact` result -- no stdout, no
+  stderr boundary notice, in every invocation form -- worse than the
+  Rust/TypeScript cases, which always at least printed a boundary
+  notice even when empty. Fixed in `classified_impact`
+  (`crates/aether-graph/src/claims.rs`): a Module-kind origin with no
+  Function-kind origin from the same file now gets its own
+  `coverage_gap` boundary, triggering the existing "any boundary
+  escalates every function" rule -- deliberately scoped to that
+  specific condition (not every Module origin) to avoid disturbing the
+  bounded trustworthiness fixtures the same way the first, reverted
+  `test_impact.rs` attempt did. Verified end-to-end against the real
+  rebuilt binary (sha256
+  `48553d3a52ce674283fa2c7c11fddaab21bc51fab4523679807e86ce3208ab14`):
+  the fallback now correctly selects and (via `--run`) actually
+  executes the real test, which genuinely fails
+  (`panic: runtime error: index out of range`) -- a real regression
+  this exact mechanism would have silently missed before the fix.
+  **The underlying node-id-collision data loss itself is STILL NOT
   fixed** -- `call_evidence_v1`/Must-Unknown classification fidelity for
   the LOST occurrence specifically is still silently wrong (its own
-  per-call evidence is still destroyed, not merged or preserved); this
-  fix only ensures `test-impact`/`review` no longer stay silent about
-  the resulting Module-level change. Recommended next step for the
-  deeper fix, before the TypeScript gate-profile above: locate and fix
-  the node-insertion collision handling itself (either disambiguate
-  colliding paths, e.g. by including an impl-target/enclosing-scope
-  discriminator in the semantic path, or detect the collision and
-  merge/preserve both nodes' evidence instead of silently dropping one).
-  The pinned TypeScript corpus checkouts used for this round's
-  measurement lived in a session-scratchpad directory that does not
-  persist across sessions and is now gone; before any TypeScript
-  gate-profile or resolver work resumes, the corpus must be re-extracted
-  from `docs/stage3-typescript-corpus.json` to a path under the repo's
-  own working tree (or another persistent location), not the
-  scratchpad.
+  per-call evidence is still destroyed, not merged or preserved); the
+  three fixes above (addenda 5, 6, 8) only ensure `test-impact`/`review`
+  no longer stay silent about the resulting Module-level change, for
+  every cause of it (the collision bug, const/type-only edits,
+  `describe`/`beforeEach`-level statements, and now Go package-level
+  var changes). Recommended next step for the deeper fix, before the
+  TypeScript gate-profile above: locate and fix the node-insertion
+  collision handling itself (either disambiguate colliding paths, e.g.
+  by including an impl-target/enclosing-scope discriminator in the
+  semantic path, or detect the collision and merge/preserve both
+  nodes' evidence instead of silently dropping one). Also still open,
+  not blocking: `--quiet --out`/`--quiet --run` reach a correct answer
+  via a different mechanism (the `tests_for_nodes`-then-fallback path)
+  than bare `--quiet` (the unconditional classified union) with a
+  different boundary message; a single commit combining a Module-only-
+  origin file with an unrelated, reachable function-body change
+  elsewhere would make `tests_for_nodes` non-empty overall and so never
+  trigger the fallback, potentially still missing the Module-only
+  file's own tests from that combined selection; re-running
+  `tools/core_trustworthiness_oracle.py` and
+  `tools/core_representative_mutations.py` against the final binary to
+  confirm neither regressed. The pinned TypeScript corpus checkouts
+  used for this round's measurement lived in a session-scratchpad
+  directory that does not persist across sessions and is now gone;
+  before any TypeScript gate-profile or resolver work resumes, the
+  corpus must be re-extracted from `docs/stage3-typescript-corpus.json`
+  to a path under the repo's own working tree (or another persistent
+  location), not the scratchpad.
 - Completion remains unproven until every criterion above has committed evidence.

@@ -208,6 +208,48 @@ impl SemanticGraph {
                 });
             }
         }
+        // A Module origin with no Function origin from the same file means
+        // the changed file has no language-level gap claim anywhere to
+        // trigger the "any boundary escalates everyone" rule below on its
+        // own -- confirmed to happen for real in Go, which (unlike
+        // Python/TypeScript's unconditional whole-file gap, or Rust's
+        // `#[test]` attribute's own claim) has no language construct that
+        // unconditionally produces an Unknown claim. A module-level var
+        // whose value changes a function's behavior with no syntactic call
+        // or attribute anywhere in the file (e.g. a Go package-level slice
+        // literal sized by an index another function relies on) previously
+        // produced a fully silent empty selection -- not even a boundary
+        // notice -- in every invocation form. A Function origin from the
+        // same file already means a real call-evidence boundary exists
+        // somewhere reachable from it or it wouldn't need this at all;
+        // this check is specifically for the case where the ONLY origin is
+        // the Module itself.
+        let origin_function_files: HashSet<&str> = origins
+            .iter()
+            .filter_map(|id| self.get(*id))
+            .filter(|n| n.kind == NodeKind::Function)
+            .filter_map(|n| n.file.as_deref())
+            .collect();
+        for &origin in origins {
+            let Some(node) = self.get(origin) else {
+                continue;
+            };
+            if node.kind != NodeKind::Module {
+                continue;
+            }
+            let same_file_function_origin = node
+                .file
+                .as_deref()
+                .is_some_and(|file| origin_function_files.contains(file));
+            if !same_file_function_origin {
+                boundaries.push(boundary(
+                    node,
+                    node.span,
+                    "module-level-change-with-no-function-origin",
+                    true,
+                ));
+            }
+        }
         while let Some((target, path_class)) = queue.pop_front() {
             for &(caller, edge_class) in incoming.get(&target).into_iter().flatten() {
                 let class = path_class.max(edge_class);
@@ -319,6 +361,78 @@ mod tests {
         let result = graph.classified_impact(&[target]).tests(&graph);
         assert_eq!(result.must, vec![test]);
         assert!(result.may.is_empty());
+    }
+
+    #[test]
+    fn a_module_origin_with_no_same_file_function_origin_still_escalates() {
+        // Confirmed for real in Go (docs/observations/stage3-typescript-audit/
+        // before-observation-addendum-7.md's correction): a module-level
+        // var with no syntactic call or attribute anywhere in the file (so
+        // zero Unknown claims exist at all) previously left a Module-only
+        // origin change with a completely silent empty selection -- not
+        // even a boundary notice, in any `test-impact` invocation form.
+        let mut graph = SemanticGraph::new();
+        let mut module = Node::new(NodeKind::Module, "sample", "crate::sample");
+        module.file = Some("sample.go".into());
+        CallEvidence::new(&module, vec![], vec![])
+            .attach(&mut module)
+            .unwrap();
+        let module_id = graph.upsert_node(module);
+        let test = add(&mut graph, "test", true);
+        {
+            let node = graph.get_mut(test).unwrap();
+            node.file = Some("sample.go".into());
+        }
+
+        let result = graph.classified_impact(&[module_id]).tests(&graph);
+        assert_eq!(
+            result.unknown,
+            vec![test],
+            "a Module origin with zero boundaries anywhere must still \
+             conservatively escalate every test, not silently return nothing"
+        );
+        assert_eq!(result.boundaries.len(), 1);
+        assert_eq!(
+            result.boundaries[0].reason,
+            "module-level-change-with-no-function-origin"
+        );
+    }
+
+    #[test]
+    fn a_module_origin_with_a_same_file_function_origin_is_not_separately_escalated() {
+        // The common case (an ordinary function-body edit, which already
+        // carries its own Function origin and whatever boundaries that
+        // function's own evidence has) must not be additionally escalated
+        // just because the edit's Module also changed -- every edit's
+        // Module changes, by construction (Node.source for a Module is the
+        // whole file).
+        let mut graph = SemanticGraph::new();
+        let mut module = Node::new(NodeKind::Module, "sample", "crate::sample");
+        module.file = Some("sample.go".into());
+        CallEvidence::new(&module, vec![], vec![])
+            .attach(&mut module)
+            .unwrap();
+        let module_id = graph.upsert_node(module);
+        let target = add(&mut graph, "target", false);
+        {
+            let node = graph.get_mut(target).unwrap();
+            node.file = Some("sample.go".into());
+        }
+        let test = add(&mut graph, "test", true);
+        {
+            let node = graph.get_mut(test).unwrap();
+            node.file = Some("sample.go".into());
+        }
+        claims(&mut graph, test, &[(target, CallClass::Must)]);
+
+        let result = graph.classified_impact(&[module_id, target]).tests(&graph);
+        assert_eq!(result.must, vec![test]);
+        assert!(
+            result.boundaries.is_empty(),
+            "a Module origin alongside a same-file Function origin must not \
+             add an extra boundary: {:?}",
+            result.boundaries
+        );
     }
 
     #[test]

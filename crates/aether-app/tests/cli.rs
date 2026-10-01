@@ -1549,6 +1549,75 @@ fn test_add() {
 }
 
 #[test]
+fn test_impact_quiet_is_not_empty_for_a_go_module_level_only_change() {
+    // Go has no unconditional whole-file gap claim the way Python/TypeScript
+    // do, and no `#[test]`-attribute claim the way Rust does -- a same-file
+    // direct call (here, TestGet calling Get) can be proven Must with ZERO
+    // Unknown claims anywhere in the file, confirmed directly via `inspect`.
+    // A package-level var with no syntactic call or attribute anywhere
+    // (changing `table`'s length, which Get indexes into with no bounds
+    // check) previously returned a fully silent empty selection -- not even
+    // a boundary notice -- in every invocation form. See
+    // docs/observations/stage3-typescript-audit/before-observation-
+    // addendum-7.md and -8.md.
+    let repo = TempRepo::new("test-impact-go-module-level-only-change");
+    repo.write("go.mod", "module example.com/sample\n\ngo 1.21\n");
+    repo.write(
+        "get_test.go",
+        r#"
+package sample
+
+import "testing"
+
+var table = []int{1, 2, 3}
+
+func Get(i int) int {
+	return table[i]
+}
+
+func TestGet(t *testing.T) {
+	_ = Get(2)
+}
+"#,
+    );
+    repo.commit_all("baseline");
+
+    repo.write(
+        "get_test.go",
+        r#"
+package sample
+
+import "testing"
+
+var table = []int{1, 2}
+
+func Get(i int) int {
+	return table[i]
+}
+
+func TestGet(t *testing.T) {
+	_ = Get(2)
+}
+"#,
+    );
+
+    let quiet_output = run_girder_output(&["test-impact", repo.path().to_str().unwrap(), "--quiet"]);
+    assert!(quiet_output.status.success());
+    let quiet_stdout = String::from_utf8_lossy(&quiet_output.stdout);
+    assert!(
+        quiet_stdout.contains("TestGet"),
+        "a Go module-level-only change with zero Unknown claims anywhere \
+         must still conservatively select the known test: {quiet_stdout:?}"
+    );
+
+    let full = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
+    assert!(
+        full.contains("TestGet") && !full.contains("No tests found in the impact set"),
+        "the full report must also conservatively select the known test: {full}"
+    );
+}
+
+#[test]
 fn test_impact_rejects_every_unknown_explicit_node() {
     let repo = TempRepo::new("test-impact-unknown-node");
     repo.write(
