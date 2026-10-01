@@ -1834,3 +1834,85 @@ Work done so far under the narrowed directive:
   objection-answering FAQ) and the Gumroad fulfillment question above,
   which needs the user's own check of the live listing, not a code or
   doc change.
+
+## 2026-10-01 (later still): product split decided — test-impact free, CI gate is the paid boundary
+
+The user made the product-split decision the previous entry's design
+work was blocked on. Quoted verbatim:
+
+> Make the product split decision as follows.
+> Local/interactive test-impact becomes free. Do not charge for Girder
+> merely telling a developer which tests may be affected, and do not
+> weaken any safety behavior for free users.
+> The future paid boundary is CI/PR enforcement and team workflow:
+> machine-enforced Must/May/Unknown policy, merge/CI gating, auditable
+> reports, configuration suitable for teams, and related automation. Do
+> not claim any paid feature exists until it actually does.
+> Grandfather every existing valid $39 paid key. Existing customers must
+> not lose functionality. Treat those keys as founding/legacy Pro
+> entitlements when the new tier is introduced.
+> Do not build accounts, telemetry, a license server, Stripe
+> integration, cloud hosting, or DRM. Reuse the existing offline Ed25519
+> key system.
+> For self-serve sales, document the simplest supported fulfillment
+> path: locally generate unique signed Girder keys in a batch and have
+> the storefront deliver one unique pre-generated key per purchase if
+> that storefront supports it. Do not state that Gumroad currently does
+> this until the actual listing configuration is verified.
+> Until automated key fulfillment is verified and a genuine paid
+> enforcement feature exists, do not present the current $39
+> test-impact license as the main commercial product.
+> Continue now with the doc-only monetization work: write the CI/PR
+> usage example, objection/FAQ page, inbound funnel, release checklist,
+> and customer-facing explanation. Also specify the absolute minimum
+> implementation needed for a paid CI gate, but do not implement it
+> yet. Show me that design first.
+> The paid CI feature should be extremely small and composable. Prefer
+> a CLI command suitable for GitHub Actions and other CI systems that
+> consumes Girder's existing classified impact data and exits nonzero
+> according to explicit policy. Do not build a GitHub App or web
+> dashboard.
+> Before changing license enforcement or runtime tier checks, show me
+> the exact proposed command, policy semantics, exit codes, free/paid
+> matrix, legacy-key behavior, and files to change.
+
+**Nothing in this entry has been implemented.** `license.rs`,
+`main.rs`, and every runtime tier check are unchanged — `test-impact`
+is still paid-gated in the shipped binary as of this commit. What was
+done is documentation and design work only:
+
+- `docs/ci-gate-design.md`: the requested design (command, policy
+  semantics, exit codes, free/paid matrix, legacy-key behavior, files
+  to change), including a verified real blocker found while writing
+  it — `semantic_changed_impact_with_config` hardcodes the diff
+  baseline to `"HEAD"` with no ref parameter anywhere in `test_impact.rs`,
+  so `test-impact` as it exists today cannot diff a CI checkout's PR
+  branch against a base branch; a `--base <ref>` flag does not exist
+  yet. Presented to the user in chat under the six requested headings;
+  this file is the durable copy.
+- `docs/ci-pr-example.md`: real captured `test-impact --classified`
+  output against `demo-project/` (a genuine one-line edit, debug-build
+  license key used locally only, never committed), showing 0 Must, 0
+  May, 6 Unknown, 82 boundaries for a single small edit — concrete
+  evidence for why a naive "fail on any Unknown" CI policy would redden
+  nearly every PR, and why the CI example cannot yet show a working
+  base-branch diff.
+- `docs/objections-faq.md`: new. Answers sourced from the actual code
+  and `LICENSE` text, including a real discrepancy found and disclosed
+  (not resolved): `LICENSE`'s Additional Use Grant names a narrower
+  free-tier list than what `license.rs` actually gates — it omits
+  `orient` and says "on one repository," which doesn't match the code
+  (no repository-count gate exists). `LICENSE` itself was not edited.
+- `docs/pricing-audit.md`, `docs/for-customers.md`,
+  `docs/first-customer-plan.md`, `docs/release-checklist.md`: updated
+  to describe the decided-but-unshipped split, explicit everywhere
+  about what's current code vs. decided-but-not-built, per "do not
+  claim any paid feature exists until it actually does."
+
+**Explicitly deferred to the user, not decided:** whether the Gumroad
+listing keeps selling the current $39 key during the transition, given
+the feature it gates is becoming free.
+
+**Still pending, before any of the design in `docs/ci-gate-design.md`
+is implemented:** the user's review of that design under its six
+headings.

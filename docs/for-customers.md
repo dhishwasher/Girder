@@ -38,30 +38,45 @@ other MCP client, a documented raw JSON config works the same way. No
 account, no cloud dependency — the binary runs entirely on your
 machine or your CI runner.
 
-## What's free, permanently
+## What's free
 
 Source lookup, symbol search, call-graph navigation, and per-node
 impact/test lookup (`orient`) — enough for an individual developer to
 use Girder for real, every day, with no license key.
 
-## What the team license adds
+**Decided, not yet shipped:** `impacted_tests` / `test-impact` — the
+automatic, git-diff-driven Must/May/Unknown test selection — is also
+becoming free. Telling a developer which tests a change may affect is
+not something Girder charges for. **As of this writing the code has
+not changed yet**: `test-impact` is still gated behind a paid key today
+(`docs/pricing-audit.md`). This document describes where things are
+headed; it will be corrected the moment the ungating actually ships.
 
-Automatic, git-diff-driven test selection (`impacted_tests` /
-`test-impact`): point it at a change, get the conservative set of
-tests that change could affect, without naming anything by hand — the
-thing you'd want gating a PR or a CI job, not just an interactive
-lookup.
+## What the paid tier is becoming
 
-**Pricing**: $39 one-time, perpetual, per individual key — [buy directly on
-Gumroad](https://maynard42.gumroad.com/l/zwpsjl), no account or sales
-conversation required. There is no separate team SKU today (confirmed by
-reading `license.rs`: `Tier` is `Free`/`Paid` only, no seat or org concept
-— see `docs/pricing-audit.md`), so the only mechanism that exists right
-now for a team is one key per developer who needs `impacted_tests`. A
-real team/seat tier is a product decision, not yet made. Anyone who
-already has a free-tier install keeps using `get_source`,
+Not individual test-impact lookup — a CI/PR enforcement feature: a
+small, composable command for GitHub Actions and other CI systems that
+consumes Girder's existing Must/May/Unknown classification and exits
+nonzero according to an explicit, auditable policy, plus configuration
+suitable for a team (a committed policy file, not a per-developer
+setting). **This does not exist yet.** A design has been written
+(`docs/roadmap.md`'s CI-gate design entry) and is awaiting approval
+before any implementation starts.
+
+**Until that feature is real and purchase fulfillment is verified
+end-to-end, Girder does not have a commercial product to sell as "the"
+paid tier.** The $39 key that exists today gated `test-impact`, which
+is becoming free — existing buyers are not losing anything (every valid
+key, old or new, will keep working and will carry forward as a legacy
+entitlement once the new tier ships), but a *new* purchase today would
+be buying access to a feature about to become free. Whether new sales
+of that key continue during the transition is an open question, not
+decided here.
+
+Anyone who already has a free-tier install keeps using `get_source`,
 `find_definition`, `search_code`, `ask_codebase`, `review_changes`, and
-`orient` without buying anything.
+`orient` without buying anything, regardless of how the paid tier
+evolves.
 
 ## Current limitations, stated plainly
 

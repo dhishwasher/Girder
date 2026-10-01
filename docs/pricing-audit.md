@@ -7,6 +7,17 @@ Verified by reading `crates/aether-app/src/project/license.rs`,
 `main.rs`'s `paid_tool_for_command`, and every command module directly,
 not inferred from documentation.
 
+**Superseded by a later decision, not yet implemented.** Later the same
+day, the user decided a different product split (`docs/roadmap.md`,
+"2026-10-01: product split decided" entry): `test-impact`/`impacted_tests`
+becomes free, and the paid boundary moves to a not-yet-built CI/PR
+enforcement gate. **Nothing below has changed in code as of this
+writing** — everything in this document is still accurate to the
+current binary. Do not present this document, or the current $39
+license, as describing the ongoing commercial product; it describes
+the pre-transition state only, kept for its evidence trail until the
+ungating and the new gate actually ship.
+
 ## The gate, exactly as implemented
 
 One function decides tier: `crates/aether-app/src/project/license.rs::

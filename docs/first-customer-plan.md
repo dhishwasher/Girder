@@ -71,43 +71,47 @@ fully self-serve.
 `ask_codebase`, `review_changes`, and `orient` are free, permanently, no
 license key (`docs/pricing-audit.md`). A developer gets real, daily-usable
 value — source lookup, call-graph navigation, per-node impact — before
-ever hitting a paywall. This is deliberate: the free tier has to be good
-enough to build trust before the paid feature is ever offered.
+ever hitting a paywall.
+
+**Decided, not yet shipped:** `test-impact` / `impacted_tests` (local,
+interactive Must/May/Unknown test selection) is also becoming part of
+this free step — the product decision is that Girder does not charge for
+telling a developer which tests a change may affect. As of this writing
+the code is unchanged; see the boundary section below.
 
 ## 5. Encounter the paid team feature
 
-This is the moment a free user discovers there's something more, without
-being sold to — the product itself should say it.
-
-**Already in place:** `crates/aether-app/src/project/license.rs::
-require_paid` returns this exact message when a free user calls
-`test-impact` / `impacted_tests`:
+**Today, in the shipped binary**, a free user hits this message calling
+`test-impact` / `impacted_tests`
+(`crates/aether-app/src/project/license.rs::require_paid`):
 
 > "The `{tool}` tool needs a paid Girder license. Buy a perpetual Girder
 > license at https://maynard42.gumroad.com/l/zwpsjl. Free alternatives:
 > `get_source`, `find_definition`, and `orient` still answer
 > code-navigation questions."
 
-This already satisfies "an obvious upgrade message when a user reaches
-paid functionality": it names the gated tool, gives the buy link directly
-in the error, and tells the user what still works for free instead of
-just blocking them. No code change identified as necessary here.
+**This boundary is going away.** Once the ungating ships, this message
+disappears for `test-impact` entirely — it becomes free, so there is
+nothing left to gate there. The *new* paid-feature encounter will be a
+CI/PR enforcement gate (a small CLI command for GitHub Actions and
+similar, exiting nonzero per an explicit policy) that **does not exist
+yet** — a design has been written (see `docs/roadmap.md`'s CI-gate
+design entry) but nothing has been implemented or approved for build.
+Until that command exists and is gated, there is no "paid team feature"
+for a free user to encounter at all.
 
-**Gap:** the same message is not yet confirmed to appear through every
-path a user could hit it from (MCP tool-call error surfaced inside
-Claude Code / Codex / Cursor's own UI, not just the raw CLI stderr) —
-worth a manual check, not a code change, before relying on it as the
-primary upgrade touchpoint.
-
-## 6. Buy — and an unverified fulfillment blocker
+## 6. Buy
 
 A real, live $39 one-time Gumroad listing exists
-(`https://maynard42.gumroad.com/l/zwpsjl`), linked both from the README's
-"Buy a license" section and from the in-product error message above.
-Checkout itself requires no conversation.
+(`https://maynard42.gumroad.com/l/zwpsjl`) for the *current* `test-impact`
+gate, which is becoming free. **Per explicit instruction, this listing
+should not be presented as the main commercial product** until (a) the
+new CI-gate feature is real, and (b) purchase fulfillment is verified.
+Whether the Gumroad listing should keep selling during the transition is
+an open question for the user, not decided here.
 
-**Unresolved, found while re-checking this document, not yet confirmed
-either way:** every valid license key must be signed with a private
+**Unresolved fulfillment question, found while re-checking this
+document:** every valid license key must be signed with a private
 Ed25519 key that never leaves this machine (`crates/aether-app/src/
 project/license.rs::PUBLIC_KEY`, verified against
 `crates/aether-app/examples/license_keygen.rs`, a local CLI that takes
@@ -121,10 +125,8 @@ loaded, no manual step per sale); or the Gumroad listing delivering one
 shared key to every buyer (automatic, but not actually per-buyer) — but
 **which one, if either, is how the live listing is actually configured
 is Gumroad account configuration, outside this repository, and I have
-not verified it.** If neither is set up, every sale currently requires a
-manual step (generating and sending a key by hand), which breaks "buy
-without speaking to me." This needs to be checked against the live
-Gumroad listing before this step is called self-serve.
+not verified it.** This needs to be checked against the live Gumroad
+listing before any version of this step is called self-serve.
 
 ## 7. Activate the offline key
 
@@ -144,31 +146,26 @@ proof — not a reason to contact them directly.
 
 ## Honest summary of where the funnel actually stands
 
-Steps 3, 4, and 7 are already fully self-serve and require no further
-work to function. Step 5's message already exists and already does the
-job asked of it. Step 6 (buy) has an unverified fulfillment question —
-whether a Gumroad purchase actually triggers automatic delivery of a
-key the binary will accept, or currently requires a manual step — that
-needs to be checked against the live listing before this funnel can be
-called fully self-serve end to end. The other real gaps are in steps 1
-and 2: discoverability listing opportunities (homepage URL, third-party
-MCP directories) and the complete absence of any visual proof
-(screenshots or a short recorded demo) that a skimming visitor can see
-before installing anything.
+Steps 1-4 and 7 either already work self-serve today or will continue to
+once the ungating ships. Step 5 (today's paid-feature encounter) is
+scheduled to disappear, to be replaced by a not-yet-built CI-gate
+encounter. Step 6 (buy) is deliberately not being pushed as the main
+commercial CTA right now, both because the feature it currently gates is
+becoming free and because its Gumroad fulfillment path is unverified.
+The remaining real work is: ship the ungating + the new CI gate (see the
+design in `docs/roadmap.md`), verify Gumroad fulfillment, and close the
+discoverability/proof gaps named in steps 1 and 2 (homepage URL,
+third-party MCP directories, screenshots or a short recorded demo).
 
-## Also worth naming: the boundary itself is individual, not "team"
+## The boundary decision (made; not yet shipped)
 
-The paid gate today is a single command (`test-impact` / `impacted_tests`)
-behind an individual $39 key — there is no team-specific feature, seat
-count, or org concept in `license.rs` (`Tier` has exactly two variants,
-`Free`/`Paid`). Two overlaps worth flagging rather than quietly living
-with: `orient` (free) already answers a close cousin of what
-`impacted_tests` answers, just scoped to one named node instead of a git
-diff; and Plan Format v2's own `tests.impacted` check
-(`test_checks.rs::run_tests_impacted`) calls the identical underlying
-`classified_impact` selection for free via `plan run`, with no license
-check at all (`docs/pricing-audit.md`). A clean "team" story — e.g. free
-for local/interactive use, paid specifically for the CI/PR-gating
-workflow — is a plausible shape given the user's "CI/PR examples" and
-"paid team feature" phrasing, but it is a product decision for the user
-to make, not one to write into shipped docs unilaterally.
+The user decided the product split (`docs/roadmap.md`, "2026-10-01:
+product split decided"): local/interactive `test-impact` becomes free;
+the paid boundary moves to a new CI/PR enforcement command, not yet
+built. This also resolves two overlaps this document previously flagged
+as open questions: `orient` (already free) no longer competes with a
+paid `impacted_tests`, since both are free; and Plan Format v2's
+`tests.impacted` check (`test_checks.rs::run_tests_impacted`), which
+calls the same underlying `classified_impact` selection for free via
+`plan run` with no license check, is no longer an inconsistency — it was
+already giving away exactly what is now decided to be free.

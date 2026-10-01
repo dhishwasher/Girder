@@ -49,6 +49,31 @@ command was actually run, not assumed.
       updated to describe it (don't let the audit document go stale
       the moment it stops being accurate).
 
+## If this release ships the test-impact ungating and/or the CI gate
+
+- [ ] `main.rs::paid_tool_for_command` and the matching check in
+      `mcp/watch.rs:390-392,487-489` are updated consistently — both gate
+      sites must agree on what's free vs. paid, not just one of them.
+- [ ] Every v1 (`girder-v1...`) and v2 (`girder-v2...`) key with tier
+      `paid` still unlocks whatever is now gated — run both the existing
+      `legacy_key_returns_its_tier` test and a new regression test
+      specific to the new gate before calling this done.
+- [ ] `docs/pricing-audit.md`, `docs/for-customers.md`,
+      `docs/first-customer-plan.md`, `README.md`, and `npm/README.md`
+      are updated together in the same change — these are five separate
+      sources of the same free/paid facts and have drifted before.
+- [ ] `crates/aether-app/tests/mcp.rs:125-148` and
+      `crates/aether-app/tests/cli.rs:143-151` (which currently assert
+      `test-impact` IS paid-gated) are updated to match the new behavior,
+      not left asserting the old boundary.
+- [ ] The Gumroad listing's actual fulfillment mechanism (does a purchase
+      auto-deliver a binary-acceptable key, or require a manual step) is
+      verified against the live listing, not assumed — see
+      `docs/first-customer-plan.md`'s "unresolved fulfillment question."
+- [ ] A decision has been made and recorded on whether the Gumroad
+      listing keeps selling during/after the transition, given the
+      feature it originally gated is now free.
+
 ## Packaging and distribution
 
 - [ ] `install.sh` (referenced from `README.md`) actually installs a
