@@ -258,20 +258,20 @@ Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
 
 ## Stage 3 — Close dispatch holes one language at a time
 
-**Status: IN PROGRESS** (Rust: DONE, all four criterion legs met with
-committed evidence, after seven correction rounds; Python: DONE, all three
-criterion legs met with committed evidence, after a three-round correction
-chain; TypeScript: before-observation measured (0/97 unsound, 0 Must
-currently proven, resolver design not yet started); see "Current
-checkpoint")
+**Status: IN PROGRESS**. Rust and Python completion claims are withdrawn pending
+an audit-size correction: 105 sampled entries produced only 52 and 85 actual
+scored call sites, below the required 100. Historical measurements remain valid
+for their stated samples; they do not satisfy the original sample-size gate.
+TypeScript remains IN PROGRESS; Go remains NOT STARTED. Further language work
+waits for the preceding language's corrected acceptance evidence.
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
 
 | Language | Status | Before / after evidence | Dependency |
 | --- | --- | --- | --- |
-| Rust | **DONE** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
-| Python | **DONE** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) | Rust trustworthy on a real repository |
+| Rust | **IN PROGRESS — audit-size correction** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
+| Python | **IN PROGRESS — audit-size correction** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) | Rust trustworthy on a real repository |
 | TypeScript | IN PROGRESS (before-observation measured: 0/97 unsound, 0 Must currently proven; resolver design not yet started) | [methodology](observations/stage3-typescript-audit/methodology.md) + addenda + [rubric](observations/stage3-typescript-audit/labeling-rubric.md) / [before-observation](observations/stage3-typescript-audit/before-observation.md) | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
@@ -393,8 +393,9 @@ This first resolver change alone left Stage 3 (Rust) **not DONE** (audit leg
 and real-repository nonempty-Must-precision leg unmet) and **not FAILED** (a
 specific next resolver step was identified, not a dead end).
 
-**Second resolver change done, after-observation done, criterion fully
-met — Stage 3 (Rust): DONE.**
+**Historical second resolver change and after-observation.** The previous DONE
+claim below omitted the audit-size gate and is superseded by the current status;
+the measurements and documented failures themselves are unchanged.
 `d0ce300`/`c436dbd`/`62141a9`/`2452bc1`/`facc21c`/`777c2a7` prove `x.m()`
 Must when the receiver has a single explicit `let x: T<...>` binding and
 `m` resolves to a unique, safe, non-cfg-gated public inherent impl with no
@@ -429,16 +430,16 @@ frozen design spec's constraint 6, not fully traced recursively;
 hand-compiled prelude method list; bare-name rather than full
 semantic-path type resolution; textual rather than solved trait-bounds
 comparison; no macro-token-tree binding rule) are in the after-observation
-in full, none of them blocking DONE.
+in full. They do not remove the separately unmet audit-size requirement.
 
 **Gate per language:** before/after corpus and real-repository audit, then all
 common gates. **Observation:**
 [audit-scoring-summary-v2.json](observations/stage3-rust-audit/audit-scoring-summary-v2.json)
 (before) and
 [after-observation.md](observations/stage3-rust-audit/after-method-call-fix/after-observation.md)
-(after — Rust DONE, all four criterion legs met).
-**Blockers:** none — next action is narrowing `transformed_scope`'s
-whole-file scope (see "Next" below), not a missing dependency.
+(historical after-result, not current stage-completion proof).
+**Blockers:** minimum real-call-site sample and fresh post-fix audit evidence.
+**Next:** complete the precommitted audit-size correction before resolver expansion.
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 
@@ -539,6 +540,17 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-01 — Audit-size correction in progress
+
+Rust/Python are IN PROGRESS until at least 100 actual sites per language have
+frozen labels and passing current-candidate scores. Their original observations
+are retained without modification. A new prospective extension will retain every
+original site, add independently selected sites, and report non-call exclusions
+separately. It cannot retroactively make the old insufficient audit complete.
+Rust's current-binary re-score will also check the node-identity fix against the
+unchanged historical cohort. No resolver changes are part of this correction.
+
 
 ### 2026-10-01 — Current-state reconciliation
 
@@ -1725,458 +1737,31 @@ rerun during this review.
   baseline matches exactly; representative-mutation result shows one
   benign, disclosed `+1` boundary count with precision/recall/TP/FP
   sets all unchanged.
-  **Both items from the standing directive's "first priority" are now
-  closed**: the node-identity/collision problem (addendum-12) and the
-  combined-origin false-empty case (this entry). Per the directive
-  below, the next step is confirming `main` is green (done) and
-  pivoting to monetization readiness, not further resolver/correctness
-  expansion. Still open, unaffected by either fix: TypeScript's own
+  **Both fixes are implemented**: the node-identity/collision problem
+  (addendum-12) and the combined-origin false-empty case (this entry).
+  Still open, unaffected by either fix: TypeScript's own
   collision mechanism (sites 23/91), Rust's DONE audit's
   `correction-3` re-score, and the TypeScript corpus re-extraction /
   gate-profile step.
 
-## Standing directive, 2026-10-01: after current correctness work closes, pivot to monetization readiness
+## Release and CI verification checkpoints
 
-User-authored instruction, recorded verbatim as the next phase of this
-resume contract. **First priority remains the current correctness
-work**: finish the node-identity/collision fix and the combined-origin
-false-empty case properly, A/B-verify, re-run the existing Rust/Python
-audits and trustworthiness measurements that could regress, run all
-four gates, and do not weaken any existing criterion to make them pass.
-
-Once those known safety blockers are closed and `main` is green,
-**stop adding resolver features temporarily**. Do not begin another
-large technical expansion and do not build a SaaS dashboard, account
-system, billing backend, marketplace, cloud service, or other
-speculative infrastructure.
-
-Switch to a "monetization readiness" phase. Goal: make the existing
-Girder something a real development team can pay for immediately.
-
-- Preserve the free local developer experience: source lookup, search,
-  orient/navigation, local graph functionality, and enough
-  functionality for an individual developer to understand the product.
-- Define the paid value around change safety and team workflow: impact
-  analysis, impacted-test enforcement, PR/CI safety checks, Must/May/
-  Unknown evidence, and preventing an AI-authored change from silently
-  skipping relevant tests.
-- Prepare the smallest sellable package possible:
-  - Audit exactly what is currently free vs. license-gated and
-    document it.
-  - Propose a simple commercial packaging model that does not require
-    new infrastructure. Include a founding-team pilot that can be sold
-    manually to the first customers.
-  - Create a clean release-readiness checklist for the first
-    post-soundness Girder release.
-  - Rewrite the README/product positioning around the actual measured
-    capability. Do not claim formal soundness, perfect impact
-    analysis, or token savings that were only measured as bytes.
-  - Create a short customer-facing page/document explaining the
-    problem, what Girder does, how installation works, what the paid
-    team gets, current limitations, and pricing.
-  - Create a technical due-diligence/valuation evidence index pointing
-    to the committed audits, benchmarks, adversarial tests, CI
-    results, and known limitations.
-  - Make onboarding for Claude Code, Codex, Cursor, and raw MCP as
-    simple as the existing product permits. Do not invent unsupported
-    integrations.
-  - Identify the smallest missing feature that would prevent us from
-    selling a $200-$500 founding-team pilot today. Only propose
-    implementation if it is genuinely required for the first sale.
-  - Produce a concrete first-customer plan: who to target, what
-    problem to pitch, what they receive, what we charge, and what
-    evidence we show them.
-- Do not optimize for more GitHub features. Optimize for getting the
-  first person to pay for Girder.
-
-**Before changing any code for monetization**, show the user the
-proposed product split, pricing, exact files that would change, and
-anything believed to need building. Prefer documentation, packaging,
-release work, and manual sales over new infrastructure. This is a
-decision checkpoint, not an implicit go-ahead -- the user reviews the
-plan before any monetization-driven code change begins.
-
-## 2026-10-01 (later same day): monetization plan narrowed to inbound/self-serve only
-
-The user explicitly narrowed the standing directive above. Quoted
-verbatim because it supersedes specific wording in that directive:
-
-> Change the monetization plan to inbound/self-serve only. I am not
-> doing cold outreach or manually contacting prospects. Do not create
-> prospect lists, email scripts, sales-call workflows, or founder-led
-> outbound plans.
->
-> Optimize Girder so developers can discover it, understand the value,
-> install it, evaluate it, and buy without speaking to me.
->
-> Focus on: README conversion, GitHub discoverability, npm
-> discoverability, a clear free vs paid boundary, self-serve pricing,
-> simple purchase/key activation, CI/PR examples, screenshots/demos,
-> benchmark/audit proof, an obvious upgrade message when a user reaches
-> paid functionality, documentation that answers objections without
-> requiring support.
->
-> Replace docs/first-customer-plan.md with an inbound customer funnel
-> plan. The funnel should be: discover -> understand -> install ->
-> experience value -> encounter paid team feature -> buy -> activate
-> offline key.
->
-> No SaaS accounts, telemetry, DRM, cold outreach, lead lists, or sales
-> calls.
-
-This supersedes the "manual sales" and "founding-team pilot ... sold
-manually" language in the standing directive above, and the "who to
-target ... reach out directly" framing that was in the original
-`docs/first-customer-plan.md`. That file has been replaced with an
-inbound funnel document of the same name (commit `5e44d82`). Every
-instruction above this entry that assumes founder-led outbound no
-longer applies; a future session should follow this entry, not that
-wording, for how a first sale is expected to happen.
-
-Work done so far under the narrowed directive:
-- `docs/first-customer-plan.md` replaced with the discover -> understand
-  -> install -> experience value -> encounter paid feature -> buy ->
-  activate offline key funnel, auditing what already works self-serve
-  against real, cited files rather than assumption.
-- Found and disclosed a real, unresolved blocker in that same document:
-  whether a Gumroad purchase actually delivers a key the binary will
-  accept automatically, or currently requires a manual step (keys must
-  be signed with a private Ed25519 key via `crates/aether-app/examples/
-  license_keygen.rs`; Gumroad cannot mint one itself). This is external
-  Gumroad-account configuration, not something this repository can
-  confirm — flagged for the user, not guessed at.
-- `docs/for-customers.md`'s pricing line, which previously said
-  "contact for current terms" for team pricing (itself an outbound
-  assumption), fixed to a self-serve answer, explicitly marked as the
-  only mechanism that exists today (one key per developer), not a
-  settled team-pricing decision.
-- Two README overclaims fixed while doing the "README conversion" pass:
-  "minimal test selection" (contradicted the documented conservative-
-  union behavior) reworded to "conservative test selection"; a "single
-  repository" qualifier on the free tier (no such gate exists in
-  `license.rs`, confirmed by reading it) removed in two places.
-- Not yet done: the rest of the named focus list (GitHub/npm
-  discoverability actions, screenshots/demos, CI/PR examples, an
-  objection-answering FAQ) and the Gumroad fulfillment question above,
-  which needs the user's own check of the live listing, not a code or
-  doc change.
-
-## 2026-10-01 (later still): product split decided — test-impact free, CI gate is the paid boundary
-
-The user made the product-split decision the previous entry's design
-work was blocked on. Quoted verbatim:
-
-> Make the product split decision as follows.
-> Local/interactive test-impact becomes free. Do not charge for Girder
-> merely telling a developer which tests may be affected, and do not
-> weaken any safety behavior for free users.
-> The future paid boundary is CI/PR enforcement and team workflow:
-> machine-enforced Must/May/Unknown policy, merge/CI gating, auditable
-> reports, configuration suitable for teams, and related automation. Do
-> not claim any paid feature exists until it actually does.
-> Grandfather every existing valid $39 paid key. Existing customers must
-> not lose functionality. Treat those keys as founding/legacy Pro
-> entitlements when the new tier is introduced.
-> Do not build accounts, telemetry, a license server, Stripe
-> integration, cloud hosting, or DRM. Reuse the existing offline Ed25519
-> key system.
-> For self-serve sales, document the simplest supported fulfillment
-> path: locally generate unique signed Girder keys in a batch and have
-> the storefront deliver one unique pre-generated key per purchase if
-> that storefront supports it. Do not state that Gumroad currently does
-> this until the actual listing configuration is verified.
-> Until automated key fulfillment is verified and a genuine paid
-> enforcement feature exists, do not present the current $39
-> test-impact license as the main commercial product.
-> Continue now with the doc-only monetization work: write the CI/PR
-> usage example, objection/FAQ page, inbound funnel, release checklist,
-> and customer-facing explanation. Also specify the absolute minimum
-> implementation needed for a paid CI gate, but do not implement it
-> yet. Show me that design first.
-> The paid CI feature should be extremely small and composable. Prefer
-> a CLI command suitable for GitHub Actions and other CI systems that
-> consumes Girder's existing classified impact data and exits nonzero
-> according to explicit policy. Do not build a GitHub App or web
-> dashboard.
-> Before changing license enforcement or runtime tier checks, show me
-> the exact proposed command, policy semantics, exit codes, free/paid
-> matrix, legacy-key behavior, and files to change.
-
-**Nothing in this entry has been implemented.** `license.rs`,
-`main.rs`, and every runtime tier check are unchanged — `test-impact`
-is still paid-gated in the shipped binary as of this commit. What was
-done is documentation and design work only:
-
-- `docs/ci-gate-design.md`: the requested design (command, policy
-  semantics, exit codes, free/paid matrix, legacy-key behavior, files
-  to change), including a verified real blocker found while writing
-  it — `semantic_changed_impact_with_config` hardcodes the diff
-  baseline to `"HEAD"` with no ref parameter anywhere in `test_impact.rs`,
-  so `test-impact` as it exists today cannot diff a CI checkout's PR
-  branch against a base branch; a `--base <ref>` flag does not exist
-  yet. Presented to the user in chat under the six requested headings;
-  this file is the durable copy.
-- `docs/ci-pr-example.md`: real captured `test-impact --classified`
-  output against `demo-project/` (a genuine one-line edit, debug-build
-  license key used locally only, never committed), showing 0 Must, 0
-  May, 6 Unknown, 82 boundaries for a single small edit — concrete
-  evidence for why a naive "fail on any Unknown" CI policy would redden
-  nearly every PR, and why the CI example cannot yet show a working
-  base-branch diff.
-- `docs/objections-faq.md`: new. Answers sourced from the actual code
-  and `LICENSE` text, including a real discrepancy found and disclosed
-  (not resolved): `LICENSE`'s Additional Use Grant names a narrower
-  free-tier list than what `license.rs` actually gates — it omits
-  `orient` and says "on one repository," which doesn't match the code
-  (no repository-count gate exists). `LICENSE` itself was not edited.
-- `docs/pricing-audit.md`, `docs/for-customers.md`,
-  `docs/first-customer-plan.md`, `docs/release-checklist.md`: updated
-  to describe the decided-but-unshipped split, explicit everywhere
-  about what's current code vs. decided-but-not-built, per "do not
-  claim any paid feature exists until it actually does."
-
-**Explicitly deferred to the user, not decided:** whether the Gumroad
-listing keeps selling the current $39 key during the transition, given
-the feature it gates is becoming free.
-
-**Still pending, before any of the design in `docs/ci-gate-design.md`
-is implemented:** the user's review of that design under its six
-headings.
-
-## 2026-10-01 (correction pass on the CI-gate design)
-
-A second review against `docs/ci-gate-design.md` found four real
-problems before presenting it, all fixed in commit `56c24c0`: (1) adding
-`"gate"` to `paid_tool_for_command` would have made `main.rs`'s shared
-pre-dispatch `report(require_paid(...))` exit 1 for a free user, which
-the design also defined as "policy violated" -- fixed by having `gate`
-check its own license directly instead, and moving "violated" off exit
-1 entirely; (2) the default policy rule only verified Must-reachable
-tests ran, which this program's own captured data (`must=0` on every
-captured run) showed would silently ignore every Unknown-classified
-test; fixed to cover the full must-or-may-or-unknown selection by
-default; (3) re-ran `test-impact --classified` on a clean `demo-project/`
-and got a real `0/0/0/0` (committed in
-`docs/observations/ci-gate-design/`), confirming the boundary count is
-diff-scoped rather than assumed, and replacing an assumed empty-CI-diff
-claim with a verified one; (4) `docs/objections-faq.md`'s soundness
-answer overclaimed "failure mode is over-inclusion, not silent
-omission," contradicting `npm/README.md`'s own disclosed dynamic-dispatch
-gap -- replaced with the honest list of known omission modes. README's
-two "no repository-count limit" lines were also reverted -- they
-asserted a broader legal claim than `LICENSE`'s own Additional Use
-Grant states ("on one repository"); both now defer to `LICENSE` as
-authoritative instead.
-
-The design in `docs/ci-gate-design.md` is presented to the user in chat
-next, under their six requested headings. Still nothing implemented.
-
-## 2026-10-01: monetization work halted; shipping the current release comes first
-
-The user stopped all monetization/CI-gate design work and redirected to
-shipping the existing product cleanly. Quoted verbatim (trimmed to the
-directive itself; full text is in this session's transcript):
-
-> Stop all monetization architecture work for now. The goal is to SHIP
-> the current Girder cleanly and make the existing product
-> understandable to an inbound stranger.
-
-Eight numbered steps followed: (1) verify and fix the real GitHub
-Actions CI state, not the locally-assumed one; (2) a release-truth pass
-reconciling README/npm README/roadmap/core-gap-analysis/license
-text/MCP descriptions/release notes against main, which is 113 commits
-ahead of the `v0.2.7` tag; (3) keep top-level positioning narrow (code
-context + conservative change-impact/test info from a local semantic
-graph; swarm/GUI/collaboration/debugger/DAP/marketplace/extensions kept
-but out of the main sales path); (4) state language maturity honestly
-(Rust/Python mature-audited, TypeScript in progress with its
-duplicate-`it()`/`describe()` collision mechanism still open, Go Stage 3
-incomplete) without delaying the release to perfect every language or
-marketing them as equally trustworthy; (5) drop the $39 test-impact
-product from the main sales story (zero customers, no grandfathering
-work, leave `license.rs` alone); (6) do NOT implement `girder gate` yet
--- ship the free/public release first; (7) fix the inbound surface
-(GitHub metadata, npm metadata, MCP registry metadata, one demo visual,
-one install path, one explanation, one evidence link); (8) cut the
-release and verify the actual published npm package and downloaded
-binaries, not just the source tree. No new research stage or design
-document until the release exists.
-
-**Finding, addressing step 1 first:** the user was right and the
-roadmap's prior "gates green" claims were wrong in the sense that
-mattered -- every local gate run this session passed, but **GitHub
-Actions itself had been failing Clippy on every push since commit
-`67dfae9`** (confirmed via `gh run list`/`gh run view` against the real
-public Actions runs, not assumed). Root cause, verified by comparing
-versions directly: this machine's local toolchain is `rustc 1.97.1`;
-CI's workflow uses `dtolnay/rust-toolchain@stable` with no pinned
-version, which picked up a newer stable Rust (clippy citing its own
-`rust-1.99.0` lint docs in the CI log) between the run that last passed
-and the one that first failed -- about 72 minutes apart in the Actions
-history. That newer clippy enforces `clippy::double_must_use` against
-`async_trait`'s macro-generated `Pin<Box<dyn Future>>` return, a known
-upstream async-trait/clippy interaction, not a bug introduced by any
-commit in this program. Of all 16 `#[async_trait]` use sites in the
-workspace, exactly two are trait *definitions* (the lint fires on the
-trait's own generated signature, not each `impl`): `AiProvider`
-(`crates/aether-ai/src/provider.rs`) and `Agent`
-(`crates/aether-agents/src/agents/mod.rs`). Fixed both with
-`#[allow(clippy::double_must_use)]` (commit `716531f`) -- **verified
-green on the actual public GitHub Actions run for that commit**
-(`gh run watch`, run `36895144641`, both jobs passed), not just
-asserted. This machine's own clippy (1.97.1) cannot reproduce the lint
-at all, which is exactly why local gate runs looked clean all session
-while the public CI was red -- a real gap in this program's own
-verification discipline, worth remembering: a local `cargo clippy`
-pass is not proof of a green public CI run when the toolchain isn't
-pinned.
-
-Steps 2-8 are in progress next, in this document's and the chat
-response's order.
-
-## 2026-10-01: test-impact ungated and shipped; positioning narrowed; CI verified green
-
-Ungated `test-impact`/`impacted_tests`, rewrote `README.md`/`npm/README.md`
-around the user's exact narrow positioning sentence, fixed two stale
-"recall 0.000" claims, added gap-analysis items 28-29 (TypeScript's open
-collision mechanism, Go's incomplete Stage 3), marked the paused
-monetization docs, and proposed (not applied) a 0.3.0 RELEASE_NOTES.md
-entry. Commit `acfb73f`, pushed and **verified green on the live public
-GitHub Actions run** (`gh run watch 36902609064 --exit-status`, both jobs
-passed) before reporting this as done, not assumed from local gates alone.
-
-Not done in this entry: the actual version bump (`Cargo.toml`,
-`npm/package.json`, `server.json`) and tag/publish. That is the one
-remaining, irreversible step (an npm version can never be republished) and
-is left for explicit user confirmation.
-
-## 2026-10-01: v0.3.0-rc.1 dry-run tag — pipeline proven end to end
-
-Bumped version to 0.3.0 (`Cargo.toml`, `npm/package.json`, `server.json`,
-`Cargo.lock` regenerated), verified all four local gates, pushed (`6c0df51`,
-verified green on live CI), then pushed the `v0.3.0-rc.1` prerelease tag per
-the user's explicit request to dry-run first. `release.yml` ran exactly as
-designed: `Versions agree` passed, all four platform builds passed (each
-verifying `--version` and a real MCP handshake on its own artifact),
-`Publish release` created a GitHub prerelease with all 10 assets, and
-`Publish to npm`/`Publish to MCP Registry` correctly skipped (prerelease
-tags don't publish). Independently re-verified outside CI: downloaded the
-Linux asset from the real public release URL, checked its sha256 against
-the published checksum file, ran `--version` (`girder 0.3.0`) and a real
-`initialize` handshake (`serverInfo.version: "0.3.0"`) against the actual
-downloaded binary, not the local build.
-
-Not done: the real `v0.3.0` tag (which does publish to npm and the MCP
-registry, and cannot be undone once npm has it) and the rc tag/release have
-not been deleted. Both are the user's call.
-
-## 2026-10-01: v0.3.0 real tag pushed and published — independently verified
-
-Pushed the real `v0.3.0` tag on the user's explicit instruction. `release.yml`
-ran all 8 jobs successfully: version-agreement, all four platform builds
-(each self-verifying `--version` and an MCP handshake on its own artifact),
-`Publish release` (real, non-prerelease GitHub release, all 10 assets),
-`Publish to npm` (OIDC trusted publishing, no stored secret), and
-`Publish to MCP Registry`.
-
-**Independently verified outside CI, against the live public services, not
-assumed from the green CI run alone:**
-- `registry.npmjs.org/girder-mcp/0.3.0` resolves with the correct version
-  and tarball URL.
-- The `latest` dist-tag initially still read `0.2.7` for about 30s after
-  the publish job finished (registry propagation lag on that specific
-  endpoint, separate from the per-version endpoint which was already
-  correct) -- polled until it read `0.3.0` before concluding the package
-  was really live, rather than trusting the first check.
-- The published tarball blob itself similarly 404'd for a short window
-  after the version metadata was already resolvable (CDN propagation,
-  not metadata) -- first `npx` attempt failed with a real 404 from
-  `registry.npmjs.org`; polled until the tarball was actually fetchable,
-  confirmed the discrepancy was transient, not a broken publish.
-- A real `GIRDER_FORCE_VENDORED=1 npx -y girder-mcp@0.3.0 <dir>` against a
-  disposable fixture: postinstall downloaded the real binary, `--version`
-  on the downloaded binary reports `girder 0.3.0`, a live MCP `initialize`
-  handshake returns `serverInfo.version: "0.3.0"`, and `setup --dry-run`
-  correctly detects no agents in a fresh fake `$HOME` and writes nothing.
-
-The `v0.3.0-rc.1` tag/prerelease from the dry run were left in place
-(not deleted) -- the user did not ask for cleanup, and a prerelease with
-no npm/registry side effects is harmless to keep as a record that the
-pipeline was proven before the real tag.
-
-Girder 0.3.0 is live: GitHub release, npm package, and MCP registry
-listing all real and independently checked, not just CI-green-assumed.
-
-## 2026-10-01: product-identity correction — context-saving restored as the one-sentence definition
-
-The user issued an explicit correction: the previous positioning sentence
-("Girder gives AI coding agents precise code context and conservative
-change-impact/test information from a local semantic graph") wrongly
-promoted test-impact to co-equal status in Girder's own one-sentence
-definition. Quoted directive: "Girder's core product identity is: Girder
-saves AI coding-agent context by giving the agent exactly the code it
-needs instead of whole files. This was the product before the recent
-positioning change and it remains the product... Do not reinterpret
-Girder again."
-
-Changed every public-facing description to lead with context-saving and
-demote test-impact/change-safety to an explicitly secondary capability,
-preserving the exact measured figures (not restating them as token
-savings — they are measured output-byte reductions):
-- `README.md`: new top section, the user's given paragraph verbatim, the
-  three measurements (`get_source` 97.85%, `find_definition` 97.98%,
-  `orient` 48,814 vs 101,302 bytes / 15 vs 78 calls) moved up and labeled
-  explicitly as byte measurements, not token savings; the `test-impact`
-  demo and explanation moved below Languages as "an additional
-  capability."
-- `npm/README.md`: same restructure.
-- `npm/package.json`'s `description`, `server.json`'s `description`, and
-  the GitHub repository description: all rewritten to lead with
-  context-saving, test-impact demoted to a trailing "also provides"
-  clause or dropped from the one-sentence definition entirely.
-- `RELEASE_NOTES.md`: fixed the 0.3.0 entry's stale "(proposed — not yet
-  tagged or published)" header (it had since been tagged and published)
-  and its "headline change" framing, which led with the test-impact
-  ungating in a way that contradicted the restored identity.
-- `crates/aether-app/src/project/commands/mcp.rs`'s `INSTRUCTIONS`
-  constant (the live MCP `initialize` text) was checked and left
-  unchanged — it already leads with `get_source`/`find_definition`,
-  lists `impacted_tests` third, and already says "Byte measurements, not
-  token measurements" explicitly; it already matched the restored
-  identity, so no code change was needed for it.
-
-Published as 0.3.1 (positioning-only correction, no code or feature
-changes) specifically so the corrected text reaches the live npm page and
-package, not just the GitHub source tree, per explicit instruction.
-
-## 2026-10-01: v0.3.1's MCP registry publish failed; fixed and shipped as v0.3.2
-
-The real `v0.3.1` release's `Publish to MCP Registry` job failed (caught
-by the user noticing CI red again, not assumed green): the registry
-rejects any `server.json` `description` over 100 characters, and the
-0.3.1 positioning-correction description ("Saves AI coding-agent context:
-a local semantic graph giving exact source, definitions, callers, and
-callees instead of whole files. Also supports conservative change-impact
-review.") was over that limit. GitHub release and npm publish for 0.3.1
-both succeeded; only the registry listing did not update.
-
-Fixed to 94 characters ("Saves AI coding-agent context by giving exact
-code instead of whole files, from a local graph.") and shipped as
-`v0.3.2`, since the already-published npm `0.3.1` cannot be edited or
-republished. No other content changed.
-
-## 2026-10-01: v0.3.2 fully verified live, including the MCP registry's own authoritative record
-
-`v0.3.2`'s `Publish to MCP Registry` job passed. Independently verified
-against the live registry's own `/v0/servers/.../versions` endpoint (not
-its separate, laggier `search` endpoint, which still returned a stale
-`0.2.3` result at the same time) that the current, `isLatest: true`
-record is version `0.3.2` with the exact corrected 94-character
-description. npm's `latest` dist-tag resolved to `0.3.2` immediately, no
-propagation lag this time. A real `GIRDER_FORCE_VENDORED=1 npx -y
-girder-mcp@0.3.2` against a disposable fixture completed a live MCP
-`initialize` handshake with `serverInfo.version: "0.3.2"`.
-
-GitHub release, npm package, and the MCP registry's authoritative record
-all independently confirmed live and correct, not assumed from a green
-CI run alone.
+- The local Rust 1.97.1 Clippy pass did not establish CI compatibility. A newer
+  stable CI toolchain reported `clippy::double_must_use` on two async-trait
+  declarations. `716531f` fixed those sites; live CI run `36895144641` passed.
+- The v0.3.0-rc.1 pipeline built all four platforms and published a prerelease;
+  npm and registry publication correctly skipped. The downloaded Linux binary's
+  checksum, version, and MCP initialization were independently verified.
+- v0.3.0 was published and tested through the real npm installation path. Initial
+  npm dist-tag and tarball propagation delays were observed before successful
+  installation; metadata alone was not treated as install evidence.
+- v0.3.1's MCP registry job failed because its description exceeded 100 characters.
+  v0.3.2 shortened it to 94 characters. GitHub release, npm installation/MCP
+  initialization, and the registry's authoritative latest-version record were
+  verified. Registry search temporarily lagged the versions endpoint.
+- The current command-dispatch function returns no license requirement for
+  `test-impact` or `orient`. No new CLI enforcement command is implemented.
+- A clean working tree's default `test-impact` compares against HEAD, not a PR's
+  base branch. CI base-reference comparison remains an unimplemented interface.
+- No build, release, or gate was performed by the 2026-10-01 reconciliation pass;
+  earlier execution records remain historical evidence for their own candidates.
