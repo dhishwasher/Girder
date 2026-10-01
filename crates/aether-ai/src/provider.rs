@@ -90,6 +90,10 @@ pub enum AiError {
 ///
 /// `Send + Sync` so the orchestrator can share one provider across parallel
 /// agent tasks behind an `Arc`.
+// async_trait's generated Pin<Box<dyn Future>> return is itself #[must_use];
+// clippy::double_must_use flags the macro's own must_use on top of that
+// (upstream async-trait limitation, not a real double-use at this call site).
+#[allow(clippy::double_must_use)]
 #[async_trait]
 pub trait AiProvider: Send + Sync {
     /// Human-readable id, e.g. `"mock"`, `"anthropic:claude"`.

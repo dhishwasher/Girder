@@ -46,6 +46,9 @@ impl AgentResult {
 /// A swarm agent. Implementors are `Send + Sync` and shared across tasks via
 /// `Arc`, so `handle` takes `&self`; per-run state lives in the shared
 /// [`SwarmContext`] (notably the graph) rather than on the agent.
+// Same upstream async-trait/clippy::double_must_use interaction as
+// aether-ai::provider::AiProvider; see its comment.
+#[allow(clippy::double_must_use)]
 #[async_trait]
 pub trait Agent: Send + Sync {
     fn role(&self) -> Role;
