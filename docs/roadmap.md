@@ -2043,3 +2043,40 @@ downloaded binary, not the local build.
 Not done: the real `v0.3.0` tag (which does publish to npm and the MCP
 registry, and cannot be undone once npm has it) and the rc tag/release have
 not been deleted. Both are the user's call.
+
+## 2026-10-01: v0.3.0 real tag pushed and published — independently verified
+
+Pushed the real `v0.3.0` tag on the user's explicit instruction. `release.yml`
+ran all 8 jobs successfully: version-agreement, all four platform builds
+(each self-verifying `--version` and an MCP handshake on its own artifact),
+`Publish release` (real, non-prerelease GitHub release, all 10 assets),
+`Publish to npm` (OIDC trusted publishing, no stored secret), and
+`Publish to MCP Registry`.
+
+**Independently verified outside CI, against the live public services, not
+assumed from the green CI run alone:**
+- `registry.npmjs.org/girder-mcp/0.3.0` resolves with the correct version
+  and tarball URL.
+- The `latest` dist-tag initially still read `0.2.7` for about 30s after
+  the publish job finished (registry propagation lag on that specific
+  endpoint, separate from the per-version endpoint which was already
+  correct) -- polled until it read `0.3.0` before concluding the package
+  was really live, rather than trusting the first check.
+- The published tarball blob itself similarly 404'd for a short window
+  after the version metadata was already resolvable (CDN propagation,
+  not metadata) -- first `npx` attempt failed with a real 404 from
+  `registry.npmjs.org`; polled until the tarball was actually fetchable,
+  confirmed the discrepancy was transient, not a broken publish.
+- A real `GIRDER_FORCE_VENDORED=1 npx -y girder-mcp@0.3.0 <dir>` against a
+  disposable fixture: postinstall downloaded the real binary, `--version`
+  on the downloaded binary reports `girder 0.3.0`, a live MCP `initialize`
+  handshake returns `serverInfo.version: "0.3.0"`, and `setup --dry-run`
+  correctly detects no agents in a fresh fake `$HOME` and writes nothing.
+
+The `v0.3.0-rc.1` tag/prerelease from the dry run were left in place
+(not deleted) -- the user did not ask for cleanup, and a prerelease with
+no npm/registry side effects is harmless to keep as a record that the
+pipeline was proven before the real tag.
+
+Girder 0.3.0 is live: GitHub release, npm package, and MCP registry
+listing all real and independently checked, not just CI-green-assumed.
