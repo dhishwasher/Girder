@@ -2138,3 +2138,19 @@ Fixed to 94 characters ("Saves AI coding-agent context by giving exact
 code instead of whole files, from a local graph.") and shipped as
 `v0.3.2`, since the already-published npm `0.3.1` cannot be edited or
 republished. No other content changed.
+
+## 2026-10-01: v0.3.2 fully verified live, including the MCP registry's own authoritative record
+
+`v0.3.2`'s `Publish to MCP Registry` job passed. Independently verified
+against the live registry's own `/v0/servers/.../versions` endpoint (not
+its separate, laggier `search` endpoint, which still returned a stale
+`0.2.3` result at the same time) that the current, `isLatest: true`
+record is version `0.3.2` with the exact corrected 94-character
+description. npm's `latest` dist-tag resolved to `0.3.2` immediately, no
+propagation lag this time. A real `GIRDER_FORCE_VENDORED=1 npx -y
+girder-mcp@0.3.2` against a disposable fixture completed a live MCP
+`initialize` handshake with `serverInfo.version: "0.3.2"`.
+
+GitHub release, npm package, and the MCP registry's authoritative record
+all independently confirmed live and correct, not assumed from a green
+CI run alone.
