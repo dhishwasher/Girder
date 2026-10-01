@@ -1,10 +1,15 @@
-# Girder 0.3.0 (proposed — not yet tagged or published)
+# Girder 0.3.0
 
 115 commits since 0.2.7, written from `git log v0.2.7..HEAD`, not from
-memory. The headline change: `test-impact` / `impacted_tests` is no longer
-paid-gated. Telling a developer which tests a change may affect is not a
-chargeable feature; see "Pricing" in `README.md`. There is no current paid
-tier. A narrow, CI/PR-focused paid feature is designed but not built
+memory. Girder's core product remains unchanged in this release: it saves
+AI coding-agent context by giving the agent exactly the code it needs
+instead of whole files, from a local semantic graph. See `README.md`.
+
+As an additional capability on that same graph, `test-impact` /
+`impacted_tests` is no longer paid-gated in this release. Telling a
+developer which tests a change may affect is not a chargeable feature; see
+"Pricing" in `README.md`. There is no current paid tier. A narrow,
+CI/PR-focused paid feature is designed but not built
 (`docs/ci-gate-design.md`).
 
 **Machine-checked Must/May/Unknown test classification is now wired through
@@ -55,9 +60,27 @@ commits (`docs/roadmap.md`, 2026-10-01 entries).
 
 **Version note:** 0.3.0 rather than a patch bump because the Must/May/
 Unknown classification surface and the test-impact ungating are both new,
-user-visible capability, not just a fix. This version number is a proposal
-pending confirmation before any tag is pushed — see the version-bump diff
-and the open questions in this session's summary.
+user-visible capability on the additional-capability side, not just a fix.
+Tagged and published: GitHub release, npm package, and MCP registry
+listing.
+
+# Girder 0.3.1
+
+A positioning-only correction, no code or feature changes. 0.3.0's own
+release notes above led with the test-impact ungating as "the headline
+change" of that release — stated here plainly as a correction, not left
+to stand: Girder's core product identity is, and remains, saving AI
+coding-agent context by giving the agent exactly the code it needs
+instead of whole files; test-impact/change-safety is a secondary
+capability built on the same graph, not a co-equal part of what Girder
+is. `README.md`, `npm/README.md`, the GitHub repository description, and
+`server.json`'s MCP registry description are corrected to lead with
+context-saving and the measured context-reduction numbers
+(`get_source` 97.85% fewer bytes, `find_definition` 97.98% fewer bytes,
+`orient` 48,814 vs 101,302 bytes / 15 vs 78 calls — output bytes, not
+tokens; no tokenizer was run), with test-impact moved below as an
+additional capability. Published so the corrected text reaches the public
+npm page and package, not just the GitHub source tree.
 
 # Girder 0.2.7
 

@@ -2080,3 +2080,45 @@ pipeline was proven before the real tag.
 
 Girder 0.3.0 is live: GitHub release, npm package, and MCP registry
 listing all real and independently checked, not just CI-green-assumed.
+
+## 2026-10-01: product-identity correction — context-saving restored as the one-sentence definition
+
+The user issued an explicit correction: the previous positioning sentence
+("Girder gives AI coding agents precise code context and conservative
+change-impact/test information from a local semantic graph") wrongly
+promoted test-impact to co-equal status in Girder's own one-sentence
+definition. Quoted directive: "Girder's core product identity is: Girder
+saves AI coding-agent context by giving the agent exactly the code it
+needs instead of whole files. This was the product before the recent
+positioning change and it remains the product... Do not reinterpret
+Girder again."
+
+Changed every public-facing description to lead with context-saving and
+demote test-impact/change-safety to an explicitly secondary capability,
+preserving the exact measured figures (not restating them as token
+savings — they are measured output-byte reductions):
+- `README.md`: new top section, the user's given paragraph verbatim, the
+  three measurements (`get_source` 97.85%, `find_definition` 97.98%,
+  `orient` 48,814 vs 101,302 bytes / 15 vs 78 calls) moved up and labeled
+  explicitly as byte measurements, not token savings; the `test-impact`
+  demo and explanation moved below Languages as "an additional
+  capability."
+- `npm/README.md`: same restructure.
+- `npm/package.json`'s `description`, `server.json`'s `description`, and
+  the GitHub repository description: all rewritten to lead with
+  context-saving, test-impact demoted to a trailing "also provides"
+  clause or dropped from the one-sentence definition entirely.
+- `RELEASE_NOTES.md`: fixed the 0.3.0 entry's stale "(proposed — not yet
+  tagged or published)" header (it had since been tagged and published)
+  and its "headline change" framing, which led with the test-impact
+  ungating in a way that contradicted the restored identity.
+- `crates/aether-app/src/project/commands/mcp.rs`'s `INSTRUCTIONS`
+  constant (the live MCP `initialize` text) was checked and left
+  unchanged — it already leads with `get_source`/`find_definition`,
+  lists `impacted_tests` third, and already says "Byte measurements, not
+  token measurements" explicitly; it already matched the restored
+  identity, so no code change was needed for it.
+
+Published as 0.3.1 (positioning-only correction, no code or feature
+changes) specifically so the corrected text reaches the live npm page and
+package, not just the GitHub source tree, per explicit instruction.

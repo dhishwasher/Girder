@@ -2,20 +2,34 @@
 
 <!-- mcp-name: io.github.dhishwasher/girder -->
 
-**Girder gives AI coding agents precise code context and conservative
-change-impact/test information from a local semantic graph.** It parses your
-repository into a graph of real functions and call edges — not text search —
-and answers questions against it: exact function source instead of whole
-files, and a conservative list of the tests a change may affect instead of
-guessing. It runs as one static binary, with no account and no cloud
-dependency.
+**Girder saves AI coding-agent context by giving the agent exactly the code
+it needs instead of whole files.** It builds a local semantic graph of your
+repository so Claude Code, Codex, Cursor, and other agents can retrieve
+exact functions, definitions, callers, callees, and task context without
+filling their context window with irrelevant code. It runs as one static
+binary, with no account and no cloud dependency.
 
 ```bash
 npx -y girder-mcp setup
 ```
 
-That one command detects and configures Claude Code, Codex, and Cursor. Two
-real, captured outputs (see
+That one command detects and configures Claude Code, Codex, and Cursor.
+
+**Measured, not estimated — output bytes, not tokens (no tokenizer was
+run). These demonstrate large measured reductions in the amount of
+context/output supplied to the agent, not token savings:**
+
+- `get_source` vs reading the whole file: **97.85% fewer bytes**, across ten
+  functions sampled by source-size decile
+  ([method and honest limits](./docs/context-vs-read-cost.md)).
+- `find_definition` vs plain grep: **97.98% fewer bytes**, across ten
+  identifiers ([method](./docs/names-cost.md)).
+- `orient` (one bundled call: source, callers, callees, tests, and impact
+  for one node) vs the equivalent chain of separate calls: **48,814 bytes
+  vs 101,302**, using **15 calls vs 78**, on a 15-task corpus spanning ten
+  pinned repositories ([method](./docs/orient-tool.md)).
+
+Real, captured output (see
 [`docs/observations/release-prep/`](./docs/observations/release-prep/) for
 exact provenance):
 
@@ -28,18 +42,10 @@ $ girder context demo-project --nodes crate::greeter::shout_greeting --json --so
     "source": "def shout_greeting(name):\n    return format_greeting(name).upper()"
   }]
 }
-
-$ girder test-impact . --quiet
-test-impact: 82 unresolved call-evidence boundaries found; this selection is the conservative must∪may∪unknown union — pass --classified to see why each test is included
-test_farewell
-test_format_greeting
-test_shout_greeting_delegates_to_format_greeting
 ```
 
-The first call returns one function's exact source, not a whole file. The
-second names the tests a real one-line edit could affect, erring toward
-including a test it can't rule out rather than silently dropping it — see
-[Status](#status) for exactly what that selection does and doesn't prove.
+One function's exact source returned, not the whole file around it — that
+is the core of what Girder gives an agent's context window.
 
 **Languages, stated plainly, not as parity:** Rust and Python have completed,
 hand-audited measurements against real open-source repositories and are the
@@ -52,6 +58,23 @@ Go's Stage 3 audit is **not complete**. See
 [`docs/typescript-support.md`](./docs/typescript-support.md) and
 [`docs/go-support.md`](./docs/go-support.md) for the exact, measured limits
 of each — don't take Rust/Python's maturity as true of the other two.
+
+**Also included, as an additional capability built on the same graph —
+conservative change-impact and test selection:** `test-impact` names the
+tests a change may affect, from the same semantic graph, erring toward
+including a test it can't rule out rather than silently dropping it. Real
+captured output:
+
+```
+$ girder test-impact . --quiet
+test-impact: 82 unresolved call-evidence boundaries found; this selection is the conservative must∪may∪unknown union — pass --classified to see why each test is included
+test_farewell
+test_format_greeting
+test_shout_greeting_delegates_to_format_greeting
+```
+
+See [Status](#status) for exactly what that selection does and doesn't
+prove.
 
 **Pricing:** everything in this release is free, permanently, with no
 license key and no account — see [License](#license). There is no current

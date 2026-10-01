@@ -1,10 +1,15 @@
 # girder-mcp
 
-A semantic-graph MCP server for AI coding agents. It answers questions about a
-repository from a parsed graph of it, so an agent can read one function instead
-of a whole file, find a declaration without grep, and get a conservative
-(over-selecting, never knowingly under-selecting) list of the tests a change
-might reach.
+Girder saves AI coding-agent context by giving the agent exactly the code it
+needs instead of whole files. It builds a local semantic graph of your
+repository so Claude Code, Codex, Cursor, and other agents can retrieve exact
+functions, definitions, callers, callees, and task context without filling
+their context window with irrelevant code — read one function instead of a
+whole file, find a declaration without grep.
+
+As an additional capability on the same graph, Girder also answers a
+conservative (over-selecting, never knowingly under-selecting) list of the
+tests a change might reach.
 
 Requires no Rust toolchain: `postinstall` downloads a prebuilt binary.
 
