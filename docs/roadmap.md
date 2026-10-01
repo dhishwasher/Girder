@@ -2023,3 +2023,23 @@ Not done in this entry: the actual version bump (`Cargo.toml`,
 `npm/package.json`, `server.json`) and tag/publish. That is the one
 remaining, irreversible step (an npm version can never be republished) and
 is left for explicit user confirmation.
+
+## 2026-10-01: v0.3.0-rc.1 dry-run tag — pipeline proven end to end
+
+Bumped version to 0.3.0 (`Cargo.toml`, `npm/package.json`, `server.json`,
+`Cargo.lock` regenerated), verified all four local gates, pushed (`6c0df51`,
+verified green on live CI), then pushed the `v0.3.0-rc.1` prerelease tag per
+the user's explicit request to dry-run first. `release.yml` ran exactly as
+designed: `Versions agree` passed, all four platform builds passed (each
+verifying `--version` and a real MCP handshake on its own artifact),
+`Publish release` created a GitHub prerelease with all 10 assets, and
+`Publish to npm`/`Publish to MCP Registry` correctly skipped (prerelease
+tags don't publish). Independently re-verified outside CI: downloaded the
+Linux asset from the real public release URL, checked its sha256 against
+the published checksum file, ran `--version` (`girder 0.3.0`) and a real
+`initialize` handshake (`serverInfo.version: "0.3.0"`) against the actual
+downloaded binary, not the local build.
+
+Not done: the real `v0.3.0` tag (which does publish to npm and the MCP
+registry, and cannot be undone once npm has it) and the rc tag/release have
+not been deleted. Both are the user's call.
