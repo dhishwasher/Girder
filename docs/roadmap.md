@@ -540,6 +540,32 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-01 — Current-state reconciliation
+
+Read-only code/evidence review against `8a088f7` (114 commits after `af43418`):
+working tree initially clean, local binary and package version `0.3.2`.
+[CI for that exact HEAD](https://github.com/dhishwasher/Girder/actions/runs/36939256394)
+is successful; the [v0.3.2 release](https://github.com/dhishwasher/Girder/releases/tag/v0.3.2)
+is published and not a prerelease. No build, gate, or mutation measurement was
+rerun during this review.
+
+- Stage 1's published failure and Stage 2's completed 49-case corpus are retained.
+- Rust/Python remain recorded DONE; this review does not independently recertify
+  them. Their frozen audits contain 52 and 85 scored call sites respectively
+  after non-call entries were excluded from the 105-entry samples. Reconcile
+  those counts with the original minimum of 100 audited call sites; separately
+  recorded supplementary checks must not be silently substituted for that gate.
+- Rust's post-collision-fix `correction-3` re-score remains outstanding, as
+  recorded in the addendum-12 checkpoint below.
+- TypeScript remains IN PROGRESS: its before-observation scored 97 sites with
+  zero proven Must claims. Duplicate `it()`/`describe()` node identities and
+  corpus re-extraction/gate-profile work remain open. Go has not started.
+- Stages 4-7 remain NOT STARTED; existing three-client setup support is not
+  evidence that the Stage 4 bundle/adapters/skill criterion has been met.
+- Next technical action: reconcile the audit-size criterion and refresh Rust's
+  post-fix evidence before relying on prior DONE claims for further dispatch work.
+
+
 - 2026-09-22: Stage 1 is complete and **FAILED-AND-PUBLISHED**: extractor call
   evidence, classified CLI/MCP answers (including the `--quiet` honesty fix),
   and the frozen mutation measurement are all implemented, run, and committed
