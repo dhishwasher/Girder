@@ -1916,3 +1916,31 @@ the feature it gates is becoming free.
 **Still pending, before any of the design in `docs/ci-gate-design.md`
 is implemented:** the user's review of that design under its six
 headings.
+
+## 2026-10-01 (correction pass on the CI-gate design)
+
+A second review against `docs/ci-gate-design.md` found four real
+problems before presenting it, all fixed in commit `56c24c0`: (1) adding
+`"gate"` to `paid_tool_for_command` would have made `main.rs`'s shared
+pre-dispatch `report(require_paid(...))` exit 1 for a free user, which
+the design also defined as "policy violated" -- fixed by having `gate`
+check its own license directly instead, and moving "violated" off exit
+1 entirely; (2) the default policy rule only verified Must-reachable
+tests ran, which this program's own captured data (`must=0` on every
+captured run) showed would silently ignore every Unknown-classified
+test; fixed to cover the full must-or-may-or-unknown selection by
+default; (3) re-ran `test-impact --classified` on a clean `demo-project/`
+and got a real `0/0/0/0` (committed in
+`docs/observations/ci-gate-design/`), confirming the boundary count is
+diff-scoped rather than assumed, and replacing an assumed empty-CI-diff
+claim with a verified one; (4) `docs/objections-faq.md`'s soundness
+answer overclaimed "failure mode is over-inclusion, not silent
+omission," contradicting `npm/README.md`'s own disclosed dynamic-dispatch
+gap -- replaced with the honest list of known omission modes. README's
+two "no repository-count limit" lines were also reverted -- they
+asserted a broader legal claim than `LICENSE`'s own Additional Use
+Grant states ("on one repository"); both now defer to `LICENSE` as
+authoritative instead.
+
+The design in `docs/ci-gate-design.md` is presented to the user in chat
+next, under their six requested headings. Still nothing implemented.
