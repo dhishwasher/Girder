@@ -1544,6 +1544,19 @@ benchmark, don't run it against the stale snapshot.
   trigger the fallback, potentially still missing the Module-only
   file's own tests from that combined selection, in BOTH
   `test_impact.rs` and (see immediately below) `test_checks.rs`.
+  **This residual is now confirmed on a real extracted Go graph, not
+  just reasoned about** (`before-observation-addendum-10.md`): editing
+  a module-level `var` together with an unrelated, ordinary, fully-
+  resolved same-file function in one commit makes `test-impact --quiet
+  --classified` select only the unrelated function's own test, with
+  the module-level-affected test completely missing and zero
+  boundaries reported. The current "no same-file Function origin"
+  heuristic in `claims.rs::classified_impact` is too coarse for this
+  case; the correct longer-term fix is "Module diff not explained by
+  child-function diffs" (check whether the Module's OWN source change
+  is accounted for by the specific origin Function nodes present, not
+  merely whether any Function origin from the same file exists at
+  all) -- not yet implemented.
   **A second mandatory gate had the identical bug, now also fixed**
   (`docs/observations/stage3-typescript-audit/before-observation-
   addendum-9.md`): `run_tests_impacted`

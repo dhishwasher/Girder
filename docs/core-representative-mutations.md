@@ -71,23 +71,42 @@ Checked result: [`core-representative-mutations.json`](core-representative-mutat
 | `group-invoke` | 2 | 1 | 0 | 0 | 0.667 | 1.000 |
 
 **Updated 2026-10 after a `test-impact` fix** (see
-`docs/observations/stage3-typescript-audit/before-observation-addendum-5.md`
-and `-6.md`): the table above previously read `0 | 0 | 2 | 1 | 1.000 |
+`docs/observations/stage3-typescript-audit/before-observation-addendum-6.md`
+and `-9.md`): the table above previously read `0 | 0 | 2 | 1 | 1.000 |
 0.000`, with both dynamically-positive tests measured as false negatives.
-That was not a regression Girder's own resolver introduced and then lost —
-it was `semantic_changed_impact_with_config`'s bare `test-impact` form
-silently returning an EMPTY impact set whenever `tests_for_nodes`
-(resolved-Calls-reachability only) found no proven edge, with no fallback
-and no notice, for ANY unresolved-dispatch origin, not just this one. That
-bare-form false-empty gap is now fixed: `test_impact.rs` falls back to the
-classified must∪may∪unknown union whenever the narrow result is empty,
-which is exactly what this mutation's `self.invoke` dispatch triggers (see
-"Verified defect" below, unchanged). Recall is now 1.000, at the cost of
-one over-selected false positive (`test_other_command_invoke`) dragging
+That was not a regression Girder's own resolver introduced and then lost.
+The origin here (`Group.invoke` itself, the mutated function) is a real,
+ordinary Function origin -- origin resolution was never the problem for
+this specific mutation. The gap was in `tests_for_nodes` itself
+(resolved-Calls-reachability only): it found no proven edge for this
+unresolved polymorphic-dispatch target and returned nothing, with no
+fallback and no notice, for ANY unresolved-dispatch origin, not just this
+one. That gap is now fixed: `test_impact.rs`'s bare (no-flag) invocation --
+exactly the form this harness's own "static prediction" step uses -- falls
+back to the classified must∪may∪unknown union whenever `tests_for_nodes`'s
+narrow result is empty. Recall is now 1.000, at the cost of one
+over-selected false positive (`test_other_command_invoke`) dragging
 precision to 0.667 — the known, accepted direction this program's whole
 "must∪may∪unknown conservative union" design always intended: missing a
 real impact (false negative) is the dangerous direction; over-selecting
 (false positive) is the safe one.
+
+**Scale, disclosed rather than left implicit**: precision/recall above are
+computed over only the 3 tests this mutation DECLARES (this harness's own
+stated scope -- see "Protocol" above). The actual fallback this triggers is
+graph-wide, not scoped to these 3: the new result's own `classified` field
+reports `unknown_total_count: 472` for this Click checkout -- every node
+the global "any Unknown boundary escalates every function" rule now
+reaches, of which the 3 declared tests are a small sample. A real,
+non-synthetic edit to `Group.invoke` (or any function reached only through
+an equally-unresolved dispatch) would make `girder test-impact . --quiet`
+select a potentially large fraction of Click's real test suite, not a
+small number -- the exact, intended "over-select broadly rather than risk
+missing one" trade-off, but a real cost worth knowing before relying on
+`--quiet`'s selection size as a proxy for how targeted an answer it is.
+The actual is-test-tagged subset of that 472 was not separately measured
+in this session; only the total unknown-classified node count is
+confirmed.
 
 ## Verified defect: fixture-mediated dispatch is still unresolved (recall fixed, resolution gap unchanged)
 

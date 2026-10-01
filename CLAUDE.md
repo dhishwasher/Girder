@@ -124,17 +124,25 @@ a semantic-path collision — see docs/observations/stage3-typescript-audit/
 before-observation-addendum-4.md) used to return empty here with NO
 boundary notice regardless of whether boundaries existed elsewhere in the
 graph (`classified_impact(&[])` short-circuiting on an empty origin list,
-before ever computing them) — fixed for every invocation form
+before ever computing them) — fixed for every invocation form, in both
+`test-impact`'s own CLI path AND the Plan Format v2 mandatory
+`tests.impacted` check, which had the identical gap independently
 (`crates/aether-app/src/project/git.rs::semantic_changed_impact_with_config`,
-`crates/aether-app/src/project/commands/test_impact.rs`; see
-before-observation-addendum-5.md and -6.md), but whether a Module-only
-origin is fail-closed on its own (vs. only safe because real code almost
-always has an Unknown boundary somewhere) is still an open question, not
-yet constructed and tested with a genuinely zero-boundary fixture in any
-language — see before-observation-addendum-6.md's "still open" section.
-The guard still matters for the common case: a bare `cargo test $(...)`
-would run everything instead of respecting an
-empty selection.
+`crates/aether-app/src/project/commands/test_impact.rs`,
+`crates/aether-app/src/project/planfile/checks/test_checks.rs`; see
+before-observation-addendum-5.md, -6.md, -8.md, and -9.md). A Module-only
+origin's fail-closed behavior was checked directly against a real,
+genuinely zero-boundary Go fixture (confirmed via `inspect`: a same-file
+call proven Must with zero Unknown claims anywhere) and found NOT
+fail-closed on its own for Go specifically — fixed in `classified_impact`
+itself (`crates/aether-graph/src/claims.rs`) to push a boundary for a
+Module origin with no same-file Function origin. The guard still matters
+for the common case: a bare `cargo test $(...)` would run everything
+instead of respecting an empty selection. Note the real cost of the
+fallback: it is graph-wide once triggered, not scoped to the edited
+function — see before-observation-addendum-9.md's "scale" disclosure for
+a real measurement (472 unknown-classified nodes graph-wide from one
+unresolved-dispatch edit in a representative repository).
 
 To answer a question about the codebase: girder query . "<question>"
 No file reading required.
