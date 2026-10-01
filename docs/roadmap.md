@@ -1944,3 +1944,66 @@ authoritative instead.
 
 The design in `docs/ci-gate-design.md` is presented to the user in chat
 next, under their six requested headings. Still nothing implemented.
+
+## 2026-10-01: monetization work halted; shipping the current release comes first
+
+The user stopped all monetization/CI-gate design work and redirected to
+shipping the existing product cleanly. Quoted verbatim (trimmed to the
+directive itself; full text is in this session's transcript):
+
+> Stop all monetization architecture work for now. The goal is to SHIP
+> the current Girder cleanly and make the existing product
+> understandable to an inbound stranger.
+
+Eight numbered steps followed: (1) verify and fix the real GitHub
+Actions CI state, not the locally-assumed one; (2) a release-truth pass
+reconciling README/npm README/roadmap/core-gap-analysis/license
+text/MCP descriptions/release notes against main, which is 113 commits
+ahead of the `v0.2.7` tag; (3) keep top-level positioning narrow (code
+context + conservative change-impact/test info from a local semantic
+graph; swarm/GUI/collaboration/debugger/DAP/marketplace/extensions kept
+but out of the main sales path); (4) state language maturity honestly
+(Rust/Python mature-audited, TypeScript in progress with its
+duplicate-`it()`/`describe()` collision mechanism still open, Go Stage 3
+incomplete) without delaying the release to perfect every language or
+marketing them as equally trustworthy; (5) drop the $39 test-impact
+product from the main sales story (zero customers, no grandfathering
+work, leave `license.rs` alone); (6) do NOT implement `girder gate` yet
+-- ship the free/public release first; (7) fix the inbound surface
+(GitHub metadata, npm metadata, MCP registry metadata, one demo visual,
+one install path, one explanation, one evidence link); (8) cut the
+release and verify the actual published npm package and downloaded
+binaries, not just the source tree. No new research stage or design
+document until the release exists.
+
+**Finding, addressing step 1 first:** the user was right and the
+roadmap's prior "gates green" claims were wrong in the sense that
+mattered -- every local gate run this session passed, but **GitHub
+Actions itself had been failing Clippy on every push since commit
+`67dfae9`** (confirmed via `gh run list`/`gh run view` against the real
+public Actions runs, not assumed). Root cause, verified by comparing
+versions directly: this machine's local toolchain is `rustc 1.97.1`;
+CI's workflow uses `dtolnay/rust-toolchain@stable` with no pinned
+version, which picked up a newer stable Rust (clippy citing its own
+`rust-1.99.0` lint docs in the CI log) between the run that last passed
+and the one that first failed -- about 72 minutes apart in the Actions
+history. That newer clippy enforces `clippy::double_must_use` against
+`async_trait`'s macro-generated `Pin<Box<dyn Future>>` return, a known
+upstream async-trait/clippy interaction, not a bug introduced by any
+commit in this program. Of all 16 `#[async_trait]` use sites in the
+workspace, exactly two are trait *definitions* (the lint fires on the
+trait's own generated signature, not each `impl`): `AiProvider`
+(`crates/aether-ai/src/provider.rs`) and `Agent`
+(`crates/aether-agents/src/agents/mod.rs`). Fixed both with
+`#[allow(clippy::double_must_use)]` (commit `716531f`) -- **verified
+green on the actual public GitHub Actions run for that commit**
+(`gh run watch`, run `36895144641`, both jobs passed), not just
+asserted. This machine's own clippy (1.97.1) cannot reproduce the lint
+at all, which is exactly why local gate runs looked clean all session
+while the public CI was red -- a real gap in this program's own
+verification discipline, worth remembering: a local `cargo clippy`
+pass is not proof of a green public CI run when the toolchain isn't
+pinned.
+
+Steps 2-8 are in progress next, in this document's and the chat
+response's order.
