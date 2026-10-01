@@ -1769,3 +1769,68 @@ anything believed to need building. Prefer documentation, packaging,
 release work, and manual sales over new infrastructure. This is a
 decision checkpoint, not an implicit go-ahead -- the user reviews the
 plan before any monetization-driven code change begins.
+
+## 2026-10-01 (later same day): monetization plan narrowed to inbound/self-serve only
+
+The user explicitly narrowed the standing directive above. Quoted
+verbatim because it supersedes specific wording in that directive:
+
+> Change the monetization plan to inbound/self-serve only. I am not
+> doing cold outreach or manually contacting prospects. Do not create
+> prospect lists, email scripts, sales-call workflows, or founder-led
+> outbound plans.
+>
+> Optimize Girder so developers can discover it, understand the value,
+> install it, evaluate it, and buy without speaking to me.
+>
+> Focus on: README conversion, GitHub discoverability, npm
+> discoverability, a clear free vs paid boundary, self-serve pricing,
+> simple purchase/key activation, CI/PR examples, screenshots/demos,
+> benchmark/audit proof, an obvious upgrade message when a user reaches
+> paid functionality, documentation that answers objections without
+> requiring support.
+>
+> Replace docs/first-customer-plan.md with an inbound customer funnel
+> plan. The funnel should be: discover -> understand -> install ->
+> experience value -> encounter paid team feature -> buy -> activate
+> offline key.
+>
+> No SaaS accounts, telemetry, DRM, cold outreach, lead lists, or sales
+> calls.
+
+This supersedes the "manual sales" and "founding-team pilot ... sold
+manually" language in the standing directive above, and the "who to
+target ... reach out directly" framing that was in the original
+`docs/first-customer-plan.md`. That file has been replaced with an
+inbound funnel document of the same name (commit `5e44d82`). Every
+instruction above this entry that assumes founder-led outbound no
+longer applies; a future session should follow this entry, not that
+wording, for how a first sale is expected to happen.
+
+Work done so far under the narrowed directive:
+- `docs/first-customer-plan.md` replaced with the discover -> understand
+  -> install -> experience value -> encounter paid feature -> buy ->
+  activate offline key funnel, auditing what already works self-serve
+  against real, cited files rather than assumption.
+- Found and disclosed a real, unresolved blocker in that same document:
+  whether a Gumroad purchase actually delivers a key the binary will
+  accept automatically, or currently requires a manual step (keys must
+  be signed with a private Ed25519 key via `crates/aether-app/examples/
+  license_keygen.rs`; Gumroad cannot mint one itself). This is external
+  Gumroad-account configuration, not something this repository can
+  confirm — flagged for the user, not guessed at.
+- `docs/for-customers.md`'s pricing line, which previously said
+  "contact for current terms" for team pricing (itself an outbound
+  assumption), fixed to a self-serve answer, explicitly marked as the
+  only mechanism that exists today (one key per developer), not a
+  settled team-pricing decision.
+- Two README overclaims fixed while doing the "README conversion" pass:
+  "minimal test selection" (contradicted the documented conservative-
+  union behavior) reworded to "conservative test selection"; a "single
+  repository" qualifier on the free tier (no such gate exists in
+  `license.rs`, confirmed by reading it) removed in two places.
+- Not yet done: the rest of the named focus list (GitHub/npm
+  discoverability actions, screenshots/demos, CI/PR examples, an
+  objection-answering FAQ) and the Gumroad fulfillment question above,
+  which needs the user's own check of the live listing, not a code or
+  doc change.

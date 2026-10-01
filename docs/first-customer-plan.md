@@ -99,19 +99,40 @@ Claude Code / Codex / Cursor's own UI, not just the raw CLI stderr) —
 worth a manual check, not a code change, before relying on it as the
 primary upgrade touchpoint.
 
-## 6. Buy
+## 6. Buy — and an unverified fulfillment blocker
 
-**Already in place:** a real, live $39 one-time Gumroad listing
+A real, live $39 one-time Gumroad listing exists
 (`https://maynard42.gumroad.com/l/zwpsjl`), linked both from the README's
 "Buy a license" section and from the in-product error message above.
-Purchase requires no conversation — Gumroad is checkout-only.
+Checkout itself requires no conversation.
+
+**Unresolved, found while re-checking this document, not yet confirmed
+either way:** every valid license key must be signed with a private
+Ed25519 key that never leaves this machine (`crates/aether-app/src/
+project/license.rs::PUBLIC_KEY`, verified against
+`crates/aether-app/examples/license_keygen.rs`, a local CLI that takes
+the private key file and prints signed keys — it does not call Gumroad
+or any network service). Gumroad cannot itself mint a key the binary
+will accept. Two ways this still works without becoming a "speak to me"
+step exist in principle — Gumroad's native "unique license key per sale"
+feature, pre-loaded with a batch of keys generated in advance via
+`license_keygen <private-key.pk8> paid <count>` (fully automatic once
+loaded, no manual step per sale); or the Gumroad listing delivering one
+shared key to every buyer (automatic, but not actually per-buyer) — but
+**which one, if either, is how the live listing is actually configured
+is Gumroad account configuration, outside this repository, and I have
+not verified it.** If neither is set up, every sale currently requires a
+manual step (generating and sending a key by hand), which breaks "buy
+without speaking to me." This needs to be checked against the live
+Gumroad listing before this step is called self-serve.
 
 ## 7. Activate the offline key
 
 **Already in place (`README.md:864-879`):** set `GIRDER_LICENSE_KEY` as an
 environment variable, or save the key to a per-OS config file path. Fully
 offline, Ed25519-verified, no network call, key never expires. This step
-is already self-serve and already documented plainly.
+is already self-serve and already documented plainly, independent of
+however step 6's fulfillment question resolves.
 
 ## What this funnel does NOT include
 
@@ -123,9 +144,31 @@ proof — not a reason to contact them directly.
 
 ## Honest summary of where the funnel actually stands
 
-Steps 3, 4, 6, and 7 are already fully self-serve and require no further
+Steps 3, 4, and 7 are already fully self-serve and require no further
 work to function. Step 5's message already exists and already does the
-job asked of it. The two real gaps are in steps 1 and 2: discoverability
-listing opportunities (homepage URL, third-party MCP directories) and the
-complete absence of any visual proof (screenshots or a short recorded
-demo) that a skimming visitor can see before installing anything.
+job asked of it. Step 6 (buy) has an unverified fulfillment question —
+whether a Gumroad purchase actually triggers automatic delivery of a
+key the binary will accept, or currently requires a manual step — that
+needs to be checked against the live listing before this funnel can be
+called fully self-serve end to end. The other real gaps are in steps 1
+and 2: discoverability listing opportunities (homepage URL, third-party
+MCP directories) and the complete absence of any visual proof
+(screenshots or a short recorded demo) that a skimming visitor can see
+before installing anything.
+
+## Also worth naming: the boundary itself is individual, not "team"
+
+The paid gate today is a single command (`test-impact` / `impacted_tests`)
+behind an individual $39 key — there is no team-specific feature, seat
+count, or org concept in `license.rs` (`Tier` has exactly two variants,
+`Free`/`Paid`). Two overlaps worth flagging rather than quietly living
+with: `orient` (free) already answers a close cousin of what
+`impacted_tests` answers, just scoped to one named node instead of a git
+diff; and Plan Format v2's own `tests.impacted` check
+(`test_checks.rs::run_tests_impacted`) calls the identical underlying
+`classified_impact` selection for free via `plan run`, with no license
+check at all (`docs/pricing-audit.md`). A clean "team" story — e.g. free
+for local/interactive use, paid specifically for the CI/PR-gating
+workflow — is a plausible shape given the user's "CI/PR examples" and
+"paid team feature" phrasing, but it is a product decision for the user
+to make, not one to write into shipped docs unilaterally.

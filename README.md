@@ -5,8 +5,8 @@
 **Girder gives coding agents exactly the code they need, instead of whole
 files.** It parses your repository into a living semantic graph — functions,
 definitions, call edges — and answers questions against that graph: exact
-function source, callers and callees, impact analysis, minimal test selection,
-and verified graph-addressed edits. It is one static Rust binary that any agent
+function source, callers and callees, impact analysis, conservative test
+selection, and verified graph-addressed edits. It is one static Rust binary that any agent
 can drive over MCP, plus an optional native IDE.
 
 ```bash
@@ -20,7 +20,7 @@ down ([TypeScript](./docs/typescript-support.md), [Go](./docs/go-support.md)).
 
 **Tiers:** the free tier is permanent and needs no account — `get_source`,
 `find_definition`, `search_code`, `ask_codebase`, `review_changes`, and
-`orient` on a single repository. The `impacted_tests` tool needs a
+`orient`, with no repository-count limit. The `impacted_tests` tool needs a
 [paid license](#buy-a-license). Keys are verified offline; the binary never phones
 home.
 
@@ -883,10 +883,10 @@ Verification is offline, and the key never expires.
 Girder is **source-available**, not open source, under the
 [Business Source License 1.1](./LICENSE).
 
-The free tier is genuinely free and permanent: it has no expiry and requires no
-account. For a single repository it includes `get_source`, `find_definition`,
-`search_code`, `ask_codebase`, `review_changes`, and `orient`. The
-`impacted_tests` tool requires a paid license.
+The free tier is genuinely free and permanent: it has no expiry, requires no
+account, and has no repository-count limit. It includes `get_source`,
+`find_definition`, `search_code`, `ask_codebase`, `review_changes`, and
+`orient`. The `impacted_tests` tool requires a paid license.
 
 Licenses are signed keys verified locally by the Girder binary. The binary
 never phones home, makes no network call for licensing, and works fully offline

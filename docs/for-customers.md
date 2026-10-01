@@ -52,12 +52,14 @@ tests that change could affect, without naming anything by hand — the
 thing you'd want gating a PR or a CI job, not just an interactive
 lookup.
 
-**Pricing**: $39 one-time, perpetual, per developer — [buy directly on
+**Pricing**: $39 one-time, perpetual, per individual key — [buy directly on
 Gumroad](https://maynard42.gumroad.com/l/zwpsjl), no account or sales
-conversation required. For a team: buy one key per developer who needs
-`impacted_tests`; there is no separate team SKU yet, so today "team
-pricing" is simply $39 × the number of developers who need the gated
-tool. Anyone who already has a free-tier install keeps using `get_source`,
+conversation required. There is no separate team SKU today (confirmed by
+reading `license.rs`: `Tier` is `Free`/`Paid` only, no seat or org concept
+— see `docs/pricing-audit.md`), so the only mechanism that exists right
+now for a team is one key per developer who needs `impacted_tests`. A
+real team/seat tier is a product decision, not yet made. Anyone who
+already has a free-tier install keeps using `get_source`,
 `find_definition`, `search_code`, `ask_codebase`, `review_changes`, and
 `orient` without buying anything.
 
