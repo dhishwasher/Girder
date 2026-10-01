@@ -1636,6 +1636,47 @@ benchmark, don't run it against the stale snapshot.
   `call_evidence_v1` fidelity and `review`/`test-impact`'s attribution
   for the LOST occurrence specifically (per addenda 4/5/6/8/9), not to
   any Must-proof correctness.
+- 2026-10-01: **The actual node-collision fix is implemented and
+  verified** (`docs/observations/stage3-typescript-audit/
+  before-observation-addendum-12.md`) -- the root cause every prior fix
+  in this thread (addenda 5, 6, 8) worked around without closing.
+  `crates/aether-builder/src/mapper.rs` now qualifies a trait-impl
+  method's path with its trait name (`{name}@{trait}`), but ONLY when
+  it actually collides with a same-named sibling in the same file
+  (the design decision recorded above) -- both the Node-creation pass
+  (`collect_defs`) and the separate caller-id-computing pass inside
+  `collect_calls`'s `walk` use one shared helper
+  (`qualified_method_name`), with a new regression test confirming
+  their ids stay consistent for a call made inside a qualified
+  method's body. All three predictions precommitted in addendum-11
+  were checked against the real binary (sha256
+  `1a502ab70162bf5897f810515384dec86c09b5058f9574b53ac0cb44cea7d8d4`)
+  and confirmed exactly, including the one honestly flagged as
+  uncertain (explicit trait-qualified call syntax, `A::go(&S)`,
+  remains unresolved to a specific candidate -- `sync.rs`'s
+  `select_candidate` was deliberately left unchanged -- but
+  `test-impact` still conservatively selects the right test regardless,
+  via the escalation already in place). `review . --quiet` now shows
+  the actual previously-lost node (`crate::lib::S::go@A`) when only
+  its body changes -- the first point in this entire thread where the
+  root cause itself, not just a downstream symptom, became visible and
+  fixed. All four gates pass; the trustworthiness oracle's baseline
+  still matches exactly (specifically confirmed `rust_raii_drop_
+  selected` -- the fixture that would have broken had the design
+  decision gone the other way -- is unaffected); the representative-
+  mutation result is byte-identical (unrelated, Python-only mutation).
+  **Still open**: Rust's DONE audit needs a `correction-3` re-score
+  against a fresh `inspect` of the pinned `petgraph`/`regex`/
+  `serde_json` corpus -- not done in this round (the pinned checkouts
+  are not present in this session's scratchpad); `ser.rs`'s two
+  `serialize_element` methods (the confirmed real-world collision from
+  addendum-4) should move from the whole-file `duplicate-semantic-
+  path` gap claim to individually-attributed evidence once re-scored.
+  TypeScript's own collision shape (duplicate `it()`/`describe()`
+  description strings, sites 23/91) is a different mechanism, entirely
+  unaffected by this Rust-only fix, and remains unaddressed. The
+  combined-origin residual (addendum-10) is also unrelated and still
+  open.
 
 ## Standing directive, 2026-10-01: after current correctness work closes, pivot to monetization readiness
 

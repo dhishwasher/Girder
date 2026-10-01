@@ -288,12 +288,26 @@ fn extract_definitions_and_references(
         id: module_id,
         ty: None,
         kind: ScopeKind::Module,
+        trait_name: None,
     };
-    collect_defs(root, source, file, lang, &scope, &mut out);
+    let method_collisions = if matches!(lang, Lang::Rust) {
+        collect_rust_method_collisions(root, source)
+    } else {
+        HashSet::new()
+    };
+    collect_defs(
+        root,
+        source,
+        file,
+        lang,
+        &scope,
+        &method_collisions,
+        &mut out,
+    );
 
     // Pass 2: record every call site as an unresolved reference. Resolution to
     // a concrete callee happens project-wide in `sync`, enabling cross-file links.
-    collect_calls(root, source, lang, &module, &mut out);
+    collect_calls(root, source, lang, &module, &method_collisions, &mut out);
 
     // Pass 3: Rust imports/re-exports retain exact symbol identities for the
     // project resolver, and `impl Trait for Type` blocks become Inherits refs.
@@ -520,12 +534,18 @@ enum ScopeKind {
 /// container a new def is attached to (a module at top level, a type inside a
 /// class body or Rust `impl`). `ty` is the enclosing *type* path when we're
 /// inside a class/impl, so a method's `self.field` accesses can be resolved to
-/// field nodes and emitted as `DataFlow` edges.
+/// field nodes and emitted as `DataFlow` edges. `trait_name` is the Rust
+/// trait being implemented when this scope came from `impl Trait for Type`
+/// (`None` for an inherent `impl Type { .. }` or any non-Rust scope) --
+/// consulted only to disambiguate a same-file colliding method's own path
+/// (see [`qualified_method_name`]); `path`/`id`/`ty` never change because of
+/// it, so Contains edges and field-flow resolution are unaffected.
 struct Scope<'a> {
     path: &'a str,
     id: NodeId,
     ty: Option<&'a str>,
     kind: ScopeKind,
+    trait_name: Option<&'a str>,
 }
 
 /// Recursively map definitions, carrying the [`Scope`] so methods belong to
@@ -537,6 +557,7 @@ fn collect_defs(
     file: &str,
     lang: Lang,
     scope: &Scope,
+    collisions: &HashSet<(String, String)>,
     out: &mut BuildOutput,
 ) {
     let kind = node.kind();
@@ -544,7 +565,14 @@ fn collect_defs(
     if is_function_kind(lang, kind) {
         if let Some(name_node) = node.child_by_field_name("name") {
             let name = node_text(name_node, source).to_string();
-            let path = format!("{}::{name}", scope.path);
+            let path_segment = match (scope.kind, scope.trait_name) {
+                (ScopeKind::Type, Some(trait_name)) => {
+                    let type_name = last_segment(scope.path);
+                    qualified_method_name(&name, type_name, Some(trait_name), collisions)
+                }
+                _ => name.clone(),
+            };
+            let path = format!("{}::{path_segment}", scope.path);
             let id = NodeId::from_path(&path);
             let mut n = Node::new(NodeKind::Function, &name, &path)
                 .with_language(lang.name())
@@ -590,8 +618,9 @@ fn collect_defs(
                 id,
                 ty: scope.ty,
                 kind: ScopeKind::Function,
+                trait_name: None,
             };
-            recurse_children(node, source, file, lang, &inner, out);
+            recurse_children(node, source, file, lang, &inner, collisions, out);
         }
         return;
     }
@@ -617,8 +646,9 @@ fn collect_defs(
                 id,
                 ty: Some(&path),
                 kind: ScopeKind::Type,
+                trait_name: None,
             };
-            recurse_children(node, source, file, lang, &inner, out);
+            recurse_children(node, source, file, lang, &inner, collisions, out);
         }
         return;
     }
@@ -630,18 +660,22 @@ fn collect_defs(
             let type_name = last_ident(node_text(type_node, source));
             let type_path = format!("{}::{type_name}", scope.path);
             let type_id = NodeId::from_path(&type_path);
+            let trait_name = node
+                .child_by_field_name("trait")
+                .map(|trait_node| last_ident(node_text(trait_node, source)));
             let inner = Scope {
                 path: &type_path,
                 id: type_id,
                 ty: Some(&type_path),
                 kind: ScopeKind::Type,
+                trait_name,
             };
-            recurse_children(node, source, file, lang, &inner, out);
+            recurse_children(node, source, file, lang, &inner, collisions, out);
             return;
         }
     }
 
-    recurse_children(node, source, file, lang, scope, out);
+    recurse_children(node, source, file, lang, scope, collisions, out);
 }
 
 fn recurse_children(
@@ -650,11 +684,12 @@ fn recurse_children(
     file: &str,
     lang: Lang,
     scope: &Scope,
+    collisions: &HashSet<(String, String)>,
     out: &mut BuildOutput,
 ) {
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
-        collect_defs(child, source, file, lang, scope, out);
+        collect_defs(child, source, file, lang, scope, collisions, out);
     }
 }
 
@@ -854,6 +889,76 @@ fn collect_rust_imports(root: TsNode, source: &str, out: &mut BuildOutput) {
     }
 }
 
+/// Same-file method-name collisions: `(type_name, method_name)` pairs
+/// provided by more than one `impl` block on the same type in this file
+/// (trait-vs-trait, e.g. two different traits both declaring a
+/// `serialize_element`/`end`/`drop`-named method on the same type, or
+/// trait-vs-inherent). Two distinct methods sharing a name and type collapse
+/// to the SAME semantic path under the ordinary, unqualified
+/// `{module}::{type}::{name}` scheme -- `SemanticGraph::upsert_node` then
+/// silently destroys whichever one is inserted first (see
+/// docs/observations/stage3-typescript-audit/before-observation-
+/// addendum-4.md). Only the colliding pair's TRAIT-impl side(s) get
+/// qualified (see [`qualified_method_name`]) -- an inherent method's path
+/// never changes, keeping every non-colliding method's id exactly as
+/// before (confirmed necessary: `sync.rs`'s RAII-drop heuristic hardcodes
+/// an unqualified `{owner}::drop` lookup, and unconditionally qualifying
+/// every trait method would have broken it for every `Drop` impl).
+fn collect_rust_method_collisions(root: TsNode, source: &str) -> HashSet<(String, String)> {
+    let mut by_type_and_method: HashMap<(String, String), u32> = HashMap::new();
+    let mut stack = vec![root];
+    while let Some(node) = stack.pop() {
+        if node.kind() == "impl_item" {
+            if let Some(type_node) = node.child_by_field_name("type") {
+                let type_name = last_ident(node_text(type_node, source)).to_string();
+                if let Some(body) = node.child_by_field_name("body") {
+                    let mut cursor = body.walk();
+                    for item in body.named_children(&mut cursor) {
+                        if item.kind() != "function_item" {
+                            continue;
+                        }
+                        let Some(name_node) = item.child_by_field_name("name") else {
+                            continue;
+                        };
+                        let method_name = node_text(name_node, source).to_string();
+                        *by_type_and_method
+                            .entry((type_name.clone(), method_name))
+                            .or_insert(0) += 1;
+                    }
+                }
+            }
+        }
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            stack.push(child);
+        }
+    }
+    by_type_and_method
+        .into_iter()
+        .filter(|(_, count)| *count > 1)
+        .map(|(key, _)| key)
+        .collect()
+}
+
+/// A trait-impl method's final path segment, qualified with its trait name
+/// only when it collides with a same-named sibling on the same type in this
+/// file (see [`collect_rust_method_collisions`]); unqualified (the ordinary
+/// `name` text) otherwise, so a non-colliding trait method's id is
+/// byte-for-byte identical to before this disambiguation existed.
+fn qualified_method_name(
+    name: &str,
+    type_name: &str,
+    trait_name: Option<&str>,
+    collisions: &HashSet<(String, String)>,
+) -> String {
+    match trait_name {
+        Some(trait_name) if collisions.contains(&(type_name.to_string(), name.to_string())) => {
+            format!("{name}@{trait_name}")
+        }
+        _ => name.to_string(),
+    }
+}
+
 /// Walk Rust `impl Trait for Type` blocks, recording `Type Inherits Trait`.
 /// Both ends are name references resolved project-wide by the sync resolver.
 fn collect_impls(root: TsNode, source: &str, module: &str, out: &mut BuildOutput) {
@@ -922,11 +1027,19 @@ fn extract_fields(
     }
 }
 
-fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut BuildOutput) {
+fn collect_calls(
+    node: TsNode,
+    source: &str,
+    lang: Lang,
+    module: &str,
+    collisions: &HashSet<(String, String)>,
+    out: &mut BuildOutput,
+) {
     struct WalkContext<'src> {
         source: &'src str,
         lang: Lang,
         module: &'src str,
+        collisions: &'src HashSet<(String, String)>,
     }
 
     #[derive(Clone, Copy)]
@@ -959,7 +1072,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
     fn walk<'src>(
         node: TsNode,
         context: &WalkContext<'src>,
-        scope: (Option<&'src str>, Option<NodeId>),
+        scope: (Option<&'src str>, Option<&'src str>, Option<NodeId>),
         type_hints: &HashMap<String, ReceiverHint>,
         locals: &HashSet<String>,
         python_scope: PythonResolutionScope<'_>,
@@ -969,6 +1082,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             source,
             lang,
             module,
+            collisions,
         } = context;
         let PythonResolutionScope {
             type_aliases,
@@ -978,9 +1092,10 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             isinstance_narrowing,
         } = python_scope;
         let lang = *lang;
-        let (current_type, current_fn) = scope;
+        let (current_type, current_trait, current_fn) = scope;
         let mut current = current_fn;
         let mut enclosing_type = current_type;
+        let mut enclosing_trait = current_trait;
         let mut function_type_hints = None;
         let mut function_locals = None;
         let mut function_type_aliases = None;
@@ -991,15 +1106,20 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         if matches!(lang, Lang::Python) && node.kind() == "class_definition" {
             if let Some(name_node) = node.child_by_field_name("name") {
                 enclosing_type = Some(node_text(name_node, source));
+                enclosing_trait = None;
             }
         } else if matches!(lang, Lang::Rust) {
             if is_type_kind(lang, node.kind()) {
                 if let Some(name_node) = node.child_by_field_name("name") {
                     enclosing_type = Some(node_text(name_node, source));
+                    enclosing_trait = None;
                 }
             } else if node.kind() == "impl_item" {
                 if let Some(type_node) = node.child_by_field_name("type") {
                     enclosing_type = Some(last_ident(node_text(type_node, source)));
+                    enclosing_trait = node
+                        .child_by_field_name("trait")
+                        .map(|trait_node| last_ident(node_text(trait_node, source)));
                 }
             }
         }
@@ -1008,7 +1128,11 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             if let Some(name_node) = node.child_by_field_name("name") {
                 let name = node_text(name_node, source);
                 let path = match enclosing_type {
-                    Some(ty) => format!("{module}::{ty}::{name}"),
+                    Some(ty) => {
+                        let path_segment =
+                            qualified_method_name(name, ty, enclosing_trait, collisions);
+                        format!("{module}::{ty}::{path_segment}")
+                    }
                     None => format!("{module}::{name}"),
                 };
                 let caller = NodeId::from_path(&path);
@@ -1252,7 +1376,7 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
             walk(
                 child,
                 context,
-                (enclosing_type, current),
+                (enclosing_type, enclosing_trait, current),
                 child_type_hints,
                 active_locals,
                 PythonResolutionScope {
@@ -1313,11 +1437,12 @@ fn collect_calls(node: TsNode, source: &str, lang: Lang, module: &str, out: &mut
         source,
         lang,
         module,
+        collisions,
     };
     walk(
         node,
         &context,
-        (None, None),
+        (None, None, None),
         &HashMap::new(),
         &HashSet::new(),
         PythonResolutionScope {
@@ -3514,6 +3639,92 @@ fn local_only() {
                     exact: false,
                 },
             ]
+        );
+    }
+
+    #[test]
+    fn colliding_trait_impl_methods_get_distinct_nodes_and_consistent_caller_ids() {
+        // Two different traits providing the same method name on the same
+        // type collapse to the identical unqualified path -- confirmed to
+        // silently destroy one occurrence's entire node (see
+        // docs/observations/stage3-typescript-audit/before-observation-
+        // addendum-4.md: serde_json's Compound type has this exact shape
+        // across 7 SerializeSeq/SerializeTuple/.../SerializeStructVariant
+        // impls). This pins the fix: both occurrences get their own,
+        // distinct node, and `collect_defs`'s node id for each matches
+        // exactly the `caller` id `collect_calls`/`walk` recorded for the
+        // call inside its own body -- the two independent path-computation
+        // sites addendum-11 required to stay consistent.
+        let source = r#"
+fn only_via_a() -> i32 { 1 }
+fn only_via_b() -> i32 { 2 }
+
+struct S;
+
+trait A { fn go(&self) -> i32; }
+trait B { fn go(&self) -> i32; }
+
+impl A for S {
+    fn go(&self) -> i32 { only_via_a() }
+}
+
+impl B for S {
+    fn go(&self) -> i32 { only_via_b() }
+}
+"#;
+        let mut parser = IncrementalParser::new(Lang::Rust);
+        let tree = parser.parse(source);
+        let out = extract(&tree, source, "src/lib.rs", Lang::Rust);
+
+        let go_nodes: Vec<_> = out
+            .nodes
+            .iter()
+            .filter(|n| n.name == "go" && n.kind == NodeKind::Function)
+            .collect();
+        assert_eq!(
+            go_nodes.len(),
+            2,
+            "both colliding `go` methods must get their own node: {:?}",
+            out.nodes.iter().map(|n| &n.path).collect::<Vec<_>>()
+        );
+        assert_ne!(
+            go_nodes[0].id, go_nodes[1].id,
+            "colliding methods must not share a node id"
+        );
+        assert_ne!(go_nodes[0].path, go_nodes[1].path);
+        // Each node's own name stays the plain, unqualified "go" (display
+        // and cargo-test-filter purposes) -- only the path/id disambiguates.
+        for n in &go_nodes {
+            assert_eq!(n.name, "go");
+        }
+        let a_node = go_nodes
+            .iter()
+            .find(|n| n.source.contains("only_via_a"))
+            .expect("impl A's go node, identified by its own call");
+        let b_node = go_nodes
+            .iter()
+            .find(|n| n.source.contains("only_via_b"))
+            .expect("impl B's go node, identified by its own call");
+
+        let call_to_a = out
+            .calls
+            .iter()
+            .find(|c| c.callee == "only_via_a")
+            .expect("a call record for only_via_a");
+        let call_to_b = out
+            .calls
+            .iter()
+            .find(|c| c.callee == "only_via_b")
+            .expect("a call record for only_via_b");
+        assert_eq!(
+            call_to_a.caller, a_node.id,
+            "collect_defs's node id for impl A's go must equal walk's own \
+             caller id for the call inside its body"
+        );
+        assert_eq!(
+            call_to_b.caller, b_node.id,
+            "collect_defs's node id for impl B's go must equal walk's own \
+             caller id for the call inside its body"
         );
     }
 }
