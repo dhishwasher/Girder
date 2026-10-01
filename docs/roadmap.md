@@ -1542,10 +1542,42 @@ benchmark, don't run it against the stale snapshot.
   origin file with an unrelated, reachable function-body change
   elsewhere would make `tests_for_nodes` non-empty overall and so never
   trigger the fallback, potentially still missing the Module-only
-  file's own tests from that combined selection; re-running
-  `tools/core_trustworthiness_oracle.py` and
-  `tools/core_representative_mutations.py` against the final binary to
-  confirm neither regressed. The pinned TypeScript corpus checkouts
+  file's own tests from that combined selection, in BOTH
+  `test_impact.rs` and (see immediately below) `test_checks.rs`.
+  **A second mandatory gate had the identical bug, now also fixed**
+  (`docs/observations/stage3-typescript-audit/before-observation-
+  addendum-9.md`): `run_tests_impacted`
+  (`crates/aether-app/src/project/planfile/checks/test_checks.rs`),
+  which Plan Format v2's own **mandatory** `tests.impacted` check
+  gates on, called `tests_for_nodes` directly with no fallback at
+  all -- a plan step editing only a module-level const could have
+  passed its mandatory test gate while a real, reachable test
+  silently never ran. Fixed with the identical scoped fallback,
+  verified not to regress the existing, intentionally-pinned "Gap 24"
+  vacuous-create-only-pass test, plus a new regression test
+  (`tests_impacted_check_is_not_vacuous_for_a_module_level_only_edit`,
+  `executor.rs`). All four gates pass.
+  **Oracle and representative-mutation harness re-run against the
+  final binary** (sha256
+  `beadb6c91907bf0e20830319e4cbbeff19eab4172cacc17caea6980cb336113f`),
+  both required by the prior review, now done:
+  `core_trustworthiness_oracle.py` shows precision/recall UNCHANGED
+  (1.000/1.000 throughout) with only a benign `+2 coverage_gap`
+  boundary-count side effect, confirmed field-by-field against the
+  prior baseline and the baseline updated to match.
+  `core_representative_mutations.py` shows a genuinely substantive,
+  understood change: the long-documented `group-invoke` dynamic-
+  dispatch defect CLAUDE.md itself cites by name (recall `0.000`) now
+  measures recall `1.000`/precision `0.667` -- NOT because the
+  underlying dispatch-resolution gap closed (it didn't; the dispatch
+  still classifies `unknown`, confirmed directly), but because the
+  bare `test-impact` form this harness uses is exactly the path
+  addendum-6 fixed: the previously-silent empty result on an
+  unresolved-dispatch origin now falls back to the conservative union.
+  `docs/core-representative-mutations.md`, `docs/core-gap-analysis.md`
+  (item 11), and `CLAUDE.md` all updated to state plainly that the
+  resolution gap is unchanged and still open; only the empty-selection
+  symptom is fixed. The pinned TypeScript corpus checkouts
   used for this round's measurement lived in a session-scratchpad
   directory that does not persist across sessions and is now gone;
   before any TypeScript gate-profile or resolver work resumes, the

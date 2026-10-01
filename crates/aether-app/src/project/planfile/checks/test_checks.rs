@@ -86,7 +86,30 @@ pub(crate) fn run_tests_impacted(
     graph: &SemanticGraph,
     changed: &[NodeId],
 ) -> CheckOutcome {
-    let impacted = graph.tests_for_nodes(changed);
+    let mut impacted = graph.tests_for_nodes(changed);
+    // `tests_for_nodes` is resolved-Calls-reachability only -- nothing
+    // "calls" a Module, so a step whose only changed node is a Module
+    // (a const/type-only edit, a node lost to a semantic-path collision,
+    // or -- confirmed directly, see docs/observations/stage3-typescript-
+    // audit/before-observation-addendum-8.md -- any Go module-level var
+    // change, since Go has no unconditional whole-file gap claim) made
+    // this MANDATORY check report `passed: true` with "no impacted tests"
+    // even when a real, reachable test exists and should have run. Falls
+    // back to the same conservative must∪may∪unknown union
+    // `test_impact.rs`'s own CLI path uses for the identical gap, only
+    // when the narrow result is empty -- preserving this check's existing,
+    // intentionally narrow behavior (Gap 24's own precedent: an empty
+    // result can legitimately mean nothing, e.g. for a brand-new node
+    // with no prior callers) for every other case.
+    if impacted.is_empty() && !changed.is_empty() {
+        let classified = graph.classified_impact(changed).tests(graph);
+        impacted = classified
+            .must
+            .into_iter()
+            .chain(classified.may)
+            .chain(classified.unknown)
+            .collect();
+    }
     if impacted.is_empty() {
         return CheckOutcome {
             kind: "tests.impacted".to_string(),

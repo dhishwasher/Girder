@@ -9,11 +9,11 @@
   },
   "classified_aggregate": {
     "boundary_by_category": {
-      "coverage_gap": 30,
+      "coverage_gap": 32,
       "missing_or_invalid_evidence": 21,
       "unresolved_call_site": 51
     },
-    "boundary_count": 102,
+    "boundary_count": 104,
     "executed_denominator": 7,
     "may_only_recall": 0.0,
     "may_true_positives": 0,
@@ -32,11 +32,11 @@
       "bitcode_reported_skipped": 2,
       "classified": {
         "boundary_by_category": {
-          "coverage_gap": 6,
+          "coverage_gap": 8,
           "missing_or_invalid_evidence": 10,
           "unresolved_call_site": 23
         },
-        "boundary_count": 39,
+        "boundary_count": 41,
         "executed_denominator": 3,
         "may": [],
         "may_false_negatives": [

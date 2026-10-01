@@ -1,29 +1,84 @@
 {
   "aggregate": {
-    "false_negatives": 2,
-    "false_positives": 0,
-    "precision": 1.0,
-    "recall": 0.0,
-    "true_negatives": 1,
-    "true_positives": 0
+    "false_negatives": 0,
+    "false_positives": 1,
+    "precision": 0.666667,
+    "recall": 1.0,
+    "true_negatives": 0,
+    "true_positives": 2
+  },
+  "classified_aggregate": {
+    "boundary_by_category": {
+      "coverage_gap": 3762,
+      "missing_or_invalid_evidence": 729,
+      "unresolved_call_site": 5536
+    },
+    "boundary_count": 10027,
+    "executed_denominator": 2,
+    "may_only_recall": 0.0,
+    "may_true_positives": 0,
+    "must_denominator": 0,
+    "must_false_positives": 0,
+    "must_or_may_recall": 0.0,
+    "must_or_may_true_positives": 0,
+    "must_precision": null,
+    "must_true_positives": 0,
+    "unknown_count": 3,
+    "unknown_total_count": 472
   },
   "mutations": [
     {
-      "false_negatives": [
-        "tests/test_chain.py::test_basic_chaining",
-        "tests/test_commands.py::test_other_command_forward"
-      ],
-      "false_positives": [],
-      "graph_path": "crate::click::core::Group::invoke",
-      "id": "group-invoke",
-      "precision": 1.0,
-      "recall": 0.0,
-      "true_negatives": [
+      "classified": {
+        "boundary_by_category": {
+          "coverage_gap": 3762,
+          "missing_or_invalid_evidence": 729,
+          "unresolved_call_site": 5536
+        },
+        "boundary_count": 10027,
+        "executed_denominator": 2,
+        "may": [],
+        "may_false_negatives": [
+          "tests/test_chain.py::test_basic_chaining",
+          "tests/test_commands.py::test_other_command_forward"
+        ],
+        "may_only_recall": 0.0,
+        "may_total_count": 0,
+        "may_true_positives": [],
+        "must": [],
+        "must_denominator": 0,
+        "must_false_positives": [],
+        "must_or_may_false_negatives": [
+          "tests/test_chain.py::test_basic_chaining",
+          "tests/test_commands.py::test_other_command_forward"
+        ],
+        "must_or_may_recall": 0.0,
+        "must_or_may_true_positives": [],
+        "must_precision": null,
+        "must_total_count": 0,
+        "must_true_positives": [],
+        "unknown": [
+          "tests/test_chain.py::test_basic_chaining",
+          "tests/test_commands.py::test_other_command_forward",
+          "tests/test_commands.py::test_other_command_invoke"
+        ],
+        "unknown_count": 3,
+        "unknown_total_count": 472
+      },
+      "false_negatives": [],
+      "false_positives": [
         "tests/test_commands.py::test_other_command_invoke"
       ],
-      "true_positives": []
+      "graph_path": "crate::click::core::Group::invoke",
+      "id": "group-invoke",
+      "precision": 0.666667,
+      "recall": 1.0,
+      "true_negatives": [],
+      "true_positives": [
+        "tests/test_chain.py::test_basic_chaining",
+        "tests/test_commands.py::test_other_command_forward"
+      ]
     }
   ],
   "repository": "click-8.4.1",
-  "schema_version": 1
+  "schema_version": 3
 }

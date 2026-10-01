@@ -1601,7 +1601,8 @@ func TestGet(t *testing.T) {
 "#,
     );
 
-    let quiet_output = run_girder_output(&["test-impact", repo.path().to_str().unwrap(), "--quiet"]);
+    let quiet_output =
+        run_girder_output(&["test-impact", repo.path().to_str().unwrap(), "--quiet"]);
     assert!(quiet_output.status.success());
     let quiet_stdout = String::from_utf8_lossy(&quiet_output.stdout);
     assert!(

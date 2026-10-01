@@ -705,6 +705,73 @@ mod tests {
         );
     }
 
+    #[test]
+    fn tests_impacted_check_is_not_vacuous_for_a_module_level_only_edit() {
+        // The same false-empty gap addenda 5/6/8 (docs/observations/
+        // stage3-typescript-audit/) closed for `test-impact`'s own CLI
+        // path, independently present in `run_tests_impacted`
+        // (`checks/test_checks.rs`), the MANDATORY `tests.impacted` check
+        // plan execution gates on: a step whose edit only changes a
+        // Module's own source (a `const` inserted before a function, not
+        // touching that function's own captured `source` text) made
+        // `tests_for_nodes` -- which this check used directly, with no
+        // fallback -- find nothing, so the check reported `passed: true`
+        // with "no impacted tests" even though a real, reachable test
+        // exists and should have run.
+        let repository = TempDir::new("tests-impacted-module-level-only-edit");
+        std::fs::write(
+            repository.0.join("lib.rs"),
+            "pub fn target() -> i32 { 1 }\n#[test]\nfn test_target() { assert_eq!(target(), 1); }\n",
+        )
+        .unwrap();
+        git(&repository.0, &["init", "--quiet"]);
+        git(&repository.0, &["add", "lib.rs"]);
+        git(
+            &repository.0,
+            &[
+                "-c",
+                "user.name=Girder Tests",
+                "-c",
+                "user.email=tests@girder.invalid",
+                "commit",
+                "--quiet",
+                "-m",
+                "base",
+            ],
+        );
+        let base_commit = git(&repository.0, &["rev-parse", "HEAD"]);
+        let plan: Plan = serde_json::from_value(serde_json::json!({
+            "plan_version": 1,
+            "plan_id": "tests-impacted-module-level-only-edit",
+            "intent": "pin that a module-level-only edit still selects its known test",
+            "base_commit": base_commit,
+            "on_failure": "rollback_plan",
+            "steps": [{
+                "id": "module-level-only",
+                "edits": [{
+                    "path": "lib.rs",
+                    "match": "pub fn target",
+                    "replace": "const UNUSED: i32 = 7;\npub fn target",
+                    "occurrences": 1
+                }],
+                "checks": [{"kind": "tests.impacted", "expect": "all_pass"}]
+            }]
+        }))
+        .unwrap();
+
+        let result = run_plan(&repository.0, &ProjectConfig::default(), &plan, false).unwrap();
+
+        assert_eq!(result.steps.len(), 1);
+        let check = &result.steps[0].checks[0];
+        assert_eq!(check.kind, "tests.impacted");
+        assert!(
+            !check.detail.contains("no impacted tests"),
+            "a module-level-only edit must still select its real, reachable \
+             test, not report a vacuous pass: {}",
+            check.detail
+        );
+    }
+
     // Gap 24 (docs/core-gap-analysis.md item 24): pins the vacuous-pass hole
     // *before* `Plan::validate()` closes it, exactly as gap 22 phase 1 pinned
     // its failure shapes before fixing them. `run_plan` itself never calls

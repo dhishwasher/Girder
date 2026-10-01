@@ -545,17 +545,25 @@ as gap 11 rather than silently accepted.
    navigation latency under sustained edits.
 10. **P1 — agent outcome metrics.** Track accepted patches, validation catches,
    rejected patches, rollback success, and time-to-safe-commit.
-11. **P1 — fixture-mediated polymorphic dispatch, newly measured.** On real
-   Click code, a test reaching a `Group.invoke`-vs-`Command.invoke`
-   polymorphic dispatch only through an untyped pytest fixture parameter
-   (`runner`) and Click's own internal `Command.main` indirection is not
-   selected: two of three declared representative-mutation cases are false
-   negatives (recall `0.000` on that one mutation; see
-   [`core-representative-mutations.md`](core-representative-mutations.md)).
-   No receiver-type inference mechanism currently reaches through an
-   untyped fixture parameter and a same-named unqualified `self.invoke`
-   dispatch. Lower priority than the original P0 set because it is narrow
-   (one dispatch shape) and newly discovered, not a regression.
+11. **P1 — fixture-mediated polymorphic dispatch: resolution gap still open,
+   selection no longer silently misses it.** On real Click code, a test
+   reaching a `Group.invoke`-vs-`Command.invoke` polymorphic dispatch only
+   through an untyped pytest fixture parameter (`runner`) and Click's own
+   internal `Command.main` indirection still has no receiver-type inference
+   mechanism that reaches through it -- Girder genuinely cannot resolve
+   this dispatch, and that part of this gap is unchanged. What DID change
+   (2026-10, after the `test-impact` false-empty fix in
+   [`core-representative-mutations.md`](core-representative-mutations.md)):
+   the representative mutation's measured recall went from `0.000` to
+   `1.000` (precision `0.667`), because the two previously-false-negative
+   tests are now conservatively included via the must∪may∪unknown
+   fallback instead of being silently dropped by an empty resolved-
+   reachability result. The dispatch itself is still reported `unknown`,
+   not resolved -- this is a selection-policy fix, not a resolver fix.
+   Actually resolving `self.invoke`'s receiver type through an untyped
+   fixture parameter remains open, future work. Lower priority than the
+   original P0 set because it is narrow (one dispatch shape) and newly
+   discovered, not a regression.
 12. **P0 — corrected capable-model protocol authors working graph plans, but
    the corpus policy still fails.** The precommitted corrected
    `qwen2.5-coder:1.5b` rerun in

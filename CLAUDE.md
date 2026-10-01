@@ -76,8 +76,16 @@ Selecting extra tests costs CPU time; missing a relevant test can conceal a
 regression. The current bounded Rust and Python trustworthiness fixtures both
 measure precision/recall `1.000/1.000`; the historical Rust precision defect at
 `0.667` is closed ([measurement](docs/core-trustworthiness-measurement.md)).
-The documented dynamic-dispatch failure remains: a representative mutation
-measured recall `0.000` ([evidence](docs/core-representative-mutations.md)).
+The documented dynamic-dispatch resolution gap remains open (Girder still
+cannot resolve a `self.invoke` dispatch through an untyped fixture
+parameter), but the representative mutation that exposed it now measures
+recall `1.000`/precision `0.667` instead of recall `0.000` — a 2026-10
+`test-impact` fix (see `docs/observations/stage3-typescript-audit/
+before-observation-addendum-5.md`) stopped the narrow, resolved-reachability
+selection from silently returning empty whenever the dispatch can't be
+resolved, falling back to the conservative union instead. The underlying
+resolution gap is unchanged; only the empty-selection symptom is fixed
+([evidence](docs/core-representative-mutations.md)).
 
 ### Use Girder instead of reading files
 
