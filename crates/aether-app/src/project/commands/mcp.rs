@@ -467,8 +467,11 @@ that do not exist). Prefer it over grepping for call sites.",
 Paid license required. \
 Name the tests that can reach what changed, detected from the git diff or \
 from explicit node paths. One test name per line, ready to pass \
-to a test runner. An empty result means nothing needs testing — it does NOT \
-mean run everything. This selection is a conservative union: it is known to \
+to a test runner. Per the frozen classification policy's own wording, \
+empty output WITH Unknown boundaries never means nothing needs running — \
+set `classified: true` or check stderr for boundary count before trusting \
+an empty result; it does NOT mean run everything regardless. This \
+selection is a conservative union: it is known to \
 over-select unrelated tests and, for any test not backed by a resolved call, \
 to include it rather than risk missing one reached only through dynamic \
 dispatch — so a full run remains the authority before you claim a change is \

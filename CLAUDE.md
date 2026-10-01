@@ -107,18 +107,25 @@ This is the conservative must∪may∪unknown union (docs/call-classification-po
 not a targeted answer: it includes any test that cannot be proven unreachable,
 which as of Stage 1 is frequently close to the full suite (see
 docs/observations/stage1/measurement-summary-final.json). Pass --classified to
-see why each test was included. An empty selection means nothing reachable
-needs testing. A change with no Function-node origin at all (a const-only
-or type-only edit, a `describe`/`beforeEach`-level statement in TypeScript,
-or a node that lost a semantic-path collision — see
-docs/observations/stage3-typescript-audit/before-observation-addendum-4.md)
-used to return empty here with no boundary notice
-(`classified_impact(&[])` short-circuiting on an empty origin list) — fixed
-by including the changed Module itself as an origin
-(`crates/aether-app/src/project/git.rs::semantic_changed_impact_with_config`),
-which flows into the same conservative must∪may∪unknown escalation every
-other origin already gets. The guard still matters for the common case: a
-bare `cargo test $(...)` would run everything instead of respecting an
+see why each test was included. Per the frozen policy's own exact wording:
+"Empty output with Unknown boundaries never means no tests need running" —
+empty is only trustworthy when stderr shows zero boundaries too. A change
+with no Function-node origin at all (a const-only or type-only edit, a
+`describe`/`beforeEach`-level statement in TypeScript, or a node that lost
+a semantic-path collision — see docs/observations/stage3-typescript-audit/
+before-observation-addendum-4.md) used to return empty here with NO
+boundary notice regardless of whether boundaries existed elsewhere in the
+graph (`classified_impact(&[])` short-circuiting on an empty origin list,
+before ever computing them) — fixed for every invocation form
+(`crates/aether-app/src/project/git.rs::semantic_changed_impact_with_config`,
+`crates/aether-app/src/project/commands/test_impact.rs`; see
+before-observation-addendum-5.md and -6.md), but whether a Module-only
+origin is fail-closed on its own (vs. only safe because real code almost
+always has an Unknown boundary somewhere) is still an open question, not
+yet constructed and tested with a genuinely zero-boundary fixture in any
+language — see before-observation-addendum-6.md's "still open" section.
+The guard still matters for the common case: a bare `cargo test $(...)`
+would run everything instead of respecting an
 empty selection.
 
 To answer a question about the codebase: girder query . "<question>"
