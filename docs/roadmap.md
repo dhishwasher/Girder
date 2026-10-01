@@ -1636,3 +1636,64 @@ benchmark, don't run it against the stale snapshot.
   `call_evidence_v1` fidelity and `review`/`test-impact`'s attribution
   for the LOST occurrence specifically (per addenda 4/5/6/8/9), not to
   any Must-proof correctness.
+
+## Standing directive, 2026-10-01: after current correctness work closes, pivot to monetization readiness
+
+User-authored instruction, recorded verbatim as the next phase of this
+resume contract. **First priority remains the current correctness
+work**: finish the node-identity/collision fix and the combined-origin
+false-empty case properly, A/B-verify, re-run the existing Rust/Python
+audits and trustworthiness measurements that could regress, run all
+four gates, and do not weaken any existing criterion to make them pass.
+
+Once those known safety blockers are closed and `main` is green,
+**stop adding resolver features temporarily**. Do not begin another
+large technical expansion and do not build a SaaS dashboard, account
+system, billing backend, marketplace, cloud service, or other
+speculative infrastructure.
+
+Switch to a "monetization readiness" phase. Goal: make the existing
+Girder something a real development team can pay for immediately.
+
+- Preserve the free local developer experience: source lookup, search,
+  orient/navigation, local graph functionality, and enough
+  functionality for an individual developer to understand the product.
+- Define the paid value around change safety and team workflow: impact
+  analysis, impacted-test enforcement, PR/CI safety checks, Must/May/
+  Unknown evidence, and preventing an AI-authored change from silently
+  skipping relevant tests.
+- Prepare the smallest sellable package possible:
+  - Audit exactly what is currently free vs. license-gated and
+    document it.
+  - Propose a simple commercial packaging model that does not require
+    new infrastructure. Include a founding-team pilot that can be sold
+    manually to the first customers.
+  - Create a clean release-readiness checklist for the first
+    post-soundness Girder release.
+  - Rewrite the README/product positioning around the actual measured
+    capability. Do not claim formal soundness, perfect impact
+    analysis, or token savings that were only measured as bytes.
+  - Create a short customer-facing page/document explaining the
+    problem, what Girder does, how installation works, what the paid
+    team gets, current limitations, and pricing.
+  - Create a technical due-diligence/valuation evidence index pointing
+    to the committed audits, benchmarks, adversarial tests, CI
+    results, and known limitations.
+  - Make onboarding for Claude Code, Codex, Cursor, and raw MCP as
+    simple as the existing product permits. Do not invent unsupported
+    integrations.
+  - Identify the smallest missing feature that would prevent us from
+    selling a $200-$500 founding-team pilot today. Only propose
+    implementation if it is genuinely required for the first sale.
+  - Produce a concrete first-customer plan: who to target, what
+    problem to pitch, what they receive, what we charge, and what
+    evidence we show them.
+- Do not optimize for more GitHub features. Optimize for getting the
+  first person to pay for Girder.
+
+**Before changing any code for monetization**, show the user the
+proposed product split, pricing, exact files that would change, and
+anything believed to need building. Prefer documentation, packaging,
+release work, and manual sales over new infrastructure. This is a
+decision checkpoint, not an implicit go-ahead -- the user reviews the
+plan before any monetization-driven code change begins.
