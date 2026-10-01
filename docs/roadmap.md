@@ -2007,3 +2007,19 @@ pinned.
 
 Steps 2-8 are in progress next, in this document's and the chat
 response's order.
+
+## 2026-10-01: test-impact ungated and shipped; positioning narrowed; CI verified green
+
+Ungated `test-impact`/`impacted_tests`, rewrote `README.md`/`npm/README.md`
+around the user's exact narrow positioning sentence, fixed two stale
+"recall 0.000" claims, added gap-analysis items 28-29 (TypeScript's open
+collision mechanism, Go's incomplete Stage 3), marked the paused
+monetization docs, and proposed (not applied) a 0.3.0 RELEASE_NOTES.md
+entry. Commit `acfb73f`, pushed and **verified green on the live public
+GitHub Actions run** (`gh run watch 36902609064 --exit-status`, both jobs
+passed) before reporting this as done, not assumed from local gates alone.
+
+Not done in this entry: the actual version bump (`Cargo.toml`,
+`npm/package.json`, `server.json`) and tag/publish. That is the one
+remaining, irreversible step (an npm version can never be republished) and
+is left for explicit user confirmation.
