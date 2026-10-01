@@ -1,6 +1,6 @@
 {
   "name": "girder-mcp",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Saves AI coding-agent context: a local semantic-graph MCP server that gives the agent exactly the code it needs instead of whole files. Also provides conservative change-impact/test selection.",
   "keywords": [
     "mcp",

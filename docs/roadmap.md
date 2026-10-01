@@ -2122,3 +2122,19 @@ savings — they are measured output-byte reductions):
 Published as 0.3.1 (positioning-only correction, no code or feature
 changes) specifically so the corrected text reaches the live npm page and
 package, not just the GitHub source tree, per explicit instruction.
+
+## 2026-10-01: v0.3.1's MCP registry publish failed; fixed and shipped as v0.3.2
+
+The real `v0.3.1` release's `Publish to MCP Registry` job failed (caught
+by the user noticing CI red again, not assumed green): the registry
+rejects any `server.json` `description` over 100 characters, and the
+0.3.1 positioning-correction description ("Saves AI coding-agent context:
+a local semantic graph giving exact source, definitions, callers, and
+callees instead of whole files. Also supports conservative change-impact
+review.") was over that limit. GitHub release and npm publish for 0.3.1
+both succeeded; only the registry listing did not update.
+
+Fixed to 94 characters ("Saves AI coding-agent context by giving exact
+code instead of whole files, from a local graph.") and shipped as
+`v0.3.2`, since the already-published npm `0.3.1` cannot be edited or
+republished. No other content changed.
