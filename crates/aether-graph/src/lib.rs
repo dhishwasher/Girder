@@ -30,7 +30,7 @@ pub use collaboration::{
     ActorId, Dot, GraphAction, GraphDelta, GraphOperation, GraphReplica, MergeReport,
     OperationAttestation, SyncReport, VersionVector,
 };
-pub use diff::{GraphDiff, NodeChange};
+pub use diff::{origins_excluding_explained_modules, GraphDiff, NodeChange};
 pub use knowledge::{parse_query, KnowledgeQuery, QueryResult};
 pub use reconcile::ReconcileReport;
 pub use refactor::RenameOutcome;

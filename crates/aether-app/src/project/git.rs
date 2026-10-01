@@ -2,7 +2,7 @@ use crate::project::config::ProjectConfig;
 use crate::project::process::{run_captured, BoundedStatus, CapturedRun};
 use crate::project::source::is_configured_source_path;
 use aether_builder::GraphBuilder;
-use aether_graph::{NodeId, NodeKind, SemanticGraph};
+use aether_graph::{origins_excluding_explained_modules, NodeId, NodeKind, SemanticGraph};
 use std::collections::{BTreeSet, HashSet};
 use std::io::{Error, ErrorKind};
 use std::path::Path;
@@ -376,6 +376,16 @@ pub(crate) fn semantic_changed_impact_with_config(
                 && seen_origins.insert(*id)
         })
         .collect();
+    // A Module origin alongside a same-file Function origin used to make
+    // `classified_impact` wrongly assume the Function origin's own
+    // evidence already accounted for whatever changed. Confirmed false on
+    // a real Go graph whenever the edit also touches content OUTSIDE
+    // every origin function's own span (a module-level var, in that
+    // repro) -- the module-affected test went missing with no boundary
+    // notice. See `aether_graph::origins_excluding_explained_modules`'s
+    // own docs and docs/observations/stage3-typescript-audit/
+    // before-observation-addendum-10.md.
+    let origin_ids = origins_excluding_explained_modules(current, &baseline, origin_ids);
 
     let mut seen_tests = HashSet::new();
     let baseline_test_paths: Vec<String> = diff

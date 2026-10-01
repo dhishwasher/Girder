@@ -8,7 +8,7 @@
 use super::CheckOutcome;
 use crate::project::config::{ConfiguredCommand, ProjectConfig};
 use crate::project::process::{run_captured, BoundedStatus};
-use aether_graph::{NodeId, SemanticGraph};
+use aether_graph::{origins_excluding_explained_modules, NodeId, SemanticGraph};
 use std::path::Path;
 use std::process::Command;
 use std::time::Duration;
@@ -16,9 +16,17 @@ use std::time::Duration;
 /// Nodes changed by a step's edits: the set `after.diff_from(&before)`
 /// reports as added or modified. Mirrors `review`'s before/after pattern
 /// (`crates/aether-app/src/project/commands/review.rs`), just sourced from
-/// two on-disk snapshots of the disposable copy instead of a git ref.
+/// two on-disk snapshots of the disposable copy instead of a git ref. A
+/// changed Module whose own content is fully accounted for by a sibling
+/// Function also in this list is dropped -- see
+/// `aether_graph::origins_excluding_explained_modules` and
+/// `crates/aether-app/src/project/git.rs`'s identical use of it for
+/// `test-impact`'s own CLI path; both callers need the same precise rule
+/// so `run_tests_impacted`'s mandatory check doesn't silently miss a
+/// module-level-only change bundled alongside an unrelated function edit.
 pub(crate) fn changed_node_ids(before: &SemanticGraph, after: &SemanticGraph) -> Vec<NodeId> {
-    after.diff_from(before).changed_node_ids()
+    let changed = after.diff_from(before).changed_node_ids();
+    origins_excluding_explained_modules(after, before, changed)
 }
 
 fn tests_by_language(graph: &SemanticGraph, ids: &[NodeId]) -> (Vec<String>, Vec<String>) {

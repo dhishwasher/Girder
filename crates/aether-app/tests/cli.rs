@@ -1619,6 +1619,94 @@ func TestGet(t *testing.T) {
 }
 
 #[test]
+fn test_impact_still_selects_a_module_level_test_when_an_unrelated_function_is_also_edited() {
+    // Addendum-10's confirmed "combined-origin residual": the earlier fix
+    // only dropped the false-empty symptom when the Module was the ONLY
+    // origin. Committing a module-level-only change (shrinking `table`)
+    // TOGETHER with an edit to an unrelated, ordinary, fully-resolved
+    // same-file function (`Other`) used to make the Module origin silently
+    // excluded -- `classified_impact` saw a same-file Function origin
+    // (`Other`) and assumed it already accounted for whatever changed, so
+    // `TestGet` (the real, module-affected test) went missing with zero
+    // boundaries reported, while only `TestOther` was selected. Fixed by
+    // checking whether the Module's own content, with every origin
+    // function's span masked out, is actually unchanged -- not just
+    // whether SOME same-file function origin happens to exist. See
+    // docs/observations/stage3-typescript-audit/before-observation-
+    // addendum-10.md (the confirmed repro) and the git.rs fix.
+    let repo = TempRepo::new("test-impact-combined-origin-residual");
+    repo.write("go.mod", "module example.com/sample\n\ngo 1.21\n");
+    repo.write(
+        "get_test.go",
+        r#"
+package sample
+
+import "testing"
+
+var table = []int{1, 2, 3}
+
+func Get(i int) int {
+	return table[i]
+}
+
+func TestGet(t *testing.T) {
+	_ = Get(2)
+}
+
+func Other() int {
+	return 1
+}
+
+func TestOther(t *testing.T) {
+	_ = Other()
+}
+"#,
+    );
+    repo.commit_all("baseline");
+
+    repo.write(
+        "get_test.go",
+        r#"
+package sample
+
+import "testing"
+
+var table = []int{1, 2}
+
+func Get(i int) int {
+	return table[i]
+}
+
+func TestGet(t *testing.T) {
+	_ = Get(2)
+}
+
+func Other() int {
+	return 2
+}
+
+func TestOther(t *testing.T) {
+	_ = Other()
+}
+"#,
+    );
+
+    let quiet_output =
+        run_girder_output(&["test-impact", repo.path().to_str().unwrap(), "--quiet"]);
+    assert!(quiet_output.status.success());
+    let quiet_stdout = String::from_utf8_lossy(&quiet_output.stdout);
+    assert!(
+        quiet_stdout.contains("TestGet"),
+        "the module-level-affected test must not be silently dropped just \
+         because an unrelated same-file function was also edited: {quiet_stdout:?}"
+    );
+    assert!(
+        quiet_stdout.contains("TestOther"),
+        "the ordinarily-edited function's own test must still be selected too: {quiet_stdout:?}"
+    );
+}
+
+#[test]
 fn test_impact_rejects_every_unknown_explicit_node() {
     let repo = TempRepo::new("test-impact-unknown-node");
     repo.write(

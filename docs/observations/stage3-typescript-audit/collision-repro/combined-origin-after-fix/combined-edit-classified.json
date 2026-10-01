@@ -1,0 +1,43 @@
+{
+  "boundaries": {
+    "by_category": {
+      "coverage_gap": 1
+    },
+    "count": 1,
+    "items": [
+      {
+        "caller": "crate",
+        "coverage_gap": true,
+        "file": "get_test.go",
+        "reason": "module-level-change-with-no-function-origin",
+        "site": {
+          "end_byte": 223,
+          "start_byte": 0,
+          "start_col": 0,
+          "start_row": 0
+        }
+      }
+    ],
+    "truncated": false
+  },
+  "may": {
+    "count": 0,
+    "paths": [],
+    "truncated": false
+  },
+  "must": {
+    "count": 1,
+    "paths": [
+      "crate::TestOther"
+    ],
+    "truncated": false
+  },
+  "schema_version": 1,
+  "unknown": {
+    "count": 1,
+    "paths": [
+      "crate::TestGet"
+    ],
+    "truncated": false
+  }
+}

@@ -208,28 +208,34 @@ impl SemanticGraph {
                 });
             }
         }
-        // A Module origin with no Function origin from the same file means
-        // the changed file has no language-level gap claim anywhere to
-        // trigger the "any boundary escalates everyone" rule below on its
-        // own -- confirmed to happen for real in Go, which (unlike
-        // Python/TypeScript's unconditional whole-file gap, or Rust's
-        // `#[test]` attribute's own claim) has no language construct that
-        // unconditionally produces an Unknown claim. A module-level var
-        // whose value changes a function's behavior with no syntactic call
-        // or attribute anywhere in the file (e.g. a Go package-level slice
-        // literal sized by an index another function relies on) previously
-        // produced a fully silent empty selection -- not even a boundary
-        // notice -- in every invocation form. A Function origin from the
-        // same file already means a real call-evidence boundary exists
-        // somewhere reachable from it or it wouldn't need this at all;
-        // this check is specifically for the case where the ONLY origin is
-        // the Module itself.
-        let origin_function_files: HashSet<&str> = origins
-            .iter()
-            .filter_map(|id| self.get(*id))
-            .filter(|n| n.kind == NodeKind::Function)
-            .filter_map(|n| n.file.as_deref())
-            .collect();
+        // A Module origin means the changed file has no language-level gap
+        // claim anywhere to trigger the "any boundary escalates everyone"
+        // rule below on its own -- confirmed to happen for real in Go,
+        // which (unlike Python/TypeScript's unconditional whole-file gap,
+        // or Rust's `#[test]` attribute's own claim) has no language
+        // construct that unconditionally produces an Unknown claim. A
+        // module-level var whose value changes a function's behavior with
+        // no syntactic call or attribute anywhere in the file (e.g. a Go
+        // package-level slice literal sized by an index another function
+        // relies on) previously produced a fully silent empty selection --
+        // not even a boundary notice -- in every invocation form.
+        //
+        // This used to skip a Module origin that had ANY same-file
+        // Function origin, on the assumption that origin's own evidence
+        // already accounted for whatever changed in the module. Confirmed
+        // false on a real Go graph whenever the edit ALSO touches content
+        // outside every origin function's own span (a module-level var
+        // edited alongside an unrelated function, in the same commit) --
+        // the module-affected test went missing anyway. Every caller that
+        // builds `origins` from a before/after graph pair now does that
+        // more precise "is this Module's change actually explained by a
+        // sibling Function origin" check upstream, before calling this
+        // function at all (`aether_graph::origins_excluding_explained_
+        // modules`, used by both `test-impact`'s CLI path and the
+        // `tests.impacted` plan check) -- so any Module origin that
+        // reaches this point is, by construction, genuinely unexplained,
+        // and unconditionally gets a boundary. See docs/observations/
+        // stage3-typescript-audit/before-observation-addendum-10.md.
         for &origin in origins {
             let Some(node) = self.get(origin) else {
                 continue;
@@ -237,18 +243,12 @@ impl SemanticGraph {
             if node.kind != NodeKind::Module {
                 continue;
             }
-            let same_file_function_origin = node
-                .file
-                .as_deref()
-                .is_some_and(|file| origin_function_files.contains(file));
-            if !same_file_function_origin {
-                boundaries.push(boundary(
-                    node,
-                    node.span,
-                    "module-level-change-with-no-function-origin",
-                    true,
-                ));
-            }
+            boundaries.push(boundary(
+                node,
+                node.span,
+                "module-level-change-with-no-function-origin",
+                true,
+            ));
         }
         while let Some((target, path_class)) = queue.pop_front() {
             for &(caller, edge_class) in incoming.get(&target).into_iter().flatten() {
@@ -399,13 +399,21 @@ mod tests {
     }
 
     #[test]
-    fn a_module_origin_with_a_same_file_function_origin_is_not_separately_escalated() {
-        // The common case (an ordinary function-body edit, which already
-        // carries its own Function origin and whatever boundaries that
-        // function's own evidence has) must not be additionally escalated
-        // just because the edit's Module also changed -- every edit's
-        // Module changes, by construction (Node.source for a Module is the
-        // whole file).
+    fn any_module_origin_unconditionally_escalates_in_classified_impact_itself() {
+        // `classified_impact` itself no longer tries to guess whether a
+        // Module origin's change is "already accounted for" by a sibling
+        // Function origin -- that precise, baseline-aware decision moved
+        // upstream to `origins_excluding_explained_modules` (`diff.rs`,
+        // used by both `test-impact`'s CLI path and the `tests.impacted`
+        // plan check before they ever call this function). A Module origin
+        // that still reaches `classified_impact` is, by construction,
+        // genuinely unexplained, so it unconditionally gets a boundary --
+        // confirmed here even when a same-file Function origin is ALSO
+        // present, which an earlier version of this function treated as a
+        // reason to stay silent (see docs/observations/stage3-typescript-
+        // audit/before-observation-addendum-10.md: that silence was wrong
+        // whenever the module's real change was NOT actually covered by
+        // that sibling function, the combined-origin residual).
         let mut graph = SemanticGraph::new();
         let mut module = Node::new(NodeKind::Module, "sample", "crate::sample");
         module.file = Some("sample.go".into());
@@ -418,20 +426,43 @@ mod tests {
             let node = graph.get_mut(target).unwrap();
             node.file = Some("sample.go".into());
         }
-        let test = add(&mut graph, "test", true);
+        // A test with a genuine, resolved Must-path straight to the origin
+        // -- the boundary must not downgrade it; a verified Must claim is
+        // not weakened by an unrelated boundary existing elsewhere.
+        let must_test = add(&mut graph, "must_test", true);
         {
-            let node = graph.get_mut(test).unwrap();
+            let node = graph.get_mut(must_test).unwrap();
             node.file = Some("sample.go".into());
         }
-        claims(&mut graph, test, &[(target, CallClass::Must)]);
+        claims(&mut graph, must_test, &[(target, CallClass::Must)]);
+        // A second, unrelated test with NO resolved path to anything --
+        // exactly the shape of the real Go repro (`TestGet` has no Calls
+        // edge to the module at all, since indexing into a package-level
+        // var is not a call). Only the module boundary's escalation can
+        // reach it.
+        let unresolved_test = add(&mut graph, "unresolved_test", true);
+        {
+            let node = graph.get_mut(unresolved_test).unwrap();
+            node.file = Some("sample.go".into());
+        }
 
         let result = graph.classified_impact(&[module_id, target]).tests(&graph);
-        assert_eq!(result.must, vec![test]);
-        assert!(
-            result.boundaries.is_empty(),
-            "a Module origin alongside a same-file Function origin must not \
-             add an extra boundary: {:?}",
-            result.boundaries
+        assert_eq!(result.boundaries.len(), 1);
+        assert_eq!(
+            result.boundaries[0].reason,
+            "module-level-change-with-no-function-origin"
+        );
+        assert_eq!(
+            result.must,
+            vec![must_test],
+            "a genuine, resolved Must-path must not be downgraded by an \
+             unrelated boundary: {result:?}"
+        );
+        assert_eq!(
+            result.unknown,
+            vec![unresolved_test],
+            "the boundary must still reach a test with no resolved path \
+             of its own: {result:?}"
         );
     }
 

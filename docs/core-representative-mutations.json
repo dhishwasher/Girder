@@ -9,11 +9,11 @@
   },
   "classified_aggregate": {
     "boundary_by_category": {
-      "coverage_gap": 3762,
+      "coverage_gap": 3763,
       "missing_or_invalid_evidence": 729,
       "unresolved_call_site": 5536
     },
-    "boundary_count": 10027,
+    "boundary_count": 10028,
     "executed_denominator": 2,
     "may_only_recall": 0.0,
     "may_true_positives": 0,
@@ -30,11 +30,11 @@
     {
       "classified": {
         "boundary_by_category": {
-          "coverage_gap": 3762,
+          "coverage_gap": 3763,
           "missing_or_invalid_evidence": 729,
           "unresolved_call_site": 5536
         },
-        "boundary_count": 10027,
+        "boundary_count": 10028,
         "executed_denominator": 2,
         "may": [],
         "may_false_negatives": [

@@ -1674,9 +1674,40 @@ benchmark, don't run it against the stale snapshot.
   path` gap claim to individually-attributed evidence once re-scored.
   TypeScript's own collision shape (duplicate `it()`/`describe()`
   description strings, sites 23/91) is a different mechanism, entirely
-  unaffected by this Rust-only fix, and remains unaddressed. The
-  combined-origin residual (addendum-10) is also unrelated and still
-  open.
+  unaffected by this Rust-only fix, and remains unaddressed.
+- 2026-10-01: **The combined-origin residual (addendum-10) is also now
+  fixed and verified** (`docs/observations/stage3-typescript-audit/
+  before-observation-addendum-13.md`) -- the second, final item from
+  the standing directive's "first priority." A new shared function,
+  `aether_graph::origins_excluding_explained_modules`
+  (`crates/aether-graph/src/diff.rs`), excludes a Module origin from
+  `origin_ids` only when its own source, with every sibling Function
+  origin's span masked out, is byte-identical between the git baseline
+  and current graph -- applied identically in both callers that build
+  origins from a before/after graph pair (`git.rs`'s `test-impact` CLI
+  path and `test_checks.rs`'s `tests.impacted` plan check). The first
+  implementation attempt failed its own new regression test; traced
+  (not assumed) to `classified_impact`'s OWN separate "same-file
+  Function origin exists" guard independently undoing the more precise
+  upstream decision -- fixed by simplifying that guard to unconditional
+  now that both callers pre-filter correctly before it ever runs. All
+  four gates pass; end-to-end confirmed on the rebuilt binary (sha256
+  `2861fe7cf70d016a025a4bc1e385447a62fdb9fdc1dd8b7edbfbb9bb6f327092`)
+  that the combined-edit case now selects both the module-affected and
+  the ordinarily-edited function's tests, while the common
+  single-function-edit case stays exactly as narrow as before. Oracle
+  baseline matches exactly; representative-mutation result shows one
+  benign, disclosed `+1` boundary count with precision/recall/TP/FP
+  sets all unchanged.
+  **Both items from the standing directive's "first priority" are now
+  closed**: the node-identity/collision problem (addendum-12) and the
+  combined-origin false-empty case (this entry). Per the directive
+  below, the next step is confirming `main` is green (done) and
+  pivoting to monetization readiness, not further resolver/correctness
+  expansion. Still open, unaffected by either fix: TypeScript's own
+  collision mechanism (sites 23/91), Rust's DONE audit's
+  `correction-3` re-score, and the TypeScript corpus re-extraction /
+  gate-profile step.
 
 ## Standing directive, 2026-10-01: after current correctness work closes, pivot to monetization readiness
 
