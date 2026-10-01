@@ -465,8 +465,8 @@ that do not exist). Prefer it over grepping for call sites.",
         title: "List tests affected by a change",
         description: "\
 Paid license required. \
-Name the tests that can reach the functions that changed, detected from the \
-git diff or from explicit node paths. One test name per line, ready to pass \
+Name the tests that can reach what changed, detected from the git diff or \
+from explicit node paths. One test name per line, ready to pass \
 to a test runner. An empty result means nothing needs testing — it does NOT \
 mean run everything. This selection is a conservative union: it is known to \
 over-select unrelated tests and, for any test not backed by a resolved call, \

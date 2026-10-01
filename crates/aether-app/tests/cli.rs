@@ -1469,6 +1469,57 @@ func Add(a, b int) int {
 }
 
 #[test]
+fn test_impact_quiet_is_not_empty_for_a_module_level_only_change() {
+    // A change with no Function-node origin at all (CLAUDE.md's documented
+    // `classified_impact(&[])` gap: "a const-only or type-only edit") must
+    // still select the conservative union, not silently return nothing.
+    // Before the fix, `semantic_changed_impact_with_config` filtered the
+    // changed Module node out of `origin_ids` entirely, leaving it empty
+    // and short-circuiting `classified_impact` to an empty result with no
+    // boundary notice -- a false-empty selection on a real, committed
+    // change. See docs/observations/stage3-typescript-audit/
+    // before-observation-addendum-4.md for the full investigation.
+    let repo = TempRepo::new("test-impact-module-level-only-change");
+    repo.write(
+        "src/lib.rs",
+        r#"
+pub fn add(a: i64, b: i64) -> i64 { a + b }
+
+#[test]
+fn test_add() {
+    assert_eq!(add(2, 3), 5);
+}
+"#,
+    );
+    repo.commit_all("baseline");
+
+    // Add a module-level const: no Function node's own source changes, only
+    // the Module's.
+    repo.write(
+        "src/lib.rs",
+        r#"
+const UNUSED: i64 = 7;
+
+pub fn add(a: i64, b: i64) -> i64 { a + b }
+
+#[test]
+fn test_add() {
+    assert_eq!(add(2, 3), 5);
+}
+"#,
+    );
+
+    let output = run_girder_output(&["test-impact", repo.path().to_str().unwrap(), "--quiet"]);
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("test_add"),
+        "a module-level-only change must still conservatively select the \
+         known test, not return an empty selection: {stdout:?}"
+    );
+}
+
+#[test]
 fn test_impact_rejects_every_unknown_explicit_node() {
     let repo = TempRepo::new("test-impact-unknown-node");
     repo.write(

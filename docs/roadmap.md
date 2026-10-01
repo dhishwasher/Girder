@@ -1449,17 +1449,46 @@ benchmark, don't run it against the stale snapshot.
   called from `load_file_unresolved`/`update_file`), which upserts every
   extracted node in sequence with no collision check: the second
   colliding node's upsert destroys the first's entry, attributes and
-  all. **Not yet fixed.** This is a
-  correctness gap in an already-DONE language (Rust), found by a
-  still-IN-PROGRESS language's (TypeScript's) own review process --
-  recorded here rather than only in the TypeScript stage's own
-  documents, since it is not specific to TypeScript. Recommended next
-  step, before the TypeScript gate-profile above: locate and fix the
-  node-insertion collision handling (either disambiguate colliding
-  paths, e.g. by including an impl-target/enclosing-scope discriminator
-  in the semantic path, or detect the collision and merge/preserve both
-  nodes' evidence instead of silently dropping one), then re-verify
-  with the same repro before resuming either language's Stage 3 work.
+  all. This is a correctness gap in an already-DONE language (Rust),
+  found by a still-IN-PROGRESS language's (TypeScript's) own review
+  process -- recorded here rather than only in the TypeScript stage's
+  own documents, since it is not specific to TypeScript.
+  **The false-empty `test-impact` SYMPTOM is FIXED** (commit alongside
+  this entry): `semantic_changed_impact_with_config`
+  (`crates/aether-app/src/project/git.rs`) no longer filters a changed
+  Module node out of `origin_ids`, so a change whose only detectable
+  effect is on a Module (whether from this collision, a const/type-only
+  edit, or a `describe`/`beforeEach`-level statement) now flows into
+  `classified_impact`'s existing conservative must∪may∪unknown
+  escalation instead of short-circuiting to an empty result on an empty
+  origin slice. Verified both ways: a new regression test
+  (`test_impact_quiet_is_not_empty_for_a_module_level_only_change`,
+  `crates/aether-app/tests/cli.rs`) fails on the pre-fix code (confirmed
+  by temporarily reverting the fix and re-running it alone) and passes
+  on the fixed code; all four gates pass
+  (`cargo test --workspace`, `clippy -D warnings`, `fmt --check`,
+  `node --test`). `CLAUDE.md` and the `impacted_tests` MCP tool
+  description updated to match (the documented const/type-only-edit gap
+  is closed; the tool description's "reach the functions that changed"
+  corrected to "reach what changed" since a Module can now be an
+  origin). A pre-existing test
+  (`test_impact_uses_baseline_tests_for_removed_functions`) needed its
+  own fix: the "Removed functions were detected" message's trigger
+  condition was `origin_ids.is_empty()`, which is no longer exclusive
+  with a real removal once that removal's Module-level side effect is
+  itself an origin -- changed to trigger off `baseline_test_paths`
+  directly instead.
+  **The underlying node-id-collision data loss itself is still NOT
+  fixed** -- `call_evidence_v1`/Must-Unknown classification fidelity for
+  the LOST occurrence specifically is still silently wrong (its own
+  per-call evidence is still destroyed, not merged or preserved); this
+  fix only ensures `test-impact`/`review` no longer stay silent about
+  the resulting Module-level change. Recommended next step for the
+  deeper fix, before the TypeScript gate-profile above: locate and fix
+  the node-insertion collision handling itself (either disambiguate
+  colliding paths, e.g. by including an impl-target/enclosing-scope
+  discriminator in the semantic path, or detect the collision and
+  merge/preserve both nodes' evidence instead of silently dropping one).
   The pinned TypeScript corpus checkouts used for this round's
   measurement lived in a session-scratchpad directory that does not
   persist across sessions and is now gone; before any TypeScript

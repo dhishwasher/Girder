@@ -107,13 +107,19 @@ This is the conservative must∪may∪unknown union (docs/call-classification-po
 not a targeted answer: it includes any test that cannot be proven unreachable,
 which as of Stage 1 is frequently close to the full suite (see
 docs/observations/stage1/measurement-summary-final.json). Pass --classified to
-see why each test was included. An empty selection means nothing *reachable
-via a function-node origin* needs testing — it does NOT cover a change with
-no function-node origins at all (e.g. a const-only or type-only edit;
-classified_impact(&[]) returns empty with no boundary notice, a known gap,
-see docs/roadmap.md). The guard still matters for the common case: a bare
-`cargo test $(...)` would run everything instead of respecting an empty
-selection.
+see why each test was included. An empty selection means nothing reachable
+needs testing. A change with no Function-node origin at all (a const-only
+or type-only edit, a `describe`/`beforeEach`-level statement in TypeScript,
+or a node that lost a semantic-path collision — see
+docs/observations/stage3-typescript-audit/before-observation-addendum-4.md)
+used to return empty here with no boundary notice
+(`classified_impact(&[])` short-circuiting on an empty origin list) — fixed
+by including the changed Module itself as an origin
+(`crates/aether-app/src/project/git.rs::semantic_changed_impact_with_config`),
+which flows into the same conservative must∪may∪unknown escalation every
+other origin already gets. The guard still matters for the common case: a
+bare `cargo test $(...)` would run everything instead of respecting an
+empty selection.
 
 To answer a question about the codebase: girder query . "<question>"
 No file reading required.

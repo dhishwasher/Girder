@@ -142,6 +142,11 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
             }
         } else {
             out!(sink, "\nNo currently present changed functions.");
+        }
+        // Independent of whether a changed Module origin is also present
+        // (e.g. a function's removal always changes its module's own
+        // source too) -- a real removal needs this message regardless.
+        if !baseline_test_paths.is_empty() {
             out!(
                 sink,
                 "  Removed functions were detected; using their baseline test coverage."

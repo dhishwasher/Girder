@@ -349,6 +349,21 @@ pub(crate) fn semantic_changed_impact_with_config(
         }));
     }
 
+    // A changed Module (not just a changed Function) must be included here.
+    // `claims::annotate()` does not give every statement its own Function
+    // node -- a `describe`/`beforeEach`-level statement in TypeScript, or any
+    // module-level code with no enclosing function, is only ever reflected
+    // in the Module node's own `source`/call evidence. Filtering those out
+    // used to leave `origin_ids` empty whenever the *only* thing that
+    // changed was one of these (or a node that lost a semantic-path
+    // collision -- see docs/observations/stage3-typescript-audit/
+    // before-observation-addendum-4.md), and `classified_impact(&[])`
+    // short-circuits to an empty result with no boundary notice on an empty
+    // slice -- a false-empty `test-impact` result on a real code change.
+    // Including the Module origin instead lets it flow into the existing,
+    // already-conservative "any Unknown boundary anywhere makes every
+    // function Unknown" escalation `classified_impact` already applies, the
+    // same safety net every other origin already gets.
     let mut seen_origins = HashSet::new();
     let origin_ids: Vec<NodeId> = diff
         .changed_node_ids()
@@ -356,7 +371,7 @@ pub(crate) fn semantic_changed_impact_with_config(
         .filter(|id| {
             current
                 .get(*id)
-                .map(|n| n.kind == NodeKind::Function)
+                .map(|n| matches!(n.kind, NodeKind::Function | NodeKind::Module))
                 .unwrap_or(false)
                 && seen_origins.insert(*id)
         })
