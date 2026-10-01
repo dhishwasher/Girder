@@ -52,8 +52,14 @@ tests that change could affect, without naming anything by hand — the
 thing you'd want gating a PR or a CI job, not just an interactive
 lookup.
 
-**Pricing**: $39 one-time, perpetual, for an individual. [Founding-team
-pilot pricing available on request — contact for current terms.]
+**Pricing**: $39 one-time, perpetual, per developer — [buy directly on
+Gumroad](https://maynard42.gumroad.com/l/zwpsjl), no account or sales
+conversation required. For a team: buy one key per developer who needs
+`impacted_tests`; there is no separate team SKU yet, so today "team
+pricing" is simply $39 × the number of developers who need the gated
+tool. Anyone who already has a free-tier install keeps using `get_source`,
+`find_definition`, `search_code`, `ask_codebase`, `review_changes`, and
+`orient` without buying anything.
 
 ## Current limitations, stated plainly
 
