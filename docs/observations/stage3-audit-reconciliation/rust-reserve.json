@@ -1,0 +1,1796 @@
+{
+  "sites": [
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/isomorphism.rs",
+      "line": 417,
+      "shape": "method_call",
+      "text": "if !edge_match.eq("
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/misc.rs",
+      "line": 32,
+      "shape": "macro_invocation",
+      "text": "vec![None, None, Some(\"a\")],"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 622,
+      "shape": "operator_usage",
+      "text": "T: ?Sized + Serialize,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/macros.rs",
+      "line": 3,
+      "shape": "plain_call",
+      "text": "fn clone(&self) -> Self {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/iso.rs",
+      "line": 478,
+      "shape": "operator_usage",
+      "text": "let g0 = graph_from_file(\"tests/res/graph_1000n_1000e.txt\");"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/mod.rs",
+      "line": 2074,
+      "shape": "method_call",
+      "text": "gr.remove_node(a);"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regexset/string.rs",
+      "line": 704,
+      "shape": "method_call",
+      "text": "self.0.next().map(|pid| pid.as_usize())"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 868,
+      "shape": "macro_invocation",
+      "text": "vec![vec![n(0)], vec![n(1)], vec![n(2)], vec![n(3)]],"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/ford_fulkerson.rs",
+      "line": 193,
+      "shape": "operator_usage",
+      "text": "max_flow = max_flow + path_flow;"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 877,
+      "shape": "plain_call",
+      "text": "fn f64_long_from_parts("
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/lexical/algorithm.rs",
+      "line": 42,
+      "shape": "operator_usage",
+      "text": "} else if exponent >= 0 && exponent <= max_exp + shift_exp {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 752,
+      "shape": "method_call",
+      "text": "Some(_) => return Err(self.peek_error(ErrorCode::InvalidNumber)),"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/utils/qc.rs",
+      "line": 67,
+      "shape": "path_or_associated_call",
+      "text": "Box::new(gr.shrink().map(Tournament))"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 500,
+      "shape": "macro_invocation",
+      "text": "println!(\"Sccs {:?}\", sccs);"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 1681,
+      "shape": "method_call",
+      "text": "visitor.visit_none()"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 686,
+      "shape": "plain_call",
+      "text": "x|y   alternation (x or y, prefer x)"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1652,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(g.edges(node_index(4)).count(), 2);"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/raw.rs",
+      "line": 560,
+      "shape": "path_or_associated_call",
+      "text": "crate::Deserializer::from_str(&self.json).deserialize_bool(visitor)"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 1933,
+      "shape": "method_call",
+      "text": "writer.write_all(fragment.as_bytes())"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 1194,
+      "shape": "method_call",
+      "text": "let fas: Vec<EdgeIndex> = greedy_feedback_arc_set(&g).map(|e| e.id()).collect();"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "benches/ograph.rs",
+      "line": 9,
+      "shape": "plain_call",
+      "text": "fn bench_inser(b: &mut test::Bencher) {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 161,
+      "shape": "macro_invocation",
+      "text": "assert!(nx1 != nx2);"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/mod.rs",
+      "line": 780,
+      "shape": "method_call",
+      "text": "if pointer.is_empty() {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/k_shortest_path.rs",
+      "line": 82,
+      "shape": "operator_usage",
+      "text": "G::NodeId: Eq + Hash,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graphmap.rs",
+      "line": 227,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(gr.node_count(), 4);"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 214,
+      "shape": "plain_call",
+      "text": "fn serialize_unit_variant("
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 441,
+      "shape": "path_or_associated_call",
+      "text": "Number::from_f64(value).ok_or_else(|| de::Error::custom(\"not a JSON number\"))"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 618,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(dags_exp, dags);"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 700,
+      "shape": "operator_usage",
+      "text": "if key == crate::number::TOKEN {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/read.rs",
+      "line": 545,
+      "shape": "plain_call",
+      "text": "fn next(&mut self) -> Result<Option<u8>> {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 954,
+      "shape": "macro_invocation",
+      "text": "tri!(self"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/de.rs",
+      "line": 683,
+      "shape": "plain_call",
+      "text": "None => Ok(None),"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 208,
+      "shape": "path_or_associated_call",
+      "text": "N::Float(_) => None,"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 971,
+      "shape": "operator_usage",
+      "text": "[OSS-fuzz project]: https://android.googlesource.com/platform/external/oss-fuzz/+/refs/tags/android-t-preview-1/projects/rust-regex/"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 2232,
+      "shape": "macro_invocation",
+      "text": "deserialize_numeric_key!(deserialize_u8);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/serialization.rs",
+      "line": 220,
+      "shape": "path_or_associated_call",
+      "text": "next: [EdgeIndex::end(); 2],"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/ford_fulkerson.rs",
+      "line": 32,
+      "shape": "macro_invocation",
+      "text": "panic!(\"Illegal endpoint {}\", end_point);"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/lexical/rounding.rs",
+      "line": 288,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(fp.mant, (1 << 52) + 1);"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1541,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(s, expected);"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/suite_string_set.rs",
+      "line": 20,
+      "shape": "path_or_associated_call",
+      "text": "let hay = match std::str::from_utf8(test.haystack()) {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/iso.rs",
+      "line": 209,
+      "shape": "method_call",
+      "text": "let lines = s.lines().filter(|l| !l.is_empty());"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 1091,
+      "shape": "macro_invocation",
+      "text": "assert!(gr2.edge_weight(edge_index(i)).is_none());"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/dot.rs",
+      "line": 66,
+      "shape": "operator_usage",
+      "text": "G: IntoNodeReferences + IntoEdgeReferences,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/filter.rs",
+      "line": 26,
+      "shape": "fn_pointer_or_closure",
+      "text": "(*self)(n)"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/serialization.rs",
+      "line": 166,
+      "shape": "plain_call",
+      "text": "nodes: Somes(node_count, nodes),"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 132,
+      "shape": "method_call",
+      "text": "let h = gr.add_node(\"H\");"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1591,
+      "shape": "path_or_associated_call",
+      "text": "let mut g = MatrixGraph::new();"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regex/string.rs",
+      "line": 1033,
+      "shape": "plain_call",
+      "text": "pub fn shortest_match_at("
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/mod.rs",
+      "line": 743,
+      "shape": "plain_call",
+      "text": "Some(x) => (x.node, x.next),"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1594,
+      "shape": "method_call",
+      "text": "while let Some((key, value)) = visitor.next_entry()? {"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 766,
+      "shape": "operator_usage",
+      "text": "(?P&lt;name&gt;exp)  named (also numbered) capture group (names must be alpha-numeric)"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/serialization.rs",
+      "line": 278,
+      "shape": "macro_invocation",
+      "text": "E::custom(format_args!("
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 211,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident () (: $($rest:tt)*) ($colon:tt $($copy:tt)*)) => {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/error.rs",
+      "line": 391,
+      "shape": "plain_call",
+      "text": "fn source(&self) -> Option<&(dyn error::Error + 'static)> {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 821,
+      "shape": "path_or_associated_call",
+      "text": "if Ty::is_directed() {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1365,
+      "shape": "method_call",
+      "text": "g.add_edge(n1, n0, ());"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 2525,
+      "shape": "path_or_associated_call",
+      "text": "let outer = Outer::deserialize(serde::de::value::MapDeserializer::new("
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 55,
+      "shape": "operator_usage",
+      "text": "match *self {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/matching.rs",
+      "line": 76,
+      "shape": "method_call",
+      "text": "collect(m.edges()),"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/serialization.rs",
+      "line": 212,
+      "shape": "method_call",
+      "text": "deserializer.deserialize_seq("
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/tred.rs",
+      "line": 124,
+      "shape": "method_call",
+      "text": "tred.add_edge(i, x, ());"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1926,
+      "shape": "path_or_associated_call",
+      "text": "Value::deserialize(&mut deserializer).unwrap();"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/dot.rs",
+      "line": 328,
+      "shape": "macro_invocation",
+      "text": "let dot = format!(\"{:?}\", Dot::with_config(&graph, &[Config::NodeNoLabel]));"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/error.rs",
+      "line": 37,
+      "shape": "path_or_associated_call",
+      "text": "Error::CompiledTooBig(size_limit)"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 628,
+      "shape": "path_or_associated_call",
+      "text": "let mut de = Deserializer::from_str(&twoline);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 124,
+      "shape": "operator_usage",
+      "text": "seen_k |= k == node;"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/page_rank.rs",
+      "line": 62,
+      "shape": "macro_invocation",
+      "text": "assert!("
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 746,
+      "shape": "plain_call",
+      "text": "fn from(u: $ty) -> Self {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graphmap.rs",
+      "line": 1238,
+      "shape": "operator_usage",
+      "text": "N: Copy + Ord + Hash,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/serialization.rs",
+      "line": 115,
+      "shape": "operator_usage",
+      "text": "Ix: IndexType + Deserialize<'de>,"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 455,
+      "shape": "method_call",
+      "text": ".end_string(&mut self.writer)"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/de.rs",
+      "line": 581,
+      "shape": "path_or_associated_call",
+      "text": "Some(Value::Array(v)) => {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 979,
+      "shape": "method_call",
+      "text": ".write_u32(&mut self.ser.writer, value)"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/read.rs",
+      "line": 778,
+      "shape": "plain_call",
+      "text": "fn position(&self) -> Position {"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regexset/string.rs",
+      "line": 679,
+      "shape": "plain_call",
+      "text": "return Some(id);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/traversal.rs",
+      "line": 380,
+      "shape": "operator_usage",
+      "text": "G: GraphRef + Visitable<NodeId = N, Map = VM>,"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/find_byte.rs",
+      "line": 6,
+      "shape": "operator_usage",
+      "text": "#[cfg(not(feature = \"perf-literal\"))]"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/scored.rs",
+      "line": 42,
+      "shape": "method_call",
+      "text": "} else if a.ne(a) && b.ne(b) {"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/error.rs",
+      "line": 93,
+      "shape": "macro_invocation",
+      "text": "write!(f, \")\")?;"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/lexical/rounding.rs",
+      "line": 281,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(fp.exp, -52);"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regexset/string.rs",
+      "line": 722,
+      "shape": "macro_invocation",
+      "text": "write!(f, \"RegexSet({:?})\", self.patterns())"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/mod.rs",
+      "line": 348,
+      "shape": "plain_call",
+      "text": "pub fn is_object(&self) -> bool {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1395,
+      "shape": "method_call",
+      "text": "g.add_edge(a, b, \"ab\");"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/io/core.rs",
+      "line": 57,
+      "shape": "plain_call",
+      "text": "fn flush(&mut self) -> Result<()> {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/traversal.rs",
+      "line": 58,
+      "shape": "operator_usage",
+      "text": "N: Copy + PartialEq,"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 104,
+      "shape": "operator_usage",
+      "text": "c => $a >= c / 10 && ($a > c / 10 || $b > c % 10),"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/matching.rs",
+      "line": 251,
+      "shape": "method_call",
+      "text": "if !visited.is_visited(&target) {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/mod.rs",
+      "line": 1084,
+      "shape": "plain_call",
+      "text": "#[cfg(not(debug_assertions))]"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 279,
+      "shape": "method_call",
+      "text": "gr.add_edge(d, f, 6.);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/mod.rs",
+      "line": 1769,
+      "shape": "method_call",
+      "text": "if node.weight.is_some() {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 1145,
+      "shape": "method_call",
+      "text": "self.scratch.extend(enclosing.take());"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 1932,
+      "shape": "method_call",
+      "text": "let j = g.add_node(\"J\");"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/mod.rs",
+      "line": 1448,
+      "shape": "path_or_associated_call",
+      "text": "Pair::One(an) => {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/quickcheck.rs",
+      "line": 56,
+      "shape": "operator_usage",
+      "text": "if p <= edge_prob {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/mod.rs",
+      "line": 1248,
+      "shape": "method_call",
+      "text": "edges: edges.collect(),"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/lexical/num.rs",
+      "line": 15,
+      "shape": "plain_call",
+      "text": "fn as_primitive_test() {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/serialization.rs",
+      "line": 244,
+      "shape": "method_call",
+      "text": ".map_err(|i| invalid_node_err(i.index(), node_bound))?;"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1787,
+      "shape": "macro_invocation",
+      "text": "assert!(from_str::<Box<RawValue>>(r#\"\"\\ud83c\\u0061\"\"#).is_ok());"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 542,
+      "shape": "operator_usage",
+      "text": "if d == Outgoing {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/mod.rs",
+      "line": 787,
+      "shape": "path_or_associated_call",
+      "text": "let overflow = self > Self::default() && rhs > Self::default() && self > std::$t::MAX - rhs;"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/lexical/math.rs",
+      "line": 53,
+      "shape": "plain_call",
+      "text": "#[cfg(fast_arithmetic = \"64\")]"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 1116,
+      "shape": "method_call",
+      "text": "self.eat_char();"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1046,
+      "shape": "path_or_associated_call",
+      "text": "(\"1e-999\", Number::from_string_unchecked(\"1e-999\".to_owned())),"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 1803,
+      "shape": "path_or_associated_call",
+      "text": "let ret = visitor.visit_map(MapAccess::new(self));"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graphmap.rs",
+      "line": 960,
+      "shape": "path_or_associated_call",
+      "text": "let index = Self::edge_key(index.0, index.1);"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/error.rs",
+      "line": 61,
+      "shape": "operator_usage",
+      "text": "match *self {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1622,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(g.edges_directed(node_index(5), Outgoing).count(), 0);"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1028,
+      "shape": "path_or_associated_call",
+      "text": "(\"0.4\", Number::from_f64(0.4).unwrap()),"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/lexical/math.rs",
+      "line": 531,
+      "shape": "method_call",
+      "text": "x.pop();"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 547,
+      "shape": "method_call",
+      "text": "self.eat_char();"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/isomorphism.rs",
+      "line": 526,
+      "shape": "plain_call",
+      "text": "Some(ix) => {"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 847,
+      "shape": "operator_usage",
+      "text": "*would not* match invalid UTF-8. One good example of this is using an ASCII"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/regression/issue795.rs",
+      "line": 60,
+      "shape": "macro_invocation",
+      "text": "let j = json!({\"Variant\":{\"x\":0,\"y\":0}});"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graphmap.rs",
+      "line": 829,
+      "shape": "path_or_associated_call",
+      "text": "mem::swap(&mut a, &mut b);"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/raw.rs",
+      "line": 400,
+      "shape": "macro_invocation",
+      "text": "tri!(deserializer.deserialize_identifier(FieldVisitor));"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 341,
+      "shape": "method_call",
+      "text": "Err(err) => Err(self.fix_position(err)),"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/de.rs",
+      "line": 761,
+      "shape": "plain_call",
+      "text": "Ok(map)"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/dijkstra.rs",
+      "line": 80,
+      "shape": "operator_usage",
+      "text": "G::NodeId: Eq + Hash,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/csr.rs",
+      "line": 591,
+      "shape": "plain_call",
+      "text": "#[derive(Clone, Debug)]"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/ser.rs",
+      "line": 513,
+      "shape": "path_or_associated_call",
+      "text": "Ok(itoa::Buffer::new().format(value).to_owned())"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "benches/bellman_ford.rs",
+      "line": 20,
+      "shape": "operator_usage",
+      "text": "let j_from = max(0, i as i32 - neighbour_count as i32 / 2) as usize;"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/mod.rs",
+      "line": 1439,
+      "shape": "plain_call",
+      "text": "#[cfg(feature = \"serde-1\")]"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 2030,
+      "shape": "operator_usage",
+      "text": "W: ?Sized + io::Write,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/simple_paths.rs",
+      "line": 174,
+      "shape": "macro_invocation",
+      "text": "println!(\"{}\", Dot::new(&graph));"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 358,
+      "shape": "method_call",
+      "text": ".map_err(Error::io));"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/builders.rs",
+      "line": 1694,
+      "shape": "plain_call",
+      "text": "pub fn line_terminator(&mut self, byte: u8) -> &mut RegexBuilder {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/serialization.rs",
+      "line": 345,
+      "shape": "operator_usage",
+      "text": "Ix: IndexType + Deserialize<'de>,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/unionfind.rs",
+      "line": 47,
+      "shape": "macro_invocation",
+      "text": "let rank = vec![0; n];"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 2360,
+      "shape": "method_call",
+      "text": "graph.add_edge(c, g, ());"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 2543,
+      "shape": "macro_invocation",
+      "text": "assert_ne!(rand.hash_one(k1), rand.hash_one(k2));"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/ser.rs",
+      "line": 134,
+      "shape": "plain_call",
+      "text": "fn serialize_u128(self, value: u128) -> Result<Value> {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/adj.rs",
+      "line": 544,
+      "shape": "method_call",
+      "text": "let iter = self.suc[a.index()]"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 306,
+      "shape": "plain_call",
+      "text": "pub fn remove_node(&mut self, a: NodeIndex<Ix>) -> N {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/feedback_arc_set.rs",
+      "line": 87,
+      "shape": "path_or_associated_call",
+      "text": "bidirectional_nve_dd: Vec::new(),"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 805,
+      "shape": "plain_call",
+      "text": "to_flat_square_matrix_position(row, column, width)"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graphmap.rs",
+      "line": 418,
+      "shape": "macro_invocation",
+      "text": ".for_each(|(i, n)| assert_eq!(i as u32, n));"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/stream.rs",
+      "line": 169,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(second.to_string(), \"trailing characters at line 1 column 2\");"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 2284,
+      "shape": "plain_call",
+      "text": "Ok(())"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 620,
+      "shape": "operator_usage",
+      "text": "`&str`-based `Regex`, but `(?-u:\\W)` will attempt to match *any byte* that"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/mod.rs",
+      "line": 91,
+      "shape": "operator_usage",
+      "text": "G: NodeCompactIndexable + IntoEdgeReferences,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/iso.rs",
+      "line": 566,
+      "shape": "plain_call",
+      "text": "subgraph_isomorphisms_iter(&&sub, &&g, &mut node_match, &mut edge_match)"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/mod.rs",
+      "line": 610,
+      "shape": "path_or_associated_call",
+      "text": "let mut condensed: Graph<Vec<N>, E, Ty, Ix> = Graph::with_capacity(sccs.len(), g.edge_count());"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 1797,
+      "shape": "method_call",
+      "text": "_ => writer.write_all(&[b'\\\\', escape_char]),"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 229,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident ($($key:tt)*) (: $($unexpected:tt)+) $copy:tt) => {"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/suite_bytes_set.rs",
+      "line": 22,
+      "shape": "path_or_associated_call",
+      "text": "\"which\" => TestResult::which(re.matches(test.haystack()).iter()),"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/mod.rs",
+      "line": 276,
+      "shape": "macro_invocation",
+      "text": "IntoNodeReferences! {delegate_impl []}"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/de.rs",
+      "line": 111,
+      "shape": "path_or_associated_call",
+      "text": "let mut vec = Vec::new();"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/raw.rs",
+      "line": 392,
+      "shape": "operator_usage",
+      "text": "if s == TOKEN {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/csr.rs",
+      "line": 1123,
+      "shape": "macro_invocation",
+      "text": "println!(\"{:?}\", g);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/data.rs",
+      "line": 232,
+      "shape": "plain_call",
+      "text": "#[cfg(feature = \"stable_graph\")]"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 1844,
+      "shape": "plain_call",
+      "text": "(Ok(ret), Ok(())) => Ok(ret),"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "benches/iso.rs",
+      "line": 24,
+      "shape": "plain_call",
+      "text": "fn petersen_undir_iso_bench(bench: &mut Bencher) {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1815,
+      "shape": "operator_usage",
+      "text": "\"a/b\": 1,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graphmap.rs",
+      "line": 360,
+      "shape": "path_or_associated_call",
+      "text": "if Ty::is_directed() {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/lexical/math.rs",
+      "line": 29,
+      "shape": "method_call",
+      "text": "for xi in x.chunks(2) {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 393,
+      "shape": "method_call",
+      "text": "let _index = g.add_edge(a, b, ());"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/partial_eq.rs",
+      "line": 38,
+      "shape": "plain_call",
+      "text": "fn eq(&self, other: &&str) -> bool {"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 86,
+      "shape": "operator_usage",
+      "text": "$ mkdir regex-example"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/mod.rs",
+      "line": 462,
+      "shape": "path_or_associated_call",
+      "text": "nodes: Vec::new(),"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/de.rs",
+      "line": 957,
+      "shape": "operator_usage",
+      "text": "match *self {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 375,
+      "shape": "macro_invocation",
+      "text": "\"a\".to_owned() => treemap![\"a\" => vec![1,2,3]],"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/ford_fulkerson.rs",
+      "line": 162,
+      "shape": "macro_invocation",
+      "text": "let mut flows = vec![N::EdgeWeight::zero(); network.edge_count()];"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1572,
+      "shape": "method_call",
+      "text": "let c = g.add_node('c');"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/matching.rs",
+      "line": 450,
+      "shape": "method_call",
+      "text": "queue.push_back(labeled);"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regex/bytes.rs",
+      "line": 1121,
+      "shape": "path_or_associated_call",
+      "text": "let input = Input::new(haystack).span(start..haystack.len());"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 454,
+      "shape": "path_or_associated_call",
+      "text": "Neighbors(Edges::on_columns("
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/de.rs",
+      "line": 1306,
+      "shape": "method_call",
+      "text": "visitor.visit_newtype_struct(self)"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 500,
+      "shape": "method_call",
+      "text": ".map_err(Error::io));"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/de.rs",
+      "line": 478,
+      "shape": "method_call",
+      "text": "_ => Err(self.invalid_type(&visitor)),"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 831,
+      "shape": "macro_invocation",
+      "text": "vec![n(1), n(4), n(7)],"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 144,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident () () ()) => {};"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/data.rs",
+      "line": 422,
+      "shape": "fn_pointer_or_closure",
+      "text": "let keep = (self.f)(match elt {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1722,
+      "shape": "macro_invocation",
+      "text": "let bytes = ByteBuf::from(vec![237, 160, 188, 10]);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 1997,
+      "shape": "method_call",
+      "text": "let a = g.add_node(\"A\");"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 237,
+      "shape": "plain_call",
+      "text": "#[cfg(not(feature = \"arbitrary_precision\"))]"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1008,
+      "shape": "plain_call",
+      "text": "#[derive(Serialize)]"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/dominators.rs",
+      "line": 48,
+      "shape": "method_call",
+      "text": "self.dominators.get(&node).cloned()"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/dfsvisit.rs",
+      "line": 302,
+      "shape": "macro_invocation",
+      "text": "debug_assert!(first_finish);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 148,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(Bfs::new(&gr, k).iter(Reversed(&gr)).count(), 3);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 908,
+      "shape": "macro_invocation",
+      "text": "vec![n(2), n(5), n(8)],"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 1901,
+      "shape": "operator_usage",
+      "text": "W: ?Sized + io::Write,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 2097,
+      "shape": "operator_usage",
+      "text": "if v == goal {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/lexical/float.rs",
+      "line": 162,
+      "shape": "plain_call",
+      "text": "check_round_to_f64(13611294676837537792, -130, 6646139978924579, -119);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/feedback_arc_set.rs",
+      "line": 288,
+      "shape": "method_call",
+      "text": "self.suitable_bucket(out_ix, nodes).remove(out_ix, nodes);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/stable_graph.rs",
+      "line": 307,
+      "shape": "macro_invocation",
+      "text": "itertools::assert_equal(g.neighbors(d), vec![a]);"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/suite_bytes_set.rs",
+      "line": 68,
+      "shape": "method_call",
+      "text": ".line_terminator(test.line_terminator())"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 173,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident ($($key:tt)+) (: false $($rest:tt)*) $copy:tt) => {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1919,
+      "shape": "path_or_associated_call",
+      "text": "let brackets: String = iter::repeat('[')"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 53,
+      "shape": "plain_call",
+      "text": "#[doc(hidden)]"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graphmap.rs",
+      "line": 398,
+      "shape": "operator_usage",
+      "text": "let exist2 = if a != b {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 152,
+      "shape": "plain_call",
+      "text": "fn is_zero(&self) -> bool;"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/serialization.rs",
+      "line": 288,
+      "shape": "macro_invocation",
+      "text": "edges: vec![],"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/mod.rs",
+      "line": 1998,
+      "shape": "method_call",
+      "text": "gr.remove_node(a);"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/replace.rs",
+      "line": 6,
+      "shape": "path_or_associated_call",
+      "text": "let re = regex::Regex::new($re).unwrap();"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graphmap.rs",
+      "line": 1404,
+      "shape": "operator_usage",
+      "text": "N: NodeTrait + Send + Sync,"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 821,
+      "shape": "operator_usage",
+      "text": "T: ?Sized + Serialize,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 1948,
+      "shape": "path_or_associated_call",
+      "text": "let mut dfs = Dfs::new(&ef_a, a);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/csr.rs",
+      "line": 173,
+      "shape": "plain_call",
+      "text": "Some(x) => x,"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 925,
+      "shape": "operator_usage",
+      "text": "[[:word:]]     word characters ([0-9A-Za-z_])"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "benches/matrix_graph.rs",
+      "line": 193,
+      "shape": "plain_call",
+      "text": "fn full_neighbors_in(bench: &mut Bencher) {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/ser.rs",
+      "line": 1059,
+      "shape": "operator_usage",
+      "text": "T: ?Sized + Display,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/mod.rs",
+      "line": 191,
+      "shape": "macro_invocation",
+      "text": "IntoEdgesDirected! {delegate_impl []}"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/floyd_warshall.rs",
+      "line": 187,
+      "shape": "method_call",
+      "text": "let a = graph.add_node(());"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/suite_string.rs",
+      "line": 22,
+      "shape": "path_or_associated_call",
+      "text": "let hay = match std::str::from_utf8(test.haystack()) {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/mod.rs",
+      "line": 1129,
+      "shape": "macro_invocation",
+      "text": "debug_assert_eq!(self.edge_count(), self.raw_edges().len() - free_edge_len);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 686,
+      "shape": "macro_invocation",
+      "text": "assert!("
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 710,
+      "shape": "operator_usage",
+      "text": "pub struct Neighbors<'a, Ty: EdgeType, Null: 'a + Nullable, Ix>(Edges<'a, Ty, Null, Ix>);"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 2358,
+      "shape": "path_or_associated_call",
+      "text": "let wrapper_to_value = serde_json::to_value(&wrapper_from_str).unwrap();"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 2225,
+      "shape": "method_call",
+      "text": ".unwrap_err()"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 821,
+      "shape": "method_call",
+      "text": "if let Some(distance) = dijkstra_res.get(&node2) {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 2490,
+      "shape": "plain_call",
+      "text": "Err(e) => {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/ser.rs",
+      "line": 213,
+      "shape": "operator_usage",
+      "text": "T: ?Sized + Serialize,"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 261,
+      "shape": "macro_invocation",
+      "text": "tri!(self"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/mod.rs",
+      "line": 1441,
+      "shape": "plain_call",
+      "text": "fn link_edges(&mut self) -> Result<(), NodeIndex<Ix>> {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/serialization.rs",
+      "line": 197,
+      "shape": "operator_usage",
+      "text": "Ix: IndexType + Deserialize<'de>,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/isomorphism.rs",
+      "line": 793,
+      "shape": "path_or_associated_call",
+      "text": ".map(|n| usize::try_from(*n).ok())"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/mod.rs",
+      "line": 1161,
+      "shape": "operator_usage",
+      "text": "<Self as IndexMut<T>>::index_mut(&mut *self_mut, i),"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 1472,
+      "shape": "path_or_associated_call",
+      "text": "let mut topo = Topo::new(&gr);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/isomorphism.rs",
+      "line": 329,
+      "shape": "macro_invocation",
+      "text": "field!(st, 1 - $j).graph.from_index(m_neigh),"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 1759,
+      "shape": "operator_usage",
+      "text": "W: ?Sized + io::Write,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/mod.rs",
+      "line": 924,
+      "shape": "operator_usage",
+      "text": "if i >= node_bound {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/mod.rs",
+      "line": 239,
+      "shape": "plain_call",
+      "text": "pub fn node_count(&self) -> usize {"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/mod.rs",
+      "line": 463,
+      "shape": "path_or_associated_call",
+      "text": "edges: Vec::new(),"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/isomorphism.rs",
+      "line": 648,
+      "shape": "operator_usage",
+      "text": "&& st.0.ins_size == st.1.ins_size)"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/builders.rs",
+      "line": 224,
+      "shape": "path_or_associated_call",
+      "text": "RegexBuilder { builder: Builder::new([pattern]) }"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 2479,
+      "shape": "plain_call",
+      "text": "Ok(value)"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/ser.rs",
+      "line": 893,
+      "shape": "path_or_associated_call",
+      "text": "Error::syntax(ErrorCode::ExpectedSomeValue, 0, 0)"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/ser.rs",
+      "line": 281,
+      "shape": "plain_call",
+      "text": "fn serialize_struct_variant("
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/mod.rs",
+      "line": 1412,
+      "shape": "path_or_associated_call",
+      "text": "if source != NodeIndex::end() && target != NodeIndex::end() {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1501,
+      "shape": "path_or_associated_call",
+      "text": "Ok(MyVec(Vec::new()))"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 496,
+      "shape": "path_or_associated_call",
+      "text": "let mut g = Self::default();"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 1757,
+      "shape": "plain_call",
+      "text": "(Err(err), _) | (_, Err(err)) => Err(err),"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regex/string.rs",
+      "line": 1110,
+      "shape": "path_or_associated_call",
+      "text": "let input = Input::new(haystack).span(start..haystack.len());"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 1844,
+      "shape": "operator_usage",
+      "text": "W: ?Sized + io::Write,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/isomorphism.rs",
+      "line": 342,
+      "shape": "macro_invocation",
+      "text": "for n_neigh in field!(st, $j)"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/mod.rs",
+      "line": 226,
+      "shape": "path_or_associated_call",
+      "text": "self.free_edge = EdgeIndex::end();"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/builders.rs",
+      "line": 548,
+      "shape": "plain_call",
+      "text": "pub fn swap_greed(&mut self, yes: bool) -> &mut RegexBuilder {"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/lib.rs",
+      "line": 55,
+      "shape": "macro_invocation",
+      "text": "load!(\"fowler/repetition\");"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/bytes.rs",
+      "line": 83,
+      "shape": "operator_usage",
+      "text": "6. In ASCII compatible mode, `.` matches any *byte* except for `\\n`. When the"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1728,
+      "shape": "plain_call",
+      "text": "fn test_not_zero() {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/lexical/math.rs",
+      "line": 470,
+      "shape": "macro_invocation",
+      "text": "debug_assert!(n < bits);"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 544,
+      "shape": "operator_usage",
+      "text": "* The character classes `\\w`, `\\d` and `\\s` are all Unicode-aware by default."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 2118,
+      "shape": "macro_invocation",
+      "text": "let variant = tri!(seed.deserialize(&mut *self.de));"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/traversal.rs",
+      "line": 352,
+      "shape": "operator_usage",
+      "text": "G: IntoNeighborsDirected + Visitable<NodeId = N, Map = VM>,"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/traversal.rs",
+      "line": 164,
+      "shape": "path_or_associated_call",
+      "text": "let mut dfs = Self::empty(graph);"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 678,
+      "shape": "operator_usage",
+      "text": "precedence, and are evaluated in left-to-right order. For example,"
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/builders.rs",
+      "line": 112,
+      "shape": "path_or_associated_call",
+      "text": "let patterns = Arc::from(self.pats.as_slice());"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/mod.rs",
+      "line": 915,
+      "shape": "path_or_associated_call",
+      "text": "let mut result_g = StableGraph::with_capacity(node_bound, edge_bound);"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/data.rs",
+      "line": 32,
+      "shape": "macro_invocation",
+      "text": "trait_template! {"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/ser.rs",
+      "line": 260,
+      "shape": "path_or_associated_call",
+      "text": "vec: Vec::with_capacity(len),"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/read.rs",
+      "line": 551,
+      "shape": "plain_call",
+      "text": "Some(ch)"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 511,
+      "shape": "macro_invocation",
+      "text": "b'.' => ParserNumber::F64(tri!(self.parse_decimal(positive, significand, 0))),"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/ford_fulkerson.rs",
+      "line": 165,
+      "shape": "path_or_associated_call",
+      "text": "let mut path_flow = N::EdgeWeight::max();"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 1871,
+      "shape": "method_call",
+      "text": "let f = g.add_node(\"F\");"
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/csr.rs",
+      "line": 510,
+      "shape": "plain_call",
+      "text": "#[derive(Debug, Clone)]"
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 241,
+      "shape": "path_or_associated_call",
+      "text": "} else if let Ok(i) = i64::try_from(i) {"
+    }
+  ]
+}
