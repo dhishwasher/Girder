@@ -1,5 +1,12 @@
 # Girder for teams
 
+> **Paused, 2026-10-01.** The user stopped all monetization-architecture
+> work to focus on shipping the current, free release cleanly first
+> (`docs/roadmap.md`). This document describes a paid-tier narrative that
+> does not currently exist and is not being built yet — not linked from
+> `README.md`, kept for its factual free/paid audit trail, not as
+> customer-facing copy.
+
 ## The problem
 
 AI coding agents (Claude Code, Codex, Cursor, and others) move fast

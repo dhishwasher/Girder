@@ -1741,6 +1741,33 @@ as gap 11 rather than silently accepted.
     keep the offline, dependency-free guarantee this module (and the whole
     default build) commits to.
 
+28. **Open — TypeScript's own node-identity collision mechanism (duplicate
+    `it()`/`describe()` description strings) is a separate, undiagnosed
+    shape from the Rust trait-impl collision this program found and fixed.**
+    The underlying bug class — two distinct semantic entities computing the
+    same content-hash `NodeId`, so the later one silently overwrites the
+    earlier one's graph node including its own call evidence — was confirmed
+    real and fixed for Rust's trait-impl-method shape (qualified-path fix,
+    `crates/aether-builder/src/mapper.rs`, commit `67dfae9`; see
+    `docs/observations/stage3-typescript-audit/before-observation-
+    addendum-4.md` onward for the full investigation). TypeScript's own
+    instance of the same bug class — two `it()`/`describe()` calls with an
+    identical literal description string in the same enclosing scope
+    computing the same semantic path — has not been fixed; the mechanism is
+    named here so it is not quietly implied to be covered by the Rust fix.
+    This is part of why TypeScript support is marked **in progress**, not
+    done, in `README.md` and `docs/typescript-support.md`.
+29. **Open — Go's own Stage 3 ground-truth audit is not complete.** Rust and
+    Python Stage 3 audits (hand-labeled ground truth against real
+    open-source repositories, frozen rubric) are both marked DONE with
+    committed passing evidence (`docs/roadmap.md`). TypeScript's Stage 3 is
+    explicitly IN PROGRESS. Go has not had the same Stage 3 audit run against
+    it at all — its only committed measurement is the narrower
+    `docs/go-support.md` gate (micro-recall `0.954545` against a `1.0` gate
+    on a smaller, earlier corpus), not a Rust/Python-equivalent audit. Do not
+    read Go's presence in the language list as evidence of the same maturity
+    as Rust or Python.
+
 Girder's potential advantage is not generic semantic search. It is one local,
 inspectable model connecting code identity, predicted impact, selected tests,
 validated projection, and recoverable commit. That advantage is unproven until

@@ -4,11 +4,11 @@ These terms apply to Girder 0.2.4 and later. Earlier Girder releases remain
 under the terms distributed with those versions. You may copy, modify, and
 redistribute Girder, and you may use it internally, including for commercial
 work, subject to the terms below. The free-tier tools (`get_source`,
-`find_definition`, `search_code`, `ask_codebase`, and `review_changes`) remain
-free for one repository, with no license key and no expiry. A valid paid key is
-required for `orient` and `impacted_tests`; you may not bypass the license-key
-check or remove or obscure the features it protects. You may not offer Girder
-itself as a competing hosted or managed service.
+`find_definition`, `search_code`, `ask_codebase`, `review_changes`, `orient`,
+and `impacted_tests`) remain free for one repository, with no license key and
+no expiry. If a future release adds a feature protected by a license key, you
+may not bypass that check or remove or obscure the feature it protects. You
+may not offer Girder itself as a competing hosted or managed service.
 
 Business Source License 1.1
 
@@ -31,9 +31,10 @@ Additional Use Grant: You may make production use of the Licensed Work for any
 
                       For clarity, condition 2 does not require a license key
                       for the free-tier functionality: `get_source`,
-                      `find_definition`, `search_code`, `ask_codebase`, and
-                      `review_changes` on one repository. That functionality
-                      may be used without a key and does not expire.
+                      `find_definition`, `search_code`, `ask_codebase`,
+                      `review_changes`, `orient`, and `impacted_tests` on one
+                      repository. That functionality may be used without a
+                      key and does not expire.
 Change Date:          2030-09-04
 Change License:       Apache License, Version 2.0
 

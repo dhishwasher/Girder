@@ -2,34 +2,73 @@
 
 <!-- mcp-name: io.github.dhishwasher/girder -->
 
-**Girder gives coding agents exactly the code they need, instead of whole
-files.** It parses your repository into a living semantic graph — functions,
-definitions, call edges — and answers questions against that graph: exact
-function source, callers and callees, impact analysis, conservative test
-selection, and verified graph-addressed edits. It is one static Rust binary that any agent
-can drive over MCP, plus an optional native IDE.
+**Girder gives AI coding agents precise code context and conservative
+change-impact/test information from a local semantic graph.** It parses your
+repository into a graph of real functions and call edges — not text search —
+and answers questions against it: exact function source instead of whole
+files, and a conservative list of the tests a change may affect instead of
+guessing. It runs as one static binary, with no account and no cloud
+dependency.
 
 ```bash
-npx -y girder-mcp setup --dry-run
 npx -y girder-mcp setup
 ```
 
-**Languages:** Rust, Python, TypeScript/TSX, and Go. Rust and Python are the most
-mature; TypeScript and Go are measured and gated, with their limits written
-down ([TypeScript](./docs/typescript-support.md), [Go](./docs/go-support.md)).
+That one command detects and configures Claude Code, Codex, and Cursor. Two
+real, captured outputs (see
+[`docs/observations/release-prep/`](./docs/observations/release-prep/) for
+exact provenance):
 
-**Tiers:** the free tier is permanent and needs no account — `get_source`,
-`find_definition`, `search_code`, `ask_codebase`, `review_changes`, and
-`orient`. The `impacted_tests` tool needs a [paid license](#buy-a-license).
-Keys are verified offline; the binary never phones home. See
-[`LICENSE`](./LICENSE) for the exact terms of free-tier use.
+```
+$ girder context demo-project --nodes crate::greeter::shout_greeting --json --source-only
+{
+  "nodes": [{
+    "language": "python",
+    "path": "crate::greeter::shout_greeting",
+    "source": "def shout_greeting(name):\n    return format_greeting(name).upper()"
+  }]
+}
 
-On the committed 15-task `orient` measurement, one bundled call per task
-returned **48,814 output bytes versus 101,302**, using **15 calls versus 78**
-for the equivalent command chain, with **37/37 gated checks passing** after
-the disclosed fixes. See the [post-fix observation](./docs/orient-tool-observation-post-fix.json)
-and [limitations](#what-that-saves-and-what-it-doesnt). These are output bytes,
-not tokens, and the baseline is Girder's separate commands.
+$ girder test-impact . --quiet
+test-impact: 82 unresolved call-evidence boundaries found; this selection is the conservative must∪may∪unknown union — pass --classified to see why each test is included
+test_farewell
+test_format_greeting
+test_shout_greeting_delegates_to_format_greeting
+```
+
+The first call returns one function's exact source, not a whole file. The
+second names the tests a real one-line edit could affect, erring toward
+including a test it can't rule out rather than silently dropping it — see
+[Status](#status) for exactly what that selection does and doesn't prove.
+
+**Languages, stated plainly, not as parity:** Rust and Python have completed,
+hand-audited measurements against real open-source repositories and are the
+mature path. TypeScript is measured and gated but explicitly **in
+progress** — it still has a separate, disclosed node-identity collision
+mechanism (duplicate `it()`/`describe()` description strings can silently
+overwrite each other's graph node; see
+[`docs/observations/stage3-typescript-audit/`](./docs/observations/stage3-typescript-audit/)).
+Go's Stage 3 audit is **not complete**. See
+[`docs/typescript-support.md`](./docs/typescript-support.md) and
+[`docs/go-support.md`](./docs/go-support.md) for the exact, measured limits
+of each — don't take Rust/Python's maturity as true of the other two.
+
+**Pricing:** everything in this release is free, permanently, with no
+license key and no account — see [License](#license). There is no current
+paid tier; a narrow, CI/PR-focused paid feature is planned but not yet
+built, and nothing in this repository is for sale until it exists.
+
+**Evidence, for a skeptical reader:**
+[`docs/evidence-index.md`](./docs/evidence-index.md) points at every
+committed audit, measurement, and adversarial finding behind the claims
+above — including the bugs found and fixed along the way, not just a final
+number.
+
+Girder also includes a native GUI, a parallel agent swarm, a time-travel
+debugger, graph-native collaboration, and a declarative extension system —
+all real, all documented below under
+[Other systems](#other-systems-gui-swarm-collaboration-debugger-extensions),
+and all secondary to the semantic-graph core above.
 
 ## Install
 
@@ -155,17 +194,17 @@ files. The committed watcher measurement matched fresh cold analysis after all
 preserving cold-analysis resolution while reusing parsing. See the
 [watcher result and limitations](./docs/mcp-watching.md).
 
-Seven tools, all read-only:
+Seven tools, all read-only and all free:
 
-| Tool | What it answers | Tier |
-|---|---|---|
-| `get_source` | The source of specific functions, without the file around them. | Free |
-| `find_definition` | Where an exact identifier is declared. Not a substring search. | Free |
-| `search_code` | Which functions match a description, when you don't know the name. | Free |
-| `ask_codebase` | Callers, callees, and blast radius, by graph traversal. | Free |
-| `impacted_tests` | Only the tests that can reach what changed. | Paid |
-| `review_changes` | What changed in the working tree, as semantics rather than text. | Free |
-| `orient` | Source, callers, callees, tests, and impact for one node, in one call. | Free |
+| Tool | What it answers |
+|---|---|
+| `get_source` | The source of specific functions, without the file around them. |
+| `find_definition` | Where an exact identifier is declared. Not a substring search. |
+| `search_code` | Which functions match a description, when you don't know the name. |
+| `ask_codebase` | Callers, callees, and blast radius, by graph traversal. |
+| `impacted_tests` | The conservative set of tests a change might reach — advisory, see below. |
+| `review_changes` | What changed in the working tree, as semantics rather than text. |
+| `orient` | Source, callers, callees, tests, and impact for one node, in one call. |
 
 ### What that saves, and what it doesn't
 
@@ -209,10 +248,17 @@ The subsequent [agentic-grep campaign](./docs/agentic-grep.md) with a local
 1.5B model stopped incomplete and produced no pairs with two correct answers.
 It establishes no comparative cost advantage or frontier-model behavior.
 
-`impacted_tests` is **advisory**. It over-selects unrelated tests, and it
-misses tests reached only through dynamic dispatch (measured: recall 0.000 on a
-polymorphic-dispatch case, [`docs/core-representative-mutations.md`](./docs/core-representative-mutations.md)).
-A full test run remains the authority before calling a change safe.
+`impacted_tests` is **advisory**. It over-selects unrelated tests, and some
+dynamic-dispatch shapes still aren't resolved — when Girder can't prove a call
+site, the frozen policy requires including the related tests rather than
+guessing they're safe to skip, so the current, measured consequence is
+over-inclusion (recall `1.000`, precision `0.667` on the representative
+polymorphic-dispatch case) rather than a silent miss. The underlying
+dispatch-resolution gap is still open; only the selection no longer drops the
+test silently. See
+[`docs/core-representative-mutations.md`](./docs/core-representative-mutations.md)
+for the measurement and exactly what changed. A full test run remains the
+authority before calling a change safe.
 
 Selecting extra tests costs CPU time; missing a relevant test can conceal a
 regression.
@@ -231,13 +277,8 @@ in place of `girder`.
 # Full end-to-end demo — no GPU, display, or API key required:
 girder
 
-# Run the test suite (graph, builder, AI router, agent swarm, debugger):
+# Run the test suite:
 cargo test --workspace
-
-# Optional: compile live providers and run the real debugpy adapter test:
-cargo check -p aether-ai --features live-providers
-python3 -m pip install debugpy
-cargo test -p aether-dap --test debugpy -- --ignored
 ```
 
 ### Analyze a repository
@@ -258,29 +299,12 @@ girder search sample-project "sum numbers in a list"
 # only the real callers, then saves the updated graph:
 girder refactor sample-project rename crate::lib::add plus
 
-# Preview what the swarm would build — graph-aware Planner only, no code written:
-girder swarm-plan sample-project "add user authentication"
-
-# Dispatch the agent swarm on a project with a natural-language intent:
-girder forge sample-project "add a subtract function"
-
-# Author a single graph-addressed plan step via a wired-in model (the
-# offline MockProvider by default) and execute it through the same
-# verified plan executor as `plan run` below, repairing from check
-# failures automatically. Never point this — or `plan run --authored` —
-# at sample-project/: it is a pinned measurement fixture, not a demo
-# target, and both refuse it outright (see "Demo target" below):
-girder do demo-project "add an exclamation mark to the farewell"
-
 # Emit graph context, a real Plan Format v2 authoring schema, and a plan
-# skeleton as one JSON object — for pasting into any external chat model
-# that isn't wired in as a provider. See "External authoring" below for
-# the full loop from here to a verified, applied edit:
+# skeleton as one JSON object — for pasting into any external chat model.
+# See "External authoring" below for the full loop to a verified, applied edit:
 girder context demo-project --nodes crate::greeter::farewell "add an exclamation mark to the farewell" --json
 
-# Validate/inspect/execute a plan file directly. `--authored` is for a plan
-# an external model wrote by hand (see "External authoring" below); without
-# it, `run` executes a plan exactly as authored (used internally by `do`):
+# Validate/inspect/execute a plan file directly:
 girder plan validate my-plan.json
 girder plan explain my-plan.json
 girder plan run my-plan.json --dry
@@ -288,7 +312,8 @@ girder plan run my-plan.json --dry
 # Semantic code review vs HEAD (typed mutations, not text diffs):
 girder review sample-project --since HEAD~1
 
-# Minimal test selection: find every test reachable from changed functions:
+# Conservative test selection: find every test that might be reachable
+# from changed functions:
 girder test-impact sample-project --run
 
 # Knowledge-graph query — answer a question by traversing the semantic graph:
@@ -296,111 +321,16 @@ girder query sample-project "what would break if I change add?"
 girder query sample-project "what calls sum_list?"
 girder query sample-project  # interactive REPL (reads stdin)
 
-# Start a graph-native collaboration history, give another replica its own actor,
-# record that replica's current source graph, and deterministically merge it:
-girder collab init sample-project alice alice.aetherc
-girder collab fork alice.aetherc bob bob.aetherc --approve
-girder collab sync sample-project bob.aetherc
-girder collab merge alice.aetherc bob.aetherc merged.aethercb
-girder collab materialize merged.aethercb merged.aether
-# Membership changes are causal operations and require explicit approval:
-girder collab member add alice.aetherc carol --approve
-girder collab member remove alice.aetherc carol --approve
-
-# Or exchange deltas in a mutually authenticated live loopback session.
-# Secret contents are generated with private permissions and never printed.
-# Group-secret-only operation remains available as a migration mode:
-girder collab secret collaboration.secret
-
-# Strict identity mode additionally pins each roster actor to an Ed25519 key.
-# Generate each actor's private/shareable-public pair, compare the printed
-# SHA-256 fingerprints out of band, and approve the exact peer fingerprint:
-girder collab identity generate alice.aetherc \
-  alice.identity alice.identity.pub
-girder collab identity generate bob.aetherc \
-  bob.identity bob.identity.pub
-girder collab identity show bob.identity.pub
-girder collab identity trust alice.trust \
-  bob.identity.pub --approve <bob-fingerprint>
-girder collab identity trust bob.trust \
-  alice.identity.pub --approve <alice-fingerprint>
-# Sign existing local-authored history now (strict host/join also does this
-# in memory before exchange), then audit a fully attested bundle offline:
-girder collab identity attest alice.aetherc alice.identity
-girder collab identity attest bob.aetherc bob.identity
-
-girder collab host alice.aetherc 127.0.0.1:7331 \
-  --identity-file alice.identity --trust-store alice.trust \
-  --secret-file collaboration.secret --discovery-dir .bitcode/peers \
-  --presence "reviewing parser changes"
-girder collab discover bob.aetherc .bitcode/peers \
-  --secret-file collaboration.secret
-girder collab join-peer bob.aetherc alice .bitcode/peers \
-  --identity-file bob.identity --trust-store bob.trust \
-  --secret-file collaboration.secret --presence "running transport tests"
-# An explicit address remains available when local discovery is not in use:
-girder collab join bob.aetherc 127.0.0.1:7331 \
-  --secret-file collaboration.secret \
-  --identity-file bob.identity --trust-store bob.trust
-# Verify every retained non-bootstrap operation against the current local pins:
-girder collab identity verify \
-  alice.aetherc alice.identity alice.trust
-# To rotate your own key, first generate a new pair, then record a dual-signed
-# causal transition while both private keys are available. Peers can then rotate
-# their current pin before the next strict session:
-girder collab identity generate alice.aetherc \
-  alice-new.identity alice-new.identity.pub
-girder collab identity rotate-local alice.aetherc \
-  alice.identity alice-new.identity \
-  --from <old-alice-fingerprint> --approve <new-alice-fingerprint>
-# Peer trust rotation/removal also requires the exact reviewed fingerprints:
-girder collab identity rotate alice.trust \
-  bob-new.identity.pub --from <old-bob-fingerprint> --approve <new-bob-fingerprint>
-girder collab identity remove alice.trust bob \
-  --approve <new-bob-fingerprint>
-# Successful sessions persist both peers' causal acknowledgements. Once every
-# active member has acknowledged superseded history, prune it conservatively:
-girder collab compact alice.aetherc
-# Rebuild remote whole-file projections, show semantic/file changes and
-# conflicts, then explicitly validate and journal-commit the reviewed bytes:
-girder collab review sample-project alice.aetherc
-girder collab apply sample-project alice.aetherc --approve
-
-# Real Python execution tracer — records every variable at every line/call/return:
-girder debug script.py
-girder debug script.py --what-if x=10 at 2
-
-# DAP adapter dry-run: resolve graph breakpoints without launching an adapter:
-girder dap script.py --dry-run
-
-# Generate and review an extension recipe without changing the project:
-girder extension sample-project generate "show call impact"
-
-# Grant the exact recipe digest/capabilities, then manage its lifecycle:
-girder extension sample-project generate "show call impact" --approve
-girder extension sample-project list
-girder extension sample-project disable dev.bitcode.generated.show-call-impact
-girder extension sample-project remove dev.bitcode.generated.show-call-impact
-
-# Install a hand-authored declarative recipe after the same explicit review:
-girder extension sample-project install recipe.json --approve
-
-# Browse the built-in reviewed marketplace and inspect a listing:
-girder extension sample-project marketplace search impact
-girder extension sample-project marketplace show org.bitcode.impact-navigator
-
-# Regenerate a reviewed intent for this project, preview its capability delta,
-# then explicitly approve the adapted recipe:
-girder extension sample-project marketplace adapt org.bitcode.impact-navigator
-girder extension sample-project marketplace adapt org.bitcode.impact-navigator --approve
-
-# Portable catalogs use the same bounded parser and print a catalog fingerprint:
-girder extension sample-project marketplace list \
-  --catalog marketplace/girder-extensions.json
-
 # Full help:
 girder --help
 ```
+
+The agent swarm (`forge`/`do`/`swarm-plan`), graph-native collaboration
+(`collab`), the Python execution tracer and DAP adapter (`debug`/`dap`), and
+the declarative extension system (`extension`) are real, documented, and
+have their own commands — see [Other
+systems](#other-systems-gui-swarm-collaboration-debugger-extensions) below.
+They are not part of the core graph/context/test-impact workflow above.
 
 `analyze`/`forge` walk every `.rs`, `.py`, `.ts`, `.tsx`, `.mts`, `.cts`, and
 `.go` file (skipping `target`, `.git`, …),
@@ -427,123 +357,6 @@ wrappers propagate an inner receiver only when their signatures prove the same
 direct type parameter flows through. Recursive factory hints have a hard size
 budget. Unknown receiver types remain unresolved rather than being linked to an
 unrelated same-named method.
-`forge` plans every candidate byte, checks conflict
-baselines, validates the candidate in a copied workspace, runs Cargo build/tests
-when a manifest is present plus configured validation commands, and only then
-journal-commits the source projection and graph together.
-
-`collab` exchanges semantic graph operations rather than text ranges. Each
-human or agent replica has a validated actor id and causal version vector;
-minimal idempotent deltas converge regardless of delivery order. Concurrent
-deletes win, concurrent updates have a deterministic tie-break, and deleting
-then recreating a node cannot resurrect edges from its old generation. RON
-`.aetherc` bundles are reviewable; `.aethercb` bundles use compact bincode.
-Init/sync reconciles source with the durable graph so graph-owned agent and
-extension metadata participates instead of being discarded. Bundle saves use a
-synced atomic replacement.
-
-Membership is part of the causal operation history rather than a local address
-book. An approved `collab fork` registers the invited actor in both the source
-and forked bundles; if writing the fork fails, the source roster is rolled back.
-`collab member add|remove ... --approve` records convergent add/remove
-operations, concurrent removal wins, normal replica APIs reject new operations
-after the local actor is removed, and membership changes invalidate stale
-acknowledgements. A history has one genesis self-membership root: separately
-initialized actors cannot self-invite through a relayed delta. Removal records
-the highest counter observed for that actor; unseen later counters fail until
-their context observes a causal re-add, so a removed offline actor cannot keep
-extending a stale membership epoch. Version
-1 and 2 bundles migrate conservatively by retaining the local actor, previously
-acknowledged peers, and non-bootstrap actors already present in the causal
-clock. Use `fork` to allocate a new actor replica; direct `member add` is for
-re-authorizing an already allocated unique actor, since it does not create that
-actor's bundle. Version 1-3 bundles load as explicit unsigned legacy history;
-version 4 stores operation attestations without changing existing CRDT dots.
-
-Live host/join uses fresh random challenges, mutual HMAC-SHA256 group
-authentication, direction- and sequence-bound message integrity, bounded frames
-checked before allocation, and socket timeouts. Secrets are read from
-non-symlink regular files owned by the current user with private permissions.
-Optional identity mode adds transcript-bound Ed25519 proofs and a local
-actor-to-key trust store: both endpoints must configure it, each public key must
-match the peer actor's exact pinned fingerprint, and either attempted downgrade
-to group-secret-only mode is refused. The signed transcript also authenticates
-fresh X25519 keys, deriving a session-integrity key that another group-secret
-holder cannot calculate from captured traffic. Private identity files receive
-the same ownership, symlink, and permission checks. New trust, rotation, and
-removal are explicit fingerprint-approved operations, and identity files are
-actor-bound to their collaboration bundle.
-
-Strict identity sessions also give every retained non-bootstrap CRDT operation a
-durable Ed25519 attestation. A delta importing a new operation, or a new
-retroactive attestation for an already-known dot, triggers verification of that
-actor's complete retained history before any bundle is replaced. The signature
-binds the dot, causal context, and exact action, so action tampering, actor
-forgery, unsigned relay, conflicting proofs, and replayed dot changes fail
-atomically. Local legacy operations can be upgraded with `identity attest`;
-`identity verify` audits a whole bundle against the local private identity and
-peer trust store.
-
-Key rotation is a causal operation signed by the previous key with a second
-proof from the successor key. Verification walks this chain backward from the
-currently pinned fingerprint, so a retired key remains valid for its historical
-counters but cannot authorize later ones. Rotation operations are never removed
-by compaction. Deterministic bootstrap snapshot operations remain an explicitly
-pre-shared bundle baseline rather than pretending to have a human signature;
-strict deltas cannot introduce new bootstrap history. Group-secret-only live
-sessions and the unpinned `collab merge` workflow ignore incoming attestation
-metadata, preventing an unauthenticated path from poisoning later strict
-verification. Actor-key transparency beyond exact local pins is still a
-separate layer.
-
-The transport deliberately binds loopback only: graph payloads are authenticated
-but not encrypted, so remote peers must connect through an encrypted tunnel such
-as SSH. After both sides verify that the other actor is active in the roster and
-durably persist a converged version, they persist monotonic peer
-acknowledgements. A delta that would remove either authenticated endpoint is
-rejected before persistence. A session claiming an unlisted actor is rejected
-even with a valid group-secret proof. Host and join may explicitly share a
-single-line status of at most 256 UTF-8 bytes. Both statuses and optional public
-keys are bound into the authenticated handshake. Status is reported to the peer
-and discarded after that synchronization; it is never written to graph
-operations, acknowledgements, discovery tickets, or collaboration bundles.
-
-An optional `--discovery-dir` publishes an atomic, HMAC-authenticated,
-process-bound lease for the loopback host. The current-user directory and
-tickets must be private (new paths are mode 700 and 600 on Unix), symlinks are
-rejected, each scan is capped at 256 entries, dead process ids on Unix and
-actors outside the local bundle's active remote roster are ignored, and
-`join-peer` refuses ambiguous same-actor tickets. A normal host shutdown removes
-its unchanged ticket.
-Tickets are only endpoint hints: PID reuse or a stale ticket cannot authorize a
-session because the existing roster-bound mutual-authentication handshake still
-decides every join.
-
-`collab compact`
-requires an acknowledgement from every active remote member, then prunes only
-causally superseded operations while retaining concurrent winners, membership
-removal barriers, and node-generation tombstones. Peers older than the recorded
-history floor fail safely and need a current bundle. Network/continuous
-discovery, continuous presence/subscriptions, encrypted remote transport, and
-operation-level signatures/key transparency remain future work.
-Group-secret-only migration mode remains a group credential: roster checks
-reject an unlisted claimed actor, but any secret holder can impersonate an
-active actor. Pinned identity mode prevents that endpoint impersonation after
-fingerprints have been verified. It does not retroactively prove the author of
-every historical CRDT operation: authenticated peers can relay the existing
-multi-actor operation set, so provenance of stored history remains trusted at
-the collaboration-group boundary until operations themselves are signed.
-
-Every parsed module carries a bounded `file-v1` whole-file projection in the
-semantic graph. `collab review` compares the remote and freshly reconciled local
-graphs, lists file and semantic changes, and reparses every remote file to prove
-its nodes and projection-derived edges agree with the claimed graph. Missing
-modules, path escapes, oversized files, inconsistent concurrent winners, and
-stale local baselines are conflicts. `collab apply --approve` reruns the plan,
-executes configured validation in an isolated candidate, then journal-commits
-added/modified/deleted files and the reconciled graph together. Native approval
-is SHA-256-bound to every candidate and expected baseline byte, so any project
-or bundle change forces another review.
 
 ### Project configuration
 
@@ -671,6 +484,226 @@ against `sample-project/` — only the two commands that write are refused.
 | `aether-dap` | Debug Adapter Protocol client/session layer with graph-aware breakpoint support. |
 | `aether-extensions` | Strict declarative recipes, digest-bound grants, graph-native lifecycle, bounded UI and project contributions. |
 | `aether-app` | The `girder` binary: every CLI subcommand, plus the egui/wgpu GUI behind feature `gui`. |
+
+## Other systems: GUI, swarm, collaboration, debugger, extensions
+
+Everything above (graph, source lookup, impact, conservative test selection)
+is the core product. Girder also ships several larger, independent systems
+built on the same graph — real and documented, but not part of evaluating
+whether the core product is useful to you, so they're grouped here rather
+than interleaved into the quickstart above.
+
+```bash
+# Agent swarm: preview what it would build, or dispatch it for real:
+girder swarm-plan sample-project "add user authentication"
+girder forge sample-project "add a subtract function"
+girder do demo-project "add an exclamation mark to the farewell"
+
+# Python execution tracer and DAP adapter:
+girder debug script.py
+girder debug script.py --what-if x=10 at 2
+girder dap script.py --dry-run
+
+# Declarative extensions and the built-in marketplace:
+girder extension sample-project generate "show call impact" --approve
+girder extension sample-project list
+girder extension sample-project marketplace search impact
+
+# Graph-native collaboration — see the full command set below:
+girder collab init sample-project alice alice.aetherc
+```
+
+`forge` plans every candidate byte, checks conflict baselines, validates the
+candidate in a copied workspace, runs Cargo build/tests when a manifest is
+present plus configured validation commands, and only then journal-commits
+the source projection and graph together.
+
+`collab` exchanges semantic graph operations rather than text ranges. Each
+human or agent replica has a validated actor id and causal version vector;
+minimal idempotent deltas converge regardless of delivery order. Concurrent
+deletes win, concurrent updates have a deterministic tie-break, and deleting
+then recreating a node cannot resurrect edges from its old generation. RON
+`.aetherc` bundles are reviewable; `.aethercb` bundles use compact bincode.
+Init/sync reconciles source with the durable graph so graph-owned agent and
+extension metadata participates instead of being discarded. Bundle saves use a
+synced atomic replacement.
+
+Membership is part of the causal operation history rather than a local address
+book. An approved `collab fork` registers the invited actor in both the source
+and forked bundles; if writing the fork fails, the source roster is rolled back.
+`collab member add|remove ... --approve` records convergent add/remove
+operations, concurrent removal wins, normal replica APIs reject new operations
+after the local actor is removed, and membership changes invalidate stale
+acknowledgements. A history has one genesis self-membership root: separately
+initialized actors cannot self-invite through a relayed delta. Removal records
+the highest counter observed for that actor; unseen later counters fail until
+their context observes a causal re-add, so a removed offline actor cannot keep
+extending a stale membership epoch. Version
+1 and 2 bundles migrate conservatively by retaining the local actor, previously
+acknowledged peers, and non-bootstrap actors already present in the causal
+clock. Use `fork` to allocate a new actor replica; direct `member add` is for
+re-authorizing an already allocated unique actor, since it does not create that
+actor's bundle. Version 1-3 bundles load as explicit unsigned legacy history;
+version 4 stores operation attestations without changing existing CRDT dots.
+
+Live host/join uses fresh random challenges, mutual HMAC-SHA256 group
+authentication, direction- and sequence-bound message integrity, bounded frames
+checked before allocation, and socket timeouts. Secrets are read from
+non-symlink regular files owned by the current user with private permissions.
+Optional identity mode adds transcript-bound Ed25519 proofs and a local
+actor-to-key trust store: both endpoints must configure it, each public key must
+match the peer actor's exact pinned fingerprint, and either attempted downgrade
+to group-secret-only mode is refused. The signed transcript also authenticates
+fresh X25519 keys, deriving a session-integrity key that another group-secret
+holder cannot calculate from captured traffic. Private identity files receive
+the same ownership, symlink, and permission checks. New trust, rotation, and
+removal are explicit fingerprint-approved operations, and identity files are
+actor-bound to their collaboration bundle.
+
+Strict identity sessions also give every retained non-bootstrap CRDT operation a
+durable Ed25519 attestation. A delta importing a new operation, or a new
+retroactive attestation for an already-known dot, triggers verification of that
+actor's complete retained history before any bundle is replaced. The signature
+binds the dot, causal context, and exact action, so action tampering, actor
+forgery, unsigned relay, conflicting proofs, and replayed dot changes fail
+atomically. Local legacy operations can be upgraded with `identity attest`;
+`identity verify` audits a whole bundle against the local private identity and
+peer trust store.
+
+Key rotation is a causal operation signed by the previous key with a second
+proof from the successor key. Verification walks this chain backward from the
+currently pinned fingerprint, so a retired key remains valid for its historical
+counters but cannot authorize later ones. Rotation operations are never removed
+by compaction. Deterministic bootstrap snapshot operations remain an explicitly
+pre-shared bundle baseline rather than pretending to have a human signature;
+strict deltas cannot introduce new bootstrap history. Group-secret-only live
+sessions and the unpinned `collab merge` workflow ignore incoming attestation
+metadata, preventing an unauthenticated path from poisoning later strict
+verification. Actor-key transparency beyond exact local pins is still a
+separate layer.
+
+The transport deliberately binds loopback only: graph payloads are authenticated
+but not encrypted, so remote peers must connect through an encrypted tunnel such
+as SSH. After both sides verify that the other actor is active in the roster and
+durably persist a converged version, they persist monotonic peer
+acknowledgements. A delta that would remove either authenticated endpoint is
+rejected before persistence. A session claiming an unlisted actor is rejected
+even with a valid group-secret proof. Host and join may explicitly share a
+single-line status of at most 256 UTF-8 bytes. Both statuses and optional public
+keys are bound into the authenticated handshake. Status is reported to the peer
+and discarded after that synchronization; it is never written to graph
+operations, acknowledgements, discovery tickets, or collaboration bundles.
+
+An optional `--discovery-dir` publishes an atomic, HMAC-authenticated,
+process-bound lease for the loopback host. The current-user directory and
+tickets must be private (new paths are mode 700 and 600 on Unix), symlinks are
+rejected, each scan is capped at 256 entries, dead process ids on Unix and
+actors outside the local bundle's active remote roster are ignored, and
+`join-peer` refuses ambiguous same-actor tickets. A normal host shutdown removes
+its unchanged ticket.
+Tickets are only endpoint hints: PID reuse or a stale ticket cannot authorize a
+session because the existing roster-bound mutual-authentication handshake still
+decides every join.
+
+`collab compact`
+requires an acknowledgement from every active remote member, then prunes only
+causally superseded operations while retaining concurrent winners, membership
+removal barriers, and node-generation tombstones. Peers older than the recorded
+history floor fail safely and need a current bundle. Network/continuous
+discovery, continuous presence/subscriptions, encrypted remote transport, and
+operation-level signatures/key transparency remain future work.
+Group-secret-only migration mode remains a group credential: roster checks
+reject an unlisted claimed actor, but any secret holder can impersonate an
+active actor. Pinned identity mode prevents that endpoint impersonation after
+fingerprints have been verified. It does not retroactively prove the author of
+every historical CRDT operation: authenticated peers can relay the existing
+multi-actor operation set, so provenance of stored history remains trusted at
+the collaboration-group boundary until operations themselves are signed.
+
+Every parsed module carries a bounded `file-v1` whole-file projection in the
+semantic graph. `collab review` compares the remote and freshly reconciled local
+graphs, lists file and semantic changes, and reparses every remote file to prove
+its nodes and projection-derived edges agree with the claimed graph. Missing
+modules, path escapes, oversized files, inconsistent concurrent winners, and
+stale local baselines are conflicts. `collab apply --approve` reruns the plan,
+executes configured validation in an isolated candidate, then journal-commits
+added/modified/deleted files and the reconciled graph together. Native approval
+is SHA-256-bound to every candidate and expected baseline byte, so any project
+or bundle change forces another review.
+
+The full `collab` command set, including the remaining subcommands
+(`sync`, `merge`, `materialize`, `secret`, the full `identity` family,
+`host`/`join`/`discover`/`join-peer`, `compact`, `review`/`apply`):
+
+```bash
+# Give another replica its own actor, record its current source graph,
+# and deterministically merge it:
+girder collab fork alice.aetherc bob bob.aetherc --approve
+girder collab sync sample-project bob.aetherc
+girder collab merge alice.aetherc bob.aetherc merged.aethercb
+girder collab materialize merged.aethercb merged.aether
+girder collab member add alice.aetherc carol --approve
+girder collab member remove alice.aetherc carol --approve
+
+# Exchange deltas in a mutually authenticated live loopback session
+# (group-secret-only migration mode):
+girder collab secret collaboration.secret
+
+# Strict identity mode pins each roster actor to an Ed25519 key:
+girder collab identity generate alice.aetherc alice.identity alice.identity.pub
+girder collab identity generate bob.aetherc bob.identity bob.identity.pub
+girder collab identity show bob.identity.pub
+girder collab identity trust alice.trust bob.identity.pub --approve <bob-fingerprint>
+girder collab identity trust bob.trust alice.identity.pub --approve <alice-fingerprint>
+girder collab identity attest alice.aetherc alice.identity
+girder collab identity attest bob.aetherc bob.identity
+
+girder collab host alice.aetherc 127.0.0.1:7331 \
+  --identity-file alice.identity --trust-store alice.trust \
+  --secret-file collaboration.secret --discovery-dir .bitcode/peers \
+  --presence "reviewing parser changes"
+girder collab discover bob.aetherc .bitcode/peers --secret-file collaboration.secret
+girder collab join-peer bob.aetherc alice .bitcode/peers \
+  --identity-file bob.identity --trust-store bob.trust \
+  --secret-file collaboration.secret --presence "running transport tests"
+# An explicit address remains available when local discovery is not in use:
+girder collab join bob.aetherc 127.0.0.1:7331 \
+  --secret-file collaboration.secret \
+  --identity-file bob.identity --trust-store bob.trust
+girder collab identity verify alice.aetherc alice.identity alice.trust
+
+# Key rotation: generate a new pair, then record a dual-signed causal
+# transition while both private keys are available:
+girder collab identity generate alice.aetherc alice-new.identity alice-new.identity.pub
+girder collab identity rotate-local alice.aetherc alice.identity alice-new.identity \
+  --from <old-alice-fingerprint> --approve <new-alice-fingerprint>
+girder collab identity rotate alice.trust bob-new.identity.pub \
+  --from <old-bob-fingerprint> --approve <new-bob-fingerprint>
+girder collab identity remove alice.trust bob --approve <new-bob-fingerprint>
+
+# Once every active member has acknowledged superseded history, prune it:
+girder collab compact alice.aetherc
+
+# Rebuild remote whole-file projections, show changes/conflicts, then
+# explicitly validate and journal-commit the reviewed bytes:
+girder collab review sample-project alice.aetherc
+girder collab apply sample-project alice.aetherc --approve
+```
+
+Full extension/marketplace command set:
+
+```bash
+girder extension sample-project generate "show call impact"
+girder extension sample-project disable dev.bitcode.generated.show-call-impact
+girder extension sample-project remove dev.bitcode.generated.show-call-impact
+girder extension sample-project install recipe.json --approve
+girder extension sample-project marketplace show org.bitcode.impact-navigator
+girder extension sample-project marketplace adapt org.bitcode.impact-navigator
+girder extension sample-project marketplace adapt org.bitcode.impact-navigator --approve
+girder extension sample-project marketplace list --catalog marketplace/girder-extensions.json
+```
+
+Every flag above is also in `girder collab --help` / `girder extension --help`.
 
 ## The GUI
 
@@ -824,10 +857,13 @@ baseline measures both Rust and Python precision/recall at `1.000/1.000`
 (the earlier `0.667` Rust precision defect is closed). That is a result on
 small fixtures, not a representative-repository superiority claim — and the
 counter-evidence is checked in alongside it: on a real dependency, a
-polymorphic-dispatch mutation measured recall `0.000`
-([`docs/core-representative-mutations.md`](docs/core-representative-mutations.md)),
-which is why test selection is documented as advisory rather than
-authoritative.
+polymorphic-dispatch mutation currently measures recall `1.000`, precision
+`0.667` ([`docs/core-representative-mutations.md`](docs/core-representative-mutations.md))
+— a 2026-10 fix stopped the selection from silently dropping the test when
+the dispatch can't be resolved, falling back to the conservative union
+instead; the underlying dispatch-resolution gap is unchanged, only the
+silent-miss symptom is fixed. This is why test selection is documented as
+advisory rather than authoritative.
 
 Implemented features:
 
@@ -840,7 +876,7 @@ Implemented features:
 | Real Python tracer | `sys.settrace` execution recording, what-if branching via `PyFrame_LocalsToFast` |
 | Knowledge-graph queries | Natural-language → concept / impact / callers / callees / explain / neighbourhood |
 | Semantic review | Typed diff (added/modified/removed nodes + edges), impact radius, test gap report |
-| Minimal test selection | Call-graph reachability from changed functions, optional `--run` |
+| Conservative test selection | Call-graph reachability from changed functions, optional `--run` |
 | Graph collaboration | Deterministic operation-set CRDT, causal membership/deltas/tombstones, atomic RON/bincode bundles, roster-gated authenticated loopback host/join with optional downgrade-resistant pinned Ed25519 actor identities, private authenticated local discovery leases, all-member acknowledgement compaction, and reviewed whole-file source projection |
 | Project contract | Validated `girder.toml` for source scope, graph path, test runners, and agent output |
 | Source projection | GUI/CLI agent output and graph rename commit validated source plus graph through recoverable journaled transactions |
@@ -861,38 +897,21 @@ The measured table-stakes comparison, current correctness evidence, and
 prioritized open risks are maintained in
 [`docs/core-gap-analysis.md`](docs/core-gap-analysis.md).
 
-## Buy a license
-
-Paid access to `impacted_tests` costs **$39, one-time and
-perpetual, with no subscription**. [Buy a Girder license on
-Gumroad](https://maynard42.gumroad.com/l/zwpsjl).
-
-Set the purchased key as the complete value of the `GIRDER_LICENSE_KEY`
-environment variable. Alternatively, save it as the only contents of the key
-file that Girder reads for your platform:
-
-- Linux and other non-macOS Unix: `$XDG_CONFIG_HOME/girder/license.key`, or
-  `$HOME/.config/girder/license.key` when `XDG_CONFIG_HOME` is unset
-- macOS: `$HOME/Library/Application Support/girder/license.key`
-- Windows: `%APPDATA%\girder\license.key`
-
-Verification is offline, and the key never expires.
-
 ## License
 
 Girder is **source-available**, not open source, under the
 [Business Source License 1.1](./LICENSE).
 
-The free tier is genuinely free and permanent: it has no expiry and requires
-no account. It includes `get_source`, `find_definition`, `search_code`,
-`ask_codebase`, `review_changes`, and `orient`. The `impacted_tests` tool
-requires a paid license. `LICENSE`'s own Additional Use Grant states the
-exact terms of free-tier use, including its one-repository condition; it
-is the authoritative text, not this summary.
-
-Licenses are signed keys verified locally by the Girder binary. The binary
-never phones home, makes no network call for licensing, and works fully offline
-in both tiers.
+Every tool listed above is free, permanently: no expiry, no account, no
+license key. `LICENSE`'s own Additional Use Grant states the exact terms of
+free-tier use, including its one-repository condition; it is the
+authoritative text, not this summary. There is no current paid tier and
+nothing is for sale right now — a narrow, CI/PR-focused paid feature is
+planned (see [`docs/roadmap.md`](./docs/roadmap.md)) but doesn't exist yet.
+Anyone who already holds a signed license key from an earlier release keeps
+it working for whatever it unlocked then; the key system itself
+(`GIRDER_LICENSE_KEY` or a per-OS key file, verified offline, no phone-home)
+is unchanged and ready for whenever a paid feature exists again.
 
 On September 4, 2030, the license converts to the Apache License, Version 2.0.
 See [`LICENSE`](./LICENSE) for the authoritative terms and

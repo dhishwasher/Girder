@@ -215,3 +215,13 @@ installing `debugpy`.
   it appears only in `docs/core-gap-analysis.md`'s past-tense narrative
   about the incident that found it, not as live guidance anywhere. `main.rs`
   USAGE, this file, and `README.md` already use the guarded form.
+- **A local `cargo clippy` pass is not proof that the public GitHub Actions
+  run is green.** `.github/workflows/ci.yml` installs Rust via
+  `dtolnay/rust-toolchain@stable` with no pinned version, so CI can pick up
+  a newer stable/clippy than this machine's own toolchain at any time —
+  this happened for real (`clippy::double_must_use` against `async_trait`'s
+  generated code, CI red for several commits while every local gate run
+  looked clean; `docs/roadmap.md`, 2026-10-01). Before calling `main` green,
+  check the actual run: `gh run list --branch main --limit 1` and
+  `gh run view <id>` (or `gh run watch <id> --exit-status` to block until it
+  finishes), not just a local gate pass.

@@ -235,9 +235,10 @@ fn watch_unlicensed_pair_and_second_owner_fail_clearly() {
     assert!(orient_value["nodes"][0]["source"]
         .as_str()
         .is_some_and(|source| source.contains("pub fn add")));
+    // Ungated in the 2026-10-01 product-split decision (docs/roadmap.md):
+    // impacted_tests is free, same as orient above.
     let impacted = watch.call("impacted_tests", json!({"nodes":["crate::math::add"]}));
-    assert_eq!(impacted["result"]["isError"], true);
-    assert!(text(&impacted).contains("paid Girder license"));
+    assert_eq!(impacted["result"]["isError"], false, "{impacted:?}");
     let alternate_temp = Fixture::new();
     let alternate_temp_text = alternate_temp.0.to_str().unwrap();
     let mut second = Session::start(

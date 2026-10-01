@@ -1,5 +1,11 @@
 # CI-gate design (proposal — not implemented, not approved)
 
+> **Paused, 2026-10-01.** The user stopped all monetization-architecture
+> work, explicitly including this design, to ship the current, free
+> release first: "do NOT implement girder gate yet... prepare this release
+> as the strongest free/public Girder release first" (`docs/roadmap.md`).
+> Kept as the requested design record; not scheduled for implementation.
+
 Per the standing instruction, this is shown before any code changes to
 license enforcement or runtime tier checks. Nothing in this document has
 been built. It specifies the minimum implementation for the paid

@@ -317,11 +317,15 @@ fn main() {
     }
 }
 
-fn paid_tool_for_command(command: Option<&str>) -> Option<&'static str> {
-    match command {
-        Some("test-impact") => Some("impacted_tests"),
-        _ => None,
-    }
+// `test-impact` / `impacted_tests` was ungated in the 2026-10-01 product-split
+// decision (docs/roadmap.md): telling a developer which tests a change may
+// affect is not a chargeable feature on its own. Nothing is paid-gated right
+// now; this stays a function (not deleted) because a future, genuinely new
+// paid feature (CI/PR enforcement, see docs/ci-gate-design.md) will need the
+// same dispatch point, not the test-impact-specific `require_paid` wiring
+// this replaces.
+fn paid_tool_for_command(_command: Option<&str>) -> Option<&'static str> {
+    None
 }
 
 fn report(result: std::io::Result<()>) {

@@ -71,22 +71,23 @@ publishing the next generation. The normal invocation without `--watch`
 retains its existing behavior. The recorded 45-mutation campaign matched fresh
 cold analysis while reusing 98.70% of file extractions. The claim is limited to
 preserving cold-analysis resolution while reusing parsing; see the
-[watcher result and limitations](https://github.com/dhishwasher/Girder/blob/v0.2.6/docs/mcp-watching.md).
+[watcher result and limitations](https://github.com/dhishwasher/Girder/blob/main/docs/mcp-watching.md).
 
 ## Tools
 
-| Tool | What it answers | Tier |
-|---|---|---|
-| `get_source` | The source of specific functions, without the file around them. | Free |
-| `find_definition` | Where an exact identifier is declared. Not a substring search. | Free |
-| `search_code` | Which functions match a description, when you don't know the name. | Free |
-| `ask_codebase` | Callers, callees, and blast radius, by graph traversal. | Free |
-| `impacted_tests` | Only the tests that can reach what changed. | Paid |
-| `review_changes` | What changed in the working tree, as semantics rather than text. | Free |
-| `orient` | Source, callers, callees, tests, and impact for one node, in one call. | Free |
+Seven tools, all read-only and all free:
 
-Every tool is read-only. None of them run a model, and none write to your
-repository.
+| Tool | What it answers |
+|---|---|
+| `get_source` | The source of specific functions, without the file around them. |
+| `find_definition` | Where an exact identifier is declared. Not a substring search. |
+| `search_code` | Which functions match a description, when you don't know the name. |
+| `ask_codebase` | Callers, callees, and blast radius, by graph traversal. |
+| `impacted_tests` | The conservative set of tests a change might reach — advisory, see below. |
+| `review_changes` | What changed in the working tree, as semantics rather than text. |
+| `orient` | Source, callers, callees, tests, and impact for one node, in one call. |
+
+None of them run a model, and none write to your repository.
 
 ## Measured cost
 
@@ -129,19 +130,30 @@ The subsequent [agentic-grep campaign](https://github.com/dhishwasher/Girder/blo
 1.5B model stopped incomplete and produced no pairs with two correct answers.
 It establishes no comparative cost advantage or frontier-model behavior.
 
-`impacted_tests` is **advisory**: it over-selects unrelated tests and misses
-tests reached only through dynamic dispatch. A full test run is still the
-authority before you call a change safe.
+`impacted_tests` is **advisory**: it over-selects unrelated tests, and some
+dynamic-dispatch shapes still aren't resolved — when Girder can't prove a
+call site, the frozen policy requires including the related tests rather
+than guessing they're safe to skip, so the measured consequence is
+over-inclusion, not a silent miss (recall `1.000`, precision `0.667` on the
+representative case; see
+[`docs/core-representative-mutations.md`](https://github.com/dhishwasher/Girder/blob/main/docs/core-representative-mutations.md)).
+A full test run is still the authority before you call a change safe.
 
 Selecting extra tests costs CPU time; missing a relevant test can conceal a
 regression.
 
 ## Languages
 
-Rust, Python, TypeScript/TSX, and Go. Rust and Python are the most mature;
-TypeScript and Go are measured and gated, with their limits written down
-([TypeScript](https://github.com/dhishwasher/Girder/blob/main/docs/typescript-support.md),
-[Go](https://github.com/dhishwasher/Girder/blob/main/docs/go-support.md)).
+Rust and Python have completed, hand-audited measurements against real
+open-source repositories and are the mature path. TypeScript is measured and
+gated but explicitly **in progress** — it still has a separate, disclosed
+node-identity collision mechanism (duplicate `it()`/`describe()` description
+strings can silently overwrite each other's graph node). Go's Stage 3 audit
+is **not complete**. See
+[TypeScript](https://github.com/dhishwasher/Girder/blob/main/docs/typescript-support.md)
+and
+[Go](https://github.com/dhishwasher/Girder/blob/main/docs/go-support.md)
+for the exact, measured limits of each.
 
 ## Environment
 
@@ -176,31 +188,16 @@ This skips the PATH search entirely. If the postinstall download did not
 land a binary, it fails loudly naming the path it expected, rather than
 silently falling back to PATH the way a normal run does.
 
-## Buy a license
-
-Paid access to `impacted_tests` costs **$39, one-time and
-perpetual, with no subscription**. [Buy a Girder license on
-Gumroad](https://maynard42.gumroad.com/l/zwpsjl).
-
-Set the purchased key as the complete value of the `GIRDER_LICENSE_KEY`
-environment variable. Alternatively, save it as the only contents of the key
-file that Girder reads for your platform:
-
-- Linux and other non-macOS Unix: `$XDG_CONFIG_HOME/girder/license.key`, or
-  `$HOME/.config/girder/license.key` when `XDG_CONFIG_HOME` is unset
-- macOS: `$HOME/Library/Application Support/girder/license.key`
-- Windows: `%APPDATA%\girder\license.key`
-
-Verification is offline, and the key never expires.
-
 ## License
 
 Girder is **source-available** under the
 [Business Source License 1.1](https://github.com/dhishwasher/Girder/blob/main/LICENSE).
 The source is public and free to read, use, modify, and run, including inside
-a company, subject to its license terms. You may not circumvent its license-key
-functionality or remove or obscure protected functionality, and you may not
-offer Girder itself to third parties as a competing hosted or managed service
+a company, subject to its license terms. Every tool above is free,
+permanently — no expiry, no account, no license key, and no current paid
+tier. You may not circumvent license-key functionality or remove or obscure
+protected functionality if a future release adds one, and you may not offer
+Girder itself to third parties as a competing hosted or managed service
 whose primary value is Girder's functionality.
 
 On September 4, 2030, the license converts to the Apache License, Version 2.0.

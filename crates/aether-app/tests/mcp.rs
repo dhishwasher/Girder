@@ -122,7 +122,10 @@ impl Session {
 }
 
 #[test]
-fn unlicensed_orient_is_free_but_impacted_tests_remains_paid() {
+fn unlicensed_orient_and_impacted_tests_are_both_free() {
+    // test-impact / impacted_tests was ungated in the 2026-10-01 product-split
+    // decision (docs/roadmap.md): nothing in the CLI/MCP surface is paid-gated
+    // right now.
     let root = fixture("license-gate");
     let mut session = Session::start_unlicensed(&root);
     session.initialize();
@@ -136,17 +139,11 @@ fn unlicensed_orient_is_free_but_impacted_tests_remains_paid() {
         .is_some_and(|source| source.contains("pub fn double")));
 
     let response = session.call_tool("impacted_tests", json!({"nodes": ["crate::calc::double"]}));
-    assert_eq!(response["result"]["isError"], true, "{response}");
-    let text = response["result"]["content"][0]["text"]
-        .as_str()
-        .expect("license failure must be readable text");
+    assert_eq!(response["result"]["isError"], false, "{response}");
+    let text = tool_text(&response);
     assert!(
-        text.contains("`impacted_tests` tool needs a paid Girder license"),
-        "{text}"
-    );
-    assert!(
-        text.contains("https://maynard42.gumroad.com/l/zwpsjl"),
-        "{text}"
+        text.contains("test_double"),
+        "unlicensed impacted_tests should still name the reachable test: {text}"
     );
 
     assert_eq!(session.request("ping", json!({}))["result"], json!({}));

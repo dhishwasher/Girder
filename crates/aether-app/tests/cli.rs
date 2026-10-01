@@ -93,11 +93,20 @@ fn run_girder_output(args: &[&str]) -> Output {
 }
 
 #[test]
-fn paid_cli_commands_require_a_license_and_offer_free_alternatives() {
-    let isolated = TempRepo::new("unlicensed-paid-commands");
+fn unlicensed_orient_and_test_impact_both_work_with_no_paid_commands_left() {
+    // Ungated in the 2026-10-01 product-split decision (docs/roadmap.md):
+    // nothing in the CLI is paid-gated right now.
+    let isolated = TempRepo::new("unlicensed-no-paid-commands");
     isolated.write(
         "src/lib.rs",
         "pub fn answer() -> i32 { 42 }\n\n#[test]\nfn answer_is_correct() { assert_eq!(answer(), 42); }\n",
+    );
+    // test-impact diffs the working tree against HEAD, so a commit is needed
+    // before the uncommitted edit below gives it something to see.
+    isolated.commit_all("initial answer()");
+    isolated.write(
+        "src/lib.rs",
+        "pub fn answer() -> i32 { 42 }\n\n#[test]\nfn answer_is_correct() { assert_eq!(answer(), 42); }\n\nfn unused() {}\n",
     );
 
     let orient = Command::new(env!("CARGO_BIN_EXE_girder"))
@@ -135,21 +144,20 @@ fn paid_cli_commands_require_a_license_and_offer_free_alternatives() {
         .output()
         .unwrap();
     assert!(
-        !output.status.success(),
-        "test-impact unexpectedly succeeded"
+        output.status.success(),
+        "test-impact unexpectedly failed without a license\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("answer_is_correct"),
+        "unlicensed test-impact should still name the reachable test: {stdout}"
     );
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(
-        stderr.contains("`impacted_tests` tool needs a paid Girder license"),
-        "{stderr}"
-    );
-    assert!(
-        stderr.contains("`get_source`, `find_definition`, and `orient`"),
-        "{stderr}"
-    );
-    assert!(
-        stderr.contains("https://maynard42.gumroad.com/l/zwpsjl"),
-        "{stderr}"
+        !stderr.contains("paid Girder license"),
+        "test-impact should no longer mention a paid license: {stderr}"
     );
 }
 

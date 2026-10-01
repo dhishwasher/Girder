@@ -1,5 +1,10 @@
 # Inbound customer funnel
 
+> **Paused, 2026-10-01.** The user stopped all monetization-architecture
+> work to focus on shipping the current, free release cleanly first
+> (`docs/roadmap.md`). The paid "team feature" step 5 of this funnel refers
+> to does not exist and is not being built yet.
+
 This replaces an earlier draft of this document that assumed founder-led
 outbound (identifying specific teams and contacting them directly). That
 approach is explicitly out of scope: **no cold outreach, no prospect lists,

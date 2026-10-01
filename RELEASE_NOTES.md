@@ -1,3 +1,64 @@
+# Girder 0.3.0 (proposed — not yet tagged or published)
+
+115 commits since 0.2.7, written from `git log v0.2.7..HEAD`, not from
+memory. The headline change: `test-impact` / `impacted_tests` is no longer
+paid-gated. Telling a developer which tests a change may affect is not a
+chargeable feature; see "Pricing" in `README.md`. There is no current paid
+tier. A narrow, CI/PR-focused paid feature is designed but not built
+(`docs/ci-gate-design.md`).
+
+**Machine-checked Must/May/Unknown test classification is now wired through
+the CLI and MCP surface.** Every call site `test-impact`/`impacted_tests`
+reasons about is labeled Must (proven reachable), May (bounded ambiguity),
+or Unknown (disclosed, not guessed) — `--classified` shows why each test
+was selected, and an unresolved dispatch includes the related test rather
+than silently dropping it (`docs/call-classification-policy.md`). This
+closed a real, found-and-fixed soundness program spanning Stage 1 through
+Stage 3:
+
+- **A real node-identity collision bug**, where two distinct semantic
+  entities (e.g. two Rust trait impls providing a same-named method on the
+  same type) could compute the identical internal graph id, silently
+  overwriting the earlier one's entire node — including its own call
+  evidence. Found via this program's own review discipline, fixed for
+  Rust's trait-impl shape (commit `67dfae9`). TypeScript has a separate,
+  disclosed instance of the same bug class (duplicate `it()`/`describe()`
+  description strings) that remains open — see gap 28 in
+  `docs/core-gap-analysis.md`.
+- **Three independent false-empty `test-impact` symptoms**, each with the
+  identical root pattern (a narrow, resolved-reachability-only selection
+  returning nothing, with no fallback or notice, whenever evidence
+  couldn't be resolved) — in the bare `--quiet` path, the full/`--run`/
+  `--out` path, and independently in Plan Format v2's own mandatory
+  `tests.impacted` check. All three now fall back to the conservative
+  Must∪May∪Unknown union instead of returning nothing.
+- As a disclosed side effect, not a claimed fix: a long-documented
+  "representative mutation recall 0.000" defect (a Click polymorphic
+  dispatch Girder still cannot resolve) now measures recall `1.000`,
+  precision `0.667` — because the selection mechanism stopped silently
+  dropping the affected test, not because the underlying dispatch
+  resolution gap closed. That gap is still open
+  (`docs/core-representative-mutations.md`).
+
+**Language maturity, stated plainly:** Rust and Python Stage 3 audits
+(hand-labeled ground truth against real open-source repositories) are both
+DONE. TypeScript's Stage 3 audit is explicitly IN PROGRESS, not done. Go has
+not had the same Stage 3 audit run against it at all (see gap 29 in
+`docs/core-gap-analysis.md`) — its only committed measurement is the
+narrower `docs/go-support.md` gate.
+
+**CI note, not a feature:** this release also fixes a GitHub Actions
+Clippy failure present since commit `67dfae9`, caused by an unpinned
+toolchain picking up a newer `clippy::double_must_use` lint against
+`async-trait`'s generated code, not by any bug in this program's own
+commits (`docs/roadmap.md`, 2026-10-01 entries).
+
+**Version note:** 0.3.0 rather than a patch bump because the Must/May/
+Unknown classification surface and the test-impact ungating are both new,
+user-visible capability, not just a fix. This version number is a proposal
+pending confirmation before any tag is pushed — see the version-bump diff
+and the open questions in this session's summary.
+
 # Girder 0.2.7
 
 Girder 0.2.7 makes `orient` available without a license and adds `girder

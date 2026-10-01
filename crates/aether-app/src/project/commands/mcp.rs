@@ -464,7 +464,6 @@ that do not exist). Prefer it over grepping for call sites.",
         name: "impacted_tests",
         title: "List tests affected by a change",
         description: "\
-Paid license required. \
 Name the tests that can reach what changed, detected from the git diff or \
 from explicit node paths. One test name per line, ready to pass \
 to a test runner. Per the frozen classification policy's own wording, \
@@ -966,10 +965,11 @@ mod tests {
             let name = tool["name"].as_str().unwrap();
             let description = tool["description"].as_str().unwrap();
             assert!(!description.is_empty(), "{name} needs a description");
-            assert_eq!(
-                description.starts_with("Paid license required."),
-                name == "impacted_tests",
-                "only paid tools should advertise the license requirement: {name}"
+            // Ungated in the 2026-10-01 product-split decision
+            // (docs/roadmap.md): no tool is paid-gated right now.
+            assert!(
+                !description.starts_with("Paid license required."),
+                "no tool should advertise a license requirement that no longer exists: {name}"
             );
             assert_eq!(tool["inputSchema"]["type"], "object", "{name}");
             assert_eq!(

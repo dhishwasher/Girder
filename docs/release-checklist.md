@@ -49,30 +49,34 @@ command was actually run, not assumed.
       updated to describe it (don't let the audit document go stale
       the moment it stops being accurate).
 
-## If this release ships the test-impact ungating and/or the CI gate
+## test-impact ungating (shipped this release; the CI gate itself is paused)
 
-- [ ] `main.rs::paid_tool_for_command` and the matching check in
-      `mcp/watch.rs:390-392,487-489` are updated consistently — both gate
-      sites must agree on what's free vs. paid, not just one of them.
-- [ ] Every v1 (`girder-v1...`) and v2 (`girder-v2...`) key with tier
-      `paid` still unlocks whatever is now gated — run both the existing
-      `legacy_key_returns_its_tier` test and a new regression test
-      specific to the new gate before calling this done.
-- [ ] `docs/pricing-audit.md`, `docs/for-customers.md`,
-      `docs/first-customer-plan.md`, `README.md`, and `npm/README.md`
-      are updated together in the same change — these are five separate
-      sources of the same free/paid facts and have drifted before.
-- [ ] `crates/aether-app/tests/mcp.rs:125-148` and
-      `crates/aether-app/tests/cli.rs:143-151` (which currently assert
-      `test-impact` IS paid-gated) are updated to match the new behavior,
-      not left asserting the old boundary.
-- [ ] The Gumroad listing's actual fulfillment mechanism (does a purchase
-      auto-deliver a binary-acceptable key, or require a manual step) is
-      verified against the live listing, not assumed — see
-      `docs/first-customer-plan.md`'s "unresolved fulfillment question."
-- [ ] A decision has been made and recorded on whether the Gumroad
-      listing keeps selling during/after the transition, given the
-      feature it originally gated is now free.
+The CI-gate design (`docs/ci-gate-design.md`) is paused per the user's
+2026-10-01 redirect to ship the current free release first — it is not part
+of this checklist. test-impact's own ungating did ship; checked below.
+
+- [x] `main.rs::paid_tool_for_command` now returns `None` unconditionally.
+      `mcp/watch.rs:390,487` both call this same function directly (not a
+      second independent gate with its own logic — corrected from an
+      earlier, wrong assumption in `docs/ci-gate-design.md` §7), so no
+      separate edit was needed there.
+- [x] `license.rs` itself (the key format, `license_keygen`, signature
+      verification) is untouched, per instruction — nothing is gated right
+      now, so there is nothing to grandfather and no new regression test
+      was needed.
+- [x] `README.md` and `npm/README.md` are both updated to describe
+      `impacted_tests` as free, in the same change as the code. `docs/
+      pricing-audit.md`, `docs/for-customers.md`, and `docs/
+      first-customer-plan.md` are marked paused/superseded rather than
+      rewritten, since the paid narrative they described no longer applies
+      and there is nothing to sell right now — see each file's banner.
+- [x] `crates/aether-app/tests/mcp.rs`, `tests/cli.rs`, and
+      `tests/mcp_watch.rs` (which previously asserted `test-impact`/
+      `impacted_tests` IS paid-gated in three places) are updated to match
+      the new behavior and verified passing, not just edited.
+- [ ] Whether the Gumroad listing should still sell the old $39 key — the
+      feature it gated is now free — is an open question for the user, not
+      decided in this checklist.
 
 ## Packaging and distribution
 
