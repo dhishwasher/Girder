@@ -1453,19 +1453,34 @@ benchmark, don't run it against the stale snapshot.
   found by a still-IN-PROGRESS language's (TypeScript's) own review
   process -- recorded here rather than only in the TypeScript stage's
   own documents, since it is not specific to TypeScript.
-  **The false-empty `test-impact` SYMPTOM is FIXED** (commit alongside
-  this entry): `semantic_changed_impact_with_config`
+  **The false-empty `test-impact` SYMPTOM is FIXED for every invocation
+  form** (two commits: the first fixed only the bare `--quiet` path and
+  was briefly, incorrectly, described as closing it entirely -- see
+  `before-observation-addendum-5.md` and its own correction in
+  `-addendum-6.md`). `semantic_changed_impact_with_config`
   (`crates/aether-app/src/project/git.rs`) no longer filters a changed
   Module node out of `origin_ids`, so a change whose only detectable
   effect is on a Module (whether from this collision, a const/type-only
-  edit, or a `describe`/`beforeEach`-level statement) now flows into
-  `classified_impact`'s existing conservative must∪may∪unknown
-  escalation instead of short-circuiting to an empty result on an empty
-  origin slice. Verified both ways: a new regression test
+  edit, or a `describe`/`beforeEach`-level statement) now flows through.
+  Two different consumers of `origin_ids` both needed a fix:
+  `quiet_from_graph` (bare `--quiet`) already used `classified_impact`'s
+  own conservative must∪may∪unknown escalation once the origin stopped
+  being dropped -- fixed by the first commit alone. `test_impact.rs`'s
+  FULL path (no flags, `--out`, `--run` -- confirmed separately broken:
+  `--run` would execute **zero tests** on a real change) uses the
+  older, narrower `tests_for_nodes` (resolved-Calls-reachability only,
+  no incoming edge into a Module, no escalation) -- fixed by falling
+  back to the SAME classified union only when `tests_for_nodes` is
+  empty and an origin exists, preserving the existing, already-tested
+  narrower behavior for the common (non-empty) case (a
+  broader/unconditional swap was tried first and reverted after it
+  broke 3 pre-existing tests whose exact impacted-test sets are
+  asserted). Verified properly: both the bare-`--quiet` and the
+  `--run`/full-path regression tests
   (`test_impact_quiet_is_not_empty_for_a_module_level_only_change`,
-  `crates/aether-app/tests/cli.rs`) fails on the pre-fix code (confirmed
-  by temporarily reverting the fix and re-running it alone) and passes
-  on the fixed code; all four gates pass
+  `crates/aether-app/tests/cli.rs`) were confirmed to fail on the
+  respective pre-fix code before being confirmed to pass on the fix;
+  all four gates pass twice (once per commit)
   (`cargo test --workspace`, `clippy -D warnings`, `fmt --check`,
   `node --test`). `CLAUDE.md` and the `impacted_tests` MCP tool
   description updated to match (the documented const/type-only-edit gap

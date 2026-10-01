@@ -1517,6 +1517,35 @@ fn test_add() {
         "a module-level-only change must still conservatively select the \
          known test, not return an empty selection: {stdout:?}"
     );
+
+    // The full (non-quiet) path used the older, narrower `tests_for_nodes`
+    // (resolved-call reachability only), which has no incoming edge into a
+    // Module origin and so stayed silently empty even after the quiet path
+    // was fixed -- `--run` would have executed zero tests on this exact
+    // change. Covers the bare form, `--out`, and `--run` together, since
+    // all three share the same origin_ids/test_ids computation.
+    let full = run_girder(&["test-impact", repo.path().to_str().unwrap()]);
+    assert!(
+        full.contains("test_add"),
+        "the full (non-quiet) test-impact report must also conservatively \
+         select the known test for a module-level-only change, not report \
+         \"No tests found in the impact set\": {full}"
+    );
+    assert!(!full.contains("No tests found in the impact set"), "{full}");
+
+    // `--run` would actually invoke the configured Rust test runner, which
+    // this throwaway repo has no real `Cargo.toml` to support -- using
+    // `run_girder_output` instead of `run_girder` so a downstream subprocess
+    // failure (irrelevant to what this test checks) doesn't mask the
+    // assertion with an unrelated panic. The selection listing prints
+    // before the subprocess runs regardless of its outcome.
+    let run_output = run_girder_output(&["test-impact", repo.path().to_str().unwrap(), "--run"]);
+    let run_stdout = String::from_utf8_lossy(&run_output.stdout);
+    assert!(
+        run_stdout.contains("test_add") && !run_stdout.contains("No tests found in the impact set"),
+        "--run must not silently execute zero tests on a module-level-only \
+         change: {run_stdout}"
+    );
 }
 
 #[test]

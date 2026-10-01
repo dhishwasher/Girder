@@ -164,6 +164,54 @@ pub fn test_impact(args: &[String]) -> std::io::Result<()> {
         }
     }
 
+    // `tests_for_nodes` is resolved-call reachability only -- deliberately
+    // narrower than `--quiet`'s conservative must∪may∪unknown union, and
+    // changing it unconditionally regresses this command's established,
+    // tested behavior on an ordinary, non-empty impact set (confirmed:
+    // doing so broke 3 pre-existing tests whose whole-file Unknown
+    // boundaries would otherwise pull in every test, not just the
+    // relevant one). It is, however, blind to a Module-kind origin (the
+    // only origin a const/type-only edit, a describe/beforeEach-level
+    // statement, or a node lost to a semantic-path collision ever
+    // produces -- see docs/observations/stage3-typescript-audit/
+    // before-observation-addendum-5.md): nothing "calls" a Module, so
+    // `tests_for_nodes` finds nothing for it even after that origin
+    // stopped being filtered out of `origin_ids` entirely, silently
+    // selecting and running zero tests on a real change via `--run`,
+    // `--out`, or the bare (no-flag) form. Falling back to the
+    // classified union ONLY when the narrow result is empty closes that
+    // specific gap without touching the common, already-tested case.
+    let mut boundary_count = 0usize;
+    if test_ids.is_empty() && !origin_ids.is_empty() {
+        let impact = graph.classified_impact(&origin_ids).tests(&graph);
+        boundary_count = impact.boundaries.len();
+        test_ids = impact
+            .must
+            .into_iter()
+            .chain(impact.may)
+            .chain(impact.unknown)
+            .collect();
+        for path in &baseline_test_paths {
+            if let Some(node) = graph.find_by_path(path) {
+                if seen.insert(node.id) {
+                    test_ids.push(node.id);
+                }
+            }
+        }
+        sort_by_path(&graph, &mut test_ids);
+    }
+    if !quiet && boundary_count > 0 {
+        out!(
+            sink,
+            "\n{} unresolved call-evidence boundar{} found; this selection \
+             fell back to the conservative must∪may∪unknown union because \
+             no test was reachable via a resolved call alone — pass \
+             --classified to see why each test is included.",
+            boundary_count,
+            if boundary_count == 1 { "y" } else { "ies" }
+        );
+    }
+
     if test_ids.is_empty() {
         if !quiet {
             out!(sink, "\nNo tests found in the impact set.");
