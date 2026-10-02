@@ -1,0 +1,42 @@
+{
+  "revision": "c441899e0807559bcd6eaf6f7f3e056a9c018bf7",
+  "serial": true,
+  "runs_per_gate": 1,
+  "gates": [
+    {
+      "command": "cargo test --workspace -j1 --quiet",
+      "exit_code": 0,
+      "log": "cargo-test.log",
+      "log_sha256": "6b3d44deba18d9a2f88a086cf0ec8ba5e06e3514e16ce82a0fe6160f8b52c923"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -j1 -- -D warnings",
+      "exit_code": 0,
+      "log": "cargo-clippy.log",
+      "log_sha256": "245c8d5c279f4c6ee5e0758bf78e9351f9700ad27a0514a85b67ba8f1c812115"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "log": "cargo-fmt.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "node --test npm/test/*.test.js",
+      "exit_code": 0,
+      "log": "npm-test.log",
+      "log_sha256": "8f9f2ed985557f7e285e153b8dac669b79f4d5ce942c9cb3efde188218e28a4b"
+    }
+  ],
+  "cargo_test": {
+    "suites": 24,
+    "passed": 753,
+    "failed": 0,
+    "ignored": 2
+  },
+  "npm_test": {
+    "passed": 29,
+    "failed": 0,
+    "skipped": 2
+  }
+}

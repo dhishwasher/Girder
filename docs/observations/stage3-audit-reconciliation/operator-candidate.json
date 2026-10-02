@@ -1,0 +1,15 @@
+{
+  "revision": "c441899e0807559bcd6eaf6f7f3e056a9c018bf7",
+  "binary": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+  "binary_sha256": "da59183f4543a51a48e584e43ed06fcb76f5d6fc21ce8ba4b4763d000442f552",
+  "policy_sha256": "51e3e3fb2593133e5e93d4e701ee2692b9ae535f01ec8cc8a120ed08571510d5",
+  "labels_manifest_sha256": "eb50ea8fb602bb3a45e79253a3eb53e08cc2095d2a5a6d95b8ef4ba1b3101533",
+  "runner_sha256": "d2f996eee28eee04b282f04addf6852bb8d1b18c3afcb9f409bf8cd4ce495a1d",
+  "environment": {
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target",
+    "CARGO_HOME": "/mnt/chromeos/removable/MOVESPEED/.cargo",
+    "RUSTUP_HOME": "/mnt/chromeos/removable/MOVESPEED/.rustup"
+  }
+}
