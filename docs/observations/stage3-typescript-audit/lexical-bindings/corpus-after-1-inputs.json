@@ -1,0 +1,426 @@
+{
+  "revision": "1c10effc34deaf6549e4aee4f89358fd20b89819",
+  "binary_sha256": "fe6901793bb8055a66359ad235e631219ba87b3f6ab96a396e4741925a7deaef",
+  "command": [
+    "python3",
+    "-m",
+    "tools.dispatch_corpus_scorer",
+    "--bitcode",
+    "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+    "--corpus",
+    "docs/dispatch-corpus.json",
+    "--output",
+    "/home/corymaynard370/Bit-code/docs/observations/stage3-typescript-audit/lexical-bindings/corpus-after-1.json",
+    "--json"
+  ],
+  "inputs": [
+    {
+      "path": "docs/dispatch-corpus.json",
+      "sha256": "9e3208a8f3fdc8faaee55cece63c1b5e25526322ebebbba915652f4f526ccd0a"
+    },
+    {
+      "path": "docs/call-classification-policy.md",
+      "sha256": "d6d686a9033c5a9e44665e8134707a8074296352ec3af28507286d925d96befb"
+    },
+    {
+      "path": "tools/dispatch_corpus_scorer.py",
+      "sha256": "0f776f407a5b475bec7e8329bf251e607a14b6b1d4e8397529a074c9257a99a5"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/closure-captures-direct-call/app.go",
+      "sha256": "24d93cd84f45a42741fdaae2023c75cb40eac1066212abc4a413298ae329e8f8"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/closure-captures-direct-call/app_test.go",
+      "sha256": "93ba1d0cf10bb681c6d82bab40e138f336fa07633df4dcb49ef6c87d2d19b182"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/closure-captures-direct-call/go.mod",
+      "sha256": "397606afd5d8dcdfd67aaca50fde54980d186aa3753e99ec0097a34a08957364"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/direct-cross-file/app.go",
+      "sha256": "b382aea8704a4b076faa9f833cc64c6ba8dd632badb91e326685290c0816714d"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/direct-cross-file/app_test.go",
+      "sha256": "76929ea61b4b7c72bbc56eb23db881ed54c76b2e1571165fad5e3a6180c934f2"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/direct-cross-file/go.mod",
+      "sha256": "7888ac4c351eb8da9bc1dcb966c9d67c5783482fa60a86d020e75c0fe08b74ac"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/direct-same-file/app_test.go",
+      "sha256": "486bdc41e2a6da4bce0208bcc60f4af67a5b2cae152b9ad85e60e30ed8013bdf"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/direct-same-file/go.mod",
+      "sha256": "9c23838d65b29227f7661b29c70c50f6a401541810f2e32a0fd54e1a5542cb99"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/embedding-promotion/app.go",
+      "sha256": "f04b1b960b5c4981e067a3295ddf4103638f3291f747a6c64b77f7ebda0f1f16"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/embedding-promotion/app_test.go",
+      "sha256": "9ad17619ee33c5fa5cc58f62348de21ea3027442ea6415ff6ca25381f235ede3"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/embedding-promotion/go.mod",
+      "sha256": "5aef4be9faed0530a7d1afe0c54931251818732523318c5f989ea9f74737de12"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/function-variable/app.go",
+      "sha256": "e54887127f4c9502dcc9a8bc0615792da2710fc9cdcbf64d38233936dbdceb94"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/function-variable/app_test.go",
+      "sha256": "62048eeb14324b0da7ae2038f155773ec8607e060e73b9b13a8d0a1d946cbb20"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/function-variable/go.mod",
+      "sha256": "216424a52394e748b3b132e81565852196d6b9b4b6120eda3f1663618d543805"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/generic-function-type-param/app.go",
+      "sha256": "2b4a63e625d184f5507f3170d1b217f5630f01f6e15e6eb2bffb25069cfb5153"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/generic-function-type-param/app_test.go",
+      "sha256": "23651983ed82280ea504f4cf8813066e580b7d824f441f3355a9ec3b3041ab41"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/generic-function-type-param/go.mod",
+      "sha256": "0b19964dffc94e4fd39b37078952b62d534e8a3d228e20de6e9f4a34168b9019"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/interface-2-impls/app.go",
+      "sha256": "d0a6d87a13e9ed5a8f35d708552fb2f2be9d3a3de4597082a10ca622cef7544c"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/interface-2-impls/app_test.go",
+      "sha256": "5492d5ad3fdfe5f2e68be3d6f46afc8d7cc06f90f89c85461c9785f382c3e32b"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/interface-2-impls/go.mod",
+      "sha256": "2eb3f9a587c7c5c255a24341e5b108b1c5b94fce866b446941d0d6ec3716ceec"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/interface-implicit-satisfaction/app.go",
+      "sha256": "e0ee6aa6592ba97c58ae3c62239e7625e9ba19232dd9cb5ed7dcf6eece19299b"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/interface-implicit-satisfaction/app_test.go",
+      "sha256": "7e03ac6094dac9a03031b0f8b22ce01b3c48e6dce96e12fbb9d05f27d11d5d38"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/interface-implicit-satisfaction/go.mod",
+      "sha256": "24018cc6aa62fafaeceed09351e452eadd073772dccec05daa9b91e9e058c706"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/method-value/app.go",
+      "sha256": "8fc5955cdc6d92cd08a3a22610fd42e3c4cec5e7091e158e481bb352a0f2126c"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/method-value/app_test.go",
+      "sha256": "7c5a98402f5ffdd3a561509e97bee7391fce02e1b9941e2d5cadcb48d6cf5149"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/method-value/go.mod",
+      "sha256": "8bf332d89983efa52a4d45e5bc944d08e6cfbff0220d6f5cbdc943cbd881dc91"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/name-shadowing-parameter/app.go",
+      "sha256": "97e7d11062e5f9a3103e1930fe46a2b247a114e292b6564d40681eaecc22700d"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/name-shadowing-parameter/app_test.go",
+      "sha256": "a367a38cb4d1586c5492bddf6016b8e9cf70a0fe0b09814d87b67e274fe0a4f1"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/name-shadowing-parameter/go.mod",
+      "sha256": "043be5bef0b774edcfe493626efdcdcde053a265768aae36871cb892473ab1bf"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/negative-unreachable/app.go",
+      "sha256": "e72db7a57edcde54754fd1998488995911ff46c4bcd581ecda68cbd74da7ae90"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/negative-unreachable/app_test.go",
+      "sha256": "a0419dce80c5643f842e57c49498521508585f7f8d34182baaf37c8776211ece"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/negative-unreachable/go.mod",
+      "sha256": "a13d6bad9e45f5740e54d897d29b5b8b71efe792fbe61387044cf5ddb713c068"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/reflect-based-call/app.go",
+      "sha256": "ace5fca9e4d4daef1ef869231d14e6ef58d5ec6d187b716a90a00c791208edc1"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/reflect-based-call/app_test.go",
+      "sha256": "642138b1c6e8a22f4be440ce9922c0353c6a70ce3192a0d20e24584a00af7cf5"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/go/reflect-based-call/go.mod",
+      "sha256": "1213c3c1d53c0114d3384a8013669e6ed0bf95d818b41369d2bf3479949e37bd"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/decorator-elsewhere-in-file/test_app.py",
+      "sha256": "493b863b8003db06e082fcc6ab5513db8d284f39478a8833edd4cde5b79f9b6d"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/decorator-on-call-site/test_app.py",
+      "sha256": "0d90098c3a576f7e0713151e4e68239df0feb3241f3407f677f051a82289c76b"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/direct-cross-file/app.py",
+      "sha256": "8380bd71b4a7d7648f6450a5b96b88ee79aea589836ad7f7206e3935e3e46359"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/direct-cross-file/test_app.py",
+      "sha256": "a5316721066bd7d5ff2caf7f8a97714a8d6fddf7cd85fd004f7d80f37cd54f66"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/direct-same-file/test_app.py",
+      "sha256": "2425f2a62b9f8af4fe20fb7665b1de5ec7a14a88226d9c32f09f0ed97eeb10b7"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/dunder-call/test_app.py",
+      "sha256": "0d2e34857bc3e76e4ece5f05778ad252290e5c11cc34c255f8b9066fe64f896c"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/getattr-dynamic/test_app.py",
+      "sha256": "5a9517ea68a5a1ccbc7f25162bbac0578c21cabd592227d9ff07a6674f109faf"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/name-shadowing-parameter/test_app.py",
+      "sha256": "55f5dfd787c26a5d6a23fefa11146f98ae1a141e498c05e3cbad45b24fe8ae36"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/negative-unreachable/test_app.py",
+      "sha256": "964c6e94298568aa485ea2a3f27a91afc264d1d692f0e8c6a3bdbef9395c2ee9"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/override-via-subclass/test_app.py",
+      "sha256": "30879637caf60e5c0c1434f841dc05f1bbbc06cad4240a258f04d1659d4e0d71"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/same-class-method-no-subclass/test_app.py",
+      "sha256": "e9232d77436e94c4e8fe32b87e3b934e02557465ddaa3539be8a4d86a1e29622"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/super-mro-diamond/test_app.py",
+      "sha256": "df71799bf2c860041d7fa40ae0e5389750d39746dde93c0181a6daf834779842"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/python/unconstrained-duck-typing/test_app.py",
+      "sha256": "0923f97d1fb2306ef9ec5d14cb28bc817c0cd5e1ee3ae9c72f08fe6a1866c05a"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/boxed-dyn-fn-closure/Cargo.lock",
+      "sha256": "210a8522c3c42d7b9847698b19ad9c1c121653510ab2612d60a5a7d1946c6670"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/boxed-dyn-fn-closure/Cargo.toml",
+      "sha256": "7959ae44b568904c1b04ce7601127ad6f01d48cd331966ea5a6d632baff8583f"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/boxed-dyn-fn-closure/src/lib.rs",
+      "sha256": "83afd47e048e162a134f7bd923253afc63ffdf860811bb1e87733891742381ff"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/call-inside-closure-body/Cargo.lock",
+      "sha256": "93fbf747569bc1162393b01f68be598b4ca4dc0f3f7c8a6494c7c949e093e08b"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/call-inside-closure-body/Cargo.toml",
+      "sha256": "5f2712cba4db80ac9a9ad7e9fff3cb219c8930ffebffe3cf46df63c2a6b5ce9e"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/call-inside-closure-body/src/lib.rs",
+      "sha256": "0a716472986940c8503c6d03433f36232870fcc90f04bb820aaa553da7fbaddd"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/direct-cross-file/Cargo.lock",
+      "sha256": "f687f3d378fee2357342f491bf581d0a06610d98adb3be0c27b169c6e0938fcb"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/direct-cross-file/Cargo.toml",
+      "sha256": "9ab04896e71fe6652cf3ce80635bcf485a6124dc70b02ee5a4192fbba9bea3fe"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/direct-cross-file/src/lib.rs",
+      "sha256": "cad9171a3c097c042e392be802ebca1b79ff56eb1f7f945d36bb0ee494a3c122"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/direct-cross-file/tests/impact.rs",
+      "sha256": "74be8c4f604082c671a471abadd29599f0d52253e5e31ce8e1461a5d225bca59"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/direct-same-file/Cargo.lock",
+      "sha256": "f797c7cf8eef0caa5a772c817ac22c5582234e670dc609ea3e1b970a2e82878a"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/direct-same-file/Cargo.toml",
+      "sha256": "98209305941e15bc532ad14217e48420cda09791280448abcabefe1486296098"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/direct-same-file/src/lib.rs",
+      "sha256": "8ca6737c6f1e5eddb02c01b928802b060d9fb43a01571d09f7ce36a3a5c6f1a4"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/dyn-trait-2-impls/Cargo.lock",
+      "sha256": "80fd1aa27a5c62f17efdfb2585b665e05b6c14d9aa8f7e71fc6cec823782c9c3"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/dyn-trait-2-impls/Cargo.toml",
+      "sha256": "5d23997502373a344b894207cba7ea7dd84ce4c360f8d02386c386c52ee78787"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/dyn-trait-2-impls/src/lib.rs",
+      "sha256": "e0fac350bd25c805fd6d0778ea2f6b4655525bf189bc4f3fd1255a3ddcc89c0d"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/fn-pointer-stored/Cargo.lock",
+      "sha256": "550ba742692263a6044952f3f16e9619f03f93ca9778caad3ca8bf8de9153941"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/fn-pointer-stored/Cargo.toml",
+      "sha256": "939add447f10c05c95ccf32ecc8812035d7d930bd9964a2d66b28438d3909a9f"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/fn-pointer-stored/src/lib.rs",
+      "sha256": "0a06c17c3558f8623ae392f6ee70b23bc00a255eadb2669fd4abbe40e2aaed68"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/generic-bound-dispatch/Cargo.lock",
+      "sha256": "f7b1fd1ce50ad1661596079eb9237e9a120f616aa377dbf67c88d71b0bb4da41"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/generic-bound-dispatch/Cargo.toml",
+      "sha256": "018c655d1077fdca5357f6033385c2fa8f0e891660ea4fa78f1021fd1e3acf4f"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/generic-bound-dispatch/src/lib.rs",
+      "sha256": "3fabc2a3221b4e2af00420fc4b4180a10e2e14f22d6a8a93bd10c674ce936051"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/macro-generated-call/Cargo.lock",
+      "sha256": "9535a74a23054c1b8feed32a82aa323dd2eba270e2ad3e313c1486a59824ad7a"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/macro-generated-call/Cargo.toml",
+      "sha256": "a18770573e15376e420c6a3752422b5ffc43b0157d2341ca6154c3de77de6f10"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/macro-generated-call/src/lib.rs",
+      "sha256": "32bddabe719c29f9cea56739189efce806a437f6fa040d2950967a16acd60f41"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/name-shadowing-parameter/Cargo.lock",
+      "sha256": "dca830d1bd50633876eb076a90c639e6399c133dd1b333580d03a0ad9b502452"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/name-shadowing-parameter/Cargo.toml",
+      "sha256": "daf61a22876b0f268292757ca28d38a366323472320644581bfea45807adaf26"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/name-shadowing-parameter/src/lib.rs",
+      "sha256": "1db4e5e4a6a0fb651f621e047daa3aac085e3364825acfb050d5435d0b6e97a3"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/negative-unreachable/Cargo.lock",
+      "sha256": "a8fd69de3dd25b3cd1a162c7e6a9b17eb051b411154ee12edb13f421702d770b"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/negative-unreachable/Cargo.toml",
+      "sha256": "a03df256d24c1ebc0a0d54de132127dee7da9ced0ad23e2bf927ba7e59fd3bee"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/negative-unreachable/src/lib.rs",
+      "sha256": "ef8fe20144ef0e23c0be4159ff66d61c34c1880b98866a3ef381b609c6497ec3"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/operator-overload-concrete/Cargo.lock",
+      "sha256": "8d02681f57b2a79efadbf99ca72cf460f41deee9b768c45432e50666830f45df"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/operator-overload-concrete/Cargo.toml",
+      "sha256": "d906aab83c539819720028c18fcf127cceebb4117c9f5451943498bd1800b2d6"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/operator-overload-concrete/src/lib.rs",
+      "sha256": "1b8a5672625fb7383980e56dd31ae77b547c361a38e075c6c25e35bc876d9fea"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/trait-default-vs-override/Cargo.lock",
+      "sha256": "20de3106799157a1f7d8a00c2f4a448fa27f09e506607a7bba59b8e7c578078a"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/trait-default-vs-override/Cargo.toml",
+      "sha256": "b0a8bed1e3f1bad62e8815cc81fcc7e3ad3374c7740c202dae29944bdc6424b2"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/rust/trait-default-vs-override/src/lib.rs",
+      "sha256": "bc548ccb130b6f7f352e329dfdc8a0e48739fc4eed05db42906c6bd4797330eb"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/any-receiver/app.test.ts",
+      "sha256": "2f7b185de5c0e55b3199c074e483e3eb43567f99120a49e669108be165ff6d7a"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/class-inheritance-override/app.test.ts",
+      "sha256": "5311a19e3c36996a7ee8b87c93c47efacd92ae25ebe990a70a451c4f4eafab4d"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/decorator-elsewhere-in-file/app.test.ts",
+      "sha256": "830cf0fe32cc965b8376ba0972fecba088831feecb81a19e1f7e33dfd0f1b2b0"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/direct-cross-file/app.test.ts",
+      "sha256": "99fe2eefb562142a2a58c989fd48600a430aa84a46c4b68dfd595d5ffe38bdb1"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/direct-cross-file/app.ts",
+      "sha256": "fcb85875c3d25a34a329dfab8a129e36220ba99da36093c6c9624b81eb3da56d"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/direct-same-file/app.test.ts",
+      "sha256": "6454b5be9e7192e96154f6c032ab0f335eb1b7f38762b4183b2447096640e5e8"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/dynamic-property-access/app.test.ts",
+      "sha256": "893ac0b93b6a84b81c56a8ea85e126ff0057f939a9717dfb6a5765a7a0cf0148"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/interface-implementors-2/app.test.ts",
+      "sha256": "60d7ea88a22a4381aa22e65f31c636711653146184532f503e1d682f3d51d124"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/name-shadowing-parameter/app.test.ts",
+      "sha256": "472ebbc3578a61d4a3605b041441c74f9845b5d9d309537f8a9237a90c359897"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/negative-unreachable/app.test.ts",
+      "sha256": "2c18e64ae0e17a480d0efabd2b66429d0ac13f35356af94730fc0e2b96a4653b"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/stored-callback/app.test.ts",
+      "sha256": "7b4a70dced72b8fd200d414393fe111bad344468159f1038ae94a20fcc9f4ffc"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/structural-class-no-implements/app.test.ts",
+      "sha256": "1fdedc0f537f1881afd0267700c6c544f76e0e340d6412df1ef941364c997c0f"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/structural-object-literal/app.test.ts",
+      "sha256": "5b85efacdb41b4a02b9b306a58339e57f4dc3950d48210d7bed1dc01af346e1d"
+    },
+    {
+      "path": "fixtures/dispatch-corpus/typescript/union-type-dispatch/app.test.ts",
+      "sha256": "b6429e5d0661c0e24ad47de7218cc38ee1e5d31911bf22ef872113d437f441fc"
+    }
+  ]
+}
