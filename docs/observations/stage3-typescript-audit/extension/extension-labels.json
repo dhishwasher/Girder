@@ -1,0 +1,55 @@
+{
+  "sites": [
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/lib/webworker.generated.d.ts",
+      "line": 15370,
+      "shape": "dynamic_dispatch",
+      "text": "[Symbol.iterator](): StylePropertyMapReadOnlyIterator<[string, Iterable<CSSStyleValue>]>;",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "This is a computed-name method signature inside an ambient .d.ts interface; there is no evaluated invocation (rubric case 9)."
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 13509,
+      "shape": "optional_chaining_call",
+      "text": "const declaration = Debug.checkDefined(symbol.declarations?.find(isTypeAlias), \"Type alias symbol with no valid declaration found\");",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "The selected optional chain is declarations?.find(isTypeAlias), not the enclosing Debug.checkDefined call. Symbol.declarations is a declaration array; find is the external Array.prototype.find implementation. Optional chaining removes undefined but does not supply an in-snapshot target."
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/__tests__/array.test.ts",
+      "line": 25,
+      "shape": "method_call",
+      "text": "justTwo.parse([\"a\", \"a\"]);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "justTwo is a same-file const initialized by z.string().array().length(2). Its relative ../index.ts -> external.ts -> types.ts imports stay within deno/lib. ZodArray.length (types.ts:2272) returns new ZodArray; parse is inherited from the sole ZodType.parse at types.ts:238, with no parse override or runtime ZodArray subclass in that module tree. Constructor assignment at :401 binds that same parse function to this; it does not substitute another implementation. The deno tree has no prototype-method assignment or Object.defineProperty call; the parallel src/types.ts is not imported here. No reassignment of this justTwo binding exists. This follows the same checked-binding rule as original sites 96/97.",
+      "true_target": "deno/lib/types.ts:238"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/utilities.ts",
+      "line": 2422,
+      "shape": "plain_call",
+      "text": "export function createDiagnosticForNodeArray(sourceFile: SourceFile, nodes: NodeArray<Node>, message: DiagnosticMessage, ...args: DiagnosticArguments): DiagnosticWithLocation {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "This line declares createDiagnosticForNodeArray; the matched function name and parameter list are not a call."
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/isSameSecond/test.ts",
+      "line": 8,
+      "shape": "new_expression",
+      "text": "new Date(2014, 8 /* Sep */, 4, 6, 30, 15, 500),",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "new Date(...) invokes the JavaScript builtin constructor. Ambient declarations in the snapshot do not provide its runtime implementation; the target is external under rubric case 8."
+    }
+  ]
+}

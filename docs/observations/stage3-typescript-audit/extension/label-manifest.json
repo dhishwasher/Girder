@@ -1,0 +1,24 @@
+{
+  "inputs": [
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/extension-labels.json",
+      "sha256": "e0a9bbb37c31525ff8dbf375603aff0ecc236f8a177f38840faf8a77021c9c20"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/combined-labels.json",
+      "sha256": "c3979bb15d2040da7a006051bde99374566cbd01e94b62f33bee3f921999c0eb"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/source-excerpts.json",
+      "sha256": "e216da240aa0f31bd336c9711fb36674776d87f6a8e03a30007f83a3074c86f0"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/binding-evidence.json",
+      "sha256": "e05fb6e1d4f2335246540cc8364030a132218a6a750405a4673a5fe2cf593cc7"
+    },
+    {
+      "path": "tools/score_typescript_audit_extension.py",
+      "sha256": "ab13edfbfe49290779160832a8516078ef9a92081f0ef76b56d0882370e2c93a"
+    }
+  ]
+}

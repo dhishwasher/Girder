@@ -1,0 +1,35 @@
+{
+  "package": "zod-3.23.8",
+  "excerpts": [
+    {
+      "file": "deno/lib/index.ts",
+      "start_line": 1,
+      "end_line": 4,
+      "source": "import * as z from \"./external.ts\";\nexport * from \"./external.ts\";\nexport { z };\nexport default z;"
+    },
+    {
+      "file": "deno/lib/external.ts",
+      "start_line": 1,
+      "end_line": 6,
+      "source": "export * from \"./errors.ts\";\nexport * from \"./helpers/parseUtil.ts\";\nexport * from \"./helpers/typeAliases.ts\";\nexport * from \"./helpers/util.ts\";\nexport * from \"./types.ts\";\nexport * from \"./ZodError.ts\";"
+    },
+    {
+      "file": "deno/lib/types.ts",
+      "start_line": 238,
+      "end_line": 243,
+      "source": "  parse(data: unknown, params?: Partial<ParseParams>): Output {\n    const result = this.safeParse(data, params);\n    if (result.success) return result.data;\n    throw result.error;\n  }\n"
+    },
+    {
+      "file": "deno/lib/types.ts",
+      "start_line": 397,
+      "end_line": 403,
+      "source": "  }\n\n  constructor(def: Def) {\n    this._def = def;\n    this.parse = this.parse.bind(this);\n    this.safeParse = this.safeParse.bind(this);\n    this.parseAsync = this.parseAsync.bind(this);"
+    },
+    {
+      "file": "deno/lib/types.ts",
+      "start_line": 2272,
+      "end_line": 2277,
+      "source": "  length(len: number, message?: errorUtil.ErrMessage): this {\n    return new ZodArray({\n      ...this._def,\n      exactLength: { value: len, message: errorUtil.toString(message) },\n    }) as any;\n  }"
+    }
+  ]
+}
