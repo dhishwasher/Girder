@@ -1,0 +1,1264 @@
+{
+  "revision": "5733be614a45d3491046cba0272201dd17ed785a",
+  "binary_sha256": "fe6901793bb8055a66359ad235e631219ba87b3f6ab96a396e4741925a7deaef",
+  "manifest_sha256": "d8c1cda9303e48dc9ebe75526a1f7d705058b5095a02f41d7d72347baf115ae3",
+  "runner_sha256": "cc66d24110675a92c9024a283dcea1409b519de970a96244020a3aec6a699af0",
+  "runtime_probe_sha256": "ac221da99adf9a6e90dd39eeacc5f4f70ecbab0ddd08d2a93f2bc1e04307a360",
+  "node_version": "v22.23.1",
+  "commands": [
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/top-level",
+        "--json"
+      ],
+      "stdout": "top-level-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 1.066,
+      "stdout_sha256": "6b1719726036a7e2952d9114c9d98d3142d695b90afc463d52f6f4381758bc61"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/top-level/project.aether",
+        "--json"
+      ],
+      "stdout": "top-level-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.336,
+      "stdout_sha256": "cf07b32f3fb6cfe2ef8f18f6bacf94a9b7b3cbe66898b5c952936a63bee5d697"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/top-level.ts",
+        "module"
+      ],
+      "stdout": "top-level-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.342,
+      "stdout_sha256": "f1cba1d6ee4ee357741f3fb09c1b2b338b2aca179ac585ca45b7081c8a7343a9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/nested",
+        "--json"
+      ],
+      "stdout": "nested-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.487,
+      "stdout_sha256": "50b089d016151848ab5bb019d4cea1ed4734acb6d8dd5a5839ff9b575c81712c"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/nested/project.aether",
+        "--json"
+      ],
+      "stdout": "nested-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.187,
+      "stdout_sha256": "906b4886edefcfc0efaa87411bfd5b9d29304695d5a4e0856299c83c69ef7f02"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/nested.ts",
+        "module"
+      ],
+      "stdout": "nested-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.18,
+      "stdout_sha256": "f1cba1d6ee4ee357741f3fb09c1b2b338b2aca179ac585ca45b7081c8a7343a9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/closure",
+        "--json"
+      ],
+      "stdout": "closure-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.427,
+      "stdout_sha256": "1e2fc80b7020dfa7b6b681164e7c360acd27f63f839f7caaef1c14a367264085"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/closure/project.aether",
+        "--json"
+      ],
+      "stdout": "closure-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.237,
+      "stdout_sha256": "0616c8e5fd0c529fff21a14335cb160e0ccf55213bad2e070b17f8d9be45fef3"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/closure.ts",
+        "module"
+      ],
+      "stdout": "closure-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.183,
+      "stdout_sha256": "f1cba1d6ee4ee357741f3fb09c1b2b338b2aca179ac585ca45b7081c8a7343a9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/hoisted",
+        "--json"
+      ],
+      "stdout": "hoisted-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.338,
+      "stdout_sha256": "23509d53b5f2ec73f40ab9010094ce9d8f49143d7258d30615aff552e40bbaf9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/hoisted/project.aether",
+        "--json"
+      ],
+      "stdout": "hoisted-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.202,
+      "stdout_sha256": "4d2a3ad21ac94f1f4c9a95127fcfa3f018edbc7adbbbb66e08458cc1bd322d32"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/hoisted.ts",
+        "module"
+      ],
+      "stdout": "hoisted-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.194,
+      "stdout_sha256": "f1cba1d6ee4ee357741f3fb09c1b2b338b2aca179ac585ca45b7081c8a7343a9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/recursive",
+        "--json"
+      ],
+      "stdout": "recursive-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.498,
+      "stdout_sha256": "548a11b6941f30fde198f5a73cba0d66a7ad076b01b94e153c0194e4ea80bec8"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/recursive/project.aether",
+        "--json"
+      ],
+      "stdout": "recursive-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.273,
+      "stdout_sha256": "a2a967bd70ca578b7790964151f9f6910f9083bba96a54cb1498e8580b8a0337"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/recursive.ts",
+        "module"
+      ],
+      "stdout": "recursive-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.243,
+      "stdout_sha256": "f1cba1d6ee4ee357741f3fb09c1b2b338b2aca179ac585ca45b7081c8a7343a9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/method-local",
+        "--json"
+      ],
+      "stdout": "method-local-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.608,
+      "stdout_sha256": "ac484e73afee488ed54aa08bbabf6b2a15443c5366069787e079831e57d79eaa"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/method-local/project.aether",
+        "--json"
+      ],
+      "stdout": "method-local-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.287,
+      "stdout_sha256": "11db6ae223069d91ab84222d5dc69d4c102d2bf3377c86f21961423c4bff8624"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/method-local.ts",
+        "module"
+      ],
+      "stdout": "method-local-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.2,
+      "stdout_sha256": "f1cba1d6ee4ee357741f3fb09c1b2b338b2aca179ac585ca45b7081c8a7343a9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/shadowed-parameter",
+        "--json"
+      ],
+      "stdout": "shadowed-parameter-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.534,
+      "stdout_sha256": "0511e995ec079ab0163b7b7d821837ac1fed47cd879ca6416d036e45038a0b5e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/shadowed-parameter/project.aether",
+        "--json"
+      ],
+      "stdout": "shadowed-parameter-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.238,
+      "stdout_sha256": "4fe87eef40e20f478bd0f282266eea41e6b47a1a83fd4edaf965c559607cf3c5"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/shadowed-parameter.ts",
+        "module"
+      ],
+      "stdout": "shadowed-parameter-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.282,
+      "stdout_sha256": "ef98004b1d18fc2fde8a9c906a3a23443bef74e1338d9ba5c2e55993f9f1754e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/assignment",
+        "--json"
+      ],
+      "stdout": "assignment-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.4,
+      "stdout_sha256": "336c9bb82ab8ad6b8e69963869842c33c43cf2c5e8400c741f131e0cf71bf6f5"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/assignment/project.aether",
+        "--json"
+      ],
+      "stdout": "assignment-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.294,
+      "stdout_sha256": "7b063863a11abd2c5a456d35fb62d1d75ce5750339d5a9f80bd74ff94b794a65"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/assignment.ts",
+        "module"
+      ],
+      "stdout": "assignment-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.233,
+      "stdout_sha256": "ef98004b1d18fc2fde8a9c906a3a23443bef74e1338d9ba5c2e55993f9f1754e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/destructuring",
+        "--json"
+      ],
+      "stdout": "destructuring-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.663,
+      "stdout_sha256": "5013c8b6f84e437597624a9ebcc9d7ff59d4c33c5789de7df482a46d955b8832"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/destructuring/project.aether",
+        "--json"
+      ],
+      "stdout": "destructuring-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.275,
+      "stdout_sha256": "c127309bf4a0df7c8e1bd095dbe15be0201f5592151828e93bc3548d787023aa"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/destructuring.ts",
+        "module"
+      ],
+      "stdout": "destructuring-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.303,
+      "stdout_sha256": "ef98004b1d18fc2fde8a9c906a3a23443bef74e1338d9ba5c2e55993f9f1754e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/escaped-assignment",
+        "--json"
+      ],
+      "stdout": "escaped-assignment-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.787,
+      "stdout_sha256": "1f7194f9bb5f77968d8117fbb9de58be9f9b32e6026108702b81a608f6d7a883"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/escaped-assignment/project.aether",
+        "--json"
+      ],
+      "stdout": "escaped-assignment-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.254,
+      "stdout_sha256": "98158d9ecac07b42b605b8e58bf4c66755be2bf9f339a1b45258b1df9d3ed49d"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/escaped-assignment.ts",
+        "module"
+      ],
+      "stdout": "escaped-assignment-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.184,
+      "stdout_sha256": "ef98004b1d18fc2fde8a9c906a3a23443bef74e1338d9ba5c2e55993f9f1754e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/direct-eval",
+        "--json"
+      ],
+      "stdout": "direct-eval-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.593,
+      "stdout_sha256": "686b445b79043c69d5e1f643e3e8c427b1c3dea73fc3606e23678d8ca53a55b0"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/direct-eval/project.aether",
+        "--json"
+      ],
+      "stdout": "direct-eval-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.274,
+      "stdout_sha256": "3dd4b301810b61bf5265eebaf3ea5fcbb21c51f3724b258058ee5872c32f2e72"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/direct-eval.ts",
+        "module"
+      ],
+      "stdout": "direct-eval-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.195,
+      "stdout_sha256": "ef98004b1d18fc2fde8a9c906a3a23443bef74e1338d9ba5c2e55993f9f1754e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/escaped-eval",
+        "--json"
+      ],
+      "stdout": "escaped-eval-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.375,
+      "stdout_sha256": "d474a4b63657f92c3007d0456f2952c17da880b2bd2570226c0a90e2eb04bbc6"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/escaped-eval/project.aether",
+        "--json"
+      ],
+      "stdout": "escaped-eval-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.234,
+      "stdout_sha256": "c20ce93b68891b96a3a89373d30767cedb4fa7c3d18318b5d2b900d9b637fda3"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/escaped-eval.ts",
+        "module"
+      ],
+      "stdout": "escaped-eval-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.293,
+      "stdout_sha256": "ef98004b1d18fc2fde8a9c906a3a23443bef74e1338d9ba5c2e55993f9f1754e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/escaping-reference",
+        "--json"
+      ],
+      "stdout": "escaping-reference-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.585,
+      "stdout_sha256": "25d2b731ab6d86af8706bcb80c03207d2c71f68e15be108c08aea3e4bb22ef2f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/escaping-reference/project.aether",
+        "--json"
+      ],
+      "stdout": "escaping-reference-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.255,
+      "stdout_sha256": "23d9388ea33beb935b2da6c2521f32027b82dc0d7005c9249abb5df426ad2c9d"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/escaping-reference.ts",
+        "module"
+      ],
+      "stdout": "escaping-reference-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.218,
+      "stdout_sha256": "f1cba1d6ee4ee357741f3fb09c1b2b338b2aca179ac585ca45b7081c8a7343a9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/shorthand-escape",
+        "--json"
+      ],
+      "stdout": "shorthand-escape-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.534,
+      "stdout_sha256": "ead704358ce42b4b9c35f82c52ef96f4391a9cba1598561af5b3f7c7ff80b5f2"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/shorthand-escape/project.aether",
+        "--json"
+      ],
+      "stdout": "shorthand-escape-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.214,
+      "stdout_sha256": "90ee73e79ffbba45575e06ff23bb4c18f7c52e888d416970860a67f6aad72dec"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/shorthand-escape.ts",
+        "module"
+      ],
+      "stdout": "shorthand-escape-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.192,
+      "stdout_sha256": "f1cba1d6ee4ee357741f3fb09c1b2b338b2aca179ac585ca45b7081c8a7343a9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/outside-scope",
+        "--json"
+      ],
+      "stdout": "outside-scope-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.556,
+      "stdout_sha256": "5c5ed584fdbd73fe1b974fbdc5c3999a533ddfd8833abd9d5c031142e3c3a35a"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/outside-scope/project.aether",
+        "--json"
+      ],
+      "stdout": "outside-scope-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.181,
+      "stdout_sha256": "87ba321218a587bb95fd1d0ecb6effb3835832a1ee86d8429d3726df77b61d62"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/outside-scope.ts",
+        "module"
+      ],
+      "stdout": "outside-scope-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.192,
+      "stdout_sha256": "ef98004b1d18fc2fde8a9c906a3a23443bef74e1338d9ba5c2e55993f9f1754e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/block-local",
+        "--json"
+      ],
+      "stdout": "block-local-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 1.01,
+      "stdout_sha256": "eaf045eef62308cd24e90d9dcfdd965002949e58140e3980456caf0b4ea9476d"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/block-local/project.aether",
+        "--json"
+      ],
+      "stdout": "block-local-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.243,
+      "stdout_sha256": "4380c664aa0827073a175b6e8c89a8433de8e5ee19fc2df987d619cc242ee342"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/block-local.ts",
+        "module"
+      ],
+      "stdout": "block-local-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.183,
+      "stdout_sha256": "f1cba1d6ee4ee357741f3fb09c1b2b338b2aca179ac585ca45b7081c8a7343a9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/overload-signatures",
+        "--json"
+      ],
+      "stdout": "overload-signatures-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.562,
+      "stdout_sha256": "161daa1fdc8b462f901f173f5d9cb934a83cdb6f1bf96e20dab0a64da2c916f1"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/overload-signatures/project.aether",
+        "--json"
+      ],
+      "stdout": "overload-signatures-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.186,
+      "stdout_sha256": "def46f96190580c59ed681fa850f9c5c0e891a87f89b8d5a5d77c42bed4f5d2f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/script",
+        "--json"
+      ],
+      "stdout": "script-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.495,
+      "stdout_sha256": "7d6a103b2b1b399f283332e11034da0cc2ad1084d34aaf944fbcb0fffb90b81f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/script/project.aether",
+        "--json"
+      ],
+      "stdout": "script-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.275,
+      "stdout_sha256": "1b72d51deb4917c0b9fdef9f165de18880d234c272bb138e8299ebadef2990a6"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/script.ts",
+        "script"
+      ],
+      "stdout": "script-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.289,
+      "stdout_sha256": "f1cba1d6ee4ee357741f3fb09c1b2b338b2aca179ac585ca45b7081c8a7343a9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/namespace-export",
+        "--json"
+      ],
+      "stdout": "namespace-export-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.486,
+      "stdout_sha256": "5df5e27946f16e594da270c52a70fa8357aba14e44fd448d4478fe6b7acb0132"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/namespace-export/project.aether",
+        "--json"
+      ],
+      "stdout": "namespace-export-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.242,
+      "stdout_sha256": "99155d4c33df6ceb78409aa0245c021b272a51b06606c062c1e0692be0270278"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/decorator",
+        "--json"
+      ],
+      "stdout": "decorator-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 1.119,
+      "stdout_sha256": "e8d74ec840448e2ae6154ab1cb25779f3707a556311e855e55e21ba6099b4740"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/decorator/project.aether",
+        "--json"
+      ],
+      "stdout": "decorator-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.542,
+      "stdout_sha256": "85a54e4aa3d010dae95352844783bceffdb8e652dda887b947afd5140ec625ed"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/escaped-unrelated-identifier",
+        "--json"
+      ],
+      "stdout": "escaped-unrelated-identifier-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.786,
+      "stdout_sha256": "9885fc1bde7a087e384b989d02d44612f54bd03b30d80dca0e5d861d0f7a91d3"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/escaped-unrelated-identifier/project.aether",
+        "--json"
+      ],
+      "stdout": "escaped-unrelated-identifier-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.12,
+      "stdout_sha256": "773ff5c3f9b79f79c98ca5f30d7eb7b27522c5115c50820a6ed99a836979d9d5"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/escaped-unrelated-identifier.ts",
+        "module"
+      ],
+      "stdout": "escaped-unrelated-identifier-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.128,
+      "stdout_sha256": "f1cba1d6ee4ee357741f3fb09c1b2b338b2aca179ac585ca45b7081c8a7343a9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-bindings-after-1/named-expression-shadow",
+        "--json"
+      ],
+      "stdout": "named-expression-shadow-analyze.json.gz",
+      "exit_status": 0,
+      "seconds": 0.487,
+      "stdout_sha256": "1661581e79d10b7f64fedbdd7f69538d0355537b62531ae7879e405d577fd735"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-bindings-after-1/named-expression-shadow/project.aether",
+        "--json"
+      ],
+      "stdout": "named-expression-shadow-inspect.json.gz",
+      "exit_status": 0,
+      "seconds": 0.227,
+      "stdout_sha256": "5418ca139a9cdef42f62de80e98ac26eea14754e457f6064437c87f717c7ce7c"
+    },
+    {
+      "argv": [
+        "node",
+        "/home/corymaynard370/Bit-code/tools/probe_typescript_binding.mjs",
+        "/home/corymaynard370/Bit-code/fixtures/typescript-binding-corpus/v1/named-expression-shadow.ts",
+        "module"
+      ],
+      "stdout": "named-expression-shadow-runtime.json.gz",
+      "exit_status": 0,
+      "seconds": 0.251,
+      "stdout_sha256": "41118aa7062990018f1124bd3a07d8509a4eab0011ae9f59235ccd1d24864c62"
+    }
+  ],
+  "cases": [
+    {
+      "name": "top-level",
+      "expected_class": "must",
+      "source_sha256": "f497dc2805a52904bc8e44cecba235f3b8afb6f984082f7e73c3547602775c7f",
+      "marked_claims": [
+        {
+          "file": "top-level.ts",
+          "caller": "crate::top-level::probe",
+          "start_byte": 86,
+          "end_byte": 94,
+          "class": "must",
+          "reason": "proven-typescript-lexical-binding",
+          "coverage_gap": false,
+          "targets": [
+            "(17051370292992788105)"
+          ]
+        }
+      ],
+      "target_matches_original_declaration": true,
+      "exact_contract": true,
+      "runtime_observed": "original",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "nested",
+      "expected_class": "must",
+      "source_sha256": "82983bff995758d18d4bd34e7815f3be4a8f3b46c0bfda7830c502ead08c9b04",
+      "marked_claims": [
+        {
+          "file": "nested.ts",
+          "caller": "crate::nested::probe",
+          "start_byte": 86,
+          "end_byte": 94,
+          "class": "must",
+          "reason": "proven-typescript-lexical-binding",
+          "coverage_gap": false,
+          "targets": [
+            "(3432096548740375454)"
+          ]
+        }
+      ],
+      "target_matches_original_declaration": true,
+      "exact_contract": true,
+      "runtime_observed": "original",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "closure",
+      "expected_class": "must",
+      "source_sha256": "bbfa4d5b0a702bb581e18115660ca6b8356c531285599676f2dc43ef19fdf23c",
+      "marked_claims": [
+        {
+          "file": "closure.ts",
+          "caller": "crate::closure::probe::invoke",
+          "start_byte": 100,
+          "end_byte": 108,
+          "class": "must",
+          "reason": "proven-typescript-lexical-binding",
+          "coverage_gap": false,
+          "targets": [
+            "(3732690498798722016)"
+          ]
+        }
+      ],
+      "target_matches_original_declaration": true,
+      "exact_contract": true,
+      "runtime_observed": "original",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "hoisted",
+      "expected_class": "must",
+      "source_sha256": "9a889f942dbd70a3f8ac627eddef21daadccd3825ec526059f8abe3e0045b7e0",
+      "marked_claims": [
+        {
+          "file": "hoisted.ts",
+          "caller": "crate::hoisted::probe",
+          "start_byte": 45,
+          "end_byte": 53,
+          "class": "must",
+          "reason": "proven-typescript-lexical-binding",
+          "coverage_gap": false,
+          "targets": [
+            "(15094909351140675673)"
+          ]
+        }
+      ],
+      "target_matches_original_declaration": true,
+      "exact_contract": true,
+      "runtime_observed": "original",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "recursive",
+      "expected_class": "must",
+      "source_sha256": "c0781c4fa5a278938e97e0d009f53f5d3e526468e9be8317127e2df9cff4400f",
+      "marked_claims": [
+        {
+          "file": "recursive.ts",
+          "caller": "crate::recursive::probe::target",
+          "start_byte": 74,
+          "end_byte": 87,
+          "class": "must",
+          "reason": "proven-typescript-lexical-binding",
+          "coverage_gap": false,
+          "targets": [
+            "(3007583718071952107)"
+          ]
+        }
+      ],
+      "target_matches_original_declaration": true,
+      "exact_contract": true,
+      "runtime_observed": "original",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "method-local",
+      "expected_class": "must",
+      "source_sha256": "31a08c474d0fa9167bcd1e64c7fe8ce467933365680b34d7953be294195385ff",
+      "marked_claims": [
+        {
+          "file": "method-local.ts",
+          "caller": "crate::method-local::run",
+          "start_byte": 85,
+          "end_byte": 93,
+          "class": "must",
+          "reason": "proven-typescript-lexical-binding",
+          "coverage_gap": false,
+          "targets": [
+            "(7790491922917840729)"
+          ]
+        }
+      ],
+      "target_matches_original_declaration": true,
+      "exact_contract": true,
+      "runtime_observed": "original",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "shadowed-parameter",
+      "expected_class": "unknown",
+      "source_sha256": "ea209bf960c8d36d273887110b4e7fc34e30eaf6101c7e55b34240f769424980",
+      "marked_claims": [
+        {
+          "file": "shadowed-parameter.ts",
+          "caller": "crate::shadowed-parameter::invoke",
+          "start_byte": 86,
+          "end_byte": 94,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "alternate",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "assignment",
+      "expected_class": "unknown",
+      "source_sha256": "0685a99effdc4673fab1f22e17abe98484da0c9e97985f6a8da9d8bf49804a4d",
+      "marked_claims": [
+        {
+          "file": "assignment.ts",
+          "caller": "crate::assignment::probe",
+          "start_byte": 114,
+          "end_byte": 122,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "alternate",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "destructuring",
+      "expected_class": "unknown",
+      "source_sha256": "59bc9f1daaf843ba5f6df67cbe28bcdfba1ba5125ca77c9d51b7d45f541d4e32",
+      "marked_claims": [
+        {
+          "file": "destructuring.ts",
+          "caller": "crate::destructuring::probe",
+          "start_byte": 167,
+          "end_byte": 175,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "alternate",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "escaped-assignment",
+      "expected_class": "unknown",
+      "source_sha256": "298dd1ea820e3d860ed79c2b23529a96afa0dd3bf3770bed6f56db21459aa2ac",
+      "marked_claims": [
+        {
+          "file": "escaped-assignment.ts",
+          "caller": "crate::escaped-assignment::probe",
+          "start_byte": 119,
+          "end_byte": 127,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "alternate",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "direct-eval",
+      "expected_class": "unknown",
+      "source_sha256": "0cc3adccc66e5005c4f1ae1468fd221ecbf62a93b571e24d81bae8bba3f3016d",
+      "marked_claims": [
+        {
+          "file": "direct-eval.ts",
+          "caller": "crate::direct-eval::probe",
+          "start_byte": 122,
+          "end_byte": 130,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "alternate",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "escaped-eval",
+      "expected_class": "unknown",
+      "source_sha256": "8ab82331c66106bdd6c18e6cbc5f373349773efb7da71f3ae75baa8bdada1a5c",
+      "marked_claims": [
+        {
+          "file": "escaped-eval.ts",
+          "caller": "crate::escaped-eval::probe",
+          "start_byte": 127,
+          "end_byte": 135,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "alternate",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "escaping-reference",
+      "expected_class": "unknown",
+      "source_sha256": "e9bc94218ea6731cac99671ae8d6219a8529f632fbc069d688636cc238ea5525",
+      "marked_claims": [
+        {
+          "file": "escaping-reference.ts",
+          "caller": "crate::escaping-reference::probe",
+          "start_byte": 110,
+          "end_byte": 118,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "original",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "shorthand-escape",
+      "expected_class": "unknown",
+      "source_sha256": "d682b104b2b7b5ac5005b8d6e33615ff01f48a750619bdaef8b7843e134789cf",
+      "marked_claims": [
+        {
+          "file": "shorthand-escape.ts",
+          "caller": "crate::shorthand-escape::probe",
+          "start_byte": 114,
+          "end_byte": 122,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "original",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "outside-scope",
+      "expected_class": "unknown",
+      "source_sha256": "28c499fd7fa6c049e52c92971d89481250629ac615c393876015d32a320c4dbf",
+      "marked_claims": [
+        {
+          "file": "outside-scope.ts",
+          "caller": "crate::outside-scope::probe",
+          "start_byte": 149,
+          "end_byte": 157,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "alternate",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "block-local",
+      "expected_class": "unknown",
+      "source_sha256": "aa8bf4ce98ac43a111fdc9dbca1a4ee8311cb5fe607e08d18306fec0d72127c9",
+      "marked_claims": [
+        {
+          "file": "block-local.ts",
+          "caller": "crate::block-local::probe",
+          "start_byte": 88,
+          "end_byte": 96,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "original",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "overload-signatures",
+      "expected_class": "unknown",
+      "source_sha256": "7b4efb8b1cc07c4be50ca38870dcc9e51ff69ed129716053ebdd51a924d0697a",
+      "marked_claims": [
+        {
+          "file": "overload-signatures.ts",
+          "caller": "crate::overload-signatures::probe",
+          "start_byte": 131,
+          "end_byte": 140,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_skipped": "skip-typescript-syntax"
+    },
+    {
+      "name": "script",
+      "expected_class": "unknown",
+      "source_sha256": "03a03f81386cb728e7d0a6805f41aaaeb83fadba0d61c0caeaf7573e809ed8b5",
+      "marked_claims": [
+        {
+          "file": "script.ts",
+          "caller": "crate::script::probe",
+          "start_byte": 79,
+          "end_byte": 87,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "original",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "namespace-export",
+      "expected_class": "unknown",
+      "source_sha256": "efb61aa8959d20a09a64cc0d692bfce70ceec2495ada37cd97583446bf6564bb",
+      "marked_claims": [
+        {
+          "file": "namespace-export.ts",
+          "caller": "crate::namespace-export::probe",
+          "start_byte": 119,
+          "end_byte": 127,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_skipped": "skip-typescript-syntax"
+    },
+    {
+      "name": "decorator",
+      "expected_class": "unknown",
+      "source_sha256": "8d221781ca1fed5fc08d62d6a1e801f92684a82cc2e4d5fe8846b975a101363c",
+      "marked_claims": [
+        {
+          "file": "decorator.ts",
+          "caller": "crate::decorator::probe",
+          "start_byte": 138,
+          "end_byte": 146,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_skipped": "skip-typescript-syntax"
+    },
+    {
+      "name": "escaped-unrelated-identifier",
+      "expected_class": "unknown",
+      "source_sha256": "ce2c81327c8f6e4ffe240a21af0ded8ef3e905bc3926f00fe666b4aca07253fc",
+      "marked_claims": [
+        {
+          "file": "escaped-unrelated-identifier.ts",
+          "caller": "crate::escaped-unrelated-identifier::probe",
+          "start_byte": 104,
+          "end_byte": 112,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "original",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    },
+    {
+      "name": "named-expression-shadow",
+      "expected_class": "unknown",
+      "source_sha256": "7640694bc54c836a5976b8b89a75d9f3c1dcef9e2ef7911e69159be3dbb837b9",
+      "marked_claims": [
+        {
+          "file": "named-expression-shadow.ts",
+          "caller": "crate::named-expression-shadow::invoke",
+          "start_byte": 103,
+          "end_byte": 111,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "target_matches_original_declaration": false,
+      "exact_contract": true,
+      "runtime_observed": "named",
+      "runtime_matches": true,
+      "runtime_disproves_original_must": false
+    }
+  ],
+  "status": "measured",
+  "exact_contracts": 22,
+  "runtime_passed": 19,
+  "runtime_skipped": 3,
+  "runtime_disproved_must": [],
+  "criterion_met": true
+}
