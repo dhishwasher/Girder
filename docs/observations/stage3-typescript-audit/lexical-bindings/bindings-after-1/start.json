@@ -1,0 +1,77 @@
+{
+  "revision": "3bb01f43c6bbac3977019ac74373696358126253",
+  "binary_sha256": "fe6901793bb8055a66359ad235e631219ba87b3f6ab96a396e4741925a7deaef",
+  "runner_sha256": "4279199e36a31034d67ce24efd23784792707eb6f7c177aa8bb6d5caf796c4ed",
+  "labels_sha256": "c3979bb15d2040da7a006051bde99374566cbd01e94b62f33bee3f921999c0eb",
+  "environment": {
+    "platform": "Linux-6.6.141-09476-g954adab60416-x86_64-with-glibc2.36",
+    "RAYON_NUM_THREADS": null,
+    "offline": true
+  },
+  "inputs": [
+    {
+      "path": "docs/observations/stage3-typescript-audit/audit-sites-labeled.json",
+      "sha256": "d9346651d99f4605bbc2a8ff12f558b61812e5b6e20c82e6a3ced2d2241637f0"
+    },
+    {
+      "path": "docs/stage3-typescript-corpus.json",
+      "sha256": "a027988684a9d4dc2c0bcfcfab3e81b066a8e5396a4cf3e9b72cb33e6e55ad12"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/policy.md",
+      "sha256": "57a8588d040e986086a495c9b98d3160618a1c7d1a7ea222c180cb3e30922f58"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/reserve.json",
+      "sha256": "4096e7f1504a8352e1085f7e4636b9bb0ad7f510342d219b171c33c9caf78cbf"
+    },
+    {
+      "path": "tools/prepare_typescript_audit_extension.py",
+      "sha256": "d04b2a8054dbc003b55b3aec81f6bd8643c96439646a4c4b5d882b6652250570"
+    },
+    {
+      "path": "tools/dispatch_audit_site_selector_typescript.py",
+      "sha256": "70cab5998b7116bc3ccbd339667e58a6cb7cc6a60f094899311b787a8143871d"
+    },
+    {
+      "path": "tools/dispatch_audit_scorer_typescript.py",
+      "sha256": "b3cac340883d6e1249402c27a0f5785478aa2ece02e9f5b05cf77d076616911a"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/labeling-rubric.md",
+      "sha256": "09e0fb1de3d0f366e6dd645881edfe167c5bd50ae96161069d6d433f4fa15d2e"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/labeling-rubric-addendum.md",
+      "sha256": "a6db05d7c58d3434a8f25235db00bd115f3f0ecad5a55313658c0576e20d24ce"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/labeling-rubric-addendum-2.md",
+      "sha256": "3c2243ef2a08d3918673d7f07a820a18fb58d8984f41d365bb28d3c86eecf212"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/extension-labels.json",
+      "sha256": "e0a9bbb37c31525ff8dbf375603aff0ecc236f8a177f38840faf8a77021c9c20"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/combined-labels.json",
+      "sha256": "c3979bb15d2040da7a006051bde99374566cbd01e94b62f33bee3f921999c0eb"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/source-excerpts.json",
+      "sha256": "e216da240aa0f31bd336c9711fb36674776d87f6a8e03a30007f83a3074c86f0"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/binding-evidence.json",
+      "sha256": "e05fb6e1d4f2335246540cc8364030a132218a6a750405a4673a5fe2cf593cc7"
+    },
+    {
+      "path": "tools/score_typescript_audit_extension.py",
+      "sha256": "ab13edfbfe49290779160832a8516078ef9a92081f0ef76b56d0882370e2c93a"
+    }
+  ],
+  "roots": {},
+  "source_inventories": {},
+  "commands": [],
+  "status": "started"
+}
