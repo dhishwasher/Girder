@@ -1,0 +1,136 @@
+{
+  "nodes": [
+    {
+      "id": "5f3dd5e77ea16648",
+      "path": "crate::ser::Compound<'a, W, F>::serialize_element@SerializeSeq",
+      "kind": "Function",
+      "name": "serialize_element",
+      "language": "rust",
+      "file": "src/ser.rs",
+      "span": {
+        "start_byte": 13067,
+        "end_byte": 13867,
+        "start_row": 490,
+        "start_col": 4
+      },
+      "source_sha256": "6d2d0993981223800e1ae626c1bccfb3244a56f2a30732ca1977191358142aa8",
+      "attributes": [
+        [
+          "call_evidence_v1",
+          "(version:1,source_fingerprint:(6040396017108614116),assumptions:[\"indexed-source-snapshot\"],calls:[(site:(start_byte:13257,end_byte:13417,start_row:496,start_col:16),class:unknown,targets:[],reason:\"unexpanded-macro-or-decorator\",coverage_gap:true),(site:(start_byte:13473,end_byte:13506,start_row:501,start_col:16),class:unknown,targets:[],reason:\"unexpanded-macro-or-decorator\",coverage_gap:true),(site:(start_byte:13524,end_byte:13631,start_row:502,start_col:16),class:unknown,targets:[],reason:\"rust-binding-or-dispatch-unproven\",coverage_gap:false),(site:(start_byte:13524,end_byte:13591,start_row:502,start_col:16),class:unknown,targets:[],reason:\"rust-binding-or-dispatch-unproven\",coverage_gap:false),(site:(start_byte:13658,end_byte:13697,start_row:506,start_col:12),class:unknown,targets:[],reason:\"unexpanded-macro-or-decorator\",coverage_gap:true),(site:(start_byte:13737,end_byte:13751,start_row:507,start_col:39),class:unknown,targets:[],reason:\"unexpanded-macro-or-decorator\",coverage_gap:true),(site:(start_byte:13765,end_byte:13794,start_row:508,start_col:12),class:unknown,targets:[],reason:\"unexpanded-macro-or-decorator\",coverage_gap:true),(site:(start_byte:13836,end_byte:13850,start_row:509,start_col:41),class:unknown,targets:[],reason:\"unexpanded-macro-or-decorator\",coverage_gap:true)])"
+        ],
+        [
+          "first_parameter_type",
+          "&T"
+        ],
+        [
+          "return_type",
+          "Result<()>"
+        ],
+        [
+          "type_parameters",
+          "<T>"
+        ]
+      ]
+    },
+    {
+      "id": "31678c7dd7514c65",
+      "path": "crate::ser::Compound<'a, W, F>::serialize_element@SerializeTuple",
+      "kind": "Function",
+      "name": "serialize_element",
+      "language": "rust",
+      "file": "src/ser.rs",
+      "span": {
+        "start_byte": 14520,
+        "end_byte": 14690,
+        "start_row": 537,
+        "start_col": 4
+      },
+      "source_sha256": "ba356195f285208f87071b5a1bf4811df9019522a6ac3055c62b2bd68a5c9e7e",
+      "attributes": [
+        [
+          "call_evidence_v1",
+          "(version:1,source_fingerprint:(13628803020552072141),assumptions:[\"indexed-source-snapshot\"],calls:[(site:(start_byte:14635,end_byte:14684,start_row:541,start_col:8),class:unknown,targets:[],reason:\"rust-binding-or-dispatch-unproven\",coverage_gap:false)])"
+        ],
+        [
+          "first_parameter_type",
+          "&T"
+        ],
+        [
+          "return_type",
+          "Result<()>"
+        ],
+        [
+          "type_parameters",
+          "<T>"
+        ]
+      ]
+    },
+    {
+      "id": "d56b00daac042b1f",
+      "path": "crate::value::ser::SerializeVec::serialize_element@SerializeSeq",
+      "kind": "Function",
+      "name": "serialize_element",
+      "language": "rust",
+      "file": "src/value/ser.rs",
+      "span": {
+        "start_byte": 8823,
+        "end_byte": 8996,
+        "start_row": 330,
+        "start_col": 4
+      },
+      "source_sha256": "fa9d6162bf9997a0c0795db1a992816cb0c20f603923843eec8e9540c617b389",
+      "attributes": [
+        [
+          "call_evidence_v1",
+          "(version:1,source_fingerprint:(16047195199177683189),assumptions:[\"indexed-source-snapshot\"],calls:[(site:(start_byte:8938,end_byte:8974,start_row:334,start_col:8),class:unknown,targets:[],reason:\"rust-binding-or-dispatch-unproven\",coverage_gap:false),(site:(start_byte:8952,end_byte:8973,start_row:334,start_col:22),class:unknown,targets:[],reason:\"unexpanded-macro-or-decorator\",coverage_gap:true),(site:(start_byte:8984,end_byte:8990,start_row:335,start_col:8),class:unknown,targets:[],reason:\"rust-binding-or-dispatch-unproven\",coverage_gap:false)])"
+        ],
+        [
+          "first_parameter_type",
+          "&T"
+        ],
+        [
+          "return_type",
+          "Result<()>"
+        ],
+        [
+          "type_parameters",
+          "<T>"
+        ]
+      ]
+    },
+    {
+      "id": "51cf833d4b9203c6",
+      "path": "crate::value::ser::SerializeVec::serialize_element@SerializeTuple",
+      "kind": "Function",
+      "name": "serialize_element",
+      "language": "rust",
+      "file": "src/value/ser.rs",
+      "span": {
+        "start_byte": 9179,
+        "end_byte": 9356,
+        "start_row": 347,
+        "start_col": 4
+      },
+      "source_sha256": "d7c743236b69a9472635a94ad81ae59af7795e83060b847a195c94a9ab27dbc5",
+      "attributes": [
+        [
+          "call_evidence_v1",
+          "(version:1,source_fingerprint:(9379757658868256458),assumptions:[\"indexed-source-snapshot\"],calls:[(site:(start_byte:9294,end_byte:9350,start_row:351,start_col:8),class:unknown,targets:[],reason:\"rust-binding-or-dispatch-unproven\",coverage_gap:false)])"
+        ],
+        [
+          "first_parameter_type",
+          "&T"
+        ],
+        [
+          "return_type",
+          "Result<()>"
+        ],
+        [
+          "type_parameters",
+          "<T>"
+        ]
+      ]
+    }
+  ]
+}

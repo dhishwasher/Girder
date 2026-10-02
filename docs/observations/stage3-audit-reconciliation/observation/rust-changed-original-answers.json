@@ -1,0 +1,38 @@
+{
+  "previous_path": "docs/observations/stage3-rust-audit/after-method-call-fix/correction-2/audit-after.json",
+  "previous_sha256": "5f5c8a80949cfad0cc7928838738f74eacedb710cf508f3d96fb13069b015eb7",
+  "changes": [
+    {
+      "before": {
+        "index": 89,
+        "crate": "serde_json-1.0.150",
+        "file": "src/ser.rs",
+        "line": 504,
+        "shape": "method_call",
+        "true_class": "may",
+        "confidence": "medium",
+        "byte_offset": 13558,
+        "status": "scored",
+        "observed_class": "unknown",
+        "observed_reason": "duplicate-semantic-path",
+        "observed_caller": "crate::ser",
+        "cell": "conservative"
+      },
+      "after": {
+        "index": 89,
+        "crate": "serde_json-1.0.150",
+        "file": "src/ser.rs",
+        "line": 504,
+        "shape": "method_call",
+        "true_class": "may",
+        "confidence": "medium",
+        "byte_offset": 13558,
+        "status": "scored",
+        "observed_class": "unknown",
+        "observed_reason": "rust-binding-or-dispatch-unproven",
+        "observed_caller": "crate::ser::Compound<'a, W, F>::serialize_element@SerializeSeq",
+        "cell": "conservative"
+      }
+    }
+  ]
+}

@@ -270,7 +270,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 
 | Language | Status | Before / after evidence | Dependency |
 | --- | --- | --- | --- |
-| Rust | **IN PROGRESS — audit-size correction** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
+| Rust | **FAILED-AND-PUBLISHED — extension found two omissions** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
 | Python | **IN PROGRESS — audit-size correction** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) | Rust trustworthy on a real repository |
 | TypeScript | IN PROGRESS (before-observation measured: 0/97 unsound, 0 Must currently proven; resolver design not yet started) | [methodology](observations/stage3-typescript-audit/methodology.md) + addenda + [rubric](observations/stage3-typescript-audit/labeling-rubric.md) / [before-observation](observations/stage3-typescript-audit/before-observation.md) | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
@@ -551,6 +551,26 @@ separately. It cannot retroactively make the old insufficient audit complete.
 Rust's current-binary re-score will also check the node-identity fix against the
 unchanged historical cohort. No resolver changes are part of this correction.
 
+
+### 2026-10-01 — Expanded audit observation
+
+The [prospective extension](observations/stage3-audit-reconciliation/observation/summary.md)
+now scores 100 actual sites per language, retaining every original site and label.
+Rust failed: 59 exact, 39 conservative, **2 unsafe exclusions**, Must 1/1.
+Python passed its current-candidate sample: 87 exact, 13 conservative, zero
+unsound cells, Must 1/1. Python remains IN PROGRESS pending Rust's dependency
+and the common gates. A single observed Must is a narrow sample, not general
+proof of correctness.
+
+The unchanged original cohorts retain their 28/24 and 73/12 exact/conservative
+counts. Rust's post-collision re-score is complete: `SerializeSeq` and
+`SerializeTuple` have distinct method paths and IDs. One original answer's
+caller/reason changed, with its Unknown class unchanged. The old outstanding
+correction-3 notes below are historical and superseded by this evidence.
+
+Next: freeze a separate correction for Rust operator-site Unknown boundaries;
+keep this failed observation and all labels unchanged. No resolver changed in
+the extension campaign itself. Gates will run once on the correction candidate.
 
 ### 2026-10-01 — Current-state reconciliation
 

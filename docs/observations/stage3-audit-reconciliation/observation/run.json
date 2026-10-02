@@ -1,0 +1,217 @@
+{
+  "revision": "3f961a53a69d6e17df68c2ce6c884177d5c77e47",
+  "binary_sha256": "be596ad14a1741a21ad107e4264d4b89eaaa454eee0eb0a23b19fe18ad18040a",
+  "commands": [
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/petgraph-0.6.5/petgraph-0.6.5",
+        "--json"
+      ],
+      "stdout": "petgraph-0.6.5-analyze.json",
+      "stderr": "petgraph-0.6.5-analyze.stderr.txt",
+      "exit_code": 0,
+      "seconds": 4.931,
+      "stdout_sha256": "9c5dbaf2068862878e33fc7a798f2ec14f2380be38179cf5e155cb1cb6fae716"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-audit-reconciliation-20261001/petgraph-0.6.5/petgraph-0.6.5/project.aether",
+        "--json"
+      ],
+      "stdout": "petgraph-0.6.5-inspect.json",
+      "stderr": "petgraph-0.6.5-inspect.stderr.txt",
+      "exit_code": 0,
+      "seconds": 0.376,
+      "stdout_sha256": "e9e43eb2f6ce494abd331824980ec60bddb29882cabfcc9dcbe1d380129d79fa"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/serde_json-1.0.150/serde_json-1.0.150",
+        "--json"
+      ],
+      "stdout": "serde_json-1.0.150-analyze.json",
+      "stderr": "serde_json-1.0.150-analyze.stderr.txt",
+      "exit_code": 0,
+      "seconds": 3.266,
+      "stdout_sha256": "9069e9fe879d6aa59b0eeff1674f80b0581b4f6dc7dc21342741515a722b88e1"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-audit-reconciliation-20261001/serde_json-1.0.150/serde_json-1.0.150/project.aether",
+        "--json"
+      ],
+      "stdout": "serde_json-1.0.150-inspect.json",
+      "stderr": "serde_json-1.0.150-inspect.stderr.txt",
+      "exit_code": 0,
+      "seconds": 0.374,
+      "stdout_sha256": "a53fe759f9684408564cd8c4877d721371908c29e7f98468cb4f62d2b00adae2"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/regex-1.12.4/regex-1.12.4",
+        "--json"
+      ],
+      "stdout": "regex-1.12.4-analyze.json",
+      "stderr": "regex-1.12.4-analyze.stderr.txt",
+      "exit_code": 0,
+      "seconds": 1.19,
+      "stdout_sha256": "2a59d450795d887dabceae3070cde814178e67113b6711d41cf853f80286cac8"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-audit-reconciliation-20261001/regex-1.12.4/regex-1.12.4/project.aether",
+        "--json"
+      ],
+      "stdout": "regex-1.12.4-inspect.json",
+      "stderr": "regex-1.12.4-inspect.stderr.txt",
+      "exit_code": 0,
+      "seconds": 0.219,
+      "stdout_sha256": "d084183580e1cf735d30fb30813c79c175c117022041ed562c38fef2e4bde17e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/click-8.4.1/click-8.4.1",
+        "--json"
+      ],
+      "stdout": "click-8.4.1-analyze.json",
+      "stderr": "click-8.4.1-analyze.stderr.txt",
+      "exit_code": 0,
+      "seconds": 6.122,
+      "stdout_sha256": "65d8767e4b11c1dd106ff0f6288918e1137173e8f51f6a4661585a0889243a2d"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-audit-reconciliation-20261001/click-8.4.1/click-8.4.1/project.aether",
+        "--json"
+      ],
+      "stdout": "click-8.4.1-inspect.json",
+      "stderr": "click-8.4.1-inspect.stderr.txt",
+      "exit_code": 0,
+      "seconds": 0.422,
+      "stdout_sha256": "c4278c4e9030d494d4bea5d9be803fea5ed9dca824c95367bc63717369f3cc9a"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/pydantic-2.13.4/pydantic-2.13.4",
+        "--json"
+      ],
+      "stdout": "pydantic-2.13.4-analyze.json",
+      "stderr": "pydantic-2.13.4-analyze.stderr.txt",
+      "exit_code": 0,
+      "seconds": 68.064,
+      "stdout_sha256": "61186f52996e0b0d0d51ef163f3e7cbac7f9a89ddf24d80efdf25977d9707e32"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-audit-reconciliation-20261001/pydantic-2.13.4/pydantic-2.13.4/project.aether",
+        "--json"
+      ],
+      "stdout": "pydantic-2.13.4-inspect.json",
+      "stderr": "pydantic-2.13.4-inspect.stderr.txt",
+      "exit_code": 0,
+      "seconds": 1.952,
+      "stdout_sha256": "0fbacd8daa7c888dcc40ef7fefcd4488beeb8a3061d83a5b0f1ed62d16fbbd79"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/requests-2.34.2/requests-2.34.2",
+        "--json"
+      ],
+      "stdout": "requests-2.34.2-analyze.json",
+      "stderr": "requests-2.34.2-analyze.stderr.txt",
+      "exit_code": 0,
+      "seconds": 3.601,
+      "stdout_sha256": "6f3104723ae16df50307da6f592ad09879bea62503c505943a2e740cb0e6635f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-audit-reconciliation-20261001/requests-2.34.2/requests-2.34.2/project.aether",
+        "--json"
+      ],
+      "stdout": "requests-2.34.2-inspect.json",
+      "stderr": "requests-2.34.2-inspect.stderr.txt",
+      "exit_code": 0,
+      "seconds": 0.219,
+      "stdout_sha256": "8043e9f0ac6b5abb031221465f7e440ebc0cdb104f551542ef9d7e71e8116037"
+    }
+  ],
+  "languages": {
+    "rust": {
+      "original_cells": {
+        "exact": 28,
+        "conservative": 24
+      },
+      "combined_cells": {
+        "exact": 59,
+        "conservative": 39,
+        "unsafe_exclusion": 2
+      },
+      "changed_original_answers": 1,
+      "acceptance": {
+        "minimum_real_sites": 100,
+        "scored": 100,
+        "not_a_call_site": 83,
+        "all_sites_accounted_for": true,
+        "unsound": 2,
+        "must_numerator": 1,
+        "must_denominator": 1,
+        "must_precision": 1.0,
+        "passed": false
+      }
+    },
+    "python": {
+      "original_cells": {
+        "exact": 73,
+        "conservative": 12
+      },
+      "combined_cells": {
+        "exact": 87,
+        "conservative": 13
+      },
+      "changed_original_answers": 0,
+      "acceptance": {
+        "minimum_real_sites": 100,
+        "scored": 100,
+        "not_a_call_site": 28,
+        "all_sites_accounted_for": true,
+        "unsound": 0,
+        "must_numerator": 1,
+        "must_denominator": 1,
+        "must_precision": 1.0,
+        "passed": true
+      }
+    }
+  },
+  "policy_sha256": "5f382d9c378239216b1846b2bde366f38dc87d6675af5a312b3d1ff8d04d01f7",
+  "label_manifest_sha256": "eb50ea8fb602bb3a45e79253a3eb53e08cc2095d2a5a6d95b8ef4ba1b3101533",
+  "environment": {
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target"
+  },
+  "status": "measured"
+}
