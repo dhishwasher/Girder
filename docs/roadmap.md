@@ -273,7 +273,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | --- | --- | --- | --- |
 | Rust | **DONE — corrected 100-site checkpoint** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) and [retained failed extension](observations/stage3-audit-reconciliation/observation/summary.md) | Stage 2 |
 | Python | **DONE — corrected 100-site checkpoint** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) | Rust trustworthy on a real repository |
-| TypeScript | IN PROGRESS (before-observation measured: 0/97 unsound, 0 Must currently proven; resolver design not yet started) | [methodology](observations/stage3-typescript-audit/methodology.md) + addenda + [rubric](observations/stage3-typescript-audit/labeling-rubric.md) / [before-observation](observations/stage3-typescript-audit/before-observation.md) | Python trustworthy on a real repository |
+| TypeScript | IN PROGRESS (expanded before-observation: 0/100 unsound, 0 Must; resolver design not yet started) | [methodology](observations/stage3-typescript-audit/methodology.md) + addenda + [rubric](observations/stage3-typescript-audit/labeling-rubric.md) / [before-observation](observations/stage3-typescript-audit/before-observation.md) + [100-site baseline](observations/stage3-typescript-audit/extension/before/observation.md) | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
 Use existing pinned Rust repositories and Click first; pin TypeScript compiler
@@ -442,10 +442,10 @@ common gates. **Observation:**
 (historical after-result, not current stage-completion proof).
 **Current completion evidence:** [corrected Rust/Python audits](observations/stage3-audit-reconciliation/after-observation.md)
 include current-candidate corpus results and all four passing gates.
-**Blockers for the next language:** TypeScript has only 97 actual sites, no
-proven Must in its audit, and unresolved node identities.
-**Next:** freeze the TypeScript sample-size extension and preserve its existing
-failed case before beginning resolver changes.
+**Blockers for the next language:** TypeScript now has 100 actual sites but no
+proven Must in its audit, plus unresolved node identities and a failed corpus origin.
+**Next:** profile the proof gates behind its 47 conservative Must sites and
+precommit resolver changes; preserve the expanded baseline and failed case.
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 
@@ -546,6 +546,39 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-02 — TypeScript 100-site before-observation published
+
+Policy `cef8681`, reserve `9aa8e3d`, and source-reviewed labels `e1f911b` were
+committed before measurement. The original 105 entries/97 actual calls remain
+unchanged; a deterministic five-entry reserve prefix adds three calls and two
+noncall declarations. All four original repository pins, rubric/addenda, and
+scoring rules are retained. Acquisition failures and the verified archive
+identities are published alongside the extension.
+
+[Observation `f236e6f`](observations/stage3-typescript-audit/extension/before/observation.md):
+100 actual calls, 10 noncalls retained, 53 exact / 47 conservative / 0 unsound,
+zero failed relocations. **Every observed answer is Unknown; Must is empty and
+precision is undefined. The language criterion is unmet.** All original 97
+answers are unchanged. This sample contains no ground-truth May sites and
+cannot measure May recall. Go remains NOT STARTED behind the TypeScript gate.
+
+The full compiler analysis took 580.707 seconds; raw outputs, commands, hashes,
+and timings are committed. Workloads ran offline and serially. Seventy-nine
+selector/scorer/acquisition/acceptance tests passed. No product code changed,
+so common Cargo/clippy/fmt/npm gates were not rerun for this before-observation.
+They remain mandatory on the next language implementation checkpoint.
+
+`ab44191` additionally fixed the audit precision numerator: a wrong-target Must
+is no longer counted as a correct prediction merely because its expected class
+is Must. It already failed the unsound-cell gate. Five focused tests passed;
+recomputed Rust, Python, and TypeScript acceptance summaries are unchanged,
+and no historical observation was edited.
+
+Next: profile the TypeScript proof gates, freeze an implementation policy, and
+repair the documented duplicate test-name identities and unresolved structural
+object-literal origin without changing the corpus or audit labels. This is the
+current resume point; the following checkpoints are historical.
 
 ### 2026-10-02 — Interrupted correction completed
 
