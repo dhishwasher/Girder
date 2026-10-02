@@ -551,6 +551,32 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-02 — TypeScript false-Must repair implemented; CLI verification next
+
+Policy/corpus `954334d` freezes 22 lexical-binding proof cases before code changes.
+[Baseline `1d42ee7`](observations/stage3-typescript-audit/lexical-bindings/before-observation.md)
+scored 10/22 exact contracts and demonstrated **four false Must targets** using
+executed destructuring, escaped-assignment, direct-eval, and escaped-eval probes.
+All 19 executable probes matched their frozen outcomes; three TypeScript-only
+forms were skipped. Among seven executed marked Must calls, four contradicted
+the certified target. These hostile cases are separate from the unchanged
+49-case dispatch corpus and 100-site real-repository audit; they do not change
+those denominators or historical observations.
+
+The implementation now indexes identifier uses (including shorthand patterns),
+requires module/function-body lexical scope, and refuses eval, escaped
+identifiers, and unsupported uses. Existing parse/identity/transformation guards
+remain. Nested functions may receive Must only after the scope and use checks;
+Rust/Python/Go proof paths are unchanged.
+
+[Builder verification](observations/stage3-typescript-audit/lexical-bindings/builder-tests-1.json):
+146 tests passed across seven suites, including all 22 contract cases and the
+registration identity regressions. This is not CLI or full language acceptance.
+Next: rebuild the CLI and rerun the frozen proof/runtime corpus, then measure the
+real-repository audit and remaining structural extraction/dispatch gaps. Common
+language gates remain outstanding; TypeScript is IN PROGRESS and Go NOT STARTED.
+
+
 ### 2026-10-02 — Registration bodies recovered on real source
 
 Implementation `67d65f6` and [observation `e4a5316`](observations/stage3-typescript-audit/identity-repair/observation.md)

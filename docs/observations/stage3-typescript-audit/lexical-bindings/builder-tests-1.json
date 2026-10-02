@@ -1,0 +1,27 @@
+{
+  "policy_commit": "954334d",
+  "parent_commit": "1d42ee7",
+  "command": "cargo test -p aether-builder -j1 --quiet",
+  "exit_status": 0,
+  "suites": 7,
+  "passed": 146,
+  "ignored": 0,
+  "proof_contract_cases_checked": 22,
+  "environment": {
+    "CARGO_HOME": "/mnt/chromeos/removable/MOVESPEED/.cargo",
+    "RUSTUP_HOME": "/mnt/chromeos/removable/MOVESPEED/.rustup",
+    "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_BUILD_JOBS": "1"
+  },
+  "source_sha256": {
+    "crates/aether-builder/src/mapper.rs": "bfd861a4ec5c08eebcf46982addaa8071c73385fd85e2a96066e5881fdb01597",
+    "crates/aether-builder/src/mapper/claims.rs": "0ee495ab95dd0d1e3690da1a4003e2b708653a8c5485277273c07dcb902429c8",
+    "crates/aether-builder/src/mapper/typescript_bindings.rs": "1479d44cbe1cedfa79efd38b94879eec4f14e5ec872d085efc5ed82838065eaa",
+    "crates/aether-builder/tests/typescript_bindings.rs": "df01875da407a34736b33f94ae075152da271f5c0edff478c050c2ffb8320c8b",
+    "fixtures/typescript-binding-corpus/v1/manifest.json": "d8c1cda9303e48dc9ebe75526a1f7d705058b5095a02f41d7d72347baf115ae3"
+  },
+  "limitations": [
+    "Builder tests only; CLI, full real-repository audit, dispatch corpus and common language gates not yet run on this implementation."
+  ]
+}

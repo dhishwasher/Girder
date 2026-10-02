@@ -204,9 +204,10 @@ pub(super) fn annotate(
             .push((node.id, name.id()));
     }
     let ts_module = !lang.is_typescript()
-        || syntax
-            .iter()
-            .any(|n| matches!(n.kind(), "export_statement" | "import_statement"));
+        || syntax.iter().any(|n| {
+            matches!(n.kind(), "export_statement" | "import_statement")
+                && n.parent().is_some_and(|p| p.id() == root.id())
+        });
     // Python only: `transformed_scope` (any decorator/decorated_definition
     // ANYWHERE in the file) is too blunt a gate for Python's own
     // same-file Must path -- a single unrelated `@pytest.mark.parametrize`
@@ -336,43 +337,48 @@ pub(super) fn annotate(
     };
     let mut proven = HashMap::new();
     if !root.has_error() && !duplicate_paths && !effective_scope_gate && ts_module {
-        for (name, candidates) in top {
-            if candidates.len() != 1 {
-                continue;
-            }
-            let (target, declaration) = candidates[0];
-            if string_rebound(&name) {
-                continue;
-            }
-            // Every occurrence must be either the declaration or a direct call.
-            // This rejects parameter/local/import shadowing, assignments,
-            // escaping function values, and unmodeled name uses conservatively.
-            let clean = syntax
-                .iter()
-                .filter(|n| {
-                    matches!(
-                        n.kind(),
-                        "identifier"
-                            | "field_identifier"
-                            | "property_identifier"
-                            | "type_identifier"
-                    ) && node_text(**n, source) == name
-                })
-                .all(|n| {
-                    n.id() == declaration
-                        || exempt_call_shaped_ids.contains(&n.id())
-                        || n.parent().is_some_and(|p| {
-                            callable(&p)
-                                && p.kind() != "new_expression"
-                                && p.child_by_field_name("function")
-                                    .is_some_and(|f| f.id() == n.id())
-                        })
-                });
-            if clean {
-                proven.insert(name, target);
+        if lang.is_typescript() {
+            proven = super::typescript_bindings::proven_functions(root, &syntax, source, out);
+        } else {
+            for (name, candidates) in top {
+                if candidates.len() != 1 {
+                    continue;
+                }
+                let (target, declaration) = candidates[0];
+                if string_rebound(&name) {
+                    continue;
+                }
+                // Every occurrence must be either the declaration or a direct call.
+                // This rejects parameter/local/import shadowing, assignments,
+                // escaping function values, and unmodeled name uses conservatively.
+                let clean = syntax
+                    .iter()
+                    .filter(|n| {
+                        matches!(
+                            n.kind(),
+                            "identifier"
+                                | "field_identifier"
+                                | "property_identifier"
+                                | "type_identifier"
+                        ) && node_text(**n, source) == name
+                    })
+                    .all(|n| {
+                        n.id() == declaration
+                            || exempt_call_shaped_ids.contains(&n.id())
+                            || n.parent().is_some_and(|p| {
+                                callable(&p)
+                                    && p.kind() != "new_expression"
+                                    && p.child_by_field_name("function")
+                                        .is_some_and(|f| f.id() == n.id())
+                            })
+                    });
+                if clean {
+                    proven.insert(name, target);
+                }
             }
         }
     }
+
     let macro_owners: HashSet<usize> = syntax
         .iter()
         .filter(|n| n.kind() == "macro_invocation" && !is_trusted_assert_macro(n))
@@ -416,7 +422,9 @@ pub(super) fn annotate(
                 .filter(|_| n.kind() != "new_expression" && !macro_owners.contains(&index))
                 .and_then(|f| proven.get(node_text(f, source)))
                 .copied();
-            let reason = if target.is_some() {
+            let reason = if target.is_some() && lang.is_typescript() {
+                "proven-typescript-lexical-binding"
+            } else if target.is_some() {
                 "proven-top-level-lexical-binding"
             } else {
                 unresolved_reason(*n, source, lang)

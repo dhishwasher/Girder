@@ -15,6 +15,7 @@ mod claims;
 mod go;
 pub(crate) mod method_index;
 mod typescript;
+mod typescript_bindings;
 
 /// A callable used to infer the type of a local binding from its return type.
 ///
