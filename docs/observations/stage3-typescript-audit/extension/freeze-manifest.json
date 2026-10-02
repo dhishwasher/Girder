@@ -1,0 +1,89 @@
+{
+  "seed": 20261002,
+  "roots": {
+    "typescript-6.0.3": "/tmp/girder-typescript-extension-20261002/typescript-6.0.3",
+    "zod-3.23.8": "/tmp/girder-typescript-extension-20261002/zod-3.23.8",
+    "date-fns-4.1.0": "/tmp/girder-typescript-extension-20261002/date-fns-4.1.0",
+    "class-validator-0.15.1": "/tmp/girder-typescript-extension-20261002/class-validator-0.15.1"
+  },
+  "artifacts": {
+    "typescript-6.0.3": {
+      "bytes": 33894793,
+      "format": "tar.gz",
+      "root": "TypeScript-6.0.3",
+      "sha256": "c26953b79c1197e02f5666a0b612d5b9707339557aa9744097e7d5719de1a117",
+      "url": "https://github.com/microsoft/TypeScript/archive/refs/tags/v6.0.3.tar.gz"
+    },
+    "zod-3.23.8": {
+      "bytes": 586431,
+      "format": "tar.gz",
+      "root": "zod-3.23.8",
+      "sha256": "ecd3ac7eb5bac88202b1146c308c8bbd48e63fc64d6d7f14b5577dde5da02c48",
+      "url": "https://github.com/colinhacks/zod/archive/refs/tags/v3.23.8.tar.gz"
+    },
+    "date-fns-4.1.0": {
+      "bytes": 1228521,
+      "format": "tar.gz",
+      "root": "date-fns-4.1.0",
+      "sha256": "a6694304fccc35587f954f4b79adbbeb9a0c66256a13e48ac0488b55f6616257",
+      "url": "https://github.com/date-fns/date-fns/archive/refs/tags/v4.1.0.tar.gz"
+    },
+    "class-validator-0.15.1": {
+      "bytes": 198264,
+      "format": "tar.gz",
+      "root": "class-validator-0.15.1",
+      "sha256": "100a22e535896aea8901c4b521b45bf25e778a41987df89dcc15054594859863",
+      "url": "https://github.com/typestack/class-validator/archive/refs/tags/v0.15.1.tar.gz"
+    }
+  },
+  "inputs": [
+    {
+      "path": "docs/observations/stage3-typescript-audit/audit-sites-labeled.json",
+      "sha256": "d9346651d99f4605bbc2a8ff12f558b61812e5b6e20c82e6a3ced2d2241637f0"
+    },
+    {
+      "path": "docs/stage3-typescript-corpus.json",
+      "sha256": "a027988684a9d4dc2c0bcfcfab3e81b066a8e5396a4cf3e9b72cb33e6e55ad12"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/policy.md",
+      "sha256": "57a8588d040e986086a495c9b98d3160618a1c7d1a7ea222c180cb3e30922f58"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/reserve.json",
+      "sha256": "4096e7f1504a8352e1085f7e4636b9bb0ad7f510342d219b171c33c9caf78cbf"
+    },
+    {
+      "path": "tools/prepare_typescript_audit_extension.py",
+      "sha256": "d04b2a8054dbc003b55b3aec81f6bd8643c96439646a4c4b5d882b6652250570"
+    },
+    {
+      "path": "tools/dispatch_audit_site_selector_typescript.py",
+      "sha256": "70cab5998b7116bc3ccbd339667e58a6cb7cc6a60f094899311b787a8143871d"
+    },
+    {
+      "path": "tools/dispatch_audit_scorer_typescript.py",
+      "sha256": "b3cac340883d6e1249402c27a0f5785478aa2ece02e9f5b05cf77d076616911a"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/labeling-rubric.md",
+      "sha256": "09e0fb1de3d0f366e6dd645881edfe167c5bd50ae96161069d6d433f4fa15d2e"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/labeling-rubric-addendum.md",
+      "sha256": "a6db05d7c58d3434a8f25235db00bd115f3f0ecad5a55313658c0576e20d24ce"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/labeling-rubric-addendum-2.md",
+      "sha256": "3c2243ef2a08d3918673d7f07a820a18fb58d8984f41d365bb28d3c86eecf212"
+    }
+  ],
+  "binary": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+  "binary_sha256": "da59183f4543a51a48e584e43ed06fcb76f5d6fc21ce8ba4b4763d000442f552",
+  "pool_counts": {
+    "typescript-6.0.3": 103644,
+    "zod-3.23.8": 9799,
+    "date-fns-4.1.0": 19091,
+    "class-validator-0.15.1": 3832
+  }
+}

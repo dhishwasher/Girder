@@ -1,0 +1,452 @@
+{
+  "sites": [
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/lib/webworker.generated.d.ts",
+      "line": 15370,
+      "shape": "dynamic_dispatch",
+      "text": "[Symbol.iterator](): StylePropertyMapReadOnlyIterator<[string, Iterable<CSSStyleValue>]>;"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 13509,
+      "shape": "optional_chaining_call",
+      "text": "const declaration = Debug.checkDefined(symbol.declarations?.find(isTypeAlias), \"Type alias symbol with no valid declaration found\");"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/__tests__/array.test.ts",
+      "line": 25,
+      "shape": "method_call",
+      "text": "justTwo.parse([\"a\", \"a\"]);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/utilities.ts",
+      "line": 2422,
+      "shape": "plain_call",
+      "text": "export function createDiagnosticForNodeArray(sourceFile: SourceFile, nodes: NodeArray<Node>, message: DiagnosticMessage, ...args: DiagnosticArguments): DiagnosticWithLocation {"
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/isSameSecond/test.ts",
+      "line": 8,
+      "shape": "new_expression",
+      "text": "new Date(2014, 8 /* Sep */, 4, 6, 30, 15, 500),"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/types.ts",
+      "line": 410,
+      "shape": "dynamic_dispatch",
+      "text": "this.nullable = this.nullable.bind(this);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/server/session.ts",
+      "line": 404,
+      "shape": "qualified_attribute_call",
+      "text": "this.operationHost.getServerHost().setTimeout("
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/services.ts",
+      "line": 881,
+      "shape": "qualified_attribute_call",
+      "text": "return this.isClassOrInterface() ? this.checker.getBaseTypes(this) : undefined;"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-options.spec.ts",
+      "line": 1252,
+      "shape": "decorator",
+      "text": "@IsDefined({"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/types.ts",
+      "line": 403,
+      "shape": "dynamic_dispatch",
+      "text": "this.parseAsync = this.parseAsync.bind(this);"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 2002,
+      "shape": "decorator",
+      "text": "@IsISRC()"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/evaluation/esDecorators.ts",
+      "line": 929,
+      "shape": "qualified_attribute_call",
+      "text": "assert.throws(() => context.access.set(D, 3));"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/__tests__/discriminated-unions.test.ts",
+      "line": 254,
+      "shape": "method_call",
+      "text": "z.object({"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/visitorPublic.ts",
+      "line": 1027,
+      "shape": "method_call",
+      "text": "Debug.checkDefined(nodeVisitor(node.name, visitor, isMemberName)),"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 3950,
+      "shape": "decorator",
+      "text": "@IsUUID('nil')"
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/eachQuarterOfInterval/test.ts",
+      "line": 35,
+      "shape": "new_expression",
+      "text": "end: new Date(2014, 7 /* Aug */, 12, 22, 15),"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/transformers/ts.ts",
+      "line": 2181,
+      "shape": "plain_call",
+      "text": "startLexicalEnvironment();"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/lib/webworker.generated.d.ts",
+      "line": 7614,
+      "shape": "plain_call",
+      "text": "addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/server/project.ts",
+      "line": 1725,
+      "shape": "qualified_attribute_call",
+      "text": "this.generatedFilesMap.forEach((watcher, source) => {"
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/isPast/test.ts",
+      "line": 9,
+      "shape": "new_expression",
+      "text": "const result = isPast(new Date(2014, 6 /* Jul */, 2));"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/parallel/worker.ts",
+      "line": 285,
+      "shape": "method_call",
+      "text": "console.log(\"Invalid message:\", message);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/helpers/tscWatch.ts",
+      "line": 172,
+      "shape": "optional_chaining_call",
+      "text": "resolutionCache: (watchOrSolution as ts.WatchOfConfigFile<T> | undefined)?.getResolutionCache?.(),"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/textChanges.ts",
+      "line": 1331,
+      "shape": "plain_call",
+      "text": "const formatOptions = getFormatCodeSettingsForWriting(formatContext, targetSourceFile);"
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/isBefore/test.ts",
+      "line": 7,
+      "shape": "new_expression",
+      "text": "new Date(1987, 1 /* Feb */, 11),"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 8706,
+      "shape": "method_call",
+      "text": "factory.createImportAttribute("
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 3334,
+      "shape": "decorator",
+      "text": "@IsMongoId()"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/stringCompletions.ts",
+      "line": 195,
+      "shape": "dynamic_dispatch",
+      "text": "has: map.has.bind(map),"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/benchmarks/primitives.ts",
+      "line": 131,
+      "shape": "new_expression",
+      "text": "minMaxDate.parse(new Date(\"2023-01-01\"));"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/projectErrors.ts",
+      "line": 159,
+      "shape": "qualified_attribute_call",
+      "text": "content: correctConfig.content.substr(1),"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 1080,
+      "shape": "decorator",
+      "text": "@IsNegative()"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 4551,
+      "shape": "decorator",
+      "text": "@IsISO31661Numeric()"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 4278,
+      "shape": "decorator",
+      "text": "@MinLength(constraint1)"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/lib/es2015.iterable.d.ts",
+      "line": 369,
+      "shape": "dynamic_dispatch",
+      "text": "[Symbol.iterator](): ArrayIterator<number>;"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/helpers/virtualFileSystemWithWatch.ts",
+      "line": 1244,
+      "shape": "optional_chaining_call",
+      "text": "diffFsEntry(baseline, this.serializedDiff.get(path), newFsEntry, this.inodes?.get(path), this.writtenFiles);"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/inherited-validation.spec.ts",
+      "line": 11,
+      "shape": "decorator",
+      "text": "@Contains('hello')"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 4007,
+      "shape": "plain_call",
+      "text": "it('should fail if method in validator said that its invalid', () => {"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/harnessUtils.ts",
+      "line": 268,
+      "shape": "method_call",
+      "text": "assert.equal("
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/configFileSearch.ts",
+      "line": 31,
+      "shape": "plain_call",
+      "text": "it(\"should use projectRootPath when searching for inferred project again\", () => {"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/incrementalUtils.ts",
+      "line": 471,
+      "shape": "dynamic_dispatch",
+      "text": "compilerHost.getCurrentDirectory = project.getCurrentDirectory.bind(project);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/commandLineParser.ts",
+      "line": 3714,
+      "shape": "qualified_attribute_call",
+      "text": "result.extendedSourceFiles.add(extenedSourceFile);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 3620,
+      "shape": "plain_call",
+      "text": "diagnosticMessage = error(errorLocation, Diagnostics.Class_0_used_before_its_declaration, declarationName);"
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/formatRelative/test.ts",
+      "line": 70,
+      "shape": "dynamic_dispatch",
+      "text": "expect(formatRelative.bind(null, new Date(NaN), baseDate)).toThrow("
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/utilities.ts",
+      "line": 9211,
+      "shape": "qualified_attribute_call",
+      "text": "return !!(compilerOptions.declarationMap && _computedOptions.declaration.computeValue(compilerOptions));"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "src/__tests__/string.test.ts",
+      "line": 326,
+      "shape": "method_call",
+      "text": "const result = ulid.safeParse(\"invalidulid\");"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "sample/sample2-using-groups/Post.ts",
+      "line": 28,
+      "shape": "decorator",
+      "text": "@IsFQDN(undefined, {"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/evaluation/autoAccessors.ts",
+      "line": 39,
+      "shape": "dynamic_dispatch",
+      "text": "assert.throws(() => desc!.get!.call(obj), /private/);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/server/project.ts",
+      "line": 1369,
+      "shape": "optional_chaining_call",
+      "text": "this.autoImportProviderHost?.markAsDirty();"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/server/project.ts",
+      "line": 1327,
+      "shape": "method_call",
+      "text": "if (this.isRoot(info)) {"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/fourslashImpl.ts",
+      "line": 3352,
+      "shape": "optional_chaining_call",
+      "text": "const matchingName = completions?.filter(e => e.name === options.name);"
+    },
+    {
+      "package": "date-fns-4.1.0",
+      "file": "src/previousWednesday/test.ts",
+      "line": 18,
+      "shape": "new_expression",
+      "text": "new Date(2021, 5 /* Jun */, 2),"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "src/helpers/util.ts",
+      "line": 54,
+      "shape": "dynamic_dispatch",
+      "text": "if (Object.prototype.hasOwnProperty.call(object, key)) {"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/harness/fourslashInterfaceImpl.ts",
+      "line": 509,
+      "shape": "qualified_attribute_call",
+      "text": "this.state.goToMarker(marker);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/server/project.ts",
+      "line": 2252,
+      "shape": "qualified_attribute_call",
+      "text": "this.projectService.includePackageJsonAutoImports() === PackageJsonAutoImportPreference.Off ||"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 3663,
+      "shape": "new_expression",
+      "text": "return checkValidValues(new MyClass(), validValues);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 15610,
+      "shape": "new_expression",
+      "text": "propSet = new Map<SymbolId, Symbol>();"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/formatting/formatting.ts",
+      "line": 1074,
+      "shape": "plain_call",
+      "text": "processRange(triviaItem, triviaItemStart, parent, contextNode, dynamicIndentation);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/emitter.ts",
+      "line": 4699,
+      "shape": "optional_chaining_call",
+      "text": "onBeforeEmitNodeArray?.(children);"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 25025,
+      "shape": "optional_chaining_call",
+      "text": "tracing?.push(tracing.Phase.CheckTypes, \"getVariancesWorker\", { arity: typeParameters.length, id: getTypeId(getDeclaredTypeOfSymbol(symbol)) });"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/jsTyping/jsTyping.ts",
+      "line": 38,
+      "shape": "plain_call",
+      "text": "directoryExists(path: string): boolean;"
+    },
+    {
+      "package": "zod-3.23.8",
+      "file": "deno/lib/__tests__/object.test.ts",
+      "line": 250,
+      "shape": "method_call",
+      "text": "const Enum = z.object({ a: z.string(), b: z.string().optional() }).keyof();"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/watchEnvironment.ts",
+      "line": 590,
+      "shape": "new_expression",
+      "text": "const session = new TestSession(host);"
+    },
+    {
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/validation-functions-and-decorators.spec.ts",
+      "line": 4407,
+      "shape": "decorator",
+      "text": "@IsMilitaryTime()"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/services/exportInfoMap.ts",
+      "line": 497,
+      "shape": "optional_chaining_call",
+      "text": "if (!ambient.name.includes(\"*\") && !(excludePatterns && ambient.declarations?.every(d => isExcluded!(d.getSourceFile())))) {"
+    },
+    {
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 10879,
+      "shape": "optional_chaining_call",
+      "text": "const getterDeclaration = p.declarations?.find(isGetAccessor);"
+    }
+  ]
+}
