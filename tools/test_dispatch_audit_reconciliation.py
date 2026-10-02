@@ -14,6 +14,16 @@ class AuditReconciliationTests(unittest.TestCase):
         self.assertIsNone(gate['must_precision'])
         self.assertFalse(gate['passed'])
 
+    def test_wrong_must_target_is_not_counted_as_correct_precision(self):
+        rows = [{'status': 'scored', 'cell': 'exact', 'true_class': 'unknown', 'observed_class': 'unknown'} for _ in range(99)]
+        rows.append({'status': 'scored', 'cell': 'overclaim', 'true_class': 'must', 'observed_class': 'must',
+                     'expected_target': 'first.ts:10', 'observed_targets': ['other.ts:10']})
+        gate = acceptance({'results': rows})
+        self.assertEqual(gate['must_denominator'], 1)
+        self.assertEqual(gate['must_numerator'], 0)
+        self.assertEqual(gate['must_precision'], 0.0)
+        self.assertFalse(gate['passed'])
+
     def test_unresolved_relocation_or_unsound_cell_fails(self):
         rows = [{'status': 'scored', 'cell': 'exact', 'true_class': 'must', 'observed_class': 'must'} for _ in range(100)]
         self.assertTrue(acceptance({'results': rows})['passed'])

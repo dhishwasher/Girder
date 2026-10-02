@@ -1,0 +1,56 @@
+{
+  "problem": "A Must with the wrong target was already an unsound failure, but the precision numerator counted its matching class as correct. Require an exact cell as well as matching Must class.",
+  "tests": "python3 -m unittest tools.test_dispatch_audit_reconciliation -q",
+  "tests_passed": 5,
+  "historical_observations_modified": false,
+  "recomputed_existing_checks": [
+    {
+      "language": "rust",
+      "result": "docs/observations/stage3-audit-reconciliation/operator-correction/rust-combined-cohort.json",
+      "record": "docs/observations/stage3-audit-reconciliation/operator-correction/run.json",
+      "unchanged_acceptance": {
+        "minimum_real_sites": 100,
+        "scored": 100,
+        "not_a_call_site": 83,
+        "all_sites_accounted_for": true,
+        "unsound": 0,
+        "must_numerator": 1,
+        "must_denominator": 1,
+        "must_precision": 1.0,
+        "passed": true
+      }
+    },
+    {
+      "language": "python",
+      "result": "docs/observations/stage3-audit-reconciliation/operator-resumption/python-combined-cohort.json",
+      "record": "docs/observations/stage3-audit-reconciliation/operator-resumption/run.json",
+      "unchanged_acceptance": {
+        "minimum_real_sites": 100,
+        "scored": 100,
+        "not_a_call_site": 28,
+        "all_sites_accounted_for": true,
+        "unsound": 0,
+        "must_numerator": 1,
+        "must_denominator": 1,
+        "must_precision": 1.0,
+        "passed": true
+      }
+    },
+    {
+      "language": "typescript",
+      "result": "docs/observations/stage3-typescript-audit/extension/before/combined-cohort.json",
+      "record": "docs/observations/stage3-typescript-audit/extension/before/run.json",
+      "unchanged_acceptance": {
+        "minimum_real_sites": 100,
+        "scored": 100,
+        "not_a_call_site": 10,
+        "all_sites_accounted_for": true,
+        "unsound": 0,
+        "must_numerator": 0,
+        "must_denominator": 0,
+        "must_precision": null,
+        "passed": false
+      }
+    }
+  ]
+}

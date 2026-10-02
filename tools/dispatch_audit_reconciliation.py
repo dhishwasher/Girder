@@ -66,7 +66,9 @@ def acceptance(result: dict, minimum: int = 100) -> dict:
     scored = [r for r in rows if r['status'] == 'scored']
     failures = [r for r in scored if r['cell'] in {'overclaim', 'unsafe_exclusion'}]
     must = [r for r in scored if r['observed_class'] == 'must']
-    correct_must = sum(r['true_class'] == 'must' for r in must)
+    # Matching the class is insufficient when a scorer has identified the
+    # wrong concrete target (for example, another overload).
+    correct_must = sum(r['true_class'] == 'must' and r['cell'] == 'exact' for r in must)
     relocated = all(r['status'] in {'scored', 'not_a_call_site'} for r in rows)
     return {
         'minimum_real_sites': minimum, 'scored': len(scored),
