@@ -2,12 +2,10 @@
 
 ## Licensing of contributions
 
-Girder is source-available under the
-[Business Source License 1.1](./LICENSE). Unless you state otherwise in
-writing, any contribution you intentionally submit for inclusion in this
-repository is offered under that same license, including its Additional Use
-Grant, Change Date, and Change License, with no additional terms or
-conditions.
+Girder is licensed under the [Apache License, Version 2.0](./LICENSE). Unless
+you explicitly state otherwise, any contribution you intentionally submit for
+inclusion in this repository is licensed under Apache-2.0, as described in
+Section 5 of that license, without any additional terms or conditions.
 
 Please sign off your commits under the
 [Developer Certificate of Origin](https://developercertificate.org/) (DCO):
@@ -23,7 +21,7 @@ Signed-off-by: Your Name <your.email@example.com>
 ```
 
 That line is you asserting you wrote the contribution, or otherwise have the
-right to submit it under the licenses above. It is a statement about
+right to submit it under the license above. It is a statement about
 provenance, not an assignment of your copyright — you keep that.
 
 ### Why this is stated up front

@@ -1,3 +1,9 @@
+# Girder 0.3.3
+
+License-only patch release: the source, npm package, and release assets are
+licensed under Apache-2.0. No product features or code changes. The previously
+published 0.3.2 package and binaries are immutable and remain under BUSL.
+
 # Girder 0.3.0
 
 115 commits since 0.2.7, written from `git log v0.2.7..HEAD`, not from

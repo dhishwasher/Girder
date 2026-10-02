@@ -16,24 +16,15 @@ makes no network request for anything related to licensing, in either
 tier. There is no account, no login, and no telemetry collection
 anywhere in the license or usage path.
 
-## Can my company use the free tier commercially?
+## Can my company use Girder commercially?
 
-Yes. `LICENSE`'s Additional Use Grant states: "You may make production
-use of the Licensed Work for any purpose, including internal commercial
-use," with two conditions: (1) you cannot resell Girder itself as a
-hosted/managed service whose primary value is Girder's own
-functionality, and (2) you cannot disable or circumvent the license-key
-gate on functionality that requires one. Condition 2 explicitly does
-not require a key for the free-tier tools.
-
-(The license text's own list of free-tier functionality — `get_source`,
-`find_definition`, `search_code`, `ask_codebase`, `review_changes`,
-"on one repository" — is narrower and stricter than what the code
-actually gates, which also includes `orient` free with no repository
-count limit, per `docs/pricing-audit.md`. This is a real discrepancy
-between the legal text and the shipped behavior, flagged here rather
-than silently resolved — `LICENSE` is a legal document and hasn't been
-edited as part of this pass.)
+Yes. Girder is licensed under the Apache License 2.0 (`LICENSE`), which
+permits commercial use, modification, redistribution, forks, and hosted
+use, subject to its terms (e.g. preserving notices). All current tools
+are ungated; the license-key parser remains only for historical
+compatibility. Earlier releases remain under the terms they shipped
+with; this is not a retroactive relicensing. Sponsorship grants no
+special permission beyond the license.
 
 ## Is Girder's test selection sound — will it ever miss a test I needed?
 

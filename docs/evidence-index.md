@@ -90,8 +90,8 @@ named as open.
 
 ## Licensing
 
-`LICENSE` (Business Source License 1.1, converting to Apache License
-2.0 on 2030-09-04) and `docs/pricing-audit.md`, a **historical** audit
+`LICENSE` (Apache License 2.0; earlier releases remain under the terms
+they shipped with) and `docs/pricing-audit.md`, a **historical** audit
 (2026-10-01) of what the former license gate covered. It is not a
 current paid offering: there is no current paid tier.
 

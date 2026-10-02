@@ -1,6 +1,6 @@
 {
   "name": "girder-mcp",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Saves AI coding-agent context: a local semantic-graph MCP server that gives the agent exactly the code it needs instead of whole files. Also provides conservative change-impact/test selection.",
   "keywords": [
     "mcp",
@@ -20,7 +20,7 @@
     "url": "git+https://github.com/dhishwasher/Girder.git",
     "directory": "npm"
   },
-  "license": "BUSL-1.1",
+  "license": "Apache-2.0",
   "mcpName": "io.github.dhishwasher/girder",
   "type": "commonjs",
   "bin": {

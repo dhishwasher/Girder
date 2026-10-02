@@ -15,6 +15,10 @@ npx -y girder-mcp setup
 
 That one command detects and configures Claude Code, Codex, and Cursor.
 
+> **Licensing note:** the currently published v0.3.2 npm package and release
+> binaries remain under the BUSL license they shipped with. The Apache-2.0
+> release, v0.3.3, is pending publication.
+
 [![CI](https://github.com/dhishwasher/Girder/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dhishwasher/Girder/actions/workflows/ci.yml)
 Latest stable release: [v0.3.2](https://github.com/dhishwasher/Girder/releases/tag/v0.3.2).
 Contributions: see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
@@ -93,9 +97,9 @@ test_shout_greeting_delegates_to_format_greeting
 See [Status](#status) for exactly what that selection does and doesn't
 prove.
 
-**Pricing:** there is no current paid tier, and no license key or account is
-required. Use is governed by the source-available BUSL terms, including its
-one-repository condition — see [License](#license).
+**Pricing and license:** Girder is free and open source under the
+[Apache License 2.0](./LICENSE). There is no current paid tier, and no license
+key or account is required — see [License](#license).
 
 **Evidence, for a skeptical reader:**
 [`docs/evidence-index.md`](./docs/evidence-index.md) points at every
@@ -942,18 +946,21 @@ prioritized open risks are maintained in
 
 ## License
 
-Girder is **source-available**, not open source, under the
-[Business Source License 1.1](./LICENSE).
+Girder's source in this repository is licensed under the [Apache License,
+Version 2.0](./LICENSE). That permits commercial use, modification,
+redistribution, forks, and hosted use, subject to the license terms; `LICENSE`
+is the authoritative text.
+
+**Temporary caveat:** the published v0.3.2 npm package and release binaries
+remain under BUSL; published releases are immutable. Apache-2.0 packages and
+binaries arrive with v0.3.3, which is pending publication.
 
 There is no current paid tier, and every shipped tool is ungated: no account
-or license key is required. Use is governed by `LICENSE`, whose Additional Use
-Grant states the exact permitted use, including its one-repository condition;
-it is the authoritative text, not this summary, and not all use is
-unrestricted. Anyone who already holds a signed license key from an earlier
-release keeps it working for whatever it unlocked then; the key system itself
-(`GIRDER_LICENSE_KEY` or a per-OS key file, verified offline, no phone-home)
-remains for that historical compatibility.
+or license key is required. Anyone who already holds a signed license key from
+an earlier release keeps it working for whatever it unlocked then; the key
+system itself (`GIRDER_LICENSE_KEY` or a per-OS key file, verified offline, no
+phone-home) remains only for that historical compatibility.
 
-On September 4, 2030, the license converts to the Apache License, Version 2.0.
-See [`LICENSE`](./LICENSE) for the authoritative terms and
-[`CONTRIBUTING.md`](./CONTRIBUTING.md) for contribution terms.
+Earlier releases remain under the terms they shipped with; this is not a
+retroactive relicensing. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for
+contribution terms.

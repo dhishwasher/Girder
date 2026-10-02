@@ -41,10 +41,11 @@ command was actually run, not assumed.
 ## Licensing
 
 - [ ] `LICENSE` file matches what `README.md`'s "## License" section
-      describes (BSL 1.1, conversion date, Apache 2.0 target).
-- [ ] The Gumroad purchase link in `README.md` and
-      `crates/aether-app/src/project/license.rs`'s `require_paid` help
-      text actually resolves and matches the stated price.
+      describes (Apache-2.0), and `Cargo.toml` and `npm/package.json`
+      declare the SPDX identifier `Apache-2.0`.
+- [ ] The newly published npm package and each release asset include the
+      Apache-2.0 `LICENSE`; npm and Cargo declare `Apache-2.0`, and the
+      package, binary, and `server.json` versions agree.
 - [ ] If a team tier ships in this release, `docs/pricing-audit.md` is
       updated to describe it (don't let the audit document go stale
       the moment it stops being accurate).

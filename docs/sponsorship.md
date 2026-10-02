@@ -39,6 +39,6 @@ recurring recognition or support obligation.
 ## What sponsorship does not buy
 
 Sponsorship does **not** buy guaranteed feature requests, private support,
-SLAs, or control over the roadmap. It grants no license permissions; Girder's
-terms are those of the [`LICENSE`](../LICENSE) (Business Source License 1.1,
-source-available, not open source).
+SLAs, or control over the roadmap. It grants no special permissions; Girder's
+terms are those of the [`LICENSE`](../LICENSE) (Apache License 2.0), which
+already allows commercial reuse, forks, and hosted use for everyone.

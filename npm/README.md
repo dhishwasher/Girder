@@ -197,14 +197,13 @@ silently falling back to PATH the way a normal run does.
 
 ## License
 
-Girder is **source-available** under the
-[Business Source License 1.1](https://github.com/dhishwasher/Girder/blob/main/LICENSE).
-The source is public and free to read, use, modify, and run, including inside
-a company, subject to its license terms. Every tool above is free,
-permanently — no expiry, no account, no license key, and no current paid
-tier. You may not circumvent license-key functionality or remove or obscure
-protected functionality if a future release adds one, and you may not offer
-Girder itself to third parties as a competing hosted or managed service
-whose primary value is Girder's functionality.
+This package, `girder-mcp` 0.3.3, is licensed under the
+[Apache License, Version 2.0](https://github.com/dhishwasher/Girder/blob/main/LICENSE).
+It permits commercial use, modification, redistribution, forks, and hosted
+use, subject to the license terms. Every tool above is ungated — no account,
+no license key, and no current paid tier.
 
-On September 4, 2030, the license converts to the Apache License, Version 2.0.
+The previously published `girder-mcp` 0.3.2 package and its release binaries
+remain under the BUSL license they shipped with; published releases are
+immutable. Earlier releases remain under the terms they shipped with; this is
+not a retroactive relicensing.
