@@ -5,6 +5,7 @@ import argparse
 import json
 from pathlib import Path
 import random
+import re
 
 from tools.core_representative_benchmark import acquire_artifact
 from tools.dispatch_audit_reconciliation import BASE, combine, identity, sha, write
@@ -25,7 +26,15 @@ def main() -> None:
     repos = json.loads(MANIFEST.read_text())['repositories']
     if args.step == 'acquire':
         for repo in repos:
-            path = acquire_artifact(repo['artifact'], CACHE, offline=False, timeout_seconds=120)
+            artifact = dict(repo['artifact'])
+            match = re.fullmatch(r'https://github.com/([^/]+)/([^/]+)/archive/refs/tags/([^/]+)\.tar\.gz', artifact['url'])
+            if match is None:
+                raise ValueError('expected a pinned GitHub tag archive')
+            owner, name, tag = match.groups()
+            # Request GitHub's archive endpoint directly. The shared downloader
+            # continues to reject redirects and enforce the original size/SHA.
+            artifact['url'] = f'https://codeload.github.com/{owner}/{name}/tar.gz/refs/tags/{tag}'
+            path = acquire_artifact(artifact, CACHE, offline=False, timeout_seconds=120)
             print(repo['id'], sha(path), flush=True)
         return
     original = json.loads(ORIGINAL.read_text())['sites']

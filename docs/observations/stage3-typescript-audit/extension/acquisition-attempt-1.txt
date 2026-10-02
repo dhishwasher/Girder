@@ -1,0 +1,31 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/corymaynard370/Bit-code/tools/prepare_typescript_audit_extension.py", line 69, in <module>
+    main()
+  File "/home/corymaynard370/Bit-code/tools/prepare_typescript_audit_extension.py", line 28, in main
+    path = acquire_artifact(repo['artifact'], CACHE, offline=False, timeout_seconds=120)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/corymaynard370/Bit-code/tools/core_representative_benchmark.py", line 326, in acquire_artifact
+    download_artifact(
+  File "/home/corymaynard370/Bit-code/tools/core_representative_benchmark.py", line 358, in download_artifact
+    with os.fdopen(descriptor, "wb") as output, opener.open(
+                                                ^^^^^^^^^^^^
+  File "/usr/lib/python3.11/urllib/request.py", line 525, in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/urllib/request.py", line 634, in http_response
+    response = self.parent.error(
+               ^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/urllib/request.py", line 557, in error
+    result = self._call_chain(*args)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/urllib/request.py", line 496, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.11/urllib/request.py", line 728, in http_error_302
+    new = self.redirect_request(req, fp, code, msg, headers, newurl)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/corymaynard370/Bit-code/tools/core_representative_benchmark.py", line 71, in redirect_request
+    raise urllib.error.HTTPError(
+urllib.error.HTTPError: HTTP Error 302: redirect rejected: https://codeload.github.com/microsoft/TypeScript/tar.gz/refs/tags/v6.0.3
