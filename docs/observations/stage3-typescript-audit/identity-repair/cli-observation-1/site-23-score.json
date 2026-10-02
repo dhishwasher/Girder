@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "results": [
+    {
+      "index": 0,
+      "package": "date-fns-4.1.0",
+      "file": "src/intlFormatDistance/test.ts",
+      "line": 109,
+      "shape": "new_expression",
+      "true_class": "unknown",
+      "confidence": "high",
+      "byte_offset": 3269,
+      "status": "scored",
+      "observed_class": "unknown",
+      "observed_reason": "unresolved-call-syntax",
+      "observed_caller": "crate::intlFormatDistance::test::@describe[696e746c466f726d617444697374616e6365]#1::@describe[776974682064656661756c742076616c756573]#1::@describe[776f726b732077697468203630207365636f6e6473]#1::@test[776f726b73207769746820667574757265]#1",
+      "cell": "exact"
+    }
+  ],
+  "cell_counts": {
+    "exact": 1
+  },
+  "not_a_call_site_count": 0,
+  "site_relocation_failed_count": 0,
+  "failed_count": 0,
+  "scored_count": 1
+}

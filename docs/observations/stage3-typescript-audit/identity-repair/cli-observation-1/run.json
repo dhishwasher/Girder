@@ -1,0 +1,230 @@
+{
+  "candidate": "a36c60af233c7df68c1703dd9af20c31dcf09a92",
+  "binary_sha256": "13976d976157318878512ae6eb5458f0cf5ca4f19b5c642a9bf16bbde54381f7",
+  "labels_sha256": "c3979bb15d2040da7a006051bde99374566cbd01e94b62f33bee3f921999c0eb",
+  "scope": "Isolated source-file extraction and call ownership; not whole-project dispatch acceptance.",
+  "commands": [
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-ts-identity-measurement-67d65f6/original",
+        "--json"
+      ],
+      "exit_status": 0,
+      "seconds": 0.911,
+      "stdout_sha256": "c85becac98843b95c510144720529866df5a0aedb0a386766eee5cc3c3a3ec8c"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-ts-identity-measurement-67d65f6/original/project.aether",
+        "--json"
+      ],
+      "exit_status": 0,
+      "seconds": 0.681,
+      "stdout_sha256": "0557181fc4e3f6e6228b6d2797dadc70ee4d96866f4e9cbb381bcf68a3b29708"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-ts-identity-measurement-67d65f6/harder",
+        "--json"
+      ],
+      "exit_status": 0,
+      "seconds": 0.487,
+      "stdout_sha256": "c78f1b4715f6859f5db371e9584a1b877f8f27db887c7d78c4eee4f8acee01e0"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-ts-identity-measurement-67d65f6/harder/project.aether",
+        "--json"
+      ],
+      "exit_status": 0,
+      "seconds": 0.282,
+      "stdout_sha256": "8b2313e9713004daf89d76c7e5ac121b910ff56ca1ddaaac7ca5fecf0989bb25"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-ts-identity-measurement-67d65f6/site-23",
+        "--json"
+      ],
+      "exit_status": 0,
+      "seconds": 0.703,
+      "stdout_sha256": "39a342d9dfb98679739ff634f27fb9c57d06e1f785e5f44e89270bf35cd0a7d2"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-ts-identity-measurement-67d65f6/site-23/project.aether",
+        "--json"
+      ],
+      "exit_status": 0,
+      "seconds": 0.331,
+      "stdout_sha256": "d0666aa77df68eb3b262106bdcb1a0d853a9abaa82561789f1008277a4acf8a1"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-ts-identity-measurement-67d65f6/site-91",
+        "--json"
+      ],
+      "exit_status": 0,
+      "seconds": 1.344,
+      "stdout_sha256": "27f5a7a5b444b4e309d5ac91f6aefeb3a7e24ecd1361916517d34bc5161aebb0"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-ts-identity-measurement-67d65f6/site-91/project.aether",
+        "--json"
+      ],
+      "exit_status": 0,
+      "seconds": 0.305,
+      "stdout_sha256": "77dea6f7a18dfaeb2765cebf24cbfe8a919859d26917db2966bffc3f80dfd7b6"
+    }
+  ],
+  "cases": [
+    {
+      "name": "original",
+      "source": "/home/corymaynard370/Bit-code/docs/observations/stage3-typescript-audit/collision-repro/typescript-repro/sample.ts",
+      "file": "sample.ts",
+      "source_sha256": "8b85e1d96da572561fdf9eff55ed471ddd27f47941377e9501bc4c5ece9f4460",
+      "before_path": "/home/corymaynard370/Bit-code/docs/observations/stage3-typescript-audit/collision-repro/typescript-repro/inspect-baseline.json",
+      "before_sha256": "312e73aa93f11e1397c25468f64c3fb9b2f76a8f711a168692b13843d135c450",
+      "before_tests": 3,
+      "after_tests": 4,
+      "duplicate_path_boundaries": 0,
+      "lost_registration_offsets": [],
+      "recovered_registration_offsets": [
+        636
+      ]
+    },
+    {
+      "name": "harder",
+      "source": "/home/corymaynard370/Bit-code/docs/observations/stage3-typescript-audit/identity-repair/harder.test.ts",
+      "file": "harder.test.ts",
+      "source_sha256": "0a2c1fee9eff54dde335cade7fa22104df741d348088210695de77fe977bff92",
+      "after_tests": 5,
+      "duplicate_path_boundaries": 0
+    },
+    {
+      "name": "site-23",
+      "source": "/tmp/girder-typescript-extension-20261002/date-fns-4.1.0/src/intlFormatDistance/test.ts",
+      "file": "src/intlFormatDistance/test.ts",
+      "source_sha256": "5c02eb6c45687b75a373ae86ea995118cb97b60c744727051bce2bb1ea16c4f3",
+      "before_path": "/tmp/girder-typescript-extension-20261002/raw-before/date-fns-4.1.0-inspect.json",
+      "before_sha256": "8f1c85252caebfd0fae41d48293d13315ae0cac3a2628d66565544179cd3f6fe",
+      "before_tests": 47,
+      "after_tests": 89,
+      "duplicate_path_boundaries": 0,
+      "lost_registration_offsets": [],
+      "recovered_registration_offsets": [
+        551,
+        784,
+        1076,
+        1312,
+        1604,
+        2089,
+        2632,
+        2860,
+        3141,
+        3372,
+        3657,
+        3873,
+        4093,
+        4603,
+        5060,
+        5565,
+        5781,
+        6290,
+        6507,
+        6778,
+        7236,
+        7748,
+        8193,
+        8692,
+        9136,
+        9634,
+        10084,
+        10591,
+        11044,
+        11550,
+        11991,
+        12486,
+        12921,
+        14403,
+        14684,
+        15285,
+        15611,
+        15885,
+        16181,
+        16461,
+        16790,
+        17070
+      ],
+      "audit_index": 23,
+      "answer": {
+        "index": 0,
+        "package": "date-fns-4.1.0",
+        "file": "src/intlFormatDistance/test.ts",
+        "line": 109,
+        "shape": "new_expression",
+        "true_class": "unknown",
+        "confidence": "high",
+        "byte_offset": 3269,
+        "status": "scored",
+        "observed_class": "unknown",
+        "observed_reason": "unresolved-call-syntax",
+        "observed_caller": "crate::intlFormatDistance::test::@describe[696e746c466f726d617444697374616e6365]#1::@describe[776974682064656661756c742076616c756573]#1::@describe[776f726b732077697468203630207365636f6e6473]#1::@test[776f726b73207769746820667574757265]#1",
+        "cell": "exact"
+      },
+      "site_owned_by_test": true
+    },
+    {
+      "name": "site-91",
+      "source": "/tmp/girder-typescript-extension-20261002/typescript-6.0.3/src/testRunner/unittests/tsserver/projectReferences.ts",
+      "file": "src/testRunner/unittests/tsserver/projectReferences.ts",
+      "source_sha256": "1486cbb235ae1d737b042134380bc20f07f31643ed7a1ce42188d71d2f3d4e93",
+      "before_path": "/tmp/girder-typescript-extension-20261002/raw-before/typescript-6.0.3-inspect.json",
+      "before_sha256": "f996ff333c435fd5bda0ed551328d10f142869d67bf2d98035f9ef56fc046f6b",
+      "before_tests": 26,
+      "after_tests": 30,
+      "duplicate_path_boundaries": 0,
+      "lost_registration_offsets": [],
+      "recovered_registration_offsets": [
+        50218,
+        50803,
+        51273,
+        51847
+      ],
+      "audit_index": 91,
+      "answer": {
+        "index": 0,
+        "package": "typescript-6.0.3",
+        "file": "src/testRunner/unittests/tsserver/projectReferences.ts",
+        "line": 1189,
+        "shape": "plain_call",
+        "true_class": "must",
+        "confidence": "high",
+        "byte_offset": 50479,
+        "status": "scored",
+        "observed_class": "unknown",
+        "observed_reason": "typescript-binding-or-structural-dispatch-unproven",
+        "observed_caller": "crate::testRunner::unittests::tsserver::projectReferences::@describe[756e697474657374733a3a2074737365727665723a3a20776974682070726f6a6563745265666572656e6365733a3a20616e642074736275696c64]#1::@describe[7768656e2064656661756c742070726f6a65637420697320736f6c7574696f6e2070726f6a656374]#1::@test[7768656e2070726f6a65637420697320696e6469726563746c79207265666572656e63656420627920736f6c7574696f6e]#1",
+        "cell": "conservative"
+      },
+      "site_owned_by_test": true
+    }
+  ],
+  "status": "measured"
+}

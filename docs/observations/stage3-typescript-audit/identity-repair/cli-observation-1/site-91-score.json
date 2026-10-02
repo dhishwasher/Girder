@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "results": [
+    {
+      "index": 0,
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/projectReferences.ts",
+      "line": 1189,
+      "shape": "plain_call",
+      "true_class": "must",
+      "confidence": "high",
+      "byte_offset": 50479,
+      "status": "scored",
+      "observed_class": "unknown",
+      "observed_reason": "typescript-binding-or-structural-dispatch-unproven",
+      "observed_caller": "crate::testRunner::unittests::tsserver::projectReferences::@describe[756e697474657374733a3a2074737365727665723a3a20776974682070726f6a6563745265666572656e6365733a3a20616e642074736275696c64]#1::@describe[7768656e2064656661756c742070726f6a65637420697320736f6c7574696f6e2070726f6a656374]#1::@test[7768656e2070726f6a65637420697320696e6469726563746c79207265666572656e63656420627920736f6c7574696f6e]#1",
+      "cell": "conservative"
+    }
+  ],
+  "cell_counts": {
+    "conservative": 1
+  },
+  "not_a_call_site_count": 0,
+  "site_relocation_failed_count": 0,
+  "failed_count": 0,
+  "scored_count": 1
+}

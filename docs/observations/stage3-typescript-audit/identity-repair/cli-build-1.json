@@ -1,0 +1,14 @@
+{
+  "candidate": "67d65f6",
+  "command": "cargo build -p aether-app --bin girder -j1 --offline --locked --quiet",
+  "exit_status": 0,
+  "binary_sha256": "13976d976157318878512ae6eb5458f0cf5ca4f19b5c642a9bf16bbde54381f7",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "environment": {
+    "CARGO_HOME": "/mnt/chromeos/removable/MOVESPEED/.cargo",
+    "RUSTUP_HOME": "/mnt/chromeos/removable/MOVESPEED/.rustup",
+    "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_BUILD_JOBS": "1"
+  }
+}
