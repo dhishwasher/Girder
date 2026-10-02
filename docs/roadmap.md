@@ -553,6 +553,10 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+2026-10-02 pause checkpoint: no implementation changes or measurements since
+`464aa6b`. No Cargo job remains running. Resume with the TypeScript structural
+member policy and frozen cases described below; language gates remain pending.
+
 ### 2026-10-02 — Real-audit improvement verified; dispatch failure remains
 
 Implementation `5733be6`; [real-audit observation `1c10eff`](observations/stage3-typescript-audit/lexical-bindings/bindings-after-1/observation.md).
