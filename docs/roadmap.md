@@ -547,6 +547,33 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-02 — TypeScript registration identity repair in progress
+
+Preimplementation policy and harder fixture: `69b4c7f`,
+[identity-repair/policy.md](observations/stage3-typescript-audit/identity-repair/policy.md).
+The label-derived profile records 37 cross-file and ten same-file ground-truth
+Must targets; all ten same-file targets fall outside the current top-level
+function proof rule. Proof gates and frozen labels remain unchanged.
+
+Recognized literal-title tests now receive distinct paths using suite ancestry,
+encoded titles, and occurrence numbers. Nested definitions inherit those paths;
+display names remain unchanged. This intentionally changes registration paths;
+rebuild existing graphs and refresh stored paths. Reordering or inserting
+identically named siblings can still rekey identities.
+
+[Focused observation](observations/stage3-typescript-audit/identity-repair/focused-tests-1.json):
+seven TypeScript builder tests passed, including the unchanged collision fixture,
+a harder repeated-suite/sibling-title fixture, call ownership, and identity
+stability under body edits, byte shifts, and unrelated registrations. This is
+an intermediate repair, not language completion; the 100-site audit still has
+an empty Must set and the structural-object-literal failure remains published.
+
+Next: rebuild the CLI, measure the original collision fixture and the two real
+repository files containing sites 23/91, then implement separately precommitted
+binding proofs and structural target extraction. Full language gates and a
+fresh 100-site after-observation remain required. Go remains NOT STARTED.
+
+
 ### 2026-10-02 — TypeScript 100-site before-observation published
 
 Policy `cef8681`, reserve `9aa8e3d`, and source-reviewed labels `e1f911b` were

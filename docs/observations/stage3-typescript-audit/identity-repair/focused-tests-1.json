@@ -1,0 +1,26 @@
+{
+  "policy_commit": "69b4c7f",
+  "candidate": "Source hashes below; implementation committed with this observation.",
+  "command": "cargo test -p aether-builder --test typescript -j1 --quiet",
+  "environment": {
+    "CARGO_HOME": "/mnt/chromeos/removable/MOVESPEED/.cargo",
+    "RUSTUP_HOME": "/mnt/chromeos/removable/MOVESPEED/.rustup",
+    "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_BUILD_JOBS": "1",
+    "platform": "Linux-6.6.141-09476-g954adab60416-x86_64-with-glibc2.36"
+  },
+  "exit_status": 0,
+  "passed": 7,
+  "failed": 0,
+  "limitations": [
+    "Focused builder checks only; CLI and full workspace gates not yet run for this candidate.",
+    "Nested local calls may remain Unknown; tests require correct owner and no target in another callback, not unsupported resolution."
+  ],
+  "sha256": {
+    "crates/aether-builder/src/mapper/typescript.rs": "1ba6d88da6a95cfd89782f4887e90246d822ec997116dce483fed923f3271e86",
+    "crates/aether-builder/tests/typescript.rs": "f8610da33dc73712de1273fa43c606f11d51471c4136ae779de713d6189cee47",
+    "docs/observations/stage3-typescript-audit/identity-repair/policy.md": "0002f1d4cebbf62b71b559180ab1aef12a3d3f2e117d38bc195152d064b177b7",
+    "docs/observations/stage3-typescript-audit/identity-repair/harder.test.ts": "0a2c1fee9eff54dde335cade7fa22104df741d348088210695de77fe977bff92"
+  }
+}

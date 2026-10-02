@@ -56,6 +56,7 @@ pub(super) fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> Buil
         kind: ScopeKind::Module,
     };
     let mut functions = Vec::new();
+    let mut registrations = HashMap::new();
     collect_definitions(
         tree.root_node(),
         source,
@@ -64,6 +65,7 @@ pub(super) fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> Buil
         &scope,
         &imports,
         &mut functions,
+        &mut registrations,
         &mut out,
     );
     collect_calls(tree.root_node(), source, &imports, &functions, &mut out);
@@ -345,6 +347,7 @@ fn collect_definitions(
     scope: &Scope,
     imports: &HashMap<String, ImportBinding>,
     functions: &mut Vec<FunctionRange>,
+    registrations: &mut HashMap<String, usize>,
     out: &mut BuildOutput,
 ) {
     match node.kind() {
@@ -375,7 +378,17 @@ fn collect_definitions(
                     out,
                 );
                 let inner = function_scope(scope, node_text(name, source));
-                recurse_definitions(node, source, file, lang, &inner, imports, functions, out);
+                recurse_definitions(
+                    node,
+                    source,
+                    file,
+                    lang,
+                    &inner,
+                    imports,
+                    functions,
+                    registrations,
+                    out,
+                );
             }
             return;
         }
@@ -384,7 +397,17 @@ fn collect_definitions(
                 let name = node_text(name, source);
                 add_function(node, name, source, file, lang, scope, false, functions, out);
                 let inner = function_scope(scope, name);
-                recurse_definitions(node, source, file, lang, &inner, imports, functions, out);
+                recurse_definitions(
+                    node,
+                    source,
+                    file,
+                    lang,
+                    &inner,
+                    imports,
+                    functions,
+                    registrations,
+                    out,
+                );
             }
             return;
         }
@@ -416,7 +439,17 @@ fn collect_definitions(
                         id,
                         kind: ScopeKind::Type,
                     };
-                    recurse_definitions(node, source, file, lang, &inner, imports, functions, out);
+                    recurse_definitions(
+                        node,
+                        source,
+                        file,
+                        lang,
+                        &inner,
+                        imports,
+                        functions,
+                        registrations,
+                        out,
+                    );
                 }
             }
             return;
@@ -431,7 +464,17 @@ fn collect_definitions(
                     let name = node_text(name, source);
                     add_function(node, name, source, file, lang, scope, false, functions, out);
                     let inner = function_scope(scope, name);
-                    recurse_definitions(value, source, file, lang, &inner, imports, functions, out);
+                    recurse_definitions(
+                        value,
+                        source,
+                        file,
+                        lang,
+                        &inner,
+                        imports,
+                        functions,
+                        registrations,
+                        out,
+                    );
                     return;
                 }
             }
@@ -468,23 +511,48 @@ fn collect_definitions(
         }
         "call_expression" if scope.kind != ScopeKind::Function => {
             if let Some((framework, title, callback)) = test_registration(node, source) {
-                if framework == "describe" {
-                    recurse_definitions(
-                        callback, source, file, lang, scope, imports, functions, out,
-                    );
-                } else {
-                    add_function(node, title, source, file, lang, scope, true, functions, out);
-                    let inner = function_scope(scope, title);
-                    recurse_definitions(
-                        callback, source, file, lang, &inner, imports, functions, out,
+                let inner = registration_scope(scope, framework, title, registrations);
+                if framework != "describe" {
+                    add_function_at_path(
+                        node,
+                        title,
+                        source,
+                        file,
+                        lang,
+                        scope,
+                        &inner.path,
+                        true,
+                        functions,
+                        out,
                     );
                 }
+                recurse_definitions(
+                    callback,
+                    source,
+                    file,
+                    lang,
+                    &inner,
+                    imports,
+                    functions,
+                    registrations,
+                    out,
+                );
                 return;
             }
         }
         _ => {}
     }
-    recurse_definitions(node, source, file, lang, scope, imports, functions, out);
+    recurse_definitions(
+        node,
+        source,
+        file,
+        lang,
+        scope,
+        imports,
+        functions,
+        registrations,
+        out,
+    );
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -496,11 +564,22 @@ fn recurse_definitions(
     scope: &Scope,
     imports: &HashMap<String, ImportBinding>,
     functions: &mut Vec<FunctionRange>,
+    registrations: &mut HashMap<String, usize>,
     out: &mut BuildOutput,
 ) {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
-        collect_definitions(child, source, file, lang, scope, imports, functions, out);
+        collect_definitions(
+            child,
+            source,
+            file,
+            lang,
+            scope,
+            imports,
+            functions,
+            registrations,
+            out,
+        );
     }
 }
 
@@ -518,8 +597,26 @@ fn add_function(
 ) {
     let path_name = name.replace("::", ":");
     let path = format!("{}::{path_name}", scope.path);
-    let id = NodeId::from_path(&path);
-    let mut node = Node::new(NodeKind::Function, name, &path)
+    add_function_at_path(
+        syntax, name, source, file, lang, scope, &path, is_test, functions, out,
+    );
+}
+
+#[allow(clippy::too_many_arguments)]
+fn add_function_at_path(
+    syntax: TsNode,
+    name: &str,
+    source: &str,
+    file: &str,
+    lang: Lang,
+    scope: &Scope,
+    path: &str,
+    is_test: bool,
+    functions: &mut Vec<FunctionRange>,
+    out: &mut BuildOutput,
+) {
+    let id = NodeId::from_path(path);
+    let mut node = Node::new(NodeKind::Function, name, path)
         .with_language(lang.name())
         .with_source(node_text(syntax, source));
     node.file = Some(file.to_string());
@@ -559,6 +656,48 @@ fn add_field(
     out.nodes.push(node);
     out.edges
         .push((scope.id, id, Edge::new(EdgeKind::Contains)));
+}
+
+// Registration callbacks have no binding name. Encode the literal title and
+// suite ancestry instead of flattening them into the containing module. The
+// occurrence counter is scoped by kind and title, so unrelated edits do not
+// change identities. Identical sibling insertions/reorders can still rekey IDs.
+fn registration_scope(
+    scope: &Scope,
+    framework: &str,
+    title: &str,
+    registrations: &mut HashMap<String, usize>,
+) -> Scope {
+    use std::fmt::Write;
+
+    let mut encoded = String::with_capacity(title.len() * 2);
+    for byte in title.bytes() {
+        write!(encoded, "{byte:02x}").expect("writing to a String cannot fail");
+    }
+    let kind = if framework == "describe" {
+        "describe"
+    } else {
+        "test"
+    };
+    let base = format!("{}::@{kind}[{encoded}]", scope.path);
+    let occurrence = registrations.entry(base.clone()).or_default();
+    *occurrence += 1;
+    let path = format!("{base}#{occurrence}");
+    if framework == "describe" {
+        // A suite supplies lexical ancestry, not a callable graph node. Its
+        // declarations remain contained by the nearest actual graph owner.
+        Scope {
+            path,
+            id: scope.id,
+            kind: scope.kind,
+        }
+    } else {
+        Scope {
+            id: NodeId::from_path(&path),
+            path,
+            kind: ScopeKind::Function,
+        }
+    }
 }
 
 fn function_scope(scope: &Scope, name: &str) -> Scope {
