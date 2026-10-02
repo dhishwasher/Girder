@@ -15,19 +15,35 @@ npx -y girder-mcp setup
 
 That one command detects and configures Claude Code, Codex, and Cursor.
 
-**Measured, not estimated — output bytes, not tokens (no tokenizer was
-run). These demonstrate large measured reductions in the amount of
-context/output supplied to the agent, not token savings:**
+[![CI](https://github.com/dhishwasher/Girder/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dhishwasher/Girder/actions/workflows/ci.yml)
+Latest stable release: [v0.3.2](https://github.com/dhishwasher/Girder/releases/tag/v0.3.2).
+Contributions: see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
-- `get_source` vs reading the whole file: **97.85% fewer bytes**, across ten
-  functions sampled by source-size decile
+**Measured output bytes, not tokens (no tokenizer was run):**
+
+- CLI stdout of `girder context ... --json --source-only` (MCP `get_source`)
+  vs reading the whole file: **97.85% fewer bytes**, across ten functions
+  sampled by source-size decile
   ([method and honest limits](./docs/context-vs-read-cost.md)).
-- `find_definition` vs plain grep: **97.98% fewer bytes**, across ten
-  identifiers ([method](./docs/names-cost.md)).
+- CLI stdout of `girder names ... --json` (MCP `find_definition`) vs plain
+  grep: **97.98% fewer bytes**, across ten identifiers
+  ([method](./docs/names-cost.md)).
 - `orient` (one bundled call: source, callers, callees, tests, and impact
   for one node) vs the equivalent chain of separate calls: **48,814 bytes
   vs 101,302**, using **15 calls vs 78**, on a 15-task corpus spanning ten
   pinned repositories ([method](./docs/orient-tool.md)).
+
+The two percentages measure CLI output; MCP transport overhead was not measured.
+
+## Support Girder
+
+Girder is independently developed to help coding agents consume less code:
+precise semantic context instead of whole-file reads and repeated repository
+greps. Sponsorship helps fund context efficiency, semantic graph correctness,
+agent integrations, reproducible benchmarks, and maintenance. Girder publishes
+its measurements, including failures and limitations. If Girder saves you
+context, compute, or development time, [sponsor its continued development](https://github.com/sponsors/dhishwasher).
+See [what sponsorship supports](./docs/sponsorship.md).
 
 Real, captured output (see
 [`docs/observations/release-prep/`](./docs/observations/release-prep/) for
@@ -77,10 +93,9 @@ test_shout_greeting_delegates_to_format_greeting
 See [Status](#status) for exactly what that selection does and doesn't
 prove.
 
-**Pricing:** everything in this release is free, permanently, with no
-license key and no account — see [License](#license). There is no current
-paid tier; a narrow, CI/PR-focused paid feature is planned but not yet
-built, and nothing in this repository is for sale until it exists.
+**Pricing:** there is no current paid tier, and no license key or account is
+required. Use is governed by the source-available BUSL terms, including its
+one-repository condition — see [License](#license).
 
 **Evidence, for a skeptical reader:**
 [`docs/evidence-index.md`](./docs/evidence-index.md) points at every
@@ -254,11 +269,15 @@ the committed [policy](./docs/orient-tool-policy.json) /
 Two additional precommitted measurements, both counting **bytes of command output rather
 than tokens** (no tokenizer was run):
 
-- `get_source` against a naive whole-file-read baseline: **97.85% fewer bytes** across ten
-  functions sampled by source-size decile, cheaper on all ten
+- `girder context ... --json --source-only` (what MCP `get_source` routes to)
+  against a naive whole-file-read baseline: **97.85% fewer CLI stdout bytes**
+  across ten functions sampled by source-size decile, cheaper on all ten
   ([`docs/context-vs-read-cost.md`](./docs/context-vs-read-cost.md)).
-- `find_definition` against a plain-grep baseline: **97.98% fewer bytes** across ten
+- `girder names ... --json` (what MCP `find_definition` routes to) against a
+  plain-grep baseline: **97.98% fewer CLI stdout bytes** across ten
   identifiers ([`docs/names-cost.md`](./docs/names-cost.md)).
+
+MCP transport overhead and tokens were not measured.
 
 Both are single-repository measurements. The direction is structural — files
 are much larger than the functions in them, and grep returns every mention
@@ -926,16 +945,14 @@ prioritized open risks are maintained in
 Girder is **source-available**, not open source, under the
 [Business Source License 1.1](./LICENSE).
 
-Every tool listed above is free, permanently: no expiry, no account, no
-license key. `LICENSE`'s own Additional Use Grant states the exact terms of
-free-tier use, including its one-repository condition; it is the
-authoritative text, not this summary. There is no current paid tier and
-nothing is for sale right now — a narrow, CI/PR-focused paid feature is
-planned (see [`docs/roadmap.md`](./docs/roadmap.md)) but doesn't exist yet.
-Anyone who already holds a signed license key from an earlier release keeps
-it working for whatever it unlocked then; the key system itself
+There is no current paid tier, and every shipped tool is ungated: no account
+or license key is required. Use is governed by `LICENSE`, whose Additional Use
+Grant states the exact permitted use, including its one-repository condition;
+it is the authoritative text, not this summary, and not all use is
+unrestricted. Anyone who already holds a signed license key from an earlier
+release keeps it working for whatever it unlocked then; the key system itself
 (`GIRDER_LICENSE_KEY` or a per-OS key file, verified offline, no phone-home)
-is unchanged and ready for whenever a paid feature exists again.
+remains for that historical compatibility.
 
 On September 4, 2030, the license converts to the Apache License, Version 2.0.
 See [`LICENSE`](./LICENSE) for the authoritative terms and

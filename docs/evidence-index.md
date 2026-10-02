@@ -1,10 +1,10 @@
-# Technical due-diligence / evidence index
+# Technical evidence index
 
-A pointer index for anyone evaluating Girder technically before buying
-or investing — every item here is a committed, reproducible artifact
-in this repository, not a marketing claim. Nothing in this document is
-new measurement; it links to what already exists and states plainly
-what each one does and doesn't prove.
+A pointer index for technical readers evaluating Girder — every item
+here is a committed, reproducible artifact in this repository, not a
+marketing claim. Nothing in this document is new measurement; it links
+to what already exists and states plainly what each one does and
+doesn't prove.
 
 ## Soundness program (the core claim: what Girder will and won't assert)
 
@@ -57,7 +57,7 @@ multi-stage program that built and is still extending this:
   the underlying resolution gap (`docs/core-gap-analysis.md` item 11).
 - `docs/core-gap-analysis.md`: the standing, prioritized list of known
   gaps and adversarial findings — read this before anyone else does,
-  for exactly the items a skeptical buyer would ask about.
+  for exactly the items a skeptical technical reader would ask about.
 
 ## Cost/efficiency measurements (bytes, not tokens, stated as such)
 
@@ -88,12 +88,12 @@ recoverability) that were tested, found wanting at some point, and
 either fixed (with the fix's own evidence linked) or left open and
 named as open.
 
-## Licensing and commercial terms
+## Licensing
 
 `LICENSE` (Business Source License 1.1, converting to Apache License
-2.0 on 2030-09-04) and `docs/pricing-audit.md` (this session's factual
-audit of exactly what the license gate does and doesn't cover, verified
-by reading the gating code directly).
+2.0 on 2030-09-04) and `docs/pricing-audit.md`, a **historical** audit
+(2026-10-01) of what the former license gate covered. It is not a
+current paid offering: there is no current paid tier.
 
 ## What this index does NOT claim
 

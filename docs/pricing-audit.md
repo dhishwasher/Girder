@@ -1,22 +1,21 @@
 # Pricing audit: what is free, what is paid, as of 2026-10-01
 
-This is a factual audit of the current, already-implemented license
-gate — not a proposal. It exists so packaging/pricing decisions start
-from what the code actually does, not from memory or assumption.
-Verified by reading `crates/aether-app/src/project/license.rs`,
+This is a historical, as-of-2026-10-01 audit of the former license
+gate — not a proposal and not the current state. It was written so
+packaging/pricing decisions would start from what the code did at that
+time, not from memory or assumption. Verified then by reading
+`crates/aether-app/src/project/license.rs`,
 `main.rs`'s `paid_tool_for_command`, and every command module directly,
 not inferred from documentation.
 
-**Superseded by a later decision, not yet implemented.** Later the same
-day, the user decided a different product split (`docs/roadmap.md`,
-"2026-10-01: product split decided" entry): `test-impact`/`impacted_tests`
-becomes free, and the paid boundary moves to a not-yet-built CI/PR
-enforcement gate. **Nothing below has changed in code as of this
-writing** — everything in this document is still accurate to the
-current binary. Do not present this document, or the current $39
-license, as describing the ongoing commercial product; it describes
-the pre-transition state only, kept for its evidence trail until the
-ungating and the new gate actually ship.
+**Historical document — superseded; the statements below describe the
+former state, not the current binary.** The former paid `test-impact`
+gate is no longer active: in the current code
+`main.rs::paid_tool_for_command` returns `None`, every shipped tool is
+ungated, and there is no current paid tier. Do not present this
+document, or the former $39 license, as describing a current offering;
+it is kept for its evidence trail. The measured historical content
+below is unchanged.
 
 ## The gate, exactly as implemented
 
