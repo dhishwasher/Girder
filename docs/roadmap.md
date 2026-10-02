@@ -551,6 +551,30 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-02 — CLI lexical-proof contract passed; repository audit next
+
+Implementation `5733be6`; [observation `09b5c73`](observations/stage3-typescript-audit/lexical-bindings/after-observation.md).
+The rebuilt CLI passes **22/22** frozen contracts (before: 10/22). All six Must
+calls name the correct declaration; all sixteen Unknown calls retain explicit
+evidence without guessed targets. The four runtime-disproved Must claims are
+now Unknown. All 19 executable probes pass; the same three TypeScript-only
+cases remain skipped. No case, label, or historical failure was changed.
+
+The 146 builder tests and CLI proof result do not establish language acceptance.
+Next: `python3 -m tools.measure_typescript_real_audit --name bindings-after-1`
+using the rebuilt binary with SHA-256
+`fe6901793bb8055a66359ad235e631219ba87b3f6ab96a396e4741925a7deaef`.
+This runs the unchanged 100-call audit on fresh extractions of the four pinned
+archives, offline and serially, checking frozen inputs and complete source
+inventories. Initial run identity is saved before workload execution so an
+interruption remains recoverable. Output is kept under
+`observations/stage3-typescript-audit/lexical-bindings/bindings-after-1/`.
+
+After that observation, continue structural extraction and dispatch-corpus work
+and the common language gates. TypeScript remains IN PROGRESS; Go NOT STARTED.
+The following checkpoints are historical.
+
+
 ### 2026-10-02 — TypeScript false-Must repair implemented; CLI verification next
 
 Policy/corpus `954334d` freezes 22 lexical-binding proof cases before code changes.

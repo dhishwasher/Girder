@@ -46,6 +46,7 @@ def main() -> None:
         'inputs': [*frozen['inputs'], *labels['inputs']],
         'roots': {}, 'source_inventories': {}, 'commands': [], 'status': 'started',
     }
+    write(dest / 'start.json', record)
     try:
         for item in record['inputs']:
             if sha(BASE / item['path']) != item['sha256']:
