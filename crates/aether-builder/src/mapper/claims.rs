@@ -446,6 +446,30 @@ pub(super) fn annotate(
                     reason: "unexpanded-macro-or-decorator".into(),
                     coverage_gap: true,
                 });
+        } else if lang == Lang::Rust
+            && (matches!(
+                n.kind(),
+                "compound_assignment_expr" | "unary_expression" | "index_expression"
+            ) || (n.kind() == "binary_expression"
+                && !n
+                    .child_by_field_name("operator")
+                    .is_some_and(|op| matches!(node_text(op, source), "&&" | "||"))))
+        {
+            // Operator traits can run code without a call_expression. A
+            // whole-file drop warning does not identify these boundaries.
+            // Until operand types and trait implementations are proven,
+            // disclose each expression (including nested ones) as Unknown.
+            // Primitive operands may over-disclose; &&/|| cannot overload.
+            claims
+                .entry(owner(*n, out, module))
+                .or_default()
+                .push(CallClaim {
+                    site: span_of(*n),
+                    class: CallClass::Unknown,
+                    targets: vec![],
+                    reason: "rust-implicit-operator-dispatch-not-certified".into(),
+                    coverage_gap: true,
+                });
         } else if lang == Lang::Python
             && matches!(
                 n.kind(),
@@ -1131,6 +1155,75 @@ mod tests {
         assert_eq!(operator_claims[0].class, CallClass::Unknown);
         assert!(operator_claims[0].targets.is_empty());
         assert!(operator_claims[0].coverage_gap);
+    }
+
+    #[test]
+    fn rust_generic_addition_and_derived_equality_have_site_boundaries() {
+        let source = "fn sum<T: std::ops::Add<Output = T>>(a: T, b: T) -> T { a + b }
+#[derive(PartialEq)] struct NodeIndex(usize);
+fn seen(a: NodeIndex, b: NodeIndex) -> bool { a == b }";
+        let g = graph("src/lib.rs", source);
+        for (name, expression) in [("sum", "a + b"), ("seen", "a == b")] {
+            let caller = g.nodes().find(|n| n.name == name).unwrap();
+            let evidence = g.call_evidence(caller.id).unwrap();
+            let site = evidence
+                .calls
+                .iter()
+                .find(|c| &source[c.site.start_byte..c.site.end_byte] == expression)
+                .expect("operator must have evidence on its function, not only its module");
+            assert_eq!(site.class, CallClass::Unknown);
+            assert!(site.targets.is_empty());
+            assert!(site.coverage_gap);
+        }
+    }
+
+    #[test]
+    fn rust_nested_operators_keep_boundaries_and_explicit_call_evidence() {
+        let source = "fn target() -> i32 { 1 }
+fn caller(mut a: i32, b: i32, items: &mut [i32]) {
+    a += b;
+    let _ = !a;
+    let _ = *items;
+    items[0] += -target();
+}";
+        let g = graph("src/lib.rs", source);
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let evidence = g.call_evidence(caller.id).unwrap();
+        for expression in [
+            "a += b",
+            "!a",
+            "*items",
+            "items[0]",
+            "-target()",
+            "items[0] += -target()",
+        ] {
+            let site = evidence
+                .calls
+                .iter()
+                .find(|c| &source[c.site.start_byte..c.site.end_byte] == expression)
+                .unwrap_or_else(|| panic!("missing nested operator: {expression}"));
+            assert_eq!(site.class, CallClass::Unknown);
+            assert!(site.coverage_gap);
+            assert!(site.targets.is_empty());
+        }
+        let target = g.nodes().find(|n| n.name == "target").unwrap();
+        assert!(evidence.calls.iter().any(|c| c.class == CallClass::Must
+            && c.targets == [target.id]
+            && &source[c.site.start_byte..c.site.end_byte] == "target()"));
+    }
+
+    #[test]
+    fn rust_short_circuit_boolean_control_flow_is_not_operator_dispatch() {
+        let g = graph(
+            "src/lib.rs",
+            "fn caller(a: bool, b: bool) -> bool { a && b || a }",
+        );
+        let caller = g.nodes().find(|n| n.name == "caller").unwrap();
+        let evidence = g.call_evidence(caller.id).unwrap();
+        assert!(evidence
+            .calls
+            .iter()
+            .all(|c| c.reason != "rust-implicit-operator-dispatch-not-certified"));
     }
 
     #[test]
