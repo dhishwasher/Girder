@@ -1,0 +1,234 @@
+{
+  "sites": [
+    {
+      "package": "requests-2.34.2",
+      "file": "src/requests/_types.py",
+      "line": 112,
+      "shape": "operator_dunder",
+      "text": "HeadersType: TypeAlias = Mapping[str, str | bytes] | None",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "This is a type alias union, not a runtime operator invocation."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_options.py",
+      "line": 771,
+      "shape": "decorator",
+      "text": "@cli.command()",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "The decorator selector matches @: applying cli.command()'s returned decorator has unproven transformation effects."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/experimental/pipeline.py",
+      "line": 574,
+      "shape": "plain_call",
+      "text": "raise NotImplementedError('Constraining to a specific timezone is not yet supported')",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "NotImplementedError construction targets a builtin outside the snapshot."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_annotated.py",
+      "line": 123,
+      "shape": "decorator",
+      "text": "@pytest.mark.parametrize(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "pytest.mark.parametrize is external decorator machinery."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_validators.py",
+      "line": 3180,
+      "shape": "plain_call",
+      "text": "def _validate_field(cls, v: int, info: ValidationInfo) -> int:",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "def _validate_field is a declaration."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_dataclasses.py",
+      "line": 3243,
+      "shape": "decorator",
+      "text": "@pydantic.dataclasses.dataclass(config={'defer_build': True})",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "The @ span applies the dataclass decorator; its generated class transformations are not a proven direct binding."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_main.py",
+      "line": 573,
+      "shape": "plain_call",
+      "text": "def test_frozen_model_cached_property():",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "This is a test function declaration."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/functional_validators.py",
+      "line": 538,
+      "shape": "dynamic_dispatch",
+      "text": "def __call__(  # noqa: D102",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "def __call__ is a declaration."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/_compat.py",
+      "line": 103,
+      "shape": "dynamic_dispatch",
+      "text": "def __getattr__(self, name: str) -> t.Any:",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "def __getattr__ is a declaration."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "tests/test_chain.py",
+      "line": 113,
+      "shape": "decorator",
+      "text": "@click.argument(\"format\")",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "The @ span applies click.argument's returned decorator, with unproven transformation effects."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_computed_fields.py",
+      "line": 726,
+      "shape": "decorator",
+      "text": "@pytest.mark.parametrize(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "pytest.mark.parametrize is external decorator machinery."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/types.py",
+      "line": 1695,
+      "shape": "dynamic_dispatch",
+      "text": "bases = getattr(cls, '__orig_bases__', getattr(cls, '__bases__', []))",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "getattr performs reflective lookup on cls; concrete target is not established."
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "src/requests/sessions.py",
+      "line": 202,
+      "shape": "method_call",
+      "text": "url = self.get_redirect_target(resp)",
+      "true_class": "may",
+      "confidence": "high",
+      "rationale": "SessionRedirectMixin.get_redirect_target (sessions.py:134) is overridden by CustomRedirectSession (tests/test_requests.py:2284). Session inherits SessionRedirectMixin at sessions.py:395. These are the two definitions in the pinned snapshot; no matching setattr was found. self does not establish which runtime subclass is active."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/benchmarks/basemodel_eq_performance.py",
+      "line": 103,
+      "shape": "operator_dunder",
+      "text": "self_type == other_type",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "self_type and other_type are class objects obtained from generic metadata or __class__; equality may involve metaclass dispatch, with no proven concrete target."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/termui.py",
+      "line": 107,
+      "shape": "operator_dunder",
+      "text": "show_default: bool | str = False,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "bool | str appears in a parameter annotation, not an evaluated operator call."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_known_annotated_metadata.py",
+      "line": 377,
+      "shape": "method_call",
+      "text": "res.update({k: v for k, v in vars(annotation).items() if not k.startswith('_')})",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "res is a dict; update is an external builtin method."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/fields.py",
+      "line": 72,
+      "shape": "operator_dunder",
+      "text": "min_length: int | None",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "int | None is an annotation, not an evaluated operator call."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "pydantic/dataclasses.py",
+      "line": 282,
+      "shape": "dynamic_dispatch",
+      "text": "return [getattr(self, f.name) for f in dataclasses.fields(self)]",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "getattr(self, f.name) is reflective access with a variable attribute name."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_parse.py",
+      "line": 151,
+      "shape": "plain_call",
+      "text": "data = handler(self)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "handler is a supplied serialization callback; its concrete callable is not established."
+    },
+    {
+      "package": "pydantic-2.13.4",
+      "file": "tests/test_json_schema.py",
+      "line": 6397,
+      "shape": "plain_call",
+      "text": "class Model(BaseModel):",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "class Model(BaseModel) is a class declaration."
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "tests/test_requests.py",
+      "line": 1576,
+      "shape": "operator_dunder",
+      "text": "assert resp.status_code == 200",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "status_code == 200 uses runtime equality (normally builtin int.__eq__, outside the snapshot); this is a genuine Python implicit call under the frozen rubric."
+    },
+    {
+      "package": "click-8.4.1",
+      "file": "src/click/parser.py",
+      "line": 329,
+      "shape": "qualified_attribute_call",
+      "text": "arg = state.rargs.pop(0)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "state.rargs is the parser argument list; pop is an external builtin list method."
+    },
+    {
+      "package": "requests-2.34.2",
+      "file": "tests/test_requests.py",
+      "line": 2525,
+      "shape": "method_call",
+      "text": "with pytest.raises(ValueError) as e:",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "pytest.raises is a target outside the three-package snapshot."
+    }
+  ]
+}

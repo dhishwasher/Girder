@@ -1,0 +1,550 @@
+{
+  "sites": [
+    {
+      "reserve_index": 0,
+      "repository": "petgraph-0.6.5",
+      "file": "src/algo/isomorphism.rs",
+      "line": 417,
+      "excerpt": "412:                         let e1 = (\n413:                             field!(nodes, 1 - $j),\n414:                             field!(st, 1 - $j).graph.from_index(m_neigh),\n415:                         );\n416:                         let edges = (e0, e1);\n417:                         if !edge_match.eq(\n418:                             st.0.graph,\n419:                             st.1.graph,\n420:                             field!(edges, $j),\n421:                             field!(edges, 1 - $j),\n422:                         ) {"
+    },
+    {
+      "reserve_index": 1,
+      "repository": "regex-1.12.4",
+      "file": "tests/misc.rs",
+      "line": 32,
+      "excerpt": "27: fn capture_names() {\n28:     let re = regex!(r\"(.)(?P<a>.)\");\n29:     assert_eq!(3, re.captures_len());\n30:     assert_eq!((3, Some(3)), re.capture_names().size_hint());\n31:     assert_eq!(\n32:         vec![None, None, Some(\"a\")],\n33:         re.capture_names().collect::<Vec<_>>()\n34:     );\n35: }\n36: \n37: #[test]"
+    },
+    {
+      "reserve_index": 2,
+      "repository": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 622,
+      "excerpt": "617:     type Error = Error;\n618: \n619:     #[inline]\n620:     fn serialize_key<T>(&mut self, key: &T) -> Result<()>\n621:     where\n622:         T: ?Sized + Serialize,\n623:     {\n624:         match self {\n625:             Compound::Map { ser, state } => {\n626:                 tri!(ser\n627:                     .formatter"
+    },
+    {
+      "reserve_index": 3,
+      "repository": "petgraph-0.6.5",
+      "file": "src/macros.rs",
+      "line": 3,
+      "excerpt": "1: macro_rules! clone_fields {\n2:     ($name:ident, $($field:ident),+ $(,)*) => (\n3:         fn clone(&self) -> Self {\n4:             $name {\n5:                 $(\n6:                     $field : self . $field .clone()\n7:                 ),*\n8:             }"
+    },
+    {
+      "reserve_index": 4,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/iso.rs",
+      "line": 478,
+      "excerpt": "473: }\n474: \n475: #[test]\n476: #[cfg_attr(miri, ignore = \"Too large for Miri\")]\n477: fn iso_large() {\n478:     let g0 = graph_from_file(\"tests/res/graph_1000n_1000e.txt\");\n479:     let g1 = graph_from_file(\"tests/res/graph_1000n_1000e.txt\");\n480:     assert!(petgraph::algo::is_isomorphic(&g0, &g1));\n481: }\n482: \n483: // isomorphism isn't correct for multigraphs."
+    },
+    {
+      "reserve_index": 5,
+      "repository": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/mod.rs",
+      "line": 2074,
+      "excerpt": "2069:     let mut gr = StableGraph::<_, _>::default();\n2070:     let a = gr.add_node(\"a\");\n2071:     let b = gr.add_node(\"b\");\n2072:     let c = gr.add_node(\"c\");\n2073:     let _d = gr.add_node(\"d\");\n2074:     gr.remove_node(a);\n2075:     gr.remove_node(b);\n2076:     gr.remove_node(c);\n2077: \n2078:     gr.extend_with_edges(vec![(0, 1, ())]);\n2079:     assert_eq!(gr.node_count(), 3);"
+    },
+    {
+      "reserve_index": 6,
+      "repository": "regex-1.12.4",
+      "file": "src/regexset/string.rs",
+      "line": 704,
+      "excerpt": "699: \n700: impl<'a> Iterator for SetMatchesIter<'a> {\n701:     type Item = usize;\n702: \n703:     fn next(&mut self) -> Option<usize> {\n704:         self.0.next().map(|pid| pid.as_usize())\n705:     }\n706: \n707:     fn size_hint(&self) -> (usize, Option<usize>) {\n708:         self.0.size_hint()\n709:     }"
+    },
+    {
+      "reserve_index": 7,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 868,
+      "excerpt": "863:     gr.add_edge(n(2), n(0), ());\n864:     gr.add_edge(n(1), n(0), ());\n865: \n866:     assert_sccs_eq(\n867:         petgraph::algo::kosaraju_scc(&gr),\n868:         vec![vec![n(0)], vec![n(1)], vec![n(2)], vec![n(3)]],\n869:         true,\n870:     );\n871: \n872:     // Kosaraju bug from PR #60\n873:     let mut gr = Graph::<(), ()>::new();"
+    },
+    {
+      "reserve_index": 8,
+      "repository": "petgraph-0.6.5",
+      "file": "src/algo/ford_fulkerson.rs",
+      "line": 193,
+      "excerpt": "188:             flows[edge_index] =\n189:                 adjust_residual_flow(&network, edge, vertex, flows[edge_index], path_flow);\n190:             vertex = other_endpoint(&network, edge, vertex);\n191:             vertex_index = NodeIndexable::to_index(&network, vertex);\n192:         }\n193:         max_flow = max_flow + path_flow;\n194:     }\n195:     (max_flow, flows)\n196: }"
+    },
+    {
+      "reserve_index": 9,
+      "repository": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 877,
+      "excerpt": "872:         }\n873:         Ok(if positive { 0.0 } else { -0.0 })\n874:     }\n875: \n876:     #[cfg(feature = \"float_roundtrip\")]\n877:     fn f64_long_from_parts(\n878:         &mut self,\n879:         positive: bool,\n880:         integer_end: usize,\n881:         exponent: i32,\n882:     ) -> Result<f64> {"
+    },
+    {
+      "reserve_index": 10,
+      "repository": "serde_json-1.0.150",
+      "file": "src/lexical/algorithm.rs",
+      "line": 42,
+      "excerpt": "37:         // Value can be exactly represented, return the value.\n38:         // Do not use powi, since powi can incrementally introduce\n39:         // error.\n40:         let float = F::as_cast(mantissa);\n41:         Some(float.pow10(exponent))\n42:     } else if exponent >= 0 && exponent <= max_exp + shift_exp {\n43:         // Check to see if we have a disguised fast-path, where the\n44:         // number of digits in the mantissa is very small, but and\n45:         // so digits can be shifted from the exponent to the mantissa.\n46:         // https://www.exploringbinary.com/fast-path-decimal-to-floating-point-conversion/\n47:         let small_powers = POW10_64;"
+    },
+    {
+      "reserve_index": 11,
+      "repository": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 752,
+      "excerpt": "747:             at_least_one_digit = true;\n748:         }\n749: \n750:         if !at_least_one_digit {\n751:             match tri!(self.peek()) {\n752:                 Some(_) => return Err(self.peek_error(ErrorCode::InvalidNumber)),\n753:                 None => return Err(self.peek_error(ErrorCode::EofWhileParsingValue)),\n754:             }\n755:         }\n756: \n757:         match tri!(self.peek_or_null()) {"
+    },
+    {
+      "reserve_index": 12,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/utils/qc.rs",
+      "line": 67,
+      "excerpt": "62:         Tournament(gr)\n63:     }\n64: \n65:     fn shrink(&self) -> Box<dyn Iterator<Item = Self>> {\n66:         let Tournament(gr) = self;\n67:         Box::new(gr.shrink().map(Tournament))\n68:     }\n69: }"
+    },
+    {
+      "reserve_index": 13,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 500,
+      "excerpt": "495:         sort_sccs(&mut tsccs);\n496:         if sccs != tsccs {\n497:             println!(\"{:?}\",\n498:                      Dot::with_config(&g, &[Config::EdgeNoLabel,\n499:                                       Config::NodeIndexLabel]));\n500:             println!(\"Sccs {:?}\", sccs);\n501:             println!(\"Sccs (Tarjan) {:?}\", tsccs);\n502:             return false;\n503:         }\n504:         true\n505:     }"
+    },
+    {
+      "reserve_index": 14,
+      "repository": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 1681,
+      "excerpt": "1676:     {\n1677:         match tri!(self.parse_whitespace()) {\n1678:             Some(b'n') => {\n1679:                 self.eat_char();\n1680:                 tri!(self.parse_ident(b\"ull\"));\n1681:                 visitor.visit_none()\n1682:             }\n1683:             _ => visitor.visit_some(self),\n1684:         }\n1685:     }\n1686: "
+    },
+    {
+      "reserve_index": 15,
+      "repository": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 686,
+      "excerpt": "681: \n682: ### Composites\n683: \n684: <pre class=\"rust\">\n685: xy    concatenation (x followed by y)\n686: x|y   alternation (x or y, prefer x)\n687: </pre>\n688: \n689: This example shows how an alternation works, and what it means to prefer a\n690: branch in the alternation over subsequent branches.\n691: "
+    },
+    {
+      "reserve_index": 16,
+      "repository": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1652,
+      "excerpt": "1647: \n1648:         assert_eq!(g.edges(node_index(0)).count(), 5);\n1649:         assert_eq!(g.edges(node_index(1)).count(), 2);\n1650:         assert_eq!(g.edges(node_index(2)).count(), 3);\n1651:         assert_eq!(g.edges(node_index(3)).count(), 3);\n1652:         assert_eq!(g.edges(node_index(4)).count(), 2);\n1653:         assert_eq!(g.edges(node_index(5)).count(), 1);\n1654:         assert_eq!(g.edges(node_index(6)).count(), 1);\n1655:     }\n1656: \n1657:     #[test]"
+    },
+    {
+      "reserve_index": 17,
+      "repository": "serde_json-1.0.150",
+      "file": "src/raw.rs",
+      "line": 560,
+      "excerpt": "555: \n556:     fn deserialize_bool<V>(self, visitor: V) -> Result<V::Value, Error>\n557:     where\n558:         V: Visitor<'de>,\n559:     {\n560:         crate::Deserializer::from_str(&self.json).deserialize_bool(visitor)\n561:     }\n562: \n563:     fn deserialize_i8<V>(self, visitor: V) -> Result<V::Value, Error>\n564:     where\n565:         V: Visitor<'de>,"
+    },
+    {
+      "reserve_index": 18,
+      "repository": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 1933,
+      "excerpt": "1928:     #[inline]\n1929:     fn write_raw_fragment<W>(&mut self, writer: &mut W, fragment: &str) -> io::Result<()>\n1930:     where\n1931:         W: ?Sized + io::Write,\n1932:     {\n1933:         writer.write_all(fragment.as_bytes())\n1934:     }\n1935: }\n1936: \n1937: /// This structure compacts a JSON value with no extra whitespace.\n1938: #[derive(Clone, Debug, Default)]"
+    },
+    {
+      "reserve_index": 19,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 1194,
+      "excerpt": "1189: }\n1190: \n1191: quickcheck! {\n1192:     fn greedy_fas_remaining_graph_is_acyclic(g: StableDiGraph<(), ()>) -> bool {\n1193:         let mut g = g;\n1194:         let fas: Vec<EdgeIndex> = greedy_feedback_arc_set(&g).map(|e| e.id()).collect();\n1195: \n1196:         for edge_id in fas {\n1197:             g.remove_edge(edge_id);\n1198:         }\n1199: "
+    },
+    {
+      "reserve_index": 20,
+      "repository": "petgraph-0.6.5",
+      "file": "benches/ograph.rs",
+      "line": 9,
+      "excerpt": "4: extern crate test;\n5: \n6: use petgraph::graph::Graph;\n7: \n8: #[bench]\n9: fn bench_inser(b: &mut test::Bencher) {\n10:     let mut og = Graph::new();\n11:     let fst = og.add_node(0i32);\n12:     for x in 1..125 {\n13:         let n = og.add_node(x);\n14:         og.add_edge(fst, n, ());"
+    },
+    {
+      "reserve_index": 21,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 161,
+      "excerpt": "156:     let nx1 = bfs.next(&gr);\n157:     assert!(nx1 == Some(i) || nx1 == Some(j));\n158: \n159:     let nx2 = bfs.next(&gr);\n160:     assert!(nx2 == Some(i) || nx2 == Some(j));\n161:     assert!(nx1 != nx2);\n162: \n163:     let nx = bfs.next(&gr);\n164:     assert_eq!(nx, Some(k));\n165:     assert_eq!(bfs.next(&gr), None);\n166: }"
+    },
+    {
+      "reserve_index": 22,
+      "repository": "serde_json-1.0.150",
+      "file": "src/value/mod.rs",
+      "line": 780,
+      "excerpt": "775:     ///\n776:     /// assert_eq!(data.pointer(\"/x/y/1\").unwrap(), &json!(\"zz\"));\n777:     /// assert_eq!(data.pointer(\"/a/b/c\"), None);\n778:     /// ```\n779:     pub fn pointer(&self, pointer: &str) -> Option<&Value> {\n780:         if pointer.is_empty() {\n781:             return Some(self);\n782:         }\n783:         if !pointer.starts_with('/') {\n784:             return None;\n785:         }"
+    },
+    {
+      "reserve_index": 23,
+      "repository": "petgraph-0.6.5",
+      "file": "src/algo/k_shortest_path.rs",
+      "line": 82,
+      "excerpt": "77:     k: usize,\n78:     mut edge_cost: F,\n79: ) -> HashMap<G::NodeId, K>\n80: where\n81:     G: IntoEdges + Visitable + NodeCount + NodeIndexable,\n82:     G::NodeId: Eq + Hash,\n83:     F: FnMut(G::EdgeRef) -> K,\n84:     K: Measure + Copy,\n85: {\n86:     let mut counter: Vec<usize> = vec![0; graph.node_count()];\n87:     let mut scores = HashMap::new();"
+    },
+    {
+      "reserve_index": 24,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/graphmap.rs",
+      "line": 227,
+      "excerpt": "222:         (0, 3),\n223:         (1, 2),\n224:         (1, 3),\n225:         (2, 3),\n226:     ]);\n227:     assert_eq!(gr.node_count(), 4);\n228:     assert_eq!(gr.edge_count(), 6);\n229:     assert_eq!(gr.neighbors(0).count(), 3);\n230:     assert_eq!(gr.neighbors(1).count(), 3);\n231:     assert_eq!(gr.neighbors(2).count(), 3);\n232:     assert_eq!(gr.neighbors(3).count(), 3);"
+    },
+    {
+      "reserve_index": 25,
+      "repository": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 214,
+      "excerpt": "209:     fn serialize_unit_struct(self, _name: &'static str) -> Result<()> {\n210:         self.serialize_unit()\n211:     }\n212: \n213:     #[inline]\n214:     fn serialize_unit_variant(\n215:         self,\n216:         _name: &'static str,\n217:         _variant_index: u32,\n218:         variant: &'static str,\n219:     ) -> Result<()> {"
+    },
+    {
+      "reserve_index": 26,
+      "repository": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 441,
+      "excerpt": "436: \n437:             fn visit_f64<E>(self, value: f64) -> Result<Number, E>\n438:             where\n439:                 E: de::Error,\n440:             {\n441:                 Number::from_f64(value).ok_or_else(|| de::Error::custom(\"not a JSON number\"))\n442:             }\n443: \n444:             #[cfg(feature = \"arbitrary_precision\")]\n445:             fn visit_map<V>(self, mut visitor: V) -> Result<Number, V::Error>\n446:             where"
+    },
+    {
+      "reserve_index": 27,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 618,
+      "excerpt": "613:         // check that all generated graphs have unique adjacency matrices\n614:         let mut adjmats = graphs.iter().map(Graph::adjacency_matrix).collect::<Vec<_>>();\n615:         adjmats.sort(); adjmats.dedup();\n616:         assert_eq!(adjmats.len(), n);\n617:         */\n618:         assert_eq!(dags_exp, dags);\n619:         assert_eq!(n, 1 << nedges);\n620:     }\n621: }\n622: \n623: #[cfg(feature = \"generate\")]"
+    },
+    {
+      "reserve_index": 28,
+      "repository": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 700,
+      "excerpt": "695:     {\n696:         match self {\n697:             Compound::Map { .. } => ser::SerializeMap::serialize_entry(self, key, value),\n698:             #[cfg(feature = \"arbitrary_precision\")]\n699:             Compound::Number { ser, .. } => {\n700:                 if key == crate::number::TOKEN {\n701:                     value.serialize(NumberStrEmitter(ser))\n702:                 } else {\n703:                     Err(invalid_number())\n704:                 }\n705:             }"
+    },
+    {
+      "reserve_index": 29,
+      "repository": "serde_json-1.0.150",
+      "file": "src/read.rs",
+      "line": 545,
+      "excerpt": "540: \n541: impl<'a> private::Sealed for SliceRead<'a> {}\n542: \n543: impl<'a> Read<'a> for SliceRead<'a> {\n544:     #[inline]\n545:     fn next(&mut self) -> Result<Option<u8>> {\n546:         // `Ok(self.slice.get(self.index).map(|ch| { self.index += 1; *ch }))`\n547:         // is about 10% slower.\n548:         Ok(if self.index < self.slice.len() {\n549:             let ch = self.slice[self.index];\n550:             self.index += 1;"
+    },
+    {
+      "reserve_index": 30,
+      "repository": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 954,
+      "excerpt": "949:             .end_string(&mut self.ser.writer)\n950:             .map_err(Error::io)\n951:     }\n952: \n953:     fn serialize_u16(self, value: u16) -> Result<()> {\n954:         tri!(self\n955:             .ser\n956:             .formatter\n957:             .begin_string(&mut self.ser.writer)\n958:             .map_err(Error::io));\n959:         tri!(self"
+    },
+    {
+      "reserve_index": 31,
+      "repository": "serde_json-1.0.150",
+      "file": "src/value/de.rs",
+      "line": 683,
+      "excerpt": "678:                 let key_de = MapKeyDeserializer {\n679:                     key: Cow::Owned(key),\n680:                 };\n681:                 seed.deserialize(key_de).map(Some)\n682:             }\n683:             None => Ok(None),\n684:         }\n685:     }\n686: \n687:     fn next_value_seed<T>(&mut self, seed: T) -> Result<T::Value, Error>\n688:     where"
+    },
+    {
+      "reserve_index": 32,
+      "repository": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 208,
+      "excerpt": "203:     pub fn as_i128(&self) -> Option<i128> {\n204:         #[cfg(not(feature = \"arbitrary_precision\"))]\n205:         match self.n {\n206:             N::PosInt(n) => Some(n as i128),\n207:             N::NegInt(n) => Some(n as i128),\n208:             N::Float(_) => None,\n209:         }\n210:         #[cfg(feature = \"arbitrary_precision\")]\n211:         self.n.parse().ok()\n212:     }\n213: "
+    },
+    {
+      "reserve_index": 33,
+      "repository": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 971,
+      "excerpt": "966: other regex engines would commit undefined behavior. When undefined behavior\n967: occurs, your program might continue as if nothing bad has happened, but it also\n968: might mean your program is open to the worst kinds of exploits. In contrast,\n969: the worst thing a panic can do is a denial of service.\n970: \n971: [OSS-fuzz project]: https://android.googlesource.com/platform/external/oss-fuzz/+/refs/tags/android-t-preview-1/projects/rust-regex/\n972: [`std::panic::catch_unwind`]: https://doc.rust-lang.org/std/panic/fn.catch_unwind.html\n973: \n974: ### Untrusted patterns\n975: \n976: The principal way this crate deals with them is by limiting their size by"
+    },
+    {
+      "reserve_index": 34,
+      "repository": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 2232,
+      "excerpt": "2227:     deserialize_numeric_key!(deserialize_i8);\n2228:     deserialize_numeric_key!(deserialize_i16);\n2229:     deserialize_numeric_key!(deserialize_i32);\n2230:     deserialize_numeric_key!(deserialize_i64);\n2231:     deserialize_numeric_key!(deserialize_i128, deserialize_i128);\n2232:     deserialize_numeric_key!(deserialize_u8);\n2233:     deserialize_numeric_key!(deserialize_u16);\n2234:     deserialize_numeric_key!(deserialize_u32);\n2235:     deserialize_numeric_key!(deserialize_u64);\n2236:     deserialize_numeric_key!(deserialize_u128, deserialize_u128);\n2237:     #[cfg(not(feature = \"float_roundtrip\"))]"
+    },
+    {
+      "reserve_index": 35,
+      "repository": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/serialization.rs",
+      "line": 220,
+      "excerpt": "215:                 return Err(invalid_hole_err(hole_pos));\n216:             }\n217:             nodes.extend(compact_nodes.by_ref().take(hole_pos - node_pos));\n218:             nodes.push(Node {\n219:                 weight: None,\n220:                 next: [EdgeIndex::end(); 2],\n221:             });\n222:             node_pos = hole_pos + 1;\n223:             debug_assert_eq!(nodes.len(), node_pos);\n224:         }\n225:         nodes.extend(compact_nodes);"
+    },
+    {
+      "reserve_index": 36,
+      "repository": "petgraph-0.6.5",
+      "file": "src/algo/ford_fulkerson.rs",
+      "line": 32,
+      "excerpt": "27:     } else if vertex == edge.target() {\n28:         // forward edge\n29:         return *edge.weight() - flow;\n30:     } else {\n31:         let end_point = NodeIndexable::to_index(&network, vertex);\n32:         panic!(\"Illegal endpoint {}\", end_point);\n33:     }\n34: }\n35: \n36: /// Gets the other endpoint of graph edge, if any, otherwise panics.\n37: fn other_endpoint<N>(network: N, edge: N::EdgeRef, vertex: N::NodeId) -> N::NodeId"
+    },
+    {
+      "reserve_index": 37,
+      "repository": "serde_json-1.0.150",
+      "file": "tests/lexical/rounding.rs",
+      "line": 288,
+      "excerpt": "283:     let mut fp = ExtendedFloat {\n284:         mant: 0x40000000000005F,\n285:         exp: -58,\n286:     };\n287:     round_to_native::<f64, _>(&mut fp, round_nearest_tie_even);\n288:     assert_eq!(fp.mant, (1 << 52) + 1);\n289:     assert_eq!(fp.exp, -52);\n290: \n291:     // Underflow\n292:     // Adapted from failures in strtod.\n293:     let mut fp = ExtendedFloat {"
+    },
+    {
+      "reserve_index": 38,
+      "repository": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1541,
+      "excerpt": "1536: \n1537:     test_encode_ok(&[(vec.clone(), \"[[],[]]\")]);\n1538: \n1539:     let s = to_string_pretty(&vec).unwrap();\n1540:     let expected = pretty_str!([[], []]);\n1541:     assert_eq!(s, expected);\n1542: }\n1543: \n1544: #[test]\n1545: fn test_serialize_map_with_no_len() {\n1546:     #[derive(Clone, Debug, PartialEq)]"
+    },
+    {
+      "reserve_index": 39,
+      "repository": "regex-1.12.4",
+      "file": "tests/suite_string_set.rs",
+      "line": 20,
+      "excerpt": "15:         .assert();\n16:     Ok(())\n17: }\n18: \n19: fn run_test(re: &RegexSet, test: &RegexTest) -> TestResult {\n20:     let hay = match std::str::from_utf8(test.haystack()) {\n21:         Ok(hay) => hay,\n22:         Err(err) => {\n23:             return TestResult::fail(&format!(\n24:                 \"haystack is not valid UTF-8: {err}\",\n25:             ));"
+    },
+    {
+      "reserve_index": 40,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/iso.rs",
+      "line": 209,
+      "excerpt": "204: \n205: /// Parse a text adjacency matrix format into a directed graph\n206: fn parse_graph<Ty: EdgeType>(s: &str) -> Graph<(), (), Ty> {\n207:     let mut gr = Graph::with_capacity(0, 0);\n208:     let s = s.trim();\n209:     let lines = s.lines().filter(|l| !l.is_empty());\n210:     for (row, line) in lines.enumerate() {\n211:         for (col, word) in line.split(' ').filter(|s| !s.is_empty()).enumerate() {\n212:             let has_edge = word.parse::<i32>().unwrap();\n213:             assert!(has_edge == 0 || has_edge == 1);\n214:             if has_edge == 0 {"
+    },
+    {
+      "reserve_index": 41,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 1091,
+      "excerpt": "1086:         // assert removals\n1087:         for i in nodes {\n1088:             assert!(gr2.node_weight(node_index(i)).is_none());\n1089:         }\n1090:         for i in edges {\n1091:             assert!(gr2.edge_weight(edge_index(i)).is_none());\n1092:         }\n1093:     }\n1094: }\n1095: \n1096: fn naive_closure_foreach<G, F>(g: G, mut f: F)"
+    },
+    {
+      "reserve_index": 42,
+      "repository": "petgraph-0.6.5",
+      "file": "src/dot.rs",
+      "line": 66,
+      "excerpt": "61: static EDGE: [&str; 2] = [\"--\", \"->\"];\n62: static INDENT: &str = \"    \";\n63: \n64: impl<'a, G> Dot<'a, G>\n65: where\n66:     G: IntoNodeReferences + IntoEdgeReferences,\n67: {\n68:     /// Create a `Dot` formatting wrapper with default configuration.\n69:     #[inline]\n70:     pub fn new(graph: G) -> Self {\n71:         Self::with_config(graph, &[])"
+    },
+    {
+      "reserve_index": 43,
+      "repository": "petgraph-0.6.5",
+      "file": "src/visit/filter.rs",
+      "line": 26,
+      "excerpt": "21: impl<F, N> FilterNode<N> for F\n22: where\n23:     F: Fn(N) -> bool,\n24: {\n25:     fn include_node(&self, n: N) -> bool {\n26:         (*self)(n)\n27:     }\n28: }\n29: \n30: /// This filter includes the nodes that are contained in the set.\n31: impl<N> FilterNode<N> for FixedBitSet"
+    },
+    {
+      "reserve_index": 44,
+      "repository": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/serialization.rs",
+      "line": 166,
+      "excerpt": "161:         let nodes = &self.raw_nodes()[..self.node_bound()];\n162:         let node_count = self.node_count();\n163:         let hole_count = nodes.len() - node_count;\n164:         let edges = &self.raw_edges()[..self.edge_bound()];\n165:         SerStableGraph {\n166:             nodes: Somes(node_count, nodes),\n167:             node_holes: Holes(hole_count, nodes),\n168:             edges: edges,\n169:             edge_property: EdgeProperty::from(PhantomData::<Ty>),\n170:         }\n171:     }"
+    },
+    {
+      "reserve_index": 45,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 132,
+      "excerpt": "127: }\n128: \n129: #[test]\n130: fn bfs() {\n131:     let mut gr = Graph::new();\n132:     let h = gr.add_node(\"H\");\n133:     let i = gr.add_node(\"I\");\n134:     let j = gr.add_node(\"J\");\n135:     let k = gr.add_node(\"K\");\n136:     // Z is disconnected.\n137:     let _ = gr.add_node(\"Z\");"
+    },
+    {
+      "reserve_index": 46,
+      "repository": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1591,
+      "excerpt": "1586:         assert_eq!(c_neighbors, vec![b]);\n1587:     }\n1588: \n1589:     #[test]\n1590:     fn test_node_identifiers() {\n1591:         let mut g = MatrixGraph::new();\n1592:         let a = g.add_node('a');\n1593:         let b = g.add_node('b');\n1594:         let c = g.add_node('c');\n1595:         let d = g.add_node('c');\n1596:         g.add_edge(a, b, ());"
+    },
+    {
+      "reserve_index": 47,
+      "repository": "regex-1.12.4",
+      "file": "src/regex/string.rs",
+      "line": 1033,
+      "excerpt": "1028:     /// assert_eq!(re.shortest_match(&hay[2..]), Some(4));\n1029:     /// // No match because the  assertions take the context into account.\n1030:     /// assert_eq!(re.shortest_match_at(hay, 2), None);\n1031:     /// ```\n1032:     #[inline]\n1033:     pub fn shortest_match_at(\n1034:         &self,\n1035:         haystack: &str,\n1036:         start: usize,\n1037:     ) -> Option<usize> {\n1038:         let input ="
+    },
+    {
+      "reserve_index": 48,
+      "repository": "petgraph-0.6.5",
+      "file": "src/graph_impl/mod.rs",
+      "line": 743,
+      "excerpt": "738:         // every edge is part of two lists,\n739:         // outgoing and incoming edges.\n740:         // Remove it from both\n741:         let (edge_node, edge_next) = match self.edges.get(e.index()) {\n742:             None => return None,\n743:             Some(x) => (x.node, x.next),\n744:         };\n745:         // Remove the edge from its in and out lists by replacing it with\n746:         // a link to the next in the list.\n747:         self.change_edge_links(edge_node, e, edge_next);\n748:         self.remove_edge_adjust_indices(e)"
+    },
+    {
+      "reserve_index": 49,
+      "repository": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1594,
+      "excerpt": "1589:         where\n1590:             Visitor: de::MapAccess<'de>,\n1591:         {\n1592:             let mut values = BTreeMap::new();\n1593: \n1594:             while let Some((key, value)) = visitor.next_entry()? {\n1595:                 values.insert(key, value);\n1596:             }\n1597: \n1598:             Ok(MyMap(values))\n1599:         }"
+    },
+    {
+      "reserve_index": 50,
+      "repository": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 766,
+      "excerpt": "761: \n762: ### Grouping and flags\n763: \n764: <pre class=\"rust\">\n765: (exp)          numbered capture group (indexed by opening parenthesis)\n766: (?P&lt;name&gt;exp)  named (also numbered) capture group (names must be alpha-numeric)\n767: (?&lt;name&gt;exp)   named (also numbered) capture group (names must be alpha-numeric)\n768: (?:exp)        non-capturing group\n769: (?flags)       set flags within current group\n770: (?flags:exp)   set flags for exp (non-capturing)\n771: </pre>"
+    },
+    {
+      "reserve_index": 51,
+      "repository": "petgraph-0.6.5",
+      "file": "src/graph_impl/serialization.rs",
+      "line": 278,
+      "excerpt": "273: \n274: pub fn invalid_node_err<E>(node_index: usize, len: usize) -> E\n275: where\n276:     E: Error,\n277: {\n278:     E::custom(format_args!(\n279:         \"invalid value: node index `{}` does not exist in graph \\\n280:          with node bound {}\",\n281:         node_index, len\n282:     ))\n283: }"
+    },
+    {
+      "reserve_index": 52,
+      "repository": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 211,
+      "excerpt": "206:         // \"unexpected end of macro invocation\"\n207:         $crate::json_internal!();\n208:     };\n209: \n210:     // Misplaced colon. Trigger a reasonable error message.\n211:     (@object $object:ident () (: $($rest:tt)*) ($colon:tt $($copy:tt)*)) => {\n212:         // Takes no arguments so \"no rules expected the token `:`\".\n213:         $crate::json_unexpected!($colon);\n214:     };\n215: \n216:     // Found a comma inside a key. Trigger a reasonable error message."
+    },
+    {
+      "reserve_index": 53,
+      "repository": "serde_json-1.0.150",
+      "file": "src/error.rs",
+      "line": 391,
+      "excerpt": "386:     }\n387: }\n388: \n389: impl serde::de::StdError for Error {\n390:     #[cfg(feature = \"std\")]\n391:     fn source(&self) -> Option<&(dyn error::Error + 'static)> {\n392:         match &self.err.code {\n393:             ErrorCode::Io(err) => err.source(),\n394:             _ => None,\n395:         }\n396:     }"
+    },
+    {
+      "reserve_index": 54,
+      "repository": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 821,
+      "excerpt": "816:     exact: bool,\n817: ) -> usize {\n818:     if old_node_capacity >= new_capacity {\n819:         return old_node_capacity;\n820:     }\n821:     if Ty::is_directed() {\n822:         extend_flat_square_matrix(node_adjacencies, old_node_capacity, new_capacity, exact)\n823:     } else {\n824:         extend_lower_triangular_matrix(node_adjacencies, new_capacity)\n825:     }\n826: }"
+    },
+    {
+      "reserve_index": 55,
+      "repository": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1365,
+      "excerpt": "1360:         let mut g = DiMatrix::<u8, ()>::with_capacity(3);\n1361:         let n0 = g.add_node(0);\n1362:         let n1 = g.add_node(1);\n1363:         let n2 = g.add_node(2);\n1364:         let n3 = g.add_node(3);\n1365:         g.add_edge(n1, n0, ());\n1366:         g.add_edge(n1, n1, ());\n1367:         // Triggers a resize from capacity 3 to 4\n1368:         g.add_edge(n2, n3, ());\n1369:         assert_eq!(g.node_count(), 4);\n1370:         assert_eq!(g.edge_count(), 3);"
+    },
+    {
+      "reserve_index": 56,
+      "repository": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 2525,
+      "excerpt": "2520:     }\n2521: \n2522:     let mut map = BTreeMap::new();\n2523:     map.insert(\"inner\", json!({ \"string\": \"Hello World\" }));\n2524: \n2525:     let outer = Outer::deserialize(serde::de::value::MapDeserializer::new(\n2526:         map.iter().map(|(k, v)| (*k, v)),\n2527:     ))\n2528:     .unwrap();\n2529:     assert_eq!(outer.inner.string, \"Hello World\");\n2530: "
+    },
+    {
+      "reserve_index": 57,
+      "repository": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 55,
+      "excerpt": "50: impl Eq for N {}\n51: \n52: #[cfg(not(feature = \"arbitrary_precision\"))]\n53: impl Hash for N {\n54:     fn hash<H: Hasher>(&self, h: &mut H) {\n55:         match *self {\n56:             N::PosInt(i) => i.hash(h),\n57:             N::NegInt(i) => i.hash(h),\n58:             N::Float(f) => {\n59:                 if f == 0.0f64 {\n60:                     // There are 2 zero representations, +0 and -0, which"
+    },
+    {
+      "reserve_index": 58,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/matching.rs",
+      "line": 76,
+      "excerpt": "71: #[test]\n72: fn greedy_star() {\n73:     let g: UnGraph<(), ()> = UnGraph::from_edges(&[(0, 1), (0, 2), (0, 3)]);\n74:     let m = greedy_matching(&g);\n75:     assert_one_of!(\n76:         collect(m.edges()),\n77:         [set![(0, 1)], set![(0, 2)], set![(0, 3)]]\n78:     );\n79:     assert_one_of!(collect(m.nodes()), [set![0, 1], set![0, 2], set![0, 3]]);\n80: }\n81: "
+    },
+    {
+      "reserve_index": 59,
+      "repository": "petgraph-0.6.5",
+      "file": "src/graph_impl/serialization.rs",
+      "line": 212,
+      "excerpt": "207: fn deser_graph_node_holes<'de, D, Ix>(deserializer: D) -> Result<Vec<NodeIndex<Ix>>, D::Error>\n208: where\n209:     D: Deserializer<'de>,\n210:     Ix: IndexType + Deserialize<'de>,\n211: {\n212:     deserializer.deserialize_seq(\n213:         MappedSequenceVisitor::<NodeIndex<Ix>, NodeIndex<Ix>, _>::new(|_| {\n214:             Err(\"Graph can not have holes in the node set, found non-empty node_holes\")\n215:         }),\n216:     )\n217: }"
+    },
+    {
+      "reserve_index": 60,
+      "repository": "petgraph-0.6.5",
+      "file": "src/algo/tred.rs",
+      "line": 124,
+      "excerpt": "119:     // the algorithm relies on this iterator being toposorted\n120:     for i in g.node_indices().rev() {\n121:         // the algorighm relies on this iterator being toposorted\n122:         for x in g.neighbors(i) {\n123:             if !mark[x.index()] {\n124:                 tred.add_edge(i, x, ());\n125:                 tclos.add_edge(i, x, ());\n126:                 for e in tclos.edge_indices_from(x) {\n127:                     let y = tclos.edge_endpoints(e).unwrap().1;\n128:                     if !mark[y.index()] {\n129:                         mark.insert(y.index());"
+    },
+    {
+      "reserve_index": 61,
+      "repository": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1926,
+      "excerpt": "1921:         .chain(iter::repeat(']').take(140))\n1922:         .collect();\n1923: \n1924:     let mut deserializer = Deserializer::from_str(&brackets);\n1925:     deserializer.disable_recursion_limit();\n1926:     Value::deserialize(&mut deserializer).unwrap();\n1927: }\n1928: \n1929: #[test]\n1930: fn test_integer_key() {\n1931:     // map with integer keys"
+    },
+    {
+      "reserve_index": 62,
+      "repository": "petgraph-0.6.5",
+      "file": "src/dot.rs",
+      "line": 328,
+      "excerpt": "323:     }\n324: \n325:     #[test]\n326:     fn test_nodenolable_option() {\n327:         let graph = simple_graph();\n328:         let dot = format!(\"{:?}\", Dot::with_config(&graph, &[Config::NodeNoLabel]));\n329:         assert_eq!(\n330:             dot,\n331:             \"digraph {\\n    0 [ ]\\n    1 [ ]\\n    0 -> 1 [ label = \\\"\\\\\\\"edge_label\\\\\\\"\\\" ]\\n}\\n\"\n332:         );\n333:     }"
+    },
+    {
+      "reserve_index": 63,
+      "repository": "regex-1.12.4",
+      "file": "src/error.rs",
+      "line": 37,
+      "excerpt": "32: }\n33: \n34: impl Error {\n35:     pub(crate) fn from_meta_build_error(err: meta::BuildError) -> Error {\n36:         if let Some(size_limit) = err.size_limit() {\n37:             Error::CompiledTooBig(size_limit)\n38:         } else if let Some(ref err) = err.syntax_error() {\n39:             Error::Syntax(err.to_string())\n40:         } else {\n41:             // This is a little suspect. Technically there are more ways for\n42:             // a meta regex to fail to build other than \"exceeded size limit\""
+    },
+    {
+      "reserve_index": 64,
+      "repository": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 628,
+      "excerpt": "623:         let json_value2: Value = from_value(json_value.clone()).unwrap();\n624:         assert_eq!(json_value2, json_value);\n625: \n626:         // Make sure we can fully ignore.\n627:         let twoline = s.to_owned() + \"\\n3735928559\";\n628:         let mut de = Deserializer::from_str(&twoline);\n629:         IgnoredAny::deserialize(&mut de).unwrap();\n630:         assert_eq!(0xDEAD_BEEF, u64::deserialize(&mut de).unwrap());\n631: \n632:         // Make sure every prefix is an EOF error, except that a prefix of a\n633:         // number may be a valid number."
+    },
+    {
+      "reserve_index": 65,
+      "repository": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 124,
+      "excerpt": "119: \n120:     let mut seen_i = false;\n121:     let mut seen_k = false;\n122:     for node in Dfs::new(&gr, h).iter(&gr) {\n123:         seen_i |= i == node;\n124:         seen_k |= k == node;\n125:         assert!(!(j == node && (seen_i ^ seen_k)), \"Invalid DFS order\");\n126:     }\n127: }\n128: \n129: #[test]"
+    },
+    {
+      "reserve_index": 66,
+      "repository": "petgraph-0.6.5",
+      "file": "src/algo/page_rank.rs",
+      "line": 62,
+      "excerpt": "57: {\n58:     let node_count = graph.node_count();\n59:     if node_count == 0 {\n60:         return vec![];\n61:     }\n62:     assert!(\n63:         D::zero() <= damping_factor && damping_factor <= D::one(),\n64:         \"Damping factor should be between 0 et 1.\"\n65:     );\n66:     let nb = D::from_usize(node_count);\n67:     let mut ranks = vec![D::one() / nb; node_count];"
+    },
+    {
+      "reserve_index": 67,
+      "repository": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 746,
+      "excerpt": "741:     (\n742:         $($ty:ty),*\n743:     ) => {\n744:         $(\n745:             impl From<$ty> for Number {\n746:                 fn from(u: $ty) -> Self {\n747:                     let n = {\n748:                         #[cfg(not(feature = \"arbitrary_precision\"))]\n749:                         { N::PosInt(u as u64) }\n750:                         #[cfg(feature = \"arbitrary_precision\")]\n751:                         {"
+    },
+    {
+      "reserve_index": 68,
+      "repository": "petgraph-0.6.5",
+      "file": "src/graphmap.rs",
+      "line": 1238,
+      "excerpt": "1233:     }\n1234: }\n1235: \n1236: impl<'a, N: 'a, E, Ty, S> visit::IntoNeighborsDirected for &'a GraphMap<N, E, Ty, S>\n1237: where\n1238:     N: Copy + Ord + Hash,\n1239:     Ty: EdgeType,\n1240:     S: BuildHasher,\n1241: {\n1242:     type NeighborsDirected = NeighborsDirected<'a, N, Ty>;\n1243:     fn neighbors_directed(self, n: N, dir: Direction) -> Self::NeighborsDirected {"
+    },
+    {
+      "reserve_index": 69,
+      "repository": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/serialization.rs",
+      "line": 115,
+      "excerpt": "110:     deserializer: D,\n111: ) -> Result<Vec<Node<Option<N>, Ix>>, D::Error>\n112: where\n113:     D: Deserializer<'de>,\n114:     N: Deserialize<'de>,\n115:     Ix: IndexType + Deserialize<'de>,\n116: {\n117:     deserializer.deserialize_seq(MappedSequenceVisitor::new(|n| {\n118:         Ok(Node {\n119:             weight: Some(n),\n120:             next: [EdgeIndex::end(); 2],"
+    },
+    {
+      "reserve_index": 70,
+      "repository": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 455,
+      "excerpt": "450:             Err(fmt::Error) => {\n451:                 return Err(Error::io(adapter.error.expect(\"there should be an error\")));\n452:             }\n453:         }\n454:         self.formatter\n455:             .end_string(&mut self.writer)\n456:             .map_err(Error::io)\n457:     }\n458: }\n459: \n460: // Not public API. Should be pub(crate)."
+    },
+    {
+      "reserve_index": 71,
+      "repository": "serde_json-1.0.150",
+      "file": "src/value/de.rs",
+      "line": 581,
+      "excerpt": "576:     fn tuple_variant<V>(self, _len: usize, visitor: V) -> Result<V::Value, Error>\n577:     where\n578:         V: Visitor<'de>,\n579:     {\n580:         match self.value {\n581:             Some(Value::Array(v)) => {\n582:                 if v.is_empty() {\n583:                     visitor.visit_unit()\n584:                 } else {\n585:                     visit_array(v, visitor)\n586:                 }"
+    },
+    {
+      "reserve_index": 72,
+      "repository": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 979,
+      "excerpt": "974:             .begin_string(&mut self.ser.writer)\n975:             .map_err(Error::io));\n976:         tri!(self\n977:             .ser\n978:             .formatter\n979:             .write_u32(&mut self.ser.writer, value)\n980:             .map_err(Error::io));\n981:         self.ser\n982:             .formatter\n983:             .end_string(&mut self.ser.writer)\n984:             .map_err(Error::io)"
+    },
+    {
+      "reserve_index": 73,
+      "repository": "serde_json-1.0.150",
+      "file": "src/read.rs",
+      "line": 778,
+      "excerpt": "773: \n774:     fn discard(&mut self) {\n775:         R::discard(self);\n776:     }\n777: \n778:     fn position(&self) -> Position {\n779:         R::position(self)\n780:     }\n781: \n782:     fn peek_position(&self) -> Position {\n783:         R::peek_position(self)"
+    },
+    {
+      "reserve_index": 74,
+      "repository": "regex-1.12.4",
+      "file": "src/regexset/string.rs",
+      "line": 679,
+      "excerpt": "674: impl DoubleEndedIterator for SetMatchesIntoIter {\n675:     fn next_back(&mut self) -> Option<usize> {\n676:         loop {\n677:             let id = self.it.next_back()?;\n678:             if self.patset.contains(PatternID::new_unchecked(id)) {\n679:                 return Some(id);\n680:             }\n681:         }\n682:     }\n683: }\n684: "
+    },
+    {
+      "reserve_index": 75,
+      "repository": "petgraph-0.6.5",
+      "file": "src/visit/traversal.rs",
+      "line": 380,
+      "excerpt": "375:     /* Private until it has a use */\n376:     /// Create a new `Topo`, using the graph's visitor map with *no* starting\n377:     /// index specified.\n378:     fn empty<G>(graph: G) -> Self\n379:     where\n380:         G: GraphRef + Visitable<NodeId = N, Map = VM>,\n381:     {\n382:         Topo {\n383:             ordered: graph.visit_map(),\n384:             tovisit: Vec::new(),\n385:         }"
+    },
+    {
+      "reserve_index": 76,
+      "repository": "regex-1.12.4",
+      "file": "src/find_byte.rs",
+      "line": 6,
+      "excerpt": "1: /// Searches for the given needle in the given haystack.\n2: ///\n3: /// If the perf-literal feature is enabled, then this uses the super optimized\n4: /// memchr crate. Otherwise, it uses the naive byte-at-a-time implementation.\n5: pub(crate) fn find_byte(needle: u8, haystack: &[u8]) -> Option<usize> {\n6:     #[cfg(not(feature = \"perf-literal\"))]\n7:     fn imp(needle: u8, haystack: &[u8]) -> Option<usize> {\n8:         haystack.iter().position(|&b| b == needle)\n9:     }\n10: \n11:     #[cfg(feature = \"perf-literal\")]"
+    },
+    {
+      "reserve_index": 77,
+      "repository": "petgraph-0.6.5",
+      "file": "src/scored.rs",
+      "line": 42,
+      "excerpt": "37:             Ordering::Equal\n38:         } else if a < b {\n39:             Ordering::Greater\n40:         } else if a > b {\n41:             Ordering::Less\n42:         } else if a.ne(a) && b.ne(b) {\n43:             // these are the NaN cases\n44:             Ordering::Equal\n45:         } else if a.ne(a) {\n46:             // Order NaN less, so that it is last in the MinScore order\n47:             Ordering::Less"
+    }
+  ]
+}

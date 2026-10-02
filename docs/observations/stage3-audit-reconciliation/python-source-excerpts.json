@@ -1,0 +1,165 @@
+{
+  "sites": [
+    {
+      "reserve_index": 0,
+      "repository": "requests-2.34.2",
+      "file": "src/requests/_types.py",
+      "line": 112,
+      "excerpt": "107: \n108:     BodyType: TypeAlias = (\n109:         bytes | str | Iterable[bytes | str] | SupportsRead[bytes | str] | None\n110:     )\n111: \n112:     HeadersType: TypeAlias = Mapping[str, str | bytes] | None\n113: \n114:     CookiesType: TypeAlias = RequestsCookieJar | Mapping[str, str]\n115: \n116:     # Building blocks for FilesType\n117:     _FileName: TypeAlias = str | None"
+    },
+    {
+      "reserve_index": 1,
+      "repository": "click-8.4.1",
+      "file": "tests/test_options.py",
+      "line": 771,
+      "excerpt": "766: def test_show_envvar_auto_prefix_dash_in_command(runner):\n767:     @click.group()\n768:     def cli():\n769:         pass\n770: \n771:     @cli.command()\n772:     @click.option(\"--baz\", show_envvar=True)\n773:     def foo_bar(baz):\n774:         pass\n775: \n776:     result = runner.invoke(cli, [\"foo-bar\", \"--help\"], auto_envvar_prefix=\"TEST\")"
+    },
+    {
+      "reserve_index": 2,
+      "repository": "pydantic-2.13.4",
+      "file": "pydantic/experimental/pipeline.py",
+      "line": 574,
+      "excerpt": "569:                     assert isinstance(v, datetime.datetime)\n570:                     return v.tzinfo is None\n571: \n572:                 s = _check_func(check_tz_naive, 'timezone naive', s)\n573:         else:\n574:             raise NotImplementedError('Constraining to a specific timezone is not yet supported')\n575:     elif isinstance(constraint, annotated_types.Interval):\n576:         if constraint.ge:\n577:             s = _apply_constraint(s, annotated_types.Ge(constraint.ge))\n578:         if constraint.gt:\n579:             s = _apply_constraint(s, annotated_types.Gt(constraint.gt))"
+    },
+    {
+      "reserve_index": 3,
+      "repository": "pydantic-2.13.4",
+      "file": "tests/test_annotated.py",
+      "line": 123,
+      "excerpt": "118:     assert metadata in field_info.metadata, 'Records the unknown metadata'\n119:     assert metadata in M.__annotations__['x'].__metadata__, 'Annotated type is recorded'\n120: \n121: \n122: @pytest.mark.thread_unsafe(reason='`pytest.raises()` is thread unsafe')\n123: @pytest.mark.parametrize(\n124:     ['hint_fn', 'value', 'empty_init_ctx'],\n125:     [\n126:         (\n127:             lambda: int,\n128:             PydanticUndefined,"
+    },
+    {
+      "reserve_index": 4,
+      "repository": "pydantic-2.13.4",
+      "file": "tests/test_validators.py",
+      "line": 3180,
+      "excerpt": "3175:     class Foo(BaseModel, validate_default=True):\n3176:         field: int = 1\n3177: \n3178:         @field_validator('field')\n3179:         @classmethod\n3180:         def _validate_field(cls, v: int, info: ValidationInfo) -> int:\n3181:             assert info.field_name == 'field'\n3182:             assert info.context == 'context'\n3183: \n3184:             return v + 1\n3185: "
+    },
+    {
+      "reserve_index": 5,
+      "repository": "pydantic-2.13.4",
+      "file": "tests/test_dataclasses.py",
+      "line": 3243,
+      "excerpt": "3238:         dc: DC\n3239: \n3240: \n3241: def test_deferred_dataclass_fields_available() -> None:\n3242:     # This aligns with deferred Pydantic models:\n3243:     @pydantic.dataclasses.dataclass(config={'defer_build': True})\n3244:     class A:\n3245:         a: int\n3246: \n3247:     assert 'a' in A.__pydantic_fields__  # pyright: ignore[reportAttributeAccessIssue]\n3248: "
+    },
+    {
+      "reserve_index": 6,
+      "repository": "pydantic-2.13.4",
+      "file": "tests/test_main.py",
+      "line": 573,
+      "excerpt": "568:     ]\n569: \n570:     assert m.a == 10\n571: \n572: \n573: def test_frozen_model_cached_property():\n574:     class FrozenModel(BaseModel):\n575:         model_config = ConfigDict(frozen=True)\n576: \n577:         a: int\n578: "
+    },
+    {
+      "reserve_index": 7,
+      "repository": "pydantic-2.13.4",
+      "file": "pydantic/functional_validators.py",
+      "line": 538,
+      "excerpt": "533: class ModelWrapValidatorWithoutInfo(Protocol[_ModelType]):\n534:     \"\"\"A `@model_validator` decorated function signature.\n535:     This is used when `mode='wrap'` and the function does not have info argument.\n536:     \"\"\"\n537: \n538:     def __call__(  # noqa: D102\n539:         self,\n540:         cls: type[_ModelType],\n541:         # this can be a dict, a model instance\n542:         # or anything else that gets passed to validate_python\n543:         # thus validators _must_ handle all cases"
+    },
+    {
+      "reserve_index": 8,
+      "repository": "click-8.4.1",
+      "file": "src/click/_compat.py",
+      "line": 103,
+      "excerpt": "98:     ):\n99:         self._stream = stream\n100:         self._force_readable = force_readable\n101:         self._force_writable = force_writable\n102: \n103:     def __getattr__(self, name: str) -> t.Any:\n104:         return getattr(self._stream, name)\n105: \n106:     def read1(self, size: int) -> bytes:\n107:         f = getattr(self._stream, \"read1\", None)\n108: "
+    },
+    {
+      "reserve_index": 9,
+      "repository": "click-8.4.1",
+      "file": "tests/test_chain.py",
+      "line": 113,
+      "excerpt": "108:     @click.group(chain=True)\n109:     def cli():\n110:         pass\n111: \n112:     @cli.command(\"sdist\")\n113:     @click.argument(\"format\")\n114:     def sdist(format):\n115:         click.echo(f\"sdist called {format}\")\n116: \n117:     @cli.command(\"bdist\")\n118:     @click.argument(\"format\")"
+    },
+    {
+      "reserve_index": 10,
+      "repository": "pydantic-2.13.4",
+      "file": "tests/test_computed_fields.py",
+      "line": 726,
+      "excerpt": "721:             return CompModel()\n722: \n723:     return Model\n724: \n725: \n726: @pytest.mark.parametrize(\n727:     'model_factory',\n728:     [\n729:         make_base_model,\n730:         pytest.param(\n731:             make_typed_dict,"
+    },
+    {
+      "reserve_index": 11,
+      "repository": "pydantic-2.13.4",
+      "file": "pydantic/types.py",
+      "line": 1695,
+      "excerpt": "1690:         origin_type = get_origin(source)\n1691:         if origin_type is not None:\n1692:             inner_type = get_args(source)[0]\n1693:         # otherwise, we need to get the inner type from the base class\n1694:         else:\n1695:             bases = getattr(cls, '__orig_bases__', getattr(cls, '__bases__', []))\n1696:             for base in bases:\n1697:                 if get_origin(base) is Secret:\n1698:                     inner_type = get_args(base)[0]\n1699:             if bases == [] or inner_type is None:\n1700:                 raise TypeError("
+    },
+    {
+      "reserve_index": 12,
+      "repository": "requests-2.34.2",
+      "file": "src/requests/sessions.py",
+      "line": 202,
+      "excerpt": "197:     ) -> Generator[Response, None, None]:\n198:         \"\"\"Receives a Response. Returns a generator of Responses or Requests.\"\"\"\n199: \n200:         hist: list[Response] = []  # keep track of history\n201: \n202:         url = self.get_redirect_target(resp)\n203:         previous_fragment = urlparse(req.url).fragment\n204:         while url:\n205:             prepared_request = req.copy()\n206: \n207:             # Update history and keep track of redirects."
+    },
+    {
+      "reserve_index": 13,
+      "repository": "pydantic-2.13.4",
+      "file": "tests/benchmarks/basemodel_eq_performance.py",
+      "line": 103,
+      "excerpt": "98:             self_type = self.__pydantic_generic_metadata__['origin'] or self.__class__\n99:             other_type = other.__pydantic_generic_metadata__['origin'] or other.__class__\n100: \n101:             # Perform common checks first\n102:             if not (\n103:                 self_type == other_type\n104:                 and self.__pydantic_private__ == other.__pydantic_private__\n105:                 and self.__pydantic_extra__ == other.__pydantic_extra__\n106:             ):\n107:                 return False\n108: "
+    },
+    {
+      "reserve_index": 14,
+      "repository": "click-8.4.1",
+      "file": "src/click/termui.py",
+      "line": 107,
+      "excerpt": "102: \n103: \n104: def _build_prompt(\n105:     text: str,\n106:     suffix: str,\n107:     show_default: bool | str = False,\n108:     default: t.Any | None = None,\n109:     show_choices: bool = True,\n110:     type: ParamType[t.Any] | None = None,\n111: ) -> str:\n112:     prompt = text"
+    },
+    {
+      "reserve_index": 15,
+      "repository": "pydantic-2.13.4",
+      "file": "pydantic/_internal/_known_annotated_metadata.py",
+      "line": 377,
+      "excerpt": "372:             constraint = at_to_constraint_map[annotation_type]\n373:             res[constraint] = getattr(annotation, constraint)\n374:         elif isinstance(annotation, type) and issubclass(annotation, PydanticMetadata):\n375:             # also support PydanticMetadata classes being used without initialisation,\n376:             # e.g. `Annotated[int, Strict]` as well as `Annotated[int, Strict()]`\n377:             res.update({k: v for k, v in vars(annotation).items() if not k.startswith('_')})\n378:         else:\n379:             remaining.append(annotation)\n380:     # Nones can sneak in but pydantic-core will reject them\n381:     # it'd be nice to clean things up so we don't put in None (we probably don't _need_ to, it was just easier)\n382:     # but this is simple enough to kick that can down the road"
+    },
+    {
+      "reserve_index": 16,
+      "repository": "pydantic-2.13.4",
+      "file": "pydantic/fields.py",
+      "line": 72,
+      "excerpt": "67:     ge: annotated_types.SupportsGe | None\n68:     lt: annotated_types.SupportsLt | None\n69:     le: annotated_types.SupportsLe | None\n70:     multiple_of: float | None\n71:     strict: bool | None\n72:     min_length: int | None\n73:     max_length: int | None\n74:     pattern: str | re.Pattern[str] | None\n75:     allow_inf_nan: bool | None\n76:     max_digits: int | None\n77:     decimal_places: int | None"
+    },
+    {
+      "reserve_index": 17,
+      "repository": "pydantic-2.13.4",
+      "file": "pydantic/dataclasses.py",
+      "line": 282,
+      "excerpt": "277:                 # Note that we do so only if `__setstate__()` isn't already set (this is the\n278:                 # case if on top of `slots`, `frozen` is used).\n279: \n280:                 # Taken from `dataclasses._dataclass_get/setstate()`:\n281:                 def _dataclass_getstate(self: Any) -> list[Any]:\n282:                     return [getattr(self, f.name) for f in dataclasses.fields(self)]\n283: \n284:                 def _dataclass_setstate(self: Any, state: list[Any]) -> None:\n285:                     for field, value in zip(dataclasses.fields(self), state):\n286:                         object.__setattr__(self, field.name, value)\n287: "
+    },
+    {
+      "reserve_index": 18,
+      "repository": "pydantic-2.13.4",
+      "file": "tests/test_parse.py",
+      "line": 151,
+      "excerpt": "146:         def populate_root(cls, values):\n147:             return {'root': values}\n148: \n149:         @model_serializer(mode='wrap')\n150:         def _serialize(self, handler, info):\n151:             data = handler(self)\n152:             if info.mode == 'json':\n153:                 return data['root']\n154:             else:\n155:                 return data\n156: "
+    },
+    {
+      "reserve_index": 19,
+      "repository": "pydantic-2.13.4",
+      "file": "tests/test_json_schema.py",
+      "line": 6397,
+      "excerpt": "6392: def test_required_fields_in_annotated_with_basemodel() -> None:\n6393:     \"\"\"\n6394:     Ensure multiple field specified with Annotated in BaseModel is marked as required.\n6395:     \"\"\"\n6396: \n6397:     class Model(BaseModel):\n6398:         a: int = ...\n6399:         b: Annotated[int, 'placeholder'] = ...\n6400:         c: Annotated[int, Field()] = ...\n6401: \n6402:     assert Model.model_fields['a'].is_required()"
+    },
+    {
+      "reserve_index": 20,
+      "repository": "requests-2.34.2",
+      "file": "tests/test_requests.py",
+      "line": 1576,
+      "excerpt": "1571:         assert r.hooks == p.hooks\n1572: \n1573:         # Verify unpickled PreparedRequest sends properly\n1574:         s = requests.Session()\n1575:         resp = s.send(r)\n1576:         assert resp.status_code == 200\n1577: \n1578:     def test_cannot_send_unprepared_requests(self, httpbin):\n1579:         r = requests.Request(url=httpbin())\n1580:         with pytest.raises(ValueError):\n1581:             requests.Session().send(r)"
+    },
+    {
+      "reserve_index": 21,
+      "repository": "click-8.4.1",
+      "file": "src/click/parser.py",
+      "line": 329,
+      "excerpt": "324:         state.largs = args\n325:         state.rargs = []\n326: \n327:     def _process_args_for_options(self, state: _ParsingState) -> None:\n328:         while state.rargs:\n329:             arg = state.rargs.pop(0)\n330:             arglen = len(arg)\n331:             # Double dashes always handled explicitly regardless of what\n332:             # prefixes are valid.\n333:             if arg == \"--\":\n334:                 return"
+    },
+    {
+      "reserve_index": 22,
+      "repository": "requests-2.34.2",
+      "file": "tests/test_requests.py",
+      "line": 2525,
+      "excerpt": "2520:             ((3, 4, 5), \"(connect, read)\"),\n2521:             (\"foo\", \"must be an int, float or None\"),\n2522:         ),\n2523:     )\n2524:     def test_invalid_timeout(self, httpbin, timeout, error_text):\n2525:         with pytest.raises(ValueError) as e:\n2526:             requests.get(httpbin(\"get\"), timeout=timeout)\n2527:         assert error_text in str(e)\n2528: \n2529:     @pytest.mark.parametrize(\"timeout\", (None, Urllib3Timeout(connect=None, read=None)))\n2530:     def test_none_timeout(self, httpbin, timeout):"
+    }
+  ]
+}

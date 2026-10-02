@@ -1,0 +1,40 @@
+{
+  "files": [
+    {
+      "path": "docs/observations/stage3-audit-reconciliation/rust-extension-labels.json",
+      "sha256": "580a2e18f120242d000c5dcc9e605e3f984df8c16ea09b32ba887ccb83ddfcfd"
+    },
+    {
+      "path": "docs/observations/stage3-audit-reconciliation/rust-combined-labels.json",
+      "sha256": "4dfe845ff3a057a30ccca316c76ec1acc3cab793ed9293be96d5ee447782087c"
+    },
+    {
+      "path": "docs/observations/stage3-audit-reconciliation/rust-source-excerpts.json",
+      "sha256": "1ac45d62056259a307d159d1012179ec199f2ada6e045739c25722fa0afdf626"
+    },
+    {
+      "path": "docs/observations/stage3-audit-reconciliation/python-extension-labels.json",
+      "sha256": "05e7586c664ff20662ba04e534036c4515cc97a4f13af120b0596ecd0d341664"
+    },
+    {
+      "path": "docs/observations/stage3-audit-reconciliation/python-combined-labels.json",
+      "sha256": "4dc4a9c81de46635e9628b1fbd1dcdcebee3b3d2b7ddc69b2c560fa0add29e8e"
+    },
+    {
+      "path": "docs/observations/stage3-audit-reconciliation/python-source-excerpts.json",
+      "sha256": "b48d3c43e2fd058c2ec84e7f3b723602eb2d92f2ec7450b1dd14ed070b355d4e"
+    },
+    {
+      "path": "tools/run_dispatch_audit_reconciliation.py",
+      "sha256": "4aa5c5682853e04a958d073ad08b1176ce7c203ec1d6f5cb20bc73e02440153d"
+    },
+    {
+      "path": "tools/dispatch_audit_scorer.py",
+      "sha256": "be46062f0ae0d22a55ab9254da59aea669881259e50d1dcc86a9fb4c4d2e42ab"
+    },
+    {
+      "path": "tools/dispatch_audit_scorer_python.py",
+      "sha256": "9a493bebb21ffd253a32d60c0faf8f2b153afd7ac49acb746db5f0ec649821ac"
+    }
+  ]
+}

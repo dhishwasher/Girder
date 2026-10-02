@@ -1,0 +1,784 @@
+{
+  "sites": [
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/isomorphism.rs",
+      "line": 417,
+      "shape": "method_call",
+      "text": "if !edge_match.eq(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "edge_match.eq is in the unexpanded edge_feasibility macro body; EM is a generic EdgeMatcher and expansion/binding is not certified."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/misc.rs",
+      "line": 32,
+      "shape": "macro_invocation",
+      "text": "vec![None, None, Some(\"a\")],",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "vec! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 622,
+      "shape": "operator_usage",
+      "text": "T: ?Sized + Serialize,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Sized + Serialize is a type bound, not an expression."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/macros.rs",
+      "line": 3,
+      "shape": "plain_call",
+      "text": "fn clone(&self) -> Self {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn clone is a declaration in a macro definition."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/iso.rs",
+      "line": 478,
+      "shape": "operator_usage",
+      "text": "let g0 = graph_from_file(\"tests/res/graph_1000n_1000e.txt\");",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "The operator regex matches tests/res inside a string, not graph_from_file outside it."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/mod.rs",
+      "line": 2074,
+      "shape": "method_call",
+      "text": "gr.remove_node(a);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "gr is constructed as StableGraph at line 2069. remove_node is its unique inherent method."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regexset/string.rs",
+      "line": 704,
+      "shape": "method_call",
+      "text": "self.0.next().map(|pid| pid.as_usize())",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "self.0 is regex_automata PatternSetIter; next is defined outside the pinned crate snapshot."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 868,
+      "shape": "macro_invocation",
+      "text": "vec![vec![n(0)], vec![n(1)], vec![n(2)], vec![n(3)]],",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "vec! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/ford_fulkerson.rs",
+      "line": 193,
+      "shape": "operator_usage",
+      "text": "max_flow = max_flow + path_flow;",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "Addition on N::EdgeWeight uses generic PositiveMeasure/Add bounds; no bounded concrete Add implementation is established."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 877,
+      "shape": "plain_call",
+      "text": "fn f64_long_from_parts(",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn f64_long_from_parts is a declaration."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/lexical/algorithm.rs",
+      "line": 42,
+      "shape": "operator_usage",
+      "text": "} else if exponent >= 0 && exponent <= max_exp + shift_exp {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "The matched exponent <= max_exp compares i32 values; primitive comparison, not overloaded dispatch."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 752,
+      "shape": "method_call",
+      "text": "Some(_) => return Err(self.peek_error(ErrorCode::InvalidNumber)),",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "self is Deserializer and peek_error is its unique inherent method in src/de.rs."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/utils/qc.rs",
+      "line": 67,
+      "shape": "path_or_associated_call",
+      "text": "Box::new(gr.shrink().map(Tournament))",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "Box::new is a standard-library target outside the snapshot."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 500,
+      "shape": "macro_invocation",
+      "text": "println!(\"Sccs {:?}\", sccs);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "println! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 1681,
+      "shape": "method_call",
+      "text": "visitor.visit_none()",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "visitor is generic V: serde::de::Visitor; dependency implementation candidates are not bounded in this snapshot."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 686,
+      "shape": "plain_call",
+      "text": "x|y   alternation (x or y, prefer x)",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Regex documentation prose is not executable code."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1652,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(g.edges(node_index(4)).count(), 2);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert_eq! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/raw.rs",
+      "line": 560,
+      "shape": "path_or_associated_call",
+      "text": "crate::Deserializer::from_str(&self.json).deserialize_bool(visitor)",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "crate::Deserializer::from_str resolves to the inherent constructor in src/de.rs, not deserialize_bool later on the line."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 1933,
+      "shape": "method_call",
+      "text": "writer.write_all(fragment.as_bytes())",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "writer has generic W: io::Write; its write_all target is not bounded to a snapshot implementation."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 1194,
+      "shape": "method_call",
+      "text": "let fas: Vec<EdgeIndex> = greedy_feedback_arc_set(&g).map(|e| e.id()).collect();",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "map is an Iterator adapter from the standard library, outside this snapshot."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "benches/ograph.rs",
+      "line": 9,
+      "shape": "plain_call",
+      "text": "fn bench_inser(b: &mut test::Bencher) {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn bench_inser is a declaration."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 161,
+      "shape": "macro_invocation",
+      "text": "assert!(nx1 != nx2);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/mod.rs",
+      "line": 780,
+      "shape": "method_call",
+      "text": "if pointer.is_empty() {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "pointer is &str; is_empty is a standard-library method outside the snapshot."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/k_shortest_path.rs",
+      "line": 82,
+      "shape": "operator_usage",
+      "text": "G::NodeId: Eq + Hash,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Eq + Hash is a type bound."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graphmap.rs",
+      "line": 227,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(gr.node_count(), 4);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert_eq! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 214,
+      "shape": "plain_call",
+      "text": "fn serialize_unit_variant(",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn serialize_unit_variant is a declaration."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 441,
+      "shape": "path_or_associated_call",
+      "text": "Number::from_f64(value).ok_or_else(|| de::Error::custom(\"not a JSON number\"))",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "Number::from_f64 is the unique inherent constructor in src/number.rs:183."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 618,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(dags_exp, dags);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert_eq! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 700,
+      "shape": "operator_usage",
+      "text": "if key == crate::number::TOKEN {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "key is &str: equality dispatches through standard-library PartialEq for str/references, outside the snapshot; not primitive numeric arithmetic."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/read.rs",
+      "line": 545,
+      "shape": "plain_call",
+      "text": "fn next(&mut self) -> Result<Option<u8>> {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn next is a declaration."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 954,
+      "shape": "macro_invocation",
+      "text": "tri!(self",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "tri! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/de.rs",
+      "line": 683,
+      "shape": "plain_call",
+      "text": "None => Ok(None),",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Ok(None) is a Result variant constructor, not a callable target."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 208,
+      "shape": "path_or_associated_call",
+      "text": "N::Float(_) => None,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "N::Float(_) is a match pattern."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 971,
+      "shape": "operator_usage",
+      "text": "[OSS-fuzz project]: https://android.googlesource.com/platform/external/oss-fuzz/+/refs/tags/android-t-preview-1/projects/rust-regex/",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "OSS-fuzz is documentation prose."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/de.rs",
+      "line": 2232,
+      "shape": "macro_invocation",
+      "text": "deserialize_numeric_key!(deserialize_u8);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "deserialize_numeric_key! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/serialization.rs",
+      "line": 220,
+      "shape": "path_or_associated_call",
+      "text": "next: [EdgeIndex::end(); 2],",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "EdgeIndex::end is the unique inherent method in graph_impl/mod.rs:179; Ix changes the value type, not the callee definition."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/ford_fulkerson.rs",
+      "line": 32,
+      "shape": "macro_invocation",
+      "text": "panic!(\"Illegal endpoint {}\", end_point);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "panic! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/lexical/rounding.rs",
+      "line": 288,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(fp.mant, (1 << 52) + 1);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert_eq! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1541,
+      "shape": "macro_invocation",
+      "text": "assert_eq!(s, expected);",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert_eq! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "tests/suite_string_set.rs",
+      "line": 20,
+      "shape": "path_or_associated_call",
+      "text": "let hay = match std::str::from_utf8(test.haystack()) {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "std::str::from_utf8 is outside the snapshot."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/iso.rs",
+      "line": 209,
+      "shape": "method_call",
+      "text": "let lines = s.lines().filter(|l| !l.is_empty());",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "s is a string slice and lines is a standard-library method outside the snapshot."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/quickcheck.rs",
+      "line": 1091,
+      "shape": "macro_invocation",
+      "text": "assert!(gr2.edge_weight(edge_index(i)).is_none());",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/dot.rs",
+      "line": 66,
+      "shape": "operator_usage",
+      "text": "G: IntoNodeReferences + IntoEdgeReferences,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "IntoNodeReferences + IntoEdgeReferences is a type bound."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/filter.rs",
+      "line": 26,
+      "shape": "fn_pointer_or_closure",
+      "text": "(*self)(n)",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "(*self)(n) invokes a generic Fn callable; concrete callback binding is not established."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/serialization.rs",
+      "line": 166,
+      "shape": "plain_call",
+      "text": "nodes: Somes(node_count, nodes),",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Somes is a tuple-struct construction, not a method/function call."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 132,
+      "shape": "method_call",
+      "text": "let h = gr.add_node(\"H\");",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "gr is Graph::new() at line 131; add_node is Graph's unique inherent method."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1591,
+      "shape": "path_or_associated_call",
+      "text": "let mut g = MatrixGraph::new();",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "MatrixGraph::new is the inherent constructor in matrix_graph.rs:1029."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regex/string.rs",
+      "line": 1033,
+      "shape": "plain_call",
+      "text": "pub fn shortest_match_at(",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "shortest_match_at is a function declaration."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/mod.rs",
+      "line": 743,
+      "shape": "plain_call",
+      "text": "Some(x) => (x.node, x.next),",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Some(x) is a match-arm pattern."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1594,
+      "shape": "method_call",
+      "text": "while let Some((key, value)) = visitor.next_entry()? {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "visitor is generic V: MapAccess; next_entry is dispatch through external serde bounds."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/lib.rs",
+      "line": 766,
+      "shape": "operator_usage",
+      "text": "(?P&lt;name&gt;exp)  named (also numbered) capture group (names must be alpha-numeric)",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "alpha-numeric is documentation prose."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/serialization.rs",
+      "line": 278,
+      "shape": "macro_invocation",
+      "text": "E::custom(format_args!(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "format_args! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/macros.rs",
+      "line": 211,
+      "shape": "fn_pointer_or_closure",
+      "text": "(@object $object:ident () (: $($rest:tt)*) ($colon:tt $($copy:tt)*)) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "The match is macro_rules token-pattern syntax, not an evaluated call."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/error.rs",
+      "line": 391,
+      "shape": "plain_call",
+      "text": "fn source(&self) -> Option<&(dyn error::Error + 'static)> {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn source is a declaration."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 821,
+      "shape": "path_or_associated_call",
+      "text": "if Ty::is_directed() {",
+      "true_class": "may",
+      "confidence": "high",
+      "rationale": "Ty: EdgeType has two in-snapshot is_directed implementations: Directed and Undirected in lib.rs:217/224. No exact Ty is established."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/matrix_graph.rs",
+      "line": 1365,
+      "shape": "method_call",
+      "text": "g.add_edge(n1, n0, ());",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "g is DiMatrix::<u8, ()>::with_capacity(3); add_edge is MatrixGraph's inherent method."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 2525,
+      "shape": "path_or_associated_call",
+      "text": "let outer = Outer::deserialize(serde::de::value::MapDeserializer::new(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "Outer::deserialize is generated by a derive macro, not an independently present callable body."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 55,
+      "shape": "operator_usage",
+      "text": "match *self {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "The matched match *self dereferences &N for a match; it is not an overloaded operator call."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/matching.rs",
+      "line": 76,
+      "shape": "method_call",
+      "text": "collect(m.edges()),",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "m is the concrete Matching returned by greedy_matching; edges is its unique inherent method (algo/matching.rs:46). The assertion macro surrounding the expression does not add a competing edges definition."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/serialization.rs",
+      "line": 212,
+      "shape": "method_call",
+      "text": "deserializer.deserialize_seq(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "deserializer is generic D: Deserializer; deserialize_seq is dispatch through an external serde trait."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/tred.rs",
+      "line": 124,
+      "shape": "method_call",
+      "text": "tred.add_edge(i, x, ());",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "tred is List::with_capacity at line 112; add_edge is the inherent List method in adj.rs:226."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 1926,
+      "shape": "path_or_associated_call",
+      "text": "Value::deserialize(&mut deserializer).unwrap();",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "Value has a handwritten Deserialize implementation at src/value/de.rs:22; Value::deserialize selects that single implementation."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/dot.rs",
+      "line": 328,
+      "shape": "macro_invocation",
+      "text": "let dot = format!(\"{:?}\", Dot::with_config(&graph, &[Config::NodeNoLabel]));",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "format! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/error.rs",
+      "line": 37,
+      "shape": "path_or_associated_call",
+      "text": "Error::CompiledTooBig(size_limit)",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Error::CompiledTooBig is an enum-variant constructor."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "tests/test.rs",
+      "line": 628,
+      "shape": "path_or_associated_call",
+      "text": "let mut de = Deserializer::from_str(&twoline);",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "Deserializer::from_str is the inherent constructor in src/de.rs."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "tests/graph.rs",
+      "line": 124,
+      "shape": "operator_usage",
+      "text": "seen_k |= k == node;",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "k and node are NodeIndex values. Their PartialEq implementation is derive-generated (graph_impl/mod.rs:103), not an explicit body; this is not primitive equality."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/algo/page_rank.rs",
+      "line": 62,
+      "shape": "macro_invocation",
+      "text": "assert!(",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "assert! is an unexpanded macro invocation."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/number.rs",
+      "line": 746,
+      "shape": "plain_call",
+      "text": "fn from(u: $ty) -> Self {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn from is a declaration in a macro body."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graphmap.rs",
+      "line": 1238,
+      "shape": "operator_usage",
+      "text": "N: Copy + Ord + Hash,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Copy + Ord + Hash is a type bound."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/graph_impl/stable_graph/serialization.rs",
+      "line": 115,
+      "shape": "operator_usage",
+      "text": "Ix: IndexType + Deserialize<'de>,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "IndexType + Deserialize is a type bound."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 455,
+      "shape": "method_call",
+      "text": ".end_string(&mut self.writer)",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "F: Formatter uses end_string. Both in-snapshot implementors CompactFormatter and PrettyFormatter inherit the same default method (ser.rs:1747); there is no override in the snapshot. External implementations are outside the stated snapshot assumption."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/value/de.rs",
+      "line": 581,
+      "shape": "path_or_associated_call",
+      "text": "Some(Value::Array(v)) => {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Value::Array(v) is inside a match pattern."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/ser.rs",
+      "line": 979,
+      "shape": "method_call",
+      "text": ".write_u32(&mut self.ser.writer, value)",
+      "true_class": "must",
+      "confidence": "high",
+      "rationale": "F: Formatter uses write_u32. Both snapshot implementors inherit the single default at ser.rs:1644 with no override. tri! surrounding the expression does not introduce another method target."
+    },
+    {
+      "crate": "serde_json-1.0.150",
+      "file": "src/read.rs",
+      "line": 778,
+      "shape": "plain_call",
+      "text": "fn position(&self) -> Position {",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "fn position is a declaration."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/regexset/string.rs",
+      "line": 679,
+      "shape": "plain_call",
+      "text": "return Some(id);",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "Some(id) is an Option variant constructor."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/visit/traversal.rs",
+      "line": 380,
+      "shape": "operator_usage",
+      "text": "G: GraphRef + Visitable<NodeId = N, Map = VM>,",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "GraphRef + Visitable is a type bound."
+    },
+    {
+      "crate": "regex-1.12.4",
+      "file": "src/find_byte.rs",
+      "line": 6,
+      "shape": "operator_usage",
+      "text": "#[cfg(not(feature = \"perf-literal\"))]",
+      "true_class": "not_a_call_site",
+      "confidence": "high",
+      "rationale": "perf-literal is text in a cfg attribute, not an operator expression."
+    },
+    {
+      "crate": "petgraph-0.6.5",
+      "file": "src/scored.rs",
+      "line": 42,
+      "shape": "method_call",
+      "text": "} else if a.ne(a) && b.ne(b) {",
+      "true_class": "unknown",
+      "confidence": "high",
+      "rationale": "a is &K with K: PartialOrd; ne dispatches through generic PartialEq and has no bounded concrete implementation in this snapshot."
+    }
+  ]
+}
