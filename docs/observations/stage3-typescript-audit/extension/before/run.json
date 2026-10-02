@@ -1,0 +1,123 @@
+{
+  "revision": "e1f911b4283ed2dc576d9275ef98d60668e8cb43",
+  "binary_sha256": "da59183f4543a51a48e584e43ed06fcb76f5d6fc21ce8ba4b4763d000442f552",
+  "commands": [
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-extension-20261002/typescript-6.0.3",
+        "--json"
+      ],
+      "stdout": "typescript-6.0.3-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 580.707,
+      "stdout_sha256": "e03cbafa7afd3aa491cbf9f4b4e55f35d4b67267a0026f93a1a42058348defa2"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-extension-20261002/typescript-6.0.3/project.aether",
+        "--json"
+      ],
+      "stdout": "typescript-6.0.3-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 8.363,
+      "stdout_sha256": "f996ff333c435fd5bda0ed551328d10f142869d67bf2d98035f9ef56fc046f6b"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-extension-20261002/zod-3.23.8",
+        "--json"
+      ],
+      "stdout": "zod-3.23.8-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 6.474,
+      "stdout_sha256": "54ed3ed98aa6aca8d7a369972c36ac04618e6d8693002df37b286d935f99017f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-extension-20261002/zod-3.23.8/project.aether",
+        "--json"
+      ],
+      "stdout": "zod-3.23.8-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 0.891,
+      "stdout_sha256": "39ba91433f4e8c0ced5b50e001f960cdec0f94fc034600dc9fb34a29df9f4573"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-extension-20261002/date-fns-4.1.0",
+        "--json"
+      ],
+      "stdout": "date-fns-4.1.0-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 23.242,
+      "stdout_sha256": "0425ae14e175dc3b08ea10f3bee69cc47cbb1bc56d1bfaac040dd3b13a454e7e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-extension-20261002/date-fns-4.1.0/project.aether",
+        "--json"
+      ],
+      "stdout": "date-fns-4.1.0-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 2.856,
+      "stdout_sha256": "8f1c85252caebfd0fae41d48293d13315ae0cac3a2628d66565544179cd3f6fe"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-typescript-extension-20261002/class-validator-0.15.1",
+        "--json"
+      ],
+      "stdout": "class-validator-0.15.1-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 3.057,
+      "stdout_sha256": "8ad5a5524a89851d3cfbbd23e948d279a71830122eb9196903ea08d534bb29a2"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-typescript-extension-20261002/class-validator-0.15.1/project.aether",
+        "--json"
+      ],
+      "stdout": "class-validator-0.15.1-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 0.429,
+      "stdout_sha256": "6369c04e98904399292e0328c1db311ee28f2ee3607b3d9c7f809d9a4e98a35c"
+    }
+  ],
+  "status": "measured",
+  "original_cells": {
+    "conservative": 46,
+    "exact": 51
+  },
+  "combined_cells": {
+    "conservative": 47,
+    "exact": 53
+  },
+  "acceptance": {
+    "minimum_real_sites": 100,
+    "scored": 100,
+    "not_a_call_site": 10,
+    "all_sites_accounted_for": true,
+    "unsound": 0,
+    "must_numerator": 0,
+    "must_denominator": 0,
+    "must_precision": null,
+    "passed": false
+  },
+  "changed_original_answers": 0
+}
