@@ -1,0 +1,13 @@
+{
+  "command": "python3 -m unittest tools.test_dispatch_corpus_scorer -q",
+  "exit_status": 0,
+  "passed": 14,
+  "scorer_sha256": "6d63e648907481cabb854acc544105e8e36616bd77fccb843418346e9db13c33",
+  "tests_sha256": "bd5fa56ff504347d669eafd18a0297921b5235f619fbde833f8cd9d9ce8ff01c",
+  "coverage": [
+    "Missing and ambiguous origins retain language",
+    "Selection failures retain language",
+    "Known and legacy unattributed failures are counted",
+    "Scored precision and recall remain unchanged"
+  ]
+}

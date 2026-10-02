@@ -1,4 +1,8 @@
 import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from tools import dispatch_corpus_scorer as scorer
 
 from tools.dispatch_corpus_scorer import cell_label, confusion_matrix, observed_class
 
@@ -103,6 +107,41 @@ class ConfusionMatrixUnitTests(unittest.TestCase):
         self.assertEqual(matrix["pooled"]["failed"], 1)
         self.assertEqual(matrix["pooled"]["exact"], 1)
         self.assertEqual(matrix["total_test_cells"], 2)
+        self.assertEqual(matrix["unattributed_failed_cases"], 1)
+
+
+class FailureLanguageTests(unittest.TestCase):
+    def test_all_case_failure_paths_keep_the_declared_language(self):
+        case = {
+            "id": "typescript-failure", "language": "typescript",
+            "fixture_dir": "fixtures/dispatch-corpus/typescript/structural-object-literal",
+            "origin": {"symbol": "name"}, "tests": [],
+        }
+        for resolution in [None, ["crate::A::name", "crate::B::name"], "crate::name"]:
+            with self.subTest(resolution=resolution), patch.object(scorer, "resolve_symbol", return_value=resolution), patch.object(scorer, "classified_selection", side_effect=RuntimeError("selection failed")):
+                result = scorer.score_case(Path("unused-binary"), case)
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["language"], "typescript")
+            matrix = scorer.confusion_matrix([result])
+            self.assertEqual(matrix["pooled"]["failed"], 1)
+            self.assertEqual(matrix["per_language"]["typescript"]["failed"], 1)
+            self.assertEqual(matrix["unattributed_failed_cases"], 0)
+            self.assertIsNone(matrix["must_precision_on_corpus"])
+
+    def test_known_and_legacy_failures_preserve_scored_metrics(self):
+        good = {"id": "good", "language": "rust", "status": "scored", "tests": [
+            {"status": "scored", "expected": "must", "observed": "must", "cell": "exact"}
+        ]}
+        failed = {"id": "bad", "language": "typescript", "status": "failed"}
+        legacy = {"id": "legacy", "status": "failed"}
+        matrix = scorer.confusion_matrix([good, failed, legacy])
+        self.assertEqual(matrix["pooled"]["failed"], 2)
+        self.assertEqual(matrix["per_language"]["typescript"]["failed"], 1)
+        self.assertEqual(matrix["per_language"]["rust"]["exact"], 1)
+        self.assertEqual(matrix["unattributed_failed_cases"], 1)
+        self.assertEqual(matrix["must_true_positives"], 1)
+        self.assertEqual(matrix["must_precision_on_corpus"], 1.0)
+        self.assertEqual(matrix["must_or_may_recall_on_corpus"], 1.0)
 
 
 if __name__ == "__main__":

@@ -139,19 +139,21 @@ def score_case(binary: Path, case: Mapping[str, object]) -> dict[str, object]:
     if origin_path is None:
         return {
             "id": case["id"],
+            "language": case["language"],
             "status": "failed",
             "reason": f"could not resolve origin symbol {origin['symbol']!r} in {project_dir}",  # type: ignore[index]
         }
     if isinstance(origin_path, list):
         return {
             "id": case["id"],
+            "language": case["language"],
             "status": "failed",
             "reason": f"origin symbol {origin['symbol']!r} is ambiguous: {origin_path}",  # type: ignore[index]
         }
     try:
         selection = classified_selection(binary, project_dir, origin_path)
     except RuntimeError as error:
-        return {"id": case["id"], "status": "failed", "reason": str(error)}
+        return {"id": case["id"], "language": case["language"], "status": "failed", "reason": str(error)}
 
     test_results = []
     for test in case["tests"]:  # type: ignore[union-attr]
@@ -197,6 +199,7 @@ def confusion_matrix(results: Sequence[Mapping[str, object]]) -> dict[str, objec
     # "must" is a false positive -- a false single-target claim, regardless
     # of whether the truth was may, unknown, or excluded.
     must_tp = must_fp = 0
+    unattributed_failed_cases = 0
     # Must-or-May recall: of the cells whose true class was must or may (a
     # genuinely reachable, classifiable call), how many did Girder land in
     # must or may (rather than flooding to unknown, which is safe but
@@ -205,6 +208,14 @@ def confusion_matrix(results: Sequence[Mapping[str, object]]) -> dict[str, objec
     for case in results:
         if case.get("status") != "scored":
             pooled["failed"] += 1
+            lang = case.get("language")
+            if isinstance(lang, str) and lang:
+                per_language.setdefault(lang, {k: 0 for k in cell_kinds})
+                per_language[lang]["failed"] += 1
+            else:
+                # Historical rows omitted language; never silently assign a
+                # language or imply all per-language failures were counted.
+                unattributed_failed_cases += 1
             continue
         lang = case["language"]
         per_language.setdefault(lang, {k: 0 for k in cell_kinds})
@@ -231,6 +242,7 @@ def confusion_matrix(results: Sequence[Mapping[str, object]]) -> dict[str, objec
         "pooled": pooled,
         "pooled_unsound_total": unsound_total,
         "per_language": per_language,
+        "unattributed_failed_cases": unattributed_failed_cases,
         "total_test_cells": total,
         "exact_match_rate": round(pooled["exact"] / total, 6) if total else None,
         "must_true_positives": must_tp,
