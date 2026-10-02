@@ -1,0 +1,23 @@
+rust {"cells": {"exact": 61, "conservative": 39}, "acceptance": {"minimum_real_sites": 100, "scored": 100, "not_a_call_site": 83, "all_sites_accounted_for": true, "unsound": 0, "must_numerator": 1, "must_denominator": 1, "must_precision": 1.0, "passed": true}, "changed_answers": 4}
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/corymaynard370/Bit-code/tools/run_operator_audit_correction.py", line 77, in <module>
+    main()
+  File "/home/corymaynard370/Bit-code/tools/run_operator_audit_correction.py", line 46, in main
+    proc = subprocess.run(argv, stdout=out, stderr=err, timeout=600)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/subprocess.py", line 1207, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/subprocess.py", line 2085, in _communicate
+    self.wait(timeout=self._remaining_time(endtime))
+  File "/usr/lib/python3.11/subprocess.py", line 1262, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/subprocess.py", line 1991, in _wait
+    time.sleep(delay)
+KeyboardInterrupt

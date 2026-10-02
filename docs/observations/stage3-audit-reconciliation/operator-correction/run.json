@@ -1,0 +1,144 @@
+{
+  "candidate": {
+    "revision": "c441899e0807559bcd6eaf6f7f3e056a9c018bf7",
+    "binary": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+    "binary_sha256": "da59183f4543a51a48e584e43ed06fcb76f5d6fc21ce8ba4b4763d000442f552",
+    "policy_sha256": "51e3e3fb2593133e5e93d4e701ee2692b9ae535f01ec8cc8a120ed08571510d5",
+    "labels_manifest_sha256": "eb50ea8fb602bb3a45e79253a3eb53e08cc2095d2a5a6d95b8ef4ba1b3101533",
+    "runner_sha256": "d2f996eee28eee04b282f04addf6852bb8d1b18c3afcb9f409bf8cd4ce495a1d",
+    "environment": {
+      "CARGO_BUILD_JOBS": "1",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target",
+      "CARGO_HOME": "/mnt/chromeos/removable/MOVESPEED/.cargo",
+      "RUSTUP_HOME": "/mnt/chromeos/removable/MOVESPEED/.rustup"
+    }
+  },
+  "commands": [
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/petgraph-0.6.5/petgraph-0.6.5",
+        "--json"
+      ],
+      "stdout": "petgraph-0.6.5-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 5.335,
+      "stdout_sha256": "f3fc1ecb3281ebe025550279e379059626c2db9b8dd37586b37ddaed70b594d5"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-audit-reconciliation-20261001/petgraph-0.6.5/petgraph-0.6.5/project.aether",
+        "--json"
+      ],
+      "stdout": "petgraph-0.6.5-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 0.484,
+      "stdout_sha256": "5f2549ede993e8aff62b3944b087486924ba546b948f55e853735a1228975269"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/serde_json-1.0.150/serde_json-1.0.150",
+        "--json"
+      ],
+      "stdout": "serde_json-1.0.150-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 3.389,
+      "stdout_sha256": "e7c640bd22dcc26c1805e2767dcfb6b11499ba2d7ec8d57cc58a99f9c6eb9959"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-audit-reconciliation-20261001/serde_json-1.0.150/serde_json-1.0.150/project.aether",
+        "--json"
+      ],
+      "stdout": "serde_json-1.0.150-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 0.421,
+      "stdout_sha256": "df2b18ba17f3fc4d7077340d7c5614997c3ef0e27ef257398a0b30d9bfa04062"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/regex-1.12.4/regex-1.12.4",
+        "--json"
+      ],
+      "stdout": "regex-1.12.4-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 1.279,
+      "stdout_sha256": "1d67084f3744b7f190cca311314f8dc2ea1cebb26b33a91232f7de266d663c48"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-audit-reconciliation-20261001/regex-1.12.4/regex-1.12.4/project.aether",
+        "--json"
+      ],
+      "stdout": "regex-1.12.4-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 0.181,
+      "stdout_sha256": "a968e7da002b97c823f672987e2d6719465610d08f3637406eaa6b714518c00e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/click-8.4.1/click-8.4.1",
+        "--json"
+      ],
+      "stdout": "click-8.4.1-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 6.589,
+      "stdout_sha256": "0af04e5d0bc334b15682e032db29ebde7316824fb1bbf6165a991c89ba8e58b4"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-audit-reconciliation-20261001/click-8.4.1/click-8.4.1/project.aether",
+        "--json"
+      ],
+      "stdout": "click-8.4.1-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 0.581,
+      "stdout_sha256": "c4278c4e9030d494d4bea5d9be803fea5ed9dca824c95367bc63717369f3cc9a"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/pydantic-2.13.4/pydantic-2.13.4",
+        "--json"
+      ],
+      "stdout": "pydantic-2.13.4-analyze.json.gz"
+    }
+  ],
+  "languages": {
+    "rust": {
+      "cells": {
+        "exact": 61,
+        "conservative": 39
+      },
+      "acceptance": {
+        "minimum_real_sites": 100,
+        "scored": 100,
+        "not_a_call_site": 83,
+        "all_sites_accounted_for": true,
+        "unsound": 0,
+        "must_numerator": 1,
+        "must_denominator": 1,
+        "must_precision": 1.0,
+        "passed": true
+      },
+      "changed_answers": 4
+    }
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "changes": [
+    {
+      "before": {
+        "index": 3,
+        "crate": "petgraph-0.6.5",
+        "file": "benches/bellman_ford.rs",
+        "line": 46,
+        "shape": "operator_usage",
+        "true_class": "unknown",
+        "confidence": "high",
+        "byte_offset": 1388,
+        "status": "scored",
+        "observed_class": "unknown",
+        "observed_reason": "rust-binding-or-dispatch-unproven",
+        "observed_caller": "crate::benches::bellman_ford::find_negative_cycle_bench",
+        "cell": "exact"
+      },
+      "after": {
+        "index": 3,
+        "crate": "petgraph-0.6.5",
+        "file": "benches/bellman_ford.rs",
+        "line": 46,
+        "shape": "operator_usage",
+        "true_class": "unknown",
+        "confidence": "high",
+        "byte_offset": 1388,
+        "status": "scored",
+        "observed_class": "unknown",
+        "observed_reason": "rust-implicit-operator-dispatch-not-certified",
+        "observed_caller": "crate::benches::bellman_ford::find_negative_cycle_bench",
+        "cell": "exact"
+      }
+    },
+    {
+      "before": {
+        "index": 113,
+        "crate": "petgraph-0.6.5",
+        "file": "src/algo/ford_fulkerson.rs",
+        "line": 193,
+        "shape": "operator_usage",
+        "true_class": "unknown",
+        "confidence": "high",
+        "byte_offset": 6243,
+        "status": "scored",
+        "observed_class": "excluded",
+        "observed_reason": null,
+        "observed_caller": null,
+        "cell": "unsafe_exclusion"
+      },
+      "after": {
+        "index": 113,
+        "crate": "petgraph-0.6.5",
+        "file": "src/algo/ford_fulkerson.rs",
+        "line": 193,
+        "shape": "operator_usage",
+        "true_class": "unknown",
+        "confidence": "high",
+        "byte_offset": 6243,
+        "status": "scored",
+        "observed_class": "unknown",
+        "observed_reason": "rust-implicit-operator-dispatch-not-certified",
+        "observed_caller": "crate::algo::ford_fulkerson::ford_fulkerson",
+        "cell": "exact"
+      }
+    },
+    {
+      "before": {
+        "index": 133,
+        "crate": "serde_json-1.0.150",
+        "file": "src/ser.rs",
+        "line": 700,
+        "shape": "operator_usage",
+        "true_class": "unknown",
+        "confidence": "high",
+        "byte_offset": 19054,
+        "status": "scored",
+        "observed_class": "unknown",
+        "observed_reason": "duplicate-semantic-path",
+        "observed_caller": "crate::ser",
+        "cell": "exact"
+      },
+      "after": {
+        "index": 133,
+        "crate": "serde_json-1.0.150",
+        "file": "src/ser.rs",
+        "line": 700,
+        "shape": "operator_usage",
+        "true_class": "unknown",
+        "confidence": "high",
+        "byte_offset": 19054,
+        "status": "scored",
+        "observed_class": "unknown",
+        "observed_reason": "rust-implicit-operator-dispatch-not-certified",
+        "observed_caller": "crate::ser::Compound<'a, W, F>::serialize_field@SerializeStruct",
+        "cell": "exact"
+      }
+    },
+    {
+      "before": {
+        "index": 170,
+        "crate": "petgraph-0.6.5",
+        "file": "tests/graph.rs",
+        "line": 124,
+        "shape": "operator_usage",
+        "true_class": "unknown",
+        "confidence": "high",
+        "byte_offset": 3190,
+        "status": "scored",
+        "observed_class": "excluded",
+        "observed_reason": null,
+        "observed_caller": null,
+        "cell": "unsafe_exclusion"
+      },
+      "after": {
+        "index": 170,
+        "crate": "petgraph-0.6.5",
+        "file": "tests/graph.rs",
+        "line": 124,
+        "shape": "operator_usage",
+        "true_class": "unknown",
+        "confidence": "high",
+        "byte_offset": 3190,
+        "status": "scored",
+        "observed_class": "unknown",
+        "observed_reason": "rust-implicit-operator-dispatch-not-certified",
+        "observed_caller": "crate::tests::graph::dfs_order",
+        "cell": "exact"
+      }
+    }
+  ]
+}
