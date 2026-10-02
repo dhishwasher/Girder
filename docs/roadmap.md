@@ -273,7 +273,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | --- | --- | --- | --- |
 | Rust | **DONE — corrected 100-site checkpoint** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) and [retained failed extension](observations/stage3-audit-reconciliation/observation/summary.md) | Stage 2 |
 | Python | **DONE — corrected 100-site checkpoint** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) | Rust trustworthy on a real repository |
-| TypeScript | IN PROGRESS (expanded before-observation: 0/100 unsound, 0 Must; resolver design not yet started) | [methodology](observations/stage3-typescript-audit/methodology.md) + addenda + [rubric](observations/stage3-typescript-audit/labeling-rubric.md) / [before-observation](observations/stage3-typescript-audit/before-observation.md) + [100-site baseline](observations/stage3-typescript-audit/extension/before/observation.md) | Python trustworthy on a real repository |
+| TypeScript | IN PROGRESS (100-site audit: 0 unsound, 2/2 correct Must, 98 Unknown; dispatch improvement and common gates pending) | [100-site baseline](observations/stage3-typescript-audit/extension/before/observation.md) / [lexical-proof after-audit](observations/stage3-typescript-audit/lexical-bindings/bindings-after-1/observation.md) + [retained false-Must baseline](observations/stage3-typescript-audit/lexical-bindings/before-observation.md) + [unchanged dispatch results](observations/stage3-typescript-audit/lexical-bindings/corpus-observation.md) | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
 Use existing pinned Rust repositories and Click first; pin TypeScript compiler
@@ -441,15 +441,17 @@ common gates. **Observation:**
 [after-observation.md](observations/stage3-rust-audit/after-method-call-fix/after-observation.md)
 (historical after-result, not current stage-completion proof).
 **Current completion evidence:** [corrected Rust/Python audits](observations/stage3-audit-reconciliation/after-observation.md)
-include current-candidate corpus results and all four passing gates.
-**Blockers for the next language:** TypeScript now has 100 actual sites but no
-proven Must in its audit and a failed structural-object-literal corpus origin.
-The literal-title registration identity loss is repaired and measured in
-[observation `e4a5316`](observations/stage3-typescript-audit/identity-repair/observation.md);
-this is an intermediate extraction result, not language completion.
-**Next:** precommit lexical-binding proofs and hostile cases, then implement
-binding proofs and structural target extraction. Preserve the expanded baseline
-and failed case; rerun full language measurements and common gates at completion.
+include their checkpoint-candidate corpus results and all four passing gates.
+**Blockers for the next language:** TypeScript's unchanged 100-site audit now
+has two correct Must targets and 98 Unknown answers, with zero scored unsound
+answers. Its dispatch-corpus result has not improved, and the structural-object-
+literal origin remains unresolved. The registration identity loss and four
+runtime-demonstrated lexical-binding false Must claims have been repaired and
+measured; the failed baselines remain public.
+**Next:** precommit structural-member extraction and the next dispatch proof
+rules. Preserve the ambiguous/missing-origin failure rather than choosing a
+same-spelled target to make it pass. Re-measure after the next implementation
+and run the common gates before claiming language completion.
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 
@@ -550,6 +552,36 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-02 — Real-audit improvement verified; dispatch failure remains
+
+Implementation `5733be6`; [real-audit observation `1c10eff`](observations/stage3-typescript-audit/lexical-bindings/bindings-after-1/observation.md).
+Fresh pinned source inventories and every frozen input matched. On 100 actual
+calls (plus ten retained noncalls), the audit improved **53 → 55 exact** and
+**47 → 45 conservative**, with zero scored unsound answers. The only class
+changes were indices 37 and 91: `popNameGenerationScope` and
+`verifySolutionScenario` now resolve to their frozen, source-checked targets.
+Must precision is **2/2**, with **98 Unknown**. This small denominator is not
+broad accuracy evidence; May recall is undefined because there are no expected
+May sites in this sample. All raw outputs, changed rows, and timing limits are
+published. The separate 22-case proof corpus still has 22/22 exact answers and
+19 passing executable probes; all four demonstrated false Must baselines remain.
+
+[Dispatch observation `7f8b18b`](observations/stage3-typescript-audit/lexical-bindings/corpus-observation.md)
+attempted all 49 unchanged cases: 22 exact, 34 conservative, zero unsound, and
+one unresolved structural-object-literal origin. There is **no dispatch-corpus
+improvement yet**. [Reporting correction `55f989a`](observations/stage3-typescript-audit/lexical-bindings/corpus-reporting-correction.md)
+fixes missing language metadata/counting for failed cases: the failure is now
+explicitly attributed to TypeScript. Fourteen reporting tests passed. No Girder
+rerun or observed-class change was used for that correction; old reports remain.
+
+Next: precommit structural-member extraction and further dispatch proofs,
+retaining ambiguous-origin refusals and every failed case. Re-measure changed
+behavior and run the four common language gates before completion. The existing
+146 passing builder tests and two-correct-Must audit do not by themselves satisfy
+all language criteria. TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+The following checkpoints are historical.
+
 
 ### 2026-10-02 — CLI lexical-proof contract passed; repository audit next
 
