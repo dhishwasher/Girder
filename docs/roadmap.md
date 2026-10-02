@@ -443,9 +443,13 @@ common gates. **Observation:**
 **Current completion evidence:** [corrected Rust/Python audits](observations/stage3-audit-reconciliation/after-observation.md)
 include current-candidate corpus results and all four passing gates.
 **Blockers for the next language:** TypeScript now has 100 actual sites but no
-proven Must in its audit, plus unresolved node identities and a failed corpus origin.
-**Next:** profile the proof gates behind its 47 conservative Must sites and
-precommit resolver changes; preserve the expanded baseline and failed case.
+proven Must in its audit and a failed structural-object-literal corpus origin.
+The literal-title registration identity loss is repaired and measured in
+[observation `e4a5316`](observations/stage3-typescript-audit/identity-repair/observation.md);
+this is an intermediate extraction result, not language completion.
+**Next:** precommit lexical-binding proofs and hostile cases, then implement
+binding proofs and structural target extraction. Preserve the expanded baseline
+and failed case; rerun full language measurements and common gates at completion.
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 
@@ -546,6 +550,30 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-02 — Registration bodies recovered on real source
+
+Implementation `67d65f6` and [observation `e4a5316`](observations/stage3-typescript-audit/identity-repair/observation.md)
+are committed. The unchanged original collision fixture now retains four tests
+instead of three; the precommitted harder fixture retains all five. On the
+unchanged real source files, date-fns retains 89 tests instead of 47 and the
+TypeScript compiler file retains 30 instead of 26: **46 recovered test bodies**,
+with no previously retained registration offset lost. No duplicate-path boundary
+remains in these four analyzed files.
+
+Seven focused builder tests and the rebuilt CLI checks passed. Source fingerprints
+were checked against the preserved baseline; raw outputs and commands are public.
+Audit sites 23 and 91 now have the correct test owner, but remain Unknown. The
+real files were analyzed in isolation: this does not establish whole-project
+resolution, a new 100-site audit result, or passage of the four common gates.
+Registration IDs change and graphs need rebuilding; identical sibling insertion
+or reordering can still rekey IDs, as precommitted.
+
+Next: freeze lexical-binding proof rules and adversarial cases, implement the
+remaining binding/structural extraction work, and run the complete dispatch
+corpus, 100-site audit, and common gates. TypeScript remains IN PROGRESS; Go
+remains NOT STARTED. The following checkpoints are historical.
+
 
 ### 2026-10-02 — TypeScript registration identity repair in progress
 
