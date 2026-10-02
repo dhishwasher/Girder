@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/corymaynard370/Bit-code/tools/prepare_typescript_audit_extension.py", line 78, in <module>
+    main()
+  File "/home/corymaynard370/Bit-code/tools/prepare_typescript_audit_extension.py", line 37, in main
+    path = acquire_artifact(artifact, CACHE, offline=False, timeout_seconds=120)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/corymaynard370/Bit-code/tools/core_representative_benchmark.py", line 326, in acquire_artifact
+    download_artifact(
+  File "/home/corymaynard370/Bit-code/tools/core_representative_benchmark.py", line 368, in download_artifact
+    raise RuntimeError(
+RuntimeError: artifact Content-Length mismatch: expected 33894793, got None

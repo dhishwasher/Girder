@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import random
 import re
+import tempfile
+import urllib.request
 
-from tools.core_representative_benchmark import acquire_artifact
+from tools.core_representative_benchmark import acquire_artifact, ensure_cache_directory, RejectRedirects
 from tools.dispatch_audit_reconciliation import BASE, combine, identity, sha, write
 from tools import dispatch_audit_site_selector_typescript as selector
 
@@ -16,6 +19,41 @@ ORIGINAL = OUT.parent / 'audit-sites-labeled.json'
 MANIFEST = BASE / 'docs/stage3-typescript-corpus.json'
 CACHE = BASE / '.benchmark-cache/stage3-typescript-v1'
 WORK = Path('/tmp/girder-typescript-extension-20261002')
+
+
+def acquire_tag(artifact: dict) -> Path:
+    """Bound the actual response body even when codeload omits Content-Length."""
+    ensure_cache_directory(CACHE)
+    destination = CACHE / f"{artifact['sha256']}.tar.gz"
+    if destination.exists():
+        return acquire_artifact(artifact, CACHE, offline=True, timeout_seconds=120)
+    request = urllib.request.Request(artifact['url'], headers={'Accept-Encoding': 'identity'})
+    opener = urllib.request.build_opener(RejectRedirects())
+    descriptor, name = tempfile.mkstemp(prefix='.acquire-', dir=CACHE)
+    temporary = Path(name)
+    received = 0
+    try:
+        with os.fdopen(descriptor, 'wb') as output, opener.open(request, timeout=120) as response:
+            if response.status != 200 or response.geturl() != artifact['url']:
+                raise RuntimeError('unexpected archive response')
+            if response.headers.get('Content-Encoding') not in {None, '', 'identity'}:
+                raise RuntimeError('unexpected archive encoding')
+            length = response.headers.get('Content-Length')
+            if length is not None and int(length) != artifact['bytes']:
+                raise RuntimeError('archive declared size mismatch')
+            while chunk := response.read(64 * 1024):
+                received += len(chunk)
+                if received > artifact['bytes']:
+                    raise RuntimeError('archive exceeded pinned size')
+                output.write(chunk)
+            output.flush()
+            os.fsync(output.fileno())
+        if received != artifact['bytes'] or sha(temporary) != artifact['sha256']:
+            raise RuntimeError('archive actual size or SHA mismatch')
+        os.replace(temporary, destination)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return destination
 
 
 def main() -> None:
@@ -31,10 +69,10 @@ def main() -> None:
             if match is None:
                 raise ValueError('expected a pinned GitHub tag archive')
             owner, name, tag = match.groups()
-            # Request GitHub's archive endpoint directly. The shared downloader
-            # continues to reject redirects and enforce the original size/SHA.
+            # Request GitHub's archive endpoint directly, rejecting redirects
+            # and enforcing the original body size/SHA.
             artifact['url'] = f'https://codeload.github.com/{owner}/{name}/tar.gz/refs/tags/{tag}'
-            path = acquire_artifact(artifact, CACHE, offline=False, timeout_seconds=120)
+            path = acquire_tag(artifact)
             print(repo['id'], sha(path), flush=True)
         return
     original = json.loads(ORIGINAL.read_text())['sites']
