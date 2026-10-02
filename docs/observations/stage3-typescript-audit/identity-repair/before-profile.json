@@ -1,0 +1,109 @@
+{
+  "candidate": "f741f53",
+  "labels_sha256": "c3979bb15d2040da7a006051bde99374566cbd01e94b62f33bee3f921999c0eb",
+  "method": "Counts from frozen source-reviewed labels; scope annotations reviewed against pinned source. This is not an instrumented run of proof gates. Restrictions overlap; counts are not causal attribution.",
+  "actual_calls": 100,
+  "observed_must": 0,
+  "expected_must": 47,
+  "expected_must_shapes": {
+    "decorator": 15,
+    "new_expression": 5,
+    "optional_chaining_call": 3,
+    "plain_call": 11,
+    "method_call": 7,
+    "qualified_attribute_call": 6
+  },
+  "cross_file_targets": 37,
+  "same_file_targets": [
+    {
+      "index": 1,
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/custom-decorators.spec.ts",
+      "line": 49,
+      "shape": "decorator",
+      "true_target": "test/functional/custom-decorators.spec.ts:11",
+      "restriction": "target function is nested, excluded from top-level proof candidate set"
+    },
+    {
+      "index": 2,
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/custom-decorators.spec.ts",
+      "line": 134,
+      "shape": "decorator",
+      "true_target": "test/functional/custom-decorators.spec.ts:109",
+      "restriction": "target function is nested, excluded from top-level proof candidate set"
+    },
+    {
+      "index": 3,
+      "package": "class-validator-0.15.1",
+      "file": "test/functional/nested-validation.spec.ts",
+      "line": 200,
+      "shape": "new_expression",
+      "true_target": "test/functional/nested-validation.spec.ts:178",
+      "restriction": "constructor targets are not top-level function declarations"
+    },
+    {
+      "index": 32,
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/checker.ts",
+      "line": 29877,
+      "shape": "plain_call",
+      "true_target": "src/compiler/checker.ts:29884",
+      "restriction": "target function is nested, excluded from top-level proof candidate set"
+    },
+    {
+      "index": 37,
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/emitter.ts",
+      "line": 2282,
+      "shape": "plain_call",
+      "true_target": "src/compiler/emitter.ts:5313",
+      "restriction": "target function is nested, excluded from top-level proof candidate set"
+    },
+    {
+      "index": 38,
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/emitter.ts",
+      "line": 2798,
+      "shape": "plain_call",
+      "true_target": "src/compiler/emitter.ts:1463",
+      "restriction": "target function is nested, excluded from top-level proof candidate set"
+    },
+    {
+      "index": 39,
+      "package": "typescript-6.0.3",
+      "file": "src/compiler/emitter.ts",
+      "line": 4280,
+      "shape": "plain_call",
+      "true_target": "src/compiler/emitter.ts:4877",
+      "restriction": "target function is nested, excluded from top-level proof candidate set"
+    },
+    {
+      "index": 83,
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/compileOnSave.ts",
+      "line": 739,
+      "shape": "plain_call",
+      "true_target": "src/testRunner/unittests/tsserver/compileOnSave.ts:743",
+      "restriction": "target function is nested, excluded from top-level proof candidate set"
+    },
+    {
+      "index": 91,
+      "package": "typescript-6.0.3",
+      "file": "src/testRunner/unittests/tsserver/projectReferences.ts",
+      "line": 1189,
+      "shape": "plain_call",
+      "true_target": "src/testRunner/unittests/tsserver/projectReferences.ts:1082",
+      "restriction": "target function is nested, excluded from top-level proof candidate set"
+    },
+    {
+      "index": 100,
+      "package": "zod-3.23.8",
+      "file": "deno/lib/types.ts",
+      "line": 2259,
+      "shape": "new_expression",
+      "true_target": "deno/lib/types.ts:2164",
+      "restriction": "constructor targets are not top-level function declarations"
+    }
+  ]
+}
