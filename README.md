@@ -47,17 +47,18 @@ $ girder context demo-project --nodes crate::greeter::shout_greeting --json --so
 One function's exact source returned, not the whole file around it — that
 is the core of what Girder gives an agent's context window.
 
-**Languages, stated plainly, not as parity:** Rust and Python have completed,
-hand-audited measurements against real open-source repositories and are the
-mature path. TypeScript is measured and gated but explicitly **in
-progress** — it still has a separate, disclosed node-identity collision
+**Languages, stated plainly, not as parity:** Rust and Python each have a
+completed 100-call-site audit across three pinned repositories, with no unsound
+answers in that sample. Each produced **1 Must and 99 Unknown** answers; the
+precision evidence is limited ([measurement](./docs/observations/stage3-audit-reconciliation/after-observation.md)).
+TypeScript is measured and gated but explicitly **in progress** — it still has a separate, disclosed node-identity collision
 mechanism (duplicate `it()`/`describe()` description strings can silently
 overwrite each other's graph node; see
 [`docs/observations/stage3-typescript-audit/`](./docs/observations/stage3-typescript-audit/)).
 Go's Stage 3 audit is **not complete**. See
 [`docs/typescript-support.md`](./docs/typescript-support.md) and
 [`docs/go-support.md`](./docs/go-support.md) for the exact, measured limits
-of each — don't take Rust/Python's maturity as true of the other two.
+of each.
 
 **Also included, as an additional capability built on the same graph —
 conservative change-impact and test selection:** `test-impact` names the

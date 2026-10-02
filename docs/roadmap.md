@@ -258,20 +258,21 @@ Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
 
 ## Stage 3 — Close dispatch holes one language at a time
 
-**Status: IN PROGRESS**. Rust and Python completion claims are withdrawn pending
-an audit-size correction: 105 sampled entries produced only 52 and 85 actual
-scored call sites, below the required 100. Historical measurements remain valid
-for their stated samples; they do not satisfy the original sample-size gate.
-TypeScript remains IN PROGRESS; Go remains NOT STARTED. Further language work
-waits for the preceding language's corrected acceptance evidence.
+**Status: IN PROGRESS**. Rust and Python now meet the corrected 100-actual-site
+checkpoint, with [committed evidence](observations/stage3-audit-reconciliation/after-observation.md)
+at `a97b2ea`. Their original 52/85-site audits did not satisfy the sample-size
+requirement; those historical observations and the failed first Rust extension
+remain published. Each corrected audit emitted only one Must claim (1/1) and
+99 Unknown claims; this is limited evidence, not general dispatch completeness.
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
 
 | Language | Status | Before / after evidence | Dependency |
 | --- | --- | --- | --- |
-| Rust | **FAILED-AND-PUBLISHED — extension found two omissions** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) | Stage 2 |
-| Python | **IN PROGRESS — audit-size correction** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) | Rust trustworthy on a real repository |
+| Rust | **DONE — corrected 100-site checkpoint** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) and [retained failed extension](observations/stage3-audit-reconciliation/observation/summary.md) | Stage 2 |
+| Python | **DONE — corrected 100-site checkpoint** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) | Rust trustworthy on a real repository |
 | TypeScript | IN PROGRESS (before-observation measured: 0/97 unsound, 0 Must currently proven; resolver design not yet started) | [methodology](observations/stage3-typescript-audit/methodology.md) + addenda + [rubric](observations/stage3-typescript-audit/labeling-rubric.md) / [before-observation](observations/stage3-typescript-audit/before-observation.md) | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
@@ -430,7 +431,8 @@ frozen design spec's constraint 6, not fully traced recursively;
 hand-compiled prelude method list; bare-name rather than full
 semantic-path type resolution; textual rather than solved trait-bounds
 comparison; no macro-token-tree binding rule) are in the after-observation
-in full. They do not remove the separately unmet audit-size requirement.
+in full. The original audit-size failure was subsequently repaired by the separately
+precommitted 100-site extension; the old sample remains unchanged.
 
 **Gate per language:** before/after corpus and real-repository audit, then all
 common gates. **Observation:**
@@ -438,8 +440,12 @@ common gates. **Observation:**
 (before) and
 [after-observation.md](observations/stage3-rust-audit/after-method-call-fix/after-observation.md)
 (historical after-result, not current stage-completion proof).
-**Blockers:** minimum real-call-site sample and fresh post-fix audit evidence.
-**Next:** complete the precommitted audit-size correction before resolver expansion.
+**Current completion evidence:** [corrected Rust/Python audits](observations/stage3-audit-reconciliation/after-observation.md)
+include current-candidate corpus results and all four passing gates.
+**Blockers for the next language:** TypeScript has only 97 actual sites, no
+proven Must in its audit, and unresolved node identities.
+**Next:** freeze the TypeScript sample-size extension and preserve its existing
+failed case before beginning resolver changes.
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 
@@ -540,6 +546,32 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-02 — Interrupted correction completed
+
+The operator correction `c441899` passed all common gates once: 753 Cargo tests
+passed (2 ignored), clippy/fmt clean, 29 npm tests passed (2 skipped). Gates and
+binary identity were committed at `cfb6d7b`. The requested pause interrupted
+Pydantic analysis; the partial run and completed Rust/Click extracts were
+preserved at `b6ec8f7`. Resumption verified unchanged inputs and reused completed
+extracts. No product code or frozen labels changed across the pause.
+
+[Observation `a97b2ea`](observations/stage3-audit-reconciliation/after-observation.md):
+Rust 100 actual sites, 61 exact / 39 conservative / 0 unsound; Python 100 actual
+sites, 87 / 13 / 0. Both have Must precision 1/1 and 99 Unknown answers. The two
+Rust operator omissions are fixed with local Unknown evidence. The earlier
+failed observation remains published. Rust's post-collision re-score is complete.
+
+The current binary's 49-case dispatch re-score has the same matrix as the last
+published Python correction: 22 exact, 34 conservative, zero unsound, **one
+existing failed TypeScript case** (`typescript-structural-object-literal`,
+unresolved origin `name`). Rust/Python meet their current checkpoint; this does
+not certify TypeScript or Go, nor retroactively validate the old audit sizes.
+
+Next action: extend TypeScript's independent audit from 97 to at least 100 actual
+sites under a frozen policy, then address its documented duplicate-node and
+unresolved-origin cases. Stage 4 remains client-agnostic and NOT STARTED. The
+following checkpoints are historical; this one is the current resume point.
 
 ### 2026-10-01 — Audit-size correction in progress
 

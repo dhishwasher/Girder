@@ -149,9 +149,11 @@ regression.
 
 ## Languages
 
-Rust and Python have completed, hand-audited measurements against real
-open-source repositories and are the mature path. TypeScript is measured and
-gated but explicitly **in progress** — it still has a separate, disclosed
+Rust and Python each have a completed 100-call-site audit across three pinned
+repositories, with no unsound answers in that sample. Each produced **1 Must and
+99 Unknown** answers; the precision evidence is limited
+([measurement](https://github.com/dhishwasher/Girder/blob/main/docs/observations/stage3-audit-reconciliation/after-observation.md)).
+TypeScript is measured and gated but explicitly **in progress** — it still has a separate, disclosed
 node-identity collision mechanism (duplicate `it()`/`describe()` description
 strings can silently overwrite each other's graph node). Go's Stage 3 audit
 is **not complete**. See
