@@ -1,0 +1,18 @@
+{
+  "revision": "b6ec8f7934e49dbbbbbdbade8f158af48a02a7fc",
+  "inputs": [
+    {
+      "path": "docs/dispatch-corpus.json",
+      "sha256": "9e3208a8f3fdc8faaee55cece63c1b5e25526322ebebbba915652f4f526ccd0a"
+    },
+    {
+      "path": "docs/call-classification-policy.md",
+      "sha256": "d6d686a9033c5a9e44665e8134707a8074296352ec3af28507286d925d96befb"
+    },
+    {
+      "path": "tools/dispatch_corpus_scorer.py",
+      "sha256": "0f776f407a5b475bec7e8329bf251e607a14b6b1d4e8397529a074c9257a99a5"
+    }
+  ],
+  "command": "python3 tools/dispatch_corpus_scorer.py --bitcode /mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder --output docs/observations/stage3-audit-reconciliation/operator-resumption/corpus-after.json"
+}

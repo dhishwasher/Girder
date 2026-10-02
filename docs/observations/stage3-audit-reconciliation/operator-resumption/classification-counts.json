@@ -1,0 +1,36 @@
+{
+  "rust": {
+    "cells": {
+      "exact": 61,
+      "conservative": 39
+    },
+    "observed": {
+      "unknown": 99,
+      "must": 1
+    },
+    "ground_truth": {
+      "unknown": 60,
+      "must": 36,
+      "may": 4
+    },
+    "path": "operator-correction/rust-combined-cohort.json",
+    "sha256": "cc333874a12a19cf412a178a4727b7aa89bc9a2f78a67069c2df77e0b9f6ee5b"
+  },
+  "python": {
+    "cells": {
+      "exact": 87,
+      "conservative": 13
+    },
+    "observed": {
+      "unknown": 99,
+      "must": 1
+    },
+    "ground_truth": {
+      "unknown": 86,
+      "must": 13,
+      "may": 1
+    },
+    "path": "operator-resumption/python-combined-cohort.json",
+    "sha256": "8f3bea4cac8eb7a581b63b0c0e056049e6ef47f933f20c1fc7d8c03340d4b9dc"
+  }
+}

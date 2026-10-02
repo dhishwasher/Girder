@@ -1,0 +1,92 @@
+{
+  "candidate": {
+    "revision": "c441899e0807559bcd6eaf6f7f3e056a9c018bf7",
+    "binary": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+    "binary_sha256": "da59183f4543a51a48e584e43ed06fcb76f5d6fc21ce8ba4b4763d000442f552",
+    "policy_sha256": "51e3e3fb2593133e5e93d4e701ee2692b9ae535f01ec8cc8a120ed08571510d5",
+    "labels_manifest_sha256": "eb50ea8fb602bb3a45e79253a3eb53e08cc2095d2a5a6d95b8ef4ba1b3101533",
+    "runner_sha256": "d2f996eee28eee04b282f04addf6852bb8d1b18c3afcb9f409bf8cd4ce495a1d",
+    "environment": {
+      "CARGO_BUILD_JOBS": "1",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target",
+      "CARGO_HOME": "/mnt/chromeos/removable/MOVESPEED/.cargo",
+      "RUSTUP_HOME": "/mnt/chromeos/removable/MOVESPEED/.rustup"
+    }
+  },
+  "prior_run_sha256": "89918288f1dc89cb08982504d0768b0278a8f0222b312f5da1d5547a9335fd5e",
+  "runner_sha256": "a4414241dd3d4fd357447a451be52e2e6a2c696e6a577fa41ea3509e11ac5c19",
+  "commands": [
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/pydantic-2.13.4/pydantic-2.13.4",
+        "--json"
+      ],
+      "stdout": "pydantic-2.13.4-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 84.831,
+      "stdout_sha256": "63cb153d153ddb59896b8eb06f86f2d72b3eb53754ea57bc578dcf78a789391c"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-audit-reconciliation-20261001/pydantic-2.13.4/pydantic-2.13.4/project.aether",
+        "--json"
+      ],
+      "stdout": "pydantic-2.13.4-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 3.452,
+      "stdout_sha256": "0fbacd8daa7c888dcc40ef7fefcd4488beeb8a3061d83a5b0f1ed62d16fbbd79"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-audit-reconciliation-20261001/requests-2.34.2/requests-2.34.2",
+        "--json"
+      ],
+      "stdout": "requests-2.34.2-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 5.831,
+      "stdout_sha256": "2365ebf4824c2797651ca408af586002436703813e324fe6699a6afa1fc735da"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-audit-reconciliation-20261001/requests-2.34.2/requests-2.34.2/project.aether",
+        "--json"
+      ],
+      "stdout": "requests-2.34.2-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 1.097,
+      "stdout_sha256": "8043e9f0ac6b5abb031221465f7e440ebc0cdb104f551542ef9d7e71e8116037"
+    }
+  ],
+  "reused": [
+    {
+      "path": "docs/observations/stage3-audit-reconciliation/operator-correction/click-8.4.1-inspect.json.gz",
+      "stdout_sha256": "c4278c4e9030d494d4bea5d9be803fea5ed9dca824c95367bc63717369f3cc9a"
+    }
+  ],
+  "status": "measured",
+  "cells": {
+    "exact": 87,
+    "conservative": 13
+  },
+  "acceptance": {
+    "minimum_real_sites": 100,
+    "scored": 100,
+    "not_a_call_site": 28,
+    "all_sites_accounted_for": true,
+    "unsound": 0,
+    "must_numerator": 1,
+    "must_denominator": 1,
+    "must_precision": 1.0,
+    "passed": true
+  },
+  "changed_answers": 0
+}
