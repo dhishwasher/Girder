@@ -1,0 +1,249 @@
+{
+  "version": 1,
+  "marker": "/* claim */",
+  "meaning": "Expected proof output for a deliberately restricted resolver, not independent real-repository ground-truth labels. Runtime probes check semantics where the source is directly executable JavaScript.",
+  "cases": [
+    {
+      "name": "top-level",
+      "file": "top-level.ts",
+      "expected_class": "must",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "original",
+      "rationale": "Unshadowed module binding, direct call.",
+      "sha256": "f497dc2805a52904bc8e44cecba235f3b8afb6f984082f7e73c3547602775c7f",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "nested",
+      "file": "nested.ts",
+      "expected_class": "must",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "original",
+      "rationale": "Declaration is in the calling function body.",
+      "sha256": "82983bff995758d18d4bd34e7815f3be4a8f3b46c0bfda7830c502ead08c9b04",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "closure",
+      "file": "closure.ts",
+      "expected_class": "must",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "original",
+      "rationale": "Closure captures a unique function-body binding.",
+      "sha256": "bbfa4d5b0a702bb581e18115660ca6b8356c531285599676f2dc43ef19fdf23c",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "hoisted",
+      "file": "hoisted.ts",
+      "expected_class": "must",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "original",
+      "rationale": "Function declaration is initialized before body evaluation.",
+      "sha256": "9a889f942dbd70a3f8ac627eddef21daadccd3825ec526059f8abe3e0045b7e0",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "recursive",
+      "file": "recursive.ts",
+      "expected_class": "must",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "original",
+      "rationale": "Recursive reference resolves to the same declaration.",
+      "sha256": "c0781c4fa5a278938e97e0d009f53f5d3e526468e9be8317127e2df9cff4400f",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "method-local",
+      "file": "method-local.ts",
+      "expected_class": "must",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "original",
+      "rationale": "Function-body binding within an object method.",
+      "sha256": "31a08c474d0fa9167bcd1e64c7fe8ce467933365680b34d7953be294195385ff",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "shadowed-parameter",
+      "file": "shadowed-parameter.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "alternate",
+      "rationale": "Parameter shadows the same-spelled declaration.",
+      "sha256": "ea209bf960c8d36d273887110b4e7fc34e30eaf6101c7e55b34240f769424980",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "assignment",
+      "file": "assignment.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "alternate",
+      "rationale": "Ordinary assignment replaces the candidate binding.",
+      "sha256": "0685a99effdc4673fab1f22e17abe98484da0c9e97985f6a8da9d8bf49804a4d",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "destructuring",
+      "file": "destructuring.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "alternate",
+      "rationale": "Shorthand destructuring assignment replaces the binding.",
+      "sha256": "59bc9f1daaf843ba5f6df67cbe28bcdfba1ba5125ca77c9d51b7d45f541d4e32",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "escaped-assignment",
+      "file": "escaped-assignment.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "alternate",
+      "rationale": "Unicode escape denotes the same mutable binding.",
+      "sha256": "298dd1ea820e3d860ed79c2b23529a96afa0dd3bf3770bed6f56db21459aa2ac",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "direct-eval",
+      "file": "direct-eval.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "alternate",
+      "rationale": "Direct eval can reassign an enclosing module binding.",
+      "sha256": "0cc3adccc66e5005c4f1ae1468fd221ecbf62a93b571e24d81bae8bba3f3016d",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "escaped-eval",
+      "file": "escaped-eval.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "alternate",
+      "rationale": "Escaped eval identifier still invokes direct eval semantics.",
+      "sha256": "8ab82331c66106bdd6c18e6cbc5f373349773efb7da71f3ae75baa8bdada1a5c",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "escaping-reference",
+      "file": "escaping-reference.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "original",
+      "rationale": "Function reference escapes the restricted proof vocabulary.",
+      "sha256": "e9bc94218ea6731cac99671ae8d6219a8529f632fbc069d688636cc238ea5525",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "shorthand-escape",
+      "file": "shorthand-escape.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "original",
+      "rationale": "Shorthand property is also a non-call reference.",
+      "sha256": "d682b104b2b7b5ac5005b8d6e33615ff01f48a750619bdaef8b7843e134789cf",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "outside-scope",
+      "file": "outside-scope.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "alternate",
+      "rationale": "The sole function declaration is outside the call lexical scope.",
+      "sha256": "28c499fd7fa6c049e52c92971d89481250629ac615c393876015d32a320c4dbf",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "block-local",
+      "file": "block-local.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "original",
+      "rationale": "Block declaration is intentionally outside the first proof subset.",
+      "sha256": "aa8bf4ce98ac43a111fdc9dbca1a4ee8311cb5fe607e08d18306fec0d72127c9",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "overload-signatures",
+      "file": "overload-signatures.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "skip-typescript-syntax",
+      "runtime_expected": null,
+      "rationale": "Overload declarations are not solved by the lexical proof.",
+      "sha256": "7b4efb8b1cc07c4be50ca38870dcc9e51ff69ed129716053ebdd51a924d0697a",
+      "runtime_exercises_claim": false
+    },
+    {
+      "name": "script",
+      "file": "script.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "script",
+      "runtime_expected": "original",
+      "rationale": "Script/global bindings lack the module isolation prerequisite.",
+      "sha256": "03a03f81386cb728e7d0a6805f41aaaeb83fadba0d61c0caeaf7573e809ed8b5",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "namespace-export",
+      "file": "namespace-export.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "skip-typescript-syntax",
+      "runtime_expected": null,
+      "rationale": "A namespace export does not make the source an external module.",
+      "sha256": "efb61aa8959d20a09a64cc0d692bfce70ceec2495ada37cd97583446bf6564bb",
+      "runtime_exercises_claim": false
+    },
+    {
+      "name": "decorator",
+      "file": "decorator.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "skip-typescript-syntax",
+      "runtime_expected": null,
+      "rationale": "Existing transformed-scope refusal remains in force.",
+      "sha256": "8d221781ca1fed5fc08d62d6a1e801f92684a82cc2e4d5fe8846b975a101363c",
+      "runtime_exercises_claim": false
+    },
+    {
+      "name": "escaped-unrelated-identifier",
+      "file": "escaped-unrelated-identifier.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "original",
+      "rationale": "Conservative whole-file refusal until escaped identifiers are normalized.",
+      "sha256": "ce2c81327c8f6e4ffe240a21af0ded8ef3e905bc3926f00fe666b4aca07253fc",
+      "runtime_exercises_claim": true
+    },
+    {
+      "name": "named-expression-shadow",
+      "file": "named-expression-shadow.ts",
+      "expected_class": "unknown",
+      "target_marker": "function target(",
+      "runtime_mode": "module",
+      "runtime_expected": "named",
+      "rationale": "Named function-expression binding shadows the declaration even on an unexecuted branch.",
+      "sha256": "7640694bc54c836a5976b8b89a75d9f3c1dcef9e2ef7911e69159be3dbb837b9",
+      "runtime_exercises_claim": false
+    }
+  ]
+}
