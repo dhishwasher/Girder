@@ -1,6 +1,6 @@
 # TypeScript relative ESM named-import proof policy v1
 
-**Status: preimplementation draft for review, with correction 1 applied**
+**Status: preimplementation draft for review, with corrections 1 and 2 applied**
 (see [Correction history](#correction-history)). It is not frozen. First draft
 `79b7e70`; correction base `dee89a5`. This is policy and fixtures only: no resolver or product code, no
 Girder run, no Cargo job, and no new measurement. Every frozen input is
@@ -115,15 +115,22 @@ today.
   - The importer's recorded import target equals the target Function node's
     semantic path exactly.
 
-- **E8 — Mocking (MOCK-1..3).**
+- **E8 — Mocking and hooks (MOCK-1..3, HOOK-1..3).**
   - The proof is refused if the snapshot contains a mock whose resolved module
     identity equals the target file.
-  - It is refused for every importer if the mocking environment is uncertain.
-  - See [Mocking model](#mocking-model).
+  - Every importer is refused if any mock identity proof fails, or if the
+    snapshot contains mocking configuration, hook registration, a pinned hook,
+    mock, or runner library, or preload configuration.
+  - See [Execution model](#execution-model-correction-2-closed) and
+    [Mocking model](#mocking-model).
 
 **Claim.** Certify Must with exactly one target, the E4 Function node. The reason
 is `proven-typescript-relative-esm-named-import`, and the claim is placed at the
-call expression's span. There is no May.
+call expression's span. The node's call evidence must list the assumptions
+`esm-native-execution` and
+`no-unmodeled-module-hooks-loaders-or-mocks-outside-or-inside-snapshot`, in
+addition to `indexed-source-snapshot`. The claim is conditional on them. There
+is no May.
 
 ## Refusals (each Unknown with no target, plus the fixture that pins it)
 
@@ -160,31 +167,73 @@ call expression's span. There is no May.
 | R-BIND-4 | Escaped identifier spellings | `escaped-callee` (contains the literal bytes `target`) |
 | R-CALL-1 | Optional, `new`, and member callees | `optional-call`, `new-expression`, `namespace-import` |
 | R-CYCLE-1 | Importer and target in the same static-import cycle (strongly connected component) of the indexed snapshot | `import-cycle` |
+| HOOK-1 | Loader or hook registration in any indexed file, including preloads | `hook-register-node-module`, `hook-register-hooks-sync` |
+| HOOK-2 | Imports of a pinned hook, mock, or runner library | `hook-unlisted-library` (`esmock`) |
+| HOOK-3 | Preload flags in package scripts, or runner rc files | `hook-package-script-flags` |
+| MOCK-2 (identity) | A mock whose E3-valid specifier is missing, unindexed, out of root, symlinked, or colliding | `mock-missing-module`, `mock-unindexed-file`, `mock-out-of-root`, `mock-symlink-identity`, `mock-colliding-identity` |
 | (unrelated imports) | No refusal: builtin, type-only, resolvable sibling, and side-effect imports of other modules leave an eligible call Must | `unrelated-imports-allowed` (positive control), `mock-other-module` (positive control) |
 
-## Execution assumptions (outside the proof model, stated)
+## Execution model (correction 2: closed)
 
-- **ESM-preserving execution.**
-  - Indexed `.ts` and `.mts` files are executed as ECMAScript modules under
-    standard linking semantics, as with Node native type stripping. Imports are
-    live, immutable, indirect bindings.
-  - A pipeline that rewrites modules is outside the model. That includes
-    transpiling to CommonJS, bundling with scope hoisting, and test runners that
-    re-evaluate or wrap modules other than through the mocking APIs handled
-    below.
-  - A `.ts` file executed as CommonJS (for example, `"type": "commonjs"` with a
-    loader that accepts ESM syntax) is outside the model.
-- **No hooks outside the snapshot.** There are no loader hooks, `--import`
-  preloads, `--experimental-*` loaders, or import maps outside the indexed
-  snapshot.
-  - Preloads inside the snapshot are only covered as far as MOCK-1..3 inspect
-    them.
-  - A preload's command-line flag is itself outside the snapshot. MOCK-3 is the
-    conservative backstop.
-- **`indexed-source-snapshot`**, as in every policy.
+**Every Must is conditional.** It is sound only under the assumptions below.
+- Each Must claim's call evidence must list them verbatim as assumptions:
+  `indexed-source-snapshot`, `esm-native-execution`, and
+  `no-unmodeled-module-hooks-loaders-or-mocks-outside-or-inside-snapshot`.
+- No observation, audit, or report may describe these claims as unconditional
+  runtime correctness. An audit counts them as "Must (conditional on the
+  stated execution assumptions)".
 
-These are honest limits. A claim is sound only under them, and the reason string
-must carry them as assumptions.
+- **EXEC-1 — ESM-native execution (assumed, not checked).**
+  - Indexed `.ts`/`.mts` files are executed as ECMAScript modules with standard
+    linking semantics, as with Node native type stripping. Imports are live,
+    immutable, indirect bindings.
+  - Transpiling to CommonJS, bundling, and re-evaluating or wrapping test
+    runners are excluded from the model.
+- **EXEC-2 — Unmodeled hooks, loaders, and mocks are excluded wherever they
+  are.**
+  - The model knows only the mocking APIs in MOCK-1 and the hook APIs and
+    sources in HOOK-1..3.
+  - Any other mechanism that can change what an import binds to, whether inside
+    or outside the snapshot, is outside the model. That includes other loaders,
+    preloads, import maps, runner plugins, and mocking libraries.
+  - Claims carry the assumption above instead of being described as
+    unconditional.
+- **HOOK-1 — Hook registration refuses the whole snapshot.** Every
+  relative-import proof in the snapshot is refused if any indexed file does any
+  of the following:
+  - imports `register` or `registerHooks` from `node:module`/`module`, by
+    static import, `import()`, or `require`;
+  - calls `.register(` or `.registerHooks(` on a namespace, default import, or
+    `require` of `node:module`/`module`;
+  - references those names in any other way, such as by destructuring.
+
+  This holds whatever the file is, including indexed preloads. The
+  runtime-checked fixtures `hook-register-node-module` (async `register`) and
+  `hook-register-hooks-sync` (`registerHooks`) show both mechanisms redirecting
+  `./app.ts` to another file.
+- **HOOK-2 — Hook and mock libraries refuse the whole snapshot.** Every
+  relative-import proof in the snapshot is refused if any indexed file imports
+  or requires a package from the pinned list:
+  - mocking libraries: `esmock`, `testdouble`, `quibble`, `proxyquire`,
+    `mock-require`, `rewire`, `rewiremock`, `mockery`, `jest-mock`;
+  - loaders: `@babel/register`, `ts-node`, `tsx`, `jiti`, `@swc-node/register`,
+    `esbuild-register`;
+  - runners: `vitest`, `@jest/globals`, `bun:test`.
+
+  The runners are on this list because their own module systems are not
+  EXEC-1. `node:test` is modeled through MOCK-1 and is not refused. The list is
+  not exhaustive; EXEC-2 covers everything else.
+- **HOOK-3 — Preload configuration refuses the whole snapshot.** Every
+  relative-import proof in the snapshot is refused if any of the following is
+  true:
+  - any indexed `package.json` script or `NODE_OPTIONS` value contains
+    `--import`, `--require`, `-r `, `--loader`, `--experimental-loader`,
+    `--experimental-test-module-mocks`, or `--experimental-default-type`;
+  - any `.npmrc`, `.mocharc.*`, `.taprc`, or `.c8rc*` file is present anywhere
+    in the root.
+
+  Hidden files are not indexed by default, so this check runs over the root's
+  file listing, not just the index.
 
 ## Mocking model
 
@@ -204,8 +253,23 @@ must carry them as assumptions.
     object (`import { vi as v }`) is still caught.
   - A mock whose resolved identity is a different file does not refuse
     anything. The `mock-other-module` positive control stays Must.
-- **MOCK-2 — Uncertain mocks refuse the whole snapshot.** Every relative-import
-  proof in the snapshot is refused if any of the following occurs:
+- **MOCK-2 — Any failed mock identity proof refuses the whole snapshot.** If
+  any mocking call's identity proof fails, every relative-import proof in the
+  snapshot is refused. That includes a specifier that is E3-valid but:
+  - names a missing file (`mock-missing-module`);
+  - names an unindexed file, for example one under an excluded directory
+    (`mock-unindexed-file`);
+  - escapes the root (`mock-out-of-root`);
+  - passes through a symlink (`mock-symlink-identity`). That fixture shows
+    Node keying mocks by real path: `../lib/app.ts` through `lib -> real`
+    replaced `./real/app.ts` at runtime;
+  - is ambiguous by case;
+  - collides on module path (`mock-colliding-identity`).
+
+  An identity proof succeeds only when the specifier resolves, by E3-S and
+  E3-R against the calling file, to exactly one indexed, regular,
+  non-symlinked, in-root, non-colliding file. MOCK-2 also refuses the whole
+  snapshot if any of the following occurs:
   - A mocking call has a specifier that is not a single E3-valid string literal
     or `import()` of one. That covers aliases such as `'@/app'`, bare
     specifiers, variables, template literals, and computed values.
@@ -219,7 +283,7 @@ must carry them as assumptions.
   - any `__mocks__` directory.
 
   Configuration outside the snapshot (CLI flags, home-directory config) is
-  outside the model (see the execution assumptions).
+  outside the model (see EXEC-2).
 
 ## Canonical identity
 
@@ -247,34 +311,53 @@ must carry them as assumptions.
 ## Frozen fixtures
 
 [Validation manifest](../../../../fixtures/typescript-esm-import-proof/v1/manifest.json),
-SHA-256 `05eeb33be49b972538f936d68aaf8ee9207f706e647e3834cfa2d65e4cce31cd`:
-- 64 case directories: 7 `must` and 57 `unknown`. Correction 1 adds 24 cases;
-  the entries for the original 40 are unchanged.
-- An incremental sequence of 7 steps (`v1-incremental/`, pinned in the same
-  manifest) covers exporter mutation, an import edit, a path collision added and
-  removed, and target deletion.
-- Symlinks are pinned by their link text, never followed.
-- Each case marks exactly one call with `/* claim */`.
-- Every file in every case is pinned by SHA-256, and the frozen corpus inputs are
-  pinned too.
-- Must cases name the exact predicted target path. These are `explicit-ts`,
-  `aliased-import`, `mts-extension`, `parent-directory`, `async-target`,
-  `unrelated-imports-allowed`, and `mock-other-module`.
-- These are proof-contract fixtures. They are **not** ground-truth samples and
-  are **not** added to the 49-case denominator.
+SHA-256 `daa7310248f8e2adc3bdbbae340a3301dcca6b18983ca29ef3c6738bb97b94cd`:
+- **Cases.** 73 case directories: 7 `must` and 66 `unknown`.
+  - Correction 1 added 24 cases and correction 2 adds 9.
+  - Correction 2 also tightened two assertions (`tsx-extension`,
+    `declaration-file-target`) that had accepted any rejection. Their previous
+    pins are kept under `superseded_pins`. Every other earlier entry is
+    unchanged.
+- **Must assumptions.** `must_claim_assumptions` pins the assumption strings
+  every Must must carry.
+- **Incremental sequence.** It now has 19 steps (`v1-incremental/`). For each
+  step it pins the expected answer, the requirement that cold and incremental
+  answers match, and a categorized Node runtime expectation. The steps cover:
+  - an exporter mutation;
+  - an import edit;
+  - a path collision added and removed;
+  - a mock of the target added and removed;
+  - an unresolvable mock added and removed;
+  - a mocking config added and removed;
+  - a `__mocks__` tree added and removed;
+  - an inert loader file;
+  - a hook registration added and removed;
+  - target deletion.
 
-[Preimplementation checks](preimplementation-checks.json), produced by
+  The 7-step sequence from correction 1 is kept under
+  `superseded_incremental_sequences`.
+- **Symlinks** are pinned by their link text, never followed.
+- These are proof-contract fixtures. They are not ground-truth samples and are
+  not added to the 49-case denominator.
+
+[Preimplementation checks](preimplementation-checks.json), from
 [`run_preimplementation_checks.py`](run_preimplementation_checks.py) with Node
 v22.22.0 only:
-- All pins match, every case has a single marker, and the raw specifier bytes
-  of all 10 spelling-hazard cases are verified.
-- 58 of 64 cases pass `node --test`, asserting the runtime truth recorded in the
-  manifest. The two mock cases run with `--experimental-test-module-mocks`, and
-  one of them with `--import`.
-- Six are skipped and not counted as passed: one needs runtime namespaces and
-  five need vitest.
-- All 7 incremental steps produce their expected Node outcome on a temporary
-  copy.
+- **Pins and markers.** All pins match, every case has a single marker, and
+  the raw bytes of all 10 spelling-hazard specifiers are verified.
+- **Runnable cases.** Every runnable case passes `node --test`, asserting its
+  recorded runtime truth.
+  - Cases that test expected errors assert the specific error code or class.
+  - Node arguments are passed per case: `--experimental-test-module-mocks` and
+    `--import <preload>`.
+- **Expected failures.** An expected failure in the incremental sequence counts
+  only if Node exits nonzero *and* reports the stated category. Any other
+  nonzero exit is a mismatch. [Negative controls](harness-negative-controls.json)
+  show that the matcher rejects:
+  - a wrong category;
+  - an unexpected pass;
+  - an unexpected failure.
+- **Skipped cases** are listed with their reasons and not counted as passed.
 
 ## Predictions (stated now, not claimed)
 
@@ -294,20 +377,25 @@ v22.22.0 only:
    pinned target, and each Unknown has no target and no missing evidence. That
    includes the cycle gate (`import-cycle`), all mock gates (MOCK-1..3), the
    mixed-language collision, and both symlink cases.
-2. **Incremental invalidation.** Replay the pinned sequence through Girder's
-   incremental update path (file-change sync and a watched MCP graph). After
-   every step:
-   - the importer's claim equals the claim from a cold rebuild of the same
-     snapshot;
+2. **Incremental invalidation.** Replay the pinned 19-step sequence through
+   Girder's incremental update path (file-change sync and a watched MCP graph).
+   After every step:
+   - the importer's claim equals the step's `expected_class`;
+   - it equals the claim from a cold rebuild of the same snapshot;
    - no claim names a deleted or replaced NodeId.
 
-   The importer's evidence depends on other files: the exporter, colliding
-   paths, mocks, and configuration. A change to any of them must re-derive it.
+   The importer's evidence depends on files the importer does not import: the
+   exporter, colliding paths, mocks, configuration, rc files, and hook
+   registrations. Creating, editing, or deleting any of them must re-derive it.
+   That includes removing an entire `__mocks__` tree.
 3. **Ingestion routes (C-3).** For each route, a symlinked file or directory is
    either skipped or marks the snapshot uncertain, and never yields a Must. The
    routes are CLI analyze, watch/incremental sync, MCP, `load_file`, and plan
    projection.
-4. There is no new Must anywhere outside E1–E8. That includes every existing
+3a. **Hooks and assumptions.** HOOK-1..3 refuse their fixtures. Every Must
+   claim carries the three pinned assumption strings. The observation and
+   audit report Must as conditional on them.
+4. There is no new Must anywhere outside E1–E8 and HOOK-1..3. That includes every existing
    TypeScript fixture corpus and the structural-member contract.
 5. Re-run the unchanged 49-case corpus and the unchanged 100-call audit. Publish
    every changed answer and keep the existing failure.
@@ -320,6 +408,8 @@ v22.22.0 only:
 | Raw = cooked plus an ASCII allow-list (E3-S1..S4) | Lexical normalization of whatever the string cooks to | URL parsing decodes `%xx`, treats `\` as a separator, and strips TAB, LF, and trailing spaces. Lexical and runtime destinations diverged in every hazard fixture. |
 | `.ts`/`.mts` only (E3-X1) | Also `.tsx`/`.cts` | `.tsx` adds JSX semantics that Node cannot run. `.cts` is CJS interop, not an ESM live binding. |
 | Mock refusal by resolved identity, with uncertainty refusing the whole snapshot (MOCK-1..3) | Literal specifier matching; ignoring configuration | A setup file's `'../app.ts'` mocked `./app.ts` at runtime. Aliases and configuration cannot be resolved from the snapshot. |
+| Conditional Must under EXEC-1/2, with hook and preload sources refusing the whole snapshot (HOOK-1..3) | Allowing indexed preloads or unlisted APIs | A hook or preload can redirect any import (runtime-checked twice). Unmodeled mechanisms cannot be enumerated soundly, so they are excluded by assumption, and every claim says so. |
+| Any failed mock identity proof refuses the whole snapshot (MOCK-2) | Refusing only literal or unresolvable specifiers | A symlinked mock path replaced a real-path import at runtime. Missing, unindexed, out-of-root, and colliding mocks cannot be proven to differ from the target. |
 | Refuse symlinks; all ingestion routes agree (C-2/C-3) | Following symlinks | Node's real-path identity differs from Girder's lexical identity. A route that ingests links silently would bypass E3. |
 | Explicit extensions only (R-RES-1) | Extensionless or `.js` → `.ts` mapping | That mapping depends on `moduleResolution`, `allowImportingTsExtensions`, bundlers, and files outside the snapshot. Node ESM rejects both forms (runtime-checked). |
 | Direct `export function` only (E4/R-EXP-1) | Following export clauses and re-exports | Keeps the binding chain to one hop. ResolveExport over stars can be ambiguous. |
@@ -346,32 +436,26 @@ runtime checks.
 
 ## Unresolved decisions for review
 
-The correction resolves the review's four required items by refusing,
-conservatively. These remain open; any of them could block a freeze:
+Correction 2 closes the review's four points by refusing, conservatively, and
+by stating conditional assumptions. These remain open; any of them may still
+block a freeze:
 
 1. **Specifier scope (R-RES-1, E3-X1).** Only explicit `.ts`/`.mts` with an
-   ASCII allow-list is accepted. Real repositories mostly use extensionless or
-   `.js` specifiers, so the real audit is likely to stay unchanged.
-2. **Cycles (R-CYCLE-1).** Refused, although the spec and the fixture suggest a
-   direct function declaration is cycle-safe given E6.
+   ASCII allow-list is accepted, so the real audit is likely to stay unchanged.
+2. **Cycles (R-CYCLE-1).** Refused, although they appear cycle-safe.
 3. **Local export clauses (R-EXP-1).** Refused even for one hop.
-4. **Mocking coverage (MOCK-1..3).** The API list, config file names, and
-   `__mocks__` rule cover the named tools (vitest, jest, `node:test`). Other
-   runners, such as bun, `ava` with `esmock`, `testdouble`, or `proxyquire`-style
-   loaders, are not enumerated and fall only under the execution assumption
-   "no hooks outside the snapshot". Choose between:
-   - **(a)** listing more APIs; or
-   - **(b)** a broader rule: refuse whenever any test-runner dependency other
-     than `node:test` appears.
-5. **Preload flags.** `--import`/`--require` preload files are named on the
-   command line, outside the snapshot. MOCK-1 inspects mocking calls in every
-   indexed file, which covers preloads that are indexed. A preload outside the
-   root, or one that mocks through an unlisted API, is only covered by the
-   assumption.
-6. **ESM-preserving execution** is an assumption, not a check. v1 does not read
-   `package.json` `"type"` or tsconfig `module` settings.
+4. **HOOK-2's package list is not exhaustive.** The residual risk is carried by
+   the EXEC-2 assumption, not removed. Alternative: refuse any snapshot whose
+   `package.json` declares any dependency outside an allow-list.
+5. **HOOK-3's file-name and flag lists.** Detection is textual. A script that
+   builds its flags dynamically, or a shell wrapper, is only covered by EXEC-2.
+6. **EXEC-1** is assumed, not checked. `"type"` and tsconfig `module` are not
+   read.
 7. **Whole-file gates (E7).** Whether an escaped identifier or `eval` anywhere
    in the importer should refuse every call in it.
+8. **Snapshot-wide refusals.** MOCK-2/3 and HOOK-1..3 refuse the whole snapshot.
+   That is very conservative on real repositories: almost any repository using
+   vitest or jest gets no Must at all from this rule.
 
 ## Correction history
 
@@ -394,3 +478,24 @@ conservatively. These remain open; any of them could block a freeze:
 
   No product code was written and nothing was measured. The corpus and labels
   are unchanged.
+- **Correction 2** (this revision), after the second high review NO-GO on
+  `7fdfdd2`:
+  - **Execution model.**
+    - EXEC-1/2 replace the earlier "hooks outside the snapshot" wording.
+    - HOOK-1..3 refuse the whole snapshot for hook registration (including
+      indexed preloads), pinned hook, mock, or runner libraries, and preload
+      flags or rc files.
+    - Every Must is conditional on three pinned assumption strings, and audits
+      must say so.
+  - **MOCK-2** now refuses the whole snapshot for every failed mock identity
+    proof: missing, unindexed, out of root, symlinked, case-ambiguous, or
+    colliding. The `mock-symlink-identity` fixture shows a real-path mock
+    replacing the import.
+  - **The incremental sequence** grew from 7 to 19 steps, adding mock, config,
+    `__mocks__`, and hook creation and removal. Each step has an expected answer
+    and a cold-versus-incremental equality requirement.
+  - **The harness** checks the error category of every expected failure. The
+    matcher has negative controls, and two fixture assertions that accepted any
+    rejection were tightened.
+  - 9 new cases.
+  - No product code, measurement, or corpus/label change. Still a draft.

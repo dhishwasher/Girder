@@ -554,7 +554,31 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
-### 2026-10-03 — ESM named-import proof policy correction 1 (policy and fixtures only; not frozen)
+### 2026-10-03 — ESM named-import proof policy correction 2 (policy, fixtures, and harness only; not frozen)
+
+The second high review returned NO-GO on `7fdfdd2`. Correction 2 makes these
+changes in the
+[policy](observations/stage3-typescript-audit/esm-import-proof/policy.md):
+- **Hooks and execution model.** Hook registration (including indexed preloads),
+  pinned hook, mock, or runner libraries, and preload flags or rc files now
+  refuse the whole snapshot (HOOK-1..3). Two runtime-checked fixtures show
+  loader hooks redirecting `./app.ts`. Every other mechanism is excluded by a
+  stated assumption, so every Must is explicitly conditional and audits must
+  say so.
+- **MOCK-2** now refuses the whole snapshot for every failed mock identity
+  proof. A symlinked mock path replaced the real-path import at runtime.
+- **Incremental sequence.** It grew to 19 steps, adding mock, config,
+  `__mocks__`, and hook creation and removal. Each step has an expected answer
+  and a cold-versus-incremental equality requirement.
+- **Harness.** It now checks the error category of every expected failure,
+  backed by negative controls.
+
+The manifest has 73 cases (7 Must and 66 Unknown). No product code ran,
+nothing was measured, and the corpus and labels are unchanged. Eight decisions
+remain open in the policy. TypeScript remains IN PROGRESS; Go remains NOT
+STARTED.
+
+### 2026-10-03 — ESM named-import proof policy correction 1 (historical)
 
 The high review returned NO-GO on `79b7e70`. Correction 1 addresses all four
 required points in the

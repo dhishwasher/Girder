@@ -1,0 +1,10 @@
+{
+  "purpose": "Negative controls for the correction-2 runtime-expectation matcher (run against matches_expectation directly).",
+  "results": {
+    "wrong category rejected": true,
+    "right category accepted": true,
+    "pass when fail expected rejected": true,
+    "fail when pass expected rejected": true
+  },
+  "all_passed": true
+}

@@ -11,7 +11,10 @@ The script checks:
 
 It runs each runnable case with `node --test`, passing any per-case Node
 arguments, and replays the incremental sequence on a temporary copy, checking
-Node's runtime outcome after every step. Results go to
+Node's runtime outcome after every step. An expected failure counts only if
+Node exits nonzero AND its output shows the stated error category (for example
+ERR_ASSERTION or ERR_MODULE_NOT_FOUND). Any other nonzero exit is a mismatch,
+never a pass. Results go to
 preimplementation-checks.json next to this file, and the script exits nonzero
 on any failure."""
 import hashlib, json, os, pathlib, shutil, subprocess, sys, tempfile
@@ -52,16 +55,29 @@ def pins(base):
     return out
 
 
+FAILURE_CATEGORIES = ("ERR_ASSERTION", "ERR_MODULE_NOT_FOUND", "ERR_UNKNOWN_FILE_EXTENSION",
+                      "ERR_INVALID_MODULE_SPECIFIER", "SyntaxError", "ReferenceError", "TypeError")
+
+
 def node_test(cwd, test_file, args=()):
     proc = subprocess.run(["node", "--test", *args, test_file], cwd=cwd,
                           capture_output=True, text=True, timeout=120)
+    output = proc.stdout + proc.stderr
     tap = {}
-    for line in (proc.stdout + proc.stderr).splitlines():
+    for line in output.splitlines():
         parts = line.split()
         if len(parts) == 3 and parts[0] == "#" and parts[1] in ("tests", "pass", "fail"):
             tap[parts[1]] = int(parts[2])
     passed = proc.returncode == 0 and tap.get("fail") == 0 and tap.get("pass", 0) >= 1
-    return {"exit": proc.returncode, "tap": tap, "passed": passed}
+    categories = sorted(c for c in FAILURE_CATEGORIES if c in output)
+    return {"exit": proc.returncode, "tap": tap, "passed": passed, "failure_categories": categories}
+
+
+def matches_expectation(result, expect):
+    if expect == "pass":
+        return result["passed"]
+    category = expect["fail"]
+    return result["exit"] != 0 and not result["passed"] and category in result["failure_categories"]
 
 
 def main():
@@ -112,15 +128,21 @@ def main():
             for step in sequence["steps"]:
                 target = work / step["path"]
                 if step["op"] == "write":
+                    target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(parent / step["source"], target)
+                elif step["op"] == "delete-tree":
+                    shutil.rmtree(target)
                 else:
                     target.unlink()
-                result = node_test(work, sequence["importer"])
-                matched = result["passed"] == (step["runtime_expect"] == "pass")
+                result = node_test(work, sequence["importer"], step.get("node_args", []))
+                matched = matches_expectation(result, step["runtime_expect"])
                 seq["steps"].append({"op": step["op"], "path": step["path"], "expected_class": step["expected_class"],
+                                     "cold_equals_incremental": step.get("cold_equals_incremental"),
                                      "runtime_expect": step["runtime_expect"], "runtime": result, "matched": matched})
                 ok &= matched
         record["incremental"].append(seq)
+    record["must_claim_assumptions_declared"] = bool(manifest.get("must_claim_assumptions"))
+    ok &= record["must_claim_assumptions_declared"]
     record["counts"] = {"cases": len(record["cases"]),
                         "runtime_passed": sum(1 for c in record["cases"] if c["runtime"].get("passed")),
                         "runtime_skipped": sum(1 for c in record["cases"] if "skipped" in c["runtime"]),
