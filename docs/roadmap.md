@@ -553,7 +553,27 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
-### 2026-10-03 — Structural member identity audit completed locally; TypeScript remains IN PROGRESS
+### 2026-10-03 — Relative ESM named-import proof policy drafted (policy and fixtures only)
+
+The [draft policy](observations/stage3-typescript-audit/esm-import-proof/policy.md)
+targets the unchanged `typescript-direct-cross-file` case. It allows a bounded
+Must for one form: a static named import from an explicit-extension relative
+specifier, bound to a unique, cleanly bound top-level `export function`, and
+called directly. It refuses everything else as Unknown with no target. That
+includes extensionless or `.js` specifiers, re-exports and stars, type-only
+imports, cycles, live-binding writes and `eval`, shadowing, module-path
+collisions, parse errors, and module mocks.
+
+The policy has 40 pinned adversarial fixture cases: 5 Must and 35 Unknown. Of
+those, 38 pass `node --test` and 2 are skipped with recorded reasons. Two of the
+fixtures show at runtime that a Must would be unsound.
+
+No product code ran, nothing was measured, and no improvement is claimed. The
+structural object-literal failure stays visible. The corpus, labels, and audit
+are unchanged. Five decisions are listed in the policy for review before it is
+frozen. TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-03 — Structural member identity audit completed locally (historical)
 
 The MOVESPEED workstation has all four pinned TypeScript archives, unlike the
 cloud container. [A fresh offline audit](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/observation.md)

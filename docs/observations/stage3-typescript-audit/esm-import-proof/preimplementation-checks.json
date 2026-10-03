@@ -1,0 +1,621 @@
+{
+  "node_version": "v22.22.0",
+  "manifest_sha256": "dc34fe028fa9a7879a296981d6041a719b2e0d1fd56aa61a55e2b17c06824b27",
+  "frozen_inputs": {
+    "docs/dispatch-corpus.json": {
+      "sha256": "9e3208a8f3fdc8faaee55cece63c1b5e25526322ebebbba915652f4f526ccd0a",
+      "matches": true
+    },
+    "fixtures/dispatch-corpus/typescript/direct-cross-file/app.ts": {
+      "sha256": "fcb85875c3d25a34a329dfab8a129e36220ba99da36093c6c9624b81eb3da56d",
+      "matches": true
+    },
+    "fixtures/dispatch-corpus/typescript/direct-cross-file/app.test.ts": {
+      "sha256": "99fe2eefb562142a2a58c989fd48600a430aa84a46c4b68dfd595d5ffe38bdb1",
+      "matches": true
+    }
+  },
+  "cases": [
+    {
+      "id": "aliased-import",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "ambiguous-export-star",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "async-target",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "bare-specifier",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "declaration-file-target",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "declaration-merging",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "skipped": "namespace with runtime code is not erasable by Node type stripping"
+      }
+    },
+    {
+      "id": "default-import",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "duplicate-export",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "dynamic-import",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "escaped-callee",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "escaped_callee_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "escaping-value-use",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "explicit-ts",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "export-star-barrel",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "extensionless-specifier",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "generator-target",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "import-cycle",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "importer-eval",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "importer-writes-binding",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "inline-type-specifier",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "js-extension-specifier",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "local-export-clause",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "module-path-collision-src",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "module-path-collision-tsx",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "mts-extension",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "namespace-import",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "new-expression",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "optional-call",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "overload-signatures",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "parent-directory",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "query-specifier",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "reexport-barrel",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "renamed-export",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "shadowed-block-declaration",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "shadowed-parameter",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "target-eval",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "target-has-export-star",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "target-parse-error",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "target-reassigns-binding",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "test-module-mocking",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "skipped": "needs vitest; not executable with node:test"
+      }
+    },
+    {
+      "id": "type-only-import",
+      "file_set_matches": true,
+      "hashes_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    }
+  ],
+  "case_dirs_match_manifest": true,
+  "counts": {
+    "cases": 40,
+    "runtime_passed": 38,
+    "runtime_skipped": 2
+  },
+  "all_passed": true
+}
