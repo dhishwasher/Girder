@@ -1,0 +1,60 @@
+{
+  "purpose": "Temporary source mutations (reverted, sources diff-verified identical afterwards) proving the focused/contract tests are not vacuous. Run before commit 0c9db9b with cargo test -p aether-builder -j1 --test typescript_structural_members.",
+  "mutations": [
+    {
+      "mutation": "m1-no-inner-unknown",
+      "description": "B1: calls inside refused subtrees no longer forced Unknown",
+      "passed": 6,
+      "failed": 3,
+      "failing_tests": [
+        "frozen_structural_member_identity_contract",
+        "no_proof_escalation_through_members_or_refused_subtrees"
+      ],
+      "caught": true
+    },
+    {
+      "mutation": "m2-no-b1-boundary",
+      "description": "B1: coverage-gap boundary claims removed",
+      "passed": 6,
+      "failed": 3,
+      "failing_tests": [
+        "collision_refuses_members_and_every_descendant_without_flattening",
+        "frozen_structural_member_identity_contract"
+      ],
+      "caught": true
+    },
+    {
+      "mutation": "m3-no-k1",
+      "description": "K1: non-plain keys treated as plain",
+      "passed": 6,
+      "failed": 3,
+      "failing_tests": [
+        "frozen_structural_member_identity_contract",
+        "refusal_of_a_branch_keeps_unrelated_sibling_branches"
+      ],
+      "caught": true
+    },
+    {
+      "mutation": "m4-no-r3",
+      "description": "R3: collision refusal removed",
+      "passed": 7,
+      "failed": 2,
+      "failing_tests": [
+        "collision_refuses_members_and_every_descendant_without_flattening",
+        "frozen_structural_member_identity_contract"
+      ],
+      "caught": true
+    },
+    {
+      "mutation": "m5-no-t1",
+      "description": "T1: refused owner-less literals still lowered",
+      "passed": 7,
+      "failed": 2,
+      "failing_tests": [
+        "frozen_structural_member_identity_contract"
+      ],
+      "caught": true
+    }
+  ],
+  "all_caught": true
+}

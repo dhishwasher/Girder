@@ -553,7 +553,29 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
-### 2026-10-03 — Structural member identity policy v1 FROZEN; product implementation next
+### 2026-10-03 — Structural member identity policy v1 implemented (`230418e`); audit re-run blocked
+
+Implementation `0c9db9b` passed all four gates but got a NO-GO in review. That
+result is retained. Correction `230418e` fixes class-field scoping, lexical R3
+pruning, the K1 shorthand rule, and scorer failure persistence. Each fix has a
+regression test that is proven by mutation.
+[Observation](observations/stage3-typescript-audit/structural-members/implementation-observation.md):
+- The identity contract passes: 31 files, 44 identities, 62 refusals, 10
+  declaration-only spans, and 6 exact-span B1 boundaries.
+- The separate validation scorer meets 17/17 resolution contracts with 0 unsound
+  cells.
+- The 49-case corpus is unchanged at 22/34/0/0/1. The original case now fails as
+  **ambiguous** (alice/bob), as predicted. This is not a dispatch improvement.
+- All four common gates pass on `230418e`: 769 Cargo tests passed (2 ignored),
+  clippy and fmt are clean, and npm has 29 passed / 2 skipped.
+
+The 100-call audit re-run is **BLOCKED** here because the egress proxy returned
+HTTP 403 for the pinned archives. It must run on the pinned cache.
+
+Next: user review of `230418e`, then the audit re-run on the MOVESPEED
+workstation. TypeScript remains IN PROGRESS and Go remains NOT STARTED.
+
+### 2026-10-03 — Structural member identity policy v1 FROZEN (historical)
 
 The freeze commit is the policy-only commit directly after `2e5c8bc` on
 `claude/roadmap-ts-policy`. Its SHA cannot appear in its own content; it is

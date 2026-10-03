@@ -1,0 +1,416 @@
+{
+  "manifest_sha256": "aa114b8e049b2c19e952af00cbb0107010c00b413621a73f3db0b36c6b916692",
+  "binary": "target/debug/girder",
+  "binary_sha256": "262bc17d5feec74b110082be9086c733d169d20552da2bb0c989f6ece6406900",
+  "summary": {
+    "cases": 17,
+    "resolution_passed": 17,
+    "failed_cases": [],
+    "cells": {
+      "exact": 1,
+      "conservative": 20,
+      "unsafe_exclusion": 0,
+      "overclaim": 0,
+      "failed": 0
+    },
+    "unsound_cells": 0,
+    "passed": true
+  },
+  "results": [
+    {
+      "id": "ts-structural-v1-arrow-alice",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::alice::@object::name"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::alice::@object::name",
+      "tests": [
+        {
+          "test_id": "test_alice",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f616c696365]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_bob",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f626f62]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "ts-structural-v1-arrow-bob",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::bob::@object::name"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::bob::@object::name",
+      "tests": [
+        {
+          "test_id": "test_alice",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f616c696365]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_bob",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f626f62]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "ts-structural-v1-arrow-interface-signature",
+      "expected_resolution": "no-executable-target",
+      "observed_resolution": "none",
+      "function_candidates": [],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "resolution-only",
+      "tests": []
+    },
+    {
+      "id": "ts-structural-v1-function-expression-alice",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::alice::@object::name"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::alice::@object::name",
+      "tests": [
+        {
+          "test_id": "test_alice",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f616c696365]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_bob",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f626f62]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "ts-structural-v1-method-shorthand-alice",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::alice::@object::name"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::alice::@object::name",
+      "tests": [
+        {
+          "test_id": "test_alice",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f616c696365]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_bob",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f626f62]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "ts-structural-v1-mixed-forms-carol",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::carol::@object::name"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::carol::@object::name",
+      "tests": [
+        {
+          "test_id": "test_alice",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f616c696365]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_bob",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f626f62]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_carol",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f6361726f6c]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "ts-structural-v1-owner-scope-ambiguous",
+      "expected_resolution": "ambiguous",
+      "observed_resolution": "ambiguous",
+      "function_candidates": [
+        "crate::app.test::makeA::alice::@object::name",
+        "crate::app.test::makeB::alice::@object::name"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "resolution-only",
+      "tests": []
+    },
+    {
+      "id": "ts-structural-v1-owner-scope-makeA",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::makeA::alice::@object::name"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::makeA::alice::@object::name",
+      "tests": [
+        {
+          "test_id": "test_a",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f61]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_b",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f62]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "ts-structural-v1-direct-member-call",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::alice::@object::name"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::alice::@object::name",
+      "tests": [
+        {
+          "test_id": "test_direct",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f646972656374]#1",
+          "expected": "must",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "ts-structural-v1-mutated-member",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::alice::@object::name"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::alice::@object::name",
+      "tests": [
+        {
+          "test_id": "test_mutated",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f6d757461746564]#1",
+          "expected": "unknown",
+          "observed": "unknown",
+          "cell": "exact"
+        }
+      ]
+    },
+    {
+      "id": "ts-structural-v1-unrelated-member",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::dave::@object::title"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::dave::@object::title",
+      "tests": [
+        {
+          "test_id": "test_alice",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f616c696365]#1",
+          "expected": "excluded",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "ts-structural-v1-spread-override-alice",
+      "expected_resolution": "no-identity",
+      "observed_resolution": "none",
+      "function_candidates": [],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "resolution-only",
+      "tests": []
+    },
+    {
+      "id": "ts-structural-v1-spread-override-base",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::base::@object::name"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::base::@object::name",
+      "tests": [
+        {
+          "test_id": "test_alice",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f616c696365]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "ts-structural-v1-property-signature-interface",
+      "expected_resolution": "no-executable-target",
+      "observed_resolution": "none",
+      "function_candidates": [],
+      "rejected_non_function_candidates": [
+        "crate::app.test::Named::name (Field)"
+      ],
+      "resolution_passed": true,
+      "status": "resolution-only",
+      "tests": []
+    },
+    {
+      "id": "ts-structural-v1-property-signature-alice",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::alice::@object::name"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::alice::@object::name",
+      "tests": [
+        {
+          "test_id": "test_alice",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f616c696365]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        },
+        {
+          "test_id": "test_bob",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f626f62]#1",
+          "expected": "may",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "ts-structural-v1-refused-subtree-reachability",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::target"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::target",
+      "tests": [
+        {
+          "test_id": "test_host",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f686f7374]#1",
+          "expected": "must",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    },
+    {
+      "id": "ts-structural-v1-refused-subtree-unrelated",
+      "expected_resolution": "unique",
+      "observed_resolution": "unique",
+      "function_candidates": [
+        "crate::app.test::target"
+      ],
+      "rejected_non_function_candidates": [],
+      "resolution_passed": true,
+      "status": "scored",
+      "origin_path": "crate::app.test::target",
+      "tests": [
+        {
+          "test_id": "test_unrelated",
+          "status": "scored",
+          "test_path": "crate::app.test::@test[746573745f756e72656c61746564]#1",
+          "expected": "excluded",
+          "observed": "unknown",
+          "cell": "conservative"
+        }
+      ]
+    }
+  ]
+}

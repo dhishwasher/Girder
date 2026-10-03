@@ -1,0 +1,32 @@
+{
+  "blocked": "100-call TypeScript real-repository audit re-run (policy acceptance item 4)",
+  "reason": "The pinned archives are not cached in this cloud session (.benchmark-cache absent) and the hash-verified downloader (tools.core_representative_benchmark.acquire_artifact, offline=False) was refused by the session's egress proxy for every pinned URL. No substitute source was used; no audit result is claimed.",
+  "attempt_date": "2026-10-03",
+  "artifacts": [
+    {
+      "url": "https://github.com/microsoft/TypeScript/archive/refs/tags/v6.0.3.tar.gz",
+      "sha256": "c26953b79c1197e02f5666a0b612d5b9707339557aa9744097e7d5719de1a117",
+      "bytes": 33894793,
+      "result": "HTTP Error 403: Forbidden (session egress proxy; codeload.github.com also 403)"
+    },
+    {
+      "url": "https://github.com/colinhacks/zod/archive/refs/tags/v3.23.8.tar.gz",
+      "sha256": "ecd3ac7eb5bac88202b1146c308c8bbd48e63fc64d6d7f14b5577dde5da02c48",
+      "bytes": 586431,
+      "result": "HTTP Error 403: Forbidden (session egress proxy; codeload.github.com also 403)"
+    },
+    {
+      "url": "https://github.com/date-fns/date-fns/archive/refs/tags/v4.1.0.tar.gz",
+      "sha256": "a6694304fccc35587f954f4b79adbbeb9a0c66256a13e48ac0488b55f6616257",
+      "bytes": 1228521,
+      "result": "HTTP Error 403: Forbidden (session egress proxy; codeload.github.com also 403)"
+    },
+    {
+      "url": "https://github.com/typestack/class-validator/archive/refs/tags/v0.15.1.tar.gz",
+      "sha256": "100a22e535896aea8901c4b521b45bf25e778a41987df89dcc15054594859863",
+      "bytes": 198264,
+      "result": "HTTP Error 403: Forbidden (session egress proxy; codeload.github.com also 403)"
+    }
+  ],
+  "next": "Run python3 -m tools.measure_typescript_real_audit --name structural-members-after-1 on a machine with the pinned cache (e.g. the MOVESPEED workstation) against the candidate binary."
+}

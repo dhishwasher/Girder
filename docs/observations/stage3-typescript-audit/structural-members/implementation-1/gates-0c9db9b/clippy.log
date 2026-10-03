@@ -1,0 +1,72 @@
+    Checking memchr v2.8.2
+    Checking serde v1.0.228
+    Checking aho-corasick v1.1.4
+    Checking regex-automata v0.4.18
+    Checking thiserror v1.0.69
+    Checking serde_json v1.0.150
+    Checking petgraph v0.6.5
+    Checking ron v0.8.1
+    Checking bincode v1.3.3
+    Checking aether-graph v0.3.3 (/home/user/Girder/crates/aether-graph)
+    Checking regex v1.12.4
+    Checking tree-sitter v0.22.6
+    Checking libc v0.2.186
+    Checking log v0.4.33
+    Checking tree-sitter-go v0.21.2
+    Checking tree-sitter-typescript v0.21.2
+    Checking tree-sitter-python v0.21.0
+    Checking tree-sitter-rust v0.21.2
+    Checking aether-builder v0.3.3 (/home/user/Girder/crates/aether-builder)
+    Checking pin-project-lite v0.2.17
+    Checking mio v1.2.1
+    Checking errno v0.3.14
+    Checking signal-hook-registry v1.4.8
+    Checking bytes v1.12.0
+    Checking typenum v1.20.1
+    Checking cfg-if v1.0.4
+    Checking generic-array v0.14.7
+    Checking tokio v1.52.3
+    Checking once_cell v1.21.4
+    Checking tracing-core v0.1.36
+    Checking crypto-common v0.1.7
+    Checking block-buffer v0.10.4
+    Checking subtle v2.6.1
+    Checking digest v0.10.7
+    Checking aether-ai v0.3.3 (/home/user/Girder/crates/aether-ai)
+    Checking bstr v1.13.0
+    Checking tracing v0.1.44
+    Checking globset v0.4.19
+    Checking cpufeatures v0.2.17
+    Checking same-file v1.0.6
+    Checking walkdir v2.5.0
+    Checking sha2 v0.10.9
+    Checking inotify-sys v0.1.8
+    Checking toml_datetime v0.6.11
+    Checking serde_spanned v0.6.9
+    Checking toml_write v0.1.2
+    Checking winnow v0.7.15
+    Checking lazy_static v1.5.0
+    Checking sharded-slab v0.1.7
+    Checking toml_edit v0.22.27
+    Checking inotify v0.11.5
+    Checking tracing-log v0.2.0
+    Checking aether-dap v0.3.3 (/home/user/Girder/crates/aether-dap)
+    Checking getrandom v0.2.17
+    Checking thread_local v1.1.9
+    Checking notify-types v2.1.0
+    Checking matchers v0.2.0
+    Checking untrusted v0.9.0
+    Checking nu-ansi-term v0.50.3
+   Compiling aether-app v0.3.3 (/home/user/Girder/crates/aether-app)
+    Checking smallvec v1.15.2
+    Checking tracing-subscriber v0.3.23
+    Checking ring v0.17.14
+    Checking notify v8.2.0
+    Checking getrandom v0.3.4
+    Checking toml v0.8.23
+    Checking aether-extensions v0.3.3 (/home/user/Girder/crates/aether-extensions)
+    Checking ignore v0.4.33
+    Checking aether-agents v0.3.3 (/home/user/Girder/crates/aether-agents)
+    Checking aether-debugger v0.3.3 (/home/user/Girder/crates/aether-debugger)
+    Checking hmac v0.12.1
+    Finished `dev` profile [optimized + debuginfo] target(s) in 45.66s
