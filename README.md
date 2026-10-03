@@ -43,7 +43,10 @@ greps. Sponsorship helps fund context efficiency, semantic graph correctness,
 agent integrations, reproducible benchmarks, and maintenance. Girder publishes
 its measurements, including failures and limitations. If Girder saves you
 context, compute, or development time, [sponsor its continued development](https://github.com/sponsors/dhishwasher).
-See [what sponsorship supports](./docs/sponsorship.md).
+
+**Funding goal:** $1,000/month to fund ongoing maintenance, releases,
+benchmarks, and continued context-efficiency work on Girder. See
+[what sponsorship supports](./docs/sponsorship.md).
 
 Real, captured output (see
 [`docs/observations/release-prep/`](./docs/observations/release-prep/) for
