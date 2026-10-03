@@ -553,7 +553,32 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
-### 2026-10-03 — Freeze correction 2: escaped-key fixture bytes repaired (before implementation)
+### 2026-10-03 — Structural member identity policy v1 FROZEN; product implementation next
+
+The freeze commit is the policy-only commit directly after `2e5c8bc` on
+`claude/roadmap-ts-policy`. Its SHA cannot appear in its own content; it is
+reported with the push and is the parent of the next commit. That commit marks
+[the policy](observations/stage3-typescript-audit/structural-members/policy.md)
+as the frozen preimplementation policy. It also closes `const`-only owners as
+the chosen v1 default.
+
+The fixtures, both manifests, and every pinned hash are unchanged from
+`2e5c8bc`. That commit passed the user's independent Node replay and byte
+inspection, and the high review concluded K1, T1, and B1 are sufficient. The
+dispatch corpus, the original fixture, and product code are unchanged.
+
+**Next: product implementation of the frozen policy**, after the user reviews
+the freeze commit. Its acceptance covers:
+- the identity contracts;
+- the postimplementation B1 boundaries;
+- a separate validation scorer;
+- the predicted ambiguity failure of the unchanged original case;
+- the re-run 49-case corpus and 100-call audit;
+- all four common gates.
+
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-03 — Freeze correction 2: escaped-key fixture bytes repaired (historical)
 
 Review found a defect in correction 1 (`d8d1645`). `mixed-key-computed-alias.ts`
 lines 15 and 23 contained plain `name`/`list` bytes, not the escaped identifiers

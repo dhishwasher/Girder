@@ -1,8 +1,11 @@
 # TypeScript structural callable member identity policy v1
 
-**Status: preimplementation draft for review, with freeze corrections 1 and 2 applied**
+**Status: FROZEN preimplementation policy.** It includes freeze corrections 1 and 2
 (see [Correction history](#correction-history)). Base `e3812c5`; first draft
-`6ac3124`. No product implementation exists for any version of this policy. Frozen inputs,
+`6ac3124`. The fixtures and manifests were pinned at `2e5c8bc` and are unchanged by
+the freeze commit. No product implementation exists for any version of this
+policy. Product implementation is next and must satisfy this text as frozen. Any
+change requires a new policy revision and new observations. Frozen inputs,
 unchanged by this commit: [dispatch corpus](../../../dispatch-corpus.json)
 SHA-256 `9e3208a8f3fdc8faaee55cece63c1b5e25526322ebebbba915652f4f526ccd0a`;
 original fixture `fixtures/dispatch-corpus/typescript/structural-object-literal/app.test.ts`
@@ -158,8 +161,9 @@ A validation scorer must check node kind, not just a name match.
   is already an R3 collision. They are excluded only because `const` (ECMAScript
   `CreateImmutableBinding`) is the one owner shape a future proof rule can rely
   on without rebinding analysis. Destructuring, class-field, and assignment
-  owners have no `variable_declarator` identifier holding the literal. Widening
-  the owner set is an open review question.
+  owners have no `variable_declarator` identifier holding the literal. **`const`-only
+  owners are the chosen v1 default (closed at freeze).** Widening the owner set
+  needs a later policy revision with its own precommitted fixtures.
 - **U3** String, numeric, computed, and escaped keys are governed by K1: they refuse
   the whole literal, not just their own member. A computed key is runtime-valued.
   A non-computed string `'__proto__'` key is a prototype setter, not a property.
@@ -281,7 +285,7 @@ hashes match.
 | Key-derived member identity | Occurrence counter or byte offset; inner function name | Stable under sibling insertion and reorder. Callers reach the member by its key. ECMAScript `NamedEvaluation` names anonymous member functions after the key. A named function expression's own name is bound only inside its body. |
 | `@object` marker segment | `owner::key`; `owner.key` | `owner::key` equals a nested function's path. A marker that no identifier can contain makes the grammar injective, so redeclaration rules aren't needed to prevent collisions. |
 | Form as an attribute | Form in the path | Changing arrow to shorthand is a body edit, not a rename. |
-| `const` owners only (scope choice) | Include `let`/`var` | Not required for identity (see U2). It keeps v1 aligned with the only owner a later proof rule can use without rebinding analysis. It is an open question for review. |
+| `const` owners only (scope choice) | Include `let`/`var` | Not required for identity (see U2). It keeps v1 aligned with the only owner a later proof rule can use without rebinding analysis. Closed at freeze as the chosen v1 default. |
 | Refuse colliding members | Pick first or last; add a counter | A refusal is never wrong. Choosing one guesses. |
 | Refuse whole literal on spread/`__proto__` | Order-aware partial identities | Spread overwrites by order, and `__proto__` (including the string-key form) is a setter. v1 avoids reasoning about either. |
 | Withdraw flattened shorthand paths (R6) | Keep `<scope>::<key>` | Those paths alias distinct members, and alias nested functions. Cost (larger after T1): callable descendants of refused subtrees and shorthand methods in owner-less, `let`/`var`, destructuring, class-field, string-keyed, spread, or `__proto__` literals lose the nodes they have today, a retrieval regression on real code, disclosed here. |
@@ -343,3 +347,8 @@ extractor source, not from running it.
     [correction-2-negative-control.json](correction-2-negative-control.json).
   - No rule text changed. The dispatch corpus and the original fixture are
     byte-unchanged.
+- **Freeze** (the policy-only commit after `2e5c8bc`): the status changed from
+  draft to frozen, and the `const`-owner question was closed as the chosen v1
+  default. No rule, fixture, manifest, or hash changed. Freeze was approved
+  after an independent Node replay and byte inspection of `2e5c8bc`, and after
+  the high review concluded that K1, T1, and B1 are sufficient.
