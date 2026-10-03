@@ -31,6 +31,38 @@ def tap_counts(text):
     return counts
 
 
+def check_escaped_site(path, site):
+    """Byte-level check that a marked key really is an escaped identifier:
+    the line must hold the marker, a space, then the spelling whose bytes
+    include ASCII backslash (0x5c) followed by `u` and four hex digits, and
+    decoding that escape must give the expected runtime key."""
+    lines = path.read_bytes().split(b"\n")
+    line = lines[site["line"] - 1] if site["line"] <= len(lines) else b""
+    marker = site["marker"].encode()
+    spelling = site["source_spelling"].encode()
+    expected = marker + b" " + spelling + b":"
+    index = spelling.find(b"\x5cu")
+    hex_digits = spelling[index + 2:index + 6] if index >= 0 else b""
+    decoded = None
+    if index >= 0 and len(hex_digits) == 4 and all(c in b"0123456789abcdefABCDEF" for c in hex_digits):
+        decoded = (spelling[:index] + chr(int(hex_digits, 16)).encode() + spelling[index + 6:]).decode()
+    result = {
+        "marker": site["marker"],
+        "line": site["line"],
+        "line_contains_marker_and_spelling": expected in line,
+        "backslash_u_byte_offset_in_line": line.find(b"\x5cu"),
+        "spelling_bytes_hex": spelling.hex(),
+        "decoded_key": decoded,
+        "decoded_matches_expected": decoded == site["decoded_key"],
+    }
+    result["passed"] = (
+        result["line_contains_marker_and_spelling"]
+        and result["backslash_u_byte_offset_in_line"] >= 0
+        and result["decoded_matches_expected"]
+    )
+    return result
+
+
 def main():
     record = {
         "node_version": run(["node", "--version"], REPO)[1].strip(),
@@ -67,6 +99,9 @@ def main():
         # Boundary pins need extractor output; they must never claim a check now.
         entry["boundaries_postimplementation_only"] = all(b["checked_now"] is False for b in boundaries)
         entry["refused_subtree_boundaries_pinned"] = len(boundaries)
+        if case.get("escaped_key_sites"):
+            entry["escaped_key_sites"] = [check_escaped_site(path, site) for site in case["escaped_key_sites"]]
+            ok &= all(site["passed"] for site in entry["escaped_key_sites"])
         ok &= entry["markers_unique"] and entry["boundary_markers_unique"]
         ok &= entry["boundaries_postimplementation_only"]
         record["identity_corpus"].append(entry)

@@ -242,29 +242,7 @@
       "markers_unique": true,
       "boundary_markers_unique": true,
       "boundaries_postimplementation_only": true,
-      "refused_subtree_boundaries_pinned": 0,
-      "escaped_key_sites": [
-        {
-          "marker": "/* m:ca.escaped */",
-          "line": 15,
-          "line_contains_marker_and_spelling": true,
-          "backslash_u_byte_offset_in_line": 22,
-          "spelling_bytes_hex": "6e5c75303036316d65",
-          "decoded_key": "name",
-          "decoded_matches_expected": true,
-          "passed": true
-        },
-        {
-          "marker": "/* m:ca.escaped-only */",
-          "line": 23,
-          "line_contains_marker_and_spelling": true,
-          "backslash_u_byte_offset_in_line": 27,
-          "spelling_bytes_hex": "6c5c75303036397374",
-          "decoded_key": "list",
-          "decoded_matches_expected": true,
-          "passed": true
-        }
-      ]
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "mixed-key-unrelated.ts",

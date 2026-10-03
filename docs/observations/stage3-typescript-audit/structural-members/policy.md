@@ -1,6 +1,6 @@
 # TypeScript structural callable member identity policy v1
 
-**Status: preimplementation draft for review, with freeze correction 1 applied**
+**Status: preimplementation draft for review, with freeze corrections 1 and 2 applied**
 (see [Correction history](#correction-history)). Base `e3812c5`; first draft
 `6ac3124`. No product implementation exists for any version of this policy. Frozen inputs,
 unchanged by this commit: [dispatch corpus](../../../dispatch-corpus.json)
@@ -196,7 +196,7 @@ and that change must be published as such. It is not a dispatch-corpus improveme
 ## Frozen fixtures
 
 1. [Identity contract corpus](../../../../fixtures/typescript-structural-member-corpus/v1/manifest.json)
-   (manifest SHA-256 `93086a9298b9f26efac2c3a392c4d642a70f6ab05a0291c3ba572bb78d771c8d`)
+   (manifest SHA-256 `fa86e16327d9d727aa570e52ad1372d32462325b794efe0eb309acc232d143dc`)
    has 31 files, 106 marked members (44 required identities, 62 required
    no-identity), 10 declaration-only signatures, and 6 pinned refused-subtree
    boundaries (B1, postimplementation only). Every file's hash is pinned.
@@ -241,7 +241,10 @@ and that change must be published as such. It is not a dispatch-corpus improveme
 v22.22.0 type stripping (Node only). Results after correction 1: 30/31 identity files executed with
 their inline semantic assertions passing; `angle-assertion.ts` is skipped because
 the syntax is not erasable, and it is not counted as passed. All 11 validation
-fixtures pass `node --test`. Every marker is unique. All 6 boundary pins are
+fixtures pass `node --test`. A byte-level check confirms that both escaped-key
+sites in `mixed-key-computed-alias.ts` (lines 15 and 23) contain backslash
+(0x5c) + `u` + four hex digits, and that they decode to `name` and `list`
+(correction 2). Every marker is unique. All 6 boundary pins are
 flagged postimplementation-only. The unchanged original fixture passes 2/2. All pinned
 hashes match.
 
@@ -307,7 +310,7 @@ extractor source, not from running it.
 ## Correction history
 
 - `6ac3124`: first draft.
-- **Freeze correction 1** (this revision), a policy/fixture correction before any
+- **Freeze correction 1** (`d8d1645`), a policy/fixture correction before any
   product implementation, made after the high review of `6ac3124`:
   - **Decision 1 → K1.** Any non-plain key refuses every callable member of its
     literal.
@@ -319,3 +322,24 @@ extractor source, not from running it.
     cannot observe extractor output.
   - `docs/dispatch-corpus.json` and the original fixture are byte-unchanged
     (hashes above, re-verified).
+- **Freeze correction 2** (this revision), before any product implementation.
+  - **Failure (retained).** Review found that at `d8d1645`,
+    `mixed-key-computed-alias.ts` lines 15 and 23 held the plain identifier bytes
+    `name` and `list`, not escaped identifiers. That contradicted K1 and the `null`
+    expectations those members were meant to exercise. The pinned SHA-256 was
+    `6c13638cdc0c526cd5cc25b5dae007017a6bce7910c6273126c69b95443ed9d1`.
+    Correction 1's Node checks still reported success, because the runtime
+    assertions hold with either spelling and no byte check existed. Its record is
+    kept unchanged as
+    [preimplementation-checks-correction-1.json](preimplementation-checks-correction-1.json).
+  - **Fix.** Both sites now contain the literal source bytes `n\u0061me` and
+    `l\u0069st`. The runtime keys stay `name` and `list`, which the inline
+    assertions confirm. The file was re-pinned to SHA-256
+    `f4ce72ba47dbf1725a1ee1df8c7e53b27a148b3603f1bf1e61ab24b4001fb140`.
+  - **New check.** The manifest now records `escaped_key_sites`.
+    `run_preimplementation_checks.py` checks them byte-for-byte (results in
+    [preimplementation-checks.json](preimplementation-checks.json)).
+  - **Negative control.** The same check fails on the `d8d1645` bytes:
+    [correction-2-negative-control.json](correction-2-negative-control.json).
+  - No rule text changed. The dispatch corpus and the original fixture are
+    byte-unchanged.

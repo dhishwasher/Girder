@@ -616,7 +616,7 @@
     },
     {
       "file": "mixed-key-computed-alias.ts",
-      "sha256": "6c13638cdc0c526cd5cc25b5dae007017a6bce7910c6273126c69b95443ed9d1",
+      "sha256": "f4ce72ba47dbf1725a1ee1df8c7e53b27a148b3603f1bf1e61ab24b4001fb140",
       "module_path": "crate::mixed-key-computed-alias",
       "members": [
         {
@@ -673,7 +673,22 @@
           "expected_identity": "crate::mixed-key-computed-alias::safe::@object::name",
           "rule": "Separate plain-keyed literal keeps its identity."
         }
-      ]
+      ],
+      "escaped_key_sites": [
+        {
+          "marker": "/* m:ca.escaped */",
+          "line": 15,
+          "source_spelling": "n\\u0061me",
+          "decoded_key": "name"
+        },
+        {
+          "marker": "/* m:ca.escaped-only */",
+          "line": 23,
+          "source_spelling": "l\\u0069st",
+          "decoded_key": "list"
+        }
+      ],
+      "correction_2": "Lines 15 and 23 previously contained plain identifier bytes (sha256 6c13638cdc0c526cd5cc25b5dae007017a6bce7910c6273126c69b95443ed9d1, pinned at d8d1645), contradicting K1. They now contain literal backslash-u escapes; checked byte-for-byte by run_preimplementation_checks.py."
     },
     {
       "file": "mixed-key-unrelated.ts",
@@ -1071,6 +1086,6 @@
       ]
     }
   ],
-  "correction": "freeze-correction-1: K1 literal-level key refusal and T1/B1 refused-subtree rules (see policy.md). Applied before any product implementation.",
+  "correction": "freeze-correction-2: mixed-key-computed-alias.ts escaped-key sites rewritten to real backslash-u bytes and re-pinned; see policy.md Correction history. freeze-correction-1 content otherwise unchanged.",
   "boundary_rule": "refused_subtree_boundaries are postimplementation acceptance requirements. Each pins the nearest existing Function or Module owner, a coverage_gap=true claim with the stated reason whose site covers the refused subtree, and an Unknown, target-free claim owned by that owner for every marked call inside. No product output is checked by this commit."
 }

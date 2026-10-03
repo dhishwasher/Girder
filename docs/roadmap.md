@@ -553,7 +553,21 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
-### 2026-10-03 — Freeze correction 1 to the structural member policy (before implementation)
+### 2026-10-03 — Freeze correction 2: escaped-key fixture bytes repaired (before implementation)
+
+Review found a defect in correction 1 (`d8d1645`). `mixed-key-computed-alias.ts`
+lines 15 and 23 contained plain `name`/`list` bytes, not the escaped identifiers
+that K1 and the `null` expectations required. Correction 1's Node checks passed
+anyway; that record is retained as `preimplementation-checks-correction-1.json`.
+
+Both sites now hold literal backslash-u escapes (`name`, `list`), and
+the runtime keys are unchanged. The file and manifest hashes are re-pinned. A
+new byte-level check passes on the new bytes and fails on the old bytes (a
+committed negative control). All Node checks pass. No rule text, product code,
+dispatch corpus, or original fixture changed. Awaiting review. TypeScript is IN
+PROGRESS and Go is NOT STARTED.
+
+### 2026-10-03 — Freeze correction 1 to the structural member policy (historical)
 
 This applies the high review of `6ac3124` to the policy and fixtures only. No
 product code changed; no Girder or Cargo run.

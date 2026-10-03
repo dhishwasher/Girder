@@ -12,7 +12,7 @@ export const aliased = {
 // An escaped identifier spelling aliases a plain key; the later one wins.
 export const escaped = {
   /* m:ca.escaped-plain */ name: () => 'plain',
-  /* m:ca.escaped */ name: () => 'escaped',
+  /* m:ca.escaped */ n\u0061me: () => 'escaped',
   /* m:ca.escaped-sibling */ run() {
     return 'run';
   },
@@ -20,7 +20,7 @@ export const escaped = {
 
 // An escaped spelling alone (no plain twin) still refuses its literal.
 export const escapedOnly = {
-  /* m:ca.escaped-only */ list: () => 'escaped only',
+  /* m:ca.escaped-only */ l\u0069st: () => 'escaped only',
   /* m:ca.escaped-only-sibling */ size: () => 1,
 };
 
