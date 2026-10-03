@@ -3,7 +3,7 @@
 use super::{node_text, span_of, BuildOutput, CallRef, InheritRef, RustImportRef};
 use crate::parser::Lang;
 use aether_graph::{Edge, EdgeKind, Node, NodeId, NodeKind};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use tree_sitter::{Node as TsNode, Tree};
 
 #[derive(Clone)]
@@ -68,6 +68,7 @@ pub(super) fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> Buil
         &mut registrations,
         &mut out,
     );
+    refuse_colliding_members(&mut out, &mut functions);
     collect_calls(tree.root_node(), source, &imports, &functions, &mut out);
     out
 }
@@ -454,10 +455,35 @@ fn collect_definitions(
             }
             return;
         }
+        "object" => {
+            // Structural member identity policy v1, U1/U2/U7: every object
+            // literal not reached through a supported `const` owner (call
+            // arguments, returns, array elements, defaults, `export default`,
+            // `let`/`var`/destructuring/assignment owners, unsupported
+            // wrappers) is refused with its whole subtree (T1).
+            refuse_structural_subtree(node, out);
+            return;
+        }
         "variable_declarator" => {
             let value = node.child_by_field_name("value");
             let name = node.child_by_field_name("name");
             if let (Some(value), Some(name)) = (value, name) {
+                if let Some(object) = const_owned_object(node, name, value, source) {
+                    let owner = format!("{}::{}", scope.path, node_text(name, source));
+                    collect_object_members(
+                        object,
+                        &owner,
+                        source,
+                        file,
+                        lang,
+                        scope,
+                        imports,
+                        functions,
+                        registrations,
+                        out,
+                    );
+                    return;
+                }
                 if name.kind() == "identifier"
                     && matches!(value.kind(), "arrow_function" | "function_expression")
                 {
@@ -487,8 +513,14 @@ fn collect_definitions(
                     .is_some_and(|value| value.kind() == "arrow_function")
                 {
                     add_function(node, name, source, file, lang, scope, false, functions, out);
-                } else if scope.kind == ScopeKind::Type {
-                    add_field(node, name, source, file, lang, scope, out);
+                } else {
+                    if scope.kind == ScopeKind::Type {
+                        add_field(node, name, source, file, lang, scope, out);
+                    }
+                    // U2: a class-field owner is not a supported literal owner.
+                    if let Some(value) = node.child_by_field_name("value") {
+                        refuse_outermost_objects(value, out);
+                    }
                 }
                 return;
             }
@@ -656,6 +688,253 @@ fn add_field(
     out.nodes.push(node);
     out.edges
         .push((scope.id, id, Edge::new(EdgeKind::Contains)));
+}
+
+/// R1: the `variable_declarator` of a `const` declaration whose name is a
+/// plain identifier and whose value is an object literal, directly or through
+/// parentheses, `satisfies T`, or `as T` only.
+fn const_owned_object<'a>(
+    declarator: TsNode<'a>,
+    name: TsNode<'a>,
+    value: TsNode<'a>,
+    source: &str,
+) -> Option<TsNode<'a>> {
+    if name.kind() != "identifier" || node_text(name, source).contains('\\') {
+        return None;
+    }
+    let declaration = declarator.parent()?;
+    if declaration.kind() != "lexical_declaration"
+        || declaration
+            .child_by_field_name("kind")
+            .is_none_or(|kind| node_text(kind, source) != "const")
+    {
+        return None;
+    }
+    let mut value = value;
+    loop {
+        match value.kind() {
+            "object" => return Some(value),
+            "parenthesized_expression" | "satisfies_expression" | "as_expression" => {
+                let mut cursor = value.walk();
+                let inner = value
+                    .named_children(&mut cursor)
+                    .find(|child| child.kind() != "type_annotation" && child.kind() != "comment")?;
+                value = inner;
+            }
+            _ => return None,
+        }
+    }
+}
+
+/// K1: only an unescaped `property_identifier` key is plain.
+fn plain_key<'a>(key: TsNode<'a>, source: &'a str) -> Option<&'a str> {
+    let text = node_text(key, source);
+    (matches!(
+        key.kind(),
+        "property_identifier" | "shorthand_property_identifier"
+    ) && !text.contains('\\'))
+    .then_some(text)
+}
+
+fn property_key<'a>(property: TsNode<'a>) -> Option<TsNode<'a>> {
+    match property.kind() {
+        "pair" => property.child_by_field_name("key"),
+        "method_definition" => property.child_by_field_name("name"),
+        "shorthand_property_identifier" => Some(property),
+        _ => None,
+    }
+}
+
+/// Getter, setter, or generator method: U4/U5.
+fn accessor_or_generator(method: TsNode) -> bool {
+    let mut cursor = method.walk();
+    let found = method
+        .children(&mut cursor)
+        .take_while(|child| child.kind() != "formal_parameters")
+        .any(|child| matches!(child.kind(), "get" | "set" | "*"));
+    found
+}
+
+/// Structural member identity policy v1 (`docs/observations/stage3-typescript-
+/// audit/structural-members/policy.md`). Assigns `<owner>::@object::<key>`
+/// to supported callable members (R2), refuses the whole literal on any
+/// non-plain key, spread, or `__proto__` entry (K1/U6), refuses duplicated
+/// keys (R4), accessors and generators (U4/U5), and never lowers anything
+/// inside a refused member or literal (T1). Identity only: no proof here.
+#[allow(clippy::too_many_arguments)]
+fn collect_object_members(
+    object: TsNode,
+    owner: &str,
+    source: &str,
+    file: &str,
+    lang: Lang,
+    scope: &Scope,
+    imports: &HashMap<String, ImportBinding>,
+    functions: &mut Vec<FunctionRange>,
+    registrations: &mut HashMap<String, usize>,
+    out: &mut BuildOutput,
+) {
+    let mut cursor = object.walk();
+    let properties = object
+        .named_children(&mut cursor)
+        .filter(|child| child.kind() != "comment")
+        .collect::<Vec<_>>();
+    let mut keys = HashMap::<&str, usize>::new();
+    for property in &properties {
+        let key = property_key(*property).and_then(|key| plain_key(key, source));
+        match key {
+            Some(key) if key != "__proto__" => *keys.entry(key).or_default() += 1,
+            // Spread, `__proto__`, non-plain keys, or an unrecognized entry.
+            _ => {
+                refuse_structural_subtree(object, out);
+                return;
+            }
+        }
+    }
+    for property in properties {
+        let Some(key) = property_key(property).map(|key| node_text(key, source)) else {
+            continue;
+        };
+        if property.kind() == "shorthand_property_identifier" {
+            // `{ name }` copies a reference; it defines no member function.
+            continue;
+        }
+        if keys.get(key).copied().unwrap_or(0) > 1 {
+            refuse_structural_subtree(property, out);
+            continue;
+        }
+        let path = format!("{owner}::@object::{key}");
+        let (form, function) = match property.kind() {
+            "method_definition" if accessor_or_generator(property) => {
+                refuse_structural_subtree(property, out);
+                continue;
+            }
+            "method_definition" => ("method_shorthand", property),
+            _ => {
+                let Some(value) = property.child_by_field_name("value") else {
+                    continue;
+                };
+                match value.kind() {
+                    "arrow_function" => ("arrow", value),
+                    "function_expression" => ("function_expression", value),
+                    "generator_function" => {
+                        refuse_structural_subtree(property, out);
+                        continue;
+                    }
+                    "object" => {
+                        let nested = format!("{owner}::@object::{key}");
+                        collect_object_members(
+                            value,
+                            &nested,
+                            source,
+                            file,
+                            lang,
+                            scope,
+                            imports,
+                            functions,
+                            registrations,
+                            out,
+                        );
+                        continue;
+                    }
+                    _ => {
+                        // A data value: lowered exactly as before, so object
+                        // literals inside it are still refused under U1.
+                        collect_definitions(
+                            value,
+                            source,
+                            file,
+                            lang,
+                            scope,
+                            imports,
+                            functions,
+                            registrations,
+                            out,
+                        );
+                        continue;
+                    }
+                }
+            }
+        };
+        add_function_at_path(
+            property, key, source, file, lang, scope, &path, false, functions, out,
+        );
+        if let Some(node) = out.nodes.last_mut() {
+            node.set_attr("member_form", form);
+            if let Some(return_type) = function.child_by_field_name("return_type") {
+                node.set_attr("return_type", node_text(return_type, source).trim());
+            }
+        }
+        let inner = Scope {
+            id: NodeId::from_path(&path),
+            path,
+            kind: ScopeKind::Function,
+        };
+        recurse_definitions(
+            function,
+            source,
+            file,
+            lang,
+            &inner,
+            imports,
+            functions,
+            registrations,
+            out,
+        );
+    }
+}
+
+/// T1: record a refused member or literal; nothing inside it is lowered.
+fn refuse_structural_subtree(node: TsNode, out: &mut BuildOutput) {
+    out.refused_structural_subtrees.push(span_of(node));
+}
+
+fn refuse_outermost_objects(node: TsNode, out: &mut BuildOutput) {
+    if node.kind() == "object" {
+        refuse_structural_subtree(node, out);
+        return;
+    }
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        refuse_outermost_objects(child, out);
+    }
+}
+
+/// R3: members that compute the same path are all refused, together with
+/// every node scoped under that path (T1). They are never told apart.
+fn refuse_colliding_members(out: &mut BuildOutput, functions: &mut Vec<FunctionRange>) {
+    let mut counts = HashMap::<&str, usize>::new();
+    for node in out.nodes.iter().filter(|n| n.attr("member_form").is_some()) {
+        *counts.entry(node.path.as_str()).or_default() += 1;
+    }
+    let colliding = counts
+        .into_iter()
+        .filter(|(_, count)| *count > 1)
+        .map(|(path, _)| path.to_string())
+        .collect::<HashSet<_>>();
+    if colliding.is_empty() {
+        return;
+    }
+    let mut removed = HashSet::new();
+    for node in &out.nodes {
+        let exact = colliding.contains(&node.path);
+        if exact
+            || colliding
+                .iter()
+                .any(|path| node.path.starts_with(&format!("{path}::")))
+        {
+            removed.insert(node.id);
+            if exact && node.attr("member_form").is_some() {
+                out.refused_structural_subtrees.push(node.span);
+            }
+        }
+    }
+    out.nodes.retain(|node| !removed.contains(&node.id));
+    out.edges
+        .retain(|(from, to, _)| !removed.contains(from) && !removed.contains(to));
+    out.inherits
+        .retain(|inherit| !removed.contains(&inherit.sub));
+    functions.retain(|function| !removed.contains(&function.id));
 }
 
 // Registration callbacks have no binding name. Encode the literal title and
