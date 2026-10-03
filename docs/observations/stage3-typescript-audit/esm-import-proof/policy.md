@@ -1,7 +1,8 @@
 # TypeScript relative ESM named-import proof policy v1
 
-**Status: preimplementation draft for review.** Base `de2b364`, the local audit
-checkpoint. This is policy and fixtures only: no resolver or product code, no
+**Status: preimplementation draft for review, with correction 1 applied**
+(see [Correction history](#correction-history)). It is not frozen. First draft
+`79b7e70`; correction base `dee89a5`. This is policy and fixtures only: no resolver or product code, no
 Girder run, no Cargo job, and no new measurement. Every frozen input is
 unchanged: the [49-case corpus](../../../dispatch-corpus.json) (SHA-256
 `9e3208a8f3fdc8faaee55cece63c1b5e25526322ebebbba915652f4f526ccd0a`), its labels,
@@ -49,14 +50,45 @@ today.
   bare identifier `local`. These forms are refused: optional calls (`local?.()`),
   `new`, tagged templates, member callees (`ns.name()`, `local.call()`), and
   calls inside a refused structural subtree (B1).
-- **E3 — Exact module resolution.**
-  - `<spec>` starts with `./` or `../` and contains no `?` or `#`.
-  - It ends in exactly `.ts`, `.tsx`, `.mts`, or `.cts`, but not `.d.ts`,
-    `.d.mts`, or `.d.cts`.
-  - Lexical normalization against the importer's directory must stay inside
-    the analyzed root and name exactly one indexed source file, matched by
-    byte-exact relative path.
-  - The resolution is refused if another indexed file differs only by ASCII case.
+- **E3 — Exact module resolution.** Node resolves a specifier as a URL, and
+  URL parsing can disagree with any lexical path (runtime-checked; see E3-S1 to
+  E3-S4). So the specifier must be spelled such that URL resolution and lexical
+  path resolution provably name the same file:
+  - **E3-S — Spelling.** Both conditions must hold:
+    - the raw text between the quotes is byte-identical to its cooked string
+      value; and
+    - the cooked value matches
+      `^(\./|(\.\./)+)([A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*/)*[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*\.(ts|mts)$`,
+      and its last segment does not end in `.d.ts` or `.d.mts`. The regex alone
+      would accept a declaration file, so this condition is separate.
+
+    A refusal is attributed to one hazard class, as follows. These labels are
+    the ones used in the refusal table and the manifest.
+    - **E3-S1 — percent-encoding.** Any `%`, including `%61`, `%2e`, `%2F`, and
+      `%5C`. URL decoding changes the destination.
+    - **E3-S2 — escape syntax or backslash.** The raw text differs from the
+      cooked value (`\x61`, `\u…`, `\t`, `\\`, line continuations), or the
+      cooked value contains a backslash, which URL parsing treats as a
+      separator.
+    - **E3-S3 — controls and whitespace.** ASCII controls, TAB, CR, LF, or
+      spaces anywhere, raw or cooked, including leading and trailing ones,
+      which URL parsing strips.
+    - **E3-S4 — anything else outside the allow-list.** That covers non-ASCII
+      characters, `?`, `#`, empty segments, and `.` or `..` segments after the
+      leading run.
+  - **E3-R — Root-relative resolution.** Segments are resolved lexically against the importer's
+    root-relative directory. The result must stay inside the analyzed root and
+    name exactly one indexed regular file (C-1, C-2), matched by byte-exact
+    relative path. It is refused if another indexed file differs only by ASCII
+    case.
+  - **E3-X1 — Extensions: v1 accepts only `.ts` and `.mts`.**
+    - `.tsx` needs JSX semantics, and Node type stripping cannot load it.
+    - `.cts` is CommonJS, so the named import goes through CJS interop rather
+      than an ESM live binding.
+    - Declaration files (`.d.ts`, `.d.mts`) have no body.
+    - `.js`, `.mjs`, `.cjs`, and extensionless specifiers are tooling-dependent.
+    - Each of these needs its own semantics and proof.
+    - The importer itself must also be a `.ts` or `.mts` file.
 - **E4 — Export form.**
   - The target file has exactly one top-level `export function name(…) { … }`
     (including `async`), extracted as exactly one Function node at that span.
@@ -83,6 +115,12 @@ today.
   - The importer's recorded import target equals the target Function node's
     semantic path exactly.
 
+- **E8 — Mocking (MOCK-1..3).**
+  - The proof is refused if the snapshot contains a mock whose resolved module
+    identity equals the target file.
+  - It is refused for every importer if the mocking environment is uncertain.
+  - See [Mocking model](#mocking-model).
+
 **Claim.** Certify Must with exactly one target, the E4 Function node. The reason
 is `proven-typescript-relative-esm-named-import`, and the claim is placed at the
 call expression's span. There is no May.
@@ -92,11 +130,20 @@ call expression's span. There is no May.
 | Rule | Refused form | Fixture(s) |
 | --- | --- | --- |
 | R-RES-1 | Extensionless or `.js`/`.mjs`/`.cjs` relative specifiers. Resolution depends on tsconfig or bundler settings outside the snapshot; Node ESM rejects both forms here. | `extensionless-specifier`, `js-extension-specifier` |
+| E3-S1 | Percent-encoding. URL decoding loads a different file than the lexical path names (`%61`), encoded dots escape a directory, and `%2F`/`%5C` are rejected. | `percent-encoded-specifier`, `encoded-dot-segment`, `encoded-slash-specifier` |
+| E3-S2 | Escape syntax and backslashes (a cooked backslash is a URL separator) | `backslash-specifier`, `hex-escape-specifier`, `line-continuation-specifier`, `tab-escape-specifier` |
+| E3-S3 | Controls and whitespace, raw or cooked, which URL parsing strips | `tab-escape-specifier`, `raw-tab-byte-specifier`, `trailing-space-specifier` |
+| E3-S4 | Non-ASCII characters (normalization differs across filesystems) | `non-ascii-specifier` |
+| E3-X1 | `.tsx` and `.cts` specifiers | `tsx-extension`, `cts-extension` |
+| MOCK-1 | A mock whose resolved identity is the target, in any spelling or any file, including `vi.mock(import(…))` | `mock-setup-different-spelling`, `vi-mock-import-expression`, `test-module-mocking` |
+| MOCK-2 | A mock with an unresolvable specifier, or an aliased mocking method | `mock-alias-specifier`, `mock-non-literal-argument`, `mock-method-alias` |
+| MOCK-3 | Mocking or aliasing configuration, or a `__mocks__` directory | `mock-config-present`, `manual-mocks-directory` |
+| C-2 | A symlinked file or path component | `symlinked-target-file`, `symlinked-directory` |
 | R-RES-2 | Bare, package, `node:` builtin, path-alias, or absolute specifiers | `bare-specifier` |
 | R-RES-3 | Specifiers with a query or hash, which create a distinct module instance | `query-specifier` |
 | R-RES-4 | Declaration files (`.d.ts`): no runtime body (D1) | `declaration-file-target` |
 | R-GRAPH-1 | A parse error in either file | `target-parse-error` |
-| R-GRAPH-2 | A module-path collision (`.ts`/`.tsx`, `src/` stripping) | `module-path-collision-tsx`, `module-path-collision-src` |
+| R-GRAPH-2 | A module-path collision with any indexed file in any language (`.ts`/`.tsx`, `src/` stripping, `app.py`) | `module-path-collision-tsx`, `module-path-collision-src`, `mixed-language-module-collision` |
 | R-IMP-1 | `import type` and inline `type` specifiers (erased, so no runtime binding) | `type-only-import`, `inline-type-specifier` |
 | R-IMP-2 | Default and namespace imports | `default-import`, `namespace-import` |
 | R-IMP-3 | Dynamic `import()` bindings | `dynamic-import` |
@@ -113,34 +160,121 @@ call expression's span. There is no May.
 | R-BIND-4 | Escaped identifier spellings | `escaped-callee` (contains the literal bytes `target`) |
 | R-CALL-1 | Optional, `new`, and member callees | `optional-call`, `new-expression`, `namespace-import` |
 | R-CYCLE-1 | Importer and target in the same static-import cycle (strongly connected component) of the indexed snapshot | `import-cycle` |
-| R-MOCK-1 | Test-framework module mocking or hoisted mocks in any indexed file that name the specifier (`vi.mock`, `vi.doMock`, `jest.mock`, `jest.unstable_mockModule`, `mock.module`) | `test-module-mocking` |
+| (unrelated imports) | No refusal: builtin, type-only, resolvable sibling, and side-effect imports of other modules leave an eligible call Must | `unrelated-imports-allowed` (positive control), `mock-other-module` (positive control) |
 
-Assumptions, in addition to `indexed-source-snapshot`: no loader hooks,
-`--import` preloads, or import maps outside the snapshot.
+## Execution assumptions (outside the proof model, stated)
+
+- **ESM-preserving execution.**
+  - Indexed `.ts` and `.mts` files are executed as ECMAScript modules under
+    standard linking semantics, as with Node native type stripping. Imports are
+    live, immutable, indirect bindings.
+  - A pipeline that rewrites modules is outside the model. That includes
+    transpiling to CommonJS, bundling with scope hoisting, and test runners that
+    re-evaluate or wrap modules other than through the mocking APIs handled
+    below.
+  - A `.ts` file executed as CommonJS (for example, `"type": "commonjs"` with a
+    loader that accepts ESM syntax) is outside the model.
+- **No hooks outside the snapshot.** There are no loader hooks, `--import`
+  preloads, `--experimental-*` loaders, or import maps outside the indexed
+  snapshot.
+  - Preloads inside the snapshot are only covered as far as MOCK-1..3 inspect
+    them.
+  - A preload's command-line flag is itself outside the snapshot. MOCK-3 is the
+    conservative backstop.
+- **`indexed-source-snapshot`**, as in every policy.
+
+These are honest limits. A claim is sound only under them, and the reason string
+must carry them as assumptions.
+
+## Mocking model
+
+- **MOCK-1 — Identity, not spelling.** Each mocking call's specifier is
+  resolved by the E3 rules against the file that contains the call. If the
+  resolved canonical identity equals the target file, every proof to that
+  target is refused.
+  - The spelling does not matter. The runtime-checked fixture
+    `mock-setup-different-spelling` shows a setup file's
+    `mock.module('../app.ts')` replacing the importer's static `./app.ts`
+    binding.
+  - `vi.mock(import('<spec>'), …)` is resolved through its `import()` argument.
+  - The mocking calls covered are `vi.mock`, `vi.doMock`, `vi.unmock`,
+    `vi.doUnmock`, `jest.mock`, `jest.doMock`, `jest.unmock`, `jest.setMock`,
+    `jest.unstable_mockModule`, and `<x>.mock.module` (`node:test`).
+  - These are matched by member property name on any object, so aliasing the
+    object (`import { vi as v }`) is still caught.
+  - A mock whose resolved identity is a different file does not refuse
+    anything. The `mock-other-module` positive control stays Must.
+- **MOCK-2 — Uncertain mocks refuse the whole snapshot.** Every relative-import
+  proof in the snapshot is refused if any of the following occurs:
+  - A mocking call has a specifier that is not a single E3-valid string literal
+    or `import()` of one. That covers aliases such as `'@/app'`, bare
+    specifiers, variables, template literals, and computed values.
+  - A mocking method is referenced other than as a direct call. That covers
+    destructuring (`const { mock } = vi`), assignment, and passing as a value.
+- **MOCK-3 — Config-driven mocking refuses the whole snapshot.** Every
+  relative-import proof in the snapshot is refused if it contains any of:
+  - a test-runner or bundler configuration that can alias, auto-mock, or add
+    setup files (`vitest.config.*`, `vite.config.*`, `vitest.workspace.*`,
+    `jest.config.*`, or a `package.json` with a `jest` key);
+  - any `__mocks__` directory.
+
+  Configuration outside the snapshot (CLI flags, home-directory config) is
+  outside the model (see the execution assumptions).
+
+## Canonical identity
+
+- **C-1 — Root and file identity.**
+  - The analyzed root is canonicalized once (real path) when analysis starts.
+  - A file's identity is its root-relative path as discovered, using `/`
+    separators and byte-exact.
+  - The importer and target identities used by E3 and MOCK-1 are those root-
+    relative paths. Two identities that differ only by ASCII case refuse.
+- **C-2 — Symlinks.**
+  - If a symlink appears in the resolved target path or the importer path
+    (checked with `lstat` on every component under the root), the proof is
+    refused.
+  - Node follows symlinks to a real path, which then differs from the lexical
+    identity (fixtures `symlinked-target-file`, `symlinked-directory`).
+  - The current CLI walk skips symlinks, so such targets are simply not indexed.
+- **C-3 — Every ingestion route must agree.**
+  - Every route that can add or change indexed files must either attest to C-2
+    or mark the snapshot uncertain, which refuses these proofs. The routes are
+    CLI analyze, watch/incremental sync, MCP watched graphs, `load_file` and
+    other library entry points, and plan projections.
+  - No route may silently ingest a symlinked or out-of-root path as an ordinary
+    file.
 
 ## Frozen fixtures
 
 [Validation manifest](../../../../fixtures/typescript-esm-import-proof/v1/manifest.json),
-SHA-256 `dc34fe028fa9a7879a296981d6041a719b2e0d1fd56aa61a55e2b17c06824b27`:
-- 40 case directories: 5 `must` and 35 `unknown`.
+SHA-256 `05eeb33be49b972538f936d68aaf8ee9207f706e647e3834cfa2d65e4cce31cd`:
+- 64 case directories: 7 `must` and 57 `unknown`. Correction 1 adds 24 cases;
+  the entries for the original 40 are unchanged.
+- An incremental sequence of 7 steps (`v1-incremental/`, pinned in the same
+  manifest) covers exporter mutation, an import edit, a path collision added and
+  removed, and target deletion.
+- Symlinks are pinned by their link text, never followed.
 - Each case marks exactly one call with `/* claim */`.
 - Every file in every case is pinned by SHA-256, and the frozen corpus inputs are
   pinned too.
 - Must cases name the exact predicted target path. These are `explicit-ts`,
-  `aliased-import`, `mts-extension`, `parent-directory`, and `async-target`.
+  `aliased-import`, `mts-extension`, `parent-directory`, `async-target`,
+  `unrelated-imports-allowed`, and `mock-other-module`.
 - These are proof-contract fixtures. They are **not** ground-truth samples and
   are **not** added to the 49-case denominator.
 
 [Preimplementation checks](preimplementation-checks.json), produced by
 [`run_preimplementation_checks.py`](run_preimplementation_checks.py) with Node
 v22.22.0 only:
-- All hashes match, every case has a single marker, and the escaped-callee
-  bytes are present.
-- 38 of 40 cases pass `node --test`, asserting the runtime truth recorded in the
-  manifest.
-- Two are skipped and not counted as passed. `declaration-merging` uses a
-  runtime namespace that type stripping can't execute, and
-  `test-module-mocking` requires vitest.
+- All pins match, every case has a single marker, and the raw specifier bytes
+  of all 10 spelling-hazard cases are verified.
+- 58 of 64 cases pass `node --test`, asserting the runtime truth recorded in the
+  manifest. The two mock cases run with `--experimental-test-module-mocks`, and
+  one of them with `--import`.
+- Six are skipped and not counted as passed: one needs runtime namespaces and
+  five need vitest.
+- All 7 incremental steps produce their expected Node outcome on a temporary
+  copy.
 
 ## Predictions (stated now, not claimed)
 
@@ -156,19 +290,38 @@ v22.22.0 only:
 
 ## Acceptance (after implementation, not now)
 
-1. The contract has exact answers on all 40 cases: each Must names exactly the
-   pinned target, and each Unknown has no target and no missing evidence.
-2. There is no new Must anywhere outside E1–E7. That includes every existing
+1. The contract has exact answers on all 64 cases: each Must names exactly the
+   pinned target, and each Unknown has no target and no missing evidence. That
+   includes the cycle gate (`import-cycle`), all mock gates (MOCK-1..3), the
+   mixed-language collision, and both symlink cases.
+2. **Incremental invalidation.** Replay the pinned sequence through Girder's
+   incremental update path (file-change sync and a watched MCP graph). After
+   every step:
+   - the importer's claim equals the claim from a cold rebuild of the same
+     snapshot;
+   - no claim names a deleted or replaced NodeId.
+
+   The importer's evidence depends on other files: the exporter, colliding
+   paths, mocks, and configuration. A change to any of them must re-derive it.
+3. **Ingestion routes (C-3).** For each route, a symlinked file or directory is
+   either skipped or marks the snapshot uncertain, and never yields a Must. The
+   routes are CLI analyze, watch/incremental sync, MCP, `load_file`, and plan
+   projection.
+4. There is no new Must anywhere outside E1–E8. That includes every existing
    TypeScript fixture corpus and the structural-member contract.
-3. Re-run the unchanged 49-case corpus and the unchanged 100-call audit. Publish
+5. Re-run the unchanged 49-case corpus and the unchanged 100-call audit. Publish
    every changed answer and keep the existing failure.
-4. Run the four common gates serially, with `-j1`.
+6. Run the four common gates serially, with `-j1`.
 
 ## Decision log
 
 | Choice | Rejected alternative | Reason |
 | --- | --- | --- |
-| Explicit `.ts`/`.tsx`/`.mts`/`.cts` only (R-RES-1) | Extensionless or `.js` → `.ts` mapping | That mapping depends on `moduleResolution`, `allowImportingTsExtensions`, bundlers, and files outside the snapshot. Node ESM rejects both forms (runtime-checked). |
+| Raw = cooked plus an ASCII allow-list (E3-S1..S4) | Lexical normalization of whatever the string cooks to | URL parsing decodes `%xx`, treats `\` as a separator, and strips TAB, LF, and trailing spaces. Lexical and runtime destinations diverged in every hazard fixture. |
+| `.ts`/`.mts` only (E3-X1) | Also `.tsx`/`.cts` | `.tsx` adds JSX semantics that Node cannot run. `.cts` is CJS interop, not an ESM live binding. |
+| Mock refusal by resolved identity, with uncertainty refusing the whole snapshot (MOCK-1..3) | Literal specifier matching; ignoring configuration | A setup file's `'../app.ts'` mocked `./app.ts` at runtime. Aliases and configuration cannot be resolved from the snapshot. |
+| Refuse symlinks; all ingestion routes agree (C-2/C-3) | Following symlinks | Node's real-path identity differs from Girder's lexical identity. A route that ingests links silently would bypass E3. |
+| Explicit extensions only (R-RES-1) | Extensionless or `.js` → `.ts` mapping | That mapping depends on `moduleResolution`, `allowImportingTsExtensions`, bundlers, and files outside the snapshot. Node ESM rejects both forms (runtime-checked). |
 | Direct `export function` only (E4/R-EXP-1) | Following export clauses and re-exports | Keeps the binding chain to one hop. ResolveExport over stars can be ambiguous. |
 | Refuse cycles (R-CYCLE-1) | Allow them, since module function declarations are instantiated in InitializeEnvironment before evaluation | Conservative v1 choice. The fixture shows the cyclic call still reaches the target, so this refusal costs recall, not soundness. |
 | The lexical clean rule on both sides (E5/E6) | Finer flow analysis | Imports are live bindings. A write or eval in the exporting module changes what the importer calls (runtime-checked). |
@@ -193,15 +346,51 @@ runtime checks.
 
 ## Unresolved decisions for review
 
-1. **Specifier scope (R-RES-1).** Explicit extensions only. This likely leaves
-   real repositories unchanged. Widening to `.js`→`.ts` (NodeNext) or
-   extensionless resolution needs a separately frozen resolution model.
+The correction resolves the review's four required items by refusing,
+conservatively. These remain open; any of them could block a freeze:
+
+1. **Specifier scope (R-RES-1, E3-X1).** Only explicit `.ts`/`.mts` with an
+   ASCII allow-list is accepted. Real repositories mostly use extensionless or
+   `.js` specifiers, so the real audit is likely to stay unchanged.
 2. **Cycles (R-CYCLE-1).** Refused, although the spec and the fixture suggest a
    direct function declaration is cycle-safe given E6.
-3. **Local export clauses (R-EXP-1).** `function f(){}; export { f }` is refused
-   even though it is a one-hop binding.
-4. **Mock detection breadth (R-MOCK-1).** The listed APIs are matched across all
-   indexed files. Should any call named `mock` anywhere refuse instead?
-5. **Gate parity.** Should a Must here also require the importer to pass the
-   existing whole-file lexical gates (no escaped identifiers or `eval` anywhere
-   in the file), as E7 currently states?
+3. **Local export clauses (R-EXP-1).** Refused even for one hop.
+4. **Mocking coverage (MOCK-1..3).** The API list, config file names, and
+   `__mocks__` rule cover the named tools (vitest, jest, `node:test`). Other
+   runners, such as bun, `ava` with `esmock`, `testdouble`, or `proxyquire`-style
+   loaders, are not enumerated and fall only under the execution assumption
+   "no hooks outside the snapshot". Choose between:
+   - **(a)** listing more APIs; or
+   - **(b)** a broader rule: refuse whenever any test-runner dependency other
+     than `node:test` appears.
+5. **Preload flags.** `--import`/`--require` preload files are named on the
+   command line, outside the snapshot. MOCK-1 inspects mocking calls in every
+   indexed file, which covers preloads that are indexed. A preload outside the
+   root, or one that mocks through an unlisted API, is only covered by the
+   assumption.
+6. **ESM-preserving execution** is an assumption, not a check. v1 does not read
+   `package.json` `"type"` or tsconfig `module` settings.
+7. **Whole-file gates (E7).** Whether an escaped identifier or `eval` anywhere
+   in the importer should refuse every call in it.
+
+## Correction history
+
+- `79b7e70`: first draft. The high review returned NO-GO on four points:
+  1. E3 lexical resolution can disagree with URL resolution (percent-encoding,
+     backslash, controls and whitespace, escapes).
+  2. `.tsx`/`.cts` need separate semantics.
+  3. Mock refusal matched spellings rather than resolved identities, and
+     ignored uncertain or config-driven mocking.
+  4. Acceptance omitted the cycle and mock gates, mixed-language roots,
+     incremental invalidation, and canonical root/symlink identity.
+- **Correction 1** (this revision) addresses all four with:
+  - E3-S1..S4 and E3-X1;
+  - the execution assumptions;
+  - MOCK-1..3;
+  - C-1..3;
+  - acceptance items 1–4;
+  - 24 new runtime-checked or explicitly skipped fixtures and a 7-step
+    incremental sequence.
+
+  No product code was written and nothing was measured. The corpus and labels
+  are unchanged.

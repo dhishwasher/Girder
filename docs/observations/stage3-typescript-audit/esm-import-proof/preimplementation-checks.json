@@ -1,6 +1,6 @@
 {
   "node_version": "v22.22.0",
-  "manifest_sha256": "dc34fe028fa9a7879a296981d6041a719b2e0d1fd56aa61a55e2b17c06824b27",
+  "manifest_sha256": "05eeb33be49b972538f936d68aaf8ee9207f706e647e3834cfa2d65e4cce31cd",
   "frozen_inputs": {
     "docs/dispatch-corpus.json": {
       "sha256": "9e3208a8f3fdc8faaee55cece63c1b5e25526322ebebbba915652f4f526ccd0a",
@@ -18,8 +18,7 @@
   "cases": [
     {
       "id": "aliased-import",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "target_marker_unique": true,
       "runtime": {
@@ -34,8 +33,7 @@
     },
     {
       "id": "ambiguous-export-star",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -49,8 +47,7 @@
     },
     {
       "id": "async-target",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "target_marker_unique": true,
       "runtime": {
@@ -64,9 +61,37 @@
       }
     },
     {
+      "id": "backslash-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
       "id": "bare-specifier",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "cts-extension",
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -80,8 +105,7 @@
     },
     {
       "id": "declaration-file-target",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -95,8 +119,7 @@
     },
     {
       "id": "declaration-merging",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "skipped": "namespace with runtime code is not erasable by Node type stripping"
@@ -104,8 +127,7 @@
     },
     {
       "id": "default-import",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -119,8 +141,7 @@
     },
     {
       "id": "duplicate-export",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -134,9 +155,38 @@
     },
     {
       "id": "dynamic-import",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "encoded-dot-segment",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "encoded-slash-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
       "runtime": {
         "exit": 0,
         "tap": {
@@ -149,10 +199,8 @@
     },
     {
       "id": "escaped-callee",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
-      "escaped_callee_bytes": true,
       "runtime": {
         "exit": 0,
         "tap": {
@@ -165,8 +213,7 @@
     },
     {
       "id": "escaping-value-use",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -180,8 +227,7 @@
     },
     {
       "id": "explicit-ts",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "target_marker_unique": true,
       "runtime": {
@@ -196,8 +242,7 @@
     },
     {
       "id": "export-star-barrel",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -211,8 +256,7 @@
     },
     {
       "id": "extensionless-specifier",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -226,8 +270,7 @@
     },
     {
       "id": "generator-target",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -240,9 +283,23 @@
       }
     },
     {
+      "id": "hex-escape-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
       "id": "import-cycle",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -256,8 +313,7 @@
     },
     {
       "id": "importer-eval",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -271,8 +327,7 @@
     },
     {
       "id": "importer-writes-binding",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -286,8 +341,7 @@
     },
     {
       "id": "inline-type-specifier",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -301,8 +355,7 @@
     },
     {
       "id": "js-extension-specifier",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -315,9 +368,118 @@
       }
     },
     {
+      "id": "line-continuation-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
       "id": "local-export-clause",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "manual-mocks-directory",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "mixed-language-module-collision",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "mock-alias-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "skipped": "needs vitest"
+      }
+    },
+    {
+      "id": "mock-config-present",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "mock-method-alias",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "skipped": "needs vitest"
+      }
+    },
+    {
+      "id": "mock-non-literal-argument",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "skipped": "needs vitest"
+      }
+    },
+    {
+      "id": "mock-other-module",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "mock-setup-different-spelling",
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -331,8 +493,7 @@
     },
     {
       "id": "module-path-collision-src",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -346,8 +507,7 @@
     },
     {
       "id": "module-path-collision-tsx",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -361,8 +521,7 @@
     },
     {
       "id": "mts-extension",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "target_marker_unique": true,
       "runtime": {
@@ -377,8 +536,7 @@
     },
     {
       "id": "namespace-import",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -392,8 +550,7 @@
     },
     {
       "id": "new-expression",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -406,9 +563,23 @@
       }
     },
     {
+      "id": "non-ascii-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
       "id": "optional-call",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -422,8 +593,7 @@
     },
     {
       "id": "overload-signatures",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -437,8 +607,7 @@
     },
     {
       "id": "parent-directory",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "target_marker_unique": true,
       "runtime": {
@@ -452,9 +621,23 @@
       }
     },
     {
+      "id": "percent-encoded-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
       "id": "query-specifier",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -467,9 +650,23 @@
       }
     },
     {
+      "id": "raw-tab-byte-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
       "id": "reexport-barrel",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -483,8 +680,7 @@
     },
     {
       "id": "renamed-export",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -498,8 +694,7 @@
     },
     {
       "id": "shadowed-block-declaration",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -513,8 +708,7 @@
     },
     {
       "id": "shadowed-parameter",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -527,9 +721,51 @@
       }
     },
     {
+      "id": "symlinked-directory",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "symlinked-target-file",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "tab-escape-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
       "id": "target-eval",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -543,8 +779,7 @@
     },
     {
       "id": "target-has-export-star",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -558,8 +793,7 @@
     },
     {
       "id": "target-parse-error",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -573,8 +807,7 @@
     },
     {
       "id": "target-reassigns-binding",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -588,17 +821,30 @@
     },
     {
       "id": "test-module-mocking",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "skipped": "needs vitest; not executable with node:test"
       }
     },
     {
-      "id": "type-only-import",
-      "file_set_matches": true,
-      "hashes_match": true,
+      "id": "trailing-space-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "tsx-extension",
+      "pins_match": true,
       "single_claim_marker": true,
       "runtime": {
         "exit": 0,
@@ -609,13 +855,180 @@
         },
         "passed": true
       }
+    },
+    {
+      "id": "type-only-import",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "unrelated-imports-allowed",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    },
+    {
+      "id": "vi-mock-import-expression",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "skipped": "needs vitest"
+      }
     }
   ],
   "case_dirs_match_manifest": true,
+  "incremental": [
+    {
+      "id": "exporter-import-collision-deletion",
+      "pins_match": true,
+      "steps": [
+        {
+          "op": "write",
+          "path": "app.ts",
+          "expected_class": "unknown",
+          "runtime_expect": "fail",
+          "runtime": {
+            "exit": 1,
+            "tap": {
+              "tests": 1,
+              "pass": 0,
+              "fail": 1
+            },
+            "passed": false
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "app.ts",
+          "expected_class": "must",
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "app.test.ts",
+          "expected_class": "unknown",
+          "runtime_expect": "fail",
+          "runtime": {
+            "exit": 1,
+            "tap": {
+              "tests": 1,
+              "pass": 0,
+              "fail": 1
+            },
+            "passed": false
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "app.test.ts",
+          "expected_class": "must",
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "app.tsx",
+          "expected_class": "unknown",
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true
+          },
+          "matched": true
+        },
+        {
+          "op": "delete",
+          "path": "app.tsx",
+          "expected_class": "must",
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true
+          },
+          "matched": true
+        },
+        {
+          "op": "delete",
+          "path": "app.ts",
+          "expected_class": "unknown",
+          "runtime_expect": "fail",
+          "runtime": {
+            "exit": 1,
+            "tap": {
+              "tests": 1,
+              "pass": 0,
+              "fail": 1
+            },
+            "passed": false
+          },
+          "matched": true
+        }
+      ],
+      "base_runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true
+      }
+    }
+  ],
   "counts": {
-    "cases": 40,
-    "runtime_passed": 38,
-    "runtime_skipped": 2
+    "cases": 64,
+    "runtime_passed": 58,
+    "runtime_skipped": 6,
+    "incremental_steps_matched": 7
   },
   "all_passed": true
 }

@@ -11,10 +11,11 @@
     "fixtures/dispatch-corpus/typescript/direct-cross-file/app.test.ts": "99fe2eefb562142a2a58c989fd48600a430aa84a46c4b68dfd595d5ffe38bdb1"
   },
   "counts": {
-    "cases": 40,
-    "must": 5,
-    "unknown": 35,
-    "runtime_executed": 38
+    "cases": 64,
+    "must": 7,
+    "unknown": 57,
+    "runtime_executed": 58,
+    "incremental_steps": 7
   },
   "cases": [
     {
@@ -82,6 +83,23 @@
       }
     },
     {
+      "id": "backslash-specifier",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "E3-S2"
+      ],
+      "runtime_truth": "the cooked backslash is a URL path separator: './sub\\\\app.ts' loads sub/app.ts ('sub.app' asserted)",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "ea0f3ba069cc3a480e089002dbdf6ff5ddba98f4a97119e5e5add976cc46a622",
+        "sub/app.ts": "25aca3352e256fa88a2dbbdfa82dfa3b590486ebf088e63f4cc10d2a31bf9eb7"
+      }
+    },
+    {
       "id": "bare-specifier",
       "importer": "app.test.ts",
       "expected_class": "unknown",
@@ -95,6 +113,23 @@
       },
       "files": {
         "app.test.ts": "c32c9a83fc37f01e9e183ff4b4397d57c29277ca280c26b9edc3294a24b269ea"
+      }
+    },
+    {
+      "id": "cts-extension",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "E3-X1"
+      ],
+      "runtime_truth": "the .cts file is CommonJS; the named import goes through CJS interop and returns 'cts.target' (asserted)",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "0df24db897bc989b15e468fb1dcaa43456a2feccb54b5996735398b4a5898ceb",
+        "lib.cts": "fec168d19f3973c46028c643b188485cca50b09449c4eade930030454bfd1e5a"
       }
     },
     {
@@ -183,6 +218,43 @@
       "files": {
         "app.test.ts": "68d8500afc73997c220202dc459547246d3a26d6342652b95d1ba3e5aa55728c",
         "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
+      }
+    },
+    {
+      "id": "encoded-dot-segment",
+      "importer": "sub/consumer.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "E3-S1"
+      ],
+      "runtime_truth": "'./%2e%2e/app.ts' from sub/ escapes to app.ts ('app.target' asserted); a lexical path names the literal directory sub/%2e%2e/.",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "87638aac44bdd19973c76162e07b230ed5c9201286533e7c431f3758bee6e6a4",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82",
+        "sub/%2e%2e/app.ts": "2a5804f6dc8d82109d31bc03ff249a6b49825ba4b56ad126482c432fb0c76dff",
+        "sub/consumer.ts": "044351b169dd5f528b641f3b5287ffa16437e9d4e5e60efc05b72e33b06d1172"
+      }
+    },
+    {
+      "id": "encoded-slash-specifier",
+      "importer": "consumer.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "E3-S1"
+      ],
+      "runtime_truth": "'./sub%2Fapp.ts' is rejected with ERR_INVALID_MODULE_SPECIFIER (asserted)",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "447d164b4c29650a23c416d9608e2b59262d5e7bb62fe6a3b7843cbcff2a68d7",
+        "consumer.ts": "017a2c8f2de81dddf2152556f51bf5ee47c2d75417078304a93e4885bddf8690",
+        "sub/app.ts": "25aca3352e256fa88a2dbbdfa82dfa3b590486ebf088e63f4cc10d2a31bf9eb7"
       }
     },
     {
@@ -301,6 +373,23 @@
       }
     },
     {
+      "id": "hex-escape-specifier",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "E3-S2"
+      ],
+      "runtime_truth": "the cooked value './app.ts' loads app.ts (asserted); raw escape syntax is refused even though the destination matches",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "4da76bede80cb0862c960d1c26ae2be3bf4ec3b7ad3f6a3d45b41d7eeb683df5",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
+      }
+    },
+    {
       "id": "import-cycle",
       "importer": "b.ts",
       "expected_class": "unknown",
@@ -388,6 +477,23 @@
       }
     },
     {
+      "id": "line-continuation-specifier",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "E3-S2"
+      ],
+      "runtime_truth": "a line continuation inside the literal cooks to './app.ts' and loads app.ts (asserted)",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "189cbd29779bf6d7c89f8c5a96d9be7d6b09cdfe37b582f8a42e2d1d65684ab6",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
+      }
+    },
+    {
       "id": "local-export-clause",
       "importer": "app.test.ts",
       "expected_class": "unknown",
@@ -402,6 +508,163 @@
       "files": {
         "app.test.ts": "3a9163d7115e103e4c1dcfa2c41a5f5f05571ab5b2420c7c4f98d414af6a9c02",
         "app.ts": "99df3891fcae5860c355037aba8bc0c3709fc15094790808b424df02efbebdcf"
+      }
+    },
+    {
+      "id": "manual-mocks-directory",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "MOCK-3"
+      ],
+      "runtime_truth": "node runs app.ts (asserted); jest/vitest can substitute __mocks__/app.ts",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "__mocks__/app.ts": "c033ef5b224877772429ca3eec73ed81aed9ef6c2271121ae22154f953338624",
+        "app.test.ts": "3a9163d7115e103e4c1dcfa2c41a5f5f05571ab5b2420c7c4f98d414af6a9c02",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
+      }
+    },
+    {
+      "id": "mixed-language-module-collision",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "R-GRAPH-2"
+      ],
+      "runtime_truth": "node runs app.ts (asserted); app.py shares module path crate::app",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.py": "829be8ce38ad0bb8aafb92cf71516068e6f2a6ff9f51694fc51716d62d69326c",
+        "app.test.ts": "3a9163d7115e103e4c1dcfa2c41a5f5f05571ab5b2420c7c4f98d414af6a9c02",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
+      }
+    },
+    {
+      "id": "mock-alias-specifier",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "MOCK-2"
+      ],
+      "runtime_truth": "vitest: '@/app' is alias-resolved by configuration outside the snapshot; the identity is unknown",
+      "runtime": {
+        "mode": "skipped",
+        "reason": "needs vitest"
+      },
+      "files": {
+        "app.test.ts": "35c5a2975cd23626e8c44587936d9c5812266bf4abbefc9bd220ab8ed8a5ad1e",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82",
+        "setup/mocks.ts": "9a2db427c1bb4a74f4c8470a28fca4889ba00a30bff40f069c674c809f049bda"
+      }
+    },
+    {
+      "id": "mock-config-present",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "MOCK-3"
+      ],
+      "runtime_truth": "node runs app.ts ('app.target' asserted); under vitest the config can alias or set up mocks",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "3a9163d7115e103e4c1dcfa2c41a5f5f05571ab5b2420c7c4f98d414af6a9c02",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82",
+        "vitest.config.ts": "ebd2ef25a5078180e2ebfe3249ad91e7ca9a4673d64a7b59fd7b3e3cf7d631f9"
+      }
+    },
+    {
+      "id": "mock-method-alias",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "MOCK-2"
+      ],
+      "runtime_truth": "vitest: the destructured `mock` aliases vi.mock; call-site matching by name would miss it",
+      "runtime": {
+        "mode": "skipped",
+        "reason": "needs vitest"
+      },
+      "files": {
+        "app.test.ts": "56a6277e9fda7eb15a1dda0167f14c12423463f87f0c429fb09837f8b03e5d0d",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
+      }
+    },
+    {
+      "id": "mock-non-literal-argument",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "MOCK-2"
+      ],
+      "runtime_truth": "vitest: the mock specifier is a variable, so its identity is not statically known",
+      "runtime": {
+        "mode": "skipped",
+        "reason": "needs vitest"
+      },
+      "files": {
+        "app.test.ts": "03cc6dddac3986cec1f180006e635eacc93643eac9d007cd96c7fb64b8159ad9",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82",
+        "other.ts": "659fefa24dad6d8647952e6d9cc6382b36c5662fbebe85f49cdd618950d37126"
+      }
+    },
+    {
+      "id": "mock-other-module",
+      "importer": "app.test.ts",
+      "expected_class": "must",
+      "expected_target": {
+        "file": "app.ts",
+        "predicted_path": "crate::app::target",
+        "marker": "export function target("
+      },
+      "rules": [
+        "MOCK-1 (resolved identity differs)",
+        "E1-E7"
+      ],
+      "runtime_truth": "a mock of other.ts does not affect app.ts; target returns 'app.target' while other is mocked (asserted)",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts",
+        "node_args": [
+          "--experimental-test-module-mocks"
+        ]
+      },
+      "files": {
+        "app.test.ts": "603b48fbb5f107f475bdce23895f14b0c279799f49d110dfb5eb8105911ffa89",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82",
+        "other.ts": "659fefa24dad6d8647952e6d9cc6382b36c5662fbebe85f49cdd618950d37126"
+      }
+    },
+    {
+      "id": "mock-setup-different-spelling",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "MOCK-1"
+      ],
+      "runtime_truth": "the setup file's mock.module('../app.ts') resolves to the importer's './app.ts'; the static import binds the mock ('mocked' asserted). Must would be unsound",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts",
+        "node_args": [
+          "--experimental-test-module-mocks",
+          "--import",
+          "./setup/mocks.ts"
+        ]
+      },
+      "files": {
+        "app.test.ts": "6e3ded85107e2271a20611949cbfc540afaec8f28e3d542b2c56ea6eb45471b6",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82",
+        "setup/mocks.ts": "1984b3f3ddcb9dcdaf3edef67517db0b9a962c74b9ba46b06d62dcc70f9f6bb7"
       }
     },
     {
@@ -498,6 +761,23 @@
       }
     },
     {
+      "id": "non-ascii-specifier",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "E3-S4"
+      ],
+      "runtime_truth": "the non-ASCII file loads ('umlaut.target' asserted); outside the v1 character allow-list (Unicode normalization differs across filesystems)",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "8b4ebbc2001d068e018f6db1b2c27b48687f07c6e30be8628b25856852cc6f9b",
+        "äpp.ts": "0eb1442c23c9a00bd085c2e00bda320c37c44305ea90f4b21fe7408e769df342"
+      }
+    },
+    {
       "id": "optional-call",
       "importer": "app.test.ts",
       "expected_class": "unknown",
@@ -554,6 +834,24 @@
       }
     },
     {
+      "id": "percent-encoded-specifier",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "E3-S1"
+      ],
+      "runtime_truth": "Node URL-decodes './%61pp.ts' and loads app.ts ('app.target' asserted), while a lexical path names the literal file %61pp.ts that also exists. The two destinations differ.",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "%61pp.ts": "143e4783e3ffb74433dea72dc3faeb66d15730fd636d8fb843e86c4def9b2313",
+        "app.test.ts": "7563a258cded6b61103d37925f1827cf2a02c1caecebc1181fbce577d32f31c1",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
+      }
+    },
+    {
       "id": "query-specifier",
       "importer": "app.test.ts",
       "expected_class": "unknown",
@@ -568,6 +866,23 @@
       "files": {
         "app.test.ts": "2e3126d2bed5a705d0874abe6dee96774cad0252d0178cd04e488624bd0938df",
         "app.ts": "d64234959c6eff92979be35922fba80bc6eea41169636f1fea2be3ffb51978ae"
+      }
+    },
+    {
+      "id": "raw-tab-byte-specifier",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "E3-S3"
+      ],
+      "runtime_truth": "a raw TAB byte in the literal is stripped by URL parsing, so the import loads app.ts (asserted)",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "7b8ce7ef28dc965eef636baaca81f5d8b9f0951bc8da88fe739ec617eafac726",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
       }
     },
     {
@@ -636,6 +951,64 @@
       },
       "files": {
         "app.test.ts": "0f68c9643503ddaae9b2b50f3ecdee71026165045548fbb740609d722c41958c",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
+      }
+    },
+    {
+      "id": "symlinked-directory",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "C-2"
+      ],
+      "runtime_truth": "Node follows the lib -> real symlink (asserted); symlinked path components are outside v1",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "90f3a975426d19339d1c4800bac94c11a993fd7de743a056e52c92e2eb70147a",
+        "lib": {
+          "symlink": "real"
+        },
+        "real/app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
+      }
+    },
+    {
+      "id": "symlinked-target-file",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "C-2"
+      ],
+      "runtime_truth": "Node follows the app.ts symlink to real/app.ts (asserted); symlinked files are outside v1",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "3a9163d7115e103e4c1dcfa2c41a5f5f05571ab5b2420c7c4f98d414af6a9c02",
+        "app.ts": {
+          "symlink": "real/app.ts"
+        },
+        "real/app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
+      }
+    },
+    {
+      "id": "tab-escape-specifier",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "E3-S2",
+        "E3-S3"
+      ],
+      "runtime_truth": "the cooked TAB is stripped by URL parsing, so './ap\\tp.ts' loads app.ts (asserted)",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "e8e44b3c3a4d8731c7da76224000ad2d11a09bb90eb36d1bb4bd6ba1b735df8f",
         "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
       }
     },
@@ -727,6 +1100,41 @@
       }
     },
     {
+      "id": "trailing-space-specifier",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "E3-S3"
+      ],
+      "runtime_truth": "the trailing space is stripped, so './app.ts ' loads app.ts (asserted)",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "44c091c8a4c611f4c0c79aa9223b813e8783c866779a3a9a13e9600fa59e1671",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
+      }
+    },
+    {
+      "id": "tsx-extension",
+      "importer": "consumer.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "E3-X1"
+      ],
+      "runtime_truth": "Node type stripping cannot load .tsx; the consumer rejects (asserted). JSX semantics are outside v1",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "055865a81bd09701be5e635b84d861f6fcef3de3cc5fd6640c983f054a277028",
+        "consumer.ts": "6ed7a8a9110280373cd22804fe35b1e02b33ac013f09ada763fd09535c6721d9",
+        "view.tsx": "8a10766a111d35c6aa7b9ca70258e795c94abf363d8c4960c72b536a102bdbca"
+      }
+    },
+    {
       "id": "type-only-import",
       "importer": "app.test.ts",
       "expected_class": "unknown",
@@ -742,6 +1150,120 @@
         "app.test.ts": "34505b023b9450d78bf21af366d4d3344bc60af3f37cef37f5db0aa495e5b869",
         "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
       }
+    },
+    {
+      "id": "unrelated-imports-allowed",
+      "importer": "app.test.ts",
+      "expected_class": "must",
+      "expected_target": {
+        "file": "app.ts",
+        "predicted_path": "crate::app::target",
+        "marker": "export function target("
+      },
+      "rules": [
+        "E1-E7 (unrelated imports do not refuse)"
+      ],
+      "runtime_truth": "the builtin, type-only, resolvable sibling and side-effect imports do not change the target ('app.target' asserted)",
+      "runtime": {
+        "mode": "node-test",
+        "test_file": "app.test.ts"
+      },
+      "files": {
+        "app.test.ts": "ab6101c0e74ef28fdc8e8193a568ec8b00ce1831cd7da82f982e9acef457fd26",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82",
+        "other.ts": "659fefa24dad6d8647952e6d9cc6382b36c5662fbebe85f49cdd618950d37126",
+        "side.ts": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+        "types.ts": "a8f593a24d2d99ded0526b767adf73a52c9bd754f8189624dba81adaf26e71e9"
+      }
+    },
+    {
+      "id": "vi-mock-import-expression",
+      "importer": "app.test.ts",
+      "expected_class": "unknown",
+      "rules": [
+        "MOCK-1"
+      ],
+      "runtime_truth": "vitest: vi.mock(import('./app.ts'), …) mocks app.ts",
+      "runtime": {
+        "mode": "skipped",
+        "reason": "needs vitest"
+      },
+      "files": {
+        "app.test.ts": "f6d9efd5d685fc868559bc9bbf9f7977172f729495ca884c24a2bf8c123aafcc",
+        "app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82"
+      }
     }
-  ]
+  ],
+  "incremental_sequences": [
+    {
+      "id": "exporter-import-collision-deletion",
+      "base_dir": "fixtures/typescript-esm-import-proof/v1-incremental/base",
+      "importer": "app.test.ts",
+      "meaning": "Apply the steps in order to a copy of base_dir. After every step, the incremental-update answer for the importer's claim must equal a cold rebuild of the same snapshot, with no stale target. runtime_expect is what node --test does on that snapshot.",
+      "steps": [
+        {
+          "op": "write",
+          "path": "app.ts",
+          "source": "steps/app-reassigns.ts",
+          "expected_class": "unknown",
+          "runtime_expect": "fail",
+          "why": "exporter mutation: target reassigns its live binding (R-BIND-2); the test's 'app.target' assertion fails at runtime"
+        },
+        {
+          "op": "write",
+          "path": "app.ts",
+          "source": "base/app.ts",
+          "expected_class": "must",
+          "runtime_expect": "pass",
+          "why": "revert restores eligibility"
+        },
+        {
+          "op": "write",
+          "path": "app.test.ts",
+          "source": "steps/app.test-extensionless.ts",
+          "expected_class": "unknown",
+          "runtime_expect": "fail",
+          "why": "import edit to an extensionless specifier (E3-X1); Node cannot resolve it"
+        },
+        {
+          "op": "write",
+          "path": "app.test.ts",
+          "source": "base/app.test.ts",
+          "expected_class": "must",
+          "runtime_expect": "pass",
+          "why": "revert"
+        },
+        {
+          "op": "write",
+          "path": "app.tsx",
+          "source": "steps/app.tsx",
+          "expected_class": "unknown",
+          "runtime_expect": "pass",
+          "why": "a path collision is added (R-GRAPH-2)"
+        },
+        {
+          "op": "delete",
+          "path": "app.tsx",
+          "expected_class": "must",
+          "runtime_expect": "pass",
+          "why": "the collision is removed"
+        },
+        {
+          "op": "delete",
+          "path": "app.ts",
+          "expected_class": "unknown",
+          "runtime_expect": "fail",
+          "why": "target deleted: no target, and no stale NodeId may remain"
+        }
+      ],
+      "files": {
+        "base/app.test.ts": "3a9163d7115e103e4c1dcfa2c41a5f5f05571ab5b2420c7c4f98d414af6a9c02",
+        "base/app.ts": "2d466d5bbad6067755cdd11108f6b2eadbfd916d4f7cb2af934aae4b89b90b82",
+        "steps/app-reassigns.ts": "19590a4eef92d1b98fa80477b42c9217459d9a74c8a929df0f4e44859dcb7d0a",
+        "steps/app.test-extensionless.ts": "5a729299117b412ef26c3452cbc5f2d5588db5184b794acaabfb313e8da63b95",
+        "steps/app.tsx": "8a10766a111d35c6aa7b9ca70258e795c94abf363d8c4960c72b536a102bdbca"
+      }
+    }
+  ],
+  "correction": "correction-1 (after the high review NO-GO on 79b7e70): adds E3 spelling and encoding refusals, v1 extensions narrowed to .ts/.mts, mock refusal by resolved module identity, canonical identity and symlink cases, mixed-language collision, an unrelated-imports positive control, and an incremental sequence. Entries for the original 40 cases are unchanged."
 }

@@ -554,7 +554,35 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
-### 2026-10-03 — Relative ESM named-import proof policy drafted (policy and fixtures only)
+### 2026-10-03 — ESM named-import proof policy correction 1 (policy and fixtures only; not frozen)
+
+The high review returned NO-GO on `79b7e70`. Correction 1 addresses all four
+required points in the
+[policy](observations/stage3-typescript-audit/esm-import-proof/policy.md):
+1. **Specifier spelling.** The raw text must equal the cooked value and match an
+   ASCII allow-list. This refuses percent-encoding, escapes, backslashes,
+   controls, whitespace, and non-ASCII characters. It was runtime-checked:
+   `%61`, `%2e%2e`, `\`, TAB, LF, and a trailing space each made Node load a
+   different file than a lexical path names, or strip characters.
+2. **Extensions.** v1 accepts `.ts` and `.mts` only. The policy states its
+   ESM-preserving execution assumptions.
+3. **Mocking.** A mock refuses by resolved module identity. A setup file's
+   `../app.ts` mock replaced the importer's `./app.ts` import at runtime. Any
+   uncertain mock, mocking configuration, or `__mocks__` directory refuses the
+   whole snapshot.
+4. **Acceptance.** It now covers the cycle and mock gates, mixed-language
+   collisions, incremental invalidation (a pinned 7-step sequence), canonical
+   identity and symlinks, and agreement across ingestion routes.
+
+The manifest now has 64 cases (7 Must and 57 Unknown) plus 7 incremental steps.
+The preimplementation checks pass: 58 cases run under Node, 6 are skipped with
+reasons, and 7 of 7 steps match.
+
+No product code ran, nothing was measured, and the corpus and labels are
+unchanged. Seven decisions remain open in the policy, so this is not a freeze.
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-03 — Relative ESM named-import proof policy drafted (historical)
 
 The [draft policy](observations/stage3-typescript-audit/esm-import-proof/policy.md)
 targets the unchanged `typescript-direct-cross-file` case. It allows a bounded
