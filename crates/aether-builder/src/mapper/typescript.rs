@@ -508,11 +508,23 @@ fn collect_definitions(
         "public_field_definition" => {
             if let Some(name) = node.child_by_field_name("name") {
                 let name = node_text(name, source);
-                if node
-                    .child_by_field_name("value")
-                    .is_some_and(|value| value.kind() == "arrow_function")
-                {
+                let value = node.child_by_field_name("value");
+                if let Some(arrow) = value.filter(|value| value.kind() == "arrow_function") {
                     add_function(node, name, source, file, lang, scope, false, functions, out);
+                    // The arrow body is an ordinary function scope: const-owned
+                    // literals inside get identities and refused ones get T1/B1.
+                    let inner = function_scope(scope, name);
+                    recurse_definitions(
+                        arrow,
+                        source,
+                        file,
+                        lang,
+                        &inner,
+                        imports,
+                        functions,
+                        registrations,
+                        out,
+                    );
                 } else {
                     if scope.kind == ScopeKind::Type {
                         add_field(node, name, source, file, lang, scope, out);
@@ -726,14 +738,11 @@ fn const_owned_object<'a>(
     }
 }
 
-/// K1: only an unescaped `property_identifier` key is plain.
+/// K1: only an unescaped `property_identifier` key is plain. A shorthand
+/// property (`{ name }`) is not, so it refuses its whole literal too.
 fn plain_key<'a>(key: TsNode<'a>, source: &'a str) -> Option<&'a str> {
     let text = node_text(key, source);
-    (matches!(
-        key.kind(),
-        "property_identifier" | "shorthand_property_identifier"
-    ) && !text.contains('\\'))
-    .then_some(text)
+    (key.kind() == "property_identifier" && !text.contains('\\')).then_some(text)
 }
 
 fn property_key<'a>(property: TsNode<'a>) -> Option<TsNode<'a>> {
@@ -795,10 +804,6 @@ fn collect_object_members(
         let Some(key) = property_key(property).map(|key| node_text(key, source)) else {
             continue;
         };
-        if property.kind() == "shorthand_property_identifier" {
-            // `{ name }` copies a reference; it defines no member function.
-            continue;
-        }
         if keys.get(key).copied().unwrap_or(0) > 1 {
             refuse_structural_subtree(property, out);
             continue;
@@ -901,7 +906,9 @@ fn refuse_outermost_objects(node: TsNode, out: &mut BuildOutput) {
 }
 
 /// R3: members that compute the same path are all refused, together with
-/// every node scoped under that path (T1). They are never told apart.
+/// every node lexically inside them (T1). Pruning is by source span, never by
+/// path prefix: an unrelated literal elsewhere may legitimately own a nested
+/// path that extends the refused one. Colliding members are never told apart.
 fn refuse_colliding_members(out: &mut BuildOutput, functions: &mut Vec<FunctionRange>) {
     let mut counts = HashMap::<&str, usize>::new();
     for node in out.nodes.iter().filter(|n| n.attr("member_form").is_some()) {
@@ -915,20 +922,24 @@ fn refuse_colliding_members(out: &mut BuildOutput, functions: &mut Vec<FunctionR
     if colliding.is_empty() {
         return;
     }
-    let mut removed = HashSet::new();
-    for node in &out.nodes {
-        let exact = colliding.contains(&node.path);
-        if exact
-            || colliding
-                .iter()
-                .any(|path| node.path.starts_with(&format!("{path}::")))
-        {
-            removed.insert(node.id);
-            if exact && node.attr("member_form").is_some() {
-                out.refused_structural_subtrees.push(node.span);
-            }
-        }
-    }
+    let refused_spans = out
+        .nodes
+        .iter()
+        .filter(|node| node.attr("member_form").is_some() && colliding.contains(&node.path))
+        .map(|node| node.span)
+        .collect::<Vec<_>>();
+    let removed = out
+        .nodes
+        .iter()
+        .filter(|node| {
+            node.kind != NodeKind::Module
+                && refused_spans.iter().any(|span| {
+                    span.start_byte <= node.span.start_byte && node.span.end_byte <= span.end_byte
+                })
+        })
+        .map(|node| node.id)
+        .collect::<HashSet<_>>();
+    out.refused_structural_subtrees.extend(refused_spans);
     out.nodes.retain(|node| !removed.contains(&node.id));
     out.edges
         .retain(|(from, to, _)| !removed.contains(from) && !removed.contains(to));

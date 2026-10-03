@@ -1,6 +1,16 @@
+import json
+import stat
+import tempfile
 import unittest
+from pathlib import Path
 
-from tools.typescript_structural_validation_scorer import resolve_origin, summarize
+from tools.typescript_structural_validation_scorer import (
+    MANIFEST,
+    PINNED_MANIFEST_SHA256,
+    main,
+    resolve_origin,
+    summarize,
+)
 
 
 def case(expected, qualifier="alice::@object", predicted=None, candidates=None):
@@ -57,6 +67,77 @@ class SummaryTests(unittest.TestCase):
         self.assertFalse(summarize(bad)["passed"])
         failed = [{"id": "b", "status": "failed", "resolution_passed": False}]
         self.assertFalse(summarize(failed)["passed"])
+
+
+class NegativeControlTests(unittest.TestCase):
+    """Failures must be persisted in the output with a nonzero status."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def fake(self, body):
+        path = self.dir / "girder"
+        path.write_text("#!/bin/sh\n" + body + "\n")
+        path.chmod(path.stat().st_mode | stat.S_IXUSR)
+        return path
+
+    def score(self, binary, *extra, **kwargs):
+        output = self.dir / "out" / "scoring.json"
+        code = main(["--binary", str(binary), "--output", str(output), *extra], **kwargs)
+        self.assertTrue(output.is_file(), "output must be written even on failure")
+        return code, json.loads(output.read_text())
+
+    def assert_all_failed(self, document, needle):
+        results = document["results"]
+        self.assertEqual(len(results), 17)
+        for result in results:
+            self.assertEqual(result["status"], "failed", result)
+            self.assertIn(needle, result["reason"])
+        self.assertFalse(document["summary"]["passed"])
+
+    def test_command_failure_is_recorded(self):
+        code, document = self.score(self.fake("echo boom >&2; exit 3"))
+        self.assertEqual(code, 1)
+        self.assert_all_failed(document, "exit 3")
+
+    def test_invalid_json_is_recorded(self):
+        code, document = self.score(self.fake("echo not-json"))
+        self.assertEqual(code, 1)
+        self.assert_all_failed(document, "invalid JSON")
+
+    def test_timeout_is_recorded(self):
+        code, document = self.score(self.fake("sleep 5"), "--timeout", "0.2")
+        self.assertEqual(code, 1)
+        self.assert_all_failed(document, "timeout")
+
+    def test_missing_binary_is_recorded(self):
+        code, document = self.score(self.dir / "absent")
+        self.assertEqual(code, 1)
+        self.assert_all_failed(document, "could not execute")
+        self.assertTrue(document["summary"]["input_errors"])
+
+    def test_test_impact_failure_after_resolution_is_recorded(self):
+        alice = json.dumps([{"path": "crate::app.test::alice::@object::name", "kind": "Function"}])
+        binary = self.fake(f"if [ \"$1\" = names ]; then echo '{alice}'; else echo garbage; fi")
+        code, document = self.score(binary)
+        self.assertEqual(code, 1)
+        failed = {r["id"]: r for r in document["results"] if r["status"] == "failed"}
+        arrow = failed["ts-structural-v1-arrow-alice"]
+        self.assertTrue(arrow["resolution_passed"])
+        self.assertIn("invalid JSON", arrow["reason"])
+
+    def test_manifest_hash_mismatch_is_recorded(self):
+        copy = self.dir / "manifest.json"
+        copy.write_bytes(MANIFEST.read_bytes() + b"\n")
+        code, document = self.score(self.fake("exit 0"), manifest_path=copy)
+        self.assertEqual(code, 1)
+        self.assertEqual(document["results"], [])
+        self.assertIn("!= pinned", document["summary"]["input_errors"][0])
+        self.assertNotEqual(document["manifest_sha256"], PINNED_MANIFEST_SHA256)
 
 
 if __name__ == "__main__":

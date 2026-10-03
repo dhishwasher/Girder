@@ -47,6 +47,52 @@ fn offset_after(source: &str, marker: &str) -> usize {
     }
 }
 
+/// End byte of the refused subtree starting at `start` in a frozen fixture:
+/// the matching `}` of an object literal, or the end of a member before its
+/// `,`/closing brace. Skips strings, template literals and comments.
+fn subtree_end(source: &str, start: usize) -> usize {
+    let bytes = source.as_bytes();
+    let literal = bytes[start] == b'{';
+    let (mut depth, mut i, mut last) = (0i32, start, start);
+    while i < bytes.len() {
+        let c = bytes[i];
+        match c {
+            b'\'' | b'"' | b'`' => {
+                i += 1;
+                while bytes[i] != c {
+                    i += if bytes[i] == b'\\' { 2 } else { 1 };
+                }
+                last = i + 1;
+            }
+            b'/' if bytes[i + 1] == b'*' => {
+                i += source[i..].find("*/").unwrap() + 1;
+            }
+            b'/' if bytes[i + 1] == b'/' => {
+                i += source[i..].find('\n').unwrap();
+            }
+            b'(' | b'[' | b'{' => {
+                depth += 1;
+                last = i + 1;
+            }
+            b')' | b']' | b'}' => {
+                if depth == 0 {
+                    return last;
+                }
+                depth -= 1;
+                last = i + 1;
+                if literal && depth == 0 {
+                    return last;
+                }
+            }
+            b',' | b';' if depth == 0 => return last,
+            c if c.is_ascii_whitespace() => {}
+            _ => last = i + 1,
+        }
+        i += 1;
+    }
+    last
+}
+
 fn functions_at(graph: &SemanticGraph, offset: usize) -> Vec<&Node> {
     graph
         .nodes()
@@ -206,6 +252,13 @@ fn frozen_structural_member_identity_contract() {
                 continue;
             }
             let site = gaps[0].1.site;
+            let end = subtree_end(&source, subtree);
+            if site.end_byte != end {
+                failures.push(format!(
+                    "{file}: B1 site {}..{} != subtree {subtree}..{end}",
+                    site.start_byte, site.end_byte
+                ));
+            }
             if let Some(inner) = graph.nodes().find(|n| {
                 n.kind != NodeKind::Module
                     && site.start_byte <= n.span.start_byte
@@ -477,4 +530,103 @@ fn original_structural_fixture_stays_ambiguous_by_name() {
     assert!(graph
         .nodes()
         .all(|n| !(n.name == "name" && n.kind != NodeKind::Function)));
+}
+
+fn exact_span(source: &str, text: &str) -> (usize, usize) {
+    assert_eq!(source.matches(text).count(), 1, "{text} not unique");
+    let start = source.find(text).unwrap();
+    (start, start + text.len())
+}
+
+fn b1_gaps(graph: &SemanticGraph) -> Vec<(String, CallClaim)> {
+    all_claims(graph)
+        .into_iter()
+        .filter(|(_, claim)| claim.reason == B1_REASON)
+        .collect()
+}
+
+#[test]
+fn class_field_arrow_body_is_an_ordinary_function_scope() {
+    let source = "export function target() { return 1; }\n\
+export class C { run = () => { const good = { name: () => 1 }; let bad = { name: () => target() }; return bad.name() + good.name(); }; }\n";
+    let graph = build("cf.ts", source);
+    let functions = paths(&graph, NodeKind::Function);
+    assert!(functions.contains("crate::cf::C::run"), "{functions:?}");
+    assert!(
+        functions.contains("crate::cf::C::run::good::@object::name"),
+        "{functions:?}"
+    );
+    assert!(
+        functions.iter().all(|path| !path.contains("bad")),
+        "{functions:?}"
+    );
+    let gaps = b1_gaps(&graph);
+    assert_eq!(gaps.len(), 1, "{gaps:?}");
+    assert_eq!(gaps[0].0, "crate::cf::C::run");
+    let (start, end) = exact_span(source, "{ name: () => target() }");
+    assert_eq!(
+        (gaps[0].1.site.start_byte, gaps[0].1.site.end_byte),
+        (start, end)
+    );
+    let call = source.find("target() }").unwrap();
+    let inner = all_claims(&graph)
+        .into_iter()
+        .find(|(_, claim)| claim.site.start_byte == call && !claim.coverage_gap)
+        .unwrap();
+    assert_eq!(inner.0, "crate::cf::C::run");
+    assert_eq!(inner.1.class, CallClass::Unknown);
+    assert_eq!(inner.1.reason, INSIDE_REASON);
+    assert!(inner.1.targets.is_empty());
+}
+
+#[test]
+fn r3_pruning_is_lexical_not_by_path_prefix() {
+    let source = "export {};\n\
+{ const a = { run() { return 1; } }; }\n\
+{ const a = { run() { return 2; } }; }\n\
+{ const a = { run: { nested: () => 3 } }; }\n";
+    let graph = build("r3.ts", source);
+    assert_eq!(
+        paths(&graph, NodeKind::Function),
+        HashSet::from(["crate::r3::a::@object::run::@object::nested".to_string()])
+    );
+    assert!(no_duplicate_paths(&graph));
+    let nested = graph
+        .nodes()
+        .find(|n| n.path == "crate::r3::a::@object::run::@object::nested")
+        .unwrap();
+    assert_eq!(nested.span.start_byte, source.find("nested:").unwrap());
+}
+
+#[test]
+fn k1_shorthand_property_refuses_the_whole_literal() {
+    let source = "export function target() { return 1; }\n\
+const data = 1;\n\
+export const obj = { data, run: () => target() };\n\
+export const safe = { run: () => 2 };\n";
+    let graph = build("short.ts", source);
+    let functions = paths(&graph, NodeKind::Function);
+    assert!(
+        !functions.contains("crate::short::obj::@object::run"),
+        "{functions:?}"
+    );
+    assert!(
+        functions.contains("crate::short::safe::@object::run"),
+        "{functions:?}"
+    );
+    let gaps = b1_gaps(&graph);
+    assert_eq!(gaps.len(), 1, "{gaps:?}");
+    assert_eq!(gaps[0].0, "crate::short");
+    let (start, end) = exact_span(source, "{ data, run: () => target() }");
+    assert_eq!(
+        (gaps[0].1.site.start_byte, gaps[0].1.site.end_byte),
+        (start, end)
+    );
+    let call = source.find("target() }").unwrap();
+    let inner = all_claims(&graph)
+        .into_iter()
+        .find(|(_, claim)| claim.site.start_byte == call && !claim.coverage_gap)
+        .unwrap();
+    assert_eq!(inner.1.class, CallClass::Unknown);
+    assert!(inner.1.targets.is_empty());
 }

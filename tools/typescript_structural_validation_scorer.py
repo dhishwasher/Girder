@@ -14,6 +14,10 @@ resolution here checks node KIND and exact IDENTITY, not just names:
 - `no-identity` / `no-executable-target` require zero Function candidates.
 
 Test cells use the dispatch scorer's exact/conservative/unsound rules.
+
+Every command failure, timeout, invalid JSON, or input-hash mismatch is
+recorded as a failure in the written output (never an abort before output),
+and makes the exit status nonzero.
 """
 from __future__ import annotations
 
@@ -23,32 +27,66 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Mapping
+from typing import Any, Mapping
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
-from tools.dispatch_corpus_scorer import (  # noqa: E402
-    UNSOUND_CELLS,
-    cell_label,
-    classified_selection,
-    observed_class,
-)
+from tools.dispatch_corpus_scorer import UNSOUND_CELLS, cell_label, observed_class  # noqa: E402
 
 MANIFEST = REPO_ROOT / "fixtures/typescript-structural-validation/v1/manifest.json"
 PINNED_MANIFEST_SHA256 = "aa114b8e049b2c19e952af00cbb0107010c00b413621a73f3db0b36c6b916692"
+DEFAULT_TIMEOUT_SECONDS = 120.0
 
 
-def names(binary: Path, project_dir: Path, bare: str) -> list[dict[str, str]]:
-    result = subprocess.run(
-        [str(binary), "names", str(project_dir), bare, "--json"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
+class CommandFailure(Exception):
+    """A girder invocation that cannot be scored; always recorded, never raised past a case."""
+
+
+def run_json(binary: Path, args: list[str], timeout: float) -> Any:
+    command = [str(binary), *args]
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise CommandFailure(f"timeout after {timeout}s: {' '.join(command)}") from None
+    except OSError as error:
+        raise CommandFailure(f"could not execute {command[0]}: {error}") from None
     if result.returncode != 0:
-        raise RuntimeError(f"girder names failed: {result.stderr.strip()}")
-    return json.loads(result.stdout)
+        raise CommandFailure(
+            f"exit {result.returncode}: {' '.join(command)}: {result.stderr.strip()[:500]}"
+        )
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as error:
+        raise CommandFailure(f"invalid JSON from {' '.join(command)}: {error}") from None
+
+
+def names(binary: Path, project_dir: Path, bare: str, timeout: float) -> list[dict[str, str]]:
+    document = run_json(binary, ["names", str(project_dir), bare, "--json"], timeout)
+    if not isinstance(document, list) or not all(
+        isinstance(c, dict) and isinstance(c.get("path"), str) for c in document
+    ):
+        raise CommandFailure(f"unexpected names output shape for {bare!r}")
+    return document
+
+
+def classified_selection(binary: Path, project_dir: Path, origin: str, timeout: float) -> dict[str, Any]:
+    document = run_json(
+        binary,
+        ["test-impact", str(project_dir), "--quiet", "--classified", "--unbounded", origin],
+        timeout,
+    )
+    try:
+        if document.get("schema_version") != 1:
+            raise CommandFailure(f"unsupported classified schema_version: {document.get('schema_version')!r}")
+        return {
+            "must": set(document["must"]["paths"]),
+            "may": set(document["may"]["paths"]),
+            "unknown": set(document["unknown"]["paths"]),
+            "boundary_count": document["boundaries"]["count"],
+        }
+    except (AttributeError, KeyError, TypeError) as error:
+        raise CommandFailure(f"unexpected test-impact output shape: {error!r}") from None
 
 
 def qualified(candidates: list[dict[str, str]], bare: str, qualifier: str | None) -> list[dict[str, str]]:
@@ -79,13 +117,13 @@ def resolve_origin(case: Mapping, candidates: list[dict[str, str]]) -> dict[str,
     }
 
 
-def score_case(binary: Path, root: Path, case: Mapping) -> dict[str, object]:
+def score_case(binary: Path, root: Path, case: Mapping, timeout: float) -> dict[str, object]:
     project_dir = root / case["fixture_dir"]
     record: dict[str, object] = {"id": case["id"]}
     try:
-        resolution = resolve_origin(case, names(binary, project_dir, case["origin"]["symbol"]))
-    except RuntimeError as error:
-        return {**record, "status": "failed", "reason": str(error)}
+        resolution = resolve_origin(case, names(binary, project_dir, case["origin"]["symbol"], timeout))
+    except CommandFailure as error:
+        return {**record, "status": "failed", "resolution_passed": False, "reason": str(error)}
     record.update(resolution)
     if not resolution["resolution_passed"]:
         return {**record, "status": "failed", "reason": "origin resolution contract not met"}
@@ -93,14 +131,21 @@ def score_case(binary: Path, root: Path, case: Mapping) -> dict[str, object]:
         # Refusal or ambiguity is the expected outcome; no test is scored.
         return {**record, "status": "resolution-only", "tests": []}
     origin_path = resolution["function_candidates"][0]
-    selection = classified_selection(binary, project_dir, origin_path)
+    try:
+        selection = classified_selection(binary, project_dir, origin_path, timeout)
+    except CommandFailure as error:
+        return {**record, "status": "failed", "reason": str(error), "tests": []}
     tests = []
     for test in case["tests"]:
-        found = [
-            c["path"]
-            for c in names(binary, project_dir, test["framework_id"])
-            if c.get("kind") == "Function"
-        ]
+        try:
+            found = [
+                c["path"]
+                for c in names(binary, project_dir, test["framework_id"], timeout)
+                if c.get("kind") == "Function"
+            ]
+        except CommandFailure as error:
+            tests.append({"test_id": test["id"], "status": "failed", "reason": str(error)})
+            continue
         if len(found) != 1:
             tests.append({"test_id": test["id"], "status": "failed", "reason": f"test paths {found}"})
             continue
@@ -118,45 +163,71 @@ def score_case(binary: Path, root: Path, case: Mapping) -> dict[str, object]:
     return {**record, "status": "scored", "origin_path": origin_path, "tests": tests}
 
 
-def summarize(results: list[Mapping]) -> dict[str, object]:
+def summarize(results: list[Mapping], input_errors: list[str] | None = None) -> dict[str, object]:
     cells = {k: 0 for k in ("exact", "conservative", "unsafe_exclusion", "overclaim", "failed")}
     for result in results:
         for test in result.get("tests", []):
             cells[test["cell"] if test["status"] == "scored" else "failed"] += 1
     failed_cases = [r["id"] for r in results if r["status"] == "failed"]
+    unsound = sum(cells[c] for c in UNSOUND_CELLS)
     return {
         "cases": len(results),
         "resolution_passed": sum(1 for r in results if r.get("resolution_passed")),
         "failed_cases": failed_cases,
+        "input_errors": list(input_errors or []),
         "cells": cells,
-        "unsound_cells": sum(cells[c] for c in UNSOUND_CELLS),
-        "passed": not failed_cases
-        and cells["failed"] == 0
-        and sum(cells[c] for c in UNSOUND_CELLS) == 0,
+        "unsound_cells": unsound,
+        "passed": not failed_cases and not input_errors and cells["failed"] == 0 and unsound == 0,
     }
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--binary", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args(argv)
-    raw = MANIFEST.read_bytes()
+def check_inputs(manifest_path: Path, pinned: str) -> tuple[dict | None, list[str], str | None]:
+    errors: list[str] = []
+    try:
+        raw = manifest_path.read_bytes()
+    except OSError as error:
+        return None, [f"cannot read manifest: {error}"], None
     digest = hashlib.sha256(raw).hexdigest()
-    if digest != PINNED_MANIFEST_SHA256:
-        raise SystemExit(f"validation manifest hash {digest} != pinned {PINNED_MANIFEST_SHA256}")
-    manifest = json.loads(raw)
+    if digest != pinned:
+        errors.append(f"manifest hash {digest} != pinned {pinned}")
+    try:
+        manifest = json.loads(raw)
+    except json.JSONDecodeError as error:
+        return None, errors + [f"invalid manifest JSON: {error}"], digest
     root = REPO_ROOT / manifest["fixtures_root"]
     for case in manifest["cases"]:
         fixture = root / case["fixture_dir"] / "app.test.ts"
-        if hashlib.sha256(fixture.read_bytes()).hexdigest() != case["fixture_sha256"]:
-            raise SystemExit(f"fixture hash mismatch: {fixture}")
-    results = [score_case(args.binary, root, case) for case in manifest["cases"]]
+        try:
+            actual = hashlib.sha256(fixture.read_bytes()).hexdigest()
+        except OSError as error:
+            errors.append(f"cannot read {fixture}: {error}")
+            continue
+        if actual != case["fixture_sha256"]:
+            errors.append(f"fixture hash mismatch: {fixture}")
+    return manifest, errors, digest
+
+
+def main(argv: list[str] | None = None, manifest_path: Path = MANIFEST, pinned: str = PINNED_MANIFEST_SHA256) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--binary", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT_SECONDS)
+    args = parser.parse_args(argv)
+    manifest, input_errors, digest = check_inputs(manifest_path, pinned)
+    results: list[dict[str, object]] = []
+    if manifest is not None and not input_errors:
+        root = REPO_ROOT / manifest["fixtures_root"]
+        results = [score_case(args.binary, root, case, args.timeout) for case in manifest["cases"]]
+    try:
+        binary_sha256 = hashlib.sha256(args.binary.read_bytes()).hexdigest()
+    except OSError as error:
+        binary_sha256 = None
+        input_errors.append(f"cannot read binary: {error}")
     document = {
         "manifest_sha256": digest,
         "binary": str(args.binary),
-        "binary_sha256": hashlib.sha256(args.binary.read_bytes()).hexdigest(),
-        "summary": summarize(results),
+        "binary_sha256": binary_sha256,
+        "summary": summarize(results, input_errors),
         "results": results,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
