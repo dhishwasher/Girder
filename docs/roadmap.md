@@ -442,14 +442,15 @@ common gates. **Observation:**
 (historical after-result, not current stage-completion proof).
 **Current completion evidence:** [corrected Rust/Python audits](observations/stage3-audit-reconciliation/after-observation.md)
 include their checkpoint-candidate corpus results and all four passing gates.
-**Blockers for the next language:** TypeScript's unchanged 100-site audit now
-has two correct Must targets and 98 Unknown answers, with zero scored unsound
-answers. Its dispatch-corpus result has not improved, and the structural-object-
-literal origin remains unresolved. The registration identity loss and four
-runtime-demonstrated lexical-binding false Must claims have been repaired and
-measured; the failed baselines remain public.
-**Next:** precommit structural-member extraction and the next dispatch proof
-rules. Preserve the ambiguous/missing-origin failure rather than choosing a
+**Blockers for the next language:** TypeScript's current 100-site audit has
+three correct Must targets and 97 Unknown answers, with zero scored unsound
+answers. Its unchanged dispatch corpus has not improved and retains one failed
+structural-object-literal case, now attributed to an ambiguous `alice`/`bob`
+origin. The registration identity loss and four runtime-demonstrated
+lexical-binding false Must claims have been repaired and measured; the failed
+baselines remain public.
+**Next:** precommit a narrow cross-file dispatch proof policy and adversarial
+fixtures. Preserve the ambiguous-origin failure rather than choosing a
 same-spelled target to make it pass. Re-measure after the next implementation
 and run the common gates before claiming language completion.
 
