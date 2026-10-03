@@ -89,3 +89,29 @@ test that fails when the defect is restored ([mutation checks](implementation-2/
 
 TypeScript stays **IN PROGRESS**. This change adds identities only and
 publishes no dispatch-corpus improvement. The audit re-run is blocked here.
+
+## Scorer correction (after `d108fba`)
+
+Review of `230418e` found that the validation scorer did not record every
+malformed-input failure. Only the scorer changed: Rust product code, the
+binary (`eb77061d…`), and every frozen input are unchanged.
+
+- **Unpinned manifest crashed before output.** A manifest whose hash differed
+  from the pin (for example `{}`) raised `KeyError` and wrote no output. The
+  scorer now records the hash mismatch and returns before reading any manifest
+  field. A pinned but malformed manifest is recorded as `invalid manifest`.
+- **Selection shape was not validated.** Each `test-impact` bucket must now be a
+  list of strings and `boundaries.count` an integer; anything else is a recorded
+  `CommandFailure`.
+  - Before this fix, unhashable path entries were already caught and recorded.
+  - A string-valued `paths` was silently accepted as a set of characters. That is
+    now rejected.
+- **Last-resort guard.** Any unexpected per-case exception is persisted as a
+  failed case instead of aborting the run.
+
+Six new negative-control tests bring the scorer suite to 17 tests, all passing
+([log](implementation-3/scorer-unit-tests.log)). Against the `230418e` scorer,
+the new tests give 4 failures and 2 errors
+([log](implementation-3/negative-controls-against-230418e-scorer.log)). The
+real scorer re-run is unchanged: 17/17 resolution contracts met and 0 unsound
+cells ([result](implementation-3/validation-scoring.json)).

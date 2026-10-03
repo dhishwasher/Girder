@@ -139,6 +139,55 @@ class NegativeControlTests(unittest.TestCase):
         self.assertIn("!= pinned", document["summary"]["input_errors"][0])
         self.assertNotEqual(document["manifest_sha256"], PINNED_MANIFEST_SHA256)
 
+    def test_unpinned_manifest_with_missing_fields_is_recorded(self):
+        copy = self.dir / "manifest.json"
+        copy.write_text("{}")
+        code, document = self.score(self.fake("exit 0"), manifest_path=copy)
+        self.assertEqual(code, 1)
+        self.assertEqual(document["results"], [])
+        self.assertIn("!= pinned", document["summary"]["input_errors"][0])
+
+    def test_pinned_but_malformed_manifest_is_recorded(self):
+        copy = self.dir / "manifest.json"
+        copy.write_text("{}")
+        digest = __import__("hashlib").sha256(b"{}").hexdigest()
+        code, document = self.score(self.fake("exit 0"), manifest_path=copy, pinned=digest)
+        self.assertEqual(code, 1)
+        self.assertEqual(document["results"], [])
+        self.assertIn("invalid manifest", document["summary"]["input_errors"][0])
+
+    def malformed_selection(self, selection):
+        alice = json.dumps([{"path": "crate::app.test::alice::@object::name", "kind": "Function"}])
+        reply = json.dumps(selection)
+        binary = self.fake(f"if [ \"$1\" = names ]; then echo '{alice}'; else echo '{reply}'; fi")
+        code, document = self.score(binary)
+        self.assertEqual(code, 1)
+        arrow = next(r for r in document["results"] if r["id"] == "ts-structural-v1-arrow-alice")
+        self.assertEqual(arrow["status"], "failed")
+        self.assertTrue(arrow["resolution_passed"])
+        return arrow["reason"]
+
+    def test_unhashable_selection_paths_are_recorded(self):
+        reason = self.malformed_selection({"schema_version": 1, "must": {"paths": [["x"]]},
+                                           "may": {"paths": []}, "unknown": {"paths": []},
+                                           "boundaries": {"count": 0}})
+        self.assertIn("must.paths is not a list of strings", reason)
+
+    def test_string_selection_paths_are_recorded(self):
+        reason = self.malformed_selection({"schema_version": 1, "must": {"paths": []},
+                                           "may": {"paths": "abc"}, "unknown": {"paths": []},
+                                           "boundaries": {"count": 0}})
+        self.assertIn("may.paths is not a list of strings", reason)
+
+    def test_non_object_selection_is_recorded(self):
+        self.assertIn("unsupported classified output", self.malformed_selection([1, 2]))
+
+    def test_missing_boundary_count_is_recorded(self):
+        reason = self.malformed_selection({"schema_version": 1, "must": {"paths": []},
+                                           "may": {"paths": []}, "unknown": {"paths": []},
+                                           "boundaries": {}})
+        self.assertIn("boundaries.count", reason)
+
 
 if __name__ == "__main__":
     unittest.main()

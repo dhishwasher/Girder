@@ -76,17 +76,20 @@ def classified_selection(binary: Path, project_dir: Path, origin: str, timeout: 
         ["test-impact", str(project_dir), "--quiet", "--classified", "--unbounded", origin],
         timeout,
     )
-    try:
-        if document.get("schema_version") != 1:
-            raise CommandFailure(f"unsupported classified schema_version: {document.get('schema_version')!r}")
-        return {
-            "must": set(document["must"]["paths"]),
-            "may": set(document["may"]["paths"]),
-            "unknown": set(document["unknown"]["paths"]),
-            "boundary_count": document["boundaries"]["count"],
-        }
-    except (AttributeError, KeyError, TypeError) as error:
-        raise CommandFailure(f"unexpected test-impact output shape: {error!r}") from None
+    if not isinstance(document, dict) or document.get("schema_version") != 1:
+        raise CommandFailure(f"unsupported classified output: {str(document)[:200]!r}")
+    selection: dict[str, Any] = {}
+    for bucket in ("must", "may", "unknown"):
+        paths = document.get(bucket, {}).get("paths") if isinstance(document.get(bucket), dict) else None
+        if not isinstance(paths, list) or not all(isinstance(path, str) for path in paths):
+            raise CommandFailure(f"unexpected test-impact output shape: {bucket}.paths is not a list of strings")
+        selection[bucket] = set(paths)
+    boundaries = document.get("boundaries")
+    count = boundaries.get("count") if isinstance(boundaries, dict) else None
+    if not isinstance(count, int) or isinstance(count, bool):
+        raise CommandFailure("unexpected test-impact output shape: boundaries.count is not an integer")
+    selection["boundary_count"] = count
+    return selection
 
 
 def qualified(candidates: list[dict[str, str]], bare: str, qualifier: str | None) -> list[dict[str, str]]:
@@ -189,20 +192,21 @@ def check_inputs(manifest_path: Path, pinned: str) -> tuple[dict | None, list[st
         return None, [f"cannot read manifest: {error}"], None
     digest = hashlib.sha256(raw).hexdigest()
     if digest != pinned:
-        errors.append(f"manifest hash {digest} != pinned {pinned}")
+        # Never dereference an unpinned manifest: its shape is untrusted.
+        return None, [f"manifest hash {digest} != pinned {pinned}"], digest
     try:
         manifest = json.loads(raw)
-    except json.JSONDecodeError as error:
-        return None, errors + [f"invalid manifest JSON: {error}"], digest
-    root = REPO_ROOT / manifest["fixtures_root"]
-    for case in manifest["cases"]:
-        fixture = root / case["fixture_dir"] / "app.test.ts"
+        root = REPO_ROOT / manifest["fixtures_root"]
+        cases = [(case, root / case["fixture_dir"] / "app.test.ts", case["fixture_sha256"]) for case in manifest["cases"]]
+    except (json.JSONDecodeError, KeyError, TypeError, AttributeError) as error:
+        return None, [f"invalid manifest: {error!r}"], digest
+    for _case, fixture, expected in cases:
         try:
             actual = hashlib.sha256(fixture.read_bytes()).hexdigest()
         except OSError as error:
             errors.append(f"cannot read {fixture}: {error}")
             continue
-        if actual != case["fixture_sha256"]:
+        if actual != expected:
             errors.append(f"fixture hash mismatch: {fixture}")
     return manifest, errors, digest
 
@@ -217,7 +221,13 @@ def main(argv: list[str] | None = None, manifest_path: Path = MANIFEST, pinned: 
     results: list[dict[str, object]] = []
     if manifest is not None and not input_errors:
         root = REPO_ROOT / manifest["fixtures_root"]
-        results = [score_case(args.binary, root, case, args.timeout) for case in manifest["cases"]]
+        for case in manifest["cases"]:
+            try:
+                results.append(score_case(args.binary, root, case, args.timeout))
+            except Exception as error:  # noqa: BLE001 - last resort: persist, never abort
+                results.append(
+                    {"id": case.get("id"), "status": "failed", "reason": f"internal scorer error: {error!r}"}
+                )
     try:
         binary_sha256 = hashlib.sha256(args.binary.read_bytes()).hexdigest()
     except OSError as error:
