@@ -3,7 +3,7 @@
   "name": "typescript-structural-member-identity-v1",
   "meaning": "Identity contract cases for TypeScript structural callable member identity policy v1. Proof-contract fixtures, not independent ground-truth samples and not additions to the published dispatch benchmark. expected_identity is the exact semantic path of the Function node that must exist at the marked member (null: no Function node may exist at that member's span).",
   "analysis_root": "fixtures/typescript-structural-member-corpus/v1",
-  "marker_rule": "A marker comment immediately precedes the member's key (or signature). The marked definition is the next property/method/signature after the marker.",
+  "marker_rule": "`/* m:<id> */` immediately precedes a marked definition's key, declaration keyword, or binding name. `/* b:<id> */` immediately precedes a refused object literal. `/* c:<id> */` immediately precedes a call expression whose evidence is pinned.",
   "stability_rule": "Every identity suffix after the module path that appears in both stability/before.ts and stability/after.ts must be equal for the same marker id; module paths differ only because the files differ.",
   "runtime": {
     "arrow.ts": "executed",
@@ -27,7 +27,16 @@
     "mutated-member.ts": "executed",
     "stability/before.ts": "executed",
     "stability/after.ts": "executed",
-    "declaration-only.ts": "executed"
+    "declaration-only.ts": "executed",
+    "mixed-key-string-duplicate.ts": "executed",
+    "mixed-key-computed-alias.ts": "executed",
+    "mixed-key-unrelated.ts": "executed",
+    "nested-branch-refusal.ts": "executed",
+    "supported-subtree.ts": "executed",
+    "refused-subtree-collision.ts": "executed",
+    "refused-subtree-duplicate-key.ts": "executed",
+    "refused-subtree-unsupported-key.ts": "executed",
+    "refused-subtree-u-rule.ts": "executed"
   },
   "cases": [
     {
@@ -573,6 +582,495 @@
           "expected": "no Function node at this span; never an origin, candidate, or proof target"
         }
       ]
+    },
+    {
+      "file": "mixed-key-string-duplicate.ts",
+      "sha256": "a798dba8295b076266c5793d451ef3c7e78e3f7ef74adef23f574d208b51521d",
+      "module_path": "crate::mixed-key-string-duplicate",
+      "members": [
+        {
+          "marker": "/* m:sd.plain */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused. The string key 'name' aliases it and wins at runtime."
+        },
+        {
+          "marker": "/* m:sd.string */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused."
+        },
+        {
+          "marker": "/* m:sd.sibling */",
+          "form": "method_shorthand",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused. Plain-identifier sibling is refused too."
+        },
+        {
+          "marker": "/* m:sd.safe */",
+          "form": "arrow",
+          "expected_identity": "crate::mixed-key-string-duplicate::safe::@object::name",
+          "rule": "Separate plain-keyed literal keeps its identity."
+        }
+      ]
+    },
+    {
+      "file": "mixed-key-computed-alias.ts",
+      "sha256": "6c13638cdc0c526cd5cc25b5dae007017a6bce7910c6273126c69b95443ed9d1",
+      "module_path": "crate::mixed-key-computed-alias",
+      "members": [
+        {
+          "marker": "/* m:ca.plain */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused. The computed [key] aliases it and wins at runtime."
+        },
+        {
+          "marker": "/* m:ca.computed */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused."
+        },
+        {
+          "marker": "/* m:ca.sibling */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused."
+        },
+        {
+          "marker": "/* m:ca.escaped-plain */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused. The escaped spelling n\\u0061me aliases it and wins at runtime."
+        },
+        {
+          "marker": "/* m:ca.escaped */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused. An escaped identifier spelling is not a plain key."
+        },
+        {
+          "marker": "/* m:ca.escaped-sibling */",
+          "form": "method_shorthand",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused."
+        },
+        {
+          "marker": "/* m:ca.escaped-only */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused. Escaped spelling with no plain twin."
+        },
+        {
+          "marker": "/* m:ca.escaped-only-sibling */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused."
+        },
+        {
+          "marker": "/* m:ca.safe */",
+          "form": "arrow",
+          "expected_identity": "crate::mixed-key-computed-alias::safe::@object::name",
+          "rule": "Separate plain-keyed literal keeps its identity."
+        }
+      ]
+    },
+    {
+      "file": "mixed-key-unrelated.ts",
+      "sha256": "64b0998b3421462e844474d900524a5e44837a7f2f26cd44dd44bed26dac555b",
+      "module_path": "crate::mixed-key-unrelated",
+      "members": [
+        {
+          "marker": "/* m:ur.string.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused. Unrelated non-callable string key 'data-id'."
+        },
+        {
+          "marker": "/* m:ur.numeric.run */",
+          "form": "method_shorthand",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused. Unrelated numeric key 0."
+        },
+        {
+          "marker": "/* m:ur.symbol.go */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused. Unrelated computed [Symbol.iterator] key."
+        },
+        {
+          "marker": "/* m:ur.symbol.iterator */",
+          "form": "generator_method",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused. Also U5."
+        },
+        {
+          "marker": "/* m:ur.safe.name */",
+          "form": "arrow",
+          "expected_identity": "crate::mixed-key-unrelated::safe::@object::name",
+          "rule": "Separate plain-keyed literal keeps its identity."
+        },
+        {
+          "marker": "/* m:ur.safe.run */",
+          "form": "method_shorthand",
+          "expected_identity": "crate::mixed-key-unrelated::safe::@object::run",
+          "rule": "Separate plain-keyed literal keeps its identity."
+        }
+      ]
+    },
+    {
+      "file": "nested-branch-refusal.ts",
+      "sha256": "6727b1f470ca59f123ceb4d1425a24097c5c429ad6858734656d7f21e2dccc5b",
+      "module_path": "crate::nested-branch-refusal",
+      "members": [
+        {
+          "marker": "/* m:nb.bad.list */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused. (the nested `bad` literal has 'x-key')."
+        },
+        {
+          "marker": "/* m:nb.bad.deeper.list */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "T1: descendant of a refused subtree; no Function identity. The `deeper` literal is clean but lies inside the refused `bad` literal."
+        },
+        {
+          "marker": "/* m:nb.good.list */",
+          "form": "arrow",
+          "expected_identity": "crate::nested-branch-refusal::api::@object::good::@object::list",
+          "rule": "Unrelated sibling branch stays indexed."
+        }
+      ],
+      "refused_subtree_boundaries": [
+        {
+          "subtree_marker": "/* b:nb.bad */",
+          "owner": "crate::nested-branch-refusal",
+          "owner_kind": "Module",
+          "coverage_gap": true,
+          "reason": "typescript-refused-structural-member-subtree",
+          "site": "span of the refused subtree that starts at subtree_marker (the member, or the object literal for a b: marker)",
+          "calls_inside": [
+            {
+              "marker": "/* c:nb.bad.call */",
+              "class": "unknown",
+              "targets": [],
+              "owner": "crate::nested-branch-refusal"
+            }
+          ],
+          "checked_now": false,
+          "acceptance": "postimplementation (requires extractor output; not observable with Node)"
+        }
+      ]
+    },
+    {
+      "file": "supported-subtree.ts",
+      "sha256": "7025af11c4100a33bb23ab257fce914dd65c8bc5c0f06d976b00e6dc2707ce06",
+      "module_path": "crate::supported-subtree",
+      "members": [
+        {
+          "marker": "/* m:ss.outer-helper */",
+          "form": "function_declaration",
+          "expected_identity": "crate::supported-subtree::helper",
+          "rule": "Existing module function; exactly one node at this path."
+        },
+        {
+          "marker": "/* m:ss.run */",
+          "form": "arrow",
+          "expected_identity": "crate::supported-subtree::ok::@object::run",
+          "rule": "Supported member."
+        },
+        {
+          "marker": "/* m:ss.inner-helper */",
+          "form": "function_declaration",
+          "expected_identity": "crate::supported-subtree::ok::@object::run::helper",
+          "rule": "R2: descendants of a supported member are scoped under it; no collision with the outer helper."
+        },
+        {
+          "marker": "/* m:ss.box.go */",
+          "form": "arrow",
+          "expected_identity": "crate::supported-subtree::ok::@object::run::box::@object::go",
+          "rule": "R2: nested const literal inside a supported member."
+        }
+      ]
+    },
+    {
+      "file": "refused-subtree-collision.ts",
+      "sha256": "6b618e9b43c8658a18ad7bba06bf63feae50c3450abf63518c74da5ceee3022d",
+      "module_path": "crate::refused-subtree-collision",
+      "members": [
+        {
+          "marker": "/* m:rc.outer-helper */",
+          "form": "function_declaration",
+          "expected_identity": "crate::refused-subtree-collision::helper",
+          "rule": "Outer declaration keeps exactly one node; no refused descendant may flatten onto it."
+        },
+        {
+          "marker": "/* m:rc.block-1.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "R3 collision."
+        },
+        {
+          "marker": "/* m:rc.block-1.inner-helper */",
+          "form": "function_declaration",
+          "expected_identity": null,
+          "rule": "T1: descendant of a refused subtree; no Function identity."
+        },
+        {
+          "marker": "/* m:rc.block-1.local */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "T1: descendant of a refused subtree; no Function identity."
+        },
+        {
+          "marker": "/* m:rc.block-1.box.go */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "T1: descendant of a refused subtree; no Function identity."
+        },
+        {
+          "marker": "/* m:rc.block-2.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "R3 collision."
+        },
+        {
+          "marker": "/* m:rc.block-2.inner-helper */",
+          "form": "function_declaration",
+          "expected_identity": null,
+          "rule": "T1: descendant of a refused subtree; no Function identity."
+        },
+        {
+          "marker": "/* m:rc.block-2.box.go */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "T1: descendant of a refused subtree; no Function identity."
+        }
+      ],
+      "refused_subtree_boundaries": [
+        {
+          "subtree_marker": "/* m:rc.block-1.name */",
+          "owner": "crate::refused-subtree-collision",
+          "owner_kind": "Module",
+          "coverage_gap": true,
+          "reason": "typescript-refused-structural-member-subtree",
+          "site": "span of the refused subtree that starts at subtree_marker (the member, or the object literal for a b: marker)",
+          "calls_inside": [
+            {
+              "marker": "/* c:rc.block-1.call */",
+              "class": "unknown",
+              "targets": [],
+              "owner": "crate::refused-subtree-collision"
+            }
+          ],
+          "checked_now": false,
+          "acceptance": "postimplementation (requires extractor output; not observable with Node)"
+        },
+        {
+          "subtree_marker": "/* m:rc.block-2.name */",
+          "owner": "crate::refused-subtree-collision",
+          "owner_kind": "Module",
+          "coverage_gap": true,
+          "reason": "typescript-refused-structural-member-subtree",
+          "site": "span of the refused subtree that starts at subtree_marker (the member, or the object literal for a b: marker)",
+          "calls_inside": [
+            {
+              "marker": "/* c:rc.block-2.call */",
+              "class": "unknown",
+              "targets": [],
+              "owner": "crate::refused-subtree-collision"
+            }
+          ],
+          "checked_now": false,
+          "acceptance": "postimplementation (requires extractor output; not observable with Node)"
+        }
+      ]
+    },
+    {
+      "file": "refused-subtree-duplicate-key.ts",
+      "sha256": "aab2e2ce1ec0c3ae84dd96f7275df9ba5958f99199bc00f415d9477ed2f0b6bd",
+      "module_path": "crate::refused-subtree-duplicate-key",
+      "members": [
+        {
+          "marker": "/* m:rd.outer-helper */",
+          "form": "function_declaration",
+          "expected_identity": "crate::refused-subtree-duplicate-key::helper",
+          "rule": "Outer declaration keeps exactly one node."
+        },
+        {
+          "marker": "/* m:rd.first */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "R4 duplicate key."
+        },
+        {
+          "marker": "/* m:rd.second */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "R4 duplicate key (wins at runtime)."
+        },
+        {
+          "marker": "/* m:rd.inner-helper */",
+          "form": "function_declaration",
+          "expected_identity": null,
+          "rule": "T1: descendant of a refused subtree; no Function identity."
+        },
+        {
+          "marker": "/* m:rd.box.go */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "T1: descendant of a refused subtree; no Function identity."
+        },
+        {
+          "marker": "/* m:rd.sibling */",
+          "form": "arrow",
+          "expected_identity": "crate::refused-subtree-duplicate-key::dup::@object::other",
+          "rule": "R4 refuses only the duplicated key; the plain-keyed sibling in the same literal keeps its identity."
+        },
+        {
+          "marker": "/* m:rd.safe.run */",
+          "form": "arrow",
+          "expected_identity": "crate::refused-subtree-duplicate-key::safe::@object::run",
+          "rule": "Separate literal keeps its identity."
+        }
+      ],
+      "refused_subtree_boundaries": [
+        {
+          "subtree_marker": "/* m:rd.second */",
+          "owner": "crate::refused-subtree-duplicate-key",
+          "owner_kind": "Module",
+          "coverage_gap": true,
+          "reason": "typescript-refused-structural-member-subtree",
+          "site": "span of the refused subtree that starts at subtree_marker (the member, or the object literal for a b: marker)",
+          "calls_inside": [
+            {
+              "marker": "/* c:rd.call */",
+              "class": "unknown",
+              "targets": [],
+              "owner": "crate::refused-subtree-duplicate-key"
+            }
+          ],
+          "checked_now": false,
+          "acceptance": "postimplementation (requires extractor output; not observable with Node)"
+        }
+      ]
+    },
+    {
+      "file": "refused-subtree-unsupported-key.ts",
+      "sha256": "1382a586a35cca67f5b4e90aea8a8ff4343c9eb68d87b2cb7a50109e0ff346e7",
+      "module_path": "crate::refused-subtree-unsupported-key",
+      "members": [
+        {
+          "marker": "/* m:rk.outer-helper */",
+          "form": "function_declaration",
+          "expected_identity": "crate::refused-subtree-unsupported-key::helper",
+          "rule": "Outer declaration keeps exactly one node."
+        },
+        {
+          "marker": "/* m:rk.run */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "K1: literal has a non-plain key; every callable member of the literal is refused."
+        },
+        {
+          "marker": "/* m:rk.inner-helper */",
+          "form": "function_declaration",
+          "expected_identity": null,
+          "rule": "T1: descendant of a refused subtree; no Function identity."
+        },
+        {
+          "marker": "/* m:rk.box.go */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "T1: descendant of a refused subtree; no Function identity."
+        }
+      ],
+      "refused_subtree_boundaries": [
+        {
+          "subtree_marker": "/* b:rk.cfg */",
+          "owner": "crate::refused-subtree-unsupported-key",
+          "owner_kind": "Module",
+          "coverage_gap": true,
+          "reason": "typescript-refused-structural-member-subtree",
+          "site": "span of the refused subtree that starts at subtree_marker (the member, or the object literal for a b: marker)",
+          "calls_inside": [
+            {
+              "marker": "/* c:rk.call */",
+              "class": "unknown",
+              "targets": [],
+              "owner": "crate::refused-subtree-unsupported-key"
+            }
+          ],
+          "checked_now": false,
+          "acceptance": "postimplementation (requires extractor output; not observable with Node)"
+        }
+      ]
+    },
+    {
+      "file": "refused-subtree-u-rule.ts",
+      "sha256": "51200af4f63b380304181f38622d610b05e4c91b77f3d5ca62292ddff5ba2b44",
+      "module_path": "crate::refused-subtree-u-rule",
+      "members": [
+        {
+          "marker": "/* m:ru.outer-helper */",
+          "form": "function_declaration",
+          "expected_identity": "crate::refused-subtree-u-rule::helper",
+          "rule": "Outer declaration keeps exactly one node."
+        },
+        {
+          "marker": "/* m:ru.host */",
+          "form": "function_declaration",
+          "expected_identity": "crate::refused-subtree-u-rule::host",
+          "rule": "Existing function; nearest existing owner of the refused subtree."
+        },
+        {
+          "marker": "/* m:ru.cfg.run */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U2: let owner."
+        },
+        {
+          "marker": "/* m:ru.inner-helper */",
+          "form": "function_declaration",
+          "expected_identity": null,
+          "rule": "T1: descendant of a refused subtree; no Function identity."
+        },
+        {
+          "marker": "/* m:ru.box.go */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "T1: descendant of a refused subtree; no Function identity."
+        },
+        {
+          "marker": "/* m:ru.ok.run */",
+          "form": "arrow",
+          "expected_identity": "crate::refused-subtree-u-rule::host::ok::@object::run",
+          "rule": "Supported sibling literal in the same function stays indexed."
+        }
+      ],
+      "refused_subtree_boundaries": [
+        {
+          "subtree_marker": "/* b:ru.cfg */",
+          "owner": "crate::refused-subtree-u-rule::host",
+          "owner_kind": "Function",
+          "coverage_gap": true,
+          "reason": "typescript-refused-structural-member-subtree",
+          "site": "span of the refused subtree that starts at subtree_marker (the member, or the object literal for a b: marker)",
+          "calls_inside": [
+            {
+              "marker": "/* c:ru.call */",
+              "class": "unknown",
+              "targets": [],
+              "owner": "crate::refused-subtree-u-rule::host"
+            }
+          ],
+          "checked_now": false,
+          "acceptance": "postimplementation (requires extractor output; not observable with Node)"
+        }
+      ]
     }
-  ]
+  ],
+  "correction": "freeze-correction-1: K1 literal-level key refusal and T1/B1 refused-subtree rules (see policy.md). Applied before any product implementation.",
+  "boundary_rule": "refused_subtree_boundaries are postimplementation acceptance requirements. Each pins the nearest existing Function or Module owner, a coverage_gap=true claim with the stated reason whose site covers the refused subtree, and an Unknown, target-free claim owned by that owner for every marked call inside. No product output is checked by this commit."
 }

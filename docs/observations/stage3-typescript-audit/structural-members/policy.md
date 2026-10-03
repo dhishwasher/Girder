@@ -1,6 +1,8 @@
 # TypeScript structural callable member identity policy v1
 
-**Status: preimplementation draft for review.** Base `e3812c5`. Frozen inputs,
+**Status: preimplementation draft for review, with freeze correction 1 applied**
+(see [Correction history](#correction-history)). Base `e3812c5`; first draft
+`6ac3124`. No product implementation exists for any version of this policy. Frozen inputs,
 unchanged by this commit: [dispatch corpus](../../../dispatch-corpus.json)
 SHA-256 `9e3208a8f3fdc8faaee55cece63c1b5e25526322ebebbba915652f4f526ccd0a`;
 original fixture `fixtures/dispatch-corpus/typescript/structural-object-literal/app.test.ts`
@@ -24,6 +26,11 @@ stays Unknown. That outcome is conservative, not an error.
   one scope therefore already produce a **duplicate path**, and that also aliases
   a nested `function name` in that scope. The current state is a collision, not
   just an absence.
+- Function declarations and `const`-bound arrows nested inside a `pair` value are
+  lowered with the *enclosing* scope, so a nested `function helper` inside an
+  arrow member already gets the same path as a module-level `function helper`.
+- Claims for a call site are owned by the smallest enclosing Function node, or by
+  the Module when no Function encloses it (`owner()` in `mapper/claims.rs`).
 - `method_signature`, `abstract_method_signature`, `function_signature`, call,
   construct, and index signatures produce no node. `property_signature` inside
   an interface or type produces a **Field** node `<Type>::<key>`, including for a
@@ -36,8 +43,9 @@ declaration whose name is a plain identifier. Its value must be an object litera
 either directly or through any nesting of these erased wrappers only:
 parentheses, `satisfies T`, and `as T`.
 
-**R2 — Supported member.** The literal is not refused (see U6 and R4). The key is
-a plain identifier (`property_identifier`). The member is one of:
+**R2 — Supported member.** The literal is not refused (K1, U6) and does not lie
+inside a refused subtree (T1). The member's key is not duplicated (R4). The key
+is a plain identifier (see K1). The member is one of:
 - `key: <arrow function>` (including `async`), form `arrow`;
 - `key: function [name] (…) {…}` (including `async`), form `function_expression`;
 - `key(…) {…}` or `async key(…) {…}`, form `method_shorthand`.
@@ -54,8 +62,22 @@ same owner and key, and from registration paths (`@test[…]#n`, `@describe[…]
 The display name is the key. The form is recorded as a node attribute
 (`member_form`) and is **not** in the path. No occurrence counter is used. The
 member is `Contains`-edged from the nearest actual graph owner. No node is created
-for the owner object in v1. Declarations nested inside a member body are scoped
-under the member path.
+for the owner object in v1. Declarations nested inside a *supported* member's body
+are scoped under the member path (`supported-subtree.ts` is the positive control).
+
+**K1 — Plain keys only, decided per literal (freeze correction 1).** A key is
+*plain* only when it is a `property_identifier` whose source text contains no
+escape (`\`). String keys, numeric keys, computed keys (including `[Symbol.…]`
+and computed aliases of a plain spelling), and escaped identifier spellings are
+non-plain. If **any** property of a literal has a non-plain key, whether it is a
+callable member, a data property, or an unrelated value, **every** callable member
+of that literal is refused, plain-identifier siblings included. The refusal
+applies to that literal only. Other literals, including a sibling branch of the
+same owner, keep their identities. Basis: a non-plain key can alias a plain one
+(`'name'`, `[k]`, `n\u0061me` all define `name`, and the later definition wins,
+which the fixtures check at runtime). Proving non-aliasing needs string
+normalization and constant evaluation that v1 does not do. Refusing the whole
+literal never guesses which definition survives.
 
 **R3 — Collisions fail closed.** If two members compute the same path (for example,
 same-named `const` owners in sibling blocks), *every* colliding member is refused:
@@ -74,6 +96,40 @@ fixture checks this.
 future rule. Any call whose slot may hold a value without identity remains
 Unknown (see the `mutated-member` validation case, where the runtime value
 differs from the literal member).
+
+**T1 — Refused subtrees emit no callable descendants (freeze correction 1).** A
+*refused subtree* is either:
+- a refused callable member (R3, R4, K1, or U1–U7) together with everything
+  lexically inside its value or body; or
+- a refused object literal (K1, U6, or a literal under a U1/U2/U7 owner)
+  together with everything inside it.
+
+No Function identity may be emitted for any callable descendant in a refused
+subtree. That covers nested function declarations, `const`-bound arrows and
+function expressions, members of nested object literals (even if those are
+clean on their own), class methods, and test-registration callbacks. Type and
+Field declarations inside the subtree are omitted too, so nothing nested can
+flatten onto an outer path. Refusal never moves a descendant to a fallback path.
+In particular, a nested `function helper` must not become `<scope>::helper` and
+collide with, or alias, a same-named outer declaration. That outer declaration
+keeps exactly one node. Sibling members and branches outside the refused subtree
+stay indexed.
+
+**B1 — No silent exclusion (freeze correction 1).** For every *maximal* refused
+subtree that contains at least one call or `new` expression, the nearest existing
+enclosing Function node (or the Module, if none) must carry:
+- one call-evidence claim with `coverage_gap: true`, class Unknown, no targets,
+  reason `typescript-refused-structural-member-subtree`, and a site covering the
+  subtree's span; and
+- for every call inside the subtree, an Unknown claim owned by that same owner
+  with no invented target.
+
+So a test that reaches the owner is never excluded because of calls hidden in the
+refused subtree. No call inside a refused subtree may be certified Must against
+any node, including a same-named outer declaration. The fixtures demonstrate at
+runtime that such a call reaches the *inner* declaration. **B1 can only be
+observed in extractor output. It is pinned in the manifest as a postimplementation
+acceptance requirement (`checked_now: false`), not as something checked now.**
 
 **R6 — Existing flattened shorthand paths are withdrawn.** An object-literal
 `method_definition` must no longer emit `<scope>::<key>`. It gets an R1/R2 identity
@@ -104,9 +160,10 @@ A validation scorer must check node kind, not just a name match.
   on without rebinding analysis. Destructuring, class-field, and assignment
   owners have no `variable_declarator` identifier holding the literal. Widening
   the owner set is an open review question.
-- **U3** String, numeric, and computed keys, including string-keyed methods. A
-  computed key is runtime-valued. A non-computed string `'__proto__'` key is a
-  prototype setter, not a property. v1 does not normalize string spellings.
+- **U3** String, numeric, computed, and escaped keys are governed by K1: they refuse
+  the whole literal, not just their own member. A computed key is runtime-valued.
+  A non-computed string `'__proto__'` key is a prototype setter, not a property.
+  v1 does not normalize spellings.
 - **U4** `get`/`set` accessors. `obj.key()` calls the getter's *result*, not the
   accessor.
 - **U5** Generators and async generators (`*m(){}`, `function*`), which match the
@@ -118,6 +175,7 @@ A validation scorer must check node kind, not just a name match.
   `{ name }` define no function, so they get no member identity.
 - **U7** Angle-bracket assertions `<T>{…}` and any wrapper not listed in R1.
 
+Every U-rule refusal also refuses its subtree under T1 and gets a boundary under B1.
 When resolution is ambiguous, the result is a refusal (R3, and multiple matches
 during origin resolution). No form here may be resolved by choosing a
 same-spelled candidate.
@@ -138,16 +196,34 @@ and that change must be published as such. It is not a dispatch-corpus improveme
 ## Frozen fixtures
 
 1. [Identity contract corpus](../../../../fixtures/typescript-structural-member-corpus/v1/manifest.json)
-   (manifest SHA-256 `0d6e4838168c21cec9d0973b718d25cd9d2260f6c4fffd8ec150c641b4309af4`)
-   has 22 files, 55 marked members (27 required identities, 28 required
-   no-identity), and 10 declaration-only signatures. Every file's hash is pinned.
+   (manifest SHA-256 `93086a9298b9f26efac2c3a392c4d642a70f6ab05a0291c3ba572bb78d771c8d`)
+   has 31 files, 106 marked members (44 required identities, 62 required
+   no-identity), 10 declaration-only signatures, and 6 pinned refused-subtree
+   boundaries (B1, postimplementation only). Every file's hash is pinned.
    `expected_identity` is the exact path, or `null` for "no Function node at this
    span". `stability/before.ts` → `after.ts` covers sibling insertion, literal
    insertion above, reordering, body edits, and form changes, with identical
-   suffixes required. These are proof-contract fixtures, not ground-truth samples.
+   suffixes required.
+   Freeze correction 1 adds the following:
+   - K1 mixed-key literals: a plain key plus a string duplicate; a computed alias;
+     escaped aliases, and an escaped spelling with no plain twin; and an unrelated
+     string, numeric, or `Symbol` key. Each comes with a separate plain-keyed
+     literal that must keep its identity.
+   - T1/B1 refused-subtree cases (collision, duplicate key, unsupported key,
+     `let` owner inside a function). Each has a nested function, a nested object,
+     a call inside, and a same-named outer declaration that must stay a single
+     node.
+   - A nested-branch case, where a refused branch sits beside an indexed sibling
+     branch.
+   - A supported-subtree positive control.
+
+   These are proof-contract fixtures, not ground-truth samples.
 2. [Qualified validation cases](../../../../fixtures/typescript-structural-validation/v1/manifest.json)
-   (manifest SHA-256 `32a96e7fea8483577a720d96b5849c7de51f7485b4c4adf0c5d8b902c93c467d`)
-   has 15 cases over 10 fixtures. `object-literal-arrow/app.test.ts` is a
+   (manifest SHA-256 `aa114b8e049b2c19e952af00cbb0107010c00b413621a73f3db0b36c6b916692`)
+   has 17 cases over 11 fixtures. Correction 1 adds `refused-subtree-reachability`:
+   a test reaches `target()` only through a refused literal's member. Its ground
+   truth is `must`, so Unknown is conservative and `excluded` is the B1 violation.
+   The same fixture includes a true negative (`excluded`). `object-literal-arrow/app.test.ts` is a
    byte-identical copy of the original fixture, now with qualifiers `alice::@object` /
    `bob::@object` and labels cited from the frozen
    `typescript-structural-class-no-implements` case (same shape, may/may). The
@@ -162,10 +238,11 @@ and that change must be published as such. It is not a dispatch-corpus improveme
 
 [Preimplementation checks](preimplementation-checks.json) were produced by
 [`run_preimplementation_checks.py`](run_preimplementation_checks.py) with Node
-v22.22.0 type stripping (Node only). Results: 21/22 identity files executed with
+v22.22.0 type stripping (Node only). Results after correction 1: 30/31 identity files executed with
 their inline semantic assertions passing; `angle-assertion.ts` is skipped because
-the syntax is not erasable, and it is not counted as passed. All 10 validation
-fixtures pass `node --test`. The unchanged original fixture passes 2/2. All pinned
+the syntax is not erasable, and it is not counted as passed. All 11 validation
+fixtures pass `node --test`. Every marker is unique. All 6 boundary pins are
+flagged postimplementation-only. The unchanged original fixture passes 2/2. All pinned
 hashes match.
 
 ## Acceptance (after implementation, not now)
@@ -173,7 +250,13 @@ hashes match.
 1. The identity corpus has exact contracts. Every non-null identity exists exactly
    once at the marked span with the stated `member_form`. Every null has no
    Function node at its span. No declaration-only span is a Function node or a
-   call-evidence target. Stability suffixes are equal.
+   call-evidence target. Stability suffixes are equal. Under T1, no refused
+   descendant has a Function node, and each outer same-named declaration
+   appears exactly once.
+1a. B1 (postimplementation): each pinned boundary exists on the stated owner
+   with `coverage_gap: true`, the stated reason, and a site covering the refused
+   subtree. Every marked inner call is an Unknown, target-free claim owned by
+   that owner. No inner call is Must.
 2. A **separate** validation scorer (a new tool, not an edit to
    `tools/dispatch_corpus_scorer.py`) uses the corpus's exact / conservative /
    unsound rules. It requires the stated origin resolution and accepts only
@@ -198,8 +281,11 @@ hashes match.
 | `const` owners only (scope choice) | Include `let`/`var` | Not required for identity (see U2). It keeps v1 aligned with the only owner a later proof rule can use without rebinding analysis. It is an open question for review. |
 | Refuse colliding members | Pick first or last; add a counter | A refusal is never wrong. Choosing one guesses. |
 | Refuse whole literal on spread/`__proto__` | Order-aware partial identities | Spread overwrites by order, and `__proto__` (including the string-key form) is a setter. v1 avoids reasoning about either. |
-| Withdraw flattened shorthand paths (R6) | Keep `<scope>::<key>` | Those paths alias distinct members, and alias nested functions. Cost: shorthand methods in owner-less, `let`/`var`, destructuring, class-field, string-keyed, spread, or `__proto__` literals lose the nodes they have today, a retrieval regression on real code, disclosed here. |
+| Withdraw flattened shorthand paths (R6) | Keep `<scope>::<key>` | Those paths alias distinct members, and alias nested functions. Cost (larger after T1): callable descendants of refused subtrees and shorthand methods in owner-less, `let`/`var`, destructuring, class-field, string-keyed, spread, or `__proto__` literals lose the nodes they have today, a retrieval regression on real code, disclosed here. |
 | Identity only, no proofs | Add structural May now | Keeps this freeze reviewable. Proof rules need their own precommitted adversarial cases. |
+| K1: refuse the whole literal on any non-plain key | Refuse only the non-plain member; normalize strings | Plain siblings can be silently overwritten by an aliasing non-plain key. A per-member refusal would keep a wrong identity. |
+| T1: omit callable descendants of refused subtrees | Keep descendants under a fallback or flattened path | A fallback path collides with or aliases outer declarations, which is the defect this policy removes. |
+| B1: explicit coverage boundary on the nearest owner | Rely on implicit per-call ownership only | Omitting nodes must never look like "no calls here". The boundary makes the gap visible in impact. |
 | Separate qualified fixtures | Qualify the original case | The user's instruction and the corpus's never-tune rule both forbid editing the original. |
 
 Basis: ECMAScript `PropertyDefinitionEvaluation` (spread uses `CopyDataProperties`;
@@ -217,3 +303,19 @@ session's egress policy, so the source file was read instead. Node type
 stripping (erasable syntax only, no type checking): https://nodejs.org/api/typescript.html,
 checked 2026-10-03. The current tree-sitter node kinds come from reading the
 extractor source, not from running it.
+
+## Correction history
+
+- `6ac3124`: first draft.
+- **Freeze correction 1** (this revision), a policy/fixture correction before any
+  product implementation, made after the high review of `6ac3124`:
+  - **Decision 1 → K1.** Any non-plain key refuses every callable member of its
+    literal.
+  - **Decision 2 → T1 and B1.** Refused subtrees emit no callable descendants
+    and get an explicit Unknown coverage boundary on the nearest existing owner.
+  - New fixtures were added and the manifests extended. Earlier manifest
+    entries, and the files they pin, are unchanged.
+  - B1 is recorded as a postimplementation acceptance requirement because Node
+    cannot observe extractor output.
+  - `docs/dispatch-corpus.json` and the original fixture are byte-unchanged
+    (hashes above, re-verified).

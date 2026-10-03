@@ -408,6 +408,55 @@
       "assumptions": [
         "indexed-source-snapshot"
       ]
+    },
+    {
+      "id": "ts-structural-v1-refused-subtree-reachability",
+      "language": "typescript",
+      "fixture_dir": "refused-subtree-reachability",
+      "fixture_sha256": "214e94e0de3ff67d4775f1f9bd430b30109bc1da1b5fe8001eae5fa2965e518d",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "target"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::target",
+      "tests": [
+        {
+          "id": "test_host",
+          "framework_id": "test_host",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "TypeScript Must: proven lexical binding/concrete implementation without viable structural/overload alternatives",
+      "rationale": "Ground truth from language semantics: test_host calls host(), whose let-owned literal member run is the only value cfg.run can hold (cfg is never reassigned), run calls the lexically unique relay(), and relay calls the lexically unique target(). The literal is refused (U2 and K1), so relay gets no identity (T1) and the call target() inside it must be kept as Unknown evidence on host under a refused-subtree boundary (B1). Must would be exact; Unknown is conservative; `excluded` is the unsafe exclusion that B1 exists to prevent.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-refused-subtree-unrelated",
+      "language": "typescript",
+      "fixture_dir": "refused-subtree-reachability",
+      "fixture_sha256": "214e94e0de3ff67d4775f1f9bd430b30109bc1da1b5fe8001eae5fa2965e518d",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "target"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::target",
+      "tests": [
+        {
+          "id": "test_unrelated",
+          "framework_id": "test_unrelated",
+          "expected": "excluded"
+        }
+      ],
+      "policy_row": "N/A (true negative)",
+      "rationale": "True negative in the same fixture: test_unrelated calls unrelated(), which calls nothing. A refused-subtree boundary on host must not be widened into a claim that test_unrelated reaches target; Unknown is conservative, Must or May would be an overclaim.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
     }
-  ]
+  ],
+  "correction": "freeze-correction-1: adds the refused-subtree reachability fixture (two cases). Prior cases unchanged."
 }

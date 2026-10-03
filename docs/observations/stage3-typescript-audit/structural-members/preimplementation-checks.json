@@ -9,132 +9,310 @@
       "file": "arrow.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "function-expression.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "method-shorthand.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "two-literals-shorthand.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "nested-literal.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "function-scope-owner.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "injective-segment.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "type-wrappers.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "owner-less.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "export-default.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "let-var-owner.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "keys.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "accessors-generators.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "shorthand-spread-proto.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "duplicate-keys.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "colliding-owners.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "other-owners.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "angle-assertion.ts",
       "sha256_matches_manifest": true,
-      "skipped": "skipped: angle-bracket assertion is not erasable by Node type stripping"
+      "skipped": "skipped: angle-bracket assertion is not erasable by Node type stripping",
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "mutated-member.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "stability/before.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "stability/after.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
     },
     {
       "file": "declaration-only.ts",
       "sha256_matches_manifest": true,
       "exit": 0,
-      "passed": true
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
+    },
+    {
+      "file": "mixed-key-string-duplicate.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
+    },
+    {
+      "file": "mixed-key-computed-alias.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
+    },
+    {
+      "file": "mixed-key-unrelated.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
+    },
+    {
+      "file": "nested-branch-refusal.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 1
+    },
+    {
+      "file": "supported-subtree.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 0
+    },
+    {
+      "file": "refused-subtree-collision.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 2
+    },
+    {
+      "file": "refused-subtree-duplicate-key.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 1
+    },
+    {
+      "file": "refused-subtree-unsupported-key.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 1
+    },
+    {
+      "file": "refused-subtree-u-rule.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true,
+      "markers_unique": true,
+      "boundary_markers_unique": true,
+      "boundaries_postimplementation_only": true,
+      "refused_subtree_boundaries_pinned": 1
     }
   ],
   "validation_fixtures": [
@@ -227,6 +405,17 @@
       "sha256_matches_manifest": true
     },
     {
+      "fixture_dir": "refused-subtree-reachability",
+      "exit": 0,
+      "tap": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256_matches_manifest": true
+    },
+    {
       "fixture_dir": "spread-override",
       "exit": 0,
       "tap": {
@@ -259,5 +448,10 @@
     }
   },
   "frozen_inputs_match_manifest": true,
+  "postimplementation_requirements_not_checked": {
+    "refused_subtree_boundaries": 6,
+    "identity_contracts": "every expected_identity / null and declaration-only span (needs extractor output)",
+    "validation_case_scores": "every validation case (needs a Girder build and a separate validation scorer)"
+  },
   "all_passed": true
 }

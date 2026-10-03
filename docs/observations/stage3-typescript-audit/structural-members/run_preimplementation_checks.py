@@ -54,6 +54,21 @@ def main():
         else:
             entry.update(skipped=mode)
         ok &= entry["sha256_matches_manifest"]
+        text = path.read_text()
+        markers = [m["marker"] for m in case.get("members", [])]
+        markers += [d["marker"] for d in case.get("declaration_only", [])]
+        entry["markers_unique"] = all(text.count(m) == 1 for m in markers)
+        boundaries = case.get("refused_subtree_boundaries", [])
+        entry["boundary_markers_unique"] = all(
+            text.count(b["subtree_marker"]) == 1
+            and all(text.count(c["marker"]) == 1 for c in b["calls_inside"])
+            for b in boundaries
+        )
+        # Boundary pins need extractor output; they must never claim a check now.
+        entry["boundaries_postimplementation_only"] = all(b["checked_now"] is False for b in boundaries)
+        entry["refused_subtree_boundaries_pinned"] = len(boundaries)
+        ok &= entry["markers_unique"] and entry["boundary_markers_unique"]
+        ok &= entry["boundaries_postimplementation_only"]
         record["identity_corpus"].append(entry)
     vmanifest = json.loads((VALID / "manifest.json").read_text())
     for fixture in sorted({c["fixture_dir"] for c in vmanifest["cases"]}):
@@ -68,6 +83,11 @@ def main():
     ok &= code == 0
     record["frozen_inputs_match_manifest"] = record["frozen_inputs"] == vmanifest["frozen_inputs"]
     ok &= record["frozen_inputs_match_manifest"]
+    record["postimplementation_requirements_not_checked"] = {
+        "refused_subtree_boundaries": sum(e["refused_subtree_boundaries_pinned"] for e in record["identity_corpus"]),
+        "identity_contracts": "every expected_identity / null and declaration-only span (needs extractor output)",
+        "validation_case_scores": "every validation case (needs a Girder build and a separate validation scorer)",
+    }
     record["all_passed"] = ok
     OUT.write_text(json.dumps(record, indent=2) + "\n")
     print(json.dumps({"all_passed": ok, "node": record["node_version"]}))

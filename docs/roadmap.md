@@ -553,7 +553,26 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
-### 2026-10-03 — Structural member identity policy drafted for review (not yet frozen)
+### 2026-10-03 — Freeze correction 1 to the structural member policy (before implementation)
+
+This applies the high review of `6ac3124` to the policy and fixtures only. No
+product code changed; no Girder or Cargo run.
+- **K1:** any string, numeric, computed, or escaped key in a literal refuses every
+  callable member of that literal. Other literals keep their identities.
+- **T1:** a refused member or branch emits no callable descendants. Same-named
+  outer declarations stay single nodes, and sibling branches stay indexed.
+- **B1:** every refused subtree containing calls needs an explicit Unknown
+  coverage boundary on the nearest existing Function or Module. Its six boundary
+  pins are **postimplementation acceptance requirements**. Node cannot observe
+  them, and they are not claimed as checked.
+
+The corpus now has 31 identity files with 106 members, plus 17 validation cases
+over 11 fixtures. The Node checks pass: 30/31 identity files ran (1 non-erasable
+file skipped) and all 11 validation fixtures pass. Prior manifest entries are
+byte-unchanged, and the corpus and original-fixture hashes are re-verified.
+Awaiting review. TypeScript is IN PROGRESS and Go is NOT STARTED.
+
+### 2026-10-03 — Structural member identity policy drafted for review (historical)
 
 Branch `claude/roadmap-ts-policy` from `e3812c5`. Draft
 [structural member identity policy v1](observations/stage3-typescript-audit/structural-members/policy.md)
