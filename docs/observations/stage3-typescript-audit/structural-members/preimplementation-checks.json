@@ -1,0 +1,263 @@
+{
+  "node_version": "v22.22.0",
+  "frozen_inputs": {
+    "docs/dispatch-corpus.json": "9e3208a8f3fdc8faaee55cece63c1b5e25526322ebebbba915652f4f526ccd0a",
+    "fixtures/dispatch-corpus/typescript/structural-object-literal/app.test.ts": "5b85efacdb41b4a02b9b306a58339e57f4dc3950d48210d7bed1dc01af346e1d"
+  },
+  "identity_corpus": [
+    {
+      "file": "arrow.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "function-expression.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "method-shorthand.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "two-literals-shorthand.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "nested-literal.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "function-scope-owner.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "injective-segment.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "type-wrappers.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "owner-less.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "export-default.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "let-var-owner.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "keys.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "accessors-generators.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "shorthand-spread-proto.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "duplicate-keys.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "colliding-owners.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "other-owners.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "angle-assertion.ts",
+      "sha256_matches_manifest": true,
+      "skipped": "skipped: angle-bracket assertion is not erasable by Node type stripping"
+    },
+    {
+      "file": "mutated-member.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "stability/before.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "stability/after.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    },
+    {
+      "file": "declaration-only.ts",
+      "sha256_matches_manifest": true,
+      "exit": 0,
+      "passed": true
+    }
+  ],
+  "validation_fixtures": [
+    {
+      "fixture_dir": "direct-member-call",
+      "exit": 0,
+      "tap": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256_matches_manifest": true
+    },
+    {
+      "fixture_dir": "function-expression",
+      "exit": 0,
+      "tap": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256_matches_manifest": true
+    },
+    {
+      "fixture_dir": "method-shorthand",
+      "exit": 0,
+      "tap": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256_matches_manifest": true
+    },
+    {
+      "fixture_dir": "mixed-forms",
+      "exit": 0,
+      "tap": {
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256_matches_manifest": true
+    },
+    {
+      "fixture_dir": "mutated-member",
+      "exit": 0,
+      "tap": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256_matches_manifest": true
+    },
+    {
+      "fixture_dir": "object-literal-arrow",
+      "exit": 0,
+      "tap": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256_matches_manifest": true
+    },
+    {
+      "fixture_dir": "owner-scope",
+      "exit": 0,
+      "tap": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256_matches_manifest": true
+    },
+    {
+      "fixture_dir": "property-signature-interface",
+      "exit": 0,
+      "tap": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256_matches_manifest": true
+    },
+    {
+      "fixture_dir": "spread-override",
+      "exit": 0,
+      "tap": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256_matches_manifest": true
+    },
+    {
+      "fixture_dir": "unrelated-member",
+      "exit": 0,
+      "tap": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256_matches_manifest": true
+    }
+  ],
+  "original_fixture_runtime": {
+    "exit": 0,
+    "tap": {
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "frozen_inputs_match_manifest": true,
+  "all_passed": true
+}

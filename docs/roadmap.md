@@ -553,6 +553,27 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-03 — Structural member identity policy drafted for review (not yet frozen)
+
+Branch `claude/roadmap-ts-policy` from `e3812c5`. Draft
+[structural member identity policy v1](observations/stage3-typescript-audit/structural-members/policy.md)
+plus a 22-file identity contract corpus (55 marked members, 10 declaration-only
+signatures) and 15 separate qualified validation cases over 10 fixtures. It
+assigns identity only (`<scope>::<owner>::@object::<key>`) to const-owned,
+identifier-keyed arrow, function-expression, and method-shorthand members. It
+declares interface/abstract/overload signatures declaration-only. It refuses
+owner-less, `let`/`var`, non-identifier keys, accessors, generators, spread,
+`__proto__`, duplicate keys, and colliding paths. It authorizes no Must or May
+proof. It predicts that the unchanged original case will move from zero matches
+to an **ambiguity failure and must stay failed**. The corpus, the original
+fixture, and the classification policy are byte-unchanged (hashes pinned). Only
+Node ran ([checks](observations/stage3-typescript-audit/structural-members/preimplementation-checks.json):
+all pass, one non-erasable file skipped). No Girder, Cargo, or product code.
+Awaiting user corrections before implementation. TypeScript remains IN PROGRESS
+and Go remains NOT STARTED. Common gates are pending.
+
+### 2026-10-02 — Pause checkpoint (historical)
+
 2026-10-02 pause checkpoint: no implementation changes or measurements since
 `464aa6b`. No Cargo job remains running. Resume with the TypeScript structural
 member policy and frozen cases described below; language gates remain pending.

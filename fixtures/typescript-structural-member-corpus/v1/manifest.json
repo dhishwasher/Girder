@@ -1,0 +1,578 @@
+{
+  "version": 1,
+  "name": "typescript-structural-member-identity-v1",
+  "meaning": "Identity contract cases for TypeScript structural callable member identity policy v1. Proof-contract fixtures, not independent ground-truth samples and not additions to the published dispatch benchmark. expected_identity is the exact semantic path of the Function node that must exist at the marked member (null: no Function node may exist at that member's span).",
+  "analysis_root": "fixtures/typescript-structural-member-corpus/v1",
+  "marker_rule": "A marker comment immediately precedes the member's key (or signature). The marked definition is the next property/method/signature after the marker.",
+  "stability_rule": "Every identity suffix after the module path that appears in both stability/before.ts and stability/after.ts must be equal for the same marker id; module paths differ only because the files differ.",
+  "runtime": {
+    "arrow.ts": "executed",
+    "function-expression.ts": "executed",
+    "method-shorthand.ts": "executed",
+    "two-literals-shorthand.ts": "executed",
+    "nested-literal.ts": "executed",
+    "function-scope-owner.ts": "executed",
+    "injective-segment.ts": "executed",
+    "type-wrappers.ts": "executed",
+    "owner-less.ts": "executed",
+    "export-default.ts": "executed",
+    "let-var-owner.ts": "executed",
+    "keys.ts": "executed",
+    "accessors-generators.ts": "executed",
+    "shorthand-spread-proto.ts": "executed",
+    "duplicate-keys.ts": "executed",
+    "colliding-owners.ts": "executed",
+    "other-owners.ts": "executed",
+    "angle-assertion.ts": "skipped: angle-bracket assertion is not erasable by Node type stripping",
+    "mutated-member.ts": "executed",
+    "stability/before.ts": "executed",
+    "stability/after.ts": "executed",
+    "declaration-only.ts": "executed"
+  },
+  "cases": [
+    {
+      "file": "arrow.ts",
+      "sha256": "f3290ae3491fc64de59ab4b70dcce2bf16382ca87e4ab1bd5d411ee134439ea7",
+      "module_path": "crate::arrow",
+      "members": [
+        {
+          "marker": "/* m:alice.name */",
+          "form": "arrow",
+          "expected_identity": "crate::arrow::alice::@object::name",
+          "rule": "R1/R2: const owner, identifier key, arrow value."
+        },
+        {
+          "marker": "/* m:asyncy.load */",
+          "form": "arrow",
+          "expected_identity": "crate::arrow::asyncy::@object::load",
+          "rule": "async does not change identity."
+        }
+      ]
+    },
+    {
+      "file": "function-expression.ts",
+      "sha256": "fe73f4ee7fbe07c13d9f23759521bf5a51984939b96d36f444c91fb1e30a4bc3",
+      "module_path": "crate::function-expression",
+      "members": [
+        {
+          "marker": "/* m:alice.name */",
+          "form": "function_expression",
+          "expected_identity": "crate::function-expression::alice::@object::name",
+          "rule": "Anonymous function expression; NamedEvaluation names it after the key."
+        },
+        {
+          "marker": "/* m:alice.label */",
+          "form": "function_expression",
+          "expected_identity": "crate::function-expression::alice::@object::label",
+          "rule": "Named function expression: identity comes from the property key (how callers reach it), never from `inner`, which is bound only inside its own body."
+        }
+      ]
+    },
+    {
+      "file": "method-shorthand.ts",
+      "sha256": "ed3eae5f266ad732afb59d210bd9ec232a335dc5da66769c17fd4fb7d3b737e9",
+      "module_path": "crate::method-shorthand",
+      "members": [
+        {
+          "marker": "/* m:alice.name */",
+          "form": "method_shorthand",
+          "expected_identity": "crate::method-shorthand::alice::@object::name",
+          "rule": "MethodDefinition in an object literal."
+        },
+        {
+          "marker": "/* m:alice.load */",
+          "form": "method_shorthand",
+          "expected_identity": "crate::method-shorthand::alice::@object::load",
+          "rule": "async method shorthand."
+        }
+      ]
+    },
+    {
+      "file": "two-literals-shorthand.ts",
+      "sha256": "a5d0e783d247045aa4a2d99e6bb4aa6023c5ee8115d170984a6865211cae1d21",
+      "module_path": "crate::two-literals-shorthand",
+      "members": [
+        {
+          "marker": "/* m:alice.name */",
+          "form": "method_shorthand",
+          "expected_identity": "crate::two-literals-shorthand::alice::@object::name",
+          "rule": "Currently both flatten to the module path ::name (duplicate). Must be distinct."
+        },
+        {
+          "marker": "/* m:bob.name */",
+          "form": "method_shorthand",
+          "expected_identity": "crate::two-literals-shorthand::bob::@object::name",
+          "rule": "Distinct from alice's member."
+        }
+      ]
+    },
+    {
+      "file": "nested-literal.ts",
+      "sha256": "9249f1dd08c57a18da09bab48ecc33f2a2c524326cc505207b570be1f28781f9",
+      "module_path": "crate::nested-literal",
+      "members": [
+        {
+          "marker": "/* m:api.users.list */",
+          "form": "arrow",
+          "expected_identity": "crate::nested-literal::api::@object::users::@object::list",
+          "rule": "R2: identifier-keyed nested literal extends the owner path."
+        },
+        {
+          "marker": "/* m:api.users.admins.list */",
+          "form": "method_shorthand",
+          "expected_identity": "crate::nested-literal::api::@object::users::@object::admins::@object::list",
+          "rule": "Same spelling `list` at a different depth is distinct."
+        }
+      ]
+    },
+    {
+      "file": "function-scope-owner.ts",
+      "sha256": "d112444559e0439894018c5274c6bba7da5c636d7f98053fdd4cf74694b9d0bb",
+      "module_path": "crate::function-scope-owner",
+      "members": [
+        {
+          "marker": "/* m:make.alice.name */",
+          "form": "arrow",
+          "expected_identity": "crate::function-scope-owner::make::alice::@object::name",
+          "rule": "Owner binding inside a function declaration body uses the existing function scope path."
+        },
+        {
+          "marker": "/* m:build.alice.name */",
+          "form": "method_shorthand",
+          "expected_identity": "crate::function-scope-owner::build::alice::@object::name",
+          "rule": "Owner inside a variable-bound arrow uses that function's existing scope path."
+        }
+      ]
+    },
+    {
+      "file": "injective-segment.ts",
+      "sha256": "e4a076b570ae40ee5cad9ffdd04b2627c2c2971ca1de99a66ac9b6bfae8db029",
+      "module_path": "crate::injective-segment",
+      "members": [
+        {
+          "marker": "/* m:alice.nested-function */",
+          "form": "function_declaration",
+          "expected_identity": "crate::injective-segment::alice::name",
+          "rule": "Existing nested-function path; unchanged by this policy (blocks do not create extractor scopes)."
+        },
+        {
+          "marker": "/* m:alice.member */",
+          "form": "method_shorthand",
+          "expected_identity": "crate::injective-segment::alice::@object::name",
+          "rule": "The @object segment cannot be spelled by an identifier, so it can never equal the nested function's path."
+        }
+      ]
+    },
+    {
+      "file": "type-wrappers.ts",
+      "sha256": "61bc2fbc71662f78149f2038adb56c452497ef0f03299c77d57debaac253a3c0",
+      "module_path": "crate::type-wrappers",
+      "members": [
+        {
+          "marker": "/* m:sat.name */",
+          "form": "arrow",
+          "expected_identity": "crate::type-wrappers::sat::@object::name",
+          "rule": "R1: `satisfies` is erased; the value is still the literal."
+        },
+        {
+          "marker": "/* m:cast.name */",
+          "form": "arrow",
+          "expected_identity": "crate::type-wrappers::cast::@object::name",
+          "rule": "R1: `as` and parentheses are erased."
+        },
+        {
+          "marker": "/* m:paren.name */",
+          "form": "method_shorthand",
+          "expected_identity": "crate::type-wrappers::paren::@object::name",
+          "rule": "R1: parenthesized literal."
+        }
+      ]
+    },
+    {
+      "file": "owner-less.ts",
+      "sha256": "014e84cf7c505009dde8440f253c5093fdd3eed169415922aa17a2e2ed1a6068",
+      "module_path": "crate::owner-less",
+      "members": [
+        {
+          "marker": "/* m:returned.name */",
+          "form": "method_shorthand",
+          "expected_identity": null,
+          "rule": "U1: returned literal has no owner binding."
+        },
+        {
+          "marker": "/* m:argument.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U1: call-argument literal."
+        },
+        {
+          "marker": "/* m:element.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U1: array element."
+        },
+        {
+          "marker": "/* m:default.name */",
+          "form": "method_shorthand",
+          "expected_identity": null,
+          "rule": "U1: default-parameter value."
+        }
+      ]
+    },
+    {
+      "file": "export-default.ts",
+      "sha256": "820480000968d212261b6b5c22321ac58ca54bf52a34f42cf548cfa849541510",
+      "module_path": "crate::export-default",
+      "members": [
+        {
+          "marker": "/* m:default-export.name */",
+          "form": "method_shorthand",
+          "expected_identity": null,
+          "rule": "U1: `export default {}` has no binding identifier."
+        }
+      ]
+    },
+    {
+      "file": "let-var-owner.ts",
+      "sha256": "d41984b18f8329ec9e5239471fef975762cf04a65e7862c946824b6d9cabc3e5",
+      "module_path": "crate::let-var-owner",
+      "members": [
+        {
+          "marker": "/* m:let.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U2: `let` binding may be reassigned to a different object."
+        },
+        {
+          "marker": "/* m:var.name */",
+          "form": "method_shorthand",
+          "expected_identity": null,
+          "rule": "U2: `var` binding may be reassigned or redeclared."
+        }
+      ]
+    },
+    {
+      "file": "keys.ts",
+      "sha256": "7ad78e12b609185ecd159ac5e2f52be277111369a797317fcd6a14b6465eb669",
+      "module_path": "crate::keys",
+      "members": [
+        {
+          "marker": "/* m:string-key */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U3: string-literal key (`'__proto__'` is a prototype setter in this form, so string keys are refused as a class)."
+        },
+        {
+          "marker": "/* m:numeric-key */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U3: numeric key."
+        },
+        {
+          "marker": "/* m:computed-key */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U3: computed key."
+        },
+        {
+          "marker": "/* m:string-method */",
+          "form": "method_shorthand",
+          "expected_identity": null,
+          "rule": "U3: string-keyed method."
+        }
+      ]
+    },
+    {
+      "file": "accessors-generators.ts",
+      "sha256": "0fddc7a5298dfe945d6e78dcae33eff3db5657d3efd65d1aef315368c94b66b9",
+      "module_path": "crate::accessors-generators",
+      "members": [
+        {
+          "marker": "/* m:getter */",
+          "form": "getter",
+          "expected_identity": null,
+          "rule": "U4: accessor; `special.name()` calls the getter's return value, not the getter."
+        },
+        {
+          "marker": "/* m:setter */",
+          "form": "setter",
+          "expected_identity": null,
+          "rule": "U4: accessor."
+        },
+        {
+          "marker": "/* m:generator-method */",
+          "form": "generator_method",
+          "expected_identity": null,
+          "rule": "U5: generator."
+        },
+        {
+          "marker": "/* m:generator-expression */",
+          "form": "generator_function_expression",
+          "expected_identity": null,
+          "rule": "U5: generator."
+        },
+        {
+          "marker": "/* m:async-generator-method */",
+          "form": "async_generator_method",
+          "expected_identity": null,
+          "rule": "U5: async generator."
+        }
+      ]
+    },
+    {
+      "file": "shorthand-spread-proto.ts",
+      "sha256": "482a5cc6a9837ceeebd3024cb1b02001e2c9fd8e3981181809119e7ef8eb9c9c",
+      "module_path": "crate::shorthand-spread-proto",
+      "members": [
+        {
+          "marker": "/* m:base.name */",
+          "form": "arrow",
+          "expected_identity": "crate::shorthand-spread-proto::base::@object::name",
+          "rule": "Plain literal elsewhere in the same file is unaffected."
+        },
+        {
+          "marker": "/* m:shorthand-property */",
+          "form": "shorthand_property",
+          "expected_identity": null,
+          "rule": "U6: `{ name }` defines no function; it copies a reference to another binding."
+        },
+        {
+          "marker": "/* m:spread-after.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U6: a spread anywhere in the literal refuses all its members (here the spread overwrites `name`; runtime-checked)."
+        },
+        {
+          "marker": "/* m:spread-before.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U6: refused even though this own member wins at runtime; v1 does not order-reason about spreads."
+        },
+        {
+          "marker": "/* m:proto.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U6: a `__proto__` entry refuses the literal."
+        },
+        {
+          "marker": "/* m:string-proto.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U6: `'__proto__'` (non-computed string key) is also a prototype setter."
+        }
+      ]
+    },
+    {
+      "file": "duplicate-keys.ts",
+      "sha256": "8fb2a808e01f048c78839898fdcba7fc2f2b43a7115ddac246ef9334a79f6140",
+      "module_path": "crate::duplicate-keys",
+      "members": [
+        {
+          "marker": "/* m:dup.first */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "R4: duplicate key within one literal refuses every member with that key (later definition wins at runtime)."
+        },
+        {
+          "marker": "/* m:dup.second */",
+          "form": "method_shorthand",
+          "expected_identity": null,
+          "rule": "R4: same."
+        }
+      ]
+    },
+    {
+      "file": "colliding-owners.ts",
+      "sha256": "482d2b098e515690b7f712f99947428c78fc6c72021b2e233d08ab1a3a2a1bbe",
+      "module_path": "crate::colliding-owners",
+      "members": [
+        {
+          "marker": "/* m:block-1.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "R3: both block-scoped `alice` owners compute the same path; every colliding member is refused (fail closed), never disambiguated by a counter."
+        },
+        {
+          "marker": "/* m:block-2.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "R3: same."
+        }
+      ]
+    },
+    {
+      "file": "other-owners.ts",
+      "sha256": "25320e166969fc481582d3a98ba00afb2a431ecff59d60417d123705f84a939f",
+      "module_path": "crate::other-owners",
+      "members": [
+        {
+          "marker": "/* m:destructured.pulled */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U2: destructuring owner."
+        },
+        {
+          "marker": "/* m:class-field.run */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U2: class-field owner is outside the v1 owner set."
+        }
+      ]
+    },
+    {
+      "file": "angle-assertion.ts",
+      "sha256": "5376103990dde8a2926cc03d43080ff8997b73902a801d2d1093ddd43a239899",
+      "module_path": "crate::angle-assertion",
+      "members": [
+        {
+          "marker": "/* m:angled.name */",
+          "form": "arrow",
+          "expected_identity": null,
+          "rule": "U7: angle-bracket type assertion is outside the v1 transparent-wrapper set (also not erasable by Node type stripping)."
+        }
+      ]
+    },
+    {
+      "file": "mutated-member.ts",
+      "sha256": "2f3ee41d1808ad3f18f92e75ed1564124f2db7fe9ab3023521a9e8964dbf4d6e",
+      "module_path": "crate::mutated-member",
+      "members": [
+        {
+          "marker": "/* m:alice.name */",
+          "form": "arrow",
+          "expected_identity": "crate::mutated-member::alice::@object::name",
+          "rule": "R5: identity names the definition site and survives later writes; writes to the slot block every proof through it."
+        }
+      ]
+    },
+    {
+      "file": "stability/before.ts",
+      "sha256": "79bd3ac5068dec6009d2c0c2e3d8110899b930aaf87e193178b7bbc11d311ee9",
+      "module_path": "crate::stability::before",
+      "members": [
+        {
+          "marker": "/* m:alice.name */",
+          "form": "arrow",
+          "expected_identity": "crate::stability::before::alice::@object::name",
+          "rule": "S1 baseline."
+        },
+        {
+          "marker": "/* m:alice.greet */",
+          "form": "method_shorthand",
+          "expected_identity": "crate::stability::before::alice::@object::greet",
+          "rule": "S1 baseline."
+        },
+        {
+          "marker": "/* m:bob.name */",
+          "form": "function_expression",
+          "expected_identity": "crate::stability::before::bob::@object::name",
+          "rule": "S1 baseline."
+        }
+      ]
+    },
+    {
+      "file": "stability/after.ts",
+      "sha256": "af1e64aa226bf143f27bcc5bbd74d4fecae7813bd716ac25103f1925c5c252d5",
+      "module_path": "crate::stability::after",
+      "members": [
+        {
+          "marker": "/* m:zed.name */",
+          "form": "arrow",
+          "expected_identity": "crate::stability::after::zed::@object::name",
+          "rule": "Inserted literal above existing owners."
+        },
+        {
+          "marker": "/* m:alice.extra */",
+          "form": "arrow",
+          "expected_identity": "crate::stability::after::alice::@object::extra",
+          "rule": "Inserted sibling member."
+        },
+        {
+          "marker": "/* m:alice.greet */",
+          "form": "arrow",
+          "expected_identity": "crate::stability::after::alice::@object::greet",
+          "rule": "Reordered, body edited, form changed: identity suffix unchanged from before.ts."
+        },
+        {
+          "marker": "/* m:alice.name */",
+          "form": "method_shorthand",
+          "expected_identity": "crate::stability::after::alice::@object::name",
+          "rule": "Reordered, body edited, form changed: identity suffix unchanged."
+        },
+        {
+          "marker": "/* m:bob.name */",
+          "form": "arrow",
+          "expected_identity": "crate::stability::after::bob::@object::name",
+          "rule": "Form changed: identity suffix unchanged."
+        }
+      ]
+    },
+    {
+      "file": "declaration-only.ts",
+      "sha256": "0f59bb3e4b61e6c9e494d3c465193db2f1ef9631dd02985ccfad8e749a53a51b",
+      "module_path": "crate::declaration-only",
+      "declaration_only": [
+        {
+          "marker": "/* d:interface.method_signature */",
+          "syntax_kind": "method_signature",
+          "executable": false,
+          "expected": "no Function node at this span; never an origin, candidate, or proof target"
+        },
+        {
+          "marker": "/* d:interface.function_property_signature */",
+          "syntax_kind": "property_signature",
+          "executable": false,
+          "expected": "no Function node at this span; never an origin, candidate, or proof target; an existing Field node is permitted but is declaration-only"
+        },
+        {
+          "marker": "/* d:interface.call_signature */",
+          "syntax_kind": "call_signature",
+          "executable": false,
+          "expected": "no Function node at this span; never an origin, candidate, or proof target"
+        },
+        {
+          "marker": "/* d:interface.construct_signature */",
+          "syntax_kind": "construct_signature",
+          "executable": false,
+          "expected": "no Function node at this span; never an origin, candidate, or proof target"
+        },
+        {
+          "marker": "/* d:interface.index_signature */",
+          "syntax_kind": "index_signature",
+          "executable": false,
+          "expected": "no Function node at this span; never an origin, candidate, or proof target"
+        },
+        {
+          "marker": "/* d:type_literal.method_signature */",
+          "syntax_kind": "method_signature",
+          "executable": false,
+          "expected": "no Function node at this span; never an origin, candidate, or proof target"
+        },
+        {
+          "marker": "/* d:abstract_method_signature */",
+          "syntax_kind": "abstract_method_signature",
+          "executable": false,
+          "expected": "no Function node at this span; never an origin, candidate, or proof target"
+        },
+        {
+          "marker": "/* d:class.overload_signature */",
+          "syntax_kind": "method_signature",
+          "executable": false,
+          "expected": "no Function node at this span; never an origin, candidate, or proof target"
+        },
+        {
+          "marker": "/* d:function_signature */",
+          "syntax_kind": "function_signature",
+          "executable": false,
+          "expected": "no Function node at this span; never an origin, candidate, or proof target"
+        },
+        {
+          "marker": "/* d:ambient_function */",
+          "syntax_kind": "ambient_declaration",
+          "executable": false,
+          "expected": "no Function node at this span; never an origin, candidate, or proof target"
+        }
+      ]
+    }
+  ]
+}
