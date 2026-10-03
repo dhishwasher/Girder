@@ -1,0 +1,228 @@
+{
+  "revision": "b3195561872d16ab440f71ef43434f643ce513b9",
+  "binary_sha256": "0e6e09c70355cb1e187a6b39b31a06d0ac4fcc62f4e81ce6af287d8537ead927",
+  "runner_sha256": "4279199e36a31034d67ce24efd23784792707eb6f7c177aa8bb6d5caf796c4ed",
+  "labels_sha256": "c3979bb15d2040da7a006051bde99374566cbd01e94b62f33bee3f921999c0eb",
+  "environment": {
+    "platform": "Linux-6.6.141-09476-g954adab60416-x86_64-with-glibc2.36",
+    "RAYON_NUM_THREADS": null,
+    "offline": true
+  },
+  "inputs": [
+    {
+      "path": "docs/observations/stage3-typescript-audit/audit-sites-labeled.json",
+      "sha256": "d9346651d99f4605bbc2a8ff12f558b61812e5b6e20c82e6a3ced2d2241637f0"
+    },
+    {
+      "path": "docs/stage3-typescript-corpus.json",
+      "sha256": "a027988684a9d4dc2c0bcfcfab3e81b066a8e5396a4cf3e9b72cb33e6e55ad12"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/policy.md",
+      "sha256": "57a8588d040e986086a495c9b98d3160618a1c7d1a7ea222c180cb3e30922f58"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/reserve.json",
+      "sha256": "4096e7f1504a8352e1085f7e4636b9bb0ad7f510342d219b171c33c9caf78cbf"
+    },
+    {
+      "path": "tools/prepare_typescript_audit_extension.py",
+      "sha256": "d04b2a8054dbc003b55b3aec81f6bd8643c96439646a4c4b5d882b6652250570"
+    },
+    {
+      "path": "tools/dispatch_audit_site_selector_typescript.py",
+      "sha256": "70cab5998b7116bc3ccbd339667e58a6cb7cc6a60f094899311b787a8143871d"
+    },
+    {
+      "path": "tools/dispatch_audit_scorer_typescript.py",
+      "sha256": "b3cac340883d6e1249402c27a0f5785478aa2ece02e9f5b05cf77d076616911a"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/labeling-rubric.md",
+      "sha256": "09e0fb1de3d0f366e6dd645881edfe167c5bd50ae96161069d6d433f4fa15d2e"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/labeling-rubric-addendum.md",
+      "sha256": "a6db05d7c58d3434a8f25235db00bd115f3f0ecad5a55313658c0576e20d24ce"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/labeling-rubric-addendum-2.md",
+      "sha256": "3c2243ef2a08d3918673d7f07a820a18fb58d8984f41d365bb28d3c86eecf212"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/extension-labels.json",
+      "sha256": "e0a9bbb37c31525ff8dbf375603aff0ecc236f8a177f38840faf8a77021c9c20"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/combined-labels.json",
+      "sha256": "c3979bb15d2040da7a006051bde99374566cbd01e94b62f33bee3f921999c0eb"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/source-excerpts.json",
+      "sha256": "e216da240aa0f31bd336c9711fb36674776d87f6a8e03a30007f83a3074c86f0"
+    },
+    {
+      "path": "docs/observations/stage3-typescript-audit/extension/binding-evidence.json",
+      "sha256": "e05fb6e1d4f2335246540cc8364030a132218a6a750405a4673a5fe2cf593cc7"
+    },
+    {
+      "path": "tools/score_typescript_audit_extension.py",
+      "sha256": "ab13edfbfe49290779160832a8516078ef9a92081f0ef76b56d0882370e2c93a"
+    }
+  ],
+  "roots": {
+    "typescript-6.0.3": "/tmp/girder-ts-real-audit-structural-members-after-local-1/typescript-6.0.3",
+    "zod-3.23.8": "/tmp/girder-ts-real-audit-structural-members-after-local-1/zod-3.23.8",
+    "date-fns-4.1.0": "/tmp/girder-ts-real-audit-structural-members-after-local-1/date-fns-4.1.0",
+    "class-validator-0.15.1": "/tmp/girder-ts-real-audit-structural-members-after-local-1/class-validator-0.15.1"
+  },
+  "source_inventories": {
+    "typescript-6.0.3": {
+      "archive_sha256": "c26953b79c1197e02f5666a0b612d5b9707339557aa9744097e7d5719de1a117",
+      "files": 709,
+      "bytes": 21274222,
+      "physical_lines": 452627,
+      "manifest_sha256": "c9122c3a6d108966914a27701a7801104b9d7b018f65ab6e25c60cb464d1355f"
+    },
+    "zod-3.23.8": {
+      "archive_sha256": "ecd3ac7eb5bac88202b1146c308c8bbd48e63fc64d6d7f14b5577dde5da02c48",
+      "files": 165,
+      "bytes": 937060,
+      "physical_lines": 30448,
+      "manifest_sha256": "a8fc1683c9305317f458fea5e7f9523deec9cf55e30888e72431aa34dc8e637e"
+    },
+    "date-fns-4.1.0": {
+      "archive_sha256": "a6694304fccc35587f954f4b79adbbeb9a0c66256a13e48ac0488b55f6616257",
+      "files": 1529,
+      "bytes": 2864829,
+      "physical_lines": 100487,
+      "manifest_sha256": "8cff01e1ed7f2ea7f69b60a09e7b4889883f182be895eb253da18af0da2cf43b"
+    },
+    "class-validator-0.15.1": {
+      "archive_sha256": "100a22e535896aea8901c4b521b45bf25e778a41987df89dcc15054594859863",
+      "files": 176,
+      "bytes": 472294,
+      "physical_lines": 14455,
+      "manifest_sha256": "27c81d40b9306797031c0e0909b5b53e207e5ae2ca83eca9f98da61fe0370595"
+    }
+  },
+  "commands": [
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-ts-real-audit-structural-members-after-local-1/typescript-6.0.3",
+        "--json"
+      ],
+      "stdout": "typescript-6.0.3-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 379.749,
+      "stdout_sha256": "19ff8a188b9e717a56b24c29ac935145d704d50bb0b7377a402bac42f25c75d2"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-ts-real-audit-structural-members-after-local-1/typescript-6.0.3/project.aether",
+        "--json"
+      ],
+      "stdout": "typescript-6.0.3-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 5.6,
+      "stdout_sha256": "5774baa3fc9c07e5c51922cf3cc85805e6cb9259826b3422ce5795177b3251d1"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-ts-real-audit-structural-members-after-local-1/zod-3.23.8",
+        "--json"
+      ],
+      "stdout": "zod-3.23.8-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 7.277,
+      "stdout_sha256": "b8431db1884b8c970b80a90fcbd4efec8519a0fdf14b13130e9152d0f4911a1a"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-ts-real-audit-structural-members-after-local-1/zod-3.23.8/project.aether",
+        "--json"
+      ],
+      "stdout": "zod-3.23.8-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 0.734,
+      "stdout_sha256": "acf9ecbfa405dda966cf3037966ca66995a3aa6b5393f21eab3acc85457b39f0"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-ts-real-audit-structural-members-after-local-1/date-fns-4.1.0",
+        "--json"
+      ],
+      "stdout": "date-fns-4.1.0-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 15.798,
+      "stdout_sha256": "3cb836522ab042b7037dc4faf15eb9ea29e6a62cc3d42e000dab0d9c2378ca77"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-ts-real-audit-structural-members-after-local-1/date-fns-4.1.0/project.aether",
+        "--json"
+      ],
+      "stdout": "date-fns-4.1.0-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 2.479,
+      "stdout_sha256": "85852b8f02803f2c53850311b5304e29191b0849f1e985c9e4a56d26d7099a94"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-ts-real-audit-structural-members-after-local-1/class-validator-0.15.1",
+        "--json"
+      ],
+      "stdout": "class-validator-0.15.1-analyze.json.gz",
+      "exit_code": 0,
+      "seconds": 3.223,
+      "stdout_sha256": "457d21bc93f307d5726f058cc42c8219e43bd6b209f676305522ce99f2e3c32a"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-ts-real-audit-structural-members-after-local-1/class-validator-0.15.1/project.aether",
+        "--json"
+      ],
+      "stdout": "class-validator-0.15.1-inspect.json.gz",
+      "exit_code": 0,
+      "seconds": 1.408,
+      "stdout_sha256": "361becc96c31383bb22c380784f300d860f923c020b52284fd689e782ff19716"
+    }
+  ],
+  "status": "measured",
+  "original_cells": {
+    "conservative": 43,
+    "exact": 54
+  },
+  "combined_cells": {
+    "conservative": 44,
+    "exact": 56
+  },
+  "acceptance": {
+    "minimum_real_sites": 100,
+    "scored": 100,
+    "not_a_call_site": 10,
+    "all_sites_accounted_for": true,
+    "unsound": 0,
+    "must_numerator": 3,
+    "must_denominator": 3,
+    "must_precision": 1.0,
+    "passed": true
+  },
+  "changed_answers": 45
+}

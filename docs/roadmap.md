@@ -273,7 +273,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | --- | --- | --- | --- |
 | Rust | **DONE — corrected 100-site checkpoint** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) and [retained failed extension](observations/stage3-audit-reconciliation/observation/summary.md) | Stage 2 |
 | Python | **DONE — corrected 100-site checkpoint** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) | Rust trustworthy on a real repository |
-| TypeScript | IN PROGRESS (100-site audit: 0 unsound, 2/2 correct Must, 98 Unknown; dispatch improvement and common gates pending) | [100-site baseline](observations/stage3-typescript-audit/extension/before/observation.md) / [lexical-proof after-audit](observations/stage3-typescript-audit/lexical-bindings/bindings-after-1/observation.md) + [retained false-Must baseline](observations/stage3-typescript-audit/lexical-bindings/before-observation.md) + [unchanged dispatch results](observations/stage3-typescript-audit/lexical-bindings/corpus-observation.md) | Python trustworthy on a real repository |
+| TypeScript | IN PROGRESS (local 100-site audit: 0 unsound, 3/3 correct Must, 97 Unknown; common gates passed; dispatch improvement pending) | [100-site baseline](observations/stage3-typescript-audit/extension/before/observation.md) / [structural-identity after-audit](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/observation.md) + [retained false-Must baseline](observations/stage3-typescript-audit/lexical-bindings/before-observation.md) + [unchanged dispatch results](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/dispatch-corpus-scoring.json) | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
 Use existing pinned Rust repositories and Click first; pin TypeScript compiler
@@ -553,7 +553,29 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
-### 2026-10-03 — Structural member identity policy v1 implemented (`230418e`); audit re-run blocked
+### 2026-10-03 — Structural member identity audit completed locally; TypeScript remains IN PROGRESS
+
+The MOVESPEED workstation has all four pinned TypeScript archives, unlike the
+cloud container. [A fresh offline audit](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/observation.md)
+on candidate `b319556` and locally rebuilt binary `0e6e09c7…` accounted for
+100 actual calls and 10 noncalls: **56 exact / 44 conservative / 0 unsound**,
+with **3/3 correct Must** and 97 Unknown. Compared with the immediate prior
+55/45, 2/2 Must checkpoint, one compiler call moved from Unknown to a correct
+Must target; eight other records changed details without changing class.
+The separate structural validation scorer passed 17/17 origin contracts with
+0 unsound cells. The unchanged 49-case corpus stayed at 22/34/0/0/1; its one
+failure is now the predicted alice/bob origin ambiguity, not an improvement.
+All four common gates passed locally on `b319556` (769 Rust passed, 2 ignored;
+strict Clippy and fmt clean; npm 29 passed, 2 skipped). The earlier cloud audit
+blocker and first implementation NO-GO remain published below.
+
+**Next:** freeze a narrow TypeScript dispatch proof policy and adversarial
+fixtures before implementation or measurement. A named relative ESM import of a
+unique exported function is the bounded existing corpus case to examine first.
+Do not infer proof from structural identity alone. TypeScript remains IN PROGRESS;
+Go remains NOT STARTED.
+
+### 2026-10-03 — Structural member identity policy v1 implemented (`230418e`); cloud audit re-run blocked (historical)
 
 Implementation `0c9db9b` passed all four gates but got a NO-GO in review. That
 result is retained. Correction `230418e` fixes class-field scoping, lexical R3

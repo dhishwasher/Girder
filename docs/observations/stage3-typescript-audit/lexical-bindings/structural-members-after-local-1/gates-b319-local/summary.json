@@ -1,0 +1,55 @@
+{
+  "revision": "b3195561872d16ab440f71ef43434f643ce513b9",
+  "binary_sha256": "0e6e09c70355cb1e187a6b39b31a06d0ac4fcc62f4e81ce6af287d8537ead927",
+  "platform": "Linux-6.6.141-09476-g954adab60416-x86_64-with-glibc2.36",
+  "environment": {
+    "RUSTUP_HOME": "/mnt/chromeos/removable/MOVESPEED/.rustup",
+    "CARGO_HOME": "/mnt/chromeos/removable/MOVESPEED/.cargo",
+    "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target",
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_INCREMENTAL": "0"
+  },
+  "results": {
+    "cargo-test": {
+      "command": "cargo test --workspace -j1 --quiet",
+      "exit_code": 0,
+      "log_sha256": "e0a034d1440b53737e06fa3138044aa789f4d1314d95641994b9d7e10c2185da"
+    },
+    "clippy": {
+      "command": "cargo clippy --workspace --all-targets -j1 -- -D warnings",
+      "exit_code": 0,
+      "log_sha256": "aa158f513e39e243c7d958cd45570fa08bbe3ecd26b652a25b724015e44f245f"
+    },
+    "fmt": {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "npm": {
+      "command": "node --test npm/test/*.test.js",
+      "exit_code": 0,
+      "log_sha256": "5e4a5d93ef9e8ad2d7aafa52b329ec91dd9bb82c1a7c1967e76fbd6f16662cc7"
+    },
+    "validation-scorer": {
+      "command": "python3 tools/typescript_structural_validation_scorer.py --binary <local binary> --output structural-validation-scoring.json",
+      "exit_code": 0,
+      "log_sha256": "0dec062860f821bd87946bfacc66ebf5679261197748f07395f07fd86bd19c85"
+    },
+    "dispatch-scorer": {
+      "command": "python3 tools/dispatch_corpus_scorer.py --bitcode <local binary> --output dispatch-corpus-scoring.json --json",
+      "exit_code": 0,
+      "log_sha256": "176f22366117499313b0b2f7a693a97b7a8ed2dfbd862d499daaba9961cfd59f"
+    }
+  },
+  "cargo_test": {
+    "suites": 26,
+    "passed": 769,
+    "failed": 0,
+    "ignored": 2
+  },
+  "npm_test": {
+    "passed": 29,
+    "failed": 0,
+    "skipped": 2
+  }
+}

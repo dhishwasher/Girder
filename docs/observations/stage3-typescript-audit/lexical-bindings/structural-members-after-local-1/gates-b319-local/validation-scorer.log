@@ -1,0 +1,1 @@
+{"cases": 17, "resolution_passed": 17, "failed_cases": [], "input_errors": [], "cells": {"exact": 1, "conservative": 20, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0}, "unsound_cells": 0, "passed": true}
