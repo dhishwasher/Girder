@@ -1,9 +1,10 @@
 # TypeScript relative ESM named-import proof policy v1
 
-**Status: preimplementation draft for review, with corrections 1 and 2 applied**
-(see [Correction history](#correction-history)). It is not frozen. First draft
-`79b7e70`; correction base `dee89a5`. This is policy and fixtures only: no resolver or product code, no
-Girder run, no Cargo job, and no new measurement. Every frozen input is
+**Status: FROZEN for implementation after corrections 1 and 2 and independent
+soundness review (2026-10-03).** See [Correction history](#correction-history).
+First draft `79b7e70`; correction base `dee89a5`. At freeze, this is policy and
+fixtures only: no resolver or product code, no Girder run, no Cargo job, and no
+new measurement. Every frozen input is
 unchanged: the [49-case corpus](../../../dispatch-corpus.json) (SHA-256
 `9e3208a8f3fdc8faaee55cece63c1b5e25526322ebebbba915652f4f526ccd0a`), its labels,
 the 100-call audit and its baselines, and the structural member policy. The
@@ -373,7 +374,7 @@ v22.22.0 only:
 
 ## Acceptance (after implementation, not now)
 
-1. The contract has exact answers on all 64 cases: each Must names exactly the
+1. The contract has exact answers on all 73 cases: each Must names exactly the
    pinned target, and each Unknown has no target and no missing evidence. That
    includes the cycle gate (`import-cycle`), all mock gates (MOCK-1..3), the
    mixed-language collision, and both symlink cases.
@@ -434,11 +435,10 @@ SHA-256 `0ceb261e…`; tc39.es itself is blocked in this session):
 Node type stripping (https://nodejs.org/api/typescript.html) was used only for
 runtime checks.
 
-## Unresolved decisions for review
+## Accepted v1 limits and future decisions
 
-Correction 2 closes the review's four points by refusing, conservatively, and
-by stating conditional assumptions. These remain open; any of them may still
-block a freeze:
+The final soundness review accepted these conservative limits for v1. Widening
+any proof condition requires a separately frozen policy and validation fixtures:
 
 1. **Specifier scope (R-RES-1, E3-X1).** Only explicit `.ts`/`.mts` with an
    ASCII allow-list is accepted, so the real audit is likely to stay unchanged.

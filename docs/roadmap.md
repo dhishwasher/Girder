@@ -554,7 +554,21 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
-### 2026-10-03 — ESM named-import proof policy correction 2 (policy, fixtures, and harness only; not frozen)
+### 2026-10-03 — ESM named-import proof policy v1 frozen (policy and fixtures only)
+
+The [bounded policy](observations/stage3-typescript-audit/esm-import-proof/policy.md)
+is frozen after independent soundness review and correction of the acceptance
+count to all 73 manifest cases. The manifest hash is
+`daa7310248f8e2adc3bdbbae340a3301dcca6b18983ca29ef3c6738bb97b94cd`.
+Local preimplementation checks passed: 67 runnable cases, 6 explicit skips,
+and 19 incremental runtime steps. Its Must claims are conditional on the
+recorded ESM execution and no-unmodeled-hook assumptions. No product code or
+new Girder measurement exists yet. **Next:** implement the exact frozen rule,
+validate its full proof contract including cold/incremental equality, then
+rerun the unchanged dispatch corpus, 100-call audit, and four common gates.
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-03 — ESM named-import proof policy correction 2 (historical)
 
 The second high review returned NO-GO on `7fdfdd2`. Correction 2 makes these
 changes in the
