@@ -215,3 +215,98 @@ fn esm_watch_replays_frozen_19_steps_and_serves_mcp() {
         }
     }
 }
+
+#[test]
+fn esm_watch_subdirectory_target_deletion_and_recreate_match_cold() {
+    let root = esm_fixture();
+    let write_target = |root: &std::path::Path| {
+        std::fs::create_dir_all(root.join("lib")).unwrap();
+        std::fs::write(
+            root.join("lib/util.ts"),
+            "export function target() { return 1; }",
+        )
+        .unwrap();
+    };
+    write_target(&root.0);
+    std::fs::write(
+        root.0.join("app.test.ts"),
+        "import { target } from './lib/util.ts'; export function run() { return /* claim */ target(); }",
+    )
+    .unwrap();
+    let server = Server::start(&root.0).unwrap();
+    assert_eq!(
+        marked(&equals_cold(&server).graph, &root.0, "app.test.ts").class,
+        CallClass::Must
+    );
+    std::fs::remove_dir_all(root.0.join("lib")).unwrap();
+    assert_eq!(
+        marked(&equals_cold(&server).graph, &root.0, "app.test.ts").class,
+        CallClass::Unknown
+    );
+    write_target(&root.0);
+    assert_eq!(
+        marked(&equals_cold(&server).graph, &root.0, "app.test.ts").class,
+        CallClass::Must
+    );
+}
+
+#[test]
+#[cfg(unix)]
+fn esm_watch_symlinked_target_file_stays_unknown() {
+    let root = esm_fixture();
+    std::fs::create_dir_all(root.0.join("real")).unwrap();
+    std::fs::write(
+        root.0.join("real/app.ts"),
+        "export function target() { return 1; }",
+    )
+    .unwrap();
+    std::fs::write(
+        root.0.join("app.test.ts"),
+        "import { target } from './app.ts'; export function run() { return /* claim */ target(); }",
+    )
+    .unwrap();
+    std::os::unix::fs::symlink("real/app.ts", root.0.join("app.ts")).unwrap();
+    let server = Server::start(&root.0).unwrap();
+    assert_eq!(
+        marked(&equals_cold(&server).graph, &root.0, "app.test.ts").class,
+        CallClass::Unknown
+    );
+}
+
+#[test]
+fn esm_watch_follow_symlinks_keeps_plain_target_unknown() {
+    let root = esm_fixture();
+    write_esm(&root.0);
+    std::fs::write(
+        root.0.join("girder.toml"),
+        "[source]\nroots = [\".\"]\nfollow_symlinks = true\n",
+    )
+    .unwrap();
+    let server = Server::start(&root.0).unwrap();
+    assert_eq!(
+        marked(&equals_cold(&server).graph, &root.0, "app.test.ts").class,
+        CallClass::Unknown
+    );
+}
+
+#[test]
+fn esm_stale_environment_candidate_is_not_publishable() {
+    let root = esm_fixture();
+    write_esm(&root.0);
+    let project = CachedProject::open_with_exclusions(&root.0, &exclusions()).unwrap();
+    let used = project.builder.typescript_environment().unwrap().clone();
+    std::fs::write(root.0.join("package.json"), "{}").unwrap();
+    let snapshot = Snapshot::capture(&root.0, &project.config).unwrap();
+    assert_ne!(used, snapshot.environment);
+    for path in project.builder.source_files() {
+        assert!(
+            snapshot.matches_bytes(&path, project.builder.source_of(&path).map(str::as_bytes)),
+            "{path}"
+        );
+    }
+    for (path, bytes) in project.configuration_inputs() {
+        assert!(snapshot.matches_bytes(path, bytes.as_deref()), "{path}");
+    }
+    assert_eq!(snapshot.graph, project.persisted_bytes);
+    assert!(!snapshot.matches_candidate(&project));
+}
