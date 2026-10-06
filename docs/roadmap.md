@@ -554,6 +554,44 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-06 (application tests) — ESM ingestion-route tests added; projection NOT covered
+
+Candidate `ec2b73a` adds four application tests in `watch/tests/esm.rs` (drafted
+by the worker agent, reviewed and applied by the lead):
+- `esm_watch_subdirectory_target_deletion_and_recreate_match_cold`: baseline
+  Must; deleting the whole target directory gives Unknown with watched == cold;
+  recreating it restores Must. Not mutation-checked.
+- `esm_watch_symlinked_target_file_stays_unknown`: passes because the source
+  walk never ingests a symlinked file, so the import has no indexed target. It
+  does **not** exercise the resolver's own symlink-component refusal. Not
+  mutation-checked.
+- `esm_watch_follow_symlinks_keeps_plain_target_unknown`: **mutation-proven**
+  (forcing `set_source_root` despite `follow_symlinks = true` flips the claim
+  to Must and fails the test: `left: Must, right: Unknown`).
+- `esm_stale_environment_candidate_is_not_publishable`: **mutation-proven**
+  (disabling the environment comparison in `Snapshot::matches_candidate`
+  fails the test at its final assertion).
+
+**Not covered, disclosed gaps.** (1) In-memory projections that differ from
+disk: no application route both attests a source root and accepts bytes other
+than a disk read, so no application-level test is reachable; the builder
+contract is pinned by `source_only_and_modified_projection_loads_have_no_import_certificate`
+in `crates/aether-builder/tests/typescript_esm.rs`. (2) A symlinked directory
+component in an import path. Ingestion-route validation is therefore **not**
+complete. A live watch thread also cannot be driven deterministically onto the
+discard path for a stale candidate; the test pins the publication predicate
+instead.
+
+Pre-push local gates on the final tree (not Stage 3 gate evidence): fmt clean;
+clippy exit 0; workspace tests 27 suites, 782 passed, 0 failed, 2 ignored; npm
+29 passed, 0 failed, 2 skipped. Official gate logs must be rerun on the
+committed candidate and saved under `docs/observations/` before any DONE claim.
+
+Next: fresh CLI build and identity, then the unchanged 73-case contract, 49-case
+corpus (watch `typescript-direct-cross-file`) and 100-call audit under a new
+observation name; confirm the pinned TypeScript archives are present first.
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
 ### 2026-10-06 (resolved) — Watch-test failures root-caused to a harness defect; WIP committed
 
 Candidate `b4a59ea`. CI had been red since the tests-only commit `c06201e`
