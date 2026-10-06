@@ -47,6 +47,12 @@ class ScoringTests(unittest.TestCase):
     def test_missing_assumption_refused(self):
         self.assertFalse(self.evaluate(self.document(assumptions=['indexed-source-snapshot'])))
 
+    def test_project_relative_inspect_paths(self):
+        doc = self.document()
+        for node in doc['nodes']:
+            node['file'] = Path(node['file']).relative_to(self.root).as_posix()
+        self.assertTrue(self.evaluate(doc))
+
     def test_wrong_or_duplicate_target_refused(self):
         for targets in ('(3)', '(1),(1)', ''):
             self.assertFalse(self.evaluate(self.document(targets=targets)))

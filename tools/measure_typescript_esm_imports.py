@@ -43,6 +43,10 @@ def pins(root: Path) -> dict:
 
 
 def score(case: dict, manifest: dict, root: Path, inspect: Path) -> dict:
+    def file_identity(file: str) -> Path:
+        path = Path(file)
+        return path if path.is_absolute() else root / path
+
     source = (root / case['importer']).read_bytes()
     marker = manifest['marker'].encode()
     if source.count(marker) != 1:
@@ -50,7 +54,7 @@ def score(case: dict, manifest: dict, root: Path, inspect: Path) -> dict:
     tail = source.split(marker, 1)[1]
     offset = len(source) - len(tail.lstrip())
     claims = [c for c in extract_call_claims(inspect)
-              if Path(c['file']).resolve() == (root / case['importer']).resolve()
+              if file_identity(c['file']) == root / case['importer']
               and c['start_byte'] == offset]
     doc = json.loads(inspect.read_text())
     result = {'marked_claims': claims, 'exact_contract': False}
@@ -71,7 +75,7 @@ def score(case: dict, manifest: dict, root: Path, inspect: Path) -> dict:
     function_start = start + target_marker.index(b'function')
     nodes = [n for n in doc['nodes'] if n['kind'] == 'Function'
              and n['path'] == expected['predicted_path']
-             and n.get('file') and Path(n['file']).resolve() == (root / expected['file']).resolve()
+             and n.get('file') and file_identity(n['file']) == root / expected['file']
              and start <= n['span']['start_byte'] <= function_start < n['span']['end_byte']]
     owners = [n for n in doc['nodes'] if n['path'] == claim['caller']
               and n.get('file') == claim['file']]
