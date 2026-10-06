@@ -1,6 +1,6 @@
 # Go direct-call proof policy v1 (frozen before implementation)
 
-Status: **drafted for review; becomes frozen only in the commit that marks it so.**
+Status: **FROZEN** (the commit that sets this line is the freeze; nothing below changes after it except by a new, separately named version).
 Scope: the first Stage 3 Go resolver step. No product code has changed and no
 Girder measurement of the Go audit or of these fixtures exists. Classification
 vocabulary comes from [call-classification-policy.md](../../call-classification-policy.md).

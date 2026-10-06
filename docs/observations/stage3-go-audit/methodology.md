@@ -1,6 +1,6 @@
 # Go real-source audit methodology (frozen before any site is labeled)
 
-Status: **drafted for review; becomes frozen only in the commit that marks it so.**
+Status: **FROZEN** (the commit that sets this line is the freeze; nothing below changes after it except by a new, separately named version).
 Applies the roadmap's Stage 3 audit contract to Go: at least 100 independently
 audited real call sites, precommitted before any resolver change, covering direct
 calls, alternate dispatch, and unknown boundaries. The dispatch rule under test
@@ -49,6 +49,14 @@ extracted tree with regular expressions only.
   other dotted chain). `bare_cross_file` and the builtin split are
   preregistered here because they are decidable without Girder and target the
   rule under test; they are not tuning.
+- **Selection is mechanical** (see `quotas.json` and `sites-selection.json`): the
+  first `quota[k]` candidates of each stratum in `--emit --seed 20261006` order
+  for the initial draw; fixed continuation rounds of 40
+  (11/7/8/6/2/1/1/4 across `bare_cross_file`, `bare_other`, `selector`,
+  `pkg_qualified`, `go_defer`, `iife`, `generic`, `builtin`); a stratum that runs
+  out sends its shortfall to `bare_cross_file`, then `bare_other`, then
+  `selector`. The selected site list is generated and its hash committed before
+  any labeling.
 - **Quotas are set from population counts, in a separate precommit.**
   `tools/go_audit_sites.py --counts` is run first, before any labeling, and
   reports only per-stratum and per-package population counts (no labels, no
@@ -97,8 +105,35 @@ truth), and is scored for soundness only.
 4. Labels, evidence, disagreement log, and raw drafts are committed and their
    hashes pinned before the first Girder run on the tree.
 
+**Fallback if the second agent fails.** Each batch gets at most two attempts. After
+that, the lead drafts the batch. Those sites are flagged `single_agent` in the
+provenance and audited at 100%, and every observation that uses the labels
+reports how many sites took this path. This is fixed now so the method does not
+change after the freeze.
+
+**Bodyless functions.** `sync`, `bytes`, and `strings` contain assembly-backed and
+`//go:linkname` declarations without bodies. A call to one has language truth
+`must` (one static binding); label it `target_in_snapshot: false` when the body
+lives outside the snapshot. G1-b requires a body, so a Girder Unknown there is a
+conservative miss, not an error.
+
 The label set is therefore drafted by one agent and audited by another; this is
 disclosed in every observation that uses it.
+
+## Matching sites to Girder claims
+
+Girder records each call claim's site as the whole `call_expression` node span
+(`span_of` on the call node in `mapper/claims.rs`), which starts at the leftmost
+operand for chained calls such as `f(x).g(y)`, `d.data[i].M()`, or `v.(T).M()`.
+The enumerator therefore emits `paren_byte` and `call_end_byte` for every site,
+and **a site matches a claim when `claim.site.end_byte == call_end_byte`**: each
+call node ends at its own closing parenthesis, so the end byte identifies exactly
+one call. The Go scorer extends `tools/dispatch_audit_scorer.py` with this exact
+end-byte match; its containment rule (offset within `[start_byte, end_byte)`) is
+not used because nested calls such as `f(g(x))` satisfy it for more than one
+claim. A site with no matching claim is reported as unmatched and scored as
+`unsafe_exclusion` (a reachable call outside any classified surface), as in the
+frozen Rust and Python audits.
 
 ## Scoring
 
@@ -117,8 +152,9 @@ sites are reported, never dropped.
 
 1. Snapshot pin and inventory tool: done (`a950897`).
 2. This methodology, the [policy](policy.md), its fixtures and runtime
-   validation, frozen together after advisor review.
-3. Enumerator and context tools, then the enumerated site list.
+   validation, quotas, and the selected initial site list, frozen together after
+   advisor review.
+3. The context tool and the labeling batches.
 4. Drafted labels, audit log, frozen labels.
 5. Baseline observation: the fixture contract, the unchanged 49-case corpus,
    and the audit on the current binary. Failures published as-is.

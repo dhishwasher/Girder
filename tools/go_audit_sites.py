@@ -115,11 +115,15 @@ def scan_sources(files: dict[str, bytes]):
                     enc = name
             return ln + 1, off - line_starts[ln] + 1, enc
 
-        def add(off, text, stratum):
+        def add(off, text, stratum, paren):
+            end = match_close(t, paren, "(", ")")
+            if end < 0:
+                excluded["unbalanced_call"] += 1
+                return
             line, col, enc = locate(off)
             cands.append(dict(file=f, byte_offset=off, line=line, col=col,
                               callee_text=re.sub(r"\s+", "", text), stratum=stratum,
-                              enclosing_func=enc))
+                              enclosing_func=enc, paren_byte=paren, call_end_byte=end + 1))
 
         for m in CAND.finditer(t):
             chain, inst, off = m.group(1), m.group(2), m.start(1)
@@ -134,7 +138,7 @@ def scan_sources(files: dict[str, bytes]):
                 if brace > 0 and (nl < 0 or brace < nl or t[end + 1:brace].strip() != ""):
                     close = match_close(t, brace, "{", "}")
                     if close > 0 and t[close + 1:].lstrip().startswith("("):
-                        add(off, "func", "iife")
+                        add(off, "func", "iife", t.index("(", close + 1))
                         continue
                 excluded["func_literal_or_type_or_receiver"] += 1
                 continue
@@ -172,10 +176,10 @@ def scan_sources(files: dict[str, bytes]):
                 stratum = "pkg_qualified"
             else:
                 stratum = "selector"
-            add(off, chain + (inst or ""), stratum)
+            add(off, chain + (inst or ""), stratum, m.end() - 1)
         for m in AFTER_CALL.finditer(t):
             if not any(a <= m.start(1) < b for a, b in iface):
-                add(m.start(1), "." + m.group(1), "selector")
+                add(m.start(1), "." + m.group(1), "selector", m.end() - 1)
     cands.sort(key=lambda c: (c["file"], c["byte_offset"]))
     return cands, dict(excluded)
 
@@ -210,6 +214,39 @@ def emit(root: Path, seed: int) -> list:
     return out
 
 
+def select(root: Path, quotas_path: Path, round_no: int) -> list:
+    """Mechanical selection. Round 0 takes the first quota[k] candidates of each
+    stratum in `--emit` order; round r>=1 takes the next continuation[k] after all
+    earlier rounds. A stratum that runs out sends its shortfall to bare_cross_file,
+    then bare_other, then selector (in that order, while they have candidates)."""
+    cfg = json.loads(quotas_path.read_text())
+    order = emit(root, cfg["seed"])
+    by = collections.defaultdict(list)
+    for c in order:
+        by[c["stratum"]].append(c)
+    plan = [cfg["initial_quotas_of_140"]] + [cfg["continuation_rounds_of_40"]] * round_no
+    taken = collections.Counter()
+    chosen = []
+    for r, quota in enumerate(plan):
+        want = dict(quota)
+        for k in sorted(want):
+            avail = len(by[k]) - taken[k]
+            give = min(want[k], max(avail, 0))
+            chosen += [dict(c, round=r) for c in by[k][taken[k]:taken[k] + give]]
+            taken[k] += give
+            shortfall = want[k] - give
+            for fallback in ("bare_cross_file", "bare_other", "selector"):
+                if shortfall <= 0:
+                    break
+                if fallback == k:
+                    continue
+                more = min(shortfall, len(by[fallback]) - taken[fallback])
+                chosen += [dict(c, round=r) for c in by[fallback][taken[fallback]:taken[fallback] + more]]
+                taken[fallback] += more
+                shortfall -= more
+    return [c for c in chosen if c["round"] == round_no] if round_no else chosen
+
+
 def self_test() -> int:
     def strata(src, name="p/a.go", extra=None):
         files = {name: src.encode()}
@@ -234,6 +271,13 @@ def self_test() -> int:
         if got != want or (excl and excl not in ex):
             print("FAIL", name, got, ex)
             bad += 1
+    chain, _ = scan_sources({"p/c.go": b"package p\nfunc F() { f(x).g(y); a[i].M() }\n"})
+    got = sorted((c["callee_text"], c["call_end_byte"]) for c in chain)
+    src = "package p\nfunc F() { f(x).g(y); a[i].M() }\n"
+    want = sorted([("f", src.index("f(x)") + 4), (".g", src.index("g(y)") + 4), (".M", src.index("M()") + 3)])
+    if got != want:
+        print("FAIL chained-call end bytes", got, want)
+        bad += 1
     cross, _ = strata('package p\nfunc F() { H() }\n', extra={"p/b.go": "package p\nfunc H() {}\n"})
     if cross != [("H", "bare_cross_file")]:
         print("FAIL cross-file", cross)
@@ -252,13 +296,21 @@ def main() -> int:
     ap.add_argument("--counts", action="store_true")
     ap.add_argument("--emit", action="store_true")
     ap.add_argument("--seed", type=int, default=20261006)
+    ap.add_argument("--select", metavar="QUOTAS_JSON")
+    ap.add_argument("--round", type=int, default=0)
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
     if a.self_test:
         return self_test()
-    if not a.root or not (a.counts or a.emit):
-        ap.error("--root and one of --counts/--emit are required")
-    json.dump(counts(Path(a.root)) if a.counts else emit(Path(a.root), a.seed), sys.stdout, indent=2)
+    if not a.root or not (a.counts or a.emit or a.select):
+        ap.error("--root and one of --counts/--emit/--select are required")
+    if a.select:
+        result = select(Path(a.root), Path(a.select), a.round)
+    elif a.counts:
+        result = counts(Path(a.root))
+    else:
+        result = emit(Path(a.root), a.seed)
+    json.dump(result, sys.stdout, indent=2)
     print()
     return 0
 
