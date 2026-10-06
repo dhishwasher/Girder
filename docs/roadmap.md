@@ -264,7 +264,9 @@ at `a97b2ea`. Their original 52/85-site audits did not satisfy the sample-size
 requirement; those historical observations and the failed first Rust extension
 remain published. Each corrected audit emitted only one Must claim (1/1) and
 99 Unknown claims; this is limited evidence, not general dispatch completeness.
-TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+**TypeScript is DONE** on its frozen criterion (see the 2026-10-06 checkpoint and
+[after-observation](observations/stage3-typescript-audit/esm-import-proof/after-observation.md));
+Go remains NOT STARTED and is the next language.
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
@@ -273,7 +275,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | --- | --- | --- | --- |
 | Rust | **DONE — corrected 100-site checkpoint** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) and [retained failed extension](observations/stage3-audit-reconciliation/observation/summary.md) | Stage 2 |
 | Python | **DONE — corrected 100-site checkpoint** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) | Rust trustworthy on a real repository |
-| TypeScript | IN PROGRESS (local 100-site audit: 0 unsound, 3/3 correct Must, 97 Unknown; common gates passed; dispatch improvement pending) | [100-site baseline](observations/stage3-typescript-audit/extension/before/observation.md) / [structural-identity after-audit](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/observation.md) + [retained false-Must baseline](observations/stage3-typescript-audit/lexical-bindings/before-observation.md) + [unchanged dispatch results](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/dispatch-corpus-scoring.json) | Python trustworthy on a real repository |
+| TypeScript | **DONE — frozen criterion met; CI green at `c78f6c9`** (73/73 ESM contract; corpus 22→23 exact, Must 6/6, 0 unsound; audit 56/44, 0 unsound, Must 3/3; gates on `cb2aa11` and `b0c09b6`) | [100-site baseline](observations/stage3-typescript-audit/extension/before/observation.md) / [structural-identity after-audit](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/observation.md) + [retained false-Must baseline](observations/stage3-typescript-audit/lexical-bindings/before-observation.md) + [unchanged dispatch results](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/dispatch-corpus-scoring.json) + [ESM after-observation](observations/stage3-typescript-audit/esm-import-proof/after-observation.md) | Python trustworthy on a real repository |
 | Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
 
 Use existing pinned Rust repositories and Click first; pin TypeScript compiler
@@ -442,17 +444,19 @@ common gates. **Observation:**
 (historical after-result, not current stage-completion proof).
 **Current completion evidence:** [corrected Rust/Python audits](observations/stage3-audit-reconciliation/after-observation.md)
 include their checkpoint-candidate corpus results and all four passing gates.
-**Blockers for the next language:** TypeScript's current 100-site audit has
-three correct Must targets and 97 Unknown answers, with zero scored unsound
-answers. Its unchanged dispatch corpus has not improved and retains one failed
-structural-object-literal case, now attributed to an ambiguous `alice`/`bob`
-origin. The registration identity loss and four runtime-demonstrated
-lexical-binding false Must claims have been repaired and measured; the failed
-baselines remain public.
-**Next:** precommit a narrow cross-file dispatch proof policy and adversarial
-fixtures. Preserve the ambiguous-origin failure rather than choosing a
-same-spelled target to make it pass. Re-measure after the next implementation
-and run the common gates before claiming language completion.
+**Blockers for the next language:** none remain for starting Go. TypeScript's
+frozen criterion is met. Carried-forward holes (all disclosed in the
+[after-observation](observations/stage3-typescript-audit/esm-import-proof/after-observation.md)):
+Must claims are conditional on the ESM policy's execution assumptions; plan
+projections and workspace buffers have no application-level C-3 test; three of
+the new application tests are not mutation-checked; the retained
+`typescript-structural-object-literal` failure; and the Stage 2 obligation to
+append a harder successor to the newly passing `typescript-direct-cross-file`
+case as a new versioned corpus file remains outstanding.
+**Next:** Go. Pin the Go standard-library snapshot, then freeze the audit
+methodology (at least 100 independently labeled sites) and the Go dispatch
+policy with adversarial fixtures before any resolver change. Record the
+baseline, implement, record the after-observation, then run the common gates.
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 
@@ -553,6 +557,19 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-06 (TypeScript DONE) — CI green on the published evidence
+
+CI run 37538734394 passed both jobs (`fmt · clippy · test` and `windows
+compiles`) on `c78f6c9`, the head that contains the committed ESM
+after-observation and both gate-log directories. The frozen TypeScript
+criterion (measured corpus improvement, nonempty Must precision 1.000, zero
+unsound audit cells) is met on that committed evidence, so **TypeScript is
+DONE**; the disclosed holes in the entry below and the after-observation carry
+forward. Go is NOT STARTED and is the next language. Housekeeping before Go
+work: no `girder` binary is installed on PATH (only the debug build under the
+MOVESPEED target dir); rerun the release `cargo install` with an explicit
+`--target-dir` while nothing else is building.
 
 ### 2026-10-06 (TypeScript measured) — ESM after-observation published; criterion met, DONE pending CI
 
