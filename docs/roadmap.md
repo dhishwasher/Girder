@@ -554,6 +554,35 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-06 (TypeScript measured) — ESM after-observation published; criterion met, DONE pending CI
+
+Binary `cbc20b34…` built at `cb2aa11`; final candidate `b0c09b6` (test-only
+commit after it). Full detail, hashes, and commands in
+[after-observation.md](observations/stage3-typescript-audit/esm-import-proof/after-observation.md).
+- 73-case ESM contract: **73/73 exact, 0 errors** (was 66/73).
+- 49-case corpus (unchanged, pins verified): **23 exact / 33 conservative /
+  0 unsound / 1 failed** (was 22/34/0/1); Must precision **6/6**;
+  `typescript-direct-cross-file` conservative to **exact**. The failed
+  `typescript-structural-object-literal` is retained.
+- 100-call real audit: **56 exact / 44 conservative / 0 unsound, Must 3/3**.
+  Checked site by site: identical to the immediate predecessor (0 differences
+  over 110 rows); against the frozen baseline `extension/before` it is 53/47 to
+  56/44 with three `unknown` to `must` changes (indices 32, 37, 91), all correct.
+- All four common gates passed on both `cb2aa11` and `b0c09b6` (783 tests passed,
+  0 failed, 2 ignored; clippy and fmt clean; npm 29 passed, 2 skipped); logs in
+  `gates-cb2aa11/` and `gates-b0c09b6/`.
+
+The frozen per-language criterion (corpus improvement, nonempty Must precision
+1.000, zero unsound audit cells) is met on committed evidence. **TypeScript is
+marked DONE only after CI is green on the pushed head** (recorded next).
+**Disclosed holes carried forward:** Must claims are conditional on the policy's
+ESM execution assumptions; plan projections and workspace buffers have no
+application-level C-3 test (no route attests a root and accepts non-disk bytes);
+the subdirectory-deletion, symlinked-file, and symlinked-directory tests are not
+mutation-checked; the Stage 2 obligation to append a harder successor to the
+newly passing corpus case (as a new versioned corpus file, never an edit of the
+frozen one) is **outstanding**.
+
 ### 2026-10-06 (application tests) — ESM ingestion-route tests added; projection NOT covered
 
 Candidate `ec2b73a` adds four application tests in `watch/tests/esm.rs` (drafted
