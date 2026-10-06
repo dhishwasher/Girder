@@ -1,0 +1,20 @@
+
+running 3 tests
+.. 2/3
+frozen_73_cold_contracts --- FAILED
+
+failures:
+
+---- frozen_73_cold_contracts stdout ----
+
+thread 'frozen_73_cold_contracts' (23622) panicked at crates/aether-builder/tests/typescript_esm.rs:171:5:
+mock-unindexed-file: expected (Unknown, []), observed (Must, ["app.ts:crate::app::target"])
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    frozen_73_cold_contracts
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.66s
+
+error: test failed, to rerun pass `-p aether-builder --test typescript_esm`
