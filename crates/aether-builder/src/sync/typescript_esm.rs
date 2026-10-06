@@ -534,6 +534,7 @@ pub(super) fn resolve(
     // routes that do not reconstruct every node before resolving.
     let previous: Vec<_> = graph
         .nodes()
+        .filter(|node| node.language == "typescript")
         .filter_map(|node| {
             graph
                 .call_evidence(node.id)
@@ -555,17 +556,22 @@ pub(super) fn resolve(
         }
     }
     let Some(root) = root else { return };
-    if !files.keys().any(|f| executable_file(f)) || !environment_clear(root) {
+    if !files.keys().any(|f| executable_file(f)) {
+        return;
+    }
+    let mut all_facts = HashMap::new();
+    for (file, state) in files {
+        let file_facts = facts(file, state);
+        if file_facts.blocked {
+            return;
+        }
+        all_facts.insert(file.clone(), file_facts);
+    }
+    let facts = all_facts;
+    if !facts.values().any(|f| f.eligible && !f.imports.is_empty()) || !environment_clear(root) {
         return;
     }
     let identity = Identities::new(root, files);
-    let facts: HashMap<_, _> = files
-        .iter()
-        .map(|(file, state)| (file.clone(), facts(file, state)))
-        .collect();
-    if facts.values().any(|f| f.blocked) {
-        return;
-    }
     let mut mocked = HashSet::new();
     for (file, f) in &facts {
         if !f.mocks.is_empty() && !identity.valid.contains(file) {
