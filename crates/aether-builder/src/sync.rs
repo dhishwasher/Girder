@@ -11,6 +11,7 @@ use std::collections::{HashMap, HashSet};
 
 mod python_rebinding;
 mod rust_methods;
+mod typescript_esm;
 mod update;
 pub use update::{normalize_source_path, FileChange, FullRebuildReason, UpdateError, UpdateReport};
 
@@ -692,6 +693,9 @@ fn resolve_factory_receiver<'a>(
 #[derive(Default, Clone)]
 pub struct GraphBuilder {
     files: HashMap<String, FileState>,
+    /// Filesystem identity is opt-in. Source-only library/projection loads
+    /// cannot certify a relative ESM import without an attested project root.
+    source_root: Option<std::path::PathBuf>,
     /// Cargo `[[bin]]` target overrides: normalized project-relative file
     /// path -> declared target name. Consulted before convention when
     /// resolving `CARGO_BIN_EXE_<target>` subprocess entrypoints, so a
@@ -714,6 +718,23 @@ pub struct GraphBuilder {
 impl GraphBuilder {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Bind future resolutions to a canonical filesystem snapshot. Every
+    /// relative ESM proof rechecks indexed bytes and rejects symlink components.
+    /// In-memory projections differing from disk remain Unknown.
+    pub fn set_source_root(&mut self, root: &std::path::Path) -> std::io::Result<()> {
+        let root = root.canonicalize()?;
+        if !root.is_dir() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "source root is not a directory",
+            ));
+        }
+        self.configuration_changed |=
+            !self.files.is_empty() && self.source_root.as_ref() != Some(&root);
+        self.source_root = Some(root);
+        Ok(())
     }
 
     /// Declare exact Cargo binary target locations from manifest metadata
@@ -1058,6 +1079,8 @@ impl GraphBuilder {
         // the target's own definition -- claims.rs's own per-file pass
         // cannot see this. See sync/python_rebinding.rs.
         python_rebinding::revert_string_rebound_python_claims(&self.files, graph);
+
+        typescript_esm::resolve(self.source_root.as_deref(), &self.files, graph);
 
         self.resolve_inherits(graph);
     }
