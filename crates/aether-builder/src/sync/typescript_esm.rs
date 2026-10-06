@@ -3,6 +3,9 @@
 //! Policy: docs/observations/stage3-typescript-audit/esm-import-proof/policy.md.
 //! Recompute from the indexed sources and filesystem on every resolution pass.
 
+mod environment;
+pub use environment::TypeScriptEsmEnvironment;
+
 use super::{FileState, IncrementalParser, Lang};
 use crate::mapper::module_path_for;
 use aether_graph::{CallClass, NodeId, NodeKind, SemanticGraph};
@@ -139,73 +142,6 @@ impl<'a> Identities<'a> {
         let target = relative_path(importer, specifier)?;
         (self.files.contains_key(&target) && self.valid.contains(&target)).then_some(target)
     }
-}
-
-/// MOCK-3 / HOOK-3. Inspect the root listing, including hidden files, without
-/// following links. Errors are uncertainty, not evidence of absence.
-fn environment_clear(root: &Path) -> bool {
-    let mut pending = vec![root.to_path_buf()];
-    while let Some(dir) = pending.pop() {
-        let Ok(entries) = std::fs::read_dir(dir) else {
-            return false;
-        };
-        for entry in entries {
-            let Ok(entry) = entry else { return false };
-            let name = entry.file_name();
-            let Some(name) = name.to_str() else {
-                return false;
-            };
-            if name == "__mocks__"
-                || name == ".npmrc"
-                || name == ".taprc"
-                || [
-                    "vitest.config.",
-                    "vite.config.",
-                    "vitest.workspace.",
-                    "jest.config.",
-                    ".mocharc.",
-                    ".c8rc",
-                ]
-                .iter()
-                .any(|prefix| name.starts_with(prefix))
-            {
-                return false;
-            }
-            let Ok(kind) = entry.file_type() else {
-                return false;
-            };
-            if name == "package.json" {
-                if !kind.is_file() {
-                    return false;
-                }
-                let Ok(contents) = std::fs::read_to_string(entry.path()) else {
-                    return false;
-                };
-                // Textual conservative check. Escaped JSON can hide a key or
-                // flag; refuse it rather than attempt a partial JSON decoder.
-                if contents.contains('\\')
-                    || contents.contains("\"jest\"")
-                    || [
-                        "--import",
-                        "--require",
-                        "-r ",
-                        "--loader",
-                        "--experimental-loader",
-                        "--experimental-test-module-mocks",
-                        "--experimental-default-type",
-                    ]
-                    .iter()
-                    .any(|flag| contents.contains(flag))
-                {
-                    return false;
-                }
-            }
-            if kind.is_dir() {
-                pending.push(entry.path());
-            }
-        }
-    }
-    true
 }
 
 #[derive(Default)]
@@ -529,7 +465,9 @@ pub(super) fn resolve(
     root: Option<&Path>,
     files: &HashMap<String, FileState>,
     graph: &mut SemanticGraph,
+    environment: &mut Option<TypeScriptEsmEnvironment>,
 ) {
+    *environment = None;
     // Revoke the previous generation first, including single-file load/delete
     // routes that do not reconstruct every node before resolving.
     let previous: Vec<_> = graph
@@ -568,7 +506,15 @@ pub(super) fn resolve(
         all_facts.insert(file.clone(), file_facts);
     }
     let facts = all_facts;
-    if !facts.values().any(|f| f.eligible && !f.imports.is_empty()) || !environment_clear(root) {
+    if !facts.values().any(|f| f.eligible && !f.imports.is_empty()) {
+        return;
+    }
+    let Ok(current_environment) = TypeScriptEsmEnvironment::capture(root) else {
+        return;
+    };
+    let clear = current_environment.is_clear();
+    *environment = Some(current_environment);
+    if !clear {
         return;
     }
     let identity = Identities::new(root, files);

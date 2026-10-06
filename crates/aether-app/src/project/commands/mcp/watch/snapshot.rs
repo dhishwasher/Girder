@@ -18,6 +18,7 @@ pub(super) struct Stamp {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct Snapshot {
     pub files: BTreeMap<String, Option<Stamp>>,
+    pub environment: aether_builder::TypeScriptEsmEnvironment,
     source_paths: std::collections::BTreeSet<String>,
     root_created: Option<SystemTime>,
     #[cfg(unix)]
@@ -50,12 +51,21 @@ impl Snapshot {
                 .ok_or_else(|| io::Error::other("unstable read: source disappeared"))?;
             files.insert(relative, Some(value));
         }
-        let source_paths = files.keys().cloned().collect();
+        let source_paths: std::collections::BTreeSet<String> = files.keys().cloned().collect();
+        let environment = if source_paths
+            .iter()
+            .any(|p| aether_builder::Lang::from_path(p).is_some_and(|lang| lang.is_typescript()))
+        {
+            aether_builder::TypeScriptEsmEnvironment::capture(root)?
+        } else {
+            aether_builder::TypeScriptEsmEnvironment::default()
+        };
         for name in ["girder.toml", "Cargo.toml", "go.mod"] {
             files.insert(name.to_string(), stamp(&root.join(name))?);
         }
         Ok(Self {
             files,
+            environment,
             source_paths,
             root_created: metadata.created().ok(),
             #[cfg(unix)]
@@ -68,22 +78,29 @@ impl Snapshot {
     }
 
     pub fn sources_equal(&self, other: &Self) -> bool {
-        self.files == other.files && self.root_created == other.root_created && {
-            #[cfg(unix)]
-            {
-                self.root_identity == other.root_identity
+        self.files == other.files
+            && self.environment == other.environment
+            && self.root_created == other.root_created
+            && {
+                #[cfg(unix)]
+                {
+                    self.root_identity == other.root_identity
+                }
+                #[cfg(not(unix))]
+                {
+                    true
+                }
             }
-            #[cfg(not(unix))]
-            {
-                true
-            }
-        }
     }
 
     pub fn matches_candidate(&self, project: &crate::project::source::CachedProject) -> bool {
         let paths: std::collections::BTreeSet<_> =
             project.builder.source_files().into_iter().collect();
         paths == self.source_paths
+            && project
+                .builder
+                .typescript_environment()
+                .is_none_or(|used| used == &self.environment)
             && paths.iter().all(|p| {
                 project
                     .builder
@@ -108,11 +125,16 @@ impl Snapshot {
     }
 
     pub fn dirty_since(&self, old: &Self) -> Vec<String> {
-        self.files
+        let file_changes = self
+            .files
             .keys()
             .chain(old.files.keys())
             .filter(|p| self.files.get(*p) != old.files.get(*p))
             .cloned()
+            .collect::<std::collections::BTreeSet<_>>();
+        file_changes
+            .into_iter()
+            .chain(self.environment.dirty_since(&old.environment))
             .collect::<std::collections::BTreeSet<_>>()
             .into_iter()
             .collect()

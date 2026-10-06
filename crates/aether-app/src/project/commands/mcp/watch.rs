@@ -133,7 +133,14 @@ impl Shared {
             {
                 continue;
             }
-            if ignored(&relative) {
+            let environment_input =
+                aether_builder::TypeScriptEsmEnvironment::is_input_path(&relative)
+                    || state.generation.as_ref().is_some_and(|g| {
+                        g.snapshot
+                            .environment
+                            .contains_path_or_descendant(&relative)
+                    });
+            if ignored(&relative) && !environment_input {
                 continue;
             }
             let graph_relative: PathBuf =
@@ -161,7 +168,12 @@ impl Shared {
                 .generation
                 .as_ref()
                 .is_some_and(|g| g.snapshot.files.contains_key(&relative));
-            if metadata || owned || directory_event || configured(&state.config, &relative) {
+            if metadata
+                || owned
+                || directory_event
+                || environment_input
+                || configured(&state.config, &relative)
+            {
                 relevant.push(relative);
             }
         }

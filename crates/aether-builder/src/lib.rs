@@ -13,7 +13,10 @@ pub mod sync;
 pub use highlight::{spans, HlKind, HlSpan};
 pub use mapper::{extract, module_path_for, BuildOutput};
 pub use parser::{IncrementalParser, Lang};
-pub use sync::{FileChange, FullRebuildReason, GraphBuilder, UpdateError, UpdateReport};
+pub use sync::{
+    FileChange, FullRebuildReason, GraphBuilder, TypeScriptEsmEnvironment, UpdateError,
+    UpdateReport,
+};
 
 /// Byte spans of syntax identifiers equal to `name`, excluding comments and
 /// strings because tree-sitter does not classify their contents as identifiers.

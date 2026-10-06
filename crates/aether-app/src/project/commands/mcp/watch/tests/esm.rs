@@ -2,6 +2,17 @@
 use super::*;
 use aether_graph::{CallClass, NodeKind};
 
+/// ESM fixtures must not inherit the shared Rust seed files: `app.rs` and
+/// `app.ts` share module path `app`, which policy R-GRAPH-2 refuses
+/// (`mixed-language-module-collision`).
+fn esm_fixture() -> Fixture {
+    let fixture = Fixture::new();
+    for name in ["lib.rs", "math.rs", "app.rs"] {
+        std::fs::remove_file(fixture.0.join(name)).unwrap();
+    }
+    fixture
+}
+
 fn write_esm(root: &Path) {
     std::fs::write(
         root.join("app.ts"),
@@ -56,7 +67,7 @@ fn esm_snapshot_tracks_non_source_proof_inputs() {
         "nested/jest.config.json",
         "__mocks__",
     ] {
-        let root = Fixture::new();
+        let root = esm_fixture();
         write_esm(&root.0);
         let config = ProjectConfig::default();
         let before = Snapshot::capture(&root.0, &config).unwrap();
@@ -78,7 +89,7 @@ fn esm_snapshot_tracks_non_source_proof_inputs() {
 
 #[test]
 fn esm_watch_non_source_creation_edit_and_removal_match_cold() {
-    let root = Fixture::new();
+    let root = esm_fixture();
     write_esm(&root.0);
     let server = Server::start(&root.0).unwrap();
     assert_eq!(
@@ -143,7 +154,7 @@ fn esm_watch_replays_frozen_19_steps_and_serves_mcp() {
     )
     .unwrap();
     for sequence in manifest["incremental_sequences"].as_array().unwrap() {
-        let root = Fixture::new();
+        let root = esm_fixture();
         let base = repo.join(sequence["base_dir"].as_str().unwrap());
         copy(&base, &root.0);
         let importer = sequence["importer"].as_str().unwrap();
