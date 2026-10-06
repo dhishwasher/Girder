@@ -1,0 +1,722 @@
+{
+ "schema_version": 1,
+ "audited_labels": 140,
+ "share_audited": 1.0,
+ "disagreements": 2,
+ "disagreement_rate": 0.0143,
+ "method": [
+  "All 140 labels reviewed against the precomputed evidence and the drafter's stated reason.",
+  "Mechanical source check of every in-snapshot must target: 78/78 declarations exist in the named file with the named receiver type, unique per name and type except 4 expected jsonv2 build-constraint pairs (ids 13, 15, 32, 36).",
+  "Direct source reads for risky labels: ids 10 (local variable shadows package func indirect: unknown), 13/15 (caller and target share a build constraint), 110/121 (interface receivers: unknown), 129, 130, 133 (embedding and method depth), 112, 127, 134.",
+  "Builtin sites checked: no package-level function named like a builtin exists in the tree; conversions confirmed against predeclared types.",
+  "Single-agent fallback sites: 0 (all 7 batches completed by the second agent; batches 4, 5, 6 needed a second attempt)."
+ ],
+ "final_counts": {
+  "must": 114,
+  "unknown": 4,
+  "not_a_call_site": 22
+ },
+ "actual_calls": 118,
+ "per_site": [
+  {
+   "id": 0,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 1,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 2,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 3,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 4,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 5,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 6,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 7,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 8,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 9,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 10,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 11,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 12,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 13,
+   "decision": "confirmed",
+   "note": "confirmed; target is the definition under the same build constraint as the caller (jsonv2 pair)"
+  },
+  {
+   "id": 14,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 15,
+   "decision": "confirmed",
+   "note": "confirmed; target is the definition under the same build constraint as the caller (jsonv2 pair)"
+  },
+  {
+   "id": 16,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 17,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 18,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 19,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 20,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 21,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 22,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 23,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 24,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 25,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 26,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 27,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 28,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 29,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 30,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 31,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 32,
+   "decision": "confirmed",
+   "note": "confirmed; target is the definition under the same build constraint as the caller (jsonv2 pair)"
+  },
+  {
+   "id": 33,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 34,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 35,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 36,
+   "decision": "confirmed",
+   "note": "confirmed; target is the definition under the same build constraint as the caller (jsonv2 pair)"
+  },
+  {
+   "id": 37,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 38,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 39,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 40,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 41,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 42,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 43,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 44,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 45,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 46,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 47,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 48,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 49,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 50,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 51,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 52,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 53,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 54,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 55,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 56,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 57,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 58,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 59,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 60,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 61,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 62,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 63,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 64,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 65,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 66,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 67,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 68,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 69,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 70,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 71,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 72,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 73,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 74,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 75,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 76,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 77,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 78,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 79,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 80,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 81,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 82,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 83,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 84,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 85,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 86,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 87,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 88,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 89,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 90,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 91,
+   "decision": "relabeled",
+   "note": "RELABELED must -> not_a_call_site(builtin): unsafe.Sizeof is a built-in constant expression, so under the methodology's builtin rule it is not a call site."
+  },
+  {
+   "id": 92,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 93,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 94,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 95,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 96,
+   "decision": "relabeled",
+   "note": "RELABELED must -> not_a_call_site(builtin): unsafe.Sizeof is a built-in constant expression, so under the methodology's builtin rule it is not a call site."
+  },
+  {
+   "id": 97,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 98,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 99,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 100,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 101,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 102,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 103,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 104,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 105,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 106,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 107,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 108,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 109,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 110,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 111,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 112,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 113,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 114,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 115,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 116,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 117,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 118,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 119,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 120,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 121,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 122,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 123,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 124,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 125,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 126,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 127,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 128,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 129,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 130,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 131,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 132,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 133,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 134,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 135,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 136,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 137,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 138,
+   "decision": "confirmed",
+   "note": "confirmed"
+  },
+  {
+   "id": 139,
+   "decision": "confirmed",
+   "note": "confirmed"
+  }
+ ]
+}

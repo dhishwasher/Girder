@@ -1,0 +1,2 @@
+I'll label sites 100–119 from the snapshot and the Go sources, reading each call in place before assigning a class.The twenty sites are loaded. Next I’ll check each callee’s declaration and the receiver type in the audit tree.
+grok_exit=0

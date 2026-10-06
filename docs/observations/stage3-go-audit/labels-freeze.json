@@ -1,0 +1,34 @@
+{
+ "schema_version": 1,
+ "status": "LABELS FROZEN. Girder may be run on the audit tree only after the commit containing this file.",
+ "inputs": {
+  "sites_initial_140": "03bd65dee0590ce6a0ef69907e7e08b1572eb0305eb0298fa108f401df47b009",
+  "sites_context": "5d31e8a40e61a0903c280f49379951c44d2e594f3e0cb3a300680b508c438f9d",
+  "context_tool": "7a192b2e895b83032aef58acc137d5731eca6383b4f923e3a89f7da076d0aae8",
+  "quotas": "e144f27d544b7aa6facdca5b388156535b4701d1d614002d1dbb1bc88de1e286",
+  "policy": "801734473f0cf2c65b463e7ec1eb4563eb26dfa9ca48768a0d70b7f11e689393",
+  "methodology": "b60ce751cc9901efd1417a2e9d9dbfbee55602e7c11452cb80c5865cdb765d85"
+ },
+ "labels_drafted_sha256": "c295593680493c6d11292beeb1ef96aba6067386da3808c38cade8a6498f6322",
+ "labels_final_sha256": "1562c9700c01a4eb12a5e3dea9e67df1f7dbcf50a25a56a6548f604fe62619e9",
+ "audit_log_sha256": "f0bfdf017c75158248214d698a46a2aba661c4a63be94befe91a0380a52ff686",
+ "provenance_sha256": {
+  "batch-01-attempt-1-raw.txt": "31ed13e571875279d26735ee48e6a54250ae9ee757e97ba34f11adfe788453ec",
+  "batch-02-attempt-1-raw.txt": "79c23f79778ca59c92e8e23cb6ea4d21527c9f0a1639311aa81255364cbd1f33",
+  "batch-03-attempt-1-raw.txt": "33937e8792ecfd9e7233d398cd497b43804585a651299972dfcb36c4d523c1be",
+  "batch-04-attempt-1-raw.txt": "b55c11d787ecb85305a90164b8f139498116d98143d8e775d90399e016621dcf",
+  "batch-04-attempt-2-raw.txt": "57467038b6b6ffcfda93db643d4227241b130836cff1fa36e03bf007c2f69f3b",
+  "batch-05-attempt-1-raw.txt": "ec07da097bf61af1dee8aed6d7f0f10543a1196ec0abb3e2ea31a13a6d31cc8d",
+  "batch-05-attempt-2-raw.txt": "a3a96868ddc3fa342d930ccd4dd9e9cbd00b2be0252b407f6bd7094c3bbc8301",
+  "batch-06-attempt-1-raw.txt": "47fdba7d1607263eab08b9013a6a4c462ee4ed7b6ecbfb7c08ff6b3c02f38ac9",
+  "batch-06-attempt-2-raw.txt": "48a416db856137f828bd6bcd299a766c7ae0e4d3d12af862508484a7da6cd3d9",
+  "batch-07-attempt-1-raw.txt": "3d7b8f7378baaf7e98e810be4eb2b5d8d2b2fe0fb3da3bd20acd25e6f7e47033"
+ },
+ "final_counts": {
+  "must": 114,
+  "unknown": 4,
+  "not_a_call_site": 22
+ },
+ "actual_calls": 118,
+ "meets_100_actual_call_rule": true
+}
