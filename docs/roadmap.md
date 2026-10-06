@@ -554,6 +554,34 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-06 (resolved) — Watch-test failures root-caused to a harness defect; WIP committed
+
+Candidate `b4a59ea`. CI had been red since the tests-only commit `c06201e`
+(3 failing app tests). Root cause for two of them: the shared watch-test
+`Fixture::new()` seeds Rust files (`lib.rs`, `math.rs`, `app.rs`), and the ESM
+tests then add `app.ts`/`app.test.ts`. Both stems are module path `app`, which
+frozen policy rule R-GRAPH-2 refuses (`mixed-language-module-collision`, a case
+in the frozen manifest; the 19-step base dir
+`fixtures/typescript-esm-import-proof/v1-incremental/base` contains `app.ts`
+and `app.test.ts`). The product's `Unknown` was correct; the harness was wrong.
+The tests now use an ESM-only fixture (`esm_fixture()`); **every assertion,
+the manifest, and the policy are unchanged**. The third failure,
+`esm_snapshot_tracks_non_source_proof_inputs`, is fixed by the WIP's product
+change (environment capture and snapshot wiring), now committed together with
+the `typescript_esm/environment.rs` it depends on. rustfmt was applied to the
+WIP files (CI's fmt step would otherwise have failed).
+
+Pre-push local run on the final tree (not Stage 3 gate evidence): `cargo fmt
+--all --check` clean; `cargo clippy --workspace --all-targets -j1 -- -D
+warnings` exit 0; `cargo test --workspace -j1 --quiet` 27 suites, 778 passed,
+0 failed, 2 ignored; `node --test npm/test/*.test.js` 29 passed, 0 failed, 2
+skipped. CI's actual result on the pushed head is checked separately.
+
+Still open for Stage 3 TypeScript acceptance: ingestion-route coverage
+(directory deletion, projections, symlink following), a fresh CLI build, the
+after-contract/corpus/audit measurements, and the four common gates as
+committed observations. TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
 ### 2026-10-06 (latest) — Watch tests ran on the WIP: 12 passed, 2 FAILED
 
 With MOVESPEED remounted, `cargo test -p aether-app -j1 --quiet watch` ran on
