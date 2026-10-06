@@ -554,6 +554,24 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-06 (latest) — Watch tests ran on the WIP: 12 passed, 2 FAILED
+
+With MOVESPEED remounted, `cargo test -p aether-app -j1 --quiet watch` ran on
+the uncommitted ESM environment WIP: **12 passed, 2 failed, 1 ignored**. Failing,
+both at their first assertion (`watch/tests/esm.rs:84` and `:151`, the baseline
+check before any mutation): `esm_watch_non_source_creation_edit_and_removal_match_cold`
+and `esm_watch_replays_frozen_19_steps_and_serves_mcp`. Each expected `Must`
+and observed `Unknown`; the watched and cold builds agreed, so the resolver
+refuses the app-level fixture. This is the conservative direction, not an
+unsound claim, but the contracts are unmet. The WIP is therefore **not
+committed**. `c06201e` added only these tests (no product code), so whether
+HEAD without the WIP fails the same way is not yet known and will be measured
+on a separate worktree. No application-level acceptance is claimed.
+
+Next: get the refusal reason for the baseline claim, compare against a clean
+`c06201e` worktree, fix product code (never the tests, manifest, or
+expectations), and rerun. TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
 ### 2026-10-06 (later) — Uncommitted ESM environment WIP triaged; watch tests BLOCKED
 
 Uncommitted work left after `c06201e` (not committed, not pushed): a new
