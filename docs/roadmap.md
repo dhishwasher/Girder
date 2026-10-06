@@ -554,7 +554,24 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
-### 2026-10-05 — ESM cold CLI baseline measured; implementation pending
+### 2026-10-06 — Conditional ESM resolver implemented; application acceptance pending
+
+Candidate `d0cf78b` passes 164 builder tests, including all 73 frozen ESM
+contracts and the 19-step cold-versus-incremental sequence. The
+[development observation](observations/stage3-typescript-audit/esm-import-proof/development-observation.md)
+publishes the command/log, added harder refusal cases, conservative implementation
+limits, and the retained first failed run (the test helper wrongly indexed an
+excluded mock target; corrected without changing the fixture). These are
+conditional Must certificates under the frozen execution assumptions.
+
+Next: validate watched-MCP and application ingestion routes, including non-source
+events, directory deletion, projections, and configured symlink following;
+build a fresh CLI and measure the after-contract, unchanged 49-case corpus and
+100-call audit; then run the common gates. The existing CLI binary predates
+this resolver. No application-level acceptance or new common gate is claimed.
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-05 — ESM cold CLI baseline measured (historical)
 
 The [frozen 73-case contract baseline](observations/stage3-typescript-audit/esm-import-proof/before-observation.md)
 has 66 exact refusals and seven conservative misses: every marked call is
