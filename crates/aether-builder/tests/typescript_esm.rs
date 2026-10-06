@@ -48,10 +48,16 @@ fn sources(root: &Path, dir: &Path, out: &mut Vec<(String, String)>) {
     for entry in std::fs::read_dir(dir).unwrap() {
         let entry = entry.unwrap();
         let kind = entry.file_type().unwrap();
+        // Mirror the default CLI inventory, including the frozen case whose
+        // existing mock target lives under excluded `target/`.
         if kind.is_symlink()
+            || entry
+                .file_name()
+                .to_str()
+                .is_some_and(|name| name.starts_with('.'))
             || matches!(
                 entry.file_name().to_str(),
-                Some("node_modules" | ".git" | ".aether")
+                Some("node_modules" | "target" | "__pycache__" | "venv")
             )
         {
             continue;
