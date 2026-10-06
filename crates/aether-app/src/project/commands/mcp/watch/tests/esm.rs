@@ -310,3 +310,26 @@ fn esm_stale_environment_candidate_is_not_publishable() {
     assert_eq!(snapshot.graph, project.persisted_bytes);
     assert!(!snapshot.matches_candidate(&project));
 }
+
+#[test]
+#[cfg(unix)]
+fn esm_watch_symlinked_directory_target_stays_unknown() {
+    let root = esm_fixture();
+    std::fs::create_dir_all(root.0.join("real_lib")).unwrap();
+    std::fs::write(
+        root.0.join("real_lib/util.ts"),
+        "export function target() { return 1; }",
+    )
+    .unwrap();
+    std::fs::write(
+        root.0.join("app.test.ts"),
+        "import { target } from './lib/util.ts'; export function run() { return /* claim */ target(); }",
+    )
+    .unwrap();
+    std::os::unix::fs::symlink("real_lib", root.0.join("lib")).unwrap();
+    let server = Server::start(&root.0).unwrap();
+    assert_eq!(
+        marked(&equals_cold(&server).graph, &root.0, "app.test.ts").class,
+        CallClass::Unknown
+    );
+}
