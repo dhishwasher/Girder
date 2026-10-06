@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "purpose": "Precommitted stratum quotas for the Go real-source audit, set from population counts only (no labels, no Girder) per methodology.md.",
+  "seed": 20261006,
+  "corpus_manifest_sha256": "5873656e02c6d250ff4c5a96ec6d69c44562ed03c253df048faf34229c588ce5",
+  "enumerator": "tools/go_audit_sites.py",
+  "enumerator_sha256": "15fb6f78315338e416f3990e334827010cdb4a5c89ca73bdf2bf246fb9abb45a",
+  "population_counts": "site-population-counts.json",
+  "population_counts_sha256": "3738814e4c1c738073a05495318b07acd2251b0b69c252046cf387aef92df255",
+  "population": {
+    "total_candidates": 5589,
+    "per_stratum": {
+      "pkg_qualified": 649,
+      "builtin": 1098,
+      "selector": 2669,
+      "bare_other": 992,
+      "iife": 14,
+      "bare_cross_file": 107,
+      "go_defer": 41,
+      "generic": 19
+    }
+  },
+  "initial_quotas_of_140": {
+    "bare_cross_file": 40,
+    "bare_other": 25,
+    "selector": 30,
+    "pkg_qualified": 20,
+    "go_defer": 8,
+    "iife": 5,
+    "generic": 5,
+    "builtin": 7
+  },
+  "floors_checked": {
+    "bare_cross_file_plus_bare_other_at_least": 40,
+    "selector_pkg_qualified_go_defer_iife_generic_each_at_least": 5
+  },
+  "continuation": "If fewer than 100 actual calls after the first 140, draw the next 40 from the same seeded order (same strata proportions) and repeat, per methodology.md.",
+  "note": "Builtins are not calls; their 7-site quota is a not-a-call control. bare_cross_file population is only 107, so its 40 draws are the main exercise of the policy under test."
+}

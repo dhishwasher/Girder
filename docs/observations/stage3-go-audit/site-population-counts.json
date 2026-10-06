@@ -1,0 +1,133 @@
+{
+  "files": 70,
+  "candidates": 5589,
+  "per_stratum": {
+    "pkg_qualified": 649,
+    "builtin": 1098,
+    "selector": 2669,
+    "bare_other": 992,
+    "iife": 14,
+    "bare_cross_file": 107,
+    "go_defer": 41,
+    "generic": 19
+  },
+  "excluded_by_reason": {
+    "keyword": 104,
+    "func_declaration_header": 540,
+    "func_literal_or_type_or_receiver": 825,
+    "method_declaration_header": 706,
+    "interface_method_spec": 67
+  },
+  "per_package": {
+    "bufio": {
+      "pkg_qualified": 21,
+      "builtin": 77,
+      "selector": 73,
+      "bare_other": 22
+    },
+    "bytes": {
+      "pkg_qualified": 68,
+      "bare_other": 144,
+      "builtin": 236,
+      "selector": 35,
+      "iife": 1,
+      "bare_cross_file": 3
+    },
+    "container/heap": {
+      "selector": 15,
+      "bare_other": 7
+    },
+    "container/list": {
+      "builtin": 1,
+      "selector": 24
+    },
+    "container/ring": {
+      "selector": 9,
+      "builtin": 1,
+      "bare_other": 2
+    },
+    "context": {
+      "pkg_qualified": 9,
+      "bare_other": 23,
+      "selector": 72,
+      "builtin": 13,
+      "go_defer": 3,
+      "iife": 1
+    },
+    "encoding/json": {
+      "bare_cross_file": 48,
+      "selector": 651,
+      "pkg_qualified": 161,
+      "bare_other": 167,
+      "builtin": 230,
+      "generic": 15,
+      "go_defer": 10,
+      "iife": 2
+    },
+    "errors": {
+      "bare_other": 8,
+      "builtin": 10,
+      "selector": 24,
+      "pkg_qualified": 6
+    },
+    "fmt": {
+      "bare_other": 135,
+      "pkg_qualified": 54,
+      "builtin": 88,
+      "bare_cross_file": 2,
+      "selector": 577,
+      "go_defer": 6,
+      "iife": 1
+    },
+    "io": {
+      "pkg_qualified": 9,
+      "selector": 48,
+      "bare_other": 19,
+      "builtin": 51,
+      "bare_cross_file": 1,
+      "go_defer": 3
+    },
+    "sort": {
+      "bare_other": 107,
+      "builtin": 6,
+      "pkg_qualified": 14,
+      "selector": 80,
+      "bare_cross_file": 6
+    },
+    "strings": {
+      "pkg_qualified": 58,
+      "builtin": 214,
+      "selector": 88,
+      "bare_cross_file": 6,
+      "bare_other": 136
+    },
+    "sync": {
+      "selector": 89,
+      "bare_cross_file": 15,
+      "bare_other": 56,
+      "pkg_qualified": 97,
+      "builtin": 28,
+      "go_defer": 4,
+      "iife": 5
+    },
+    "text/template": {
+      "bare_other": 102,
+      "builtin": 86,
+      "selector": 450,
+      "pkg_qualified": 103,
+      "generic": 4,
+      "go_defer": 12,
+      "iife": 3,
+      "bare_cross_file": 24
+    },
+    "text/template/parse": {
+      "pkg_qualified": 49,
+      "builtin": 57,
+      "bare_other": 64,
+      "selector": 434,
+      "go_defer": 3,
+      "bare_cross_file": 2,
+      "iife": 1
+    }
+  }
+}
