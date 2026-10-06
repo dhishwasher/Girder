@@ -87,13 +87,6 @@
       "status": "ok"
     },
     {
-      "id": "u-func-literal-caller",
-      "expected": "unknown",
-      "go_vet_exit": 0,
-      "go_test_exit": 0,
-      "status": "ok"
-    },
-    {
       "id": "u-generic-target",
       "expected": "unknown",
       "go_vet_exit": 0,
@@ -120,8 +113,43 @@
       "go_vet_exit": 0,
       "go_test_exit": 0,
       "status": "ok"
+    },
+    {
+      "id": "g1-func-literal-caller",
+      "expected": "must",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-same-file-build-constraint",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-same-file-cgo",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-package-var-initializer-call",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "g1-test-file-target",
+      "expected": "must",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
     }
   ],
   "failed": 0,
-  "total": 17
+  "total": 21
 }

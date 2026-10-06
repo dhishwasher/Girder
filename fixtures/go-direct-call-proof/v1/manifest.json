@@ -14,7 +14,8 @@
         "app.go": "03eafd5112fca0ad40e0f58591a1898d9ea1535e337258ecd273ee1855330687",
         "app_test.go": "d171c80880887f05bdef6914d05f167d4a4fa6d3b9d14693ac665b24b4603a50"
       },
-      "path": "fixtures/go-direct-call-proof/v1/g1-cross-file-same-package-test"
+      "path": "fixtures/go-direct-call-proof/v1/g1-cross-file-same-package-test",
+      "expected_target": "app.go::Target"
     },
     {
       "id": "g1-cross-file-non-test",
@@ -28,7 +29,8 @@
         "b.go": "fc68caa35a2389efad4030cd707cf70a5d92c0dbc2dfb6f46796431abb38991d",
         "app_test.go": "cd3b5e690289168a7642901f0c7eb1f7dd8d1320b30a8646194eac82d48fe09c"
       },
-      "path": "fixtures/go-direct-call-proof/v1/g1-cross-file-non-test"
+      "path": "fixtures/go-direct-call-proof/v1/g1-cross-file-non-test",
+      "expected_target": "app.go::Target"
     },
     {
       "id": "g1-three-files",
@@ -43,7 +45,8 @@
         "c.go": "03eafd5112fca0ad40e0f58591a1898d9ea1535e337258ecd273ee1855330687",
         "app_test.go": "cd3b5e690289168a7642901f0c7eb1f7dd8d1320b30a8646194eac82d48fe09c"
       },
-      "path": "fixtures/go-direct-call-proof/v1/g1-three-files"
+      "path": "fixtures/go-direct-call-proof/v1/g1-three-files",
+      "expected_target": "c.go::Target"
     },
     {
       "id": "g1-method-with-same-name",
@@ -57,7 +60,8 @@
         "b.go": "fc68caa35a2389efad4030cd707cf70a5d92c0dbc2dfb6f46796431abb38991d",
         "app_test.go": "cd3b5e690289168a7642901f0c7eb1f7dd8d1320b30a8646194eac82d48fe09c"
       },
-      "path": "fixtures/go-direct-call-proof/v1/g1-method-with-same-name"
+      "path": "fixtures/go-direct-call-proof/v1/g1-method-with-same-name",
+      "expected_target": "app.go::Target"
     },
     {
       "id": "g1-same-name-in-other-package-dir",
@@ -72,7 +76,8 @@
         "b/target.go": "33ddd01f5b9a6eccc6928d8793c52b96b08e4d61374eb2c096018c40ca400cf4",
         "a/a_test.go": "976af729a590510eb2251847ff6ac02845e8be13f94de47080beac57f8a92773"
       },
-      "path": "fixtures/go-direct-call-proof/v1/g1-same-name-in-other-package-dir"
+      "path": "fixtures/go-direct-call-proof/v1/g1-same-name-in-other-package-dir",
+      "expected_target": "a/target.go::Target"
     },
     {
       "id": "u-local-shadow",
@@ -164,30 +169,16 @@
       "rule": "G1-refuse-dot-import",
       "expected": "unknown",
       "importer": "b.go",
-      "description": "A bare call names a dot-imported function from another package; a same-named function in a third package must not be chosen.",
+      "description": "A bare call names a dot-imported function (other.Helper, returns 5); a same-named function in a third package (returns 6) must not be chosen. The test asserts 5.",
       "files": {
         "go.mod": "fca13169aa71f20482ce51bc5866a21015fc17c61dcc5656671d454372c5b4b8",
         "app.go": "03eafd5112fca0ad40e0f58591a1898d9ea1535e337258ecd273ee1855330687",
         "other/other.go": "00c09600e370d7dd8d7955032e8e8dd4521124f5d67a5e305f51695e872bc7e8",
         "third/third.go": "43ae73812be2e97bfc8deaa56b8e416fb783ef039520afb66590ddb3587004c3",
         "b.go": "f0310d77ee9e76edd2824dc6e32c4011c20e916f2c821cba1d0fd9456a615018",
-        "app_test.go": "a22d1d3d0cb6bca6cc73ab34020ae07a41ef42ce1d419f990bc934c2bb86954b"
+        "app_test.go": "5d425363c21fc18d24c6d02be5947125bed22b637a18cd7cc1fe372b5f398550"
       },
       "path": "fixtures/go-direct-call-proof/v1/u-dot-import-other-dir"
-    },
-    {
-      "id": "u-func-literal-caller",
-      "rule": "G1-refuse-func-literal",
-      "expected": "unknown",
-      "importer": "b.go",
-      "description": "The call sits inside a function literal (mirrors dispatch case go-closure-captures-direct-call).",
-      "files": {
-        "go.mod": "0a242609372b81bb4b40639762c68c52220743f3cd49188d841674ae47ea121d",
-        "app.go": "03eafd5112fca0ad40e0f58591a1898d9ea1535e337258ecd273ee1855330687",
-        "b.go": "3870b8368a9e197547ea924fc757f4c7e5d305ad2cc2a831a8553c8e7344dd42",
-        "app_test.go": "cd3b5e690289168a7642901f0c7eb1f7dd8d1320b30a8646194eac82d48fe09c"
-      },
-      "path": "fixtures/go-direct-call-proof/v1/u-func-literal-caller"
     },
     {
       "id": "u-generic-target",
@@ -242,6 +233,75 @@
         "app_test.go": "cd3b5e690289168a7642901f0c7eb1f7dd8d1320b30a8646194eac82d48fe09c"
       },
       "path": "fixtures/go-direct-call-proof/v1/u-cgo-caller"
+    },
+    {
+      "id": "g1-func-literal-caller",
+      "rule": "G1",
+      "expected": "must",
+      "importer": "b.go",
+      "description": "The call sits inside a function literal. Go func literals are not Function nodes, so the call is attributed to the enclosing named function (as today); it is eligible like any other call. Mirrors dispatch case go-closure-captures-direct-call.",
+      "files": {
+        "go.mod": "0a242609372b81bb4b40639762c68c52220743f3cd49188d841674ae47ea121d",
+        "app.go": "03eafd5112fca0ad40e0f58591a1898d9ea1535e337258ecd273ee1855330687",
+        "b.go": "3870b8368a9e197547ea924fc757f4c7e5d305ad2cc2a831a8553c8e7344dd42",
+        "app_test.go": "cd3b5e690289168a7642901f0c7eb1f7dd8d1320b30a8646194eac82d48fe09c"
+      },
+      "path": "fixtures/go-direct-call-proof/v1/g1-func-literal-caller",
+      "expected_target": "app.go::Target"
+    },
+    {
+      "id": "u-same-file-build-constraint",
+      "rule": "G1-refuse-build-constraint",
+      "expected": "unknown",
+      "importer": "app.go",
+      "description": "Same-file call in a build-constrained file. The refusal set applies to every Go Must, including same-file calls the existing proof certifies.",
+      "files": {
+        "go.mod": "284767d47ade3f5857e0a69d4d29fc0533cdc78cc588fcb0af0b4a05ba72d1f2",
+        "app.go": "ea010069e6e4b06434489b5771aad5bb6864dce3d96a7c946ca0b52ae825695e",
+        "app_test.go": "cd3b5e690289168a7642901f0c7eb1f7dd8d1320b30a8646194eac82d48fe09c"
+      },
+      "path": "fixtures/go-direct-call-proof/v1/u-same-file-build-constraint"
+    },
+    {
+      "id": "u-same-file-cgo",
+      "rule": "G1-refuse-cgo",
+      "expected": "unknown",
+      "importer": "app.go",
+      "description": "Same-file call in a cgo file.",
+      "files": {
+        "go.mod": "b665d5f3d10327c68393c72326dd6d11ef0ff51fe9bdb4660292bfc353797abc",
+        "app.go": "4d4bd76035f8792b02dec7e2cc301a36e2f05617047b200b3bb9e4b59df5e627",
+        "app_test.go": "cd3b5e690289168a7642901f0c7eb1f7dd8d1320b30a8646194eac82d48fe09c"
+      },
+      "path": "fixtures/go-direct-call-proof/v1/u-same-file-cgo"
+    },
+    {
+      "id": "u-package-var-initializer-call",
+      "rule": "G1-refuse-no-enclosing-func",
+      "expected": "unknown",
+      "importer": "app.go",
+      "description": "A call in a package-level var initializer has no enclosing function (the owner is the module), so v1 leaves it Unknown.",
+      "files": {
+        "go.mod": "d5c4fc2e0470f820cf7a15448a5e1fd21e6ff5002f9d1baf5411c1de6010b946",
+        "app.go": "ed961a7e757f7778204ae89d0f8631d7019ebb4c1ffc5aabf738ffceab3c288d",
+        "app_test.go": "cd3b5e690289168a7642901f0c7eb1f7dd8d1320b30a8646194eac82d48fe09c"
+      },
+      "path": "fixtures/go-direct-call-proof/v1/u-package-var-initializer-call"
+    },
+    {
+      "id": "g1-test-file-target",
+      "rule": "G1",
+      "expected": "must",
+      "importer": "app_test.go",
+      "description": "A helper declared only in an internal _test.go file, called from another _test.go file of the same package.",
+      "files": {
+        "go.mod": "2ec069f8d15766406e690debe3907bb15db20a8cd82db2b70b78ba47a412179e",
+        "app.go": "ccb7b155dc03e465002a46fdecf3a57d803ba57d763a103e5389120100c3fa3c",
+        "helper_test.go": "98204d89b1fc7f28e5380631031ef89e80006698ad5d6fa1f8fc09ffb7dd3422",
+        "app_test.go": "ce41ef2a79182f0a2c56323f5c6c6469b9c779b951e99e2222dbdab2327310c7"
+      },
+      "path": "fixtures/go-direct-call-proof/v1/g1-test-file-target",
+      "expected_target": "helper_test.go::helper"
     }
   ]
 }

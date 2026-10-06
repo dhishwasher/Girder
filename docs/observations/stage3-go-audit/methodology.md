@@ -14,7 +14,8 @@ The pinned Go 1.27.1 standard-library subset in
 packages, 70 non-test `.go` files, 26,925 lines, reproduced by
 `tools/go_audit_inventory.py`. The extraction filter physically removes
 `*_test.go`, `testdata/`, `vendor/`, and `//go:build ignore` files, so the
-sampled corpus equals what Girder's default walk indexes. The audited scope is
+sampled corpus equals what Girder's default walk indexes. The extracted tree contains only
+`.go` files and no `go.mod`. The audited scope is
 **non-test library source of those packages only**; test files and other
 packages are out of scope and disclosed as such.
 
@@ -29,30 +30,49 @@ truth is read from source, not from the product.
 ## Site enumeration (independent of Girder's parser)
 
 A plain-Python enumerator (`tools/go_audit_sites.py`, pinned by hash before
-labeling) scans the extracted tree with regular expressions only.
+labeling and drafted by the second agent, reviewed by the lead) scans the
+extracted tree with regular expressions only.
 
 - **Candidates:** an identifier or selector chain immediately followed by `(`,
   excluding `func` declaration headers, `//` and `/* */` comments, and string or
   raw-string literals.
 - **Order:** files sorted by path, candidates by byte offset, then shuffled with
   `random.Random(20261006)` within each stratum.
-- **Strata** (shape detected by regex): bare-identifier call; package-qualified
-  call (`pkg.F(`, where `pkg` is an import name in that file); other
-  selector call (`x.M(`); `go`/`defer` call; immediately-invoked function
-  literal; generic instantiation (`f[T](`). Initial targets out of 140
-  candidates: 40, 25, 40, 10, 10, 5, with the shortfall of any stratum
-  redistributed in stratum order.
+- **Strata** (shape detected by regex alone, first match wins, in this order):
+  `go_defer`; immediately-invoked function literal; generic instantiation
+  (`f[T](`); **builtin** (a bare identifier in the fixed builtin-name list
+  below, decidable by name); **bare_cross_file** (a bare identifier declared as a
+  top-level `func NAME(` in another file of the same directory, from a regex scan
+  of declarations); **bare_other** (any other bare identifier, including
+  same-file functions, conversions, and local closures); **pkg_qualified**
+  (`pkg.F(` where `pkg` is an import name in that file); **selector** (any
+  other dotted chain). `bare_cross_file` and the builtin split are
+  preregistered here because they are decidable without Girder and target the
+  rule under test; they are not tuning.
+- **Quotas are set from population counts, in a separate precommit.**
+  `tools/go_audit_sites.py --counts` is run first, before any labeling, and
+  reports only per-stratum and per-package population counts (no labels, no
+  Girder). The quotas for the initial 140 candidates are then frozen in a commit
+  of their own, with a floor so that `bare_cross_file` and `bare_other` together
+  supply at least 40 candidates and the dispatch-relevant strata (`selector`,
+  `pkg_qualified`, `go_defer`, `iife`, `generic`) each supply at least 5 where
+  the population allows, so the sample is not dominated by builtins and
+  conversions. If a stratum's population is below its floor, all of it is taken
+  and the shortfall is disclosed.
 - **Reaching 100 actual calls (fixed rule, set now):** label candidates in the
   seeded order. If fewer than 100 are actual calls after the first 140, draw the
   next 40 from the same seeded order (strata unchanged) and repeat until at
   least 100 actual calls exist. No hand-picked replacement, and no site dropped
   after seeing a Girder answer.
 - **Not-a-call sites** are labeled `not_a_call_site` and scored separately,
-  never counted as calls. Categories: type conversion `T(x)`, builtin
+  never counted as calls. Categories: type conversion `T(x)`; builtin
   (`len`, `cap`, `append`, `make`, `new`, `copy`, `delete`, `close`, `panic`,
   `recover`, `print`, `println`, `min`, `max`, `clear`, `complex`, `real`,
-  `imag`), a parameter or struct-field declaration, a type assertion form, and
-  any other non-call match.
+  `imag`); an interface method specification inside `type X interface { ... }`;
+  a function type literal (`func(...)` in a type, field, or parameter); a
+  function declaration header; a type assertion form; and any other non-call
+  match. The enumerator also blanks comments and string, rune, and raw-string
+  literals before matching, and reports the excluded matches by reason.
 
 ## Ground-truth labels
 
