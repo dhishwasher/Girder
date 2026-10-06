@@ -1,0 +1,127 @@
+{
+  "go_version": "go version go1.19.8 linux/amd64",
+  "has_c_compiler": true,
+  "cases": [
+    {
+      "id": "g1-cross-file-same-package-test",
+      "expected": "must",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "g1-cross-file-non-test",
+      "expected": "must",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "g1-three-files",
+      "expected": "must",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "g1-method-with-same-name",
+      "expected": "must",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "g1-same-name-in-other-package-dir",
+      "expected": "must",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-local-shadow",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-param-shadow",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-package-var-function-value",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-build-tag-duplicate-targets",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-filename-suffix-target",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-caller-build-constraint",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-dot-import-other-dir",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-func-literal-caller",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-generic-target",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-external-test-package-duplicate-name",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-qualified-call-deferred",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    },
+    {
+      "id": "u-cgo-caller",
+      "expected": "unknown",
+      "go_vet_exit": 0,
+      "go_test_exit": 0,
+      "status": "ok"
+    }
+  ],
+  "failed": 0,
+  "total": 17
+}
