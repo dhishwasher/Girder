@@ -543,7 +543,11 @@ pub(crate) fn build_from_dir_with_config(
     recover_project_transactions_read_only(root)?;
     let mut graph = SemanticGraph::new();
     let mut builder = GraphBuilder::new();
-    builder.set_source_root(root)?;
+    // Following a symlink canonicalizes away its discovery identity. Such a
+    // snapshot cannot attest the ESM policy's no-symlink ingestion condition.
+    if !config.source.follow_symlinks {
+        builder.set_source_root(root)?;
+    }
     builder.set_bin_targets(cargo_bin_targets(root));
     builder.set_go_module_path(read_go_module_path(root)?);
     builder.set_rust_package_name(read_rust_package_name(root));

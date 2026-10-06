@@ -264,3 +264,53 @@ fn source_only_and_modified_projection_loads_have_no_import_certificate() {
     );
     assert_eq!(marked(&graph, &root.0, "app.test.ts").0, CallClass::Unknown);
 }
+
+#[test]
+fn additional_modeled_api_spellings_and_refused_calls_never_gain_a_certificate() {
+    // Harder cases accompany the newly passing v1 cases; the v1 fixtures and
+    // their expected answers remain unchanged. These are static proof-contract
+    // checks, not executed runtime observations.
+    let importer =
+        "import { target } from './app.ts'; export function run() { return /* claim */ target(); }";
+    for setup in [
+        "import { mock } from 'node:test'; mock['module']('./app.ts', {});",
+        "import { mock } from 'node:test'; mock[`module`]('./app.ts', {});",
+        "import { mock } from 'node:test'; const { module: replace } = mock; replace('./app.ts', {});",
+        "import * as m from 'node:module'; m['registerHooks']({});",
+        r"import * as m from 'node:\u006dodule'; m.registerHooks({});",
+    ] {
+        let root = Root::new();
+        std::fs::write(root.0.join("app.ts"), "export function target() { return 1; }").unwrap();
+        std::fs::write(root.0.join("app.test.ts"), importer).unwrap();
+        std::fs::write(root.0.join("setup.ts"), setup).unwrap();
+        let (graph, _) = build(&root.0);
+        assert_eq!(marked(&graph, &root.0, "app.test.ts").0, CallClass::Unknown, "{setup}");
+    }
+    for importer in [
+        "import { target } from './app.ts' with { type: 'json' }; export function run() { return /* claim */ target(); }",
+        "import { target } from './app.ts'; export function run() { return /* claim */ target`text`; }",
+    ] {
+        let root = Root::new();
+        std::fs::write(root.0.join("app.ts"), "export function target() { return 1; }").unwrap();
+        std::fs::write(root.0.join("app.test.ts"), importer).unwrap();
+        let (graph, _) = build(&root.0);
+        assert_eq!(marked(&graph, &root.0, "app.test.ts").0, CallClass::Unknown, "{importer}");
+    }
+}
+
+#[test]
+#[cfg(unix)]
+fn library_cannot_attest_a_symlinked_source_file() {
+    let root = Root::new();
+    let target = "export function target() { return 1; }";
+    let importer =
+        "import { target } from './app.ts'; export function run() { return /* claim */ target(); }";
+    std::fs::write(root.0.join("real.ts"), target).unwrap();
+    std::fs::write(root.0.join("app.test.ts"), importer).unwrap();
+    std::os::unix::fs::symlink("real.ts", root.0.join("app.ts")).unwrap();
+    let mut graph = SemanticGraph::new();
+    let mut builder = GraphBuilder::new();
+    builder.set_source_root(&root.0).unwrap();
+    builder.load_files(&mut graph, [("app.ts", target), ("app.test.ts", importer)]);
+    assert_eq!(marked(&graph, &root.0, "app.test.ts").0, CallClass::Unknown);
+}

@@ -568,6 +568,9 @@ pub(super) fn resolve(
     }
     let mut mocked = HashSet::new();
     for (file, f) in &facts {
+        if !f.mocks.is_empty() && !identity.valid.contains(file) {
+            return;
+        }
         for specifier in &f.mocks {
             let Some(target) = identity.resolve(file, specifier) else {
                 return;
@@ -608,6 +611,13 @@ pub(super) fn resolve(
             let Some(node) = graph.get(*target) else {
                 continue;
             };
+            if !files[&target_file].nodes.iter().any(|original| {
+                original.id == *target
+                    && original.source == node.source
+                    && original.span == node.span
+            }) {
+                continue;
+            }
             if node.file.as_deref() != Some(&target_file)
                 || !files[file]
                     .rust_imports
@@ -619,6 +629,13 @@ pub(super) fn resolve(
             bindings.insert(import.local.as_str(), *target);
         }
         for extracted in &files[file].nodes {
+            if !graph.get(extracted.id).is_some_and(|node| {
+                node.file.as_deref() == Some(file)
+                    && node.source == extracted.source
+                    && node.span == extracted.span
+            }) {
+                continue;
+            }
             let Ok(mut evidence) = graph.call_evidence(extracted.id) else {
                 continue;
             };
