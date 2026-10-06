@@ -554,7 +554,21 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
-### 2026-10-03 — ESM named-import proof policy v1 frozen (policy and fixtures only)
+### 2026-10-05 — ESM cold CLI baseline measured; implementation pending
+
+The [frozen 73-case contract baseline](observations/stage3-typescript-audit/esm-import-proof/before-observation.md)
+has 66 exact refusals and seven conservative misses: every marked call is
+explicit Unknown with no target. All expected target declarations were found;
+there are no missing marked claims or command errors. The freshly rebuilt
+candidate `c209a22` passed its serial offline build; the measurement runner's
+nine unit tests passed. All frozen pins were checked, and raw outputs and
+the failed contract remain published. No ESM product implementation or new
+language gate has run. Next: implement the frozen policy, including snapshot
+identity and invalidation, then measure cold/incremental/watched-MCP equality,
+ingestion routes, the unchanged dispatch corpus and real audit, and common
+gates. TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-03 — ESM named-import proof policy v1 frozen (historical)
 
 The [bounded policy](observations/stage3-typescript-audit/esm-import-proof/policy.md)
 is frozen after independent soundness review and correction of the acceptance
