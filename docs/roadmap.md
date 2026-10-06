@@ -554,6 +554,28 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-06 (later) — Uncommitted ESM environment WIP triaged; watch tests BLOCKED
+
+Uncommitted work left after `c06201e` (not committed, not pushed): a new
+`sync/typescript_esm/environment.rs` (`TypeScriptEsmEnvironment`),
+`GraphBuilder::typescript_environment()` (`resolve_calls` now takes `&mut self`),
+and watched-MCP snapshot wiring in `mcp/watch.rs` and `mcp/watch/snapshot.rs`
+so environment inputs (configs, mocks, hooks) are never filtered as ignored and
+a snapshot publishes only if the builder's environment matches it.
+
+Observed on this working tree: `cargo check -p aether-app --all-targets -j1`
+exit 0, no errors or warnings (32m cold build). `cargo test -p aether-builder
+-j1 --quiet` exit 0, all suites ok (134+2+2+1+7+1+5+12 = 164 tests, including
+the frozen ESM contracts). `cargo test -p aether-app -j1 --quiet watch` did
+**not run**: the compile died with SIGBUS writing to the target dir, and
+`/mnt/chromeos/removable/MOVESPEED` is no longer mounted in the VM (`dmesg`
+also shows `virtio_balloon: Out of puff`). This is an environment blocker, not
+a test result. No application-level acceptance is claimed.
+
+Next: re-share the MOVESPEED drive, rerun the watch tests, then commit the WIP
+as one piece and continue the Stage 3 TypeScript ESM acceptance list below.
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
 ### 2026-10-06 — Conditional ESM resolver implemented; application acceptance pending
 
 Candidate `d0cf78b` passes 164 builder tests, including all 73 frozen ESM
