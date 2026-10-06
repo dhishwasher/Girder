@@ -266,7 +266,7 @@ remain published. Each corrected audit emitted only one Must claim (1/1) and
 99 Unknown claims; this is limited evidence, not general dispatch completeness.
 **TypeScript is DONE** on its frozen criterion (see the 2026-10-06 checkpoint and
 [after-observation](observations/stage3-typescript-audit/esm-import-proof/after-observation.md));
-Go remains NOT STARTED and is the next language.
+Go is IN PROGRESS (see the 2026-10-06 Go checkpoint).
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
@@ -276,7 +276,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | Rust | **DONE — corrected 100-site checkpoint** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) and [retained failed extension](observations/stage3-audit-reconciliation/observation/summary.md) | Stage 2 |
 | Python | **DONE — corrected 100-site checkpoint** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) | Rust trustworthy on a real repository |
 | TypeScript | **DONE — frozen criterion met; CI green at `c78f6c9`** (73/73 ESM contract; corpus 22→23 exact, Must 6/6, 0 unsound; audit 56/44, 0 unsound, Must 3/3; gates on `cb2aa11` and `b0c09b6`) | [100-site baseline](observations/stage3-typescript-audit/extension/before/observation.md) / [structural-identity after-audit](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/observation.md) + [retained false-Must baseline](observations/stage3-typescript-audit/lexical-bindings/before-observation.md) + [unchanged dispatch results](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/dispatch-corpus-scoring.json) + [ESM after-observation](observations/stage3-typescript-audit/esm-import-proof/after-observation.md) | Python trustworthy on a real repository |
-| Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
+| Go | IN PROGRESS (snapshot pinned, policy and methodology frozen; no measurement yet) | none / [frozen policy](observations/stage3-go-audit/policy.md) + [methodology](observations/stage3-go-audit/methodology.md) | TypeScript trustworthy on a real repository |
 
 Use existing pinned Rust repositories and Click first; pin TypeScript compiler
 and Go standard-library snapshots before their language work. Precommit at
@@ -557,6 +557,43 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-06 (Go started) — snapshot pinned; policy and methodology FROZEN; no labels, no Girder run, no resolver change
+
+Stage 3 Go has begun. Nothing has been measured with Girder and no product code
+changed.
+- **Snapshot** (`a950897`): Go 1.27.1 source, `go1.27.1.src.tar.gz`, 35,109,201
+  bytes, sha256 `4e408abae126d916b6164627193f2c54f0e3ca1312d693b86db45f862ab238b1`
+  (verified against go.dev), in the gitignored `.benchmark-cache/stage3-go-v1/`.
+  Extraction keeps 15 stdlib packages, 70 non-test files, 26,925 lines
+  ([stage3-go-corpus.json](stage3-go-corpus.json), reproduced by
+  `tools/go_audit_inventory.py`). The filter drops `_test.go`, `testdata/`,
+  `vendor/`, and `//go:build ignore` files so the sampled corpus equals what
+  Girder's default walk indexes.
+- **Frozen documents** in `observations/stage3-go-audit/`: [policy.md](observations/stage3-go-audit/policy.md)
+  (same-package direct-call proof; refusals apply to every Go Must, same-file
+  included; predicted corpus result written first: Go 7 exact / 7 conservative,
+  pooled 25 / 31, with `go-direct-cross-file` and `go-closure-captures-direct-call`
+  expected to flip) and [methodology.md](observations/stage3-go-audit/methodology.md)
+  (independent regex enumeration, mechanical selection, call-end-byte matching,
+  100-actual-site continuation rule, labeling fallback). Girder must not be run
+  on the audit tree before the labels are frozen.
+- **Fixtures:** 21 adversarial modules (7 expected Must with `expected_target`,
+  14 expected Unknown), all passing runtime validation under go1.19.8
+  ([manifest sha256 `fc88e266…`](../fixtures/go-direct-call-proof/v1/manifest.json)).
+- **Population and quotas:** 5,589 regex candidates; `bare_cross_file`, the
+  stratum the policy targets, has only 107. The initial 140-site list
+  (`sites-initial-140.json`) is generated and hash-pinned before any labeling.
+- **Worker note:** the second agent (Grok) completes read-only lookup briefs but
+  has repeatedly returned only an opening line on drafting briefs, so the Go
+  tooling was written by the lead; labeling batches have a precommitted two-try
+  fallback to the lead (flagged `single_agent`, audited at 100%).
+
+Not yet done: the context tool and labeling, the baseline observation (fixture
+contract, unchanged 49-case corpus, audit) on the current binary, the resolver
+change, the after-observation, and the Go gates. Deferred holes: package-qualified
+calls (the audit root has no `go.mod`), `may` classification, and everything
+beyond bare same-package calls. Go remains IN PROGRESS.
 
 ### 2026-10-06 (TypeScript DONE) — CI green on the published evidence
 
