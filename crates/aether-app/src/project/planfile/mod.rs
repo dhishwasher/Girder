@@ -10,6 +10,7 @@ mod executor;
 mod precondition;
 mod report;
 mod schema;
+mod verify;
 
 use crate::project::config::ProjectConfig;
 use crate::project::output_sink::{out, Sink};
@@ -327,6 +328,39 @@ pub(crate) fn run(
         for check in &step.checks {
             let mark = if check.passed { "ok" } else { "FAIL" };
             out!(sink, "    {mark} {}: {}", check.kind, check.detail);
+        }
+        match &step.certification {
+            Some(cert) if cert.certified => {
+                out!(
+                    sink,
+                    "    certification: certified (the declared delta matched the actual delta)"
+                );
+                if let Some(impact) = &cert.impact {
+                    out!(
+                        sink,
+                        "    predicted impact ({}): {} changed origin(s); impacted nodes must/may/unknown {}/{}/{}; tests reachable after must/may/unknown {}/{}/{} (before {}/{}/{}); newly reachable {}, no longer reachable {}{}",
+                        impact.label,
+                        impact.origins,
+                        impact.impacted_nodes.must,
+                        impact.impacted_nodes.may,
+                        impact.impacted_nodes.unknown,
+                        impact.tests_after.must,
+                        impact.tests_after.may,
+                        impact.tests_after.unknown,
+                        impact.tests_before.must,
+                        impact.tests_before.may,
+                        impact.tests_before.unknown,
+                        impact.newly_reachable.len(),
+                        impact.no_longer_reachable.len(),
+                        if impact.truncated { " (lists truncated)" } else { "" }
+                    );
+                }
+            }
+            Some(cert) if cert.refusal.is_some() => {
+                let refusal = cert.refusal.as_ref().expect("checked");
+                out!(sink, "    certification: REFUSED [{}]", refusal.category);
+            }
+            _ => out!(sink, "    certification: uncertified (no verify block)"),
         }
     }
 
