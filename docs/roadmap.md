@@ -563,6 +563,34 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-07 (Stage 4 corrected) — two review defects fixed; criterion met, DONE pending CI
+
+Candidate `0fc97741` (binary `37739238…`). Detail in the
+[Stage 4 observation](observations/stage4-clients/observation.md); formats frozen in
+[doc-verification.md](observations/stage4-clients/doc-verification.md). Candidate `aa153de` was
+superseded: review found (1) a data-loss bug (a rewritten owned instruction block kept the first install's
+restore text, so uninstall could overwrite later edits; fixed, two regression tests, mutation-proven) and
+(2) an MCP entry that launched `npx -y girder-mcp .` at every client start, against the stage text "Runtime
+uses installed local Girder" (setup now writes `<path-to-girder> mcp .`, falling back to the npx form only
+from npx's transient cache).
+- **Built:** one canonical orient-first instruction installed through each client's native mechanism
+  (Claude Code `~/.claude/CLAUDE.md` block; Codex `$CODEX_HOME/AGENTS.md` block, skipped when a non-empty
+  `AGENTS.override.md` exists; Cursor project rule `.cursor/rules/girder-orient.mdc` with `--project`);
+  README and `docs/setup.md` cover all three clients, the raw MCP JSON/TOML fallback, and per-client
+  placement; raw `npx` setup preserved.
+- **Evidence:** 14 new setup tests (guards mutation-checked); isolated per-client smoke: the written
+  config parses in each client's documented format, the exact configured command answers `initialize` and
+  `tools/list` (7 tools), the real `claude mcp list` (Connected) and `codex mcp list` read the configs;
+  hook cases (normal with the exact documented output shape, missing graph, malformed input, missing binary,
+  failing binary) pass through the installed commands for Claude Code and Codex; all four gates passed (802
+  tests, 0 failed).
+- **Disclosed:** no live model session loaded the instruction (vendor docs plus file and CLI-reader
+  evidence); the published `npx ... setup` path and the npx-cache fallback entry were not launched; Cursor
+  has no CLI here, its instruction needs `--project` (user rules are UI-only) and its hook is documented but
+  not built (no pre-read hook can add context without blocking); Linux only.
+
+Stage 4 is marked DONE only after CI is green on the pushed head (recorded next). Stage 5 follows.
+
 ### 2026-10-06 (Stage 4 measured) — client adapters built; criterion met, DONE pending CI
 
 Candidate `aa153de6` (binary `625025fa…`). Detail in the
@@ -587,6 +615,9 @@ Candidate `aa153de6` (binary `625025fa…`). Detail in the
   Linux only.
 
 Stage 4 is marked DONE only after CI is green on the pushed head (recorded next). Stage 5 follows.
+
+**Superseded** by the 2026-10-07 entry above after review found two defects (see there); its
+artifacts are kept in `observations/stage4-clients/superseded-aa153de/`.
 
 ### 2026-10-06 (Go DONE; Stage 3 complete) — CI green on the published evidence
 
