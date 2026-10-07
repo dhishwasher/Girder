@@ -558,6 +558,29 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-06 (Go baseline) — labels frozen; baseline measured: 3 contract overclaims, 7 audit unsafe exclusions
+
+Labels frozen (`bb2c06a`): 140 sites, 118 actual calls, 22 non-calls, drafted by the
+second agent in 7 batches (3 needed a second attempt, 0 single-agent fallbacks) and
+audited at 100% with 2 disagreements (`unsafe.Sizeof`, a compiler built-in); all 78
+in-snapshot `must` targets mechanically verified. Girder was not run on the tree
+before this commit. [Baseline observation](observations/stage3-go-audit/baseline-observation.md)
+on the unchanged resolver (binary `cbc20b34…`):
+- **Fixture contract (21):** 10 exact / 7 conservative / **3 overclaim** / 1 failed.
+  The three overclaims are same-file Musts the frozen refusals forbid (an `app` /
+  `app_test` identity collision, a build-constrained file, a cgo file); the failure is
+  a call in a package-level initializer that leaves no claim at all.
+- **Corpus (unchanged):** 23 / 33 / 0 / 1, Go 5 exact / 9 conservative.
+- **Audit (118 calls):** 15 exact / 96 conservative / 0 overclaim / **7 unsafe
+  exclusion**; existing Must claims 11/11 correct. The 7 exclusions are calls with no
+  claim (verified for two as duplicate v1/v2 definitions in `encoding/json` and one
+  package-level initializer; four generic-call sites not yet explained).
+
+The Go criterion is **not** met at baseline (7 errors, all lost evidence). Next:
+implement the frozen policy (same-package cross-file proof, tightened same-file path,
+explicit Unknown claims where evidence is now lost), then the after-observation and
+gates. Go remains IN PROGRESS.
+
 ### 2026-10-06 (Go started) — snapshot pinned; policy and methodology FROZEN; no labels, no Girder run, no resolver change
 
 Stage 3 Go has begun. Nothing has been measured with Girder and no product code
