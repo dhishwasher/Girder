@@ -563,6 +563,18 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-07 (v0.4.0 released) — merged, tagged, published, verified
+
+PR #1 merged to `main` (`b38c427`, CI run 37615463638 green; the PR's own checks, including macOS, Windows and
+Linux builds, also passed). Tag `v0.4.0` on `b38c427`; Release run 37616163866 succeeded on every job (versions
+agree, four platform builds, GitHub release, npm, MCP registry). Independently verified: the GitHub release
+carries all platform assets and the Linux archive matches its `.sha256` and reports `girder 0.4.0`; `npm view`
+shows `latest` 0.4.0, and the tarball was installable only after about four minutes of propagation delay (404
+at first, as with 0.3.0); the npm-installed 0.4.0 binary answers MCP `initialize` (7 tools, read-only); the
+registry versions endpoint lists 0.4.0 as latest. Note: the local `~/.cargo/bin/girder` is 0.3.3-labelled
+(built before the bump) and takes precedence over the npm package on PATH; reinstall before Stage 6 freezes a
+binary. **Next: Stage 6** (pins inspected; fresh serial campaign; at most one per 30 days).
+
 ### 2026-10-07 (release authorized) — merge to main and release 0.4.0
 
 The user explicitly authorized merging, tagging and releasing ("obviously tag release push merge"), lifting the
