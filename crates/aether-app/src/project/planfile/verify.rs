@@ -597,6 +597,208 @@ mod tests {
         assert_eq!(fingerprint("p", "s").len(), 64);
     }
 
+    use crate::project::config::ProjectConfig;
+    use crate::project::planfile::schema::{DeclaredEdges, DeclaredNodes};
+    use crate::project::source::build_from_dir_with_config;
+    use std::path::PathBuf;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+    const ALPHA: &str = "pub fn alpha() -> i32 {\n    1\n}";
+    const SOURCE: &str = "pub fn alpha() -> i32 {\n    1\n}\n\npub fn beta() -> i32 {\n    2\n}\n";
+
+    struct Dir(PathBuf);
+
+    impl Dir {
+        fn new() -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "girder-verify-{}-{}",
+                std::process::id(),
+                NEXT.fetch_add(1, Ordering::Relaxed)
+            ));
+            std::fs::create_dir_all(path.join("src")).unwrap();
+            std::fs::write(path.join("src/lib.rs"), SOURCE).unwrap();
+            Self(path)
+        }
+
+        fn graph(&self) -> SemanticGraph {
+            build_from_dir_with_config(&self.0, &ProjectConfig::load(&self.0).unwrap())
+                .unwrap()
+                .0
+        }
+    }
+
+    impl Drop for Dir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn node_source(graph: &SemanticGraph, path: &str) -> String {
+        graph
+            .nodes()
+            .find(|n| n.path == path)
+            .unwrap()
+            .source
+            .clone()
+    }
+
+    fn step(replacement: &str, baseline: &[(&str, String)], changed: &[&str]) -> Step {
+        let list = |items: &[&str]| Some(items.iter().map(|i| i.to_string()).collect::<Vec<_>>());
+        Step {
+            id: "s1".into(),
+            description: String::new(),
+            edits: vec![Edit::ReplaceNode {
+                node: "crate::lib::alpha".into(),
+                replacement: replacement.into(),
+            }],
+            checks: Vec::new(),
+            verify: Some(Verify {
+                baseline: Some(
+                    baseline
+                        .iter()
+                        .map(|(k, v)| (k.to_string(), v.clone()))
+                        .collect(),
+                ),
+                delta: Some(DeclaredDelta {
+                    nodes: Some(DeclaredNodes {
+                        changed: list(changed),
+                        added: list(&[]),
+                        removed: list(&[]),
+                    }),
+                    edges: Some(DeclaredEdges {
+                        added: Some(Vec::new()),
+                        removed: Some(Vec::new()),
+                    }),
+                }),
+            }),
+        }
+    }
+
+    fn prepared(dir: &Dir, replacement: &str) -> (Prepared, SemanticGraph) {
+        let before = dir.graph();
+        let baseline = [(
+            "crate::lib::alpha",
+            fingerprint(
+                "crate::lib::alpha",
+                &node_source(&before, "crate::lib::alpha"),
+            ),
+        )];
+        let step = step(replacement, &baseline, &["crate::lib::alpha"]);
+        let ready = pre_check(&step, step.verify.as_ref().unwrap(), &before, &dir.0).unwrap();
+        (ready, before)
+    }
+
+    #[test]
+    fn a_correct_edit_passes_every_post_check() {
+        let dir = Dir::new();
+        let replacement = "pub fn alpha() -> i32 {\n    10\n}";
+        let (ready, before) = prepared(&dir, replacement);
+        std::fs::write(dir.0.join("src/lib.rs"), SOURCE.replace(ALPHA, replacement)).unwrap();
+        let after = dir.graph();
+        let delta = post_check(&ready, &before, &after, Some(&after), &dir.0).unwrap();
+        assert_eq!(delta.nodes_changed, vec!["crate::lib::alpha".to_string()]);
+        assert!(delta.edges_added.is_empty() && delta.edges_removed.is_empty());
+    }
+
+    #[test]
+    fn projection_exactness_refuses_a_file_changed_outside_the_span() {
+        let dir = Dir::new();
+        let replacement = "pub fn alpha() -> i32 {\n    10\n}";
+        let (ready, before) = prepared(&dir, replacement);
+        // The span is replaced correctly, but a comment is also added elsewhere in the file.
+        let doctored = format!("// stray\n{}", SOURCE.replace(ALPHA, replacement));
+        std::fs::write(dir.0.join("src/lib.rs"), doctored).unwrap();
+        let after = dir.graph();
+        let refusal = post_check(&ready, &before, &after, None, &dir.0).unwrap_err();
+        assert_eq!(refusal.category, "insufficient_evidence");
+        assert!(
+            refusal.detail.contains("projection mismatch"),
+            "{}",
+            refusal.detail
+        );
+    }
+
+    #[test]
+    fn an_incremental_graph_that_differs_from_cold_is_refused() {
+        let dir = Dir::new();
+        let replacement = "pub fn alpha() -> i32 {\n    10\n}";
+        let (ready, before) = prepared(&dir, replacement);
+        std::fs::write(dir.0.join("src/lib.rs"), SOURCE.replace(ALPHA, replacement)).unwrap();
+        let after = dir.graph();
+        // The "incremental" graph still holds the pre-edit state.
+        let refusal = post_check(&ready, &before, &after, Some(&before), &dir.0).unwrap_err();
+        assert_eq!(refusal.category, "insufficient_evidence");
+        assert!(
+            refusal.detail.contains("incremental graph differs"),
+            "{}",
+            refusal.detail
+        );
+    }
+
+    #[test]
+    fn a_parse_error_introduced_by_the_edit_is_refused() {
+        let dir = Dir::new();
+        let broken = "pub fn alpha() -> i32 {\n    1 +\n";
+        let (ready, before) = prepared(&dir, broken);
+        std::fs::write(dir.0.join("src/lib.rs"), SOURCE.replace(ALPHA, broken)).unwrap();
+        let after = dir.graph();
+        let refusal = post_check(&ready, &before, &after, None, &dir.0).unwrap_err();
+        assert_eq!(refusal.category, "insufficient_evidence");
+        assert!(refusal.detail.contains("parse-error"), "{}", refusal.detail);
+    }
+
+    #[test]
+    fn a_baseline_for_a_node_the_step_does_not_edit_is_refused() {
+        let dir = Dir::new();
+        let before = dir.graph();
+        let baseline = [
+            (
+                "crate::lib::alpha",
+                fingerprint(
+                    "crate::lib::alpha",
+                    &node_source(&before, "crate::lib::alpha"),
+                ),
+            ),
+            (
+                "crate::lib::beta",
+                fingerprint(
+                    "crate::lib::beta",
+                    &node_source(&before, "crate::lib::beta"),
+                ),
+            ),
+        ];
+        let step = step(
+            "pub fn alpha() -> i32 {\n    10\n}",
+            &baseline,
+            &["crate::lib::alpha"],
+        );
+        let refusal = pre_check(&step, step.verify.as_ref().unwrap(), &before, &dir.0).unwrap_err();
+        assert_eq!(refusal.category, "insufficient_evidence");
+        assert!(
+            refusal.detail.contains("does not edit"),
+            "{}",
+            refusal.detail
+        );
+    }
+
+    #[test]
+    fn an_unknown_node_path_is_an_ambiguity_refusal() {
+        let dir = Dir::new();
+        let before = dir.graph();
+        let mut step = step(
+            "pub fn alpha() -> i32 {\n    10\n}",
+            &[("crate::lib::nope", "x".into())],
+            &[],
+        );
+        step.edits = vec![Edit::ReplaceNode {
+            node: "crate::lib::nope".into(),
+            replacement: "pub fn nope() {}".into(),
+        }];
+        let refusal = pre_check(&step, step.verify.as_ref().unwrap(), &before, &dir.0).unwrap_err();
+        assert_eq!(refusal.category, "ambiguity");
+    }
+
     #[test]
     fn refusal_message_names_the_category() {
         let refusal = Refusal::new("stale_input", "x");
