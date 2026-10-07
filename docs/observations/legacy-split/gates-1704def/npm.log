@@ -1,0 +1,196 @@
+TAP version 13
+# Subtest: launcher forwards stdin and native stdout unchanged
+ok 1 - launcher forwards stdin and native stdout unchanged
+  ---
+  duration_ms: 53.940162
+  type: 'test'
+  ...
+# Subtest: launcher fails open when the pinned native executable is unavailable
+ok 2 - launcher fails open when the pinned native executable is unavailable
+  ---
+  duration_ms: 12.701482
+  type: 'test'
+  ...
+# Subtest: launcher forwards post-edit native stderr but suppresses post-edit stdout
+ok 3 - launcher forwards post-edit native stderr but suppresses post-edit stdout
+  ---
+  duration_ms: 24.02633
+  type: 'test'
+  ...
+# Subtest: launcher stays silent when native hook fails after writing both streams
+ok 4 - launcher stays silent when native hook fails after writing both streams
+  ---
+  duration_ms: 18.693364
+  type: 'test'
+  ...
+# Subtest: Python launcher forwards stdin and fails open
+ok 5 - Python launcher forwards stdin and fails open
+  ---
+  duration_ms: 288.06769
+  type: 'test'
+  ...
+# Subtest: Python launcher forwards post-edit native stderr but suppresses post-edit stdout
+ok 6 - Python launcher forwards post-edit native stderr but suppresses post-edit stdout
+  ---
+  duration_ms: 129.361281
+  type: 'test'
+  ...
+# Subtest: Python launcher stays silent when native hook fails after writing both streams
+ok 7 - Python launcher stays silent when native hook fails after writing both streams
+  ---
+  duration_ms: 139.43524
+  type: 'test'
+  ...
+# Subtest: npm package allowlist includes the advisory hook
+ok 8 - npm package allowlist includes the advisory hook
+  ---
+  duration_ms: 1.390873
+  type: 'test'
+  ...
+# Subtest: a verified asset is installed
+ok 9 - a verified asset is installed
+  ---
+  duration_ms: 413.303667
+  type: 'test'
+  ...
+# Subtest: a missing checksum installs nothing
+ok 10 - a missing checksum installs nothing
+  ---
+  duration_ms: 289.80561
+  type: 'test'
+  ...
+# Subtest: a mismatched checksum installs nothing
+ok 11 - a mismatched checksum installs nothing
+  ---
+  duration_ms: 248.13101
+  type: 'test'
+  ...
+# Subtest: a checksum file that is not a checksum is called malformed
+ok 12 - a checksum file that is not a checksum is called malformed
+  ---
+  duration_ms: 287.435723
+  type: 'test'
+  ...
+# Subtest: the skip flag is the only way to install unverified
+ok 13 - the skip flag is the only way to install unverified
+  ---
+  duration_ms: 277.624379
+  type: 'test'
+  ...
+# Subtest: a failed download still falls back rather than failing
+ok 14 - a failed download still falls back rather than failing
+  ---
+  duration_ms: 227.733408
+  type: 'test'
+  ...
+# Subtest: GIRDER_SKIP_DOWNLOAD=1 downloads nothing
+ok 15 - GIRDER_SKIP_DOWNLOAD=1 downloads nothing
+  ---
+  duration_ms: 132.915292
+  type: 'test'
+  ...
+# Subtest: Linux x64 downloads the static musl release
+ok 16 - Linux x64 downloads the static musl release
+  ---
+  duration_ms: 4.563346
+  type: 'test'
+  ...
+# Subtest: resolves nothing when PATH is empty and no binary was vendored
+ok 17 - resolves nothing when PATH is empty and no binary was vendored
+  ---
+  duration_ms: 6.368395
+  type: 'test'
+  ...
+# Subtest: prefers a real binary found on PATH
+ok 18 - prefers a real binary found on PATH
+  ---
+  duration_ms: 7.706423
+  type: 'test'
+  ...
+# Subtest: a global-install symlink pointing back into this package is not resolved
+ok 19 - a global-install symlink pointing back into this package is not resolved
+  ---
+  duration_ms: 6.426496
+  type: 'test'
+  ...
+# Subtest: skips this package's own shim but still finds a real binary behind it
+ok 20 - skips this package's own shim but still finds a real binary behind it
+  ---
+  duration_ms: 6.175694
+  type: 'test'
+  ...
+# Subtest: a shim launched by another shim ignores PATH and uses the vendored binary
+ok 21 - a shim launched by another shim ignores PATH and uses the vendored binary
+  ---
+  duration_ms: 4.772558
+  type: 'test'
+  ...
+# Subtest: childEnv marks the chain so the next shim cannot loop
+ok 22 - childEnv marks the chain so the next shim cannot loop
+  ---
+  duration_ms: 3.838844
+  type: 'test'
+  ...
+# Subtest: GIRDER_FORCE_VENDORED=1 uses the vendored binary even with a real one on PATH
+ok 23 - GIRDER_FORCE_VENDORED=1 uses the vendored binary even with a real one on PATH
+  ---
+  duration_ms: 5.822795
+  type: 'test'
+  ...
+# Subtest: GIRDER_FORCE_VENDORED=1 fails loudly naming the missing vendored path
+ok 24 - GIRDER_FORCE_VENDORED=1 fails loudly naming the missing vendored path
+  ---
+  duration_ms: 8.559408
+  type: 'test'
+  ...
+# Subtest: resolutionNotice is silent about a second binary when only the vendored one exists
+ok 25 - resolutionNotice is silent about a second binary when only the vendored one exists
+  ---
+  duration_ms: 6.153545
+  type: 'test'
+  ...
+# Subtest: resolutionNotice names both paths and both --version outputs when PATH wins over an existing vendored copy
+ok 26 - resolutionNotice names both paths and both --version outputs when PATH wins over an existing vendored copy
+  ---
+  duration_ms: 17.399684
+  type: 'test'
+  ...
+# Subtest: when a PATH binary wins over an existing vendored copy, stdout carries only the child's bytes and stderr names both
+ok 27 - when a PATH binary wins over an existing vendored copy, stdout carries only the child's bytes and stderr names both
+  ---
+  duration_ms: 140.661819
+  type: 'test'
+  ...
+# Subtest: when only the vendored binary exists, stderr says nothing about a second binary
+ok 28 - when only the vendored binary exists, stderr says nothing about a second binary
+  ---
+  duration_ms: 106.298492
+  type: 'test'
+  ...
+# Subtest: setup goes to the Rust CLI while ordinary invocation still starts MCP
+ok 29 - setup goes to the Rust CLI while ordinary invocation still starts MCP
+  ---
+  duration_ms: 190.60435
+  type: 'test'
+  ...
+# Subtest: the vendored binary's --version matches npm/package.json
+ok 30 - the vendored binary's --version matches npm/package.json # SKIP no vendored binary found; set GIRDER_TEST_BIN or run the postinstall first
+  ---
+  duration_ms: 1.886245
+  type: 'test'
+  ...
+# Subtest: the vendored binary's MCP serverInfo.version matches npm/package.json
+ok 31 - the vendored binary's MCP serverInfo.version matches npm/package.json # SKIP no vendored binary found; set GIRDER_TEST_BIN or run the postinstall first
+  ---
+  duration_ms: 0.376399
+  type: 'test'
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 29
+# fail 0
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 3900.148651

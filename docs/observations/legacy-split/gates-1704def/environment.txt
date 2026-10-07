@@ -1,0 +1,9 @@
+candidate: 1704def4e55b2e4053ba85bc196655bcf91ac558
+tracked_modified_files: 0
+platform: Linux x86_64
+rustc 1.97.1 (8bab26f4f 2026-07-14)
+cargo 1.97.1 (c980f4866 2026-06-30)
+v22.23.1
+Python 3.11.2
+CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0
+note: build-directory paths are redacted to <target-dir> in the logs
