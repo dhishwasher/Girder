@@ -563,6 +563,20 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-07 (legacy split) — legacy subsystems behind a default-off feature; CI green
+
+The agent swarm (`swarm-plan`, `forge`), collaboration (`collab`), tracer/DAP (`debug`, `dap`), extensions
+(`extension`), the swarm demo and the GUI now sit behind `--features legacy` in `aether-app` (`gui` implies it); the four
+legacy crates are optional dependencies. The default binary matches its public description (bare `girder` prints usage;
+`girder do` is kept). The default `cargo test --workspace` skips the legacy code in `aether-app`; journal crash recovery
+stays covered in the default suite through four new `plan run` fault-point tests (the `forge` versions run under
+`legacy`). Verified: default and `legacy` clippy `-D warnings` clean; default tests, `legacy` tests and the `gui`
+type-check pass; the four gates pass on candidate `1704def` (`docs/observations/legacy-split/gates-1704def/`);
+CI run 37645338628 is green on `f6be28e` (main job, `windows compiles`, and the new non-blocking `legacy` job). One
+CI failure on the way (`0a478f1`): a Windows-only unused-import error, fixed in `f6be28e`. The Windows installer is
+still built with `--features gui`, so it keeps the legacy code. Not changed: the natural-language search evidence files
+and the pinned historical evidence.
+
 ### 2026-10-07 (Stage 6 DONE) — CI green on the published evidence
 
 CI run 37635134731 passed on `048603e`, the head containing the run 2 results, raw-evidence archives (20 campaigns,
