@@ -462,8 +462,8 @@ needs a harder successor appended in a new versioned corpus file, never by editi
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 
-**Status: IN PROGRESS** (criterion met on committed evidence; **DONE pending CI**; see the
-2026-10-06 Stage 4 checkpoint)
+**Status: DONE** (criterion met on committed evidence and CI green at `2852953`; see the
+2026-10-07 Stage 4 checkpoints)
 
 Build **one shared MCP bundle with per-client adapters**, covering **Claude Code,
 Cursor, and Codex** at minimum. Start with Claude Code because the advisory hook
@@ -562,6 +562,19 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-07 (Stage 4 DONE) — CI green on the published evidence
+
+CI run 37570784619 passed both jobs (`fmt · clippy · test`, `windows compiles`) on `2852953`, the head
+containing the corrected Stage 4 observation, smoke report, and final-candidate gate logs. The Stage 4
+criterion (all three adapters install cleanly, expose Girder through MCP, load the shared orient-first
+instruction through their native mechanisms, with committed evidence; README covers all three plus the raw
+MCP JSON fallback; raw `npx` setup preserved) is met on that evidence, so **Stage 4 is DONE**. The
+disclosed limits carry forward: no live model session loaded the instruction, the published `npx ... setup`
+path was not exercised, Cursor's instruction needs `--project` and its hook is documented but not built.
+**Next: Stage 5, verified edits.** Extend the existing Plan Format v2 journaled edits (not a separate
+editor); read the current edit code with `girder` first and freeze the delta and refusal contract before
+implementing.
 
 ### 2026-10-07 (Stage 4 corrected) — two review defects fixed; criterion met, DONE pending CI
 
