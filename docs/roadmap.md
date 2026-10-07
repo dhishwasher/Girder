@@ -276,7 +276,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | Rust | **DONE — corrected 100-site checkpoint** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) and [retained failed extension](observations/stage3-audit-reconciliation/observation/summary.md) | Stage 2 |
 | Python | **DONE — corrected 100-site checkpoint** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) | Rust trustworthy on a real repository |
 | TypeScript | **DONE — frozen criterion met; CI green at `c78f6c9`** (73/73 ESM contract; corpus 22→23 exact, Must 6/6, 0 unsound; audit 56/44, 0 unsound, Must 3/3; gates on `cb2aa11` and `b0c09b6`) | [100-site baseline](observations/stage3-typescript-audit/extension/before/observation.md) / [structural-identity after-audit](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/observation.md) + [retained false-Must baseline](observations/stage3-typescript-audit/lexical-bindings/before-observation.md) + [unchanged dispatch results](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/dispatch-corpus-scoring.json) + [ESM after-observation](observations/stage3-typescript-audit/esm-import-proof/after-observation.md) | Python trustworthy on a real repository |
-| Go | IN PROGRESS (snapshot pinned, policy and methodology frozen; no measurement yet) | none / [frozen policy](observations/stage3-go-audit/policy.md) + [methodology](observations/stage3-go-audit/methodology.md) | TypeScript trustworthy on a real repository |
+| Go | IN PROGRESS (criterion met on committed evidence: corpus 25/31, audit 28/90/0/0, Must 24/24; **DONE pending CI**) | none / [frozen policy](observations/stage3-go-audit/policy.md) + [methodology](observations/stage3-go-audit/methodology.md) | TypeScript trustworthy on a real repository |
 
 Use existing pinned Rust repositories and Click first; pin TypeScript compiler
 and Go standard-library snapshots before their language work. Precommit at
@@ -557,6 +557,31 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-06 (Go measured) — after-observation published; criterion met, DONE pending CI
+
+Final candidate `cc016189` (binary `a277658e…`). Full detail, attempts, hashes, and
+limits in the [Go after-observation](observations/stage3-go-audit/after-observation.md).
+- **Fixture contract (21):** baseline 10 / 7 / 3 / 1 to **21 / 0 / 0 / 0**; Must 7/7 correct.
+- **Corpus (unchanged, pins verified):** pooled 23 / 33 / 0 / 1 to **25 / 31 / 0 / 1**; Go
+  5 / 9 to **7 / 7**; Must 6/6 to **8/8**. The pre-written predictions held exactly.
+- **Real audit (118 calls):** baseline 15 / 96 / 0 / **7 unsafe exclusion** to **28 / 90 / 0 / 0**;
+  Girder Must claims 11 to **24, all correct** (precision 1.0).
+- **Gates:** all four passed on `cc01618` (787 tests, 0 failed; clippy, fmt, npm clean). An earlier
+  candidate's clippy gate failed (`type_complexity`) and is published in `gates-c5d101e/`; the first
+  after-audit (3 unsafe exclusions: generic calls parsed as type conversions) is also kept.
+- Baseline reproduced with the final runners on the independent pre-Go release binary (same cells).
+
+The frozen Go criterion (corpus improvement, nonempty Must precision 1.000, zero unsound audit
+cells) is met on committed evidence, so **Go is marked DONE only after CI is green on the pushed
+head** (recorded next). **Disclosed holes:** 90 audit cells are conservative Unknown (methods,
+package-qualified calls, `go`/`defer`, generics, build-constrained `encoding/json` pairs); Must
+recall on labeled musts is 24 of 114; Must claims are conditional on compilation; the audit is a
+non-test stdlib subset with no `go.mod`; labels were drafted by a second agent and lead-audited;
+a speculative scanner for `ERROR` regions was removed as untested; a backup race during mutation
+testing was caught and fixed before any commit; the Stage 2 obligation to append harder successors
+for `go-direct-cross-file` and `go-closure-captures-direct-call` (and TypeScript's case) remains
+**outstanding**. After this, Stage 3 has no language left; Stage 4 is next.
 
 ### 2026-10-06 (Go baseline) — labels frozen; baseline measured: 3 contract overclaims, 7 audit unsafe exclusions
 
