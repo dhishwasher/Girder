@@ -1,7 +1,9 @@
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+#[cfg(any(unix, feature = "legacy"))]
+use std::time::{Duration, Instant};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
 
