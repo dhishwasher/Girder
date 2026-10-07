@@ -537,7 +537,7 @@ gates. **Observation:** [stage6-run2](competitor-benchmark/results/stage6-run2/o
 
 ## Stage 7 — Turns to correct edit
 
-**Status: NOT STARTED**
+**Status: TO COME** (not started; to be scheduled later)
 
 The previous local 1.5B attempt could not complete the tasks. Its failed evidence
 stays in [agentic-grep.md](agentic-grep.md) and linked observations. It is a known
@@ -572,9 +572,8 @@ The precommitted criterion (a fresh rerun with Girder and an external runner, pi
 including regressions, raw evidence and resource failures; a replay of old archives does not count) is met, so
 **Stage 6 is DONE**. Carried limits: modest fixtures only; the Girder candidate is the published v0.4.0 binary, not the
 branch head; run 1 stays published as INVALID; GitNexus stays `RESOURCE_BLOCKED` and was not rerun; the next campaign
-is not due before 2026-11-06 (at most one per 30 days). **Next: Stage 7**, which ends as a published blocker unless a
-capable agent is available: its harness is frozen to a local Ollama model this 2.7 GB VM cannot run at the needed
-capability, so no comparison will be made. In parallel, the `legacy` feature split is in progress (legacy subsystems
+is not due before 2026-11-06 (at most one per 30 days). **Next: Stage 7** (turns to correct edit) is to come and is not
+started; it will be scheduled later. In parallel, the `legacy` feature split is in progress (legacy subsystems
 move behind `--features legacy`, off by default).
 
 ### 2026-10-07 (Stage 6 measured) — fresh campaign complete; gates and CI pending, NOT DONE

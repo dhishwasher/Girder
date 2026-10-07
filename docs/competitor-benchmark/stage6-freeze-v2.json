@@ -28,18 +28,18 @@
       "version": "2.3.8"
     },
     "codebase-memory-mcp": {
-      "binary": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/codebase-memory-mcp-0.10.8/codebase-memory-mcp",
+      "binary": "<benchmark-root>/acquisition/codebase-memory-mcp-0.10.8/codebase-memory-mcp",
       "binary_sha256": "1175645cb30560e7e47d78611cd1bcb509478eaf6d4e51f72fe18327ee9c1351",
       "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
       "runs_from": "a fresh writable temp copy, as in the baseline",
       "version": "0.10.8"
     },
     "gitnexus": {
-      "state": "RESOURCE_BLOCKED in the baseline; retained as blocked, not rerun on this host",
+      "state": "RESOURCE_BLOCKED in the baseline; retained as blocked, not rerun",
       "version": "1.6.11"
     },
     "ripwire": {
-      "binary": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/ripwire-0.5.0/ripwire-0.5.0-linux-x64/ripwire",
+      "binary": "<benchmark-root>/acquisition/ripwire-0.5.0/ripwire-0.5.0-linux-x64/ripwire",
       "binary_sha256": "31595be94f9199a16dfd78b577fe95219366878b41dc5c7858eba2475ad61b14",
       "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
       "version": "0.5.0"
@@ -59,7 +59,7 @@
   },
   "girder_candidate": {
     "archive_sha256": "80f24114a453dd023941abbfbc9dd47786f662af801aad7ca84c7d589309d555",
-    "binary": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/girder-0.4.0/girder",
+    "binary": "<benchmark-root>/acquisition/girder-0.4.0/girder",
     "binary_sha256": "81239a6be95992cd028f3e9bbeef51160f6c0a0eee7cdb0b27e041d9706652b7",
     "commit": "b38c427b7451814b5ea5a7fe5368ba7d806a2efe",
     "source": "GitHub release v0.4.0 asset, checksum verified against the published .sha256",
@@ -77,9 +77,7 @@
     "scoring.py": "f342d9cf8bb9edd419a3e4dea05a365ee33c2d3984e313ba50ca182f5f497460"
   },
   "host": {
-    "nproc": 2,
-    "os": "Linux 6.6 (ChromeOS Crostini)",
-    "ram_mb": 2747
+    "os": "Linux x86_64"
   },
   "inputs_sha256": {
     "corpus.json": "1711d8b456e960f65f5314a55ce3f2f5d200d44cd43fdbd2deb10efaa98c77e1",

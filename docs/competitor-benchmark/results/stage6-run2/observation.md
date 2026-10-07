@@ -15,7 +15,7 @@ code-review-graph, on the four modest fixtures (Rust, Python, TypeScript/TSX, Go
 | Policy | `girder-competitor-benchmark-v1-revision-13`, sha256 `7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2`; freeze manifest sha256 `458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff` |
 | Pins | [`../../stage6-freeze-v2.json`](../../stage6-freeze-v2.json) (versions, commits, binary hashes, input and adapter hashes, limits), frozen and committed before the run |
 | Externals | ripwire 0.5.0, codebase-memory-mcp 0.10.8 (run from a fresh temp copy), code-review-graph 2.3.8 (hash-locked venv in `/tmp`; needed pip 26.2.1, because pip 23.0.1 resolved `py-key-value-aio` 0.4.6 against the 0.4.5 lock) |
-| Host | Linux 6.6 Crostini VM, 2 CPUs, 2.7 GB RAM; serial, one campaign at a time; memory floor 768 MiB checked before each |
+| Host | Linux x86_64; serial, one campaign at a time; memory floor 768 MiB checked before each |
 | Driver | `tools/stage6_run_campaign.sh`; per-campaign limit 1800 s |
 
 ## Run 1 is invalid and is published, not deleted
@@ -32,7 +32,7 @@ Reports: [`report.md`](report.md), [`summary.csv`](summary.csv), [`summary.json`
 [`deltas.md`](deltas.md), [`deltas.json`](deltas.json). Raw evidence: [`raw/`](raw/) with `artifacts.sha256`.
 
 - **External runners reproduced the baseline exactly.** ripwire, codebase-memory-mcp and code-review-graph
-  differ from the published baseline in **zero** metric cells (a version-identical rerun on this host), so
+  differ from the published baseline in **zero** metric cells (a version-identical rerun), so
   run-to-run variation on these fixtures is nil and any Girder difference below is a real change.
 - **Girder 0.4.0 versus the 0.2.6 baseline: of 200 metric cells compared across all five runners, 188 are
   unchanged and 12 changed, all in Girder (6 in normal mode, 6 in watch mode).** Each mode's six are test
@@ -52,7 +52,7 @@ Reports: [`report.md`](report.md), [`summary.csv`](summary.csv), [`summary.json`
 
 ## Honest limits
 
-- Modest fixtures only (20 base tasks per runner). Results are specific to this host and pins, not general
+- Modest fixtures only (20 base tasks per runner). Results are specific to this setup and these pins, not general
   claims about the products.
 - The reported precision/recall change is a trade, not a clean win; the regression is stated as one.
 - The Girder candidate is the published release binary, not a build of the current branch head, so it does
