@@ -286,6 +286,8 @@ fn facts(file: &str, state: &FileState) -> Facts {
 }
 
 type Package = (String, String);
+/// Package-scope declarations by package, then by name: (file, declaration).
+type PackageDecls<'a> = HashMap<Package, HashMap<&'a str, Vec<(&'a str, &'a Decl)>>>;
 
 pub(super) fn resolve(files: &HashMap<String, FileState>, graph: &mut SemanticGraph) {
     let mut names: Vec<&String> = files
@@ -319,7 +321,7 @@ pub(super) fn resolve(files: &HashMap<String, FileState>, graph: &mut SemanticGr
         .map(|f| (f.as_str(), facts(f, &files[f.as_str()])))
         .collect();
     // Package-scope declarations per package, and the clauses declaring a name per directory.
-    let mut package_decls: HashMap<Package, HashMap<&str, Vec<(&str, &Decl)>>> = HashMap::new();
+    let mut package_decls: PackageDecls = HashMap::new();
     let mut clauses_for: HashMap<(&str, &str), HashSet<&str>> = HashMap::new();
     for name in &names {
         let f = &all[name.as_str()];

@@ -1,0 +1,454 @@
+{
+  "binary_revision": "pre-go-release-80f3cde",
+  "binary_sha256": "db8d59ac2fd083c31f36932619784e6208b68d314fa14cb8eaa079d430ff5619",
+  "manifest_sha256": "fc88e266701a2e671837b19131e0647e447cfb87989d5f6cf91808f57bf164bd",
+  "runner_sha256": "e1eb0fde9b6607e3c7b2c492d0fd8eea51279123755ce30a8a28cfd6ea4fc7b4",
+  "git_head": "c5d101e7fab2e08a3a852794ff273eb84a12e548",
+  "cases": [
+    {
+      "id": "g1-cross-file-same-package-test",
+      "expected": "must",
+      "rule": "G1",
+      "marked_claims": [
+        {
+          "file": "app_test.go",
+          "caller": "crate::TestX",
+          "start_byte": 74,
+          "end_byte": 82,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "conservative",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "expected_target_nodes": [
+        "8f6c704d6121d3c5"
+      ]
+    },
+    {
+      "id": "g1-cross-file-non-test",
+      "expected": "must",
+      "rule": "G1",
+      "marked_claims": [
+        {
+          "file": "b.go",
+          "caller": "crate::Caller",
+          "start_byte": 52,
+          "end_byte": 60,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "conservative",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "expected_target_nodes": [
+        "8f6c704d6121d3c5"
+      ]
+    },
+    {
+      "id": "g1-three-files",
+      "expected": "must",
+      "rule": "G1",
+      "marked_claims": [
+        {
+          "file": "a.go",
+          "caller": "crate::Caller",
+          "start_byte": 52,
+          "end_byte": 60,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "conservative",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "expected_target_nodes": [
+        "8f6c704d6121d3c5"
+      ]
+    },
+    {
+      "id": "g1-method-with-same-name",
+      "expected": "must",
+      "rule": "G1",
+      "marked_claims": [
+        {
+          "file": "b.go",
+          "caller": "crate::Caller",
+          "start_byte": 52,
+          "end_byte": 60,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "conservative",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "expected_target_nodes": [
+        "8f6c704d6121d3c5"
+      ]
+    },
+    {
+      "id": "g1-same-name-in-other-package-dir",
+      "expected": "must",
+      "rule": "G1",
+      "marked_claims": [
+        {
+          "file": "a/a.go",
+          "caller": "crate::a::Caller",
+          "start_byte": 50,
+          "end_byte": 58,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "conservative",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "expected_target_nodes": [
+        "8eee35ef1e5797ca"
+      ]
+    },
+    {
+      "id": "u-local-shadow",
+      "expected": "unknown",
+      "rule": "G1-refuse-shadow",
+      "marked_claims": [
+        {
+          "file": "b.go",
+          "caller": "crate::Caller",
+          "start_byte": 88,
+          "end_byte": 96,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "exact",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven"
+    },
+    {
+      "id": "u-param-shadow",
+      "expected": "unknown",
+      "rule": "G1-refuse-shadow",
+      "marked_claims": [
+        {
+          "file": "b.go",
+          "caller": "crate::Caller",
+          "start_byte": 69,
+          "end_byte": 77,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "exact",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven"
+    },
+    {
+      "id": "u-package-var-function-value",
+      "expected": "unknown",
+      "rule": "G1-refuse-not-func-decl",
+      "marked_claims": [
+        {
+          "file": "b.go",
+          "caller": "crate::Caller",
+          "start_byte": 52,
+          "end_byte": 60,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "exact",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven"
+    },
+    {
+      "id": "u-build-tag-duplicate-targets",
+      "expected": "unknown",
+      "rule": "G1-refuse-build-constraint",
+      "marked_claims": [
+        {
+          "file": "b.go",
+          "caller": "crate::Caller",
+          "start_byte": 52,
+          "end_byte": 60,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "exact",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven"
+    },
+    {
+      "id": "u-filename-suffix-target",
+      "expected": "unknown",
+      "rule": "G1-refuse-build-constraint",
+      "marked_claims": [
+        {
+          "file": "b.go",
+          "caller": "crate::Caller",
+          "start_byte": 52,
+          "end_byte": 60,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "exact",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven"
+    },
+    {
+      "id": "u-caller-build-constraint",
+      "expected": "unknown",
+      "rule": "G1-refuse-build-constraint",
+      "marked_claims": [
+        {
+          "file": "b.go",
+          "caller": "crate::Caller",
+          "start_byte": 70,
+          "end_byte": 78,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "exact",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven"
+    },
+    {
+      "id": "u-dot-import-other-dir",
+      "expected": "unknown",
+      "rule": "G1-refuse-dot-import",
+      "marked_claims": [
+        {
+          "file": "b.go",
+          "caller": "crate::Caller",
+          "start_byte": 81,
+          "end_byte": 89,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "exact",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven"
+    },
+    {
+      "id": "u-generic-target",
+      "expected": "unknown",
+      "rule": "G1-refuse-generic",
+      "marked_claims": [
+        {
+          "file": "b.go",
+          "caller": "crate::Caller",
+          "start_byte": 52,
+          "end_byte": 62,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "exact",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven"
+    },
+    {
+      "id": "u-external-test-package-duplicate-name",
+      "expected": "unknown",
+      "rule": "G1-refuse-identity-collision",
+      "marked_claims": [
+        {
+          "file": "app_test.go",
+          "caller": "crate::TestX",
+          "start_byte": 112,
+          "end_byte": 120,
+          "class": "must",
+          "reason": "proven-top-level-lexical-binding",
+          "coverage_gap": false,
+          "targets": [
+            "(10334758722552845253)"
+          ]
+        }
+      ],
+      "cell": "overclaim",
+      "observed_class": "must",
+      "observed_reason": "proven-top-level-lexical-binding"
+    },
+    {
+      "id": "u-qualified-call-deferred",
+      "expected": "unknown",
+      "rule": "G2-deferred",
+      "marked_claims": [
+        {
+          "file": "app_test.go",
+          "caller": "crate::TestX",
+          "start_byte": 103,
+          "end_byte": 115,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "exact",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven"
+    },
+    {
+      "id": "u-cgo-caller",
+      "expected": "unknown",
+      "rule": "G1-refuse-cgo",
+      "marked_claims": [
+        {
+          "file": "b.go",
+          "caller": "crate::Caller",
+          "start_byte": 105,
+          "end_byte": 113,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "exact",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven"
+    },
+    {
+      "id": "g1-func-literal-caller",
+      "expected": "must",
+      "rule": "G1",
+      "marked_claims": [
+        {
+          "file": "b.go",
+          "caller": "crate::Caller",
+          "start_byte": 71,
+          "end_byte": 79,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "conservative",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "expected_target_nodes": [
+        "8f6c704d6121d3c5"
+      ]
+    },
+    {
+      "id": "u-same-file-build-constraint",
+      "expected": "unknown",
+      "rule": "G1-refuse-build-constraint",
+      "marked_claims": [
+        {
+          "file": "app.go",
+          "caller": "crate::Caller",
+          "start_byte": 103,
+          "end_byte": 111,
+          "class": "must",
+          "reason": "proven-top-level-lexical-binding",
+          "coverage_gap": false,
+          "targets": [
+            "(10334758722552845253)"
+          ]
+        }
+      ],
+      "cell": "overclaim",
+      "observed_class": "must",
+      "observed_reason": "proven-top-level-lexical-binding"
+    },
+    {
+      "id": "u-same-file-cgo",
+      "expected": "unknown",
+      "rule": "G1-refuse-cgo",
+      "marked_claims": [
+        {
+          "file": "app.go",
+          "caller": "crate::Caller",
+          "start_byte": 137,
+          "end_byte": 145,
+          "class": "must",
+          "reason": "proven-top-level-lexical-binding",
+          "coverage_gap": false,
+          "targets": [
+            "(10334758722552845253)"
+          ]
+        }
+      ],
+      "cell": "overclaim",
+      "observed_class": "must",
+      "observed_reason": "proven-top-level-lexical-binding"
+    },
+    {
+      "id": "u-package-var-initializer-call",
+      "expected": "unknown",
+      "rule": "G1-refuse-no-enclosing-func",
+      "marked_claims": [],
+      "cell": "failed",
+      "failure": "expected one marked claim, got 0"
+    },
+    {
+      "id": "g1-test-file-target",
+      "expected": "must",
+      "rule": "G1",
+      "marked_claims": [
+        {
+          "file": "app_test.go",
+          "caller": "crate::TestX",
+          "start_byte": 74,
+          "end_byte": 82,
+          "class": "unknown",
+          "reason": "go-binding-or-interface-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ],
+      "cell": "conservative",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "expected_target_nodes": [
+        "f6ee9b1ac31369b4"
+      ]
+    }
+  ],
+  "summary": {
+    "exact": 10,
+    "conservative": 7,
+    "overclaim": 3,
+    "failed": 1
+  },
+  "total": 21,
+  "unsound": 3,
+  "must_claims": 3,
+  "must_correct": 0
+}
