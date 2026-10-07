@@ -413,16 +413,47 @@ pub(super) fn annotate(
             coverage_gap: false,
         });
     }
+    // Structural member identity policy v1, B1: nothing inside a refused
+    // TypeScript member or literal has a node (T1), so its calls are owned by
+    // the nearest existing Function or the Module. They stay Unknown with no
+    // target, and each maximal refused subtree containing a call is disclosed
+    // as an explicit coverage boundary on that owner.
+    let refused = maximal_spans(&out.refused_structural_subtrees);
+    let inside_refused = |n: &TsNode<'_>| {
+        refused
+            .iter()
+            .any(|span| span.start_byte <= n.start_byte() && n.end_byte() <= span.end_byte)
+    };
+    for span in &refused {
+        if syntax.iter().any(|n| {
+            callable(n) && span.start_byte <= n.start_byte() && n.end_byte() <= span.end_byte
+        }) {
+            claims
+                .entry(owner_of_range(span.start_byte, span.end_byte, out, module))
+                .or_default()
+                .push(CallClaim {
+                    site: *span,
+                    class: CallClass::Unknown,
+                    targets: vec![],
+                    reason: "typescript-refused-structural-member-subtree".into(),
+                    coverage_gap: true,
+                });
+        }
+    }
     for n in &syntax {
         if callable(n) {
             let index = owner(*n, out, module);
+            let refused_site = inside_refused(n);
             let function = n.child_by_field_name("function");
             let target = function
                 .filter(|f| f.kind() == "identifier")
                 .filter(|_| n.kind() != "new_expression" && !macro_owners.contains(&index))
+                .filter(|_| !refused_site)
                 .and_then(|f| proven.get(node_text(f, source)))
                 .copied();
-            let reason = if target.is_some() && lang.is_typescript() {
+            let reason = if refused_site {
+                "typescript-call-inside-refused-structural-member-subtree"
+            } else if target.is_some() && lang.is_typescript() {
                 "proven-typescript-lexical-binding"
             } else if target.is_some() {
                 "proven-top-level-lexical-binding"
@@ -607,6 +638,22 @@ pub(super) fn annotate(
     }
 }
 
+/// Distinct spans not contained in another span, in source order.
+fn maximal_spans(spans: &[Span]) -> Vec<Span> {
+    let mut sorted = spans.to_vec();
+    sorted.sort_by_key(|span| (span.start_byte, std::cmp::Reverse(span.end_byte)));
+    let mut maximal: Vec<Span> = Vec::new();
+    for span in sorted {
+        if maximal.last().is_some_and(|last| {
+            last.start_byte <= span.start_byte && span.end_byte <= last.end_byte
+        }) {
+            continue;
+        }
+        maximal.push(span);
+    }
+    maximal
+}
+
 fn walk<'tree>(node: TsNode<'tree>, nodes: &mut Vec<TsNode<'tree>>) {
     nodes.push(node);
     let mut cursor = node.walk();
@@ -616,13 +663,17 @@ fn walk<'tree>(node: TsNode<'tree>, nodes: &mut Vec<TsNode<'tree>>) {
 }
 
 fn owner(node: TsNode<'_>, out: &BuildOutput, module: usize) -> usize {
+    owner_of_range(node.start_byte(), node.end_byte(), out, module)
+}
+
+fn owner_of_range(start: usize, end: usize, out: &BuildOutput, module: usize) -> usize {
     out.nodes
         .iter()
         .enumerate()
         .filter(|(_, candidate)| {
             candidate.kind == NodeKind::Function
-                && candidate.span.start_byte <= node.start_byte()
-                && candidate.span.end_byte >= node.end_byte()
+                && candidate.span.start_byte <= start
+                && candidate.span.end_byte >= end
         })
         .min_by_key(|(_, candidate)| candidate.span.end_byte - candidate.span.start_byte)
         .map_or(module, |(index, _)| index)

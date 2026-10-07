@@ -1,0 +1,792 @@
+{
+  "cases": [
+    {
+      "expected": {
+        "category": "wrong_overload",
+        "failed_step": "s1",
+        "outcome": "refused"
+      },
+      "id": "wrong-overload-by-fingerprint",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::Widget::render": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::Widget::render"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": false,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": "wrong_overload",
+        "failed_step": "s1",
+        "outcome": "refused"
+      },
+      "id": "wrong-overload-by-delta",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::Widget::render": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::Widget::render"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": false,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": null,
+        "failed_step": null,
+        "outcome": "committed"
+      },
+      "id": "correct-overload-applies",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::Widget::render@Render": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::Widget::render@Render"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": true,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": "wrong_overload",
+        "failed_step": "s1",
+        "outcome": "refused"
+      },
+      "id": "identical-bodies-wrong-by-fingerprint",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::Widget::render": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::Widget::render"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": false,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": "wrong_overload",
+        "failed_step": "s1",
+        "outcome": "refused"
+      },
+      "id": "identical-bodies-wrong-by-delta",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::Widget::render": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::Widget::render"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": false,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": null,
+        "failed_step": null,
+        "outcome": "committed"
+      },
+      "id": "identical-bodies-correct-applies",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::Widget::render@Render": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::Widget::render@Render"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": true,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": "stale_input",
+        "failed_step": "s1",
+        "outcome": "refused"
+      },
+      "id": "stale-baseline",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::alpha": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::alpha"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": true,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": "unexpected_edge",
+        "failed_step": "s1",
+        "outcome": "refused"
+      },
+      "id": "unexpected-edge-refused",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::alpha": "Function"
+            },
+            "edges": {
+              "added": [
+                [
+                  "crate::lib::alpha",
+                  "crate::lib::helper",
+                  "Calls"
+                ]
+              ],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::alpha"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": false,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": null,
+        "failed_step": null,
+        "outcome": "committed"
+      },
+      "id": "declared-edge-applies",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::alpha": "Function"
+            },
+            "edges": {
+              "added": [
+                [
+                  "crate::lib::alpha",
+                  "crate::lib::helper",
+                  "Calls"
+                ]
+              ],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::alpha"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": true,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": "delta_mismatch",
+        "failed_step": "s1",
+        "outcome": "refused"
+      },
+      "id": "declared-extra-change-refused",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::alpha": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::alpha"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": false,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": null,
+        "failed_step": null,
+        "outcome": "committed"
+      },
+      "id": "no-op-replacement-applies",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {},
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [],
+            "nodes": {
+              "added": [],
+              "changed": [],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": true,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": "insufficient_evidence",
+        "failed_step": "s1",
+        "outcome": "refused"
+      },
+      "id": "insufficient-missing-baseline",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::alpha": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::alpha"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": true,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": "insufficient_evidence",
+        "failed_step": "s1",
+        "outcome": "refused"
+      },
+      "id": "insufficient-missing-edge-delta",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::alpha": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::alpha"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": true,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": "insufficient_evidence",
+        "failed_step": "s1",
+        "outcome": "refused"
+      },
+      "id": "insufficient-text-edit-in-verified-step",
+      "steps": [
+        {
+          "delta_probed": false,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": "insufficient_evidence",
+        "failed_step": "s1",
+        "outcome": "refused"
+      },
+      "id": "insufficient-unsupported-edit-kind",
+      "steps": [
+        {
+          "delta_probed": false,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": null,
+        "failed_step": null,
+        "outcome": "committed-uncertified"
+      },
+      "id": "uncertified-plan-runs-as-before",
+      "steps": [
+        {
+          "delta_probed": false,
+          "has_verify": false,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": "delta_mismatch",
+        "failed_step": "s2",
+        "outcome": "refused"
+      },
+      "id": "second-step-refused-rolls-back",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::alpha": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::alpha"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": true,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        },
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::lib::beta": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::lib"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::lib::beta"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": false,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s2"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "[s2] passed \u2014 0 check(s)",
+          ""
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": null,
+        "failed_step": null,
+        "outcome": "committed"
+      },
+      "id": "python-correct-applies",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::app::alpha": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::app"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::app::alpha"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": true,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    },
+    {
+      "expected": {
+        "category": "stale_input",
+        "failed_step": "s1",
+        "outcome": "refused"
+      },
+      "id": "python-stale-refused",
+      "steps": [
+        {
+          "actual": {
+            "changed_kinds": {
+              "crate::app::alpha": "Function"
+            },
+            "edges": {
+              "added": [],
+              "removed": []
+            },
+            "modules_changed_excluded": [
+              "crate::app"
+            ],
+            "nodes": {
+              "added": [],
+              "changed": [
+                "crate::app::alpha"
+              ],
+              "removed": []
+            }
+          },
+          "declared_equals_actual": true,
+          "delta_probed": true,
+          "has_verify": true,
+          "step": "s1"
+        }
+      ],
+      "today_unverified": {
+        "exit": 0,
+        "head": [
+          "[s1] passed \u2014 0 check(s)",
+          "",
+          "report (dry run, not written to disk):"
+        ]
+      }
+    }
+  ]
+}

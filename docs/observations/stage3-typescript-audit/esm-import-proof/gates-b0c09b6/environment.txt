@@ -1,0 +1,10 @@
+candidate: b0c09b6b464368fa3330803d2d7199a0e294212d
+tracked_modified_files: 0
+note: staged-only additions are observation evidence under docs/; no Rust/JS change after this commit
+Linux penguin 6.6.143-09589-gf9e106250941 #1 SMP PREEMPT_DYNAMIC Wed, 26 Aug 2026 12:08:14 -0700 x86_64 GNU/Linux
+nproc: 2
+Mem:            2747        1160         958           0         629        1587
+rustc 1.97.1 (8bab26f4f 2026-07-14)
+cargo 1.97.1 (c980f4866 2026-06-30)
+v22.23.1
+CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 CARGO_TARGET_DIR=/mnt/chromeos/removable/MOVESPEED/aetherforge-target

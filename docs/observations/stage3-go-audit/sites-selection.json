@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "inputs": {
+    "quotas_json_sha256": "e144f27d544b7aa6facdca5b388156535b4701d1d614002d1dbb1bc88de1e286",
+    "enumerator_sha256": "52152b57d9c1b2d4ef7cc03925590f319ade4d5eb4f8a54b7ecae0b0ebae3090",
+    "corpus_manifest_sha256": "5873656e02c6d250ff4c5a96ec6d69c44562ed03c253df048faf34229c588ce5"
+  },
+  "round": 0,
+  "selected_file": "sites-initial-140.json",
+  "selected_file_sha256": "03bd65dee0590ce6a0ef69907e7e08b1572eb0305eb0298fa108f401df47b009",
+  "count": 140,
+  "note": "Generated before any labeling. No labels and no Girder output exist."
+}

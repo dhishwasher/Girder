@@ -1,0 +1,462 @@
+{
+  "schema_version": 1,
+  "name": "typescript-structural-validation-v1",
+  "meaning": "Qualified validation cases for the TypeScript structural callable member identity policy v1. Separate from docs/dispatch-corpus.json: never counted in its 49-case denominator, its fixed-cohort scores, or any 'dispatch-corpus improvement' claim. Expected test classes are language-semantic ground truth using the frozen classification policy's vocabulary; predicted origin paths are policy predictions to check after implementation, not observations.",
+  "fixtures_root": "fixtures/typescript-structural-validation/v1",
+  "frozen_inputs": {
+    "docs/dispatch-corpus.json": "9e3208a8f3fdc8faaee55cece63c1b5e25526322ebebbba915652f4f526ccd0a",
+    "fixtures/dispatch-corpus/typescript/structural-object-literal/app.test.ts": "5b85efacdb41b4a02b9b306a58339e57f4dc3950d48210d7bed1dc01af346e1d"
+  },
+  "origin_resolution_values": {
+    "unique": "exactly one executable Function node matches; test classes are scored",
+    "ambiguous": "more than one Function node matches; the case is a resolution failure by design and no test is scored",
+    "no-identity": "zero Function nodes match because the member form receives no identity under the policy",
+    "no-executable-target": "the qualifier names a declaration-only signature; zero Function nodes may match, and a Field/Type/signature node must never be accepted as an origin"
+  },
+  "cases": [
+    {
+      "id": "ts-structural-v1-arrow-alice",
+      "language": "typescript",
+      "fixture_dir": "object-literal-arrow",
+      "fixture_sha256": "5b85efacdb41b4a02b9b306a58339e57f4dc3950d48210d7bed1dc01af346e1d",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "alice::@object"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::alice::@object::name",
+      "tests": [
+        {
+          "id": "test_alice",
+          "framework_id": "test_alice",
+          "expected": "may"
+        },
+        {
+          "id": "test_bob",
+          "framework_id": "test_bob",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "Byte-identical copy of the frozen typescript-structural-object-literal fixture, qualified to alice's member. Labels follow the frozen typescript-structural-class-no-implements case (same announce(n: Named) shape, qualifier Alice, may/may): both object-literal members are structurally viable targets of n.name() regardless of which object a test passes.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-arrow-bob",
+      "language": "typescript",
+      "fixture_dir": "object-literal-arrow",
+      "fixture_sha256": "5b85efacdb41b4a02b9b306a58339e57f4dc3950d48210d7bed1dc01af346e1d",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "bob::@object"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::bob::@object::name",
+      "tests": [
+        {
+          "id": "test_alice",
+          "framework_id": "test_alice",
+          "expected": "may"
+        },
+        {
+          "id": "test_bob",
+          "framework_id": "test_bob",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "Symmetric to the alice case; proves the two members are distinct origins, not one flattened name.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-arrow-interface-signature",
+      "language": "typescript",
+      "fixture_dir": "object-literal-arrow",
+      "fixture_sha256": "5b85efacdb41b4a02b9b306a58339e57f4dc3950d48210d7bed1dc01af346e1d",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "Named"
+      },
+      "expected_origin_resolution": "no-executable-target",
+      "predicted_origin_path": null,
+      "tests": [],
+      "policy_row": "Policy rule D1 (declaration-only signatures)",
+      "rationale": "Named.name() is an interface method_signature: a type-level declaration with no body and no runtime value. It must never resolve to an executable origin or a proof target.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-function-expression-alice",
+      "language": "typescript",
+      "fixture_dir": "function-expression",
+      "fixture_sha256": "14c8fee7cf09c24480edd5b62a642bc24c4f699a06f3b9efeba3970918289b43",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "alice::@object"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::alice::@object::name",
+      "tests": [
+        {
+          "id": "test_alice",
+          "framework_id": "test_alice",
+          "expected": "may"
+        },
+        {
+          "id": "test_bob",
+          "framework_id": "test_bob",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "Same shape as the arrow case with `name: function () {}` members; identity must not depend on member form.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-method-shorthand-alice",
+      "language": "typescript",
+      "fixture_dir": "method-shorthand",
+      "fixture_sha256": "0db34350f100828d70aa72775a9c02bd94a517b7caa9a5dc2bcb5ef52518b27d",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "alice::@object"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::alice::@object::name",
+      "tests": [
+        {
+          "id": "test_alice",
+          "framework_id": "test_alice",
+          "expected": "may"
+        },
+        {
+          "id": "test_bob",
+          "framework_id": "test_bob",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "Shorthand `name() {}` members. Read-only inspection of the current extractor shows both currently flatten to crate::app.test::name (duplicate path); this case requires distinct owner-qualified identities.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-mixed-forms-carol",
+      "language": "typescript",
+      "fixture_dir": "mixed-forms",
+      "fixture_sha256": "c29d479eb960e8cc29e919ce136e2808190f60255a7de021d37e588f92103342",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "carol::@object"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::carol::@object::name",
+      "tests": [
+        {
+          "id": "test_alice",
+          "framework_id": "test_alice",
+          "expected": "may"
+        },
+        {
+          "id": "test_bob",
+          "framework_id": "test_bob",
+          "expected": "may"
+        },
+        {
+          "id": "test_carol",
+          "framework_id": "test_carol",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "Arrow, shorthand, and function-expression members of three Named-shaped objects; carol's member is a structurally viable target of n.name() from every test.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-owner-scope-ambiguous",
+      "language": "typescript",
+      "fixture_dir": "owner-scope",
+      "fixture_sha256": "646eaee3df23dca5e9d01bdd754ed37e9a350ac55e09833aa055bdd8299f0405",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "alice::@object"
+      },
+      "expected_origin_resolution": "ambiguous",
+      "predicted_origin_path": null,
+      "predicted_candidates": [
+        "crate::app.test::makeA::alice::@object::name",
+        "crate::app.test::makeB::alice::@object::name"
+      ],
+      "tests": [],
+      "policy_row": "Policy rule R3 (ambiguous origins fail closed)",
+      "rationale": "Two distinct `alice` bindings in different function scopes. The qualifier matches both by substring; the scorer must report ambiguity, never pick one.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-owner-scope-makeA",
+      "language": "typescript",
+      "fixture_dir": "owner-scope",
+      "fixture_sha256": "646eaee3df23dca5e9d01bdd754ed37e9a350ac55e09833aa055bdd8299f0405",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "makeA::alice::@object"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::makeA::alice::@object::name",
+      "tests": [
+        {
+          "id": "test_a",
+          "framework_id": "test_a",
+          "expected": "may"
+        },
+        {
+          "id": "test_b",
+          "framework_id": "test_b",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "Fully qualified owner path disambiguates. Both members flow to announce(n: Named); each is a structurally viable target of n.name() for both tests.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-direct-member-call",
+      "language": "typescript",
+      "fixture_dir": "direct-member-call",
+      "fixture_sha256": "9a58d9a4c06f1c72a65c7ad270b3c0ea123a20405b98b84976237699d3dae676",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "alice::@object"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::alice::@object::name",
+      "tests": [
+        {
+          "id": "test_direct",
+          "framework_id": "test_direct",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "TypeScript Must: proven lexical binding/concrete implementation without viable structural/overload alternatives",
+      "rationale": "Ground truth from language semantics: alice is a const (immutable binding) initialized to a literal whose `name` member is never written, deleted, or escaped, so alice.name() can only call this member. Structural-member policy v1 authorizes no Must proof; an Unknown answer is conservative, not an error.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-mutated-member",
+      "language": "typescript",
+      "fixture_dir": "mutated-member",
+      "fixture_sha256": "edf0ef94192550e258afaeb3e3ca2ff38b295d25f4664cd1ae3ab4b10b610302",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "alice::@object"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::alice::@object::name",
+      "tests": [
+        {
+          "id": "test_mutated",
+          "framework_id": "test_mutated",
+          "expected": "unknown"
+        }
+      ],
+      "policy_row": "TypeScript Unknown: unresolved declarations/runtime code",
+      "rationale": "alice.name is overwritten by an owner-less arrow before the call; the test asserts 'mutated', so the literal member is dynamically not called. The slot's candidate set includes a function with no identity, so completeness is unproven: Unknown. Must or May on the literal member would be an overclaim (Must is runtime-disproved).",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-unrelated-member",
+      "language": "typescript",
+      "fixture_dir": "unrelated-member",
+      "fixture_sha256": "825b560ba3e1d0caaa3f7c7e37d799a58b70b077f939e011d84abc6f524135ad",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "title",
+        "qualifier": "dave::@object"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::dave::@object::title",
+      "tests": [
+        {
+          "id": "test_alice",
+          "framework_id": "test_alice",
+          "expected": "excluded"
+        }
+      ],
+      "policy_row": "N/A (true negative)",
+      "rationale": "No `.title` access or call exists anywhere in the fixture; test_alice cannot reach dave.title directly or transitively.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-spread-override-alice",
+      "language": "typescript",
+      "fixture_dir": "spread-override",
+      "fixture_sha256": "b9aae1d0f3d8d75a672d667ca35b6ab9077a81d08e9a517090a5d8204c47a2fa",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "alice::@object"
+      },
+      "expected_origin_resolution": "no-identity",
+      "predicted_origin_path": null,
+      "tests": [],
+      "policy_row": "Policy rule U6 (spread refuses the literal)",
+      "rationale": "alice's literal contains a spread after its own `name`; at runtime base's name wins (the test asserts 'base'). The literal's members receive no identity, so the qualified origin resolves to nothing.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-spread-override-base",
+      "language": "typescript",
+      "fixture_dir": "spread-override",
+      "fixture_sha256": "b9aae1d0f3d8d75a672d667ca35b6ab9077a81d08e9a517090a5d8204c47a2fa",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "base::@object"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::base::@object::name",
+      "tests": [
+        {
+          "id": "test_alice",
+          "framework_id": "test_alice",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "base.name is a structurally viable target of n.name() (and is the one actually executed). Other candidates (alice's refused literal) are an Unknown boundary; per the classification policy May may hold one known candidate plus an Unknown boundary.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-property-signature-interface",
+      "language": "typescript",
+      "fixture_dir": "property-signature-interface",
+      "fixture_sha256": "af3fefb518e5b44eed76d7fe9326d1171ffd7d4b243eb2dd26f20118668a0ec9",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "Named"
+      },
+      "expected_origin_resolution": "no-executable-target",
+      "predicted_origin_path": null,
+      "tests": [],
+      "policy_row": "Policy rule D1 (declaration-only signatures)",
+      "rationale": "`name: () => string` in an interface is a function-typed property signature. Read-only inspection shows the extractor already emits it as a Field node Named::name; that node is declaration-only and must never be accepted as an executable origin or proof target.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-property-signature-alice",
+      "language": "typescript",
+      "fixture_dir": "property-signature-interface",
+      "fixture_sha256": "af3fefb518e5b44eed76d7fe9326d1171ffd7d4b243eb2dd26f20118668a0ec9",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "name",
+        "qualifier": "alice::@object"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::alice::@object::name",
+      "tests": [
+        {
+          "id": "test_alice",
+          "framework_id": "test_alice",
+          "expected": "may"
+        },
+        {
+          "id": "test_bob",
+          "framework_id": "test_bob",
+          "expected": "may"
+        }
+      ],
+      "policy_row": "TypeScript May: structural receivers, unions, overload alternatives",
+      "rationale": "Same as the arrow case; the interface's property signature must not displace or alias the object members.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-refused-subtree-reachability",
+      "language": "typescript",
+      "fixture_dir": "refused-subtree-reachability",
+      "fixture_sha256": "214e94e0de3ff67d4775f1f9bd430b30109bc1da1b5fe8001eae5fa2965e518d",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "target"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::target",
+      "tests": [
+        {
+          "id": "test_host",
+          "framework_id": "test_host",
+          "expected": "must"
+        }
+      ],
+      "policy_row": "TypeScript Must: proven lexical binding/concrete implementation without viable structural/overload alternatives",
+      "rationale": "Ground truth from language semantics: test_host calls host(), whose let-owned literal member run is the only value cfg.run can hold (cfg is never reassigned), run calls the lexically unique relay(), and relay calls the lexically unique target(). The literal is refused (U2 and K1), so relay gets no identity (T1) and the call target() inside it must be kept as Unknown evidence on host under a refused-subtree boundary (B1). Must would be exact; Unknown is conservative; `excluded` is the unsafe exclusion that B1 exists to prevent.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    },
+    {
+      "id": "ts-structural-v1-refused-subtree-unrelated",
+      "language": "typescript",
+      "fixture_dir": "refused-subtree-reachability",
+      "fixture_sha256": "214e94e0de3ff67d4775f1f9bd430b30109bc1da1b5fe8001eae5fa2965e518d",
+      "origin": {
+        "file": "app.test.ts",
+        "symbol": "target"
+      },
+      "expected_origin_resolution": "unique",
+      "predicted_origin_path": "crate::app.test::target",
+      "tests": [
+        {
+          "id": "test_unrelated",
+          "framework_id": "test_unrelated",
+          "expected": "excluded"
+        }
+      ],
+      "policy_row": "N/A (true negative)",
+      "rationale": "True negative in the same fixture: test_unrelated calls unrelated(), which calls nothing. A refused-subtree boundary on host must not be widened into a claim that test_unrelated reaches target; Unknown is conservative, Must or May would be an overclaim.",
+      "assumptions": [
+        "indexed-source-snapshot"
+      ]
+    }
+  ],
+  "correction": "freeze-correction-1: adds the refused-subtree reachability fixture (two cases). Prior cases unchanged."
+}

@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "cargo",
+    "build",
+    "--locked",
+    "--offline",
+    "-p",
+    "aether-app",
+    "--bin",
+    "girder",
+    "-j1"
+  ],
+  "candidate": "c209a2248a5a33c45d2428193dbd4ad3ea5b2aa3",
+  "environment": {
+    "CARGO_HOME": "/mnt/chromeos/removable/MOVESPEED/.cargo",
+    "RUSTUP_HOME": "/mnt/chromeos/removable/MOVESPEED/.rustup",
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_TARGET_DIR": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target"
+  },
+  "status": "finished",
+  "exit_status": 0,
+  "seconds": 598.15,
+  "binary_sha256": "469f25194a826ff7aacb1b4240c8307c26f35cf0ff60c422bdf7cd6b8e26a1be"
+}

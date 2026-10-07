@@ -1,0 +1,4 @@
+I'll classify call sites 80–99 from the audit snapshot and the Go sources, then return the JSON array.The snapshot lists selector, defer, and package-qualified sites. I'll read each callee's declaration in the Go tree before assigning a class.Several sites are methods or package-qualified calls. I'll confirm each receiver type, import path, and whether the function body is in this tree.Memory flush started.
+Memory flush completed.
+
+grok_exit=0

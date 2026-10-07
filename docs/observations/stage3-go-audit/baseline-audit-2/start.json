@@ -1,0 +1,8 @@
+{
+  "binary_revision": "pre-go-release-80f3cde",
+  "binary_sha256": "db8d59ac2fd083c31f36932619784e6208b68d314fa14cb8eaa079d430ff5619",
+  "runner_sha256": "3ca8244fa49c9a43a3339159681a1a86d2831934cc8383dbb1e776734d33da9b",
+  "labels_final_sha256": "1562c9700c01a4eb12a5e3dea9e67df1f7dbcf50a25a56a6548f604fe62619e9",
+  "git_head": "c5d101e7fab2e08a3a852794ff273eb84a12e548",
+  "status": "started"
+}

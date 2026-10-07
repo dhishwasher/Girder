@@ -1,0 +1,48 @@
+{
+  "purpose": "Temporary source mutations restoring each reviewed defect of 0c9db9b (and one B1 span defect), reverted and diff-verified afterwards; run on the 230418e working tree with cargo test -p aether-builder -j1 --test typescript_structural_members.",
+  "mutations": [
+    {
+      "mutation": "c1-no-class-field-recursion",
+      "description": "class-field arrow body not recursed (0c9db9b behaviour)",
+      "passed": 11,
+      "failed": 1,
+      "failing_tests": [
+        "class_field_arrow_body_is_an_ordinary_function_scope"
+      ],
+      "caught": true
+    },
+    {
+      "mutation": "c2-prefix-pruning",
+      "description": "R3 pruning by path prefix (0c9db9b behaviour)",
+      "passed": 11,
+      "failed": 1,
+      "failing_tests": [
+        "r3_pruning_is_lexical_not_by_path_prefix"
+      ],
+      "caught": true
+    },
+    {
+      "mutation": "c3-shorthand-plain",
+      "description": "shorthand property accepted as a plain key (0c9db9b behaviour)",
+      "passed": 11,
+      "failed": 1,
+      "failing_tests": [
+        "k1_shorthand_property_refuses_the_whole_literal"
+      ],
+      "caught": true
+    },
+    {
+      "mutation": "c4-short-b1-site",
+      "description": "B1 boundary site one byte short of the refused subtree",
+      "passed": 9,
+      "failed": 3,
+      "failing_tests": [
+        "class_field_arrow_body_is_an_ordinary_function_scope",
+        "frozen_structural_member_identity_contract",
+        "k1_shorthand_property_refuses_the_whole_literal"
+      ],
+      "caught": true
+    }
+  ],
+  "all_caught": true
+}

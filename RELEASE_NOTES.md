@@ -1,3 +1,27 @@
+# Girder 0.4.0
+
+70 commits since 0.3.3, written from `git log v0.3.3..HEAD`. Every item below has committed
+evidence under `docs/observations/` and a passing CI run; limits are stated, not omitted.
+
+- **TypeScript ESM named-import proof.** Relative ESM named imports are proven Must only when the
+  import environment is verified; anything else stays Unknown. The watched MCP and ingestion routes
+  track the proof environment (non-source events, directory deletion, symlinks).
+- **Go same-package direct-call proof.** Direct calls within a package are classified Must with a
+  lost-evidence safety net; generic and `go`/`defer` calls are refused or left Unknown. Audited against
+  a pinned Go 1.27.1 standard-library snapshot.
+- **`girder setup` for Claude Code, Codex and Cursor.** Installs the MCP entry and an "orient before
+  reading" instruction through each client's native mechanism, with exact uninstall. Cursor's pre-read
+  hook is not built (its hooks cannot add context). The published `npx ... setup` path was not exercised
+  before this release.
+- **Verified edits.** A Plan Format v2 `replace_node` step may carry a `verify` block (a path-bound
+  node fingerprint plus the declared node and edge delta). Girder checks it on a disposable candidate
+  and refuses wrong overloads, ambiguity, stale input and unexpected changes, leaving source and graph
+  untouched. `girder context` now prints each node's `fingerprint`. Certified scope is Rust and Python
+  `replace_node` only; plans without `verify` run as before and are reported uncertified.
+
+Not changed: the advisory status of coverage output and the conservative `test-impact` fallback.
+`--source-only` output is unchanged.
+
 # Girder 0.3.3
 
 License-only patch release: the source, npm package, and release assets are

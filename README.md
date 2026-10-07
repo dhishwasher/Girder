@@ -16,7 +16,7 @@ npx -y girder-mcp setup
 That one command detects and configures Claude Code, Codex, and Cursor.
 
 [![CI](https://github.com/dhishwasher/Girder/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dhishwasher/Girder/actions/workflows/ci.yml)
-Latest stable release: [v0.3.3](https://github.com/dhishwasher/Girder/releases/tag/v0.3.3) (Apache-2.0).
+Latest stable release: [v0.4.0](https://github.com/dhishwasher/Girder/releases/tag/v0.4.0) (Apache-2.0).
 Contributions: see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 **Measured output bytes, not tokens (no tokenizer was run):**
@@ -193,13 +193,40 @@ documented config and installs nested `PreToolUse` and `PostToolUse` hooks for
 Claude Code and Codex. Pre hooks cover structured `Read`, `read_file`, and
 `mcp__.*__read_file` events; post hooks cover Claude's
 `Edit|Write|NotebookEdit` and Codex's `apply_patch|Edit|Write` edit names.
-Shell commands are intentionally not parsed. Cursor is MCP-only: its documented
-post-edit hook input and output semantics do not establish the standalone
-additional-context protocol used by this launcher, so setup does not register a
-hook there. A generic MCP client has no universal config path and is reported as
-not detected. Setup never writes outside your home directory. Existing foreign
+Shell commands are intentionally not parsed. Cursor documents hooks, but no
+pre-read hook can add advisory context without blocking (`preToolUse` and
+`beforeReadFile` only allow, deny, or rewrite input; only `postToolUse` and
+`sessionStart` return `additional_context`, after the fact), so setup registers
+MCP and the project rule for Cursor but no hook. A generic MCP client has no
+universal config path and is reported as not detected. Setup never writes outside your home directory. Existing foreign
 `girder` entries remain untouched, including with `--force`; `girder setup
 --uninstall` removes only setup-owned changes.
+
+**The orient-first instruction.** Besides MCP, setup installs one short shared
+instruction through each client's own mechanism, so the agent calls Girder's
+`orient` before broad reads or grep, says so when Girder is unsure, and falls back
+to reading source rather than guessing:
+
+| Client | Instruction location | Notes |
+| --- | --- | --- |
+| Claude Code | a delimited block in `~/.claude/CLAUDE.md` | Claude Code concatenates user and project `CLAUDE.md` files into context |
+| Codex | a delimited block in `$CODEX_HOME/AGENTS.md` (default `~/.codex/AGENTS.md`) | skipped and reported if a non-empty `AGENTS.override.md` exists, because Codex then ignores `AGENTS.md` |
+| Cursor | `.cursor/rules/girder-orient.mdc` in the current project, only with `girder setup --project` | project rules are `.mdc` files with `alwaysApply: true`; Cursor documents no file path for user rules, so none is written |
+
+The block is marked and recorded in `girder-setup-state.json`: re-running setup
+changes nothing, `--uninstall` restores the file exactly, an edited block is left
+alone, and `--no-instructions` skips this step. The formats above were checked
+against each client's own documentation on 2026-10-06; sources and quotes are in
+[`docs/observations/stage4-clients/`](docs/observations/stage4-clients/doc-verification.md).
+
+**Which form installs what.** `girder setup` from a built or installed binary
+installs MCP, hooks, and the instruction, and writes an MCP entry that launches
+that installed binary (`<path-to-girder> mcp .`), so clients run local Girder with
+no package download at launch. `npx -y girder-mcp setup` runs the *published*
+package's setup, which installs the instruction only once a release that includes
+it ships; when setup runs from npx's transient cache there is no stable binary path,
+so the entry falls back to the `npx -y girder-mcp .` launcher form and setup says so
+(install Girder, then run `girder setup`, to switch to the local binary).
 
 The packaged hook launcher forwards each event to the pinned native `girder hook`
 executable and fails open on errors. Only standalone `PreToolUse` JSON is
@@ -211,8 +238,17 @@ last analyzed version of changed files. See the [setup and client path
 guide](./docs/setup.md) for config paths, ownership, and the manual JSON
 fallback.
 
-For clients setup cannot detect, add this entry to their documented MCP config
-manually:
+For clients setup cannot detect, or to do it by hand, add the entry to the
+client's documented MCP config. Placement per client:
+
+| Client | Where | Format |
+| --- | --- | --- |
+| Claude Code | project `.mcp.json` or user `~/.claude.json` | JSON `mcpServers.girder` (below) |
+| Cursor | project `.cursor/mcp.json` or user `~/.cursor/mcp.json` | JSON `mcpServers.girder` (below) |
+| Codex | `~/.codex/config.toml` (or a trusted project's `.codex/config.toml`) | TOML table, shown after the JSON |
+| Any other MCP client | that client's documented MCP config | the same `command` and `args` |
+
+JSON form:
 
 ```json
 {
@@ -225,8 +261,18 @@ manually:
 }
 ```
 
+Codex uses a TOML table instead:
+
+```toml
+[mcp_servers.girder]
+command = "npx"
+args = ["-y", "girder-mcp", "."]
+```
+
 With a binary already installed, `"command": "girder", "args": ["mcp", "."]`
-skips npm entirely.
+skips npm entirely. To give any client the instruction by hand, paste the text of
+[`npm/instructions/orient-first.md`](npm/instructions/orient-first.md) into its
+documented instruction file (`CLAUDE.md`, `AGENTS.md`, or a Cursor `.mdc` rule).
 
 Girder 0.2.6 and later can opt into a cached graph generation with
 `girder mcp . --watch` or `npx -y girder-mcp . --watch`. The server keeps
@@ -952,7 +998,7 @@ is the authoritative text.
 
 The previously published v0.3.2 npm package and release binaries remain under
 the BUSL license they shipped with; published releases are immutable. The
-current v0.3.3 npm package and release binaries ship with Apache-2.0.
+current v0.4.0 npm package and release binaries ship with Apache-2.0.
 
 There is no current paid tier, and every shipped tool is ungated: no account
 or license key is required. Anyone who already holds a signed license key from

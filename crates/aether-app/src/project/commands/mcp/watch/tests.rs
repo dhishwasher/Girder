@@ -1,6 +1,8 @@
 use super::*;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+mod esm;
+
 static NEXT: AtomicU64 = AtomicU64::new(0);
 struct Fixture(PathBuf);
 impl Fixture {

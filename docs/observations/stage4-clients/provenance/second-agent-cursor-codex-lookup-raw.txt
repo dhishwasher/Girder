@@ -1,0 +1,97 @@
+Fetching vendor docs now and extracting only what they currently state.Official pages are identified; pulling the full MCP, rules, and hooks docs next.Pulling remaining User Rules, AGENTS.md, hook I/O, and Codex TOML examples from the official pages.## C1. Cursor MCP config
+**URL:** https://cursor.com/docs/mcp  
+**Fetched:** 2026-10-06
+
+- Paths: `"Create `.cursor/mcp.json` in your project for project-specific tools."` / `"Create `~/.cursor/mcp.json` in your home directory for tools available everywhere."`
+- Top-level key + stdio shape:
+```
+{
+  "mcpServers": {
+    "server-name": {
+      "command": "npx",
+      "args": ["-y", "mcp-server"],
+      "env": {
+        "API_KEY": "value"
+      }
+    }
+  }
+}
+```
+- Field table: `"**command** | Yes | Command to start the server executable."` / `"**args** | No | Array of arguments passed to the command"` / `"**env** | No | Environment variables for the server"`  
+  Same table also lists `"**type** | Yes | Server connection type | `"stdio"`"` (examples omit `type`).
+
+**Verdict: CONFIRMED**
+
+## C2. Cursor persistent instructions
+**URL:** https://cursor.com/docs/rules  
+**Fetched:** 2026-10-06
+
+- Project: `"Stored in `.cursor/rules`"` / `"Project rules live in `.cursor/rules` as `.mdc` files"` / `"Project rules must use the `.mdc` extension."` / `"A plain `.md` file in `.cursor/rules` is ignored ... no frontmatter to specify `description` , `globs` , and `alwaysApply`."`
+- Frontmatter: `"the three frontmatter fields interact ... `alwaysApply` ... `description` ... `globs`"` / `"true | — | — | Always included."`
+- AGENTS.md: `"`AGENTS.md` is a simple markdown file ... Place it in your project root as an alternative to `.cursor/rules`"` / `"Cursor supports AGENTS.md in the project root and subdirectories."`
+- User rules: `"User Rules are global preferences defined in **Customize → Rules** that apply across all projects."` File path for user rules: **NOT CONFIRMED**.
+- Also documented: `"Team Rules ... managed from the dashboard."`
+
+**Verdict: PARTIAL** (user-level file path not stated)
+
+## C3. Cursor hooks
+**URL:** https://cursor.com/docs/hooks  
+**Fetched:** 2026-10-06
+
+- Exists. Paths: `"project level ( `<project>/.cursor/hooks.json` ) or in your home directory ( `~/.cursor/hooks.json` )"`
+- Shape: `"Command hooks execute shell scripts that receive JSON input via stdin and return JSON output via stdout."`
+```
+{ "version": 1, "hooks": { "afterFileEdit": [{ "command": "./hooks/format.sh" }] } }
+```
+- Events include `"beforeMCPExecution"` `"beforeReadFile"` `"afterFileEdit"` plus `sessionStart`, `beforeShellExecution`, `preToolUse`, `postToolUse`, …
+- `beforeMCPExecution` stdin: `"tool_name"`, `"tool_input"`, `"mcp_server_name"` plus `"url"`/`"command"`; stdout: `": "allow" | "deny" | "ask"`
+- `beforeReadFile` stdin: `"file_path"`, `"content"`, `"attachments"`; stdout: `": "allow" | "deny"`
+- `afterFileEdit` stdin: `"file_path"`, `"edits": [{ "old_string", "new_string" }]`. Stdout for that event: **NOT CONFIRMED** on that section.
+- Can inject context (not only allow/deny): `"Inject context at session start"` / sessionStart stdout `"additional_context": "<context to add to conversation>"` / postToolUse `"additional_context` | Extra context injected into the conversation after the tool result"`
+
+**Verdict: CONFIRMED** (afterFileEdit stdout not shown)
+
+## X1. Codex MCP config
+**URL:** https://developers.openai.com/codex/mcp  
+**Fetched:** 2026-10-06  
+(GitHub `docs/config.md` only points at the same developers.openai.com pages.)
+
+- `"Codex stores MCP configuration in `config.toml` ... `~/.codex/config.toml` ... project with `.codex/config.toml` (trusted projects only)."`
+- `"Configure each MCP server with a `[mcp_servers.<server-name>]` table"`
+- Keys: `"command (required)"` `"args (optional)"` `"env (optional)"` (also `env_vars`, `cwd`)
+```
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+env_vars = ["LOCAL_TOKEN"]
+
+[mcp_servers.context7.env]
+MY_ENV_VAR = "MY_ENV_VALUE"
+```
+
+**Verdict: CONFIRMED**
+
+## X2. Codex persistent instructions
+**URL:** https://developers.openai.com/codex/guides/agents-md  
+**Fetched:** 2026-10-06
+
+- Global: `"In your Codex home directory (defaults to ~/.codex , unless you set CODEX_HOME ), Codex reads AGENTS.override.md if it exists. Otherwise, Codex reads AGENTS.md."` / `"Create ~/.codex/AGENTS.md"`
+- Project: `"Starting at the project root ... walks down to your current working directory. ... checks for AGENTS.override.md , then AGENTS.md"`
+- Merge: `"Codex concatenates files from the root down, joining them with blank lines. Files closer to your current directory override earlier guidance"`
+- Size: `"stops adding files once the combined size reaches the limit defined by `project_doc_max_bytes` (32 KiB by default)."`
+
+**Verdict: CONFIRMED**
+
+## X3. Codex hooks
+**URL:** https://developers.openai.com/codex/hooks  
+**Fetched:** 2026-10-06
+
+- Documented: `"hooks.json"` and `"inline [hooks] tables inside config.toml"`
+- Paths: `"~/.codex/hooks.json"` `"~/.codex/config.toml"` `"<repo>/.codex/hooks.json"` `"<repo>/.codex/config.toml"`
+- Events: `"PreToolUse , PermissionRequest , PostToolUse , PreCompact , PostCompact , UserPromptSubmit , SubagentStop , Stop"` plus `"SessionStart"` `"SubagentStart"` `"SessionEnd"` `"Interrupt"`
+- Stdin: `"Every command hook receives one JSON object on `stdin`."` shared fields `"session_id"` `"transcript_path"` `"cwd"` `"hook_event_name"` `"model"`
+- Can add context: SessionStart stdout `"additionalContext": "Load the workspace conventions before editing."` / `"That `additionalContext` text is added as extra developer context."` PreToolUse can `"deny"` or `"additionalContext"` without blocking.
+- `notify` is a separate config key (ignored in project config); **not** the hook system.
+
+**Verdict: CONFIRMED**
+grok_exit=0

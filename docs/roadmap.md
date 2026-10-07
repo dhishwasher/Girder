@@ -8,7 +8,7 @@ verified edits.
 
 Every session starts by reading this file and ends by updating it. Execute stages
 in order, with the language dependency in Stage 3 enforced. Commit and push each
-coherent piece separately; do not tag or release. The first program commit is this
+coherent piece separately; do not tag or release (lifted 2026-10-07 by the user's explicit instruction to merge, tag and release 0.4.0). The first program commit is this
 roadmap, before implementation. Freeze a stage's policy before measuring it.
 
 Statuses are **NOT STARTED**, **IN PROGRESS**, **DONE**, and
@@ -258,13 +258,20 @@ Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
 
 ## Stage 3 — Close dispatch holes one language at a time
 
-**Status: IN PROGRESS**. Rust and Python now meet the corrected 100-actual-site
+**Status: DONE** (all four languages, each on its frozen criterion; see the 2026-10-06
+checkpoints). Rust and Python meet the corrected 100-actual-site
 checkpoint, with [committed evidence](observations/stage3-audit-reconciliation/after-observation.md)
 at `a97b2ea`. Their original 52/85-site audits did not satisfy the sample-size
 requirement; those historical observations and the failed first Rust extension
 remain published. Each corrected audit emitted only one Must claim (1/1) and
 99 Unknown claims; this is limited evidence, not general dispatch completeness.
-TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+**TypeScript is DONE** on its frozen criterion (see the 2026-10-06 checkpoint and
+[after-observation](observations/stage3-typescript-audit/esm-import-proof/after-observation.md));
+**Go is DONE** on its frozen criterion (see the 2026-10-06 Go checkpoints and the
+[Go after-observation](observations/stage3-go-audit/after-observation.md)). Dispatch
+completeness is **not** claimed for any language: each result is limited, disclosed
+evidence, and every language keeps Unknown holes (methods, interfaces, package-qualified
+calls, and more).
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
@@ -273,8 +280,8 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | --- | --- | --- | --- |
 | Rust | **DONE — corrected 100-site checkpoint** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) and [retained failed extension](observations/stage3-audit-reconciliation/observation/summary.md) | Stage 2 |
 | Python | **DONE — corrected 100-site checkpoint** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) | Rust trustworthy on a real repository |
-| TypeScript | IN PROGRESS (100-site audit: 0 unsound, 2/2 correct Must, 98 Unknown; dispatch improvement and common gates pending) | [100-site baseline](observations/stage3-typescript-audit/extension/before/observation.md) / [lexical-proof after-audit](observations/stage3-typescript-audit/lexical-bindings/bindings-after-1/observation.md) + [retained false-Must baseline](observations/stage3-typescript-audit/lexical-bindings/before-observation.md) + [unchanged dispatch results](observations/stage3-typescript-audit/lexical-bindings/corpus-observation.md) | Python trustworthy on a real repository |
-| Go | NOT STARTED | none / none | TypeScript trustworthy on a real repository |
+| TypeScript | **DONE — frozen criterion met; CI green at `c78f6c9`** (73/73 ESM contract; corpus 22→23 exact, Must 6/6, 0 unsound; audit 56/44, 0 unsound, Must 3/3; gates on `cb2aa11` and `b0c09b6`) | [100-site baseline](observations/stage3-typescript-audit/extension/before/observation.md) / [structural-identity after-audit](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/observation.md) + [retained false-Must baseline](observations/stage3-typescript-audit/lexical-bindings/before-observation.md) + [unchanged dispatch results](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/dispatch-corpus-scoring.json) + [ESM after-observation](observations/stage3-typescript-audit/esm-import-proof/after-observation.md) | Python trustworthy on a real repository |
+| Go | **DONE — frozen criterion met; CI green at `4b35c52`** (contract 21/21; corpus 25/31, Go 7/7; audit 27/91/0/0, Must 23/23; 401 Must claims verified, 0 violations; gates on `08fcbdc`) | [baseline](observations/stage3-go-audit/baseline-observation.md) / [after](observations/stage3-go-audit/after-observation.md) + [frozen policy](observations/stage3-go-audit/policy.md) + [methodology](observations/stage3-go-audit/methodology.md) | TypeScript trustworthy on a real repository |
 
 Use existing pinned Rust repositories and Click first; pin TypeScript compiler
 and Go standard-library snapshots before their language work. Precommit at
@@ -442,20 +449,21 @@ common gates. **Observation:**
 (historical after-result, not current stage-completion proof).
 **Current completion evidence:** [corrected Rust/Python audits](observations/stage3-audit-reconciliation/after-observation.md)
 include their checkpoint-candidate corpus results and all four passing gates.
-**Blockers for the next language:** TypeScript's unchanged 100-site audit now
-has two correct Must targets and 98 Unknown answers, with zero scored unsound
-answers. Its dispatch-corpus result has not improved, and the structural-object-
-literal origin remains unresolved. The registration identity loss and four
-runtime-demonstrated lexical-binding false Must claims have been repaired and
-measured; the failed baselines remain public.
-**Next:** precommit structural-member extraction and the next dispatch proof
-rules. Preserve the ambiguous/missing-origin failure rather than choosing a
-same-spelled target to make it pass. Re-measure after the next implementation
-and run the common gates before claiming language completion.
+**Blockers for the next stage:** none. Stage 3 is complete for all four languages.
+Carried-forward holes, all disclosed in each language's after-observation: TypeScript and Go
+Must claims are conditional on stated execution assumptions; TypeScript plan projections and
+workspace buffers have no application-level C-3 test; Go package-qualified calls, methods,
+interfaces, and generics remain Unknown, and Go safety-net claims anchor on a file's first
+function rather than the real caller; the retained `typescript-structural-object-literal`
+failure. **Outstanding Stage 2 obligation:** three corpus cases now pass
+(`typescript-direct-cross-file`, `go-direct-cross-file`, `go-closure-captures-direct-call`); each
+needs a harder successor appended in a new versioned corpus file, never by editing the frozen one.
+**Next:** Stage 4 (client-agnostic packaging). Reverify each client's documented formats first.
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 
-**Status: NOT STARTED**
+**Status: DONE** (criterion met on committed evidence and CI green at `2852953`; see the
+2026-10-07 Stage 4 checkpoints)
 
 Build **one shared MCP bundle with per-client adapters**, covering **Claude Code,
 Cursor, and Codex** at minimum. Start with Claude Code because the advisory hook
@@ -481,12 +489,14 @@ adapter keeps this stage incomplete.
 
 **Gate:** isolated per-client install/MCP/instruction smoke checks; advisory-hook
 checks for normal, missing-graph, malformed-input, and hook-failure cases where
-supported; then all common gates. **Observation:** none.
-**Blockers:** preceding stages; formats must be reverified at implementation.
+supported; then all common gates. **Observation:** [stage4-clients/observation.md](observations/stage4-clients/observation.md)
+(formats frozen first in [doc-verification.md](observations/stage4-clients/doc-verification.md)).
+**Blockers:** none; formats were reverified on 2026-10-06 and one adapter step (the Cursor
+hook) is recorded as documented but not built.
 
 ## Stage 5 — Verified edits
 
-**Status: NOT STARTED**
+**Status: DONE** (CI green on `6f7118c`; see the 2026-10-07 Stage 5 DONE checkpoint)
 
 Extend existing graph-addressed edits and journaled projection, not a separate
 editor. The agent names an exact node and baseline fingerprint and declares the
@@ -503,7 +513,7 @@ test execution separately; predicted reachability is not execution evidence.
 without source or graph changes, while the correct-target counterpart succeeds.
 
 **Gate:** wrong-target/correct-target, stale-input, unexpected-edge, and rollback
-checks, then all common gates. **Observation:** none. **Blockers:** preceding stages.
+checks, then all common gates. **Observation:** [stage5-verified-edits](observations/stage5-verified-edits/observation.md). **Blockers:** none.
 
 ## Stage 6 — Recurring comparative measurements
 
@@ -552,6 +562,589 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-07 (release authorized) — merge to main and release 0.4.0
+
+The user explicitly authorized merging, tagging and releasing ("obviously tag release push merge"), lifting the
+no-tag rule above. Plan: bump to 0.4.0 (Cargo.toml, npm/package.json, server.json, READMEs), write RELEASE_NOTES
+from `git log v0.3.3..HEAD`, open a PR, merge only after CI is green on it, then tag `v0.4.0` on the merged
+main commit and verify the release workflow, npm installation and registry as for 0.3.x. Stage 6 remains
+NOT STARTED (pins inspected: the 0.2.6 baseline artifacts exist on the drive; a fresh serial campaign is next).
+
+### 2026-10-07 (Stage 5 DONE) — CI green on the published evidence
+
+CI run 37584566098 passed both jobs on `6f7118c`, the head containing the Stage 5 observation (with binary
+identity, commands and disclosures), gate logs for `300fff7`, and the impact-field assertion. The
+precommitted criterion is met, so **Stage 5 is DONE**. Carried limits: certified scope is `replace_node` on
+Rust/Python; the stale-bytes path relies on an existing non-certified test; impact-list truncation is not
+exercised end to end; `~/.cargo/bin/girder` was stale until reinstalled for Stage 6.
+**Next: Stage 6**, recurring comparisons: freeze versions, SHAs, hashes, adapters, corpus, limits and the
+Girder commit; one serial campaign over three hours; at most one per 30 days.
+
+### 2026-10-07 (Stage 5 measured) — verified edits built; criterion met, DONE pending CI
+
+Certified `replace_node` steps (a `verify` block with path-bound fingerprints and a declared node/edge delta)
+are checked on a disposable candidate before commit: refusal categories insufficient_evidence, ambiguity,
+wrong_overload, stale_input, delta_mismatch, unexpected_edge; projection exactness and incremental-vs-cold
+agreement are enforced. All 19 frozen plans meet their outcome; the wrong-overload plans are refused with the
+whole tree hash-identical and the correct-target plan commits. Nine mutation checks each break a guard test;
+the three fixture-unreachable guards have unit tests. Gates `300fff7` all pass; first candidate `beae7c2`
+failed clippy and is published. Evidence: `docs/observations/stage5-verified-edits/`. Limits: replace_node on
+Rust/Python only, structural delta, no live-agent authoring. Stage 5 is marked DONE only after CI is green on
+the pushed head (recorded next). **Next: Stage 6**, recurring comparisons (needs a frozen pin set and a serial
+campaign over three hours; at most one per 30 days).
+
+### 2026-10-07 (Stage 4 DONE) — CI green on the published evidence
+
+CI run 37570784619 passed both jobs (`fmt · clippy · test`, `windows compiles`) on `2852953`, the head
+containing the corrected Stage 4 observation, smoke report, and final-candidate gate logs. The Stage 4
+criterion (all three adapters install cleanly, expose Girder through MCP, load the shared orient-first
+instruction through their native mechanisms, with committed evidence; README covers all three plus the raw
+MCP JSON fallback; raw `npx` setup preserved) is met on that evidence, so **Stage 4 is DONE**. The
+disclosed limits carry forward: no live model session loaded the instruction, the published `npx ... setup`
+path was not exercised, Cursor's instruction needs `--project` and its hook is documented but not built.
+**Next: Stage 5, verified edits.** Extend the existing Plan Format v2 journaled edits (not a separate
+editor); read the current edit code with `girder` first and freeze the delta and refusal contract before
+implementing.
+
+### 2026-10-07 (Stage 4 corrected) — two review defects fixed; criterion met, DONE pending CI
+
+Candidate `0fc97741` (binary `37739238…`). Detail in the
+[Stage 4 observation](observations/stage4-clients/observation.md); formats frozen in
+[doc-verification.md](observations/stage4-clients/doc-verification.md). Candidate `aa153de` was
+superseded: review found (1) a data-loss bug (a rewritten owned instruction block kept the first install's
+restore text, so uninstall could overwrite later edits; fixed, two regression tests, mutation-proven) and
+(2) an MCP entry that launched `npx -y girder-mcp .` at every client start, against the stage text "Runtime
+uses installed local Girder" (setup now writes `<path-to-girder> mcp .`, falling back to the npx form only
+from npx's transient cache).
+- **Built:** one canonical orient-first instruction installed through each client's native mechanism
+  (Claude Code `~/.claude/CLAUDE.md` block; Codex `$CODEX_HOME/AGENTS.md` block, skipped when a non-empty
+  `AGENTS.override.md` exists; Cursor project rule `.cursor/rules/girder-orient.mdc` with `--project`);
+  README and `docs/setup.md` cover all three clients, the raw MCP JSON/TOML fallback, and per-client
+  placement; raw `npx` setup preserved.
+- **Evidence:** 14 new setup tests (guards mutation-checked); isolated per-client smoke: the written
+  config parses in each client's documented format, the exact configured command answers `initialize` and
+  `tools/list` (7 tools), the real `claude mcp list` (Connected) and `codex mcp list` read the configs;
+  hook cases (normal with the exact documented output shape, missing graph, malformed input, missing binary,
+  failing binary) pass through the installed commands for Claude Code and Codex; all four gates passed (802
+  tests, 0 failed).
+- **Disclosed:** no live model session loaded the instruction (vendor docs plus file and CLI-reader
+  evidence); the published `npx ... setup` path and the npx-cache fallback entry were not launched; Cursor
+  has no CLI here, its instruction needs `--project` (user rules are UI-only) and its hook is documented but
+  not built (no pre-read hook can add context without blocking); Linux only.
+
+Stage 4 is marked DONE only after CI is green on the pushed head (recorded next). Stage 5 follows.
+
+### 2026-10-06 (Stage 4 measured) — client adapters built; criterion met, DONE pending CI
+
+Candidate `aa153de6` (binary `625025fa…`). Detail in the
+[Stage 4 observation](observations/stage4-clients/observation.md); documentation facts were frozen first
+([doc-verification.md](observations/stage4-clients/doc-verification.md), source and date for every format).
+- **Built:** one canonical orient-first instruction (`npm/instructions/orient-first.md`) installed by
+  `girder setup` through each client's native mechanism: a delimited block in `~/.claude/CLAUDE.md`, a block
+  in `$CODEX_HOME/AGENTS.md` (skipped and reported when a non-empty `AGENTS.override.md` exists), and a
+  Cursor project rule `.cursor/rules/girder-orient.mdc` with `--project`. Ownership-tracked, idempotent,
+  exact uninstall; `--no-instructions` opts out. README and `docs/setup.md` cover all three clients and the
+  raw MCP JSON/TOML fallback with per-client placement; raw `npx` setup preserved.
+- **Evidence:** 11 new setup tests (22 existing unchanged; three guards mutation-checked); an isolated
+  per-client smoke (config parses in each client's documented format, instruction present, MCP server
+  answers with all 7 tools, uninstall clean): **Claude Code, Codex, Cursor all PASS**; hook cases (normal,
+  missing graph, malformed input, hook failure) pass through the installed commands for Claude Code and
+  Codex; all four gates passed (799 tests, 0 failed). The first smoke attempt failed one cold-hook check
+  (the hook's 20 ms deadline answers silently) and remains published.
+- **Disclosed:** the `npx -y girder-mcp .` launch path and `npx ... setup` (published package) were not
+  exercised offline; no live client session was driven, so "loads the instruction" rests on vendor docs plus
+  file and protocol checks; Cursor's instruction needs `--project` (user rules are UI-only, no file path is
+  documented) and its hook is documented but not built (no pre-read hook can add context without blocking);
+  Linux only.
+
+Stage 4 is marked DONE only after CI is green on the pushed head (recorded next). Stage 5 follows.
+
+**Superseded** by the 2026-10-07 entry above after review found two defects (see there); its
+artifacts are kept in `observations/stage4-clients/superseded-aa153de/`.
+
+### 2026-10-06 (Go DONE; Stage 3 complete) — CI green on the published evidence
+
+CI run 37563090631 passed both jobs (`fmt · clippy · test`, `windows compiles`) on `4b35c52`, the head
+containing the Go after-observation, the final-candidate gate logs, and the whole-tree Must
+verification. The frozen Go criterion (corpus improvement, nonempty Must precision 1.000, zero
+unsound audit cells) is met on that committed evidence, so **Go is DONE and Stage 3 is complete for
+Rust, Python, TypeScript, and Go.** This is not a claim of dispatch completeness: the disclosed holes
+carry forward, and three corpus cases still owe harder successors. Stage 4 is next.
+
+### 2026-10-06 (Go measured) — after-observation published; criterion met, DONE pending CI
+
+Final candidate `08fcbdc0` (binary `c8fb49e3…`), attempt 4 of 4; every attempt is published. Full
+detail in the [Go after-observation](observations/stage3-go-audit/after-observation.md).
+- **Fixture contract (21):** baseline 10 / 7 / 3 / 1 to **21 / 0 / 0 / 0**; Must 7/7 correct.
+- **Corpus (unchanged, pins verified):** pooled 23 / 33 / 0 / 1 to **25 / 31 / 0 / 1**; Go 5 / 9 to
+  **7 / 7**; Must 6/6 to **8/8**. The pre-written predictions held exactly.
+- **Real audit (118 calls):** baseline 15 / 96 / 0 / **7 unsafe exclusion** to **27 / 91 / 0 / 0**;
+  Girder Must claims 11 to **23, all correct**. A whole-tree check verifies **401 Must claims across the
+  70 files with 0 violations**.
+- **Gates:** all four passed on `08fcbdc` (788 tests, 0 failed; clippy, fmt, npm clean).
+- **A policy departure was found and fixed:** attempts 1 to 3 certified `go`/`defer` statement calls,
+  which frozen G1-a forbids; fixtures and the sampled audit were blind to it. A whole-tree check of the
+  attempt-3 graph found 3 violating Must claims of 404; the direct-operand refusal (mutation-checked)
+  fixes it. Attempt 3, an earlier failed clippy gate (`type_complexity`), and attempt 1's 3 exclusions
+  (generic calls parsed as type conversions) all remain published.
+
+The frozen Go criterion (corpus improvement, nonempty Must precision 1.000, zero unsound audit cells)
+is met on committed evidence, so **Go is marked DONE only after CI is green on the pushed head**
+(recorded next). **Disclosed holes:** 91 audit cells are conservative Unknown; Must recall on labeled
+musts is 23 of 114; Must claims are conditional on compilation; the audit is a non-test stdlib subset
+with no `go.mod`; labels were drafted by a second agent and lead-audited; safety-net Unknown claims
+anchor on the file's first function and do not record the real caller; a speculative scanner for `ERROR`
+regions was removed as untested; the Stage 2 obligation to append harder successors for
+`go-direct-cross-file`, `go-closure-captures-direct-call`, and TypeScript's case is **outstanding**.
+
+### 2026-10-06 (Go baseline) — labels frozen; baseline measured: 3 contract overclaims, 7 audit unsafe exclusions
+
+Labels frozen (`bb2c06a`): 140 sites, 118 actual calls, 22 non-calls, drafted by the
+second agent in 7 batches (3 needed a second attempt, 0 single-agent fallbacks) and
+audited at 100% with 2 disagreements (`unsafe.Sizeof`, a compiler built-in); all 78
+in-snapshot `must` targets mechanically verified. Girder was not run on the tree
+before this commit. [Baseline observation](observations/stage3-go-audit/baseline-observation.md)
+on the unchanged resolver (binary `cbc20b34…`):
+- **Fixture contract (21):** 10 exact / 7 conservative / **3 overclaim** / 1 failed.
+  The three overclaims are same-file Musts the frozen refusals forbid (an `app` /
+  `app_test` identity collision, a build-constrained file, a cgo file); the failure is
+  a call in a package-level initializer that leaves no claim at all.
+- **Corpus (unchanged):** 23 / 33 / 0 / 1, Go 5 exact / 9 conservative.
+- **Audit (118 calls):** 15 exact / 96 conservative / 0 overclaim / **7 unsafe
+  exclusion**; existing Must claims 11/11 correct. The 7 exclusions are calls with no
+  claim (verified for two as duplicate v1/v2 definitions in `encoding/json` and one
+  package-level initializer; four generic-call sites not yet explained).
+
+The Go criterion is **not** met at baseline (7 errors, all lost evidence). Next:
+implement the frozen policy (same-package cross-file proof, tightened same-file path,
+explicit Unknown claims where evidence is now lost), then the after-observation and
+gates. Go remains IN PROGRESS.
+
+### 2026-10-06 (Go started) — snapshot pinned; policy and methodology FROZEN; no labels, no Girder run, no resolver change
+
+Stage 3 Go has begun. Nothing has been measured with Girder and no product code
+changed.
+- **Snapshot** (`a950897`): Go 1.27.1 source, `go1.27.1.src.tar.gz`, 35,109,201
+  bytes, sha256 `4e408abae126d916b6164627193f2c54f0e3ca1312d693b86db45f862ab238b1`
+  (verified against go.dev), in the gitignored `.benchmark-cache/stage3-go-v1/`.
+  Extraction keeps 15 stdlib packages, 70 non-test files, 26,925 lines
+  ([stage3-go-corpus.json](stage3-go-corpus.json), reproduced by
+  `tools/go_audit_inventory.py`). The filter drops `_test.go`, `testdata/`,
+  `vendor/`, and `//go:build ignore` files so the sampled corpus equals what
+  Girder's default walk indexes.
+- **Frozen documents** in `observations/stage3-go-audit/`: [policy.md](observations/stage3-go-audit/policy.md)
+  (same-package direct-call proof; refusals apply to every Go Must, same-file
+  included; predicted corpus result written first: Go 7 exact / 7 conservative,
+  pooled 25 / 31, with `go-direct-cross-file` and `go-closure-captures-direct-call`
+  expected to flip) and [methodology.md](observations/stage3-go-audit/methodology.md)
+  (independent regex enumeration, mechanical selection, call-end-byte matching,
+  100-actual-site continuation rule, labeling fallback). Girder must not be run
+  on the audit tree before the labels are frozen.
+- **Fixtures:** 21 adversarial modules (7 expected Must with `expected_target`,
+  14 expected Unknown), all passing runtime validation under go1.19.8
+  ([manifest sha256 `fc88e266…`](../fixtures/go-direct-call-proof/v1/manifest.json)).
+- **Population and quotas:** 5,589 regex candidates; `bare_cross_file`, the
+  stratum the policy targets, has only 107. The initial 140-site list
+  (`sites-initial-140.json`) is generated and hash-pinned before any labeling.
+- **Worker note:** the second agent (Grok) completes read-only lookup briefs but
+  has repeatedly returned only an opening line on drafting briefs, so the Go
+  tooling was written by the lead; labeling batches have a precommitted two-try
+  fallback to the lead (flagged `single_agent`, audited at 100%).
+
+Not yet done: the context tool and labeling, the baseline observation (fixture
+contract, unchanged 49-case corpus, audit) on the current binary, the resolver
+change, the after-observation, and the Go gates. Deferred holes: package-qualified
+calls (the audit root has no `go.mod`), `may` classification, and everything
+beyond bare same-package calls. Go remains IN PROGRESS.
+
+### 2026-10-06 (TypeScript DONE) — CI green on the published evidence
+
+CI run 37538734394 passed both jobs (`fmt · clippy · test` and `windows
+compiles`) on `c78f6c9`, the head that contains the committed ESM
+after-observation and both gate-log directories. The frozen TypeScript
+criterion (measured corpus improvement, nonempty Must precision 1.000, zero
+unsound audit cells) is met on that committed evidence, so **TypeScript is
+DONE**; the disclosed holes in the entry below and the after-observation carry
+forward. Go is NOT STARTED and is the next language. Housekeeping before Go
+work: no `girder` binary is installed on PATH (only the debug build under the
+MOVESPEED target dir); rerun the release `cargo install` with an explicit
+`--target-dir` while nothing else is building.
+
+### 2026-10-06 (TypeScript measured) — ESM after-observation published; criterion met, DONE pending CI
+
+Binary `cbc20b34…` built at `cb2aa11`; final candidate `b0c09b6` (test-only
+commit after it). Full detail, hashes, and commands in
+[after-observation.md](observations/stage3-typescript-audit/esm-import-proof/after-observation.md).
+- 73-case ESM contract: **73/73 exact, 0 errors** (was 66/73).
+- 49-case corpus (unchanged, pins verified): **23 exact / 33 conservative /
+  0 unsound / 1 failed** (was 22/34/0/1); Must precision **6/6**;
+  `typescript-direct-cross-file` conservative to **exact**. The failed
+  `typescript-structural-object-literal` is retained.
+- 100-call real audit: **56 exact / 44 conservative / 0 unsound, Must 3/3**.
+  Checked site by site: identical to the immediate predecessor (0 differences
+  over 110 rows); against the frozen baseline `extension/before` it is 53/47 to
+  56/44 with three `unknown` to `must` changes (indices 32, 37, 91), all correct.
+- All four common gates passed on both `cb2aa11` and `b0c09b6` (783 tests passed,
+  0 failed, 2 ignored; clippy and fmt clean; npm 29 passed, 2 skipped); logs in
+  `gates-cb2aa11/` and `gates-b0c09b6/`.
+
+The frozen per-language criterion (corpus improvement, nonempty Must precision
+1.000, zero unsound audit cells) is met on committed evidence. **TypeScript is
+marked DONE only after CI is green on the pushed head** (recorded next).
+**Disclosed holes carried forward:** Must claims are conditional on the policy's
+ESM execution assumptions; plan projections and workspace buffers have no
+application-level C-3 test (no route attests a root and accepts non-disk bytes);
+the subdirectory-deletion, symlinked-file, and symlinked-directory tests are not
+mutation-checked; the Stage 2 obligation to append a harder successor to the
+newly passing corpus case (as a new versioned corpus file, never an edit of the
+frozen one) is **outstanding**.
+
+### 2026-10-06 (application tests) — ESM ingestion-route tests added; projection NOT covered
+
+Candidate `ec2b73a` adds four application tests in `watch/tests/esm.rs` (drafted
+by the worker agent, reviewed and applied by the lead):
+- `esm_watch_subdirectory_target_deletion_and_recreate_match_cold`: baseline
+  Must; deleting the whole target directory gives Unknown with watched == cold;
+  recreating it restores Must. Not mutation-checked.
+- `esm_watch_symlinked_target_file_stays_unknown`: passes because the source
+  walk never ingests a symlinked file, so the import has no indexed target. It
+  does **not** exercise the resolver's own symlink-component refusal. Not
+  mutation-checked.
+- `esm_watch_follow_symlinks_keeps_plain_target_unknown`: **mutation-proven**
+  (forcing `set_source_root` despite `follow_symlinks = true` flips the claim
+  to Must and fails the test: `left: Must, right: Unknown`).
+- `esm_stale_environment_candidate_is_not_publishable`: **mutation-proven**
+  (disabling the environment comparison in `Snapshot::matches_candidate`
+  fails the test at its final assertion).
+
+**Not covered, disclosed gaps.** (1) In-memory projections that differ from
+disk: no application route both attests a source root and accepts bytes other
+than a disk read, so no application-level test is reachable; the builder
+contract is pinned by `source_only_and_modified_projection_loads_have_no_import_certificate`
+in `crates/aether-builder/tests/typescript_esm.rs`. (2) A symlinked directory
+component in an import path. Ingestion-route validation is therefore **not**
+complete. A live watch thread also cannot be driven deterministically onto the
+discard path for a stale candidate; the test pins the publication predicate
+instead.
+
+Pre-push local gates on the final tree (not Stage 3 gate evidence): fmt clean;
+clippy exit 0; workspace tests 27 suites, 782 passed, 0 failed, 2 ignored; npm
+29 passed, 0 failed, 2 skipped. Official gate logs must be rerun on the
+committed candidate and saved under `docs/observations/` before any DONE claim.
+
+Next: fresh CLI build and identity, then the unchanged 73-case contract, 49-case
+corpus (watch `typescript-direct-cross-file`) and 100-call audit under a new
+observation name; confirm the pinned TypeScript archives are present first.
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-06 (resolved) — Watch-test failures root-caused to a harness defect; WIP committed
+
+Candidate `b4a59ea`. CI had been red since the tests-only commit `c06201e`
+(3 failing app tests). Root cause for two of them: the shared watch-test
+`Fixture::new()` seeds Rust files (`lib.rs`, `math.rs`, `app.rs`), and the ESM
+tests then add `app.ts`/`app.test.ts`. Both stems are module path `app`, which
+frozen policy rule R-GRAPH-2 refuses (`mixed-language-module-collision`, a case
+in the frozen manifest; the 19-step base dir
+`fixtures/typescript-esm-import-proof/v1-incremental/base` contains `app.ts`
+and `app.test.ts`). The product's `Unknown` was correct; the harness was wrong.
+The tests now use an ESM-only fixture (`esm_fixture()`); **every assertion,
+the manifest, and the policy are unchanged**. The third failure,
+`esm_snapshot_tracks_non_source_proof_inputs`, is fixed by the WIP's product
+change (environment capture and snapshot wiring), now committed together with
+the `typescript_esm/environment.rs` it depends on. rustfmt was applied to the
+WIP files (CI's fmt step would otherwise have failed).
+
+Pre-push local run on the final tree (not Stage 3 gate evidence): `cargo fmt
+--all --check` clean; `cargo clippy --workspace --all-targets -j1 -- -D
+warnings` exit 0; `cargo test --workspace -j1 --quiet` 27 suites, 778 passed,
+0 failed, 2 ignored; `node --test npm/test/*.test.js` 29 passed, 0 failed, 2
+skipped. CI's actual result on the pushed head is checked separately.
+
+Still open for Stage 3 TypeScript acceptance: ingestion-route coverage
+(directory deletion, projections, symlink following), a fresh CLI build, the
+after-contract/corpus/audit measurements, and the four common gates as
+committed observations. TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-06 (latest) — Watch tests ran on the WIP: 12 passed, 2 FAILED
+
+With MOVESPEED remounted, `cargo test -p aether-app -j1 --quiet watch` ran on
+the uncommitted ESM environment WIP: **12 passed, 2 failed, 1 ignored**. Failing,
+both at their first assertion (`watch/tests/esm.rs:84` and `:151`, the baseline
+check before any mutation): `esm_watch_non_source_creation_edit_and_removal_match_cold`
+and `esm_watch_replays_frozen_19_steps_and_serves_mcp`. Each expected `Must`
+and observed `Unknown`; the watched and cold builds agreed, so the resolver
+refuses the app-level fixture. This is the conservative direction, not an
+unsound claim, but the contracts are unmet. The WIP is therefore **not
+committed**. `c06201e` added only these tests (no product code), so whether
+HEAD without the WIP fails the same way is not yet known and will be measured
+on a separate worktree. No application-level acceptance is claimed.
+
+Next: get the refusal reason for the baseline claim, compare against a clean
+`c06201e` worktree, fix product code (never the tests, manifest, or
+expectations), and rerun. TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-06 (later) — Uncommitted ESM environment WIP triaged; watch tests BLOCKED
+
+Uncommitted work left after `c06201e` (not committed, not pushed): a new
+`sync/typescript_esm/environment.rs` (`TypeScriptEsmEnvironment`),
+`GraphBuilder::typescript_environment()` (`resolve_calls` now takes `&mut self`),
+and watched-MCP snapshot wiring in `mcp/watch.rs` and `mcp/watch/snapshot.rs`
+so environment inputs (configs, mocks, hooks) are never filtered as ignored and
+a snapshot publishes only if the builder's environment matches it.
+
+Observed on this working tree: `cargo check -p aether-app --all-targets -j1`
+exit 0, no errors or warnings (32m cold build). `cargo test -p aether-builder
+-j1 --quiet` exit 0, all suites ok (134+2+2+1+7+1+5+12 = 164 tests, including
+the frozen ESM contracts). `cargo test -p aether-app -j1 --quiet watch` did
+**not run**: the compile died with SIGBUS writing to the target dir, and
+`/mnt/chromeos/removable/MOVESPEED` is no longer mounted in the VM (`dmesg`
+also shows `virtio_balloon: Out of puff`). This is an environment blocker, not
+a test result. No application-level acceptance is claimed.
+
+Next: re-share the MOVESPEED drive, rerun the watch tests, then commit the WIP
+as one piece and continue the Stage 3 TypeScript ESM acceptance list below.
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-06 — Conditional ESM resolver implemented; application acceptance pending
+
+Candidate `d0cf78b` passes 164 builder tests, including all 73 frozen ESM
+contracts and the 19-step cold-versus-incremental sequence. The
+[development observation](observations/stage3-typescript-audit/esm-import-proof/development-observation.md)
+publishes the command/log, added harder refusal cases, conservative implementation
+limits, and the retained first failed run (the test helper wrongly indexed an
+excluded mock target; corrected without changing the fixture). These are
+conditional Must certificates under the frozen execution assumptions.
+
+Next: validate watched-MCP and application ingestion routes, including non-source
+events, directory deletion, projections, and configured symlink following;
+build a fresh CLI and measure the after-contract, unchanged 49-case corpus and
+100-call audit; then run the common gates. The existing CLI binary predates
+this resolver. No application-level acceptance or new common gate is claimed.
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-05 — ESM cold CLI baseline measured (historical)
+
+The [frozen 73-case contract baseline](observations/stage3-typescript-audit/esm-import-proof/before-observation.md)
+has 66 exact refusals and seven conservative misses: every marked call is
+explicit Unknown with no target. All expected target declarations were found;
+there are no missing marked claims or command errors. The freshly rebuilt
+candidate `c209a22` passed its serial offline build; the measurement runner's
+nine unit tests passed. All frozen pins were checked, and raw outputs and
+the failed contract remain published. No ESM product implementation or new
+language gate has run. Next: implement the frozen policy, including snapshot
+identity and invalidation, then measure cold/incremental/watched-MCP equality,
+ingestion routes, the unchanged dispatch corpus and real audit, and common
+gates. TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-03 — ESM named-import proof policy v1 frozen (historical)
+
+The [bounded policy](observations/stage3-typescript-audit/esm-import-proof/policy.md)
+is frozen after independent soundness review and correction of the acceptance
+count to all 73 manifest cases. The manifest hash is
+`daa7310248f8e2adc3bdbbae340a3301dcca6b18983ca29ef3c6738bb97b94cd`.
+Local preimplementation checks passed: 67 runnable cases, 6 explicit skips,
+and 19 incremental runtime steps. Its Must claims are conditional on the
+recorded ESM execution and no-unmodeled-hook assumptions. No product code or
+new Girder measurement exists yet. **Next:** implement the exact frozen rule,
+validate its full proof contract including cold/incremental equality, then
+rerun the unchanged dispatch corpus, 100-call audit, and four common gates.
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-03 — ESM named-import proof policy correction 2 (historical)
+
+The second high review returned NO-GO on `7fdfdd2`. Correction 2 makes these
+changes in the
+[policy](observations/stage3-typescript-audit/esm-import-proof/policy.md):
+- **Hooks and execution model.** Hook registration (including indexed preloads),
+  pinned hook, mock, or runner libraries, and preload flags or rc files now
+  refuse the whole snapshot (HOOK-1..3). Two runtime-checked fixtures show
+  loader hooks redirecting `./app.ts`. Every other mechanism is excluded by a
+  stated assumption, so every Must is explicitly conditional and audits must
+  say so.
+- **MOCK-2** now refuses the whole snapshot for every failed mock identity
+  proof. A symlinked mock path replaced the real-path import at runtime.
+- **Incremental sequence.** It grew to 19 steps, adding mock, config,
+  `__mocks__`, and hook creation and removal. Each step has an expected answer
+  and a cold-versus-incremental equality requirement.
+- **Harness.** It now checks the error category of every expected failure,
+  backed by negative controls.
+
+The manifest has 73 cases (7 Must and 66 Unknown). No product code ran,
+nothing was measured, and the corpus and labels are unchanged. Eight decisions
+remain open in the policy. TypeScript remains IN PROGRESS; Go remains NOT
+STARTED.
+
+### 2026-10-03 — ESM named-import proof policy correction 1 (historical)
+
+The high review returned NO-GO on `79b7e70`. Correction 1 addresses all four
+required points in the
+[policy](observations/stage3-typescript-audit/esm-import-proof/policy.md):
+1. **Specifier spelling.** The raw text must equal the cooked value and match an
+   ASCII allow-list. This refuses percent-encoding, escapes, backslashes,
+   controls, whitespace, and non-ASCII characters. It was runtime-checked:
+   `%61`, `%2e%2e`, `\`, TAB, LF, and a trailing space each made Node load a
+   different file than a lexical path names, or strip characters.
+2. **Extensions.** v1 accepts `.ts` and `.mts` only. The policy states its
+   ESM-preserving execution assumptions.
+3. **Mocking.** A mock refuses by resolved module identity. A setup file's
+   `../app.ts` mock replaced the importer's `./app.ts` import at runtime. Any
+   uncertain mock, mocking configuration, or `__mocks__` directory refuses the
+   whole snapshot.
+4. **Acceptance.** It now covers the cycle and mock gates, mixed-language
+   collisions, incremental invalidation (a pinned 7-step sequence), canonical
+   identity and symlinks, and agreement across ingestion routes.
+
+The manifest now has 64 cases (7 Must and 57 Unknown) plus 7 incremental steps.
+The preimplementation checks pass: 58 cases run under Node, 6 are skipped with
+reasons, and 7 of 7 steps match.
+
+No product code ran, nothing was measured, and the corpus and labels are
+unchanged. Seven decisions remain open in the policy, so this is not a freeze.
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-03 — Relative ESM named-import proof policy drafted (historical)
+
+The [draft policy](observations/stage3-typescript-audit/esm-import-proof/policy.md)
+targets the unchanged `typescript-direct-cross-file` case. It allows a bounded
+Must for one form: a static named import from an explicit-extension relative
+specifier, bound to a unique, cleanly bound top-level `export function`, and
+called directly. It refuses everything else as Unknown with no target. That
+includes extensionless or `.js` specifiers, re-exports and stars, type-only
+imports, cycles, live-binding writes and `eval`, shadowing, module-path
+collisions, parse errors, and module mocks.
+
+The policy has 40 pinned adversarial fixture cases: 5 Must and 35 Unknown. Of
+those, 38 pass `node --test` and 2 are skipped with recorded reasons. Two of the
+fixtures show at runtime that a Must would be unsound.
+
+No product code ran, nothing was measured, and no improvement is claimed. The
+structural object-literal failure stays visible. The corpus, labels, and audit
+are unchanged. Five decisions are listed in the policy for review before it is
+frozen. TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-03 — Structural member identity audit completed locally (historical)
+
+The MOVESPEED workstation has all four pinned TypeScript archives, unlike the
+cloud container. [A fresh offline audit](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/observation.md)
+on candidate `b319556` and locally rebuilt binary `0e6e09c7…` accounted for
+100 actual calls and 10 noncalls: **56 exact / 44 conservative / 0 unsound**,
+with **3/3 correct Must** and 97 Unknown. Compared with the immediate prior
+55/45, 2/2 Must checkpoint, one compiler call moved from Unknown to a correct
+Must target; eight other records changed details without changing class.
+The separate structural validation scorer passed 17/17 origin contracts with
+0 unsound cells. The unchanged 49-case corpus stayed at 22/34/0/0/1; its one
+failure is now the predicted alice/bob origin ambiguity, not an improvement.
+All four common gates passed locally on `b319556` (769 Rust passed, 2 ignored;
+strict Clippy and fmt clean; npm 29 passed, 2 skipped). The earlier cloud audit
+blocker and first implementation NO-GO remain published below.
+
+**Next:** freeze a narrow TypeScript dispatch proof policy and adversarial
+fixtures before implementation or measurement. A named relative ESM import of a
+unique exported function is the bounded existing corpus case to examine first.
+Do not infer proof from structural identity alone. TypeScript remains IN PROGRESS;
+Go remains NOT STARTED.
+
+### 2026-10-03 — Structural member identity policy v1 implemented (`230418e`); cloud audit re-run blocked (historical)
+
+Implementation `0c9db9b` passed all four gates but got a NO-GO in review. That
+result is retained. Correction `230418e` fixes class-field scoping, lexical R3
+pruning, the K1 shorthand rule, and scorer failure persistence. Each fix has a
+regression test that is proven by mutation.
+[Observation](observations/stage3-typescript-audit/structural-members/implementation-observation.md):
+- The identity contract passes: 31 files, 44 identities, 62 refusals, 10
+  declaration-only spans, and 6 exact-span B1 boundaries.
+- The separate validation scorer meets 17/17 resolution contracts with 0 unsound
+  cells.
+- The 49-case corpus is unchanged at 22/34/0/0/1. The original case now fails as
+  **ambiguous** (alice/bob), as predicted. This is not a dispatch improvement.
+- All four common gates pass on `230418e`: 769 Cargo tests passed (2 ignored),
+  clippy and fmt are clean, and npm has 29 passed / 2 skipped.
+
+The 100-call audit re-run is **BLOCKED** here because the egress proxy returned
+HTTP 403 for the pinned archives. It must run on the pinned cache.
+
+Next: user review of `230418e`, then the audit re-run on the MOVESPEED
+workstation. TypeScript remains IN PROGRESS and Go remains NOT STARTED.
+
+### 2026-10-03 — Structural member identity policy v1 FROZEN (historical)
+
+The freeze commit is the policy-only commit directly after `2e5c8bc` on
+`claude/roadmap-ts-policy`. Its SHA cannot appear in its own content; it is
+reported with the push and is the parent of the next commit. That commit marks
+[the policy](observations/stage3-typescript-audit/structural-members/policy.md)
+as the frozen preimplementation policy. It also closes `const`-only owners as
+the chosen v1 default.
+
+The fixtures, both manifests, and every pinned hash are unchanged from
+`2e5c8bc`. That commit passed the user's independent Node replay and byte
+inspection, and the high review concluded K1, T1, and B1 are sufficient. The
+dispatch corpus, the original fixture, and product code are unchanged.
+
+**Next: product implementation of the frozen policy**, after the user reviews
+the freeze commit. Its acceptance covers:
+- the identity contracts;
+- the postimplementation B1 boundaries;
+- a separate validation scorer;
+- the predicted ambiguity failure of the unchanged original case;
+- the re-run 49-case corpus and 100-call audit;
+- all four common gates.
+
+TypeScript remains IN PROGRESS; Go remains NOT STARTED.
+
+### 2026-10-03 — Freeze correction 2: escaped-key fixture bytes repaired (historical)
+
+Review found a defect in correction 1 (`d8d1645`). `mixed-key-computed-alias.ts`
+lines 15 and 23 contained plain `name`/`list` bytes, not the escaped identifiers
+that K1 and the `null` expectations required. Correction 1's Node checks passed
+anyway; that record is retained as `preimplementation-checks-correction-1.json`.
+
+Both sites now hold literal backslash-u escapes (`name`, `list`), and
+the runtime keys are unchanged. The file and manifest hashes are re-pinned. A
+new byte-level check passes on the new bytes and fails on the old bytes (a
+committed negative control). All Node checks pass. No rule text, product code,
+dispatch corpus, or original fixture changed. Awaiting review. TypeScript is IN
+PROGRESS and Go is NOT STARTED.
+
+### 2026-10-03 — Freeze correction 1 to the structural member policy (historical)
+
+This applies the high review of `6ac3124` to the policy and fixtures only. No
+product code changed; no Girder or Cargo run.
+- **K1:** any string, numeric, computed, or escaped key in a literal refuses every
+  callable member of that literal. Other literals keep their identities.
+- **T1:** a refused member or branch emits no callable descendants. Same-named
+  outer declarations stay single nodes, and sibling branches stay indexed.
+- **B1:** every refused subtree containing calls needs an explicit Unknown
+  coverage boundary on the nearest existing Function or Module. Its six boundary
+  pins are **postimplementation acceptance requirements**. Node cannot observe
+  them, and they are not claimed as checked.
+
+The corpus now has 31 identity files with 106 members, plus 17 validation cases
+over 11 fixtures. The Node checks pass: 30/31 identity files ran (1 non-erasable
+file skipped) and all 11 validation fixtures pass. Prior manifest entries are
+byte-unchanged, and the corpus and original-fixture hashes are re-verified.
+Awaiting review. TypeScript is IN PROGRESS and Go is NOT STARTED.
+
+### 2026-10-03 — Structural member identity policy drafted for review (historical)
+
+Branch `claude/roadmap-ts-policy` from `e3812c5`. Draft
+[structural member identity policy v1](observations/stage3-typescript-audit/structural-members/policy.md)
+plus a 22-file identity contract corpus (55 marked members, 10 declaration-only
+signatures) and 15 separate qualified validation cases over 10 fixtures. It
+assigns identity only (`<scope>::<owner>::@object::<key>`) to const-owned,
+identifier-keyed arrow, function-expression, and method-shorthand members. It
+declares interface/abstract/overload signatures declaration-only. It refuses
+owner-less, `let`/`var`, non-identifier keys, accessors, generators, spread,
+`__proto__`, duplicate keys, and colliding paths. It authorizes no Must or May
+proof. It predicts that the unchanged original case will move from zero matches
+to an **ambiguity failure and must stay failed**. The corpus, the original
+fixture, and the classification policy are byte-unchanged (hashes pinned). Only
+Node ran ([checks](observations/stage3-typescript-audit/structural-members/preimplementation-checks.json):
+all pass, one non-erasable file skipped). No Girder, Cargo, or product code.
+Awaiting user corrections before implementation. TypeScript remains IN PROGRESS
+and Go remains NOT STARTED. Common gates are pending.
+
+### 2026-10-02 — Pause checkpoint (historical)
 
 2026-10-02 pause checkpoint: no implementation changes or measurements since
 `464aa6b`. No Cargo job remains running. Resume with the TypeScript structural

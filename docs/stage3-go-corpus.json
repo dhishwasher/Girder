@@ -1,0 +1,418 @@
+{
+  "schema_version": 1,
+  "purpose": "Pinned Go standard-library snapshot for the Stage 3 Go real-source audit. Frozen before any Go resolver change. Girder must not be run on this tree before the audit labels are frozen.",
+  "archive": {
+    "id": "go-1.27.1-src",
+    "upstream": "go1.27.1",
+    "url": "https://go.dev/dl/go1.27.1.src.tar.gz",
+    "filename": "go1.27.1.src.tar.gz",
+    "bytes": 35109201,
+    "sha256": "4e408abae126d916b6164627193f2c54f0e3ca1312d693b86db45f862ab238b1",
+    "sha256_source": "go.dev/dl/?mode=json published value; verified against the downloaded file (full 64 hex)",
+    "cache_path": ".benchmark-cache/stage3-go-v1/<sha256>.tar.gz",
+    "acquired": "2026-10-06"
+  },
+  "extraction_filter": {
+    "root": "src/",
+    "packages": [
+      "io",
+      "bufio",
+      "sort",
+      "container/heap",
+      "container/list",
+      "container/ring",
+      "context",
+      "errors",
+      "encoding/json",
+      "text/template",
+      "text/template/parse",
+      "strings",
+      "bytes",
+      "fmt",
+      "sync"
+    ],
+    "include": "*.go directly inside each listed package directory (not subdirectories unless the subdirectory is itself listed)",
+    "exclude": [
+      "*_test.go",
+      "testdata/",
+      "vendor/",
+      "files whose first 600 bytes contain a line starting //go:build ignore"
+    ],
+    "rationale": "Girder's default walk (project/config.rs) excludes only .git, target, node_modules, venvs and dot-paths, so it would index testdata, vendor, test files and build-ignore generators. The filter removes them physically so the sampled corpus equals the indexed corpus."
+  },
+  "toolchain_note": "Installed Go is go1.19.8 (/usr/bin/go). It is older than the pinned source and is used only to run small adversarial fixtures for runtime checks; it is never used to build the snapshot.",
+  "tool": "tools/go_audit_inventory.py (plain Python; verifies the archive pin and reproduces this inventory)",
+  "inventory": {
+    "files": [
+      {
+        "path": "bufio/bufio.go",
+        "sha256": "01cda8edce0b23c41fc64bb20a28c8a13cbd0a44f8535fe10555e6ba65711676",
+        "lines": 842
+      },
+      {
+        "path": "bufio/scan.go",
+        "sha256": "67ad04ac41a859798cb26e112d52ac15ec2fb11b4948293e20c0f7983d029c0b",
+        "lines": 427
+      },
+      {
+        "path": "bytes/buffer.go",
+        "sha256": "11cf45edaaf49b6dd6ece3d1a7c7779bb6623b705283e691c66c137336aa62de",
+        "lines": 500
+      },
+      {
+        "path": "bytes/bytes.go",
+        "sha256": "e0695206833688b57e9d26014dcd28e3379fc09aafb4c702a82b90563cc11b23",
+        "lines": 1435
+      },
+      {
+        "path": "bytes/iter.go",
+        "sha256": "628f8dc51af2c70325050c0125340ec01c6a7da84c53f2f5ae3ec040c7e5fc6f",
+        "lines": 137
+      },
+      {
+        "path": "bytes/reader.go",
+        "sha256": "5b42a3100971836c10b1e0d3699b46cffd41c8be23d09e1642ee42ff795dc6ab",
+        "lines": 159
+      },
+      {
+        "path": "container/heap/heap.go",
+        "sha256": "5a04882f60417c2535138f37daeaeb254a77487d0abd0bc1958290d50b8043ec",
+        "lines": 118
+      },
+      {
+        "path": "container/list/list.go",
+        "sha256": "88d1eadd6ac199fe42872bf52ff71264235fa51b0c5034be3d099fcfddcf640e",
+        "lines": 235
+      },
+      {
+        "path": "container/ring/ring.go",
+        "sha256": "afd2489e5a3ee55297061be3273ef9a0331aee2c3871b4f13c0b25ceb5783451",
+        "lines": 136
+      },
+      {
+        "path": "context/context.go",
+        "sha256": "971f00ffa375b79d3f65e6da33cca3a493cc3fce091c589233abfb4283e29b7d",
+        "lines": 807
+      },
+      {
+        "path": "encoding/json/decode.go",
+        "sha256": "1632161a34c8286722716a48ba0b5e0c3d117a2e017e79ace676403808a16e6e",
+        "lines": 1302
+      },
+      {
+        "path": "encoding/json/encode.go",
+        "sha256": "8ff45e82c60c6e29d11fe57ce0c59d79f40ef0d53be28ac36617482a7463b217",
+        "lines": 1344
+      },
+      {
+        "path": "encoding/json/fold.go",
+        "sha256": "30c457bbab4e4cb4a92b74dcfa428cd977a76a18b98fa603c7cf64a9a9ebb2f0",
+        "lines": 50
+      },
+      {
+        "path": "encoding/json/indent.go",
+        "sha256": "9ef9eac29fc4cc9d94bf305976891eb5e78a2644acd4f07ed7a0c186991ac908",
+        "lines": 184
+      },
+      {
+        "path": "encoding/json/scanner.go",
+        "sha256": "2b16dd215274dfa8e0806b53cca144684d5b9c8a02319cf5ce10120c50e6eef2",
+        "lines": 612
+      },
+      {
+        "path": "encoding/json/stream.go",
+        "sha256": "065501364e4954cf1c8f1887900248d4c0983593b8c058b2fe7997d9635b793d",
+        "lines": 526
+      },
+      {
+        "path": "encoding/json/tables.go",
+        "sha256": "74f7f392e1cc22890b72959647b9e5facda591a890c81f8167b532d31adc561e",
+        "lines": 220
+      },
+      {
+        "path": "encoding/json/tags.go",
+        "sha256": "e7300718fc8862f4dbc8bbdde33e4a0335124bb028e68062b52d3c042c374d6e",
+        "lines": 40
+      },
+      {
+        "path": "encoding/json/v2_decode.go",
+        "sha256": "d82e2e8ac32bc64c967b02769fc1fc6e2e5e9d7aae384673709e6af4669bc3fe",
+        "lines": 271
+      },
+      {
+        "path": "encoding/json/v2_encode.go",
+        "sha256": "8d3601b3a4c652b90ece3b9c5f5b1bcb7ad155eb85e625372a158c1dd9e8c414",
+        "lines": 262
+      },
+      {
+        "path": "encoding/json/v2_indent.go",
+        "sha256": "f8ac9f3dba216cc5577ca731268db70c7667a1c0d7bb61f436ffd3db92a8f500",
+        "lines": 131
+      },
+      {
+        "path": "encoding/json/v2_inject.go",
+        "sha256": "f1fbf89a12eab3f6f6e53d23d801cd4c5f3a2901c0f20aaa3369c9e025560e58",
+        "lines": 156
+      },
+      {
+        "path": "encoding/json/v2_options.go",
+        "sha256": "253e7ccb9c38463ab47b5c78e1bc1f103b2e95f976dfe0805e23f4922d59ab0a",
+        "lines": 553
+      },
+      {
+        "path": "encoding/json/v2_scanner.go",
+        "sha256": "d3f720d1a0a001f010c8556dc01507d99d78d6640c953f95c256a6c398fa20ad",
+        "lines": 91
+      },
+      {
+        "path": "encoding/json/v2_stream.go",
+        "sha256": "ae20daf462b86bf14884637fc2e8256aaadd9bba91c580fbb6840020e6a12898",
+        "lines": 313
+      },
+      {
+        "path": "errors/errors.go",
+        "sha256": "865b9cce008bf68d4d2cc4146455a9c5692756bbe57be29ee1ef0de345dafe1e",
+        "lines": 90
+      },
+      {
+        "path": "errors/join.go",
+        "sha256": "87da7c120f71d17e37f110ae1dc6af6493ec841a22ee825e13a6a8024a014dba",
+        "lines": 63
+      },
+      {
+        "path": "errors/wrap.go",
+        "sha256": "098116636610ae87dd80e49c4dbe6a2b6c37918d7e1af35ded005be621d68a40",
+        "lines": 209
+      },
+      {
+        "path": "fmt/doc.go",
+        "sha256": "1f560df68a2578929f14b0ded40fb743aa5279d9c9ccbdfd31e21a199a369082",
+        "lines": 409
+      },
+      {
+        "path": "fmt/errors.go",
+        "sha256": "01fd304868493a3aa1198cc79a56274930f687353e9405211ca063c1b8195ea6",
+        "lines": 94
+      },
+      {
+        "path": "fmt/format.go",
+        "sha256": "a668c0d6bb23f6ac929b73ef661a65be2225a9f665052a2ce02c4c58339c3335",
+        "lines": 595
+      },
+      {
+        "path": "fmt/print.go",
+        "sha256": "10d7cd625d83a15f70b6e61641d3cebd4e4d49d7e0f2a24d5d2b59988074d2f7",
+        "lines": 1208
+      },
+      {
+        "path": "fmt/scan.go",
+        "sha256": "ac416ad4fba7f9901c737a203950d5d57220d1401e4bc7f0a2420389b88a86cd",
+        "lines": 1238
+      },
+      {
+        "path": "io/io.go",
+        "sha256": "3945d328a9072e4f5970b7d4bc0eb834eec29fd22889a1ed9f3fb76ad41c3274",
+        "lines": 750
+      },
+      {
+        "path": "io/multi.go",
+        "sha256": "acb61a128d4e49dcc8b5dcd268ee1bd61008fd97af0e459f839166e3ae51384e",
+        "lines": 137
+      },
+      {
+        "path": "io/pipe.go",
+        "sha256": "75ef56f505592fcffb188bf7660c6ea6abede3f2701b500d6946fa519c37e233",
+        "lines": 202
+      },
+      {
+        "path": "sort/search.go",
+        "sha256": "78418580ae0329bd5e5b33e91223f62c42010a3d16c17f37ff953ac094611686",
+        "lines": 150
+      },
+      {
+        "path": "sort/slice.go",
+        "sha256": "842b1095d5a97a239e0d88726de1e7a7bbcf5bb7417e2d6a4dd7706dd6645ae9",
+        "lines": 61
+      },
+      {
+        "path": "sort/sort.go",
+        "sha256": "100e49103d23dd6b8335a50b17ae6e9db2b056cb1217d964dcf58852c3c6f8a1",
+        "lines": 288
+      },
+      {
+        "path": "sort/zsortfunc.go",
+        "sha256": "35cdbcbc3a63372e12eebc815c249adfd420e9d783a99b0405998a7ccb00ac1a",
+        "lines": 479
+      },
+      {
+        "path": "sort/zsortinterface.go",
+        "sha256": "8978a49cc4174b0c35a84a2ddf73175d41254eb340ebeda29f21d3e546088a3b",
+        "lines": 479
+      },
+      {
+        "path": "strings/builder.go",
+        "sha256": "ffe3e09dbe0d4ce455964566a825dcd0a99fa7a2488f04c9dc22aefb0ee37735",
+        "lines": 116
+      },
+      {
+        "path": "strings/clone.go",
+        "sha256": "5c18eb3b45b7d9ae63d0cc43f9e337c077de05dd47fd5a1ea49dafeb7e1b862b",
+        "lines": 23
+      },
+      {
+        "path": "strings/compare.go",
+        "sha256": "af4e0fa7dfe63018d9808f89a4c511eeb8d773bd6f3b030f1c9592a1e0de7a85",
+        "lines": 17
+      },
+      {
+        "path": "strings/iter.go",
+        "sha256": "067603fe06f2cec8ec607f9c9d469493901820f76af7f9e3e51136824fe8b04a",
+        "lines": 137
+      },
+      {
+        "path": "strings/reader.go",
+        "sha256": "cceec92b1c65a8b3b2b5fc2991ea0a54b1bf6c5fb75981de5fa91c7b2dadbb6d",
+        "lines": 156
+      },
+      {
+        "path": "strings/replace.go",
+        "sha256": "fbe8467c532ea7e5cdb848577423c4f218cbe2776907fb5c8c091006c786cdba",
+        "lines": 578
+      },
+      {
+        "path": "strings/search.go",
+        "sha256": "4fdef1f79f6e854789d9140b17ce2c2bbdbf0d4067a801e42607cf7877698cd1",
+        "lines": 117
+      },
+      {
+        "path": "strings/strings.go",
+        "sha256": "a81bdf73a308277c322e35d0c602e3813f57b6f769c091f8f8962c8884a45ea3",
+        "lines": 1300
+      },
+      {
+        "path": "sync/cond.go",
+        "sha256": "1159ffd7688160d8ff85b63a280eccd7ca52defde347cb443b0a3d1d1eb0519a",
+        "lines": 124
+      },
+      {
+        "path": "sync/map.go",
+        "sha256": "ea2b7b418426ba83ed9b77c5926dcb28a6a94dc84b26ea7b581c782a36a646b4",
+        "lines": 115
+      },
+      {
+        "path": "sync/mutex.go",
+        "sha256": "3dec4264678744c4ce15a05ba0cc88e5e8b155f071b71d74eb7ed229ca72c114",
+        "lines": 66
+      },
+      {
+        "path": "sync/once.go",
+        "sha256": "3bc00bab32acd134ddf50c87fdbd1dd70502f224b7684a801a077dfe0a05eb3f",
+        "lines": 80
+      },
+      {
+        "path": "sync/oncefunc.go",
+        "sha256": "0853c1ad885c593d2810e601c495f00abe197b10d12b679f94badf3efe5fa365",
+        "lines": 109
+      },
+      {
+        "path": "sync/pool.go",
+        "sha256": "288ad32bc150faf519eecf277f79ce5b91de7f2bd3839273068b86e40cc07992",
+        "lines": 309
+      },
+      {
+        "path": "sync/poolqueue.go",
+        "sha256": "25b900ffeb803a9ecd4c1926a5faaa3ba8d7b4adcd71bbfbd373cb8606910dae",
+        "lines": 302
+      },
+      {
+        "path": "sync/runtime.go",
+        "sha256": "a2be85512b59e11270b099f264581343cc1589bb782e03a476102406defd5f33",
+        "lines": 59
+      },
+      {
+        "path": "sync/runtime2.go",
+        "sha256": "5bc4014718a892af6591e26e6c87105a001b7d1d1f93c3ec4c289128c80f6ba4",
+        "lines": 19
+      },
+      {
+        "path": "sync/runtime2_lockrank.go",
+        "sha256": "44be4866d69dabdc0c4ad5c49d237ffd12830d9a8659b440f8e9aee3dcda1330",
+        "lines": 21
+      },
+      {
+        "path": "sync/rwmutex.go",
+        "sha256": "4ecc9b2fa7771cbe37e1670e4caefd7a28939683bfe1614fcf5e9d545261d17f",
+        "lines": 247
+      },
+      {
+        "path": "sync/waitgroup.go",
+        "sha256": "274e43a7cbc76eb0da4635a2680785200dfaf94d85e2d55cdd5122c76a4791d9",
+        "lines": 260
+      },
+      {
+        "path": "text/template/doc.go",
+        "sha256": "0f74f7ac85529540095185d9905584606b9140a3b0a1ae7b3e064df3470387d0",
+        "lines": 502
+      },
+      {
+        "path": "text/template/exec.go",
+        "sha256": "ca14feb551ec536deeddfd46efdfa60d1c328e6d1b00cd5aa6ca944e379c282a",
+        "lines": 1134
+      },
+      {
+        "path": "text/template/funcs.go",
+        "sha256": "6cc9d22f1a20a993f38810128bcb21f0bdd2d1bf612f4a279107773b7e207f30",
+        "lines": 774
+      },
+      {
+        "path": "text/template/helper.go",
+        "sha256": "a9694b886bed5ed1aab68ff030176b01e3cff6ca5a5c36d8b14c77751ca71d06",
+        "lines": 178
+      },
+      {
+        "path": "text/template/option.go",
+        "sha256": "fae2206d9c10cf31439ba9d616a2f8ead93f8e9b8fc12060fbf9cfbc842c0a43",
+        "lines": 72
+      },
+      {
+        "path": "text/template/parse/lex.go",
+        "sha256": "51bf08bd87c3ee27e5128dde81449f4efe6f52aab9bf7c88349f66c077c1e40b",
+        "lines": 687
+      },
+      {
+        "path": "text/template/parse/node.go",
+        "sha256": "22404f3d7c64251c6f359b97d61c2a52418e9f3a34e18811efe2f5924f756b98",
+        "lines": 1016
+      },
+      {
+        "path": "text/template/parse/parse.go",
+        "sha256": "a2d7754ebdeb72ae62b788fe1b137a20eee669800d5fec504b6d8f14b581c252",
+        "lines": 866
+      },
+      {
+        "path": "text/template/template.go",
+        "sha256": "2312a20ae21b171b2dde1028e6e7f5a7b77cbce3e1f99118db35414fc27f236d",
+        "lines": 238
+      }
+    ],
+    "file_count": 70,
+    "line_count": 26925,
+    "per_package": {
+      "io": 3,
+      "bufio": 2,
+      "sort": 5,
+      "container/heap": 1,
+      "container/list": 1,
+      "container/ring": 1,
+      "context": 1,
+      "errors": 3,
+      "encoding/json": 15,
+      "text/template": 6,
+      "text/template/parse": 3,
+      "strings": 8,
+      "bytes": 4,
+      "fmt": 5,
+      "sync": 12
+    }
+  }
+}

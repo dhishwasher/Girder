@@ -1,0 +1,30 @@
+{
+  "must_claims_verified": 404,
+  "files_in_tree": 70,
+  "violations": [
+    {
+      "file": "fmt/scan.go",
+      "start_byte": 28215,
+      "site": "errorHandler(&err)",
+      "problems": [
+        "direct operand of go/defer"
+      ]
+    },
+    {
+      "file": "fmt/scan.go",
+      "start_byte": 31451,
+      "site": "errorHandler(&err)",
+      "problems": [
+        "direct operand of go/defer"
+      ]
+    },
+    {
+      "file": "text/template/exec.go",
+      "start_byte": 6093,
+      "site": "errRecover(&err)",
+      "problems": [
+        "direct operand of go/defer"
+      ]
+    }
+  ]
+}

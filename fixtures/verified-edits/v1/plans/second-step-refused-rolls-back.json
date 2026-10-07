@@ -1,0 +1,67 @@
+{
+  "plan_version": 2,
+  "plan_id": "verified-edit-fixture",
+  "intent": "fixture",
+  "base_commit": "<HEAD>",
+  "on_failure": "rollback_plan",
+  "steps": [
+    {
+      "id": "s1",
+      "description": "",
+      "edits": [
+        {
+          "node": "crate::lib::alpha",
+          "replace_node": "pub fn alpha() -> i32 {\n    10\n}"
+        }
+      ],
+      "checks": [],
+      "verify": {
+        "baseline": {
+          "crate::lib::alpha": "116a0e9b569fcfd0d5732b04f41ac2a7b2d1f63391f320c0985d77724b2c7cbc"
+        },
+        "delta": {
+          "nodes": {
+            "changed": [
+              "crate::lib::alpha"
+            ],
+            "added": [],
+            "removed": []
+          },
+          "edges": {
+            "added": [],
+            "removed": []
+          }
+        }
+      }
+    },
+    {
+      "id": "s2",
+      "description": "",
+      "edits": [
+        {
+          "node": "crate::lib::beta",
+          "replace_node": "pub fn beta() -> i32 {\n    20\n}"
+        }
+      ],
+      "checks": [],
+      "verify": {
+        "baseline": {
+          "crate::lib::beta": "a644055a177675a71963244004c55d7a2d8e11aacbd17c5b4c47f9e032d2488e"
+        },
+        "delta": {
+          "nodes": {
+            "changed": [
+              "crate::lib::alpha"
+            ],
+            "added": [],
+            "removed": []
+          },
+          "edges": {
+            "added": [],
+            "removed": []
+          }
+        }
+      }
+    }
+  ]
+}

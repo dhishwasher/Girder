@@ -1,0 +1,1483 @@
+{
+  "node_version": "v22.22.0",
+  "manifest_sha256": "daa7310248f8e2adc3bdbbae340a3301dcca6b18983ca29ef3c6738bb97b94cd",
+  "frozen_inputs": {
+    "docs/dispatch-corpus.json": {
+      "sha256": "9e3208a8f3fdc8faaee55cece63c1b5e25526322ebebbba915652f4f526ccd0a",
+      "matches": true
+    },
+    "fixtures/dispatch-corpus/typescript/direct-cross-file/app.ts": {
+      "sha256": "fcb85875c3d25a34a329dfab8a129e36220ba99da36093c6c9624b81eb3da56d",
+      "matches": true
+    },
+    "fixtures/dispatch-corpus/typescript/direct-cross-file/app.test.ts": {
+      "sha256": "99fe2eefb562142a2a58c989fd48600a430aa84a46c4b68dfd595d5ffe38bdb1",
+      "matches": true
+    }
+  },
+  "cases": [
+    {
+      "id": "aliased-import",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "ambiguous-export-star",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "async-target",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "backslash-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "bare-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "cts-extension",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "declaration-file-target",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "declaration-merging",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "skipped": "namespace with runtime code is not erasable by Node type stripping"
+      }
+    },
+    {
+      "id": "default-import",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "duplicate-export",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "dynamic-import",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "encoded-dot-segment",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "encoded-slash-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "escaped-callee",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "escaping-value-use",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "explicit-ts",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "export-star-barrel",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "extensionless-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "generator-target",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "hex-escape-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "hook-package-script-flags",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "hook-register-hooks-sync",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "hook-register-node-module",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "hook-unlisted-library",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "import-cycle",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "importer-eval",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "importer-writes-binding",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "inline-type-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "js-extension-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "line-continuation-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "local-export-clause",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "manual-mocks-directory",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "mixed-language-module-collision",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "mock-alias-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "skipped": "needs vitest"
+      }
+    },
+    {
+      "id": "mock-colliding-identity",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "mock-config-present",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "mock-method-alias",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "skipped": "needs vitest"
+      }
+    },
+    {
+      "id": "mock-missing-module",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "mock-non-literal-argument",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "skipped": "needs vitest"
+      }
+    },
+    {
+      "id": "mock-other-module",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "mock-out-of-root",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "mock-setup-different-spelling",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "mock-symlink-identity",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "mock-unindexed-file",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "module-path-collision-src",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "module-path-collision-tsx",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "mts-extension",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "namespace-import",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "new-expression",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "non-ascii-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "optional-call",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "overload-signatures",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "parent-directory",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "percent-encoded-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "query-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "raw-tab-byte-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "reexport-barrel",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "renamed-export",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "shadowed-block-declaration",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "shadowed-parameter",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "symlinked-directory",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "symlinked-target-file",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "tab-escape-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "target-eval",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "target-has-export-star",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "target-parse-error",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "target-reassigns-binding",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "test-module-mocking",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "skipped": "needs vitest; not executable with node:test"
+      }
+    },
+    {
+      "id": "trailing-space-specifier",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "raw_specifier_bytes": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "tsx-extension",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "type-only-import",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "unrelated-imports-allowed",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "target_marker_unique": true,
+      "runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    },
+    {
+      "id": "vi-mock-import-expression",
+      "pins_match": true,
+      "single_claim_marker": true,
+      "runtime": {
+        "skipped": "needs vitest"
+      }
+    }
+  ],
+  "case_dirs_match_manifest": true,
+  "incremental": [
+    {
+      "id": "exporter-import-collision-mock-config-hook-deletion",
+      "pins_match": true,
+      "steps": [
+        {
+          "op": "write",
+          "path": "app.ts",
+          "expected_class": "unknown",
+          "cold_equals_incremental": true,
+          "runtime_expect": {
+            "fail": "ERR_ASSERTION"
+          },
+          "runtime": {
+            "exit": 1,
+            "tap": {
+              "tests": 1,
+              "pass": 0,
+              "fail": 1
+            },
+            "passed": false,
+            "failure_categories": [
+              "ERR_ASSERTION"
+            ]
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "app.ts",
+          "expected_class": "must",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "app.test.ts",
+          "expected_class": "unknown",
+          "cold_equals_incremental": true,
+          "runtime_expect": {
+            "fail": "ERR_MODULE_NOT_FOUND"
+          },
+          "runtime": {
+            "exit": 1,
+            "tap": {
+              "tests": 1,
+              "pass": 0,
+              "fail": 1
+            },
+            "passed": false,
+            "failure_categories": [
+              "ERR_MODULE_NOT_FOUND"
+            ]
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "app.test.ts",
+          "expected_class": "must",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "app.tsx",
+          "expected_class": "unknown",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "delete",
+          "path": "app.tsx",
+          "expected_class": "must",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "setup/mocks.ts",
+          "expected_class": "unknown",
+          "cold_equals_incremental": true,
+          "runtime_expect": {
+            "fail": "ERR_ASSERTION"
+          },
+          "runtime": {
+            "exit": 1,
+            "tap": {
+              "tests": 1,
+              "pass": 0,
+              "fail": 1
+            },
+            "passed": false,
+            "failure_categories": [
+              "ERR_ASSERTION"
+            ]
+          },
+          "matched": true
+        },
+        {
+          "op": "delete",
+          "path": "setup/mocks.ts",
+          "expected_class": "must",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "setup/mocks.ts",
+          "expected_class": "unknown",
+          "cold_equals_incremental": true,
+          "runtime_expect": {
+            "fail": "ERR_MODULE_NOT_FOUND"
+          },
+          "runtime": {
+            "exit": 1,
+            "tap": {
+              "tests": 1,
+              "pass": 0,
+              "fail": 1
+            },
+            "passed": false,
+            "failure_categories": [
+              "ERR_MODULE_NOT_FOUND"
+            ]
+          },
+          "matched": true
+        },
+        {
+          "op": "delete",
+          "path": "setup/mocks.ts",
+          "expected_class": "must",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "vitest.config.ts",
+          "expected_class": "unknown",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "delete",
+          "path": "vitest.config.ts",
+          "expected_class": "must",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "__mocks__/app.ts",
+          "expected_class": "unknown",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "delete-tree",
+          "path": "__mocks__",
+          "expected_class": "must",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "setup/loader.mjs",
+          "expected_class": "must",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "write",
+          "path": "setup/hooks.ts",
+          "expected_class": "unknown",
+          "cold_equals_incremental": true,
+          "runtime_expect": {
+            "fail": "ERR_ASSERTION"
+          },
+          "runtime": {
+            "exit": 1,
+            "tap": {
+              "tests": 1,
+              "pass": 0,
+              "fail": 1
+            },
+            "passed": false,
+            "failure_categories": [
+              "ERR_ASSERTION"
+            ]
+          },
+          "matched": true
+        },
+        {
+          "op": "delete",
+          "path": "setup/hooks.ts",
+          "expected_class": "must",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "delete",
+          "path": "setup/loader.mjs",
+          "expected_class": "must",
+          "cold_equals_incremental": true,
+          "runtime_expect": "pass",
+          "runtime": {
+            "exit": 0,
+            "tap": {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0
+            },
+            "passed": true,
+            "failure_categories": []
+          },
+          "matched": true
+        },
+        {
+          "op": "delete",
+          "path": "app.ts",
+          "expected_class": "unknown",
+          "cold_equals_incremental": true,
+          "runtime_expect": {
+            "fail": "ERR_MODULE_NOT_FOUND"
+          },
+          "runtime": {
+            "exit": 1,
+            "tap": {
+              "tests": 1,
+              "pass": 0,
+              "fail": 1
+            },
+            "passed": false,
+            "failure_categories": [
+              "ERR_MODULE_NOT_FOUND"
+            ]
+          },
+          "matched": true
+        }
+      ],
+      "base_runtime": {
+        "exit": 0,
+        "tap": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0
+        },
+        "passed": true,
+        "failure_categories": []
+      }
+    }
+  ],
+  "must_claim_assumptions_declared": true,
+  "counts": {
+    "cases": 73,
+    "runtime_passed": 67,
+    "runtime_skipped": 6,
+    "incremental_steps_matched": 19
+  },
+  "all_passed": true
+}

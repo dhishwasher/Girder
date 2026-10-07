@@ -208,6 +208,11 @@ pub struct BuildOutput {
     /// the same rebinding hazard as `python_string_literals`, spelled
     /// without a string. Empty for every other language.
     pub python_attribute_rebind_targets: std::collections::HashSet<String>,
+    /// TypeScript only: source spans of object-literal members and literals
+    /// refused by the structural member identity policy (K1/R3/R4/U1-U7).
+    /// No callable descendant inside one has a node (T1); `claims` keeps
+    /// every call inside Unknown and adds a coverage boundary (B1).
+    pub refused_structural_subtrees: Vec<aether_graph::Span>,
 }
 
 impl BuildOutput {

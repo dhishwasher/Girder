@@ -1,0 +1,8241 @@
+[
+  {
+    "id": 0,
+    "file": "encoding/json/stream.go",
+    "line": 187,
+    "col": 7,
+    "stratum": "bare_cross_file",
+    "callee_text": "isSpace",
+    "call_end_byte": 5141,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tif !isSpace(c) {",
+    "context": [
+      {
+        "line": 184,
+        "text": ""
+      },
+      {
+        "line": 185,
+        "text": "func nonSpace(b []byte) bool {"
+      },
+      {
+        "line": 186,
+        "text": "\tfor _, c := range b {"
+      },
+      {
+        "line": 187,
+        "text": "\t\tif !isSpace(c) {"
+      },
+      {
+        "line": 188,
+        "text": "\t\t\treturn true"
+      },
+      {
+        "line": 189,
+        "text": "\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 185,
+      "header": "func nonSpace(b []byte) bool {"
+    },
+    "imports": [
+      "bytes",
+      "errors",
+      "io"
+    ],
+    "callee_first_identifier": "isSpace",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/scanner.go",
+        "line": 201,
+        "kind": "func",
+        "has_body": true,
+        "header": "func isSpace(c byte) bool {"
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "file": "text/template/exec.go",
+    "line": 790,
+    "col": 12,
+    "stratum": "bare_cross_file",
+    "callee_text": "goodFunc",
+    "call_end_byte": 23786,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tif err := goodFunc(name, typ); err != nil {",
+    "context": [
+      {
+        "line": 787,
+        "text": "\t} else if numIn != typ.NumIn() {"
+      },
+      {
+        "line": 788,
+        "text": "\t\ts.errorf(\"wrong number of args for %s: want %d got %d\", name, typ.NumIn(), numIn)"
+      },
+      {
+        "line": 789,
+        "text": "\t}"
+      },
+      {
+        "line": 790,
+        "text": "\tif err := goodFunc(name, typ); err != nil {"
+      },
+      {
+        "line": 791,
+        "text": "\t\ts.errorf(\"%v\", err)"
+      },
+      {
+        "line": 792,
+        "text": "\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 772,
+      "header": "func (s *state) evalCall(dot, fun reflect.Value, isBuiltin bool, node parse.Node, name string, args []parse.Node, final reflect.Value) reflect.Value {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "fmtsort",
+      "io",
+      "parse",
+      "reflect",
+      "runtime",
+      "strings"
+    ],
+    "callee_first_identifier": "goodFunc",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/funcs.go",
+        "line": 99,
+        "kind": "func",
+        "has_body": true,
+        "header": "func goodFunc(name string, typ reflect.Type) error {"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "file": "io/multi.go",
+    "line": 54,
+    "col": 13,
+    "stratum": "bare_cross_file",
+    "callee_text": "copyBuffer",
+    "call_end_byte": 1423,
+    "package": "io",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tn, err = copyBuffer(w, r, buf)",
+    "context": [
+      {
+        "line": 51,
+        "text": "\t\tif subMr, ok := r.(*multiReader); ok { // reuse buffer with nested multiReaders"
+      },
+      {
+        "line": 52,
+        "text": "\t\t\tn, err = subMr.writeToWithBuffer(w, buf)"
+      },
+      {
+        "line": 53,
+        "text": "\t\t} else {"
+      },
+      {
+        "line": 54,
+        "text": "\t\t\tn, err = copyBuffer(w, r, buf)"
+      },
+      {
+        "line": 55,
+        "text": "\t\t}"
+      },
+      {
+        "line": 56,
+        "text": "\t\tsum += n"
+      }
+    ],
+    "enclosing_function": {
+      "line": 48,
+      "header": "func (mr *multiReader) writeToWithBuffer(w Writer, buf []byte) (sum int64, err error) {"
+    },
+    "imports": [],
+    "callee_first_identifier": "copyBuffer",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "io/io.go",
+        "line": 407,
+        "kind": "func",
+        "has_body": true,
+        "header": "func copyBuffer(dst Writer, src Reader, buf []byte) (written int64, err error) {"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "file": "encoding/json/v2_inject.go",
+    "line": 60,
+    "col": 13,
+    "stratum": "bare_cross_file",
+    "callee_text": "transformSyntacticError",
+    "call_end_byte": 2115,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\terr.Err = transformSyntacticError(err.Err)",
+    "context": [
+      {
+        "line": 57,
+        "text": "\t\treturn (*UnsupportedValueError)(nil)"
+      },
+      {
+        "line": 58,
+        "text": "\t}"
+      },
+      {
+        "line": 59,
+        "text": "\tif err, _ := err.(*MarshalerError); err != nil {"
+      },
+      {
+        "line": 60,
+        "text": "\t\terr.Err = transformSyntacticError(err.Err)"
+      },
+      {
+        "line": 61,
+        "text": "\t\treturn err"
+      },
+      {
+        "line": 62,
+        "text": "\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 32,
+      "header": "func transformMarshalError(root any, err error) error {"
+    },
+    "imports": [
+      "fmt",
+      "internal",
+      "jsontext",
+      "jsonv2",
+      "reflect",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "transformSyntacticError",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/v2_scanner.go",
+        "line": 56,
+        "kind": "func",
+        "has_body": true,
+        "header": "func transformSyntacticError(err error) error {"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "file": "fmt/errors.go",
+    "line": 39,
+    "col": 7,
+    "stratum": "bare_cross_file",
+    "callee_text": "newPrinter",
+    "call_end_byte": 1431,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tp := newPrinter()",
+    "context": [
+      {
+        "line": 36,
+        "text": "\tif len(a) == 0 && stringslite.IndexByte(format, '%') == -1 {"
+      },
+      {
+        "line": 37,
+        "text": "\t\treturn nil"
+      },
+      {
+        "line": 38,
+        "text": "\t}"
+      },
+      {
+        "line": 39,
+        "text": "\tp := newPrinter()"
+      },
+      {
+        "line": 40,
+        "text": "\tp.wrapErrs = true"
+      },
+      {
+        "line": 41,
+        "text": "\tp.doPrintf(format, a)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 35,
+      "header": "func errorf(format string, a ...any) error {"
+    },
+    "imports": [
+      "errors",
+      "slices",
+      "stringslite"
+    ],
+    "callee_first_identifier": "newPrinter",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "fmt/print.go",
+        "line": 145,
+        "kind": "func",
+        "has_body": true,
+        "header": "func newPrinter() *pp {"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "file": "text/template/funcs.go",
+    "line": 339,
+    "col": 9,
+    "stratum": "bare_cross_file",
+    "callee_text": "indirectInterface",
+    "call_end_byte": 10463,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\targ = indirectInterface(arg)",
+    "context": [
+      {
+        "line": 336,
+        "text": "\t}"
+      },
+      {
+        "line": 337,
+        "text": "\targv := make([]reflect.Value, len(args))"
+      },
+      {
+        "line": 338,
+        "text": "\tfor i, arg := range args {"
+      },
+      {
+        "line": 339,
+        "text": "\t\targ = indirectInterface(arg)"
+      },
+      {
+        "line": 340,
+        "text": "\t\t// Compute the expected type. Clumsy because of variadics."
+      },
+      {
+        "line": 341,
+        "text": "\t\targType := dddType"
+      }
+    ],
+    "enclosing_function": {
+      "line": 312,
+      "header": "func call(name string, fn reflect.Value, args ...reflect.Value) (reflect.Value, error) {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "io",
+      "reflect",
+      "strings",
+      "sync",
+      "unicode",
+      "url",
+      "utf8"
+    ],
+    "callee_first_identifier": "indirectInterface",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/exec.go",
+        "line": 1089,
+        "kind": "func",
+        "has_body": true,
+        "header": "func indirectInterface(v reflect.Value) reflect.Value {"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "file": "text/template/parse/parse.go",
+    "line": 274,
+    "col": 11,
+    "stratum": "bare_cross_file",
+    "callee_text": "lex",
+    "call_end_byte": 7611,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tlexer := lex(t.Name, text, t.leftDelim, t.rightDelim)",
+    "context": [
+      {
+        "line": 271,
+        "text": "\tif t.rightDelim == \"\" {"
+      },
+      {
+        "line": 272,
+        "text": "\t\tt.rightDelim = defaultRightDelim"
+      },
+      {
+        "line": 273,
+        "text": "\t}"
+      },
+      {
+        "line": 274,
+        "text": "\tlexer := lex(t.Name, text, t.leftDelim, t.rightDelim)"
+      },
+      {
+        "line": 275,
+        "text": "\tt.startParse(funcs, lexer, treeSet)"
+      },
+      {
+        "line": 276,
+        "text": "\tt.text = text"
+      }
+    ],
+    "enclosing_function": {
+      "line": 263,
+      "header": "func (t *Tree) Parse(text, leftDelim, rightDelim string, treeSet map[string]*Tree, funcs ...map[string]any) (tree *Tree, err error) {"
+    },
+    "imports": [
+      "bytes",
+      "fmt",
+      "runtime",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "lex",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/parse/lex.go",
+        "line": 241,
+        "kind": "func",
+        "has_body": true,
+        "header": "func lex(name, input, left, right string) *lexer {"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "file": "sync/waitgroup.go",
+    "line": 107,
+    "col": 3,
+    "stratum": "bare_cross_file",
+    "callee_text": "fatal",
+    "call_end_byte": 3436,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tfatal(\"sync: WaitGroup.Add called from inside and outside synctest bubble\")",
+    "context": [
+      {
+        "line": 104,
+        "text": "\tstate := wg.state.Add(uint64(delta) << 32)"
+      },
+      {
+        "line": 105,
+        "text": "\tif state&waitGroupBubbleFlag != 0 && !bubbled {"
+      },
+      {
+        "line": 106,
+        "text": "\t\t// Add has been called from within a synctest bubble (and we aren't in one)."
+      },
+      {
+        "line": 107,
+        "text": "\t\tfatal(\"sync: WaitGroup.Add called from inside and outside synctest bubble\")"
+      },
+      {
+        "line": 108,
+        "text": "\t}"
+      },
+      {
+        "line": 109,
+        "text": "\tv := int32(state >> 32)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 77,
+      "header": "func (wg *WaitGroup) Add(delta int) {"
+    },
+    "imports": [
+      "atomic",
+      "race",
+      "synctest",
+      "unsafe"
+    ],
+    "callee_first_identifier": "fatal",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sync/runtime.go",
+        "line": 59,
+        "kind": "func",
+        "has_body": false,
+        "header": "func fatal(string)"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "file": "encoding/json/v2_stream.go",
+    "line": 47,
+    "col": 13,
+    "stratum": "bare_cross_file",
+    "callee_text": "DefaultOptionsV1",
+    "call_end_byte": 1258,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdec.opts = DefaultOptionsV1()",
+    "context": [
+      {
+        "line": 44,
+        "text": "\t}"
+      },
+      {
+        "line": 45,
+        "text": ""
+      },
+      {
+        "line": 46,
+        "text": "\tdec := new(Decoder)"
+      },
+      {
+        "line": 47,
+        "text": "\tdec.opts = DefaultOptionsV1()"
+      },
+      {
+        "line": 48,
+        "text": "\tdec.dec = jsontext.NewDecoder(r, dec.opts)"
+      },
+      {
+        "line": 49,
+        "text": "\treturn dec"
+      }
+    ],
+    "enclosing_function": {
+      "line": 38,
+      "header": "func NewDecoder(r io.Reader) *Decoder {"
+    },
+    "imports": [
+      "bytes",
+      "errors",
+      "io",
+      "jsontext",
+      "jsonv2",
+      "reflect"
+    ],
+    "callee_first_identifier": "DefaultOptionsV1",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/v2_options.go",
+        "line": 233,
+        "kind": "func",
+        "has_body": true,
+        "header": "func DefaultOptionsV1() Options {"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "file": "encoding/json/v2_inject.go",
+    "line": 155,
+    "col": 9,
+    "stratum": "bare_cross_file",
+    "callee_text": "transformSyntacticError",
+    "call_end_byte": 5240,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\treturn transformSyntacticError(err)",
+    "context": [
+      {
+        "line": 152,
+        "text": "\t} else if ok {"
+      },
+      {
+        "line": 153,
+        "text": "\t\treturn (*UnmarshalTypeError)(nil)"
+      },
+      {
+        "line": 154,
+        "text": "\t}"
+      },
+      {
+        "line": 155,
+        "text": "\treturn transformSyntacticError(err)"
+      },
+      {
+        "line": 156,
+        "text": "}"
+      },
+      {
+        "line": 157,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 66,
+      "header": "func transformUnmarshalError(root any, err error) error {"
+    },
+    "imports": [
+      "fmt",
+      "internal",
+      "jsontext",
+      "jsonv2",
+      "reflect",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "transformSyntacticError",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/v2_scanner.go",
+        "line": 56,
+        "kind": "func",
+        "has_body": true,
+        "header": "func transformSyntacticError(err error) error {"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "file": "encoding/json/encode.go",
+    "line": 408,
+    "col": 7,
+    "stratum": "bare_cross_file",
+    "callee_text": "indirect",
+    "call_end_byte": 14594,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\tf := indirect()",
+    "context": [
+      {
+        "line": 405,
+        "text": "\t\treturn fi.(encoderFunc)"
+      },
+      {
+        "line": 406,
+        "text": "\t}"
+      },
+      {
+        "line": 407,
+        "text": ""
+      },
+      {
+        "line": 408,
+        "text": "\tf := indirect()"
+      },
+      {
+        "line": 409,
+        "text": "\tencoderCache.Store(t, f)"
+      },
+      {
+        "line": 410,
+        "text": "\treturn f"
+      }
+    ],
+    "enclosing_function": {
+      "line": 387,
+      "header": "func typeEncoder(t reflect.Type) encoderFunc {"
+    },
+    "imports": [
+      "base64",
+      "bytes",
+      "cmp",
+      "encoding",
+      "fmt",
+      "math",
+      "reflect",
+      "slices",
+      "strconv",
+      "strings",
+      "sync",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "indirect",
+    "local_bindings_before_site": [
+      {
+        "line": 398,
+        "text": "indirect := sync.OnceValue(func() encoderFunc {"
+      }
+    ],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/decode.go",
+        "line": 433,
+        "kind": "func",
+        "has_body": true,
+        "header": "func indirect(v reflect.Value, decodingNull bool) (Unmarshaler, encoding.TextUnmarshaler, reflect.Value) {"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "file": "encoding/json/v2_indent.go",
+    "line": 58,
+    "col": 10,
+    "stratum": "bare_cross_file",
+    "callee_text": "transformSyntacticError",
+    "call_end_byte": 1915,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\treturn transformSyntacticError(err)",
+    "context": [
+      {
+        "line": 55,
+        "text": "\t\tjsontext.AllowInvalidUTF8(true),"
+      },
+      {
+        "line": 56,
+        "text": "\t\tjsontext.PreserveRawStrings(true))"
+      },
+      {
+        "line": 57,
+        "text": "\tif err != nil {"
+      },
+      {
+        "line": 58,
+        "text": "\t\treturn transformSyntacticError(err)"
+      },
+      {
+        "line": 59,
+        "text": "\t}"
+      },
+      {
+        "line": 60,
+        "text": "\tdst.Write(b)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 49,
+      "header": "func Compact(dst *bytes.Buffer, src []byte) error {"
+    },
+    "imports": [
+      "bytes",
+      "jsontext",
+      "strings"
+    ],
+    "callee_first_identifier": "transformSyntacticError",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/v2_scanner.go",
+        "line": 56,
+        "kind": "func",
+        "has_body": true,
+        "header": "func transformSyntacticError(err error) error {"
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "file": "text/template/funcs.go",
+    "line": 376,
+    "col": 17,
+    "stratum": "bare_cross_file",
+    "callee_text": "indirectInterface",
+    "call_end_byte": 11395,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tt, _ := isTrue(indirectInterface(arg))",
+    "context": [
+      {
+        "line": 373,
+        "text": "// Boolean logic."
+      },
+      {
+        "line": 374,
+        "text": ""
+      },
+      {
+        "line": 375,
+        "text": "func truth(arg reflect.Value) bool {"
+      },
+      {
+        "line": 376,
+        "text": "\tt, _ := isTrue(indirectInterface(arg))"
+      },
+      {
+        "line": 377,
+        "text": "\treturn t"
+      },
+      {
+        "line": 378,
+        "text": "}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 375,
+      "header": "func truth(arg reflect.Value) bool {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "io",
+      "reflect",
+      "strings",
+      "sync",
+      "unicode",
+      "url",
+      "utf8"
+    ],
+    "callee_first_identifier": "indirectInterface",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/exec.go",
+        "line": 1089,
+        "kind": "func",
+        "has_body": true,
+        "header": "func indirectInterface(v reflect.Value) reflect.Value {"
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "file": "encoding/json/v2_stream.go",
+    "line": 149,
+    "col": 13,
+    "stratum": "bare_cross_file",
+    "callee_text": "Indent",
+    "call_end_byte": 4605,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tif err := Indent(&enc.indentBuf, b, enc.indentPrefix, enc.indentValue); err != nil {",
+    "context": [
+      {
+        "line": 146,
+        "text": "\tb := export.Encoder(e).Buf // b must not leak current scope"
+      },
+      {
+        "line": 147,
+        "text": "\tif len(enc.indentPrefix)+len(enc.indentValue) > 0 {"
+      },
+      {
+        "line": 148,
+        "text": "\t\tenc.indentBuf.Reset()"
+      },
+      {
+        "line": 149,
+        "text": "\t\tif err := Indent(&enc.indentBuf, b, enc.indentPrefix, enc.indentValue); err != nil {"
+      },
+      {
+        "line": 150,
+        "text": "\t\t\treturn err"
+      },
+      {
+        "line": 151,
+        "text": "\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 136,
+      "header": "func (enc *Encoder) Encode(v any) error {"
+    },
+    "imports": [
+      "bytes",
+      "errors",
+      "io",
+      "jsontext",
+      "jsonv2",
+      "reflect"
+    ],
+    "callee_first_identifier": "Indent",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/indent.go",
+        "line": 120,
+        "kind": "func",
+        "has_body": true,
+        "header": "func Indent(dst *bytes.Buffer, src []byte, prefix, indent string) error {"
+      },
+      {
+        "file": "encoding/json/v2_indent.go",
+        "line": 83,
+        "kind": "func",
+        "has_body": true,
+        "header": "func Indent(dst *bytes.Buffer, src []byte, prefix, indent string) error {"
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "file": "text/template/helper.go",
+    "line": 81,
+    "col": 8,
+    "stratum": "bare_cross_file",
+    "callee_text": "New",
+    "call_end_byte": 3136,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tt = New(name)",
+    "context": [
+      {
+        "line": 78,
+        "text": "\t\t// works. Otherwise we create a new template associated with t."
+      },
+      {
+        "line": 79,
+        "text": "\t\tvar tmpl *Template"
+      },
+      {
+        "line": 80,
+        "text": "\t\tif t == nil {"
+      },
+      {
+        "line": 81,
+        "text": "\t\t\tt = New(name)"
+      },
+      {
+        "line": 82,
+        "text": "\t\t}"
+      },
+      {
+        "line": 83,
+        "text": "\t\tif name == t.Name() {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 62,
+      "header": "func parseFiles(t *Template, readFile func(string) (string, []byte, error), filenames ...string) (*Template, error) {"
+    },
+    "imports": [
+      "filepath",
+      "fmt",
+      "fs",
+      "os",
+      "path"
+    ],
+    "callee_first_identifier": "New",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/template.go",
+        "line": 39,
+        "kind": "func",
+        "has_body": true,
+        "header": "func New(name string) *Template {"
+      },
+      {
+        "file": "text/template/template.go",
+        "line": 59,
+        "kind": "method",
+        "has_body": true,
+        "header": "func (t *Template) New(name string) *Template {"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "file": "encoding/json/encode.go",
+    "line": 226,
+    "col": 12,
+    "stratum": "bare_cross_file",
+    "callee_text": "appendIndent",
+    "call_end_byte": 9505,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\tb2, err = appendIndent(b2, b, prefix, indent)",
+    "context": [
+      {
+        "line": 223,
+        "text": "\t\treturn nil, err"
+      },
+      {
+        "line": 224,
+        "text": "\t}"
+      },
+      {
+        "line": 225,
+        "text": "\tb2 := make([]byte, 0, indentGrowthFactor*len(b))"
+      },
+      {
+        "line": 226,
+        "text": "\tb2, err = appendIndent(b2, b, prefix, indent)"
+      },
+      {
+        "line": 227,
+        "text": "\tif err != nil {"
+      },
+      {
+        "line": 228,
+        "text": "\t\treturn nil, err"
+      }
+    ],
+    "enclosing_function": {
+      "line": 220,
+      "header": "func MarshalIndent(v any, prefix, indent string) ([]byte, error) {"
+    },
+    "imports": [
+      "base64",
+      "bytes",
+      "cmp",
+      "encoding",
+      "fmt",
+      "math",
+      "reflect",
+      "slices",
+      "strconv",
+      "strings",
+      "sync",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "appendIndent",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/indent.go",
+        "line": 128,
+        "kind": "func",
+        "has_body": true,
+        "header": "func appendIndent(dst, src []byte, prefix, indent string) ([]byte, error) {"
+      },
+      {
+        "file": "encoding/json/v2_indent.go",
+        "line": 91,
+        "kind": "func",
+        "has_body": true,
+        "header": "func appendIndent(dst, src []byte, prefix, indent string) ([]byte, error) {"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "file": "text/template/funcs.go",
+    "line": 527,
+    "col": 9,
+    "stratum": "bare_cross_file",
+    "callee_text": "indirectInterface",
+    "call_end_byte": 15603,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\targ1 = indirectInterface(arg1)",
+    "context": [
+      {
+        "line": 524,
+        "text": ""
+      },
+      {
+        "line": 525,
+        "text": "// lt evaluates the comparison a < b."
+      },
+      {
+        "line": 526,
+        "text": "func lt(arg1, arg2 reflect.Value) (bool, error) {"
+      },
+      {
+        "line": 527,
+        "text": "\targ1 = indirectInterface(arg1)"
+      },
+      {
+        "line": 528,
+        "text": "\tk1, err := basicKind(arg1)"
+      },
+      {
+        "line": 529,
+        "text": "\tif err != nil {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 526,
+      "header": "func lt(arg1, arg2 reflect.Value) (bool, error) {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "io",
+      "reflect",
+      "strings",
+      "sync",
+      "unicode",
+      "url",
+      "utf8"
+    ],
+    "callee_first_identifier": "indirectInterface",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/exec.go",
+        "line": 1089,
+        "kind": "func",
+        "has_body": true,
+        "header": "func indirectInterface(v reflect.Value) reflect.Value {"
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "file": "encoding/json/v2_indent.go",
+    "line": 115,
+    "col": 3,
+    "stratum": "bare_cross_file",
+    "callee_text": "ReportErrorsWithLegacySemantics",
+    "call_end_byte": 4252,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tReportErrorsWithLegacySemantics(true),",
+    "context": [
+      {
+        "line": 112,
+        "text": "\t}"
+      },
+      {
+        "line": 113,
+        "text": ""
+      },
+      {
+        "line": 114,
+        "text": "\tdst, err := jsontext.AppendFormat(dst, src,"
+      },
+      {
+        "line": 115,
+        "text": "\t\tReportErrorsWithLegacySemantics(true),"
+      },
+      {
+        "line": 116,
+        "text": "\t\tjsontext.AllowDuplicateNames(true),"
+      },
+      {
+        "line": 117,
+        "text": "\t\tjsontext.AllowInvalidUTF8(true),"
+      }
+    ],
+    "enclosing_function": {
+      "line": 91,
+      "header": "func appendIndent(dst, src []byte, prefix, indent string) ([]byte, error) {"
+    },
+    "imports": [
+      "bytes",
+      "jsontext",
+      "strings"
+    ],
+    "callee_first_identifier": "ReportErrorsWithLegacySemantics",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/v2_options.go",
+        "line": 489,
+        "kind": "func",
+        "has_body": true,
+        "header": "func ReportErrorsWithLegacySemantics(v bool) Options {"
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "file": "encoding/json/stream.go",
+    "line": 507,
+    "col": 7,
+    "stratum": "bare_cross_file",
+    "callee_text": "isSpace",
+    "call_end_byte": 13398,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tif isSpace(c) {",
+    "context": [
+      {
+        "line": 504,
+        "text": "\tfor {"
+      },
+      {
+        "line": 505,
+        "text": "\t\tfor i := dec.scanp; i < len(dec.buf); i++ {"
+      },
+      {
+        "line": 506,
+        "text": "\t\t\tc := dec.buf[i]"
+      },
+      {
+        "line": 507,
+        "text": "\t\t\tif isSpace(c) {"
+      },
+      {
+        "line": 508,
+        "text": "\t\t\t\tcontinue"
+      },
+      {
+        "line": 509,
+        "text": "\t\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 502,
+      "header": "func (dec *Decoder) peek() (byte, error) {"
+    },
+    "imports": [
+      "bytes",
+      "errors",
+      "io"
+    ],
+    "callee_first_identifier": "isSpace",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/scanner.go",
+        "line": 201,
+        "kind": "func",
+        "has_body": true,
+        "header": "func isSpace(c byte) bool {"
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "file": "sync/cond.go",
+    "line": 69,
+    "col": 7,
+    "stratum": "bare_cross_file",
+    "callee_text": "runtime_notifyListAdd",
+    "call_end_byte": 2261,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tt := runtime_notifyListAdd(&c.notify)",
+    "context": [
+      {
+        "line": 66,
+        "text": "//\tc.L.Unlock()"
+      },
+      {
+        "line": 67,
+        "text": "func (c *Cond) Wait() {"
+      },
+      {
+        "line": 68,
+        "text": "\tc.checker.check()"
+      },
+      {
+        "line": 69,
+        "text": "\tt := runtime_notifyListAdd(&c.notify)"
+      },
+      {
+        "line": 70,
+        "text": "\tc.L.Unlock()"
+      },
+      {
+        "line": 71,
+        "text": "\truntime_notifyListWait(&c.notify, t)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 67,
+      "header": "func (c *Cond) Wait() {"
+    },
+    "imports": [
+      "atomic",
+      "unsafe"
+    ],
+    "callee_first_identifier": "runtime_notifyListAdd",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sync/runtime.go",
+        "line": 40,
+        "kind": "func",
+        "has_body": false,
+        "header": "func runtime_notifyListAdd(l *notifyList) uint32"
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "file": "sync/rwmutex.go",
+    "line": 212,
+    "col": 3,
+    "stratum": "bare_cross_file",
+    "callee_text": "fatal",
+    "call_end_byte": 6462,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tfatal(\"sync: Unlock of unlocked RWMutex\")",
+    "context": [
+      {
+        "line": 209,
+        "text": "\tr := rw.readerCount.Add(rwmutexMaxReaders)"
+      },
+      {
+        "line": 210,
+        "text": "\tif r >= rwmutexMaxReaders {"
+      },
+      {
+        "line": 211,
+        "text": "\t\trace.Enable()"
+      },
+      {
+        "line": 212,
+        "text": "\t\tfatal(\"sync: Unlock of unlocked RWMutex\")"
+      },
+      {
+        "line": 213,
+        "text": "\t}"
+      },
+      {
+        "line": 214,
+        "text": "\t// Unblock blocked readers, if any."
+      }
+    ],
+    "enclosing_function": {
+      "line": 201,
+      "header": "func (rw *RWMutex) Unlock() {"
+    },
+    "imports": [
+      "atomic",
+      "race",
+      "unsafe"
+    ],
+    "callee_first_identifier": "fatal",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sync/runtime.go",
+        "line": 59,
+        "kind": "func",
+        "has_body": false,
+        "header": "func fatal(string)"
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "file": "text/template/funcs.go",
+    "line": 766,
+    "col": 13,
+    "stratum": "bare_cross_file",
+    "callee_text": "printableValue",
+    "call_end_byte": 21139,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\ta, ok := printableValue(reflect.ValueOf(arg))",
+    "context": [
+      {
+        "line": 763,
+        "text": "\t}"
+      },
+      {
+        "line": 764,
+        "text": "\tif !ok {"
+      },
+      {
+        "line": 765,
+        "text": "\t\tfor i, arg := range args {"
+      },
+      {
+        "line": 766,
+        "text": "\t\t\ta, ok := printableValue(reflect.ValueOf(arg))"
+      },
+      {
+        "line": 767,
+        "text": "\t\t\tif ok {"
+      },
+      {
+        "line": 768,
+        "text": "\t\t\t\targs[i] = a"
+      }
+    ],
+    "enclosing_function": {
+      "line": 757,
+      "header": "func evalArgs(args []any) string {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "io",
+      "reflect",
+      "strings",
+      "sync",
+      "unicode",
+      "url",
+      "utf8"
+    ],
+    "callee_first_identifier": "printableValue",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/exec.go",
+        "line": 1115,
+        "kind": "func",
+        "has_body": true,
+        "header": "func printableValue(v reflect.Value) (any, bool) {"
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "file": "sort/sort.go",
+    "line": 234,
+    "col": 2,
+    "stratum": "bare_cross_file",
+    "callee_text": "stable",
+    "call_end_byte": 8559,
+    "package": "sort",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tstable(data, data.Len())",
+    "context": [
+      {
+        "line": 231,
+        "text": "// Note: in many situations, the newer slices.SortStableFunc function is more"
+      },
+      {
+        "line": 232,
+        "text": "// ergonomic and runs faster."
+      },
+      {
+        "line": 233,
+        "text": "func Stable(data Interface) {"
+      },
+      {
+        "line": 234,
+        "text": "\tstable(data, data.Len())"
+      },
+      {
+        "line": 235,
+        "text": "}"
+      },
+      {
+        "line": 236,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 233,
+      "header": "func Stable(data Interface) {"
+    },
+    "imports": [
+      "bits",
+      "slices"
+    ],
+    "callee_first_identifier": "stable",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sort/zsortinterface.go",
+        "line": 335,
+        "kind": "func",
+        "has_body": true,
+        "header": "func stable(data Interface, n int) {"
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "file": "sync/rwmutex.go",
+    "line": 74,
+    "col": 3,
+    "stratum": "bare_cross_file",
+    "callee_text": "runtime_SemacquireRWMutexR",
+    "call_end_byte": 2871,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\truntime_SemacquireRWMutexR(&rw.readerSem, false, 0)",
+    "context": [
+      {
+        "line": 71,
+        "text": "\t}"
+      },
+      {
+        "line": 72,
+        "text": "\tif rw.readerCount.Add(1) < 0 {"
+      },
+      {
+        "line": 73,
+        "text": "\t\t// A writer is pending, wait for it."
+      },
+      {
+        "line": 74,
+        "text": "\t\truntime_SemacquireRWMutexR(&rw.readerSem, false, 0)"
+      },
+      {
+        "line": 75,
+        "text": "\t}"
+      },
+      {
+        "line": 76,
+        "text": "\tif race.Enabled {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 67,
+      "header": "func (rw *RWMutex) RLock() {"
+    },
+    "imports": [
+      "atomic",
+      "race",
+      "unsafe"
+    ],
+    "callee_first_identifier": "runtime_SemacquireRWMutexR",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sync/runtime.go",
+        "line": 27,
+        "kind": "func",
+        "has_body": false,
+        "header": "func runtime_SemacquireRWMutexR(s *uint32, lifo bool, skipframes int)"
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "file": "fmt/scan.go",
+    "line": 1204,
+    "col": 29,
+    "stratum": "bare_cross_file",
+    "callee_text": "parsenum",
+    "call_end_byte": 32053,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\ts.maxWid, widPresent, i = parsenum(format, i, end)",
+    "context": [
+      {
+        "line": 1201,
+        "text": ""
+      },
+      {
+        "line": 1202,
+        "text": "\t\t// do we have 20 (width)?"
+      },
+      {
+        "line": 1203,
+        "text": "\t\tvar widPresent bool"
+      },
+      {
+        "line": 1204,
+        "text": "\t\ts.maxWid, widPresent, i = parsenum(format, i, end)"
+      },
+      {
+        "line": 1205,
+        "text": "\t\tif !widPresent {"
+      },
+      {
+        "line": 1206,
+        "text": "\t\t\ts.maxWid = hugeWid"
+      }
+    ],
+    "enclosing_function": {
+      "line": 1181,
+      "header": "func (s *ss) doScanf(format string, a []any) (numProcessed int, err error) {"
+    },
+    "imports": [
+      "errors",
+      "io",
+      "math",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "parsenum",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "fmt/print.go",
+        "line": 350,
+        "kind": "func",
+        "has_body": true,
+        "header": "func parsenum(s string, start, end int) (num int, isnum bool, newi int) {"
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "file": "text/template/funcs.go",
+    "line": 376,
+    "col": 10,
+    "stratum": "bare_cross_file",
+    "callee_text": "isTrue",
+    "call_end_byte": 11396,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tt, _ := isTrue(indirectInterface(arg))",
+    "context": [
+      {
+        "line": 373,
+        "text": "// Boolean logic."
+      },
+      {
+        "line": 374,
+        "text": ""
+      },
+      {
+        "line": 375,
+        "text": "func truth(arg reflect.Value) bool {"
+      },
+      {
+        "line": 376,
+        "text": "\tt, _ := isTrue(indirectInterface(arg))"
+      },
+      {
+        "line": 377,
+        "text": "\treturn t"
+      },
+      {
+        "line": 378,
+        "text": "}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 375,
+      "header": "func truth(arg reflect.Value) bool {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "io",
+      "reflect",
+      "strings",
+      "sync",
+      "unicode",
+      "url",
+      "utf8"
+    ],
+    "callee_first_identifier": "isTrue",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/exec.go",
+        "line": 324,
+        "kind": "func",
+        "has_body": true,
+        "header": "func isTrue(val reflect.Value) (truth, ok bool) {"
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "file": "sync/waitgroup.go",
+    "line": 94,
+    "col": 4,
+    "stratum": "bare_cross_file",
+    "callee_text": "fatal",
+    "call_end_byte": 2894,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tfatal(\"sync: WaitGroup.Add called from multiple synctest bubbles\")",
+    "context": [
+      {
+        "line": 91,
+        "text": "\t\tcase synctest.Unbubbled:"
+      },
+      {
+        "line": 92,
+        "text": "\t\tcase synctest.OtherBubble:"
+      },
+      {
+        "line": 93,
+        "text": "\t\t\t// wg is already associated with a different bubble."
+      },
+      {
+        "line": 94,
+        "text": "\t\t\tfatal(\"sync: WaitGroup.Add called from multiple synctest bubbles\")"
+      },
+      {
+        "line": 95,
+        "text": "\t\tcase synctest.CurrentBubble:"
+      },
+      {
+        "line": 96,
+        "text": "\t\t\tbubbled = true"
+      }
+    ],
+    "enclosing_function": {
+      "line": 77,
+      "header": "func (wg *WaitGroup) Add(delta int) {"
+    },
+    "imports": [
+      "atomic",
+      "race",
+      "synctest",
+      "unsafe"
+    ],
+    "callee_first_identifier": "fatal",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sync/runtime.go",
+        "line": 59,
+        "kind": "func",
+        "has_body": false,
+        "header": "func fatal(string)"
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "file": "text/template/funcs.go",
+    "line": 313,
+    "col": 7,
+    "stratum": "bare_cross_file",
+    "callee_text": "indirectInterface",
+    "call_end_byte": 9665,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tfn = indirectInterface(fn)",
+    "context": [
+      {
+        "line": 310,
+        "text": "// call returns the result of evaluating the first argument as a function."
+      },
+      {
+        "line": 311,
+        "text": "// The function must return 1 result, or 2 results, the second of which is an error."
+      },
+      {
+        "line": 312,
+        "text": "func call(name string, fn reflect.Value, args ...reflect.Value) (reflect.Value, error) {"
+      },
+      {
+        "line": 313,
+        "text": "\tfn = indirectInterface(fn)"
+      },
+      {
+        "line": 314,
+        "text": "\tif !fn.IsValid() {"
+      },
+      {
+        "line": 315,
+        "text": "\t\treturn reflect.Value{}, fmt.Errorf(\"call of nil\")"
+      }
+    ],
+    "enclosing_function": {
+      "line": 312,
+      "header": "func call(name string, fn reflect.Value, args ...reflect.Value) (reflect.Value, error) {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "io",
+      "reflect",
+      "strings",
+      "sync",
+      "unicode",
+      "url",
+      "utf8"
+    ],
+    "callee_first_identifier": "indirectInterface",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/exec.go",
+        "line": 1089,
+        "kind": "func",
+        "has_body": true,
+        "header": "func indirectInterface(v reflect.Value) reflect.Value {"
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "file": "encoding/json/v2_stream.go",
+    "line": 282,
+    "col": 14,
+    "stratum": "bare_cross_file",
+    "callee_text": "transformSyntacticError",
+    "call_end_byte": 8987,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tdec.err = transformSyntacticError(err)",
+    "context": [
+      {
+        "line": 279,
+        "text": "\t\t\t\t// This is only possible if jsontext violates its documentation."
+      },
+      {
+        "line": 280,
+        "text": "\t\t\t\terr = errors.New(\"json: successful read after failed peek\")"
+      },
+      {
+        "line": 281,
+        "text": "\t\t\t}"
+      },
+      {
+        "line": 282,
+        "text": "\t\t\tdec.err = transformSyntacticError(err)"
+      },
+      {
+        "line": 283,
+        "text": "\t\t}"
+      },
+      {
+        "line": 284,
+        "text": "\t\treturn dec.err != io.EOF"
+      }
+    ],
+    "enclosing_function": {
+      "line": 270,
+      "header": "func (dec *Decoder) More() bool {"
+    },
+    "imports": [
+      "bytes",
+      "errors",
+      "io",
+      "jsontext",
+      "jsonv2",
+      "reflect"
+    ],
+    "callee_first_identifier": "transformSyntacticError",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/v2_scanner.go",
+        "line": 56,
+        "kind": "func",
+        "has_body": true,
+        "header": "func transformSyntacticError(err error) error {"
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "file": "sync/cond.go",
+    "line": 84,
+    "col": 2,
+    "stratum": "bare_cross_file",
+    "callee_text": "runtime_notifyListNotifyOne",
+    "call_end_byte": 2720,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\truntime_notifyListNotifyOne(&c.notify)",
+    "context": [
+      {
+        "line": 81,
+        "text": "// are attempting to lock c.L, they may be awoken before a \"waiting\" goroutine."
+      },
+      {
+        "line": 82,
+        "text": "func (c *Cond) Signal() {"
+      },
+      {
+        "line": 83,
+        "text": "\tc.checker.check()"
+      },
+      {
+        "line": 84,
+        "text": "\truntime_notifyListNotifyOne(&c.notify)"
+      },
+      {
+        "line": 85,
+        "text": "}"
+      },
+      {
+        "line": 86,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 82,
+      "header": "func (c *Cond) Signal() {"
+    },
+    "imports": [
+      "atomic",
+      "unsafe"
+    ],
+    "callee_first_identifier": "runtime_notifyListNotifyOne",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sync/runtime.go",
+        "line": 49,
+        "kind": "func",
+        "has_body": false,
+        "header": "func runtime_notifyListNotifyOne(l *notifyList)"
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "file": "encoding/json/decode.go",
+    "line": 653,
+    "col": 12,
+    "stratum": "bare_cross_file",
+    "callee_text": "cachedTypeFields",
+    "call_end_byte": 19261,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tfields = cachedTypeFields(t)",
+    "context": [
+      {
+        "line": 650,
+        "text": "\t\t\tv.Set(reflect.MakeMap(t))"
+      },
+      {
+        "line": 651,
+        "text": "\t\t}"
+      },
+      {
+        "line": 652,
+        "text": "\tcase reflect.Struct:"
+      },
+      {
+        "line": 653,
+        "text": "\t\tfields = cachedTypeFields(t)"
+      },
+      {
+        "line": 654,
+        "text": "\t\t// ok"
+      },
+      {
+        "line": 655,
+        "text": "\tdefault:"
+      }
+    ],
+    "enclosing_function": {
+      "line": 605,
+      "header": "func (d *decodeState) object(v reflect.Value) error {"
+    },
+    "imports": [
+      "base64",
+      "encoding",
+      "fmt",
+      "reflect",
+      "strconv",
+      "strings",
+      "unicode",
+      "utf16",
+      "utf8"
+    ],
+    "callee_first_identifier": "cachedTypeFields",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/encode.go",
+        "line": 1331,
+        "kind": "func",
+        "has_body": true,
+        "header": "func cachedTypeFields(t reflect.Type) structFields {"
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "file": "text/template/funcs.go",
+    "line": 243,
+    "col": 9,
+    "stratum": "bare_cross_file",
+    "callee_text": "indirectInterface",
+    "call_end_byte": 7522,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\titem = indirectInterface(item)",
+    "context": [
+      {
+        "line": 240,
+        "text": "// is x[:], \"slice x 1\" is x[1:], and \"slice x 1 2 3\" is x[1:2:3]. The first"
+      },
+      {
+        "line": 241,
+        "text": "// argument must be a string, slice, or array."
+      },
+      {
+        "line": 242,
+        "text": "func slice(item reflect.Value, indexes ...reflect.Value) (reflect.Value, error) {"
+      },
+      {
+        "line": 243,
+        "text": "\titem = indirectInterface(item)"
+      },
+      {
+        "line": 244,
+        "text": "\tif !item.IsValid() {"
+      },
+      {
+        "line": 245,
+        "text": "\t\treturn reflect.Value{}, fmt.Errorf(\"slice of untyped nil\")"
+      }
+    ],
+    "enclosing_function": {
+      "line": 242,
+      "header": "func slice(item reflect.Value, indexes ...reflect.Value) (reflect.Value, error) {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "io",
+      "reflect",
+      "strings",
+      "sync",
+      "unicode",
+      "url",
+      "utf8"
+    ],
+    "callee_first_identifier": "indirectInterface",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/exec.go",
+        "line": 1089,
+        "kind": "func",
+        "has_body": true,
+        "header": "func indirectInterface(v reflect.Value) reflect.Value {"
+      }
+    ]
+  },
+  {
+    "id": 32,
+    "file": "encoding/json/indent.go",
+    "line": 18,
+    "col": 12,
+    "stratum": "bare_cross_file",
+    "callee_text": "appendHTMLEscape",
+    "call_end_byte": 731,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdst.Write(appendHTMLEscape(dst.AvailableBuffer(), src))",
+    "context": [
+      {
+        "line": 15,
+        "text": "// escaping within <script> tags, so an alternative JSON encoding must be used."
+      },
+      {
+        "line": 16,
+        "text": "func HTMLEscape(dst *bytes.Buffer, src []byte) {"
+      },
+      {
+        "line": 17,
+        "text": "\tdst.Grow(len(src))"
+      },
+      {
+        "line": 18,
+        "text": "\tdst.Write(appendHTMLEscape(dst.AvailableBuffer(), src))"
+      },
+      {
+        "line": 19,
+        "text": "}"
+      },
+      {
+        "line": 20,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 16,
+      "header": "func HTMLEscape(dst *bytes.Buffer, src []byte) {"
+    },
+    "imports": [
+      "bytes"
+    ],
+    "callee_first_identifier": "appendHTMLEscape",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/indent.go",
+        "line": 21,
+        "kind": "func",
+        "has_body": true,
+        "header": "func appendHTMLEscape(dst, src []byte) []byte {"
+      },
+      {
+        "file": "encoding/json/v2_indent.go",
+        "line": 26,
+        "kind": "func",
+        "has_body": true,
+        "header": "func appendHTMLEscape(dst, src []byte) []byte {"
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "file": "encoding/json/indent.go",
+    "line": 53,
+    "col": 10,
+    "stratum": "bare_cross_file",
+    "callee_text": "newScanner",
+    "call_end_byte": 1773,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\tscan := newScanner()",
+    "context": [
+      {
+        "line": 50,
+        "text": ""
+      },
+      {
+        "line": 51,
+        "text": "func appendCompact(dst, src []byte, escape bool) ([]byte, error) {"
+      },
+      {
+        "line": 52,
+        "text": "\torigLen := len(dst)"
+      },
+      {
+        "line": 53,
+        "text": "\tscan := newScanner()"
+      },
+      {
+        "line": 54,
+        "text": "\tdefer freeScanner(scan)"
+      },
+      {
+        "line": 55,
+        "text": "\tstart := 0"
+      }
+    ],
+    "enclosing_function": {
+      "line": 51,
+      "header": "func appendCompact(dst, src []byte, escape bool) ([]byte, error) {"
+    },
+    "imports": [
+      "bytes"
+    ],
+    "callee_first_identifier": "newScanner",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/scanner.go",
+        "line": 95,
+        "kind": "func",
+        "has_body": true,
+        "header": "func newScanner() *scanner {"
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "file": "sync/waitgroup.go",
+    "line": 100,
+    "col": 5,
+    "stratum": "bare_cross_file",
+    "callee_text": "fatal",
+    "call_end_byte": 3174,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\t\tfatal(\"sync: WaitGroup.Add called from inside and outside synctest bubble\")",
+    "context": [
+      {
+        "line": 97,
+        "text": "\t\t\tstate := wg.state.Or(waitGroupBubbleFlag)"
+      },
+      {
+        "line": 98,
+        "text": "\t\t\tif state != 0 && state&waitGroupBubbleFlag == 0 {"
+      },
+      {
+        "line": 99,
+        "text": "\t\t\t\t// Add has been called from outside this bubble."
+      },
+      {
+        "line": 100,
+        "text": "\t\t\t\tfatal(\"sync: WaitGroup.Add called from inside and outside synctest bubble\")"
+      },
+      {
+        "line": 101,
+        "text": "\t\t\t}"
+      },
+      {
+        "line": 102,
+        "text": "\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 77,
+      "header": "func (wg *WaitGroup) Add(delta int) {"
+    },
+    "imports": [
+      "atomic",
+      "race",
+      "synctest",
+      "unsafe"
+    ],
+    "callee_first_identifier": "fatal",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sync/runtime.go",
+        "line": 59,
+        "kind": "func",
+        "has_body": false,
+        "header": "func fatal(string)"
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "file": "text/template/exec.go",
+    "line": 870,
+    "col": 12,
+    "stratum": "bare_cross_file",
+    "callee_text": "safeCall",
+    "call_end_byte": 26151,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tv, err := safeCall(fun, argv)",
+    "context": [
+      {
+        "line": 867,
+        "text": "\t\tfun = reflect.ValueOf(call)"
+      },
+      {
+        "line": 868,
+        "text": "\t}"
+      },
+      {
+        "line": 869,
+        "text": ""
+      },
+      {
+        "line": 870,
+        "text": "\tv, err := safeCall(fun, argv)"
+      },
+      {
+        "line": 871,
+        "text": "\t// If we have an error that is not nil, stop execution and return that"
+      },
+      {
+        "line": 872,
+        "text": "\t// error to the caller."
+      }
+    ],
+    "enclosing_function": {
+      "line": 772,
+      "header": "func (s *state) evalCall(dot, fun reflect.Value, isBuiltin bool, node parse.Node, name string, args []parse.Node, final reflect.Value) reflect.Value {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "fmtsort",
+      "io",
+      "parse",
+      "reflect",
+      "runtime",
+      "strings"
+    ],
+    "callee_first_identifier": "safeCall",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/funcs.go",
+        "line": 356,
+        "kind": "func",
+        "has_body": true,
+        "header": "func safeCall(fun reflect.Value, args []reflect.Value) (val reflect.Value, err error) {"
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "file": "encoding/json/v2_indent.go",
+    "line": 23,
+    "col": 12,
+    "stratum": "bare_cross_file",
+    "callee_text": "appendHTMLEscape",
+    "call_end_byte": 773,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdst.Write(appendHTMLEscape(dst.AvailableBuffer(), src))",
+    "context": [
+      {
+        "line": 20,
+        "text": "// escaping within <script> tags, so an alternative JSON encoding must be used."
+      },
+      {
+        "line": 21,
+        "text": "func HTMLEscape(dst *bytes.Buffer, src []byte) {"
+      },
+      {
+        "line": 22,
+        "text": "\tdst.Grow(len(src))"
+      },
+      {
+        "line": 23,
+        "text": "\tdst.Write(appendHTMLEscape(dst.AvailableBuffer(), src))"
+      },
+      {
+        "line": 24,
+        "text": "}"
+      },
+      {
+        "line": 25,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 21,
+      "header": "func HTMLEscape(dst *bytes.Buffer, src []byte) {"
+    },
+    "imports": [
+      "bytes",
+      "jsontext",
+      "strings"
+    ],
+    "callee_first_identifier": "appendHTMLEscape",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/indent.go",
+        "line": 21,
+        "kind": "func",
+        "has_body": true,
+        "header": "func appendHTMLEscape(dst, src []byte) []byte {"
+      },
+      {
+        "file": "encoding/json/v2_indent.go",
+        "line": 26,
+        "kind": "func",
+        "has_body": true,
+        "header": "func appendHTMLEscape(dst, src []byte) []byte {"
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "file": "encoding/json/v2_stream.go",
+    "line": 80,
+    "col": 13,
+    "stratum": "bare_cross_file",
+    "callee_text": "transformSyntacticError",
+    "call_end_byte": 2445,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tdec.err = transformSyntacticError(err)",
+    "context": [
+      {
+        "line": 77,
+        "text": "\t}"
+      },
+      {
+        "line": 78,
+        "text": "\tb, err := dec.dec.ReadValue()"
+      },
+      {
+        "line": 79,
+        "text": "\tif err != nil {"
+      },
+      {
+        "line": 80,
+        "text": "\t\tdec.err = transformSyntacticError(err)"
+      },
+      {
+        "line": 81,
+        "text": "\t\tif dec.err.Error() == errUnexpectedEnd.Error() {"
+      },
+      {
+        "line": 82,
+        "text": "\t\t\t// NOTE: Decode has always been inconsistent with Unmarshal"
+      }
+    ],
+    "enclosing_function": {
+      "line": 74,
+      "header": "func (dec *Decoder) Decode(v any) error {"
+    },
+    "imports": [
+      "bytes",
+      "errors",
+      "io",
+      "jsontext",
+      "jsonv2",
+      "reflect"
+    ],
+    "callee_first_identifier": "transformSyntacticError",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/v2_scanner.go",
+        "line": 56,
+        "kind": "func",
+        "has_body": true,
+        "header": "func transformSyntacticError(err error) error {"
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "file": "text/template/funcs.go",
+    "line": 149,
+    "col": 7,
+    "stratum": "bare_cross_file",
+    "callee_text": "canBeNil",
+    "call_end_byte": 4430,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tif !canBeNil(argType) {",
+    "context": [
+      {
+        "line": 146,
+        "text": "// converts an invalid value to appropriate zero if possible."
+      },
+      {
+        "line": 147,
+        "text": "func prepareArg(value reflect.Value, argType reflect.Type) (reflect.Value, error) {"
+      },
+      {
+        "line": 148,
+        "text": "\tif !value.IsValid() {"
+      },
+      {
+        "line": 149,
+        "text": "\t\tif !canBeNil(argType) {"
+      },
+      {
+        "line": 150,
+        "text": "\t\t\treturn reflect.Value{}, fmt.Errorf(\"value is nil; should be of type %s\", argType)"
+      },
+      {
+        "line": 151,
+        "text": "\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 147,
+      "header": "func prepareArg(value reflect.Value, argType reflect.Type) (reflect.Value, error) {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "io",
+      "reflect",
+      "strings",
+      "sync",
+      "unicode",
+      "url",
+      "utf8"
+    ],
+    "callee_first_identifier": "canBeNil",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/exec.go",
+        "line": 881,
+        "kind": "func",
+        "has_body": true,
+        "header": "func canBeNil(typ reflect.Type) bool {"
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "file": "encoding/json/v2_indent.go",
+    "line": 123,
+    "col": 24,
+    "stratum": "bare_cross_file",
+    "callee_text": "transformSyntacticError",
+    "call_end_byte": 4528,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\treturn dst[:dstLen], transformSyntacticError(err)",
+    "context": [
+      {
+        "line": 120,
+        "text": "\t\tjsontext.WithIndentPrefix(prefix),"
+      },
+      {
+        "line": 121,
+        "text": "\t\tjsontext.WithIndent(indent))"
+      },
+      {
+        "line": 122,
+        "text": "\tif err != nil {"
+      },
+      {
+        "line": 123,
+        "text": "\t\treturn dst[:dstLen], transformSyntacticError(err)"
+      },
+      {
+        "line": 124,
+        "text": "\t}"
+      },
+      {
+        "line": 125,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 91,
+      "header": "func appendIndent(dst, src []byte, prefix, indent string) ([]byte, error) {"
+    },
+    "imports": [
+      "bytes",
+      "jsontext",
+      "strings"
+    ],
+    "callee_first_identifier": "transformSyntacticError",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/v2_scanner.go",
+        "line": 56,
+        "kind": "func",
+        "has_body": true,
+        "header": "func transformSyntacticError(err error) error {"
+      }
+    ]
+  },
+  {
+    "id": 40,
+    "file": "fmt/print.go",
+    "line": 572,
+    "col": 13,
+    "stratum": "bare_other",
+    "callee_text": "uint64",
+    "call_end_byte": 15948,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tp.fmt0x64(uint64(u), !p.fmt.sharp)",
+    "context": [
+      {
+        "line": 569,
+        "text": "\t\t\t}"
+      },
+      {
+        "line": 570,
+        "text": "\t\t}"
+      },
+      {
+        "line": 571,
+        "text": "\tcase 'p':"
+      },
+      {
+        "line": 572,
+        "text": "\t\tp.fmt0x64(uint64(u), !p.fmt.sharp)"
+      },
+      {
+        "line": 573,
+        "text": "\tcase 'b', 'o', 'd', 'x', 'X':"
+      },
+      {
+        "line": 574,
+        "text": "\t\tp.fmtInteger(arg, value, uint64(u), unsigned, verb)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 542,
+      "header": "func (p *pp) fmtPointer(arg any, value reflect.Value, verb rune) {"
+    },
+    "imports": [
+      "fmtsort",
+      "io",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "uint64",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 41,
+    "file": "sort/zsortfunc.go",
+    "line": 473,
+    "col": 4,
+    "stratum": "bare_other",
+    "callee_text": "swapRange_func",
+    "call_end_byte": 11704,
+    "package": "sort",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tswapRange_func(data, m-i, m+j-i, i)",
+    "context": [
+      {
+        "line": 470,
+        "text": "\t\t\tswapRange_func(data, m-i, m, j)"
+      },
+      {
+        "line": 471,
+        "text": "\t\t\ti -= j"
+      },
+      {
+        "line": 472,
+        "text": "\t\t} else {"
+      },
+      {
+        "line": 473,
+        "text": "\t\t\tswapRange_func(data, m-i, m+j-i, i)"
+      },
+      {
+        "line": 474,
+        "text": "\t\t\tj -= i"
+      },
+      {
+        "line": 475,
+        "text": "\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 464,
+      "header": "func rotate_func(data lessSwap, a, m, b int) {"
+    },
+    "imports": [],
+    "callee_first_identifier": "swapRange_func",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sort/zsortfunc.go",
+        "line": 329,
+        "kind": "func",
+        "has_body": true,
+        "header": "func swapRange_func(data lessSwap, a, b, n int) {"
+      }
+    ]
+  },
+  {
+    "id": 42,
+    "file": "strings/replace.go",
+    "line": 240,
+    "col": 7,
+    "stratum": "bare_other",
+    "callee_text": "int",
+    "call_end_byte": 7079,
+    "package": "strings",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tif int(index) == r.tableSize {",
+    "context": [
+      {
+        "line": 237,
+        "text": "\t\t}"
+      },
+      {
+        "line": 238,
+        "text": "\t\tif node.table != nil {"
+      },
+      {
+        "line": 239,
+        "text": "\t\t\tindex := r.mapping[s[0]]"
+      },
+      {
+        "line": 240,
+        "text": "\t\t\tif int(index) == r.tableSize {"
+      },
+      {
+        "line": 241,
+        "text": "\t\t\t\tbreak"
+      },
+      {
+        "line": 242,
+        "text": "\t\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 221,
+      "header": "func (r *genericReplacer) lookup(s string, ignoreRoot bool) (val string, keylen int, found bool) {"
+    },
+    "imports": [
+      "io",
+      "sync"
+    ],
+    "callee_first_identifier": "int",
+    "local_bindings_before_site": [
+      {
+        "line": 221,
+        "text": "func (r *genericReplacer) lookup(s string, ignoreRoot bool) (val string, keylen int, found bool) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 43,
+    "file": "strings/strings.go",
+    "line": 375,
+    "col": 14,
+    "stratum": "bare_other",
+    "callee_text": "int",
+    "call_end_byte": 9733,
+    "package": "strings",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tisSpace := int(asciiSpace[r])",
+    "context": [
+      {
+        "line": 372,
+        "text": "\tfor i := 0; i < len(s); i++ {"
+      },
+      {
+        "line": 373,
+        "text": "\t\tr := s[i]"
+      },
+      {
+        "line": 374,
+        "text": "\t\tsetBits |= r"
+      },
+      {
+        "line": 375,
+        "text": "\t\tisSpace := int(asciiSpace[r])"
+      },
+      {
+        "line": 376,
+        "text": "\t\tn += wasSpace & ^isSpace"
+      },
+      {
+        "line": 377,
+        "text": "\t\twasSpace = isSpace"
+      }
+    ],
+    "enclosing_function": {
+      "line": 365,
+      "header": "func Fields(s string) []string {"
+    },
+    "imports": [
+      "bits",
+      "bytealg",
+      "stringslite",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "int",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 44,
+    "file": "strings/strings.go",
+    "line": 615,
+    "col": 7,
+    "stratum": "bare_other",
+    "callee_text": "int",
+    "call_end_byte": 16107,
+    "package": "strings",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tn := int(lo) // lo = len(s) * count",
+    "context": [
+      {
+        "line": 612,
+        "text": "\tif hi > 0 || lo > uint(maxInt) {"
+      },
+      {
+        "line": 613,
+        "text": "\t\tpanic(\"strings: Repeat output length overflow\")"
+      },
+      {
+        "line": 614,
+        "text": "\t}"
+      },
+      {
+        "line": 615,
+        "text": "\tn := int(lo) // lo = len(s) * count"
+      },
+      {
+        "line": 616,
+        "text": ""
+      },
+      {
+        "line": 617,
+        "text": "\tif len(s) == 0 {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 597,
+      "header": "func Repeat(s string, count int) string {"
+    },
+    "imports": [
+      "bits",
+      "bytealg",
+      "stringslite",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "int",
+    "local_bindings_before_site": [
+      {
+        "line": 597,
+        "text": "func Repeat(s string, count int) string {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 45,
+    "file": "bytes/bytes.go",
+    "line": 253,
+    "col": 8,
+    "stratum": "bare_other",
+    "callee_text": "rune",
+    "call_end_byte": 6411,
+    "package": "bytes",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tr := rune(s[i])",
+    "context": [
+      {
+        "line": 250,
+        "text": "\t}"
+      },
+      {
+        "line": 251,
+        "text": "\tvar width int"
+      },
+      {
+        "line": 252,
+        "text": "\tfor i := 0; i < len(s); i += width {"
+      },
+      {
+        "line": 253,
+        "text": "\t\tr := rune(s[i])"
+      },
+      {
+        "line": 254,
+        "text": "\t\tif r < utf8.RuneSelf {"
+      },
+      {
+        "line": 255,
+        "text": "\t\t\tif bytealg.IndexByteString(chars, s[i]) >= 0 {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 213,
+      "header": "func IndexAny(s []byte, chars string) int {"
+    },
+    "imports": [
+      "bits",
+      "bytealg",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "rune",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 46,
+    "file": "bytes/bytes.go",
+    "line": 823,
+    "col": 9,
+    "stratum": "bare_other",
+    "callee_text": "Map",
+    "call_end_byte": 21971,
+    "package": "bytes",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\treturn Map(",
+    "context": [
+      {
+        "line": 820,
+        "text": "\t// Hackish but effective. Depends on Map scanning in order and calling"
+      },
+      {
+        "line": 821,
+        "text": "\t// the closure once per rune."
+      },
+      {
+        "line": 822,
+        "text": "\tprev := ' '"
+      },
+      {
+        "line": 823,
+        "text": "\treturn Map("
+      },
+      {
+        "line": 824,
+        "text": "\t\tfunc(r rune) rune {"
+      },
+      {
+        "line": 825,
+        "text": "\t\t\tif isSeparator(prev) {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 818,
+      "header": "func Title(s []byte) []byte {"
+    },
+    "imports": [
+      "bits",
+      "bytealg",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "Map",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "bytes/bytes.go",
+        "line": 597,
+        "kind": "func",
+        "has_body": true,
+        "header": "func Map(mapping func(r rune) rune, s []byte) []byte {"
+      }
+    ]
+  },
+  {
+    "id": 47,
+    "file": "sort/zsortinterface.go",
+    "line": 279,
+    "col": 8,
+    "stratum": "bare_other",
+    "callee_text": "medianAdjacent",
+    "call_end_byte": 6681,
+    "package": "sort",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\ti = medianAdjacent(data, i, &swaps)",
+    "context": [
+      {
+        "line": 276,
+        "text": "\tif l >= 8 {"
+      },
+      {
+        "line": 277,
+        "text": "\t\tif l >= shortestNinther {"
+      },
+      {
+        "line": 278,
+        "text": "\t\t\t// Tukey ninther method, the idea came from Rust's implementation."
+      },
+      {
+        "line": 279,
+        "text": "\t\t\ti = medianAdjacent(data, i, &swaps)"
+      },
+      {
+        "line": 280,
+        "text": "\t\t\tj = medianAdjacent(data, j, &swaps)"
+      },
+      {
+        "line": 281,
+        "text": "\t\t\tk = medianAdjacent(data, k, &swaps)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 261,
+      "header": "func choosePivot(data Interface, a, b int) (pivot int, hint sortedHint) {"
+    },
+    "imports": [],
+    "callee_first_identifier": "medianAdjacent",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sort/zsortinterface.go",
+        "line": 315,
+        "kind": "func",
+        "has_body": true,
+        "header": "func medianAdjacent(data Interface, a int, swaps *int) int {"
+      }
+    ]
+  },
+  {
+    "id": 48,
+    "file": "bytes/buffer.go",
+    "line": 53,
+    "col": 16,
+    "stratum": "bare_other",
+    "callee_text": "int",
+    "call_end_byte": 2042,
+    "package": "bytes",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "const maxInt = int(^uint(0) >> 1)",
+    "context": [
+      {
+        "line": 50,
+        "text": "var ErrTooLarge = errors.New(\"bytes.Buffer: too large\")"
+      },
+      {
+        "line": 51,
+        "text": "var errNegativeRead = errors.New(\"bytes.Buffer: reader returned negative count from Read\")"
+      },
+      {
+        "line": 52,
+        "text": ""
+      },
+      {
+        "line": 53,
+        "text": "const maxInt = int(^uint(0) >> 1)"
+      },
+      {
+        "line": 54,
+        "text": ""
+      },
+      {
+        "line": 55,
+        "text": "// Bytes returns a slice of length b.Len() holding the unread portion of the buffer."
+      }
+    ],
+    "enclosing_function": null,
+    "imports": [
+      "errors",
+      "io",
+      "utf8"
+    ],
+    "callee_first_identifier": "int",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 49,
+    "file": "text/template/parse/parse.go",
+    "line": 331,
+    "col": 13,
+    "stratum": "bare_other",
+    "callee_text": "New",
+    "call_end_byte": 8889,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\t\tnewT := New(\"definition\") // name will be updated once we know it.",
+    "context": [
+      {
+        "line": 328,
+        "text": "\t\tif t.peek().typ == itemLeftDelim {"
+      },
+      {
+        "line": 329,
+        "text": "\t\t\tdelim := t.next()"
+      },
+      {
+        "line": 330,
+        "text": "\t\t\tif t.nextNonSpace().typ == itemDefine {"
+      },
+      {
+        "line": 331,
+        "text": "\t\t\t\tnewT := New(\"definition\") // name will be updated once we know it."
+      },
+      {
+        "line": 332,
+        "text": "\t\t\t\tnewT.text = t.text"
+      },
+      {
+        "line": 333,
+        "text": "\t\t\t\tnewT.Mode = t.Mode"
+      }
+    ],
+    "enclosing_function": {
+      "line": 325,
+      "header": "func (t *Tree) parse() {"
+    },
+    "imports": [
+      "bytes",
+      "fmt",
+      "runtime",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "New",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/parse/parse.go",
+        "line": 148,
+        "kind": "func",
+        "has_body": true,
+        "header": "func New(name string, funcs ...map[string]any) *Tree {"
+      }
+    ]
+  },
+  {
+    "id": 50,
+    "file": "bytes/bytes.go",
+    "line": 1207,
+    "col": 9,
+    "stratum": "bare_other",
+    "callee_text": "Replace",
+    "call_end_byte": 32110,
+    "package": "bytes",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\treturn Replace(s, old, new, -1)",
+    "context": [
+      {
+        "line": 1204,
+        "text": "// and after each UTF-8 sequence, yielding up to k+1 replacements"
+      },
+      {
+        "line": 1205,
+        "text": "// for a k-rune slice."
+      },
+      {
+        "line": 1206,
+        "text": "func ReplaceAll(s, old, new []byte) []byte {"
+      },
+      {
+        "line": 1207,
+        "text": "\treturn Replace(s, old, new, -1)"
+      },
+      {
+        "line": 1208,
+        "text": "}"
+      },
+      {
+        "line": 1209,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 1206,
+      "header": "func ReplaceAll(s, old, new []byte) []byte {"
+    },
+    "imports": [
+      "bits",
+      "bytealg",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "Replace",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "bytes/bytes.go",
+        "line": 1162,
+        "kind": "func",
+        "has_body": true,
+        "header": "func Replace(s, old, new []byte, n int) []byte {"
+      }
+    ]
+  },
+  {
+    "id": 51,
+    "file": "text/template/parse/node.go",
+    "line": 707,
+    "col": 28,
+    "stratum": "bare_other",
+    "callee_text": "uint64",
+    "call_end_byte": 17316,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tif !n.IsUint && float64(uint64(f)) == f {",
+    "context": [
+      {
+        "line": 704,
+        "text": "\t\t\t\tn.IsInt = true"
+      },
+      {
+        "line": 705,
+        "text": "\t\t\t\tn.Int64 = int64(f)"
+      },
+      {
+        "line": 706,
+        "text": "\t\t\t}"
+      },
+      {
+        "line": 707,
+        "text": "\t\t\tif !n.IsUint && float64(uint64(f)) == f {"
+      },
+      {
+        "line": 708,
+        "text": "\t\t\t\tn.IsUint = true"
+      },
+      {
+        "line": 709,
+        "text": "\t\t\t\tn.Uint64 = uint64(f)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 633,
+      "header": "func (t *Tree) newNumber(pos Pos, text string, typ itemType) (*NumberNode, error) {"
+    },
+    "imports": [
+      "fmt",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "uint64",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 52,
+    "file": "sort/zsortfunc.go",
+    "line": 280,
+    "col": 8,
+    "stratum": "bare_other",
+    "callee_text": "medianAdjacent_func",
+    "call_end_byte": 6866,
+    "package": "sort",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tj = medianAdjacent_func(data, j, &swaps)",
+    "context": [
+      {
+        "line": 277,
+        "text": "\t\tif l >= shortestNinther {"
+      },
+      {
+        "line": 278,
+        "text": "\t\t\t// Tukey ninther method, the idea came from Rust's implementation."
+      },
+      {
+        "line": 279,
+        "text": "\t\t\ti = medianAdjacent_func(data, i, &swaps)"
+      },
+      {
+        "line": 280,
+        "text": "\t\t\tj = medianAdjacent_func(data, j, &swaps)"
+      },
+      {
+        "line": 281,
+        "text": "\t\t\tk = medianAdjacent_func(data, k, &swaps)"
+      },
+      {
+        "line": 282,
+        "text": "\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 261,
+      "header": "func choosePivot_func(data lessSwap, a, b int) (pivot int, hint sortedHint) {"
+    },
+    "imports": [],
+    "callee_first_identifier": "medianAdjacent_func",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sort/zsortfunc.go",
+        "line": 315,
+        "kind": "func",
+        "has_body": true,
+        "header": "func medianAdjacent_func(data lessSwap, a int, swaps *int) int {"
+      }
+    ]
+  },
+  {
+    "id": 53,
+    "file": "sort/zsortfunc.go",
+    "line": 389,
+    "col": 9,
+    "stratum": "bare_other",
+    "callee_text": "int",
+    "call_end_byte": 9996,
+    "package": "sort",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\th := int(uint(i+j) >> 1)",
+    "context": [
+      {
+        "line": 386,
+        "text": "\t\ti := m"
+      },
+      {
+        "line": 387,
+        "text": "\t\tj := b"
+      },
+      {
+        "line": 388,
+        "text": "\t\tfor i < j {"
+      },
+      {
+        "line": 389,
+        "text": "\t\t\th := int(uint(i+j) >> 1)"
+      },
+      {
+        "line": 390,
+        "text": "\t\t\tif data.Less(h, a) {"
+      },
+      {
+        "line": 391,
+        "text": "\t\t\t\ti = h + 1"
+      }
+    ],
+    "enclosing_function": {
+      "line": 378,
+      "header": "func symMerge_func(data lessSwap, a, m, b int) {"
+    },
+    "imports": [],
+    "callee_first_identifier": "int",
+    "local_bindings_before_site": [
+      {
+        "line": 378,
+        "text": "func symMerge_func(data lessSwap, a, m, b int) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 54,
+    "file": "fmt/scan.go",
+    "line": 737,
+    "col": 9,
+    "stratum": "bare_other",
+    "callee_text": "string",
+    "call_end_byte": 19489,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\treturn string(s.buf)",
+    "context": [
+      {
+        "line": 734,
+        "text": "\t\tfor s.accept(decimalDigits + \"_\") {"
+      },
+      {
+        "line": 735,
+        "text": "\t\t}"
+      },
+      {
+        "line": 736,
+        "text": "\t}"
+      },
+      {
+        "line": 737,
+        "text": "\treturn string(s.buf)"
+      },
+      {
+        "line": 738,
+        "text": "}"
+      },
+      {
+        "line": 739,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 702,
+      "header": "func (s *ss) floatToken() string {"
+    },
+    "imports": [
+      "errors",
+      "io",
+      "math",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "string",
+    "local_bindings_before_site": [
+      {
+        "line": 702,
+        "text": "func (s *ss) floatToken() string {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 55,
+    "file": "fmt/format.go",
+    "line": 158,
+    "col": 53,
+    "stratum": "bare_other",
+    "callee_text": "rune",
+    "call_end_byte": 3556,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tif f.sharp && u <= utf8.MaxRune && strconv.IsPrint(rune(u)) {",
+    "context": [
+      {
+        "line": 155,
+        "text": "\ti := len(buf)"
+      },
+      {
+        "line": 156,
+        "text": ""
+      },
+      {
+        "line": 157,
+        "text": "\t// For %#U we want to add a space and a quoted character at the end of the buffer."
+      },
+      {
+        "line": 158,
+        "text": "\tif f.sharp && u <= utf8.MaxRune && strconv.IsPrint(rune(u)) {"
+      },
+      {
+        "line": 159,
+        "text": "\t\ti--"
+      },
+      {
+        "line": 160,
+        "text": "\t\tbuf[i] = '\\''"
+      }
+    ],
+    "enclosing_function": {
+      "line": 138,
+      "header": "func (f *fmt) fmtUnicode(u uint64) {"
+    },
+    "imports": [
+      "strconv",
+      "utf8"
+    ],
+    "callee_first_identifier": "rune",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 56,
+    "file": "strings/replace.go",
+    "line": 458,
+    "col": 8,
+    "stratum": "bare_other",
+    "callee_text": "getStringWriter",
+    "call_end_byte": 11943,
+    "package": "strings",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tsw := getStringWriter(w)",
+    "context": [
+      {
+        "line": 455,
+        "text": "}"
+      },
+      {
+        "line": 456,
+        "text": ""
+      },
+      {
+        "line": 457,
+        "text": "func (r *byteReplacer) WriteString(w io.Writer, s string) (n int, err error) {"
+      },
+      {
+        "line": 458,
+        "text": "\tsw := getStringWriter(w)"
+      },
+      {
+        "line": 459,
+        "text": "\tlast := 0"
+      },
+      {
+        "line": 460,
+        "text": "\tfor i := 0; i < len(s); i++ {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 457,
+      "header": "func (r *byteReplacer) WriteString(w io.Writer, s string) (n int, err error) {"
+    },
+    "imports": [
+      "io",
+      "sync"
+    ],
+    "callee_first_identifier": "getStringWriter",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "strings/replace.go",
+        "line": 322,
+        "kind": "func",
+        "has_body": true,
+        "header": "func getStringWriter(w io.Writer) io.StringWriter {"
+      }
+    ]
+  },
+  {
+    "id": 57,
+    "file": "fmt/scan.go",
+    "line": 972,
+    "col": 8,
+    "stratum": "bare_other",
+    "callee_text": "complex64",
+    "call_end_byte": 25222,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t*v = complex64(s.scanComplex(verb, 64))",
+    "context": [
+      {
+        "line": 969,
+        "text": "\tcase *bool:"
+      },
+      {
+        "line": 970,
+        "text": "\t\t*v = s.scanBool(verb)"
+      },
+      {
+        "line": 971,
+        "text": "\tcase *complex64:"
+      },
+      {
+        "line": 972,
+        "text": "\t\t*v = complex64(s.scanComplex(verb, 64))"
+      },
+      {
+        "line": 973,
+        "text": "\tcase *complex128:"
+      },
+      {
+        "line": 974,
+        "text": "\t\t*v = s.scanComplex(verb, 128)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 953,
+      "header": "func (s *ss) scanOne(verb rune, arg any) {"
+    },
+    "imports": [
+      "errors",
+      "io",
+      "math",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "complex64",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 58,
+    "file": "strings/iter.go",
+    "line": 41,
+    "col": 9,
+    "stratum": "bare_other",
+    "callee_text": "yield",
+    "call_end_byte": 1156,
+    "package": "strings",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\t\tif !yield(s[:size]) {",
+    "context": [
+      {
+        "line": 38,
+        "text": "\t\tif len(sep) == 0 {"
+      },
+      {
+        "line": 39,
+        "text": "\t\t\tfor len(s) > 0 {"
+      },
+      {
+        "line": 40,
+        "text": "\t\t\t\t_, size := utf8.DecodeRuneInString(s)"
+      },
+      {
+        "line": 41,
+        "text": "\t\t\t\tif !yield(s[:size]) {"
+      },
+      {
+        "line": 42,
+        "text": "\t\t\t\t\treturn"
+      },
+      {
+        "line": 43,
+        "text": "\t\t\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 36,
+      "header": "func splitSeq(s, sep string, sepSave int) iter.Seq[string] {"
+    },
+    "imports": [
+      "iter",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "yield",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 59,
+    "file": "sort/search.go",
+    "line": 124,
+    "col": 9,
+    "stratum": "bare_other",
+    "callee_text": "Search",
+    "call_end_byte": 4631,
+    "package": "sort",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\treturn Search(len(a), func(i int) bool { return a[i] >= x })",
+    "context": [
+      {
+        "line": 121,
+        "text": "// not present (it could be len(a))."
+      },
+      {
+        "line": 122,
+        "text": "// The slice must be sorted in ascending order."
+      },
+      {
+        "line": 123,
+        "text": "func SearchInts(a []int, x int) int {"
+      },
+      {
+        "line": 124,
+        "text": "\treturn Search(len(a), func(i int) bool { return a[i] >= x })"
+      },
+      {
+        "line": 125,
+        "text": "}"
+      },
+      {
+        "line": 126,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 123,
+      "header": "func SearchInts(a []int, x int) int {"
+    },
+    "imports": [],
+    "callee_first_identifier": "Search",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sort/search.go",
+        "line": 58,
+        "kind": "func",
+        "has_body": true,
+        "header": "func Search(n int, f func(int) bool) int {"
+      },
+      {
+        "file": "sort/search.go",
+        "line": 144,
+        "kind": "method",
+        "has_body": true,
+        "header": "func (p IntSlice) Search(x int) int { return SearchInts(p, x) }"
+      },
+      {
+        "file": "sort/search.go",
+        "line": 147,
+        "kind": "method",
+        "has_body": true,
+        "header": "func (p Float64Slice) Search(x float64) int { return SearchFloat64s(p, x) }"
+      },
+      {
+        "file": "sort/search.go",
+        "line": 150,
+        "kind": "method",
+        "has_body": true,
+        "header": "func (p StringSlice) Search(x string) int { return SearchStrings(p, x) }"
+      }
+    ]
+  },
+  {
+    "id": 60,
+    "file": "strings/strings.go",
+    "line": 1142,
+    "col": 10,
+    "stratum": "bare_other",
+    "callee_text": "Count",
+    "call_end_byte": 30142,
+    "package": "strings",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tif m := Count(s, old); m == 0 {",
+    "context": [
+      {
+        "line": 1139,
+        "text": "\t}"
+      },
+      {
+        "line": 1140,
+        "text": ""
+      },
+      {
+        "line": 1141,
+        "text": "\t// Compute number of replacements."
+      },
+      {
+        "line": 1142,
+        "text": "\tif m := Count(s, old); m == 0 {"
+      },
+      {
+        "line": 1143,
+        "text": "\t\treturn s // avoid allocation"
+      },
+      {
+        "line": 1144,
+        "text": "\t} else if n < 0 || m < n {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 1136,
+      "header": "func Replace(s, old, new string, n int) string {"
+    },
+    "imports": [
+      "bits",
+      "bytealg",
+      "stringslite",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "Count",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "strings/strings.go",
+        "line": 42,
+        "kind": "func",
+        "has_body": true,
+        "header": "func Count(s, substr string) int {"
+      }
+    ]
+  },
+  {
+    "id": 61,
+    "file": "fmt/scan.go",
+    "line": 661,
+    "col": 7,
+    "stratum": "bare_other",
+    "callee_text": "uint",
+    "call_end_byte": 17664,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tn := uint(bitSize)",
+    "context": [
+      {
+        "line": 658,
+        "text": "\tif err != nil {"
+      },
+      {
+        "line": 659,
+        "text": "\t\ts.error(err)"
+      },
+      {
+        "line": 660,
+        "text": "\t}"
+      },
+      {
+        "line": 661,
+        "text": "\tn := uint(bitSize)"
+      },
+      {
+        "line": 662,
+        "text": "\tx := (i << (64 - n)) >> (64 - n)"
+      },
+      {
+        "line": 663,
+        "text": "\tif x != i {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 638,
+      "header": "func (s *ss) scanInt(verb rune, bitSize int) int64 {"
+    },
+    "imports": [
+      "errors",
+      "io",
+      "math",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "uint",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 62,
+    "file": "strings/strings.go",
+    "line": 134,
+    "col": 10,
+    "stratum": "bare_other",
+    "callee_text": "IndexByte",
+    "call_end_byte": 3506,
+    "package": "strings",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\t\to := IndexByte(s[i+1:], rs[last])",
+    "context": [
+      {
+        "line": 131,
+        "text": "\t\tfails := 0"
+      },
+      {
+        "line": 132,
+        "text": "\t\tfor i < len(s) {"
+      },
+      {
+        "line": 133,
+        "text": "\t\t\tif s[i] != rs[last] {"
+      },
+      {
+        "line": 134,
+        "text": "\t\t\t\to := IndexByte(s[i+1:], rs[last])"
+      },
+      {
+        "line": 135,
+        "text": "\t\t\t\tif o < 0 {"
+      },
+      {
+        "line": 136,
+        "text": "\t\t\t\t\treturn -1"
+      }
+    ],
+    "enclosing_function": {
+      "line": 110,
+      "header": "func IndexRune(s string, r rune) int {"
+    },
+    "imports": [
+      "bits",
+      "bytealg",
+      "stringslite",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "IndexByte",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "strings/strings.go",
+        "line": 102,
+        "kind": "func",
+        "has_body": true,
+        "header": "func IndexByte(s string, c byte) int {"
+      }
+    ]
+  },
+  {
+    "id": 63,
+    "file": "sort/zsortfunc.go",
+    "line": 353,
+    "col": 4,
+    "stratum": "bare_other",
+    "callee_text": "symMerge_func",
+    "call_end_byte": 8508,
+    "package": "sort",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tsymMerge_func(data, a, m, n)",
+    "context": [
+      {
+        "line": 350,
+        "text": "\t\t\tb += 2 * blockSize"
+      },
+      {
+        "line": 351,
+        "text": "\t\t}"
+      },
+      {
+        "line": 352,
+        "text": "\t\tif m := a + blockSize; m < n {"
+      },
+      {
+        "line": 353,
+        "text": "\t\t\tsymMerge_func(data, a, m, n)"
+      },
+      {
+        "line": 354,
+        "text": "\t\t}"
+      },
+      {
+        "line": 355,
+        "text": "\t\tblockSize *= 2"
+      }
+    ],
+    "enclosing_function": {
+      "line": 335,
+      "header": "func stable_func(data lessSwap, n int) {"
+    },
+    "imports": [],
+    "callee_first_identifier": "symMerge_func",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "sort/zsortfunc.go",
+        "line": 378,
+        "kind": "func",
+        "has_body": true,
+        "header": "func symMerge_func(data lessSwap, a, m, b int) {"
+      }
+    ]
+  },
+  {
+    "id": 64,
+    "file": "bufio/bufio.go",
+    "line": 735,
+    "col": 25,
+    "stratum": "bare_other",
+    "callee_text": "string",
+    "call_end_byte": 20055,
+    "package": "bufio",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\treturn b.WriteString(string(r))",
+    "context": [
+      {
+        "line": 732,
+        "text": "\t\tn = b.Available()"
+      },
+      {
+        "line": 733,
+        "text": "\t\tif n < utf8.UTFMax {"
+      },
+      {
+        "line": 734,
+        "text": "\t\t\t// Can only happen if buffer is silly small."
+      },
+      {
+        "line": 735,
+        "text": "\t\t\treturn b.WriteString(string(r))"
+      },
+      {
+        "line": 736,
+        "text": "\t\t}"
+      },
+      {
+        "line": 737,
+        "text": "\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 715,
+      "header": "func (b *Writer) WriteRune(r rune) (size int, err error) {"
+    },
+    "imports": [
+      "bytes",
+      "errors",
+      "io",
+      "strings",
+      "utf8"
+    ],
+    "callee_first_identifier": "string",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 65,
+    "file": "text/template/parse/node.go",
+    "line": 553,
+    "col": 12,
+    "stratum": "builtin",
+    "callee_text": "append",
+    "call_end_byte": 13222,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tc.Field = append(c.Field, field)",
+    "context": [
+      {
+        "line": 550,
+        "text": "\tif field == \"\" {"
+      },
+      {
+        "line": 551,
+        "text": "\t\tpanic(\"empty field\")"
+      },
+      {
+        "line": 552,
+        "text": "\t}"
+      },
+      {
+        "line": 553,
+        "text": "\tc.Field = append(c.Field, field)"
+      },
+      {
+        "line": 554,
+        "text": "}"
+      },
+      {
+        "line": 555,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 545,
+      "header": "func (c *ChainNode) Add(field string) {"
+    },
+    "imports": [
+      "fmt",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "append",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "text/template/parse/node.go",
+        "line": 92,
+        "kind": "method",
+        "has_body": true,
+        "header": "func (l *ListNode) append(n Node) {"
+      },
+      {
+        "file": "text/template/parse/node.go",
+        "line": 202,
+        "kind": "method",
+        "has_body": true,
+        "header": "func (p *PipeNode) append(command *CommandNode) {"
+      },
+      {
+        "file": "text/template/parse/node.go",
+        "line": 305,
+        "kind": "method",
+        "has_body": true,
+        "header": "func (c *CommandNode) append(arg Node) {"
+      }
+    ]
+  },
+  {
+    "id": 66,
+    "file": "bytes/bytes.go",
+    "line": 1079,
+    "col": 6,
+    "stratum": "builtin",
+    "callee_text": "len",
+    "call_end_byte": 28910,
+    "package": "bytes",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tfor len(s) > 0 && s[len(s)-1] == c {",
+    "context": [
+      {
+        "line": 1076,
+        "text": "}"
+      },
+      {
+        "line": 1077,
+        "text": ""
+      },
+      {
+        "line": 1078,
+        "text": "func trimRightByte(s []byte, c byte) []byte {"
+      },
+      {
+        "line": 1079,
+        "text": "\tfor len(s) > 0 && s[len(s)-1] == c {"
+      },
+      {
+        "line": 1080,
+        "text": "\t\ts = s[:len(s)-1]"
+      },
+      {
+        "line": 1081,
+        "text": "\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 1078,
+      "header": "func trimRightByte(s []byte, c byte) []byte {"
+    },
+    "imports": [
+      "bits",
+      "bytealg",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "len",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 67,
+    "file": "errors/join.go",
+    "line": 55,
+    "col": 7,
+    "stratum": "builtin",
+    "callee_text": "append",
+    "call_end_byte": 1248,
+    "package": "errors",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tb = append(b, err.Error()...)",
+    "context": [
+      {
+        "line": 52,
+        "text": "\tb := []byte(e.errs[0].Error())"
+      },
+      {
+        "line": 53,
+        "text": "\tfor _, err := range e.errs[1:] {"
+      },
+      {
+        "line": 54,
+        "text": "\t\tb = append(b, '\\n')"
+      },
+      {
+        "line": 55,
+        "text": "\t\tb = append(b, err.Error()...)"
+      },
+      {
+        "line": 56,
+        "text": "\t}"
+      },
+      {
+        "line": 57,
+        "text": "\t// At this point, b has at least one byte '\\n'."
+      }
+    ],
+    "enclosing_function": {
+      "line": 45,
+      "header": "func (e *joinError) Error() string {"
+    },
+    "imports": [
+      "unsafe"
+    ],
+    "callee_first_identifier": "append",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 68,
+    "file": "encoding/json/v2_decode.go",
+    "line": 145,
+    "col": 6,
+    "stratum": "builtin",
+    "callee_text": "len",
+    "call_end_byte": 6349,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tif len(e.Field[i:]) > 0 && strings.TrimRight(e.Field[i:], \"0123456789\") == \"\" {",
+    "context": [
+      {
+        "line": 142,
+        "text": "\t\t// avoid the phrase \"Go struct field \"."
+      },
+      {
+        "line": 143,
+        "text": "\t\tintoWhat := \"Go struct field \""
+      },
+      {
+        "line": 144,
+        "text": "\t\ti := strings.LastIndexByte(e.Field, '.') + len(\".\")"
+      },
+      {
+        "line": 145,
+        "text": "\t\tif len(e.Field[i:]) > 0 && strings.TrimRight(e.Field[i:], \"0123456789\") == \"\" {"
+      },
+      {
+        "line": 146,
+        "text": "\t\t\tintoWhat = \"\" // likely a Go slice or array"
+      },
+      {
+        "line": 147,
+        "text": "\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 132,
+      "header": "func (e *UnmarshalTypeError) Error() string {"
+    },
+    "imports": [
+      "cmp",
+      "fmt",
+      "jsontext",
+      "jsonv2",
+      "jsonwire",
+      "reflect",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "len",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 69,
+    "file": "encoding/json/decode.go",
+    "line": 263,
+    "col": 18,
+    "stratum": "builtin",
+    "callee_text": "append",
+    "call_end_byte": 9592,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\t\tfieldStack = append(fieldStack, err.Field)",
+    "context": [
+      {
+        "line": 260,
+        "text": "\t\t\terr.Struct = d.errorContext.Struct.Name()"
+      },
+      {
+        "line": 261,
+        "text": "\t\t\tfieldStack := d.errorContext.FieldStack"
+      },
+      {
+        "line": 262,
+        "text": "\t\t\tif err.Field != \"\" {"
+      },
+      {
+        "line": 263,
+        "text": "\t\t\t\tfieldStack = append(fieldStack, err.Field)"
+      },
+      {
+        "line": 264,
+        "text": "\t\t\t}"
+      },
+      {
+        "line": 265,
+        "text": "\t\t\terr.Field = strings.Join(fieldStack, \".\")"
+      }
+    ],
+    "enclosing_function": {
+      "line": 256,
+      "header": "func (d *decodeState) addErrorContext(err error) error {"
+    },
+    "imports": [
+      "base64",
+      "encoding",
+      "fmt",
+      "reflect",
+      "strconv",
+      "strings",
+      "unicode",
+      "utf16",
+      "utf8"
+    ],
+    "callee_first_identifier": "append",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 70,
+    "file": "bytes/iter.go",
+    "line": 54,
+    "col": 20,
+    "stratum": "builtin",
+    "callee_text": "len",
+    "call_end_byte": 1347,
+    "package": "bytes",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tif !yield(frag[:len(frag):len(frag)]) {",
+    "context": [
+      {
+        "line": 51,
+        "text": "\t\t\t\tbreak"
+      },
+      {
+        "line": 52,
+        "text": "\t\t\t}"
+      },
+      {
+        "line": 53,
+        "text": "\t\t\tfrag := s[:i+sepSave]"
+      },
+      {
+        "line": 54,
+        "text": "\t\t\tif !yield(frag[:len(frag):len(frag)]) {"
+      },
+      {
+        "line": 55,
+        "text": "\t\t\t\treturn"
+      },
+      {
+        "line": 56,
+        "text": "\t\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 36,
+      "header": "func splitSeq(s, sep []byte, sepSave int) iter.Seq[[]byte] {"
+    },
+    "imports": [
+      "iter",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "len",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 71,
+    "file": "encoding/json/encode.go",
+    "line": 319,
+    "col": 4,
+    "stratum": "builtin",
+    "callee_text": "panic",
+    "call_end_byte": 12156,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tpanic(\"ptrEncoder.encode should have emptied ptrSeen via defers\")",
+    "context": [
+      {
+        "line": 316,
+        "text": "\t\te := v.(*encodeState)"
+      },
+      {
+        "line": 317,
+        "text": "\t\te.Reset()"
+      },
+      {
+        "line": 318,
+        "text": "\t\tif len(e.ptrSeen) > 0 {"
+      },
+      {
+        "line": 319,
+        "text": "\t\t\tpanic(\"ptrEncoder.encode should have emptied ptrSeen via defers\")"
+      },
+      {
+        "line": 320,
+        "text": "\t\t}"
+      },
+      {
+        "line": 321,
+        "text": "\t\te.ptrLevel = 0"
+      }
+    ],
+    "enclosing_function": {
+      "line": 314,
+      "header": "func newEncodeState() *encodeState {"
+    },
+    "imports": [
+      "base64",
+      "bytes",
+      "cmp",
+      "encoding",
+      "fmt",
+      "math",
+      "reflect",
+      "slices",
+      "strconv",
+      "strings",
+      "sync",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "panic",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 72,
+    "file": "encoding/json/encode.go",
+    "line": 518,
+    "col": 11,
+    "stratum": "generic",
+    "callee_text": "reflect.TypeAssert[encoding.TextMarshaler]",
+    "call_end_byte": 17670,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\tm, ok := reflect.TypeAssert[encoding.TextMarshaler](v)",
+    "context": [
+      {
+        "line": 515,
+        "text": "\t\te.WriteString(\"null\")"
+      },
+      {
+        "line": 516,
+        "text": "\t\treturn"
+      },
+      {
+        "line": 517,
+        "text": "\t}"
+      },
+      {
+        "line": 518,
+        "text": "\tm, ok := reflect.TypeAssert[encoding.TextMarshaler](v)"
+      },
+      {
+        "line": 519,
+        "text": "\tif !ok {"
+      },
+      {
+        "line": 520,
+        "text": "\t\te.WriteString(\"null\")"
+      }
+    ],
+    "enclosing_function": {
+      "line": 513,
+      "header": "func textMarshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {"
+    },
+    "imports": [
+      "base64",
+      "bytes",
+      "cmp",
+      "encoding",
+      "fmt",
+      "math",
+      "reflect",
+      "slices",
+      "strconv",
+      "strings",
+      "sync",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "reflect",
+    "local_bindings_before_site": [
+      {
+        "line": 513,
+        "text": "func textMarshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 73,
+    "file": "encoding/json/encode.go",
+    "line": 982,
+    "col": 15,
+    "stratum": "generic",
+    "callee_text": "reflect.TypeAssert[encoding.TextMarshaler]",
+    "call_end_byte": 29081,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\tif tm, ok := reflect.TypeAssert[encoding.TextMarshaler](k); ok {",
+    "context": [
+      {
+        "line": 979,
+        "text": "\tif k.Kind() == reflect.String {"
+      },
+      {
+        "line": 980,
+        "text": "\t\treturn k.String(), nil"
+      },
+      {
+        "line": 981,
+        "text": "\t}"
+      },
+      {
+        "line": 982,
+        "text": "\tif tm, ok := reflect.TypeAssert[encoding.TextMarshaler](k); ok {"
+      },
+      {
+        "line": 983,
+        "text": "\t\tif k.Kind() == reflect.Pointer && k.IsNil() {"
+      },
+      {
+        "line": 984,
+        "text": "\t\t\treturn \"\", nil"
+      }
+    ],
+    "enclosing_function": {
+      "line": 978,
+      "header": "func resolveKeyName(k reflect.Value) (string, error) {"
+    },
+    "imports": [
+      "base64",
+      "bytes",
+      "cmp",
+      "encoding",
+      "fmt",
+      "math",
+      "reflect",
+      "slices",
+      "strconv",
+      "strings",
+      "sync",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "reflect",
+    "local_bindings_before_site": [
+      {
+        "line": 978,
+        "text": "func resolveKeyName(k reflect.Value) (string, error) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 74,
+    "file": "text/template/exec.go",
+    "line": 766,
+    "col": 21,
+    "stratum": "generic",
+    "callee_text": "reflect.TypeFor[reflect.Value]",
+    "call_end_byte": 22825,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\treflectValueType = reflect.TypeFor[reflect.Value]()",
+    "context": [
+      {
+        "line": 763,
+        "text": "var ("
+      },
+      {
+        "line": 764,
+        "text": "\terrorType        = reflect.TypeFor[error]()"
+      },
+      {
+        "line": 765,
+        "text": "\tfmtStringerType  = reflect.TypeFor[fmt.Stringer]()"
+      },
+      {
+        "line": 766,
+        "text": "\treflectValueType = reflect.TypeFor[reflect.Value]()"
+      },
+      {
+        "line": 767,
+        "text": ")"
+      },
+      {
+        "line": 768,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 682,
+      "header": "func (s *state) evalField(dot reflect.Value, fieldName string, node parse.Node, args []parse.Node, final, receiver reflect.Value) reflect.Value {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "fmtsort",
+      "io",
+      "parse",
+      "reflect",
+      "runtime",
+      "strings"
+    ],
+    "callee_first_identifier": "reflect",
+    "local_bindings_before_site": [
+      {
+        "line": 682,
+        "text": "func (s *state) evalField(dot reflect.Value, fieldName string, node parse.Node, args []parse.Node, final, receiver reflect.Value) reflect.Value {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 75,
+    "file": "encoding/json/decode.go",
+    "line": 845,
+    "col": 63,
+    "stratum": "generic",
+    "callee_text": "reflect.TypeFor[float64]",
+    "call_end_byte": 24620,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\treturn nil, &UnmarshalTypeError{Value: \"number \" + s, Type: reflect.TypeFor[float64](), Offset: int64(d.off)}",
+    "context": [
+      {
+        "line": 842,
+        "text": "\t}"
+      },
+      {
+        "line": 843,
+        "text": "\tf, err := strconv.ParseFloat(s, 64)"
+      },
+      {
+        "line": 844,
+        "text": "\tif err != nil {"
+      },
+      {
+        "line": 845,
+        "text": "\t\treturn nil, &UnmarshalTypeError{Value: \"number \" + s, Type: reflect.TypeFor[float64](), Offset: int64(d.off)}"
+      },
+      {
+        "line": 846,
+        "text": "\t}"
+      },
+      {
+        "line": 847,
+        "text": "\treturn f, nil"
+      }
+    ],
+    "enclosing_function": {
+      "line": 839,
+      "header": "func (d *decodeState) convertNumber(s string) (any, error) {"
+    },
+    "imports": [
+      "base64",
+      "encoding",
+      "fmt",
+      "reflect",
+      "strconv",
+      "strings",
+      "unicode",
+      "utf16",
+      "utf8"
+    ],
+    "callee_first_identifier": "reflect",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 76,
+    "file": "encoding/json/decode.go",
+    "line": 490,
+    "col": 17,
+    "stratum": "generic",
+    "callee_text": "reflect.TypeAssert[encoding.TextUnmarshaler]",
+    "call_end_byte": 15394,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\t\tif u, ok := reflect.TypeAssert[encoding.TextUnmarshaler](v); ok {",
+    "context": [
+      {
+        "line": 487,
+        "text": "\t\t\t\treturn u, nil, reflect.Value{}"
+      },
+      {
+        "line": 488,
+        "text": "\t\t\t}"
+      },
+      {
+        "line": 489,
+        "text": "\t\t\tif !decodingNull {"
+      },
+      {
+        "line": 490,
+        "text": "\t\t\t\tif u, ok := reflect.TypeAssert[encoding.TextUnmarshaler](v); ok {"
+      },
+      {
+        "line": 491,
+        "text": "\t\t\t\t\treturn nil, u, reflect.Value{}"
+      },
+      {
+        "line": 492,
+        "text": "\t\t\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 433,
+      "header": "func indirect(v reflect.Value, decodingNull bool) (Unmarshaler, encoding.TextUnmarshaler, reflect.Value) {"
+    },
+    "imports": [
+      "base64",
+      "encoding",
+      "fmt",
+      "reflect",
+      "strconv",
+      "strings",
+      "unicode",
+      "utf16",
+      "utf8"
+    ],
+    "callee_first_identifier": "reflect",
+    "local_bindings_before_site": [
+      {
+        "line": 433,
+        "text": "func indirect(v reflect.Value, decodingNull bool) (Unmarshaler, encoding.TextUnmarshaler, reflect.Value) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 77,
+    "file": "text/template/parse/parse.go",
+    "line": 264,
+    "col": 8,
+    "stratum": "go_defer",
+    "callee_text": "t.recover",
+    "call_end_byte": 7359,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdefer t.recover(&err)",
+    "context": [
+      {
+        "line": 261,
+        "text": "// default (\"{{\" or \"}}\") is used. Embedded template definitions are added to"
+      },
+      {
+        "line": 262,
+        "text": "// the treeSet map."
+      },
+      {
+        "line": 263,
+        "text": "func (t *Tree) Parse(text, leftDelim, rightDelim string, treeSet map[string]*Tree, funcs ...map[string]any) (tree *Tree, err error) {"
+      },
+      {
+        "line": 264,
+        "text": "\tdefer t.recover(&err)"
+      },
+      {
+        "line": 265,
+        "text": "\tt.ParseName = t.Name"
+      },
+      {
+        "line": 266,
+        "text": "\tt.leftDelim = leftDelim"
+      }
+    ],
+    "enclosing_function": {
+      "line": 263,
+      "header": "func (t *Tree) Parse(text, leftDelim, rightDelim string, treeSet map[string]*Tree, funcs ...map[string]any) (tree *Tree, err error) {"
+    },
+    "imports": [
+      "bytes",
+      "fmt",
+      "runtime",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "t",
+    "local_bindings_before_site": [
+      {
+        "line": 263,
+        "text": "func (t *Tree) Parse(text, leftDelim, rightDelim string, treeSet map[string]*Tree, funcs ...map[string]any) (tree *Tree, err error) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 78,
+    "file": "encoding/json/stream.go",
+    "line": 222,
+    "col": 8,
+    "stratum": "go_defer",
+    "callee_text": "encodeStatePool.Put",
+    "call_end_byte": 5895,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdefer encodeStatePool.Put(e)",
+    "context": [
+      {
+        "line": 219,
+        "text": "\t}"
+      },
+      {
+        "line": 220,
+        "text": ""
+      },
+      {
+        "line": 221,
+        "text": "\te := newEncodeState()"
+      },
+      {
+        "line": 222,
+        "text": "\tdefer encodeStatePool.Put(e)"
+      },
+      {
+        "line": 223,
+        "text": ""
+      },
+      {
+        "line": 224,
+        "text": "\terr := e.marshal(v, encOpts{escapeHTML: enc.escapeHTML})"
+      }
+    ],
+    "enclosing_function": {
+      "line": 216,
+      "header": "func (enc *Encoder) Encode(v any) error {"
+    },
+    "imports": [
+      "bytes",
+      "errors",
+      "io"
+    ],
+    "callee_first_identifier": "encodeStatePool",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "encoding/json/encode.go",
+        "line": 312,
+        "kind": "var",
+        "has_body": true,
+        "header": "var encodeStatePool sync.Pool"
+      }
+    ]
+  },
+  {
+    "id": 79,
+    "file": "context/context.go",
+    "line": 455,
+    "col": 8,
+    "stratum": "go_defer",
+    "callee_text": "c.mu.Unlock",
+    "call_end_byte": 15627,
+    "package": "context",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdefer c.mu.Unlock()",
+    "context": [
+      {
+        "line": 452,
+        "text": "\t\treturn d.(chan struct{})"
+      },
+      {
+        "line": 453,
+        "text": "\t}"
+      },
+      {
+        "line": 454,
+        "text": "\tc.mu.Lock()"
+      },
+      {
+        "line": 455,
+        "text": "\tdefer c.mu.Unlock()"
+      },
+      {
+        "line": 456,
+        "text": "\td = c.done.Load()"
+      },
+      {
+        "line": 457,
+        "text": "\tif d == nil {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 449,
+      "header": "func (c *cancelCtx) Done() <-chan struct{} {"
+    },
+    "imports": [
+      "atomic",
+      "errors",
+      "reflectlite",
+      "sync",
+      "time"
+    ],
+    "callee_first_identifier": "c",
+    "local_bindings_before_site": [
+      {
+        "line": 449,
+        "text": "func (c *cancelCtx) Done() <-chan struct{} {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 80,
+    "file": "text/template/exec.go",
+    "line": 359,
+    "col": 8,
+    "stratum": "go_defer",
+    "callee_text": "s.pop",
+    "call_end_byte": 10294,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdefer s.pop(s.mark())",
+    "context": [
+      {
+        "line": 356,
+        "text": "\t\t\tpanic(r)"
+      },
+      {
+        "line": 357,
+        "text": "\t\t}"
+      },
+      {
+        "line": 358,
+        "text": "\t}()"
+      },
+      {
+        "line": 359,
+        "text": "\tdefer s.pop(s.mark())"
+      },
+      {
+        "line": 360,
+        "text": "\tval, _ := indirect(s.evalPipeline(dot, r.Pipe))"
+      },
+      {
+        "line": 361,
+        "text": "\t// mark top of stack before any variables in the body are pushed."
+      }
+    ],
+    "enclosing_function": {
+      "line": 352,
+      "header": "func (s *state) walkRange(dot reflect.Value, r *parse.RangeNode) {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "fmtsort",
+      "io",
+      "parse",
+      "reflect",
+      "runtime",
+      "strings"
+    ],
+    "callee_first_identifier": "s",
+    "local_bindings_before_site": [
+      {
+        "line": 352,
+        "text": "func (s *state) walkRange(dot reflect.Value, r *parse.RangeNode) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 81,
+    "file": "text/template/template.go",
+    "line": 106,
+    "col": 8,
+    "stratum": "go_defer",
+    "callee_text": "t.muFuncs.RUnlock",
+    "call_end_byte": 2992,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdefer t.muFuncs.RUnlock()",
+    "context": [
+      {
+        "line": 103,
+        "text": "\t\tnt.tmpl[k] = tmpl"
+      },
+      {
+        "line": 104,
+        "text": "\t}"
+      },
+      {
+        "line": 105,
+        "text": "\tt.muFuncs.RLock()"
+      },
+      {
+        "line": 106,
+        "text": "\tdefer t.muFuncs.RUnlock()"
+      },
+      {
+        "line": 107,
+        "text": "\tmaps.Copy(nt.parseFuncs, t.parseFuncs)"
+      },
+      {
+        "line": 108,
+        "text": "\tmaps.Copy(nt.execFuncs, t.execFuncs)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 87,
+      "header": "func (t *Template) Clone() (*Template, error) {"
+    },
+    "imports": [
+      "maps",
+      "parse",
+      "reflect",
+      "sync"
+    ],
+    "callee_first_identifier": "t",
+    "local_bindings_before_site": [
+      {
+        "line": 87,
+        "text": "func (t *Template) Clone() (*Template, error) {"
+      },
+      {
+        "line": 96,
+        "text": "for k, v := range t.tmpl {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 82,
+    "file": "fmt/scan.go",
+    "line": 1071,
+    "col": 8,
+    "stratum": "go_defer",
+    "callee_text": "errorHandler",
+    "call_end_byte": 28233,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdefer errorHandler(&err)",
+    "context": [
+      {
+        "line": 1068,
+        "text": ""
+      },
+      {
+        "line": 1069,
+        "text": "// doScan does the real work for scanning without a format string."
+      },
+      {
+        "line": 1070,
+        "text": "func (s *ss) doScan(a []any) (numProcessed int, err error) {"
+      },
+      {
+        "line": 1071,
+        "text": "\tdefer errorHandler(&err)"
+      },
+      {
+        "line": 1072,
+        "text": "\tfor _, arg := range a {"
+      },
+      {
+        "line": 1073,
+        "text": "\t\ts.scanOne('v', arg)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 1070,
+      "header": "func (s *ss) doScan(a []any) (numProcessed int, err error) {"
+    },
+    "imports": [
+      "errors",
+      "io",
+      "math",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "errorHandler",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": [
+      {
+        "file": "fmt/scan.go",
+        "line": 1057,
+        "kind": "func",
+        "has_body": true,
+        "header": "func errorHandler(errp *error) {"
+      }
+    ]
+  },
+  {
+    "id": 83,
+    "file": "text/template/parse/parse.go",
+    "line": 401,
+    "col": 9,
+    "stratum": "go_defer",
+    "callee_text": "t.clearActionLine",
+    "call_end_byte": 10549,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tdefer t.clearActionLine()",
+    "context": [
+      {
+        "line": 398,
+        "text": "\t\treturn t.newText(token.pos, token.val)"
+      },
+      {
+        "line": 399,
+        "text": "\tcase itemLeftDelim:"
+      },
+      {
+        "line": 400,
+        "text": "\t\tt.actionLine = token.line"
+      },
+      {
+        "line": 401,
+        "text": "\t\tdefer t.clearActionLine()"
+      },
+      {
+        "line": 402,
+        "text": "\t\treturn t.action()"
+      },
+      {
+        "line": 403,
+        "text": "\tcase itemComment:"
+      }
+    ],
+    "enclosing_function": {
+      "line": 395,
+      "header": "func (t *Tree) textOrAction() Node {"
+    },
+    "imports": [
+      "bytes",
+      "fmt",
+      "runtime",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "t",
+    "local_bindings_before_site": [
+      {
+        "line": 395,
+        "text": "func (t *Tree) textOrAction() Node {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 84,
+    "file": "text/template/template.go",
+    "line": 193,
+    "col": 8,
+    "stratum": "go_defer",
+    "callee_text": "t.muTmpl.RUnlock",
+    "call_end_byte": 5910,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdefer t.muTmpl.RUnlock()",
+    "context": [
+      {
+        "line": 190,
+        "text": "\t\treturn nil"
+      },
+      {
+        "line": 191,
+        "text": "\t}"
+      },
+      {
+        "line": 192,
+        "text": "\tt.muTmpl.RLock()"
+      },
+      {
+        "line": 193,
+        "text": "\tdefer t.muTmpl.RUnlock()"
+      },
+      {
+        "line": 194,
+        "text": "\treturn t.tmpl[name]"
+      },
+      {
+        "line": 195,
+        "text": "}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 188,
+      "header": "func (t *Template) Lookup(name string) *Template {"
+    },
+    "imports": [
+      "maps",
+      "parse",
+      "reflect",
+      "sync"
+    ],
+    "callee_first_identifier": "t",
+    "local_bindings_before_site": [
+      {
+        "line": 188,
+        "text": "func (t *Template) Lookup(name string) *Template {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 85,
+    "file": "text/template/funcs.go",
+    "line": 357,
+    "col": 8,
+    "stratum": "iife",
+    "callee_text": "func",
+    "call_end_byte": 11168,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdefer func() {",
+    "context": [
+      {
+        "line": 354,
+        "text": "// safeCall runs fun.Call(args), and returns the resulting value and error, if"
+      },
+      {
+        "line": 355,
+        "text": "// any. If the call panics, the panic value is returned as an error."
+      },
+      {
+        "line": 356,
+        "text": "func safeCall(fun reflect.Value, args []reflect.Value) (val reflect.Value, err error) {"
+      },
+      {
+        "line": 357,
+        "text": "\tdefer func() {"
+      },
+      {
+        "line": 358,
+        "text": "\t\tif r := recover(); r != nil {"
+      },
+      {
+        "line": 359,
+        "text": "\t\t\tif e, ok := r.(error); ok {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 356,
+      "header": "func safeCall(fun reflect.Value, args []reflect.Value) (val reflect.Value, err error) {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "io",
+      "reflect",
+      "strings",
+      "sync",
+      "unicode",
+      "url",
+      "utf8"
+    ],
+    "callee_first_identifier": "func",
+    "local_bindings_before_site": [
+      {
+        "line": 356,
+        "text": "func safeCall(fun reflect.Value, args []reflect.Value) (val reflect.Value, err error) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 86,
+    "file": "encoding/json/v2_indent.go",
+    "line": 99,
+    "col": 9,
+    "stratum": "iife",
+    "callee_text": "func",
+    "call_end_byte": 4163,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tdefer func() {",
+    "context": [
+      {
+        "line": 96,
+        "text": "\t\tinvalidPrefix, invalidIndent := prefix, indent"
+      },
+      {
+        "line": 97,
+        "text": "\t\tprefix = strings.Repeat(\" \", len(prefix))"
+      },
+      {
+        "line": 98,
+        "text": "\t\tindent = strings.Repeat(\" \", len(indent))"
+      },
+      {
+        "line": 99,
+        "text": "\t\tdefer func() {"
+      },
+      {
+        "line": 100,
+        "text": "\t\t\tb := dst[dstLen:]"
+      },
+      {
+        "line": 101,
+        "text": "\t\t\tfor i := bytes.IndexByte(b, '\\n'); i >= 0; i = bytes.IndexByte(b, '\\n') {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 91,
+      "header": "func appendIndent(dst, src []byte, prefix, indent string) ([]byte, error) {"
+    },
+    "imports": [
+      "bytes",
+      "jsontext",
+      "strings"
+    ],
+    "callee_first_identifier": "func",
+    "local_bindings_before_site": [
+      {
+        "line": 91,
+        "text": "func appendIndent(dst, src []byte, prefix, indent string) ([]byte, error) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 87,
+    "file": "encoding/json/encode.go",
+    "line": 333,
+    "col": 8,
+    "stratum": "iife",
+    "callee_text": "func",
+    "call_end_byte": 12682,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdefer func() {",
+    "context": [
+      {
+        "line": 330,
+        "text": "type jsonError struct{ error }"
+      },
+      {
+        "line": 331,
+        "text": ""
+      },
+      {
+        "line": 332,
+        "text": "func (e *encodeState) marshal(v any, opts encOpts) (err error) {"
+      },
+      {
+        "line": 333,
+        "text": "\tdefer func() {"
+      },
+      {
+        "line": 334,
+        "text": "\t\tif r := recover(); r != nil {"
+      },
+      {
+        "line": 335,
+        "text": "\t\t\tif je, ok := r.(jsonError); ok {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 332,
+      "header": "func (e *encodeState) marshal(v any, opts encOpts) (err error) {"
+    },
+    "imports": [
+      "base64",
+      "bytes",
+      "cmp",
+      "encoding",
+      "fmt",
+      "math",
+      "reflect",
+      "slices",
+      "strconv",
+      "strings",
+      "sync",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "func",
+    "local_bindings_before_site": [
+      {
+        "line": 332,
+        "text": "func (e *encodeState) marshal(v any, opts encOpts) (err error) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 88,
+    "file": "text/template/exec.go",
+    "line": 354,
+    "col": 8,
+    "stratum": "iife",
+    "callee_text": "func",
+    "call_end_byte": 10271,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdefer func() {",
+    "context": [
+      {
+        "line": 351,
+        "text": ""
+      },
+      {
+        "line": 352,
+        "text": "func (s *state) walkRange(dot reflect.Value, r *parse.RangeNode) {"
+      },
+      {
+        "line": 353,
+        "text": "\ts.at(r)"
+      },
+      {
+        "line": 354,
+        "text": "\tdefer func() {"
+      },
+      {
+        "line": 355,
+        "text": "\t\tif r := recover(); r != nil && r != walkBreak {"
+      },
+      {
+        "line": 356,
+        "text": "\t\t\tpanic(r)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 352,
+      "header": "func (s *state) walkRange(dot reflect.Value, r *parse.RangeNode) {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "fmtsort",
+      "io",
+      "parse",
+      "reflect",
+      "runtime",
+      "strings"
+    ],
+    "callee_first_identifier": "func",
+    "local_bindings_before_site": [
+      {
+        "line": 352,
+        "text": "func (s *state) walkRange(dot reflect.Value, r *parse.RangeNode) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 89,
+    "file": "sync/waitgroup.go",
+    "line": 238,
+    "col": 5,
+    "stratum": "iife",
+    "callee_text": "func",
+    "call_end_byte": 8163,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tgo func() {",
+    "context": [
+      {
+        "line": 235,
+        "text": "// [the Go memory model]: https://go.dev/ref/mem"
+      },
+      {
+        "line": 236,
+        "text": "func (wg *WaitGroup) Go(f func()) {"
+      },
+      {
+        "line": 237,
+        "text": "\twg.Add(1)"
+      },
+      {
+        "line": 238,
+        "text": "\tgo func() {"
+      },
+      {
+        "line": 239,
+        "text": "\t\tdefer func() {"
+      },
+      {
+        "line": 240,
+        "text": "\t\t\tif x := recover(); x != nil {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 236,
+      "header": "func (wg *WaitGroup) Go(f func()) {"
+    },
+    "imports": [
+      "atomic",
+      "race",
+      "synctest",
+      "unsafe"
+    ],
+    "callee_first_identifier": "func",
+    "local_bindings_before_site": [
+      {
+        "line": 236,
+        "text": "func (wg *WaitGroup) Go(f func()) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 90,
+    "file": "sync/waitgroup.go",
+    "line": 209,
+    "col": 5,
+    "stratum": "pkg_qualified",
+    "callee_text": "race.Enable",
+    "call_end_byte": 6572,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\t\trace.Enable()",
+    "context": [
+      {
+        "line": 206,
+        "text": "\t\t\truntime_SemacquireWaitGroup(&wg.sema, synctestDurable)"
+      },
+      {
+        "line": 207,
+        "text": "\t\t\tisReset := wg.state.Load() != 0"
+      },
+      {
+        "line": 208,
+        "text": "\t\t\tif race.Enabled {"
+      },
+      {
+        "line": 209,
+        "text": "\t\t\t\trace.Enable()"
+      },
+      {
+        "line": 210,
+        "text": "\t\t\t\trace.Acquire(unsafe.Pointer(wg))"
+      },
+      {
+        "line": 211,
+        "text": "\t\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 160,
+      "header": "func (wg *WaitGroup) Wait() {"
+    },
+    "imports": [
+      "atomic",
+      "race",
+      "synctest",
+      "unsafe"
+    ],
+    "callee_first_identifier": "race",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 91,
+    "file": "sync/pool.go",
+    "line": 302,
+    "col": 47,
+    "stratum": "pkg_qualified",
+    "callee_text": "unsafe.Sizeof",
+    "call_end_byte": 9082,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tlp := unsafe.Pointer(uintptr(l) + uintptr(i)*unsafe.Sizeof(poolLocal{}))",
+    "context": [
+      {
+        "line": 299,
+        "text": "}"
+      },
+      {
+        "line": 300,
+        "text": ""
+      },
+      {
+        "line": 301,
+        "text": "func indexLocal(l unsafe.Pointer, i int) *poolLocal {"
+      },
+      {
+        "line": 302,
+        "text": "\tlp := unsafe.Pointer(uintptr(l) + uintptr(i)*unsafe.Sizeof(poolLocal{}))"
+      },
+      {
+        "line": 303,
+        "text": "\treturn (*poolLocal)(lp)"
+      },
+      {
+        "line": 304,
+        "text": "}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 301,
+      "header": "func indexLocal(l unsafe.Pointer, i int) *poolLocal {"
+    },
+    "imports": [
+      "atomic",
+      "race",
+      "rtatomic",
+      "runtime",
+      "unsafe"
+    ],
+    "callee_first_identifier": "unsafe",
+    "local_bindings_before_site": [
+      {
+        "line": 301,
+        "text": "func indexLocal(l unsafe.Pointer, i int) *poolLocal {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 92,
+    "file": "fmt/print.go",
+    "line": 1176,
+    "col": 23,
+    "stratum": "pkg_qualified",
+    "callee_text": "reflect.TypeOf",
+    "call_end_byte": 32608,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\t\tp.buf.writeString(reflect.TypeOf(arg).String())",
+    "context": [
+      {
+        "line": 1173,
+        "text": "\t\t\tif arg == nil {"
+      },
+      {
+        "line": 1174,
+        "text": "\t\t\t\tp.buf.writeString(nilAngleString)"
+      },
+      {
+        "line": 1175,
+        "text": "\t\t\t} else {"
+      },
+      {
+        "line": 1176,
+        "text": "\t\t\t\tp.buf.writeString(reflect.TypeOf(arg).String())"
+      },
+      {
+        "line": 1177,
+        "text": "\t\t\t\tp.buf.writeByte('=')"
+      },
+      {
+        "line": 1178,
+        "text": "\t\t\t\tp.printArg(arg, 'v')"
+      }
+    ],
+    "enclosing_function": {
+      "line": 1007,
+      "header": "func (p *pp) doPrintf(format string, a []any) {"
+    },
+    "imports": [
+      "fmtsort",
+      "io",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "reflect",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 93,
+    "file": "text/template/parse/parse.go",
+    "line": 174,
+    "col": 9,
+    "stratum": "pkg_qualified",
+    "callee_text": "fmt.Sprintf",
+    "call_end_byte": 4734,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\treturn fmt.Sprintf(\"%s:%d:%d\", tree.ParseName, lineNum, byteNum), context",
+    "context": [
+      {
+        "line": 171,
+        "text": "\t}"
+      },
+      {
+        "line": 172,
+        "text": "\tlineNum := 1 + strings.Count(text, \"\\n\")"
+      },
+      {
+        "line": 173,
+        "text": "\tcontext = n.String()"
+      },
+      {
+        "line": 174,
+        "text": "\treturn fmt.Sprintf(\"%s:%d:%d\", tree.ParseName, lineNum, byteNum), context"
+      },
+      {
+        "line": 175,
+        "text": "}"
+      },
+      {
+        "line": 176,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 158,
+      "header": "func (t *Tree) ErrorContext(n Node) (location, context string) {"
+    },
+    "imports": [
+      "bytes",
+      "fmt",
+      "runtime",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "fmt",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 94,
+    "file": "encoding/json/encode.go",
+    "line": 857,
+    "col": 38,
+    "stratum": "pkg_qualified",
+    "callee_text": "fmt.Sprintf",
+    "call_end_byte": 26163,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\te.error(&UnsupportedValueError{v, fmt.Sprintf(\"encountered a cycle via %s\", v.Type())})",
+    "context": [
+      {
+        "line": 854,
+        "text": "\t\t\tlen int"
+      },
+      {
+        "line": 855,
+        "text": "\t\t}{v.UnsafePointer(), v.Len()}"
+      },
+      {
+        "line": 856,
+        "text": "\t\tif _, ok := e.ptrSeen[ptr]; ok {"
+      },
+      {
+        "line": 857,
+        "text": "\t\t\te.error(&UnsupportedValueError{v, fmt.Sprintf(\"encountered a cycle via %s\", v.Type())})"
+      },
+      {
+        "line": 858,
+        "text": "\t\t}"
+      },
+      {
+        "line": 859,
+        "text": "\t\te.ptrSeen[ptr] = struct{}{}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 842,
+      "header": "func (se sliceEncoder) encode(e *encodeState, v reflect.Value, opts encOpts) {"
+    },
+    "imports": [
+      "base64",
+      "bytes",
+      "cmp",
+      "encoding",
+      "fmt",
+      "math",
+      "reflect",
+      "slices",
+      "strconv",
+      "strings",
+      "sync",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "fmt",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 95,
+    "file": "encoding/json/v2_indent.go",
+    "line": 55,
+    "col": 3,
+    "stratum": "pkg_qualified",
+    "callee_text": "jsontext.AllowInvalidUTF8",
+    "call_end_byte": 1822,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tjsontext.AllowInvalidUTF8(true),",
+    "context": [
+      {
+        "line": 52,
+        "text": "\tb, err := jsontext.AppendFormat(b, src,"
+      },
+      {
+        "line": 53,
+        "text": "\t\tReportErrorsWithLegacySemantics(true),"
+      },
+      {
+        "line": 54,
+        "text": "\t\tjsontext.AllowDuplicateNames(true),"
+      },
+      {
+        "line": 55,
+        "text": "\t\tjsontext.AllowInvalidUTF8(true),"
+      },
+      {
+        "line": 56,
+        "text": "\t\tjsontext.PreserveRawStrings(true))"
+      },
+      {
+        "line": 57,
+        "text": "\tif err != nil {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 49,
+      "header": "func Compact(dst *bytes.Buffer, src []byte) error {"
+    },
+    "imports": [
+      "bytes",
+      "jsontext",
+      "strings"
+    ],
+    "callee_first_identifier": "jsontext",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 96,
+    "file": "sync/runtime.go",
+    "line": 55,
+    "col": 26,
+    "stratum": "pkg_qualified",
+    "callee_text": "unsafe.Sizeof",
+    "call_end_byte": 2210,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\truntime_notifyListCheck(unsafe.Sizeof(n))",
+    "context": [
+      {
+        "line": 52,
+        "text": "func runtime_notifyListCheck(size uintptr)"
+      },
+      {
+        "line": 53,
+        "text": "func init() {"
+      },
+      {
+        "line": 54,
+        "text": "\tvar n notifyList"
+      },
+      {
+        "line": 55,
+        "text": "\truntime_notifyListCheck(unsafe.Sizeof(n))"
+      },
+      {
+        "line": 56,
+        "text": "}"
+      },
+      {
+        "line": 57,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 53,
+      "header": "func init() {"
+    },
+    "imports": [
+      "unsafe"
+    ],
+    "callee_first_identifier": "unsafe",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 97,
+    "file": "sync/rwmutex.go",
+    "line": 89,
+    "col": 3,
+    "stratum": "pkg_qualified",
+    "callee_text": "race.Read",
+    "call_end_byte": 3293,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\trace.Read(unsafe.Pointer(&rw.w))",
+    "context": [
+      {
+        "line": 86,
+        "text": "// in a particular use of mutexes."
+      },
+      {
+        "line": 87,
+        "text": "func (rw *RWMutex) TryRLock() bool {"
+      },
+      {
+        "line": 88,
+        "text": "\tif race.Enabled {"
+      },
+      {
+        "line": 89,
+        "text": "\t\trace.Read(unsafe.Pointer(&rw.w))"
+      },
+      {
+        "line": 90,
+        "text": "\t\trace.Disable()"
+      },
+      {
+        "line": 91,
+        "text": "\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 87,
+      "header": "func (rw *RWMutex) TryRLock() bool {"
+    },
+    "imports": [
+      "atomic",
+      "race",
+      "unsafe"
+    ],
+    "callee_first_identifier": "race",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 98,
+    "file": "context/context.go",
+    "line": 677,
+    "col": 3,
+    "stratum": "pkg_qualified",
+    "callee_text": "time.Until",
+    "call_end_byte": 21380,
+    "package": "context",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\ttime.Until(c.deadline).String() + \"])\"",
+    "context": [
+      {
+        "line": 674,
+        "text": "func (c *timerCtx) String() string {"
+      },
+      {
+        "line": 675,
+        "text": "\treturn contextName(c.cancelCtx.Context) + \".WithDeadline(\" +"
+      },
+      {
+        "line": 676,
+        "text": "\t\tc.deadline.String() + \" [\" +"
+      },
+      {
+        "line": 677,
+        "text": "\t\ttime.Until(c.deadline).String() + \"])\""
+      },
+      {
+        "line": 678,
+        "text": "}"
+      },
+      {
+        "line": 679,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 674,
+      "header": "func (c *timerCtx) String() string {"
+    },
+    "imports": [
+      "atomic",
+      "errors",
+      "reflectlite",
+      "sync",
+      "time"
+    ],
+    "callee_first_identifier": "time",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 99,
+    "file": "bytes/bytes.go",
+    "line": 229,
+    "col": 6,
+    "stratum": "pkg_qualified",
+    "callee_text": "bytealg.IndexByteString",
+    "call_end_byte": 6001,
+    "package": "bytes",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tif bytealg.IndexByteString(chars, s[0]) >= 0 {",
+    "context": [
+      {
+        "line": 226,
+        "text": "\t\t\t}"
+      },
+      {
+        "line": 227,
+        "text": "\t\t\treturn -1"
+      },
+      {
+        "line": 228,
+        "text": "\t\t}"
+      },
+      {
+        "line": 229,
+        "text": "\t\tif bytealg.IndexByteString(chars, s[0]) >= 0 {"
+      },
+      {
+        "line": 230,
+        "text": "\t\t\treturn 0"
+      },
+      {
+        "line": 231,
+        "text": "\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 213,
+      "header": "func IndexAny(s []byte, chars string) int {"
+    },
+    "imports": [
+      "bits",
+      "bytealg",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "bytealg",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 100,
+    "file": "encoding/json/tags.go",
+    "line": 20,
+    "col": 17,
+    "stratum": "pkg_qualified",
+    "callee_text": "strings.Cut",
+    "call_end_byte": 572,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\ttag, opt, _ := strings.Cut(tag, \",\")",
+    "context": [
+      {
+        "line": 17,
+        "text": "// parseTag splits a struct field's json tag into its name and"
+      },
+      {
+        "line": 18,
+        "text": "// comma-separated options."
+      },
+      {
+        "line": 19,
+        "text": "func parseTag(tag string) (string, tagOptions) {"
+      },
+      {
+        "line": 20,
+        "text": "\ttag, opt, _ := strings.Cut(tag, \",\")"
+      },
+      {
+        "line": 21,
+        "text": "\treturn tag, tagOptions(opt)"
+      },
+      {
+        "line": 22,
+        "text": "}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 19,
+      "header": "func parseTag(tag string) (string, tagOptions) {"
+    },
+    "imports": [
+      "strings"
+    ],
+    "callee_first_identifier": "strings",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 101,
+    "file": "context/context.go",
+    "line": 760,
+    "col": 9,
+    "stratum": "pkg_qualified",
+    "callee_text": "reflectlite.TypeOf",
+    "call_end_byte": 24218,
+    "package": "context",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\treturn reflectlite.TypeOf(v).String()",
+    "context": [
+      {
+        "line": 757,
+        "text": "\tcase nil:"
+      },
+      {
+        "line": 758,
+        "text": "\t\treturn \"<nil>\""
+      },
+      {
+        "line": 759,
+        "text": "\t}"
+      },
+      {
+        "line": 760,
+        "text": "\treturn reflectlite.TypeOf(v).String()"
+      },
+      {
+        "line": 761,
+        "text": "}"
+      },
+      {
+        "line": 762,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 751,
+      "header": "func stringify(v any) string {"
+    },
+    "imports": [
+      "atomic",
+      "errors",
+      "reflectlite",
+      "sync",
+      "time"
+    ],
+    "callee_first_identifier": "reflectlite",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 102,
+    "file": "fmt/print.go",
+    "line": 94,
+    "col": 7,
+    "stratum": "pkg_qualified",
+    "callee_text": "strconv.AppendInt",
+    "call_end_byte": 3215,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tb = strconv.AppendInt(b, int64(p), 10)",
+    "context": [
+      {
+        "line": 91,
+        "text": "\t}"
+      },
+      {
+        "line": 92,
+        "text": "\tif p, ok := state.Precision(); ok {"
+      },
+      {
+        "line": 93,
+        "text": "\t\tb = append(b, '.')"
+      },
+      {
+        "line": 94,
+        "text": "\t\tb = strconv.AppendInt(b, int64(p), 10)"
+      },
+      {
+        "line": 95,
+        "text": "\t}"
+      },
+      {
+        "line": 96,
+        "text": "\tb = utf8.AppendRune(b, verb)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 81,
+      "header": "func FormatString(state State, verb rune) string {"
+    },
+    "imports": [
+      "fmtsort",
+      "io",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "strconv",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 103,
+    "file": "bytes/bytes.go",
+    "line": 1273,
+    "col": 8,
+    "stratum": "pkg_qualified",
+    "callee_text": "unicode.SimpleFold",
+    "call_end_byte": 33521,
+    "package": "bytes",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tr := unicode.SimpleFold(sr)",
+    "context": [
+      {
+        "line": 1270,
+        "text": ""
+      },
+      {
+        "line": 1271,
+        "text": "\t\t// General case. SimpleFold(x) returns the next equivalent rune > x"
+      },
+      {
+        "line": 1272,
+        "text": "\t\t// or wraps around to smaller values."
+      },
+      {
+        "line": 1273,
+        "text": "\t\tr := unicode.SimpleFold(sr)"
+      },
+      {
+        "line": 1274,
+        "text": "\t\tfor r != sr && r < tr {"
+      },
+      {
+        "line": 1275,
+        "text": "\t\t\tr = unicode.SimpleFold(r)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 1213,
+      "header": "func EqualFold(s, t []byte) bool {"
+    },
+    "imports": [
+      "bits",
+      "bytealg",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "unicode",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 104,
+    "file": "encoding/json/decode.go",
+    "line": 529,
+    "col": 10,
+    "stratum": "pkg_qualified",
+    "callee_text": "reflect.ValueOf",
+    "call_end_byte": 16315,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tv.Set(reflect.ValueOf(ai))",
+    "context": [
+      {
+        "line": 526,
+        "text": "\t\tif v.NumMethod() == 0 {"
+      },
+      {
+        "line": 527,
+        "text": "\t\t\t// Decoding into nil interface? Switch to non-reflect code."
+      },
+      {
+        "line": 528,
+        "text": "\t\t\tai := d.arrayInterface()"
+      },
+      {
+        "line": 529,
+        "text": "\t\t\tv.Set(reflect.ValueOf(ai))"
+      },
+      {
+        "line": 530,
+        "text": "\t\t\treturn nil"
+      },
+      {
+        "line": 531,
+        "text": "\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 508,
+      "header": "func (d *decodeState) array(v reflect.Value) error {"
+    },
+    "imports": [
+      "base64",
+      "encoding",
+      "fmt",
+      "reflect",
+      "strconv",
+      "strings",
+      "unicode",
+      "utf16",
+      "utf8"
+    ],
+    "callee_first_identifier": "reflect",
+    "local_bindings_before_site": [
+      {
+        "line": 508,
+        "text": "func (d *decodeState) array(v reflect.Value) error {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 105,
+    "file": "bytes/bytes.go",
+    "line": 1099,
+    "col": 11,
+    "stratum": "pkg_qualified",
+    "callee_text": "utf8.DecodeLastRune",
+    "call_end_byte": 29287,
+    "package": "bytes",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tr, n = utf8.DecodeLastRune(s)",
+    "context": [
+      {
+        "line": 1096,
+        "text": "\tfor len(s) > 0 {"
+      },
+      {
+        "line": 1097,
+        "text": "\t\tr, n := rune(s[len(s)-1]), 1"
+      },
+      {
+        "line": 1098,
+        "text": "\t\tif r >= utf8.RuneSelf {"
+      },
+      {
+        "line": 1099,
+        "text": "\t\t\tr, n = utf8.DecodeLastRune(s)"
+      },
+      {
+        "line": 1100,
+        "text": "\t\t}"
+      },
+      {
+        "line": 1101,
+        "text": "\t\tif !containsRune(cutset, r) {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 1095,
+      "header": "func trimRightUnicode(s []byte, cutset string) []byte {"
+    },
+    "imports": [
+      "bits",
+      "bytealg",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "utf8",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 106,
+    "file": "text/template/parse/lex.go",
+    "line": 29,
+    "col": 10,
+    "stratum": "pkg_qualified",
+    "callee_text": "fmt.Sprintf",
+    "call_end_byte": 736,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\treturn fmt.Sprintf(\"<%s>\", i.val)",
+    "context": [
+      {
+        "line": 26,
+        "text": "\tcase i.typ == itemError:"
+      },
+      {
+        "line": 27,
+        "text": "\t\treturn i.val"
+      },
+      {
+        "line": 28,
+        "text": "\tcase i.typ > itemKeyword:"
+      },
+      {
+        "line": 29,
+        "text": "\t\treturn fmt.Sprintf(\"<%s>\", i.val)"
+      },
+      {
+        "line": 30,
+        "text": "\tcase len(i.val) > 10:"
+      },
+      {
+        "line": 31,
+        "text": "\t\treturn fmt.Sprintf(\"%.10q...\", i.val)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 22,
+      "header": "func (i item) String() string {"
+    },
+    "imports": [
+      "fmt",
+      "strings",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "fmt",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 107,
+    "file": "sync/waitgroup.go",
+    "line": 90,
+    "col": 10,
+    "stratum": "pkg_qualified",
+    "callee_text": "synctest.Associate",
+    "call_end_byte": 2710,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tswitch synctest.Associate(wg) {",
+    "context": [
+      {
+        "line": 87,
+        "text": "\tif synctest.IsInBubble() {"
+      },
+      {
+        "line": 88,
+        "text": "\t\t// If Add is called from within a bubble, then all Add calls must be made"
+      },
+      {
+        "line": 89,
+        "text": "\t\t// from the same bubble."
+      },
+      {
+        "line": 90,
+        "text": "\t\tswitch synctest.Associate(wg) {"
+      },
+      {
+        "line": 91,
+        "text": "\t\tcase synctest.Unbubbled:"
+      },
+      {
+        "line": 92,
+        "text": "\t\tcase synctest.OtherBubble:"
+      }
+    ],
+    "enclosing_function": {
+      "line": 77,
+      "header": "func (wg *WaitGroup) Add(delta int) {"
+    },
+    "imports": [
+      "atomic",
+      "race",
+      "synctest",
+      "unsafe"
+    ],
+    "callee_first_identifier": "synctest",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 108,
+    "file": "strings/builder.go",
+    "line": 39,
+    "col": 23,
+    "stratum": "pkg_qualified",
+    "callee_text": "abi.NoEscape",
+    "call_end_byte": 1396,
+    "package": "strings",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tb.addr = (*Builder)(abi.NoEscape(unsafe.Pointer(b)))",
+    "context": [
+      {
+        "line": 36,
+        "text": "\t\t// See issue 23382."
+      },
+      {
+        "line": 37,
+        "text": "\t\t// TODO: once issue 7921 is fixed, this should be reverted to"
+      },
+      {
+        "line": 38,
+        "text": "\t\t// just \"b.addr = b\"."
+      },
+      {
+        "line": 39,
+        "text": "\t\tb.addr = (*Builder)(abi.NoEscape(unsafe.Pointer(b)))"
+      },
+      {
+        "line": 40,
+        "text": "\t} else if b.addr != b {"
+      },
+      {
+        "line": 41,
+        "text": "\t\tpanic(\"strings: illegal use of non-zero Builder copied by value\")"
+      }
+    ],
+    "enclosing_function": {
+      "line": 32,
+      "header": "func (b *Builder) copyCheck() {"
+    },
+    "imports": [
+      "abi",
+      "bytealg",
+      "unsafe",
+      "utf8"
+    ],
+    "callee_first_identifier": "abi",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 109,
+    "file": "text/template/parse/node.go",
+    "line": 140,
+    "col": 9,
+    "stratum": "pkg_qualified",
+    "callee_text": "fmt.Sprintf",
+    "call_end_byte": 3913,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\treturn fmt.Sprintf(textFormat, t.Text)",
+    "context": [
+      {
+        "line": 137,
+        "text": "}"
+      },
+      {
+        "line": 138,
+        "text": ""
+      },
+      {
+        "line": 139,
+        "text": "func (t *TextNode) String() string {"
+      },
+      {
+        "line": 140,
+        "text": "\treturn fmt.Sprintf(textFormat, t.Text)"
+      },
+      {
+        "line": 141,
+        "text": "}"
+      },
+      {
+        "line": 142,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 139,
+      "header": "func (t *TextNode) String() string {"
+    },
+    "imports": [
+      "fmt",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "fmt",
+    "local_bindings_before_site": [],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 110,
+    "file": "io/io.go",
+    "line": 549,
+    "col": 12,
+    "stratum": "selector",
+    "callee_text": "s.r.ReadAt",
+    "call_end_byte": 18075,
+    "package": "io",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tn, err = s.r.ReadAt(p, off)",
+    "context": [
+      {
+        "line": 546,
+        "text": "\toff += s.base"
+      },
+      {
+        "line": 547,
+        "text": "\tif max := s.limit - off; int64(len(p)) > max {"
+      },
+      {
+        "line": 548,
+        "text": "\t\tp = p[0:max]"
+      },
+      {
+        "line": 549,
+        "text": "\t\tn, err = s.r.ReadAt(p, off)"
+      },
+      {
+        "line": 550,
+        "text": "\t\tif err == nil {"
+      },
+      {
+        "line": 551,
+        "text": "\t\t\terr = EOF"
+      }
+    ],
+    "enclosing_function": {
+      "line": 542,
+      "header": "func (s *SectionReader) ReadAt(p []byte, off int64) (n int, err error) {"
+    },
+    "imports": [
+      "errors",
+      "sync"
+    ],
+    "callee_first_identifier": "s",
+    "local_bindings_before_site": [
+      {
+        "line": 542,
+        "text": "func (s *SectionReader) ReadAt(p []byte, off int64) (n int, err error) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 111,
+    "file": "fmt/scan.go",
+    "line": 1021,
+    "col": 43,
+    "stratum": "selector",
+    "callee_text": "val.Type",
+    "call_end_byte": 26639,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\ts.errorString(\"type not a pointer: \" + val.Type().String())",
+    "context": [
+      {
+        "line": 1018,
+        "text": "\t\tval := reflect.ValueOf(v)"
+      },
+      {
+        "line": 1019,
+        "text": "\t\tptr := val"
+      },
+      {
+        "line": 1020,
+        "text": "\t\tif ptr.Kind() != reflect.Pointer {"
+      },
+      {
+        "line": 1021,
+        "text": "\t\t\ts.errorString(\"type not a pointer: \" + val.Type().String())"
+      },
+      {
+        "line": 1022,
+        "text": "\t\t\treturn"
+      },
+      {
+        "line": 1023,
+        "text": "\t\t}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 953,
+      "header": "func (s *ss) scanOne(verb rune, arg any) {"
+    },
+    "imports": [
+      "errors",
+      "io",
+      "math",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "val",
+    "local_bindings_before_site": [
+      {
+        "line": 1018,
+        "text": "val := reflect.ValueOf(v)"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 112,
+    "file": "fmt/print.go",
+    "line": 680,
+    "col": 4,
+    "stratum": "selector",
+    "callee_text": "p.badVerb",
+    "call_end_byte": 18904,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tp.badVerb(arg, reflect.Value{}, verb)",
+    "context": [
+      {
+        "line": 677,
+        "text": "\t\tcase 'T', 'v':"
+      },
+      {
+        "line": 678,
+        "text": "\t\t\tp.fmt.padString(nilAngleString)"
+      },
+      {
+        "line": 679,
+        "text": "\t\tdefault:"
+      },
+      {
+        "line": 680,
+        "text": "\t\t\tp.badVerb(arg, reflect.Value{}, verb)"
+      },
+      {
+        "line": 681,
+        "text": "\t\t}"
+      },
+      {
+        "line": 682,
+        "text": "\t\treturn"
+      }
+    ],
+    "enclosing_function": {
+      "line": 674,
+      "header": "func (p *pp) printArg(arg any, verb rune) {"
+    },
+    "imports": [
+      "fmtsort",
+      "io",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "p",
+    "local_bindings_before_site": [
+      {
+        "line": 674,
+        "text": "func (p *pp) printArg(arg any, verb rune) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 113,
+    "file": "fmt/print.go",
+    "line": 851,
+    "col": 5,
+    "stratum": "selector",
+    "callee_text": "p.buf.writeString",
+    "call_end_byte": 23980,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\t\tp.buf.writeString(nilAngleString)",
+    "context": [
+      {
+        "line": 848,
+        "text": "\t\t\t\tp.buf.writeString(f.Type().String())"
+      },
+      {
+        "line": 849,
+        "text": "\t\t\t\tp.buf.writeString(nilParenString)"
+      },
+      {
+        "line": 850,
+        "text": "\t\t\t} else {"
+      },
+      {
+        "line": 851,
+        "text": "\t\t\t\tp.buf.writeString(nilAngleString)"
+      },
+      {
+        "line": 852,
+        "text": "\t\t\t}"
+      },
+      {
+        "line": 853,
+        "text": "\t\t} else {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 756,
+      "header": "func (p *pp) printValue(value reflect.Value, verb rune, depth int) {"
+    },
+    "imports": [
+      "fmtsort",
+      "io",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "p",
+    "local_bindings_before_site": [
+      {
+        "line": 756,
+        "text": "func (p *pp) printValue(value reflect.Value, verb rune, depth int) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 114,
+    "file": "text/template/exec.go",
+    "line": 1047,
+    "col": 2,
+    "stratum": "selector",
+    "callee_text": "s.at",
+    "call_end_byte": 31523,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\ts.at(n)",
+    "context": [
+      {
+        "line": 1044,
+        "text": "}"
+      },
+      {
+        "line": 1045,
+        "text": ""
+      },
+      {
+        "line": 1046,
+        "text": "func (s *state) evalEmptyInterface(dot reflect.Value, n parse.Node) reflect.Value {"
+      },
+      {
+        "line": 1047,
+        "text": "\ts.at(n)"
+      },
+      {
+        "line": 1048,
+        "text": "\tswitch n := n.(type) {"
+      },
+      {
+        "line": 1049,
+        "text": "\tcase *parse.BoolNode:"
+      }
+    ],
+    "enclosing_function": {
+      "line": 1046,
+      "header": "func (s *state) evalEmptyInterface(dot reflect.Value, n parse.Node) reflect.Value {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "fmtsort",
+      "io",
+      "parse",
+      "reflect",
+      "runtime",
+      "strings"
+    ],
+    "callee_first_identifier": "s",
+    "local_bindings_before_site": [
+      {
+        "line": 1046,
+        "text": "func (s *state) evalEmptyInterface(dot reflect.Value, n parse.Node) reflect.Value {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 115,
+    "file": "text/template/parse/lex.go",
+    "line": 606,
+    "col": 5,
+    "stratum": "selector",
+    "callee_text": "l.accept",
+    "call_end_byte": 16852,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tif l.accept(\"0\") {",
+    "context": [
+      {
+        "line": 603,
+        "text": "\tl.accept(\"+-\")"
+      },
+      {
+        "line": 604,
+        "text": "\t// Is it hex?"
+      },
+      {
+        "line": 605,
+        "text": "\tdigits := \"0123456789_\""
+      },
+      {
+        "line": 606,
+        "text": "\tif l.accept(\"0\") {"
+      },
+      {
+        "line": 607,
+        "text": "\t\t// Note: Leading 0 does not mean octal in floats."
+      },
+      {
+        "line": 608,
+        "text": "\t\tif l.accept(\"xX\") {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 601,
+      "header": "func (l *lexer) scanNumber() bool {"
+    },
+    "imports": [
+      "fmt",
+      "strings",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "l",
+    "local_bindings_before_site": [
+      {
+        "line": 601,
+        "text": "func (l *lexer) scanNumber() bool {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 116,
+    "file": "text/template/parse/node.go",
+    "line": 321,
+    "col": 4,
+    "stratum": "selector",
+    "callee_text": "sb.WriteByte",
+    "call_end_byte": 7999,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tsb.WriteByte('(')",
+    "context": [
+      {
+        "line": 318,
+        "text": "\t\t\tsb.WriteByte(' ')"
+      },
+      {
+        "line": 319,
+        "text": "\t\t}"
+      },
+      {
+        "line": 320,
+        "text": "\t\tif arg, ok := arg.(*PipeNode); ok {"
+      },
+      {
+        "line": 321,
+        "text": "\t\t\tsb.WriteByte('(')"
+      },
+      {
+        "line": 322,
+        "text": "\t\t\targ.writeTo(sb)"
+      },
+      {
+        "line": 323,
+        "text": "\t\t\tsb.WriteByte(')')"
+      }
+    ],
+    "enclosing_function": {
+      "line": 315,
+      "header": "func (c *CommandNode) writeTo(sb *strings.Builder) {"
+    },
+    "imports": [
+      "fmt",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "sb",
+    "local_bindings_before_site": [
+      {
+        "line": 315,
+        "text": "func (c *CommandNode) writeTo(sb *strings.Builder) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 117,
+    "file": "text/template/parse/parse.go",
+    "line": 141,
+    "col": 2,
+    "stratum": "selector",
+    "callee_text": "t.backup",
+    "call_end_byte": 3862,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tt.backup()",
+    "context": [
+      {
+        "line": 138,
+        "text": "// peekNonSpace returns but does not consume the next non-space token."
+      },
+      {
+        "line": 139,
+        "text": "func (t *Tree) peekNonSpace() item {"
+      },
+      {
+        "line": 140,
+        "text": "\ttoken := t.nextNonSpace()"
+      },
+      {
+        "line": 141,
+        "text": "\tt.backup()"
+      },
+      {
+        "line": 142,
+        "text": "\treturn token"
+      },
+      {
+        "line": 143,
+        "text": "}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 139,
+      "header": "func (t *Tree) peekNonSpace() item {"
+    },
+    "imports": [
+      "bytes",
+      "fmt",
+      "runtime",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "t",
+    "local_bindings_before_site": [
+      {
+        "line": 139,
+        "text": "func (t *Tree) peekNonSpace() item {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 118,
+    "file": "fmt/scan.go",
+    "line": 1006,
+    "col": 6,
+    "stratum": "selector",
+    "callee_text": "s.okVerb",
+    "call_end_byte": 26191,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tif s.okVerb(verb, floatVerbs, \"float64\") {",
+    "context": [
+      {
+        "line": 1003,
+        "text": "\t\t\t*v = float32(s.convertFloat(s.floatToken(), 32))"
+      },
+      {
+        "line": 1004,
+        "text": "\t\t}"
+      },
+      {
+        "line": 1005,
+        "text": "\tcase *float64:"
+      },
+      {
+        "line": 1006,
+        "text": "\t\tif s.okVerb(verb, floatVerbs, \"float64\") {"
+      },
+      {
+        "line": 1007,
+        "text": "\t\t\ts.SkipSpace()"
+      },
+      {
+        "line": 1008,
+        "text": "\t\t\ts.notEOF()"
+      }
+    ],
+    "enclosing_function": {
+      "line": 953,
+      "header": "func (s *ss) scanOne(verb rune, arg any) {"
+    },
+    "imports": [
+      "errors",
+      "io",
+      "math",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "s",
+    "local_bindings_before_site": [
+      {
+        "line": 953,
+        "text": "func (s *ss) scanOne(verb rune, arg any) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 119,
+    "file": "strings/builder.go",
+    "line": 113,
+    "col": 2,
+    "stratum": "selector",
+    "callee_text": "b.copyCheck",
+    "call_end_byte": 3537,
+    "package": "strings",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tb.copyCheck()",
+    "context": [
+      {
+        "line": 110,
+        "text": "// WriteString appends the contents of s to b's buffer."
+      },
+      {
+        "line": 111,
+        "text": "// It returns the length of s and a nil error."
+      },
+      {
+        "line": 112,
+        "text": "func (b *Builder) WriteString(s string) (int, error) {"
+      },
+      {
+        "line": 113,
+        "text": "\tb.copyCheck()"
+      },
+      {
+        "line": 114,
+        "text": "\tb.buf = append(b.buf, s...)"
+      },
+      {
+        "line": 115,
+        "text": "\treturn len(s), nil"
+      }
+    ],
+    "enclosing_function": {
+      "line": 112,
+      "header": "func (b *Builder) WriteString(s string) (int, error) {"
+    },
+    "imports": [
+      "abi",
+      "bytealg",
+      "unsafe",
+      "utf8"
+    ],
+    "callee_first_identifier": "b",
+    "local_bindings_before_site": [
+      {
+        "line": 112,
+        "text": "func (b *Builder) WriteString(s string) (int, error) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 120,
+    "file": "text/template/parse/parse.go",
+    "line": 279,
+    "col": 2,
+    "stratum": "selector",
+    "callee_text": "t.stopParse",
+    "call_end_byte": 7698,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tt.stopParse()",
+    "context": [
+      {
+        "line": 276,
+        "text": "\tt.text = text"
+      },
+      {
+        "line": 277,
+        "text": "\tt.parse()"
+      },
+      {
+        "line": 278,
+        "text": "\tt.add()"
+      },
+      {
+        "line": 279,
+        "text": "\tt.stopParse()"
+      },
+      {
+        "line": 280,
+        "text": "\treturn t, nil"
+      },
+      {
+        "line": 281,
+        "text": "}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 263,
+      "header": "func (t *Tree) Parse(text, leftDelim, rightDelim string, treeSet map[string]*Tree, funcs ...map[string]any) (tree *Tree, err error) {"
+    },
+    "imports": [
+      "bytes",
+      "fmt",
+      "runtime",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "t",
+    "local_bindings_before_site": [
+      {
+        "line": 263,
+        "text": "func (t *Tree) Parse(text, leftDelim, rightDelim string, treeSet map[string]*Tree, funcs ...map[string]any) (tree *Tree, err error) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 121,
+    "file": "context/context.go",
+    "line": 512,
+    "col": 24,
+    "stratum": "selector",
+    "callee_text": "parent.Err",
+    "call_end_byte": 16985,
+    "package": "context",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tchild.cancel(false, parent.Err(), Cause(parent))",
+    "context": [
+      {
+        "line": 509,
+        "text": "\t\t// parent implements an AfterFunc method."
+      },
+      {
+        "line": 510,
+        "text": "\t\tc.mu.Lock()"
+      },
+      {
+        "line": 511,
+        "text": "\t\tstop := a.AfterFunc(func() {"
+      },
+      {
+        "line": 512,
+        "text": "\t\t\tchild.cancel(false, parent.Err(), Cause(parent))"
+      },
+      {
+        "line": 513,
+        "text": "\t\t})"
+      },
+      {
+        "line": 514,
+        "text": "\t\tc.Context = stopCtx{"
+      }
+    ],
+    "enclosing_function": {
+      "line": 476,
+      "header": "func (c *cancelCtx) propagateCancel(parent Context, child canceler) {"
+    },
+    "imports": [
+      "atomic",
+      "errors",
+      "reflectlite",
+      "sync",
+      "time"
+    ],
+    "callee_first_identifier": "parent",
+    "local_bindings_before_site": [
+      {
+        "line": 476,
+        "text": "func (c *cancelCtx) propagateCancel(parent Context, child canceler) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 122,
+    "file": "sync/waitgroup.go",
+    "line": 135,
+    "col": 2,
+    "stratum": "selector",
+    "callee_text": "wg.state.Store",
+    "call_end_byte": 4411,
+    "package": "sync",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\twg.state.Store(0)",
+    "context": [
+      {
+        "line": 132,
+        "text": "\t\tpanic(\"sync: WaitGroup misuse: Add called concurrently with Wait\")"
+      },
+      {
+        "line": 133,
+        "text": "\t}"
+      },
+      {
+        "line": 134,
+        "text": "\t// Reset waiters count to 0."
+      },
+      {
+        "line": 135,
+        "text": "\twg.state.Store(0)"
+      },
+      {
+        "line": 136,
+        "text": "\tif bubbled {"
+      },
+      {
+        "line": 137,
+        "text": "\t\t// Adds must not happen concurrently with wait when counter is 0,"
+      }
+    ],
+    "enclosing_function": {
+      "line": 77,
+      "header": "func (wg *WaitGroup) Add(delta int) {"
+    },
+    "imports": [
+      "atomic",
+      "race",
+      "synctest",
+      "unsafe"
+    ],
+    "callee_first_identifier": "wg",
+    "local_bindings_before_site": [
+      {
+        "line": 77,
+        "text": "func (wg *WaitGroup) Add(delta int) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 123,
+    "file": "text/template/parse/parse.go",
+    "line": 631,
+    "col": 9,
+    "stratum": "selector",
+    "callee_text": "t.newEnd",
+    "call_end_byte": 16829,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\treturn t.newEnd(t.expect(itemRightDelim, \"end\").pos)",
+    "context": [
+      {
+        "line": 628,
+        "text": "//"
+      },
+      {
+        "line": 629,
+        "text": "// End keyword is past."
+      },
+      {
+        "line": 630,
+        "text": "func (t *Tree) endControl() Node {"
+      },
+      {
+        "line": 631,
+        "text": "\treturn t.newEnd(t.expect(itemRightDelim, \"end\").pos)"
+      },
+      {
+        "line": 632,
+        "text": "}"
+      },
+      {
+        "line": 633,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 630,
+      "header": "func (t *Tree) endControl() Node {"
+    },
+    "imports": [
+      "bytes",
+      "fmt",
+      "runtime",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "t",
+    "local_bindings_before_site": [
+      {
+        "line": 630,
+        "text": "func (t *Tree) endControl() Node {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 124,
+    "file": "encoding/json/decode.go",
+    "line": 957,
+    "col": 4,
+    "stratum": "selector",
+    "callee_text": "v.SetBytes",
+    "call_end_byte": 28188,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\tv.SetBytes(b[:n])",
+    "context": [
+      {
+        "line": 954,
+        "text": "\t\t\t\td.saveError(err)"
+      },
+      {
+        "line": 955,
+        "text": "\t\t\t\tbreak"
+      },
+      {
+        "line": 956,
+        "text": "\t\t\t}"
+      },
+      {
+        "line": 957,
+        "text": "\t\t\tv.SetBytes(b[:n])"
+      },
+      {
+        "line": 958,
+        "text": "\t\tcase reflect.String:"
+      },
+      {
+        "line": 959,
+        "text": "\t\t\tt := string(s)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 857,
+      "header": "func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool) error {"
+    },
+    "imports": [
+      "base64",
+      "encoding",
+      "fmt",
+      "reflect",
+      "strconv",
+      "strings",
+      "unicode",
+      "utf16",
+      "utf8"
+    ],
+    "callee_first_identifier": "v",
+    "local_bindings_before_site": [
+      {
+        "line": 857,
+        "text": "func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool) error {"
+      },
+      {
+        "line": 895,
+        "text": "v = pv"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 125,
+    "file": "container/list/list.go",
+    "line": 231,
+    "col": 2,
+    "stratum": "selector",
+    "callee_text": "l.lazyInit",
+    "call_end_byte": 6318,
+    "package": "list",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tl.lazyInit()",
+    "context": [
+      {
+        "line": 228,
+        "text": "// PushFrontList inserts a copy of another list at the front of list l."
+      },
+      {
+        "line": 229,
+        "text": "// The lists l and other may be the same. They must not be nil."
+      },
+      {
+        "line": 230,
+        "text": "func (l *List) PushFrontList(other *List) {"
+      },
+      {
+        "line": 231,
+        "text": "\tl.lazyInit()"
+      },
+      {
+        "line": 232,
+        "text": "\tfor i, e := other.Len(), other.Back(); i > 0; i, e = i-1, e.Prev() {"
+      },
+      {
+        "line": 233,
+        "text": "\t\tl.insertValue(e.Value, &l.root)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 230,
+      "header": "func (l *List) PushFrontList(other *List) {"
+    },
+    "imports": [],
+    "callee_first_identifier": "l",
+    "local_bindings_before_site": [
+      {
+        "line": 230,
+        "text": "func (l *List) PushFrontList(other *List) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 126,
+    "file": "text/template/parse/lex.go",
+    "line": 393,
+    "col": 14,
+    "stratum": "selector",
+    "callee_text": "l.atRightDelim",
+    "call_end_byte": 11436,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tdelim, _ := l.atRightDelim()",
+    "context": [
+      {
+        "line": 390,
+        "text": "\t// Either number, quoted string, or identifier."
+      },
+      {
+        "line": 391,
+        "text": "\t// Spaces separate arguments; runs of spaces turn into itemSpace."
+      },
+      {
+        "line": 392,
+        "text": "\t// Pipe symbols separate and are emitted."
+      },
+      {
+        "line": 393,
+        "text": "\tdelim, _ := l.atRightDelim()"
+      },
+      {
+        "line": 394,
+        "text": "\tif delim {"
+      },
+      {
+        "line": 395,
+        "text": "\t\tif l.parenDepth == 0 {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 389,
+      "header": "func lexInsideAction(l *lexer) stateFn {"
+    },
+    "imports": [
+      "fmt",
+      "strings",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "l",
+    "local_bindings_before_site": [
+      {
+        "line": 389,
+        "text": "func lexInsideAction(l *lexer) stateFn {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 127,
+    "file": "io/multi.go",
+    "line": 45,
+    "col": 9,
+    "stratum": "selector",
+    "callee_text": "mr.writeToWithBuffer",
+    "call_end_byte": 1115,
+    "package": "io",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\treturn mr.writeToWithBuffer(w, make([]byte, 1024*32))",
+    "context": [
+      {
+        "line": 42,
+        "text": "}"
+      },
+      {
+        "line": 43,
+        "text": ""
+      },
+      {
+        "line": 44,
+        "text": "func (mr *multiReader) WriteTo(w Writer) (sum int64, err error) {"
+      },
+      {
+        "line": 45,
+        "text": "\treturn mr.writeToWithBuffer(w, make([]byte, 1024*32))"
+      },
+      {
+        "line": 46,
+        "text": "}"
+      },
+      {
+        "line": 47,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 44,
+      "header": "func (mr *multiReader) WriteTo(w Writer) (sum int64, err error) {"
+    },
+    "imports": [],
+    "callee_first_identifier": "mr",
+    "local_bindings_before_site": [
+      {
+        "line": 44,
+        "text": "func (mr *multiReader) WriteTo(w Writer) (sum int64, err error) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 128,
+    "file": "fmt/print.go",
+    "line": 887,
+    "col": 6,
+    "stratum": "selector",
+    "callee_text": "p.buf.writeString",
+    "call_end_byte": 25008,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\t\t\tp.buf.writeString(commaSpaceString)",
+    "context": [
+      {
+        "line": 884,
+        "text": "\t\t\tp.buf.writeByte('{')"
+      },
+      {
+        "line": 885,
+        "text": "\t\t\tfor i := 0; i < f.Len(); i++ {"
+      },
+      {
+        "line": 886,
+        "text": "\t\t\t\tif i > 0 {"
+      },
+      {
+        "line": 887,
+        "text": "\t\t\t\t\tp.buf.writeString(commaSpaceString)"
+      },
+      {
+        "line": 888,
+        "text": "\t\t\t\t}"
+      },
+      {
+        "line": 889,
+        "text": "\t\t\t\tp.printValue(f.Index(i), verb, depth+1)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 756,
+      "header": "func (p *pp) printValue(value reflect.Value, verb rune, depth int) {"
+    },
+    "imports": [
+      "fmtsort",
+      "io",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "p",
+    "local_bindings_before_site": [
+      {
+        "line": 756,
+        "text": "func (p *pp) printValue(value reflect.Value, verb rune, depth int) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 129,
+    "file": "text/template/parse/node.go",
+    "line": 604,
+    "col": 17,
+    "stratum": "selector",
+    "callee_text": "b.String",
+    "call_end_byte": 14226,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tsb.WriteString(b.String())",
+    "context": [
+      {
+        "line": 601,
+        "text": "}"
+      },
+      {
+        "line": 602,
+        "text": ""
+      },
+      {
+        "line": 603,
+        "text": "func (b *BoolNode) writeTo(sb *strings.Builder) {"
+      },
+      {
+        "line": 604,
+        "text": "\tsb.WriteString(b.String())"
+      },
+      {
+        "line": 605,
+        "text": "}"
+      },
+      {
+        "line": 606,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 603,
+      "header": "func (b *BoolNode) writeTo(sb *strings.Builder) {"
+    },
+    "imports": [
+      "fmt",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "b",
+    "local_bindings_before_site": [
+      {
+        "line": 603,
+        "text": "func (b *BoolNode) writeTo(sb *strings.Builder) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 130,
+    "file": "encoding/json/encode.go",
+    "line": 487,
+    "col": 3,
+    "stratum": "selector",
+    "callee_text": "e.Buffer.Write",
+    "call_end_byte": 16939,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\te.Buffer.Write(out)",
+    "context": [
+      {
+        "line": 484,
+        "text": "\t\te.Grow(len(b))"
+      },
+      {
+        "line": 485,
+        "text": "\t\tout := e.AvailableBuffer()"
+      },
+      {
+        "line": 486,
+        "text": "\t\tout, err = appendCompact(out, b, opts.escapeHTML)"
+      },
+      {
+        "line": 487,
+        "text": "\t\te.Buffer.Write(out)"
+      },
+      {
+        "line": 488,
+        "text": "\t}"
+      },
+      {
+        "line": 489,
+        "text": "\tif err != nil {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 472,
+      "header": "func marshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {"
+    },
+    "imports": [
+      "base64",
+      "bytes",
+      "cmp",
+      "encoding",
+      "fmt",
+      "math",
+      "reflect",
+      "slices",
+      "strconv",
+      "strings",
+      "sync",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "e",
+    "local_bindings_before_site": [
+      {
+        "line": 472,
+        "text": "func marshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 131,
+    "file": "text/template/parse/parse.go",
+    "line": 580,
+    "col": 34,
+    "stratum": "selector",
+    "callee_text": "t.peek",
+    "call_end_byte": 15748,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t} else if context == \"with\" && t.peek().typ == itemWith {",
+    "context": [
+      {
+        "line": 577,
+        "text": "\t\t\tt.next() // Consume the \"if\" token."
+      },
+      {
+        "line": 578,
+        "text": "\t\t\telseList = t.newList(next.Position())"
+      },
+      {
+        "line": 579,
+        "text": "\t\t\telseList.append(t.ifControl())"
+      },
+      {
+        "line": 580,
+        "text": "\t\t} else if context == \"with\" && t.peek().typ == itemWith {"
+      },
+      {
+        "line": 581,
+        "text": "\t\t\tt.next()"
+      },
+      {
+        "line": 582,
+        "text": "\t\t\telseList = t.newList(next.Position())"
+      }
+    ],
+    "enclosing_function": {
+      "line": 552,
+      "header": "func (t *Tree) parseControl(context string) (pos Pos, line int, pipe *PipeNode, list, elseList *ListNode) {"
+    },
+    "imports": [
+      "bytes",
+      "fmt",
+      "runtime",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "t",
+    "local_bindings_before_site": [
+      {
+        "line": 552,
+        "text": "func (t *Tree) parseControl(context string) (pos Pos, line int, pipe *PipeNode, list, elseList *ListNode) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 132,
+    "file": "bufio/bufio.go",
+    "line": 226,
+    "col": 14,
+    "stratum": "selector",
+    "callee_text": "b.readErr",
+    "call_end_byte": 5913,
+    "package": "bufio",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\treturn 0, b.readErr()",
+    "context": [
+      {
+        "line": 223,
+        "text": "\t}"
+      },
+      {
+        "line": 224,
+        "text": "\tif b.r == b.w {"
+      },
+      {
+        "line": 225,
+        "text": "\t\tif b.err != nil {"
+      },
+      {
+        "line": 226,
+        "text": "\t\t\treturn 0, b.readErr()"
+      },
+      {
+        "line": 227,
+        "text": "\t\t}"
+      },
+      {
+        "line": 228,
+        "text": "\t\tif len(p) >= len(b.buf) {"
+      }
+    ],
+    "enclosing_function": {
+      "line": 216,
+      "header": "func (b *Reader) Read(p []byte) (n int, err error) {"
+    },
+    "imports": [
+      "bytes",
+      "errors",
+      "io",
+      "strings",
+      "utf8"
+    ],
+    "callee_first_identifier": "b",
+    "local_bindings_before_site": [
+      {
+        "line": 216,
+        "text": "func (b *Reader) Read(p []byte) (n int, err error) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 133,
+    "file": "text/template/exec.go",
+    "line": 136,
+    "col": 24,
+    "stratum": "selector",
+    "callee_text": "s.tmpl.Name",
+    "call_end_byte": 3632,
+    "package": "template",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tname := doublePercent(s.tmpl.Name())",
+    "context": [
+      {
+        "line": 133,
+        "text": ""
+      },
+      {
+        "line": 134,
+        "text": "// errorf records an ExecError and terminates processing."
+      },
+      {
+        "line": 135,
+        "text": "func (s *state) errorf(format string, args ...any) {"
+      },
+      {
+        "line": 136,
+        "text": "\tname := doublePercent(s.tmpl.Name())"
+      },
+      {
+        "line": 137,
+        "text": "\tif s.node == nil {"
+      },
+      {
+        "line": 138,
+        "text": "\t\tformat = fmt.Sprintf(\"template: %s: %s\", name, format)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 135,
+      "header": "func (s *state) errorf(format string, args ...any) {"
+    },
+    "imports": [
+      "errors",
+      "fmt",
+      "fmtsort",
+      "io",
+      "parse",
+      "reflect",
+      "runtime",
+      "strings"
+    ],
+    "callee_first_identifier": "s",
+    "local_bindings_before_site": [
+      {
+        "line": 135,
+        "text": "func (s *state) errorf(format string, args ...any) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 134,
+    "file": "fmt/format.go",
+    "line": 436,
+    "col": 2,
+    "stratum": "selector",
+    "callee_text": "f.fmtSbx",
+    "call_end_byte": 9648,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tf.fmtSbx(s, nil, digits)",
+    "context": [
+      {
+        "line": 433,
+        "text": ""
+      },
+      {
+        "line": 434,
+        "text": "// fmtSx formats a string as a hexadecimal encoding of its bytes."
+      },
+      {
+        "line": 435,
+        "text": "func (f *fmt) fmtSx(s, digits string) {"
+      },
+      {
+        "line": 436,
+        "text": "\tf.fmtSbx(s, nil, digits)"
+      },
+      {
+        "line": 437,
+        "text": "}"
+      },
+      {
+        "line": 438,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 435,
+      "header": "func (f *fmt) fmtSx(s, digits string) {"
+    },
+    "imports": [
+      "strconv",
+      "utf8"
+    ],
+    "callee_first_identifier": "f",
+    "local_bindings_before_site": [
+      {
+        "line": 435,
+        "text": "func (f *fmt) fmtSx(s, digits string) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 135,
+    "file": "fmt/print.go",
+    "line": 788,
+    "col": 28,
+    "stratum": "selector",
+    "callee_text": "f.Complex",
+    "call_end_byte": 22510,
+    "package": "fmt",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tp.fmtComplex(nil, value, f.Complex(), 64, verb)",
+    "context": [
+      {
+        "line": 785,
+        "text": "\tcase reflect.Float64:"
+      },
+      {
+        "line": 786,
+        "text": "\t\tp.fmtFloat(nil, value, f.Float(), 64, verb)"
+      },
+      {
+        "line": 787,
+        "text": "\tcase reflect.Complex64:"
+      },
+      {
+        "line": 788,
+        "text": "\t\tp.fmtComplex(nil, value, f.Complex(), 64, verb)"
+      },
+      {
+        "line": 789,
+        "text": "\tcase reflect.Complex128:"
+      },
+      {
+        "line": 790,
+        "text": "\t\tp.fmtComplex(nil, value, f.Complex(), 128, verb)"
+      }
+    ],
+    "enclosing_function": {
+      "line": 756,
+      "header": "func (p *pp) printValue(value reflect.Value, verb rune, depth int) {"
+    },
+    "imports": [
+      "fmtsort",
+      "io",
+      "os",
+      "reflect",
+      "strconv",
+      "sync",
+      "utf8"
+    ],
+    "callee_first_identifier": "f",
+    "local_bindings_before_site": [
+      {
+        "line": 765,
+        "text": "switch f := value; value.Kind() {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 136,
+    "file": "encoding/json/decode.go",
+    "line": 726,
+    "col": 8,
+    "stratum": "selector",
+    "callee_text": "subv.Set",
+    "call_end_byte": 21235,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\t\t\t\t\t\tsubv.Set(reflect.New(subv.Type().Elem()))",
+    "context": [
+      {
+        "line": 723,
+        "text": "\t\t\t\t\t\t\t\tdestring = false"
+      },
+      {
+        "line": 724,
+        "text": "\t\t\t\t\t\t\t\tbreak"
+      },
+      {
+        "line": 725,
+        "text": "\t\t\t\t\t\t\t}"
+      },
+      {
+        "line": 726,
+        "text": "\t\t\t\t\t\t\tsubv.Set(reflect.New(subv.Type().Elem()))"
+      },
+      {
+        "line": 727,
+        "text": "\t\t\t\t\t\t}"
+      },
+      {
+        "line": 728,
+        "text": "\t\t\t\t\t\tsubv = subv.Elem()"
+      }
+    ],
+    "enclosing_function": {
+      "line": 605,
+      "header": "func (d *decodeState) object(v reflect.Value) error {"
+    },
+    "imports": [
+      "base64",
+      "encoding",
+      "fmt",
+      "reflect",
+      "strconv",
+      "strings",
+      "unicode",
+      "utf16",
+      "utf8"
+    ],
+    "callee_first_identifier": "subv",
+    "local_bindings_before_site": [
+      {
+        "line": 688,
+        "text": "var subv reflect.Value"
+      },
+      {
+        "line": 698,
+        "text": "subv = mapElem"
+      },
+      {
+        "line": 705,
+        "text": "subv = v"
+      },
+      {
+        "line": 722,
+        "text": "subv = reflect.Value{}"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 137,
+    "file": "text/template/parse/node.go",
+    "line": 414,
+    "col": 3,
+    "stratum": "selector",
+    "callee_text": "sb.WriteString",
+    "call_end_byte": 10082,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\t\tsb.WriteString(id)",
+    "context": [
+      {
+        "line": 411,
+        "text": "\t\tif i > 0 {"
+      },
+      {
+        "line": 412,
+        "text": "\t\t\tsb.WriteByte('.')"
+      },
+      {
+        "line": 413,
+        "text": "\t\t}"
+      },
+      {
+        "line": 414,
+        "text": "\t\tsb.WriteString(id)"
+      },
+      {
+        "line": 415,
+        "text": "\t}"
+      },
+      {
+        "line": 416,
+        "text": "}"
+      }
+    ],
+    "enclosing_function": {
+      "line": 409,
+      "header": "func (v *VariableNode) writeTo(sb *strings.Builder) {"
+    },
+    "imports": [
+      "fmt",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "sb",
+    "local_bindings_before_site": [
+      {
+        "line": 409,
+        "text": "func (v *VariableNode) writeTo(sb *strings.Builder) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 138,
+    "file": "text/template/parse/parse.go",
+    "line": 370,
+    "col": 2,
+    "stratum": "selector",
+    "callee_text": "t.stopParse",
+    "call_end_byte": 9900,
+    "package": "parse",
+    "build_constraint": false,
+    "filename_suffix_constraint": false,
+    "site_line": "\tt.stopParse()",
+    "context": [
+      {
+        "line": 367,
+        "text": "\t\tt.errorf(\"unexpected %s in %s\", end, context)"
+      },
+      {
+        "line": 368,
+        "text": "\t}"
+      },
+      {
+        "line": 369,
+        "text": "\tt.add()"
+      },
+      {
+        "line": 370,
+        "text": "\tt.stopParse()"
+      },
+      {
+        "line": 371,
+        "text": "}"
+      },
+      {
+        "line": 372,
+        "text": ""
+      }
+    ],
+    "enclosing_function": {
+      "line": 355,
+      "header": "func (t *Tree) parseDefinition() {"
+    },
+    "imports": [
+      "bytes",
+      "fmt",
+      "runtime",
+      "strconv",
+      "strings"
+    ],
+    "callee_first_identifier": "t",
+    "local_bindings_before_site": [
+      {
+        "line": 355,
+        "text": "func (t *Tree) parseDefinition() {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  },
+  {
+    "id": 139,
+    "file": "encoding/json/encode.go",
+    "line": 473,
+    "col": 36,
+    "stratum": "selector",
+    "callee_text": "v.IsNil",
+    "call_end_byte": 16648,
+    "package": "json",
+    "build_constraint": true,
+    "filename_suffix_constraint": false,
+    "site_line": "\tif v.Kind() == reflect.Pointer && v.IsNil() {",
+    "context": [
+      {
+        "line": 470,
+        "text": "}"
+      },
+      {
+        "line": 471,
+        "text": ""
+      },
+      {
+        "line": 472,
+        "text": "func marshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {"
+      },
+      {
+        "line": 473,
+        "text": "\tif v.Kind() == reflect.Pointer && v.IsNil() {"
+      },
+      {
+        "line": 474,
+        "text": "\t\te.WriteString(\"null\")"
+      },
+      {
+        "line": 475,
+        "text": "\t\treturn"
+      }
+    ],
+    "enclosing_function": {
+      "line": 472,
+      "header": "func marshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {"
+    },
+    "imports": [
+      "base64",
+      "bytes",
+      "cmp",
+      "encoding",
+      "fmt",
+      "math",
+      "reflect",
+      "slices",
+      "strconv",
+      "strings",
+      "sync",
+      "unicode",
+      "utf8"
+    ],
+    "callee_first_identifier": "v",
+    "local_bindings_before_site": [
+      {
+        "line": 472,
+        "text": "func marshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {"
+      }
+    ],
+    "package_level_declarations_of_name": []
+  }
+]

@@ -1,0 +1,9 @@
+candidate: c5d101e7fab2e08a3a852794ff273eb84a12e548
+tracked_modified_files: 0
+Linux penguin 6.6.143-09589-gf9e106250941 #1 SMP PREEMPT_DYNAMIC Wed, 26 Aug 2026 12:08:14 -0700 x86_64 GNU/Linux
+nproc: 2
+Mem:            2747        1110         972           0         664        1637
+rustc 1.97.1 (8bab26f4f 2026-07-14)
+cargo 1.97.1 (c980f4866 2026-06-30)
+v22.23.1
+CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 CARGO_TARGET_DIR=/mnt/chromeos/removable/MOVESPEED/aetherforge-target

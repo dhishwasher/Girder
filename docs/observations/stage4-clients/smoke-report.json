@@ -1,0 +1,193 @@
+{
+  "binary_sha256": "37739238f4477e534445cecbc9a1078b31f9849696b3a6cc77061fc788b0552d",
+  "git_head": "0fc977417f07c0d867d05b03140961b76821a185",
+  "npx_published_package_path_exercised": false,
+  "clients": [
+    {
+      "client": "claude",
+      "checks": {
+        "analyze_exit": 0,
+        "setup_exit": 0,
+        "mcp_entry": {
+          "args": [
+            "mcp",
+            "."
+          ],
+          "command": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder"
+        },
+        "mcp_entry_ok": true,
+        "instruction_path": ".claude/CLAUDE.md",
+        "instruction_ok": true,
+        "server": {
+          "initialize_ok": true,
+          "tools": [
+            "ask_codebase",
+            "find_definition",
+            "get_source",
+            "impacted_tests",
+            "orient",
+            "review_changes",
+            "search_code"
+          ],
+          "all_expected_tools": true,
+          "stderr_bytes": 93
+        },
+        "real_client_reader": {
+          "status": "ok",
+          "exit": 0,
+          "output": "Checking MCP server health\u2026\n\ngirder: /mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder mcp . - ! Connected \u00b7 tools fetch failed \u2014 Invalid result for tools/list: missing required resultType \u2014 servers implementing protocol revision 2026-07-28 MUST include it (the absent-means-complete bridge applies only to earlier-revision servers)"
+        },
+        "hooks": {
+          "normal": {
+            "exit": 0,
+            "stdout": "{\"hookSpecificOutput\":{\"additionalContext\":\"Girder: consider `girder context . --nodes <node::path> --json --source-only` before this whole-file read.\",\"hookEventName\":\"PreToolUse\"}}",
+            "stderr_bytes": 0
+          },
+          "normal_attempts": {
+            "attempts": 6,
+            "advised": 3,
+            "silent": 3
+          },
+          "missing_graph": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "malformed_input": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "hook_failure_missing_binary": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "hook_failure_native_exit": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "ok": true
+        },
+        "uninstall_exit": 0,
+        "instruction_removed": true
+      },
+      "passed": true
+    },
+    {
+      "client": "codex",
+      "checks": {
+        "analyze_exit": 0,
+        "setup_exit": 0,
+        "mcp_entry": {
+          "args": [
+            "mcp",
+            "."
+          ],
+          "command": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder"
+        },
+        "mcp_entry_ok": true,
+        "instruction_path": ".codex/AGENTS.md",
+        "instruction_ok": true,
+        "server": {
+          "initialize_ok": true,
+          "tools": [
+            "ask_codebase",
+            "find_definition",
+            "get_source",
+            "impacted_tests",
+            "orient",
+            "review_changes",
+            "search_code"
+          ],
+          "all_expected_tools": true,
+          "stderr_bytes": 92
+        },
+        "real_client_reader": {
+          "status": "ok",
+          "exit": 0,
+          "output": "Name    Command                                                            Args   Env  Cwd  Status   Auth       \ngirder  /mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder  mcp .  -    -    enabled  Unsupported\nWARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"/tmp\" (codex_home: AbsolutePathBuf(\"/tmp/girder-sta"
+        },
+        "hooks": {
+          "normal": {
+            "exit": 0,
+            "stdout": "{\"hookSpecificOutput\":{\"additionalContext\":\"Girder: consider `girder context . --nodes <node::path> --json --source-only` before this whole-file read.\",\"hookEventName\":\"PreToolUse\"}}",
+            "stderr_bytes": 0
+          },
+          "normal_attempts": {
+            "attempts": 6,
+            "advised": 6,
+            "silent": 0
+          },
+          "missing_graph": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "malformed_input": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "hook_failure_missing_binary": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "hook_failure_native_exit": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "ok": true
+        },
+        "uninstall_exit": 0,
+        "instruction_removed": true
+      },
+      "passed": true
+    },
+    {
+      "client": "cursor",
+      "checks": {
+        "analyze_exit": 0,
+        "setup_exit": 0,
+        "mcp_entry": {
+          "args": [
+            "mcp",
+            "."
+          ],
+          "command": "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder"
+        },
+        "mcp_entry_ok": true,
+        "instruction_path": "proj/.cursor/rules/girder-orient.mdc",
+        "instruction_ok": true,
+        "cursor_frontmatter_ok": true,
+        "server": {
+          "initialize_ok": true,
+          "tools": [
+            "ask_codebase",
+            "find_definition",
+            "get_source",
+            "impacted_tests",
+            "orient",
+            "review_changes",
+            "search_code"
+          ],
+          "all_expected_tools": true,
+          "stderr_bytes": 93
+        },
+        "real_client_reader": {
+          "status": "not available",
+          "reason": "no CLI reader for this client"
+        },
+        "hook_registered": false,
+        "hook_note": "not built: no documented pre-read hook can add advisory context",
+        "uninstall_exit": 0,
+        "instruction_removed": true
+      },
+      "passed": true
+    }
+  ],
+  "all_passed": true
+}

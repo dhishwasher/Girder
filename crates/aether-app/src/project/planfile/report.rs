@@ -27,6 +27,9 @@ pub(crate) struct StepReport {
     pub(crate) checks: Vec<CheckReport>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) writes: Option<Vec<WriteFingerprintReport>>,
+    /// Certified, refused (with a category), or uncertified. Predicted impact lives inside it and
+    /// is never execution evidence; executed checks stay in `checks`.
+    pub(crate) certification: super::verify::Certification,
 }
 
 #[derive(Debug, Serialize)]
@@ -205,6 +208,10 @@ pub(crate) fn build_report(
                     })
                     .collect()
             }),
+            certification: step
+                .certification
+                .clone()
+                .unwrap_or_else(super::verify::Certification::uncertified),
         })
         .collect();
 
@@ -336,6 +343,7 @@ mod tests {
                     detail: "mode Exact: expected [\"a\"], actual [\"a\", \"b\"]".to_string(),
                 }],
                 write_fingerprints: None,
+                certification: None,
             }],
         };
         let report = build_report(&plan(), &run, false, None, None);

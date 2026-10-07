@@ -310,6 +310,49 @@ pub(crate) fn plan_schema(node_paths: &[String]) -> Value {
                 "minItems": 0,
                 "maxItems": 3,
                 "items": plan_check_schema(node_paths)
+            },
+            "verify": plan_verify_schema(node_paths)
+        }
+    })
+}
+
+/// Optional certified-step block (docs/verified-edits-policy.md): `replace_node` edits only.
+/// `baseline` maps each edited node to the `fingerprint` that `context` printed for it; `delta`
+/// is the exact node and edge change the author expects (all five lists are required).
+fn plan_verify_schema(_node_paths: &[String]) -> Value {
+    let path = json!({"type": "string"});
+    let edge = json!({"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "string"}});
+    json!({
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["baseline", "delta"],
+        "properties": {
+            "baseline": {"type": "object", "additionalProperties": {"type": "string"}},
+            "delta": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["nodes", "edges"],
+                "properties": {
+                    "nodes": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["changed", "added", "removed"],
+                        "properties": {
+                            "changed": {"type": "array", "items": path.clone()},
+                            "added": {"type": "array", "items": path.clone()},
+                            "removed": {"type": "array", "items": path}
+                        }
+                    },
+                    "edges": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["added", "removed"],
+                        "properties": {
+                            "added": {"type": "array", "items": edge.clone()},
+                            "removed": {"type": "array", "items": edge}
+                        }
+                    }
+                }
             }
         }
     })

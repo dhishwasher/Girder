@@ -102,6 +102,49 @@ pub(crate) struct Step {
     pub(crate) description: String,
     pub(crate) edits: Vec<Edit>,
     pub(crate) checks: Vec<Check>,
+    /// Present only on a certified step (docs/verified-edits-policy.md). Absent: the step runs
+    /// as it always has and is reported uncertified.
+    pub(crate) verify: Option<Verify>,
+}
+
+/// A certified step's promise. Every field is optional at parse time so an incomplete block
+/// loads and is refused as `insufficient_evidence` by the verifier, not rejected by the parser.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct Verify {
+    #[serde(default)]
+    pub(crate) baseline: Option<std::collections::BTreeMap<String, String>>,
+    #[serde(default)]
+    pub(crate) delta: Option<DeclaredDelta>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct DeclaredDelta {
+    #[serde(default)]
+    pub(crate) nodes: Option<DeclaredNodes>,
+    #[serde(default)]
+    pub(crate) edges: Option<DeclaredEdges>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct DeclaredNodes {
+    #[serde(default)]
+    pub(crate) changed: Option<Vec<String>>,
+    #[serde(default)]
+    pub(crate) added: Option<Vec<String>>,
+    #[serde(default)]
+    pub(crate) removed: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct DeclaredEdges {
+    #[serde(default)]
+    pub(crate) added: Option<Vec<[String; 3]>>,
+    #[serde(default)]
+    pub(crate) removed: Option<Vec<[String; 3]>>,
 }
 
 #[derive(Deserialize)]
@@ -113,6 +156,8 @@ struct RawStep {
     edits: Vec<Value>,
     #[serde(default)]
     checks: Vec<Value>,
+    #[serde(default)]
+    verify: Option<Verify>,
 }
 
 impl<'de> Deserialize<'de> for Step {
@@ -129,7 +174,7 @@ impl<'de> Deserialize<'de> for Step {
             .and_then(Value::as_str)
             .unwrap_or("<missing step id>")
             .to_string();
-        const KNOWN_FIELDS: &[&str] = &["id", "description", "edits", "checks"];
+        const KNOWN_FIELDS: &[&str] = &["id", "description", "edits", "checks", "verify"];
         if let Some(field) = object
             .keys()
             .find(|field| !KNOWN_FIELDS.contains(&field.as_str()))
@@ -183,6 +228,7 @@ impl<'de> Deserialize<'de> for Step {
             description: raw.description,
             edits,
             checks,
+            verify: raw.verify,
         })
     }
 }

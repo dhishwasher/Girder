@@ -1,0 +1,9 @@
+== M7-projection-bytes
+test result: FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 386 filtered out; finished in 0.55s
+error: test failed, to rerun pass `-p aether-app --bin girder`
+== M8-incremental-vs-cold
+test result: FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 386 filtered out; finished in 0.46s
+error: test failed, to rerun pass `-p aether-app --bin girder`
+== M9-parse-gap
+test result: FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 386 filtered out; finished in 0.55s
+error: test failed, to rerun pass `-p aether-app --bin girder`

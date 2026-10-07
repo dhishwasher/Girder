@@ -1,0 +1,28 @@
+{
+  "purpose": "Negative control: the correction-2 byte check applied to the d8d1645 fixture bytes, which must fail.",
+  "fixture_commit": "d8d1645",
+  "fixture_sha256": "6c13638cdc0c526cd5cc25b5dae007017a6bce7910c6273126c69b95443ed9d1",
+  "sites": [
+    {
+      "marker": "/* m:ca.escaped */",
+      "line": 15,
+      "line_contains_marker_and_spelling": false,
+      "backslash_u_byte_offset_in_line": -1,
+      "spelling_bytes_hex": "6e5c75303036316d65",
+      "decoded_key": "name",
+      "decoded_matches_expected": true,
+      "passed": false
+    },
+    {
+      "marker": "/* m:ca.escaped-only */",
+      "line": 23,
+      "line_contains_marker_and_spelling": false,
+      "backslash_u_byte_offset_in_line": -1,
+      "spelling_bytes_hex": "6c5c75303036397374",
+      "decoded_key": "list",
+      "decoded_matches_expected": true,
+      "passed": false
+    }
+  ],
+  "all_failed_as_expected": true
+}

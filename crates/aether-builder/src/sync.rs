@@ -9,8 +9,11 @@ use crate::parser::{IncrementalParser, Lang};
 use aether_graph::{Edge, EdgeKind, NodeId, NodeKind, SemanticGraph};
 use std::collections::{HashMap, HashSet};
 
+mod go_package;
 mod python_rebinding;
 mod rust_methods;
+mod typescript_esm;
+pub use typescript_esm::TypeScriptEsmEnvironment;
 mod update;
 pub use update::{normalize_source_path, FileChange, FullRebuildReason, UpdateError, UpdateReport};
 
@@ -692,6 +695,10 @@ fn resolve_factory_receiver<'a>(
 #[derive(Default, Clone)]
 pub struct GraphBuilder {
     files: HashMap<String, FileState>,
+    /// Filesystem identity is opt-in. Source-only library/projection loads
+    /// cannot certify a relative ESM import without an attested project root.
+    source_root: Option<std::path::PathBuf>,
+    typescript_environment: Option<TypeScriptEsmEnvironment>,
     /// Cargo `[[bin]]` target overrides: normalized project-relative file
     /// path -> declared target name. Consulted before convention when
     /// resolving `CARGO_BIN_EXE_<target>` subprocess entrypoints, so a
@@ -714,6 +721,29 @@ pub struct GraphBuilder {
 impl GraphBuilder {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Bind future resolutions to a canonical filesystem snapshot. Every
+    /// relative ESM proof rechecks indexed bytes and rejects symlink components.
+    /// In-memory projections differing from disk remain Unknown.
+    pub fn set_source_root(&mut self, root: &std::path::Path) -> std::io::Result<()> {
+        let root = root.canonicalize()?;
+        if !root.is_dir() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "source root is not a directory",
+            ));
+        }
+        self.configuration_changed |=
+            !self.files.is_empty() && self.source_root.as_ref() != Some(&root);
+        self.source_root = Some(root);
+        Ok(())
+    }
+
+    /// Exact environment used by the last ESM resolution, if consulted.
+    /// Watchers compare it with their candidate snapshot before publishing.
+    pub fn typescript_environment(&self) -> Option<&TypeScriptEsmEnvironment> {
+        self.typescript_environment.as_ref()
     }
 
     /// Declare exact Cargo binary target locations from manifest metadata
@@ -788,7 +818,7 @@ impl GraphBuilder {
     /// a name is ambiguous, a same-module definition wins; otherwise a unique
     /// global match is used. Renamed Rust imports and public re-export chains
     /// select exact paths; ambiguous or cyclic aliases are left unlinked.
-    pub fn resolve_calls(&self, graph: &mut SemanticGraph) {
+    pub fn resolve_calls(&mut self, graph: &mut SemanticGraph) {
         let source_owned: HashSet<NodeId> = self
             .files
             .values()
@@ -1058,6 +1088,14 @@ impl GraphBuilder {
         // the target's own definition -- claims.rs's own per-file pass
         // cannot see this. See sync/python_rebinding.rs.
         python_rebinding::revert_string_rebound_python_claims(&self.files, graph);
+
+        typescript_esm::resolve(
+            self.source_root.as_deref(),
+            &self.files,
+            graph,
+            &mut self.typescript_environment,
+        );
+        go_package::resolve(&self.files, graph);
 
         self.resolve_inherits(graph);
     }

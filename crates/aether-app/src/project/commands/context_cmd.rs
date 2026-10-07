@@ -99,7 +99,20 @@ fn build_context_json_inner(
     with_tests: bool,
 ) -> std::io::Result<Value> {
     let selection = select_nodes(root, intent, pinned_node_paths, with_tests)?;
-    let node_context = selection.node_context;
+    // Authoring envelope only: `--source-only` stays exactly `{path, language, source}`. The
+    // fingerprint is the one `verify.baseline` is checked against (single shared function).
+    let node_context: Vec<Value> = selection
+        .node_context
+        .into_iter()
+        .map(|mut node| {
+            let fp = crate::project::planfile::node_fingerprint(
+                node["path"].as_str().unwrap_or_default(),
+                node["source"].as_str().unwrap_or_default(),
+            );
+            node["fingerprint"] = Value::String(fp);
+            node
+        })
+        .collect();
 
     let base_commit = git_head_commit(root)?;
     let plan_id = generate_plan_id();
@@ -414,6 +427,15 @@ mod tests {
             keys,
             vec!["base_commit", "intent", "nodes", "plan_skeleton", "schema"]
         );
+        let node = &output["nodes"][0];
+        assert_eq!(
+            node["fingerprint"],
+            crate::project::planfile::node_fingerprint(
+                node["path"].as_str().unwrap(),
+                node["source"].as_str().unwrap()
+            ),
+            "the authoring envelope carries the verifier's fingerprint"
+        );
 
         assert!(output["intent"].is_string());
         assert!(output["base_commit"].is_string());
@@ -467,6 +489,18 @@ mod tests {
         assert_eq!(nodes[0]["path"], "crate::calc::greet");
         assert_eq!(nodes[0]["language"], "rust");
         assert!(nodes[0]["source"].as_str().unwrap().contains("fn greet"));
+        let mut node_keys: Vec<&str> = nodes[0]
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        node_keys.sort_unstable();
+        assert_eq!(
+            node_keys,
+            vec!["language", "path", "source"],
+            "--source-only is a measured contract"
+        );
 
         let _ = std::fs::remove_dir_all(&root);
     }
@@ -487,8 +521,13 @@ mod tests {
         args.push("--source-only".to_string());
         let lean = build_output(&root, &args).unwrap();
 
+        // The authoring envelope adds exactly one field, `fingerprint`; nothing else differs.
+        let mut stripped = authoring["nodes"].clone();
+        for node in stripped.as_array_mut().unwrap() {
+            node.as_object_mut().unwrap().remove("fingerprint");
+        }
         assert_eq!(
-            lean["nodes"], authoring["nodes"],
+            lean["nodes"], stripped,
             "--source-only must not change the node payload, only the wrapper"
         );
         let lean_bytes = serde_json::to_string_pretty(&lean).unwrap().len();

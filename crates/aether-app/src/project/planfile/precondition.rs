@@ -295,6 +295,7 @@ mod tests {
                 description: String::new(),
                 edits,
                 checks: Vec::new(),
+                verify: None,
             }],
         }
     }
@@ -379,6 +380,7 @@ mod tests {
                         create: "pub fn brand_new() -> i32 { 1 }\n".into(),
                     }],
                     checks: Vec::new(),
+                    verify: None,
                 },
                 crate::project::planfile::schema::Step {
                     id: "edit-step".into(),
@@ -388,6 +390,7 @@ mod tests {
                         replacement: "pub fn brand_new() -> i32 { 222222 }".into(),
                     }],
                     checks: Vec::new(),
+                    verify: None,
                 },
             ],
         };

@@ -1,0 +1,14 @@
+{
+  "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "cargo": "cargo 1.97.0 (c980f4866 2026-06-30)",
+  "node": "v22.22.0",
+  "platform": "Linux-6.18.44-fc-v64-x86_64-with-glibc2.39",
+  "cpus": 4,
+  "memory_gb": 15,
+  "deviation": "Cloud session, not the ChromeOS/MOVESPEED workstation: CARGO_TARGET_DIR is the default ./target (MOVESPEED absent). CARGO_BUILD_JOBS=1, CARGO_INCREMENTAL=0, -j1, serial Cargo jobs as required.",
+  "girder_binary": {
+    "path": "target/debug/girder",
+    "built_from": "working tree identical to 230418e product code",
+    "sha256": "eb77061dbe4a77f74e17ba69fbe72943d363c6fa315f2d19e91dd9c2e8cf0fe4"
+  }
+}

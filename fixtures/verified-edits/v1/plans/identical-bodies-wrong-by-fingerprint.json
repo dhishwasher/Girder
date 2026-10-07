@@ -1,0 +1,38 @@
+{
+  "plan_version": 2,
+  "plan_id": "verified-edit-fixture",
+  "intent": "fixture",
+  "base_commit": "<HEAD>",
+  "on_failure": "rollback_plan",
+  "steps": [
+    {
+      "id": "s1",
+      "description": "",
+      "edits": [
+        {
+          "node": "crate::lib::Widget::render",
+          "replace_node": "fn render(&self) -> String {\n        String::from(\"same v2\")\n    }"
+        }
+      ],
+      "checks": [],
+      "verify": {
+        "baseline": {
+          "crate::lib::Widget::render": "02d57f6d1ac292018d212252bd94af24b0f7cf3f0accd7b276fb895bf6ef5d3d"
+        },
+        "delta": {
+          "nodes": {
+            "changed": [
+              "crate::lib::Widget::render@Render"
+            ],
+            "added": [],
+            "removed": []
+          },
+          "edges": {
+            "added": [],
+            "removed": []
+          }
+        }
+      }
+    }
+  ]
+}

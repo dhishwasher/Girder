@@ -1,0 +1,89 @@
+{"cases": 17, "resolution_passed": 0, "failed_cases": ["ts-structural-v1-arrow-alice", "ts-structural-v1-arrow-bob", "ts-structural-v1-arrow-interface-signature", "ts-structural-v1-function-expression-alice", "ts-structural-v1-method-shorthand-alice", "ts-structural-v1-mixed-forms-carol", "ts-structural-v1-owner-scope-ambiguous", "ts-structural-v1-owner-scope-makeA", "ts-structural-v1-direct-member-call", "ts-structural-v1-mutated-member", "ts-structural-v1-unrelated-member", "ts-structural-v1-spread-override-alice", "ts-structural-v1-spread-override-base", "ts-structural-v1-property-signature-interface", "ts-structural-v1-property-signature-alice", "ts-structural-v1-refused-subtree-reachability", "ts-structural-v1-refused-subtree-unrelated"], "input_errors": [], "cells": {"exact": 0, "conservative": 0, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0}, "unsound_cells": 0, "passed": false}
+.{"cases": 17, "resolution_passed": 0, "failed_cases": ["ts-structural-v1-arrow-alice", "ts-structural-v1-arrow-bob", "ts-structural-v1-arrow-interface-signature", "ts-structural-v1-function-expression-alice", "ts-structural-v1-method-shorthand-alice", "ts-structural-v1-mixed-forms-carol", "ts-structural-v1-owner-scope-ambiguous", "ts-structural-v1-owner-scope-makeA", "ts-structural-v1-direct-member-call", "ts-structural-v1-mutated-member", "ts-structural-v1-unrelated-member", "ts-structural-v1-spread-override-alice", "ts-structural-v1-spread-override-base", "ts-structural-v1-property-signature-interface", "ts-structural-v1-property-signature-alice", "ts-structural-v1-refused-subtree-reachability", "ts-structural-v1-refused-subtree-unrelated"], "input_errors": [], "cells": {"exact": 0, "conservative": 0, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0}, "unsound_cells": 0, "passed": false}
+.{"cases": 0, "resolution_passed": 0, "failed_cases": [], "input_errors": ["manifest hash d29fc40d0be1b76e083ee87b10ce3c8e9197c33448d42a2988fc8b81557e6617 != pinned aa114b8e049b2c19e952af00cbb0107010c00b413621a73f3db0b36c6b916692"], "cells": {"exact": 0, "conservative": 0, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0}, "unsound_cells": 0, "passed": false}
+.{"cases": 17, "resolution_passed": 0, "failed_cases": ["ts-structural-v1-arrow-alice", "ts-structural-v1-arrow-bob", "ts-structural-v1-arrow-interface-signature", "ts-structural-v1-function-expression-alice", "ts-structural-v1-method-shorthand-alice", "ts-structural-v1-mixed-forms-carol", "ts-structural-v1-owner-scope-ambiguous", "ts-structural-v1-owner-scope-makeA", "ts-structural-v1-direct-member-call", "ts-structural-v1-mutated-member", "ts-structural-v1-unrelated-member", "ts-structural-v1-spread-override-alice", "ts-structural-v1-spread-override-base", "ts-structural-v1-property-signature-interface", "ts-structural-v1-property-signature-alice", "ts-structural-v1-refused-subtree-reachability", "ts-structural-v1-refused-subtree-unrelated"], "input_errors": ["cannot read binary: [Errno 2] No such file or directory: '/tmp/tmpohya5dm_/absent'"], "cells": {"exact": 0, "conservative": 0, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0}, "unsound_cells": 0, "passed": false}
+.{"cases": 17, "resolution_passed": 8, "failed_cases": ["ts-structural-v1-arrow-alice", "ts-structural-v1-arrow-bob", "ts-structural-v1-function-expression-alice", "ts-structural-v1-method-shorthand-alice", "ts-structural-v1-mixed-forms-carol", "ts-structural-v1-owner-scope-ambiguous", "ts-structural-v1-owner-scope-makeA", "ts-structural-v1-direct-member-call", "ts-structural-v1-mutated-member", "ts-structural-v1-unrelated-member", "ts-structural-v1-spread-override-alice", "ts-structural-v1-spread-override-base", "ts-structural-v1-property-signature-alice", "ts-structural-v1-refused-subtree-reachability", "ts-structural-v1-refused-subtree-unrelated"], "input_errors": [], "cells": {"exact": 0, "conservative": 0, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0}, "unsound_cells": 0, "passed": false}
+F{"cases": 17, "resolution_passed": 8, "failed_cases": ["ts-structural-v1-arrow-alice", "ts-structural-v1-arrow-bob", "ts-structural-v1-function-expression-alice", "ts-structural-v1-method-shorthand-alice", "ts-structural-v1-mixed-forms-carol", "ts-structural-v1-owner-scope-ambiguous", "ts-structural-v1-owner-scope-makeA", "ts-structural-v1-direct-member-call", "ts-structural-v1-mutated-member", "ts-structural-v1-unrelated-member", "ts-structural-v1-spread-override-alice", "ts-structural-v1-spread-override-base", "ts-structural-v1-property-signature-alice", "ts-structural-v1-refused-subtree-reachability", "ts-structural-v1-refused-subtree-unrelated"], "input_errors": [], "cells": {"exact": 0, "conservative": 0, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0}, "unsound_cells": 0, "passed": false}
+FE{"cases": 17, "resolution_passed": 8, "failed_cases": ["ts-structural-v1-arrow-bob", "ts-structural-v1-mixed-forms-carol", "ts-structural-v1-owner-scope-ambiguous", "ts-structural-v1-owner-scope-makeA", "ts-structural-v1-unrelated-member", "ts-structural-v1-spread-override-alice", "ts-structural-v1-spread-override-base", "ts-structural-v1-refused-subtree-reachability", "ts-structural-v1-refused-subtree-unrelated"], "input_errors": [], "cells": {"exact": 0, "conservative": 0, "unsafe_exclusion": 10, "overclaim": 0, "failed": 0}, "unsound_cells": 10, "passed": false}
+F{"cases": 17, "resolution_passed": 8, "failed_cases": ["ts-structural-v1-arrow-alice", "ts-structural-v1-arrow-bob", "ts-structural-v1-function-expression-alice", "ts-structural-v1-method-shorthand-alice", "ts-structural-v1-mixed-forms-carol", "ts-structural-v1-owner-scope-ambiguous", "ts-structural-v1-owner-scope-makeA", "ts-structural-v1-direct-member-call", "ts-structural-v1-mutated-member", "ts-structural-v1-unrelated-member", "ts-structural-v1-spread-override-alice", "ts-structural-v1-spread-override-base", "ts-structural-v1-property-signature-alice", "ts-structural-v1-refused-subtree-reachability", "ts-structural-v1-refused-subtree-unrelated"], "input_errors": [], "cells": {"exact": 0, "conservative": 0, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0}, "unsound_cells": 0, "passed": false}
+.{"cases": 17, "resolution_passed": 0, "failed_cases": ["ts-structural-v1-arrow-alice", "ts-structural-v1-arrow-bob", "ts-structural-v1-arrow-interface-signature", "ts-structural-v1-function-expression-alice", "ts-structural-v1-method-shorthand-alice", "ts-structural-v1-mixed-forms-carol", "ts-structural-v1-owner-scope-ambiguous", "ts-structural-v1-owner-scope-makeA", "ts-structural-v1-direct-member-call", "ts-structural-v1-mutated-member", "ts-structural-v1-unrelated-member", "ts-structural-v1-spread-override-alice", "ts-structural-v1-spread-override-base", "ts-structural-v1-property-signature-interface", "ts-structural-v1-property-signature-alice", "ts-structural-v1-refused-subtree-reachability", "ts-structural-v1-refused-subtree-unrelated"], "input_errors": [], "cells": {"exact": 0, "conservative": 0, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0}, "unsound_cells": 0, "passed": false}
+.{"cases": 17, "resolution_passed": 8, "failed_cases": ["ts-structural-v1-arrow-alice", "ts-structural-v1-arrow-bob", "ts-structural-v1-function-expression-alice", "ts-structural-v1-method-shorthand-alice", "ts-structural-v1-mixed-forms-carol", "ts-structural-v1-owner-scope-ambiguous", "ts-structural-v1-owner-scope-makeA", "ts-structural-v1-direct-member-call", "ts-structural-v1-mutated-member", "ts-structural-v1-unrelated-member", "ts-structural-v1-spread-override-alice", "ts-structural-v1-spread-override-base", "ts-structural-v1-property-signature-alice", "ts-structural-v1-refused-subtree-reachability", "ts-structural-v1-refused-subtree-unrelated"], "input_errors": [], "cells": {"exact": 0, "conservative": 0, "unsafe_exclusion": 0, "overclaim": 0, "failed": 0}, "unsound_cells": 0, "passed": false}
+FE.....
+======================================================================
+ERROR: test_pinned_but_malformed_manifest_is_recorded (tools.test_typescript_structural_validation_scorer.NegativeControlTests.test_pinned_but_malformed_manifest_is_recorded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/user/Girder/tools/test_typescript_structural_validation_scorer.py", line 154, in test_pinned_but_malformed_manifest_is_recorded
+    code, document = self.score(self.fake("exit 0"), manifest_path=copy, pinned=digest)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/Girder/tools/test_typescript_structural_validation_scorer.py", line 90, in score
+    code = main(["--binary", str(binary), "--output", str(output), *extra], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/Girder/tools/typescript_structural_validation_scorer.py", line 216, in main
+    manifest, input_errors, digest = check_inputs(manifest_path, pinned)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/Girder/tools/typescript_structural_validation_scorer.py", line 197, in check_inputs
+    root = REPO_ROOT / manifest["fixtures_root"]
+                       ~~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'fixtures_root'
+
+======================================================================
+ERROR: test_unpinned_manifest_with_missing_fields_is_recorded (tools.test_typescript_structural_validation_scorer.NegativeControlTests.test_unpinned_manifest_with_missing_fields_is_recorded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/user/Girder/tools/test_typescript_structural_validation_scorer.py", line 145, in test_unpinned_manifest_with_missing_fields_is_recorded
+    code, document = self.score(self.fake("exit 0"), manifest_path=copy)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/Girder/tools/test_typescript_structural_validation_scorer.py", line 90, in score
+    code = main(["--binary", str(binary), "--output", str(output), *extra], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/Girder/tools/typescript_structural_validation_scorer.py", line 216, in main
+    manifest, input_errors, digest = check_inputs(manifest_path, pinned)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/Girder/tools/typescript_structural_validation_scorer.py", line 197, in check_inputs
+    root = REPO_ROOT / manifest["fixtures_root"]
+                       ~~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'fixtures_root'
+
+======================================================================
+FAIL: test_missing_boundary_count_is_recorded (tools.test_typescript_structural_validation_scorer.NegativeControlTests.test_missing_boundary_count_is_recorded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/user/Girder/tools/test_typescript_structural_validation_scorer.py", line 189, in test_missing_boundary_count_is_recorded
+    self.assertIn("boundaries.count", reason)
+AssertionError: 'boundaries.count' not found in "unexpected test-impact output shape: KeyError('count')"
+
+======================================================================
+FAIL: test_non_object_selection_is_recorded (tools.test_typescript_structural_validation_scorer.NegativeControlTests.test_non_object_selection_is_recorded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/user/Girder/tools/test_typescript_structural_validation_scorer.py", line 183, in test_non_object_selection_is_recorded
+    self.assertIn("unsupported classified output", self.malformed_selection([1, 2]))
+AssertionError: 'unsupported classified output' not found in 'unexpected test-impact output shape: AttributeError("\'list\' object has no attribute \'get\'")'
+
+======================================================================
+FAIL: test_string_selection_paths_are_recorded (tools.test_typescript_structural_validation_scorer.NegativeControlTests.test_string_selection_paths_are_recorded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/user/Girder/tools/test_typescript_structural_validation_scorer.py", line 177, in test_string_selection_paths_are_recorded
+    reason = self.malformed_selection({"schema_version": 1, "must": {"paths": []},
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/Girder/tools/test_typescript_structural_validation_scorer.py", line 166, in malformed_selection
+    self.assertEqual(arrow["status"], "failed")
+AssertionError: 'scored' != 'failed'
+- scored
++ failed
+
+
+======================================================================
+FAIL: test_unhashable_selection_paths_are_recorded (tools.test_typescript_structural_validation_scorer.NegativeControlTests.test_unhashable_selection_paths_are_recorded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/user/Girder/tools/test_typescript_structural_validation_scorer.py", line 174, in test_unhashable_selection_paths_are_recorded
+    self.assertIn("must.paths is not a list of strings", reason)
+AssertionError: 'must.paths is not a list of strings' not found in 'unexpected test-impact output shape: TypeError("unhashable type: \'list\'")'
+
+----------------------------------------------------------------------
+Ran 17 tests in 3.730s
+
+FAILED (failures=4, errors=2)

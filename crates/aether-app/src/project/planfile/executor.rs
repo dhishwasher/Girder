@@ -4,6 +4,7 @@
 //! never written to the real tree) and makes `--dry` almost the same code
 //! path with the final commit skipped (Phase 6).
 
+use super::verify::{self, Certification, Refusal};
 use crate::project::config::ProjectConfig;
 use crate::project::git::git_checkout_paths;
 use crate::project::planfile::checks::command::run_command_check;
@@ -31,6 +32,8 @@ pub(crate) struct StepOutcome {
     pub(crate) files_changed: Vec<PathBuf>,
     pub(crate) checks: Vec<CheckOutcome>,
     pub(crate) write_fingerprints: Option<Vec<WriteFingerprint>>,
+    /// Set on every v2 step: certified, refused with a category, or uncertified (no `verify`).
+    pub(crate) certification: Option<super::verify::Certification>,
 }
 
 #[derive(Debug, Clone)]
@@ -103,6 +106,7 @@ pub(crate) fn run_plan(
                     detail: error.to_string(),
                 }],
                 write_fingerprints: None,
+                certification: None,
             });
             return finish_run(root, plan, steps, &step.id, &base_existence, dry);
         }
@@ -163,6 +167,7 @@ pub(crate) fn run_plan(
                 files_changed,
                 checks: check_outcomes,
                 write_fingerprints: None,
+                certification: None,
             });
             return finish_run(root, plan, steps, &step.id, &base_existence, dry);
         }
@@ -182,6 +187,7 @@ pub(crate) fn run_plan(
                 files_changed,
                 checks: check_outcomes,
                 write_fingerprints: None,
+                certification: None,
             });
             continue;
         }
@@ -208,6 +214,7 @@ pub(crate) fn run_plan(
             files_changed: written,
             checks: check_outcomes,
             write_fingerprints: None,
+            certification: None,
         });
     }
 
@@ -215,6 +222,23 @@ pub(crate) fn run_plan(
         outcome: RunOutcome::Passed,
         steps,
     })
+}
+
+/// A certified step that verification refused: a failed step, nothing committed.
+fn refused_step(id: &str, files_changed: Vec<PathBuf>, refusal: Refusal) -> StepOutcome {
+    StepOutcome {
+        id: id.to_string(),
+        passed: false,
+        committed: false,
+        files_changed,
+        checks: vec![CheckOutcome {
+            kind: "verify".to_string(),
+            passed: false,
+            detail: refusal.message(),
+        }],
+        write_fingerprints: Some(Vec::new()),
+        certification: Some(Certification::refused(refusal)),
+    }
 }
 
 fn run_plan_v2(
@@ -236,10 +260,33 @@ fn run_plan_v2(
         }
 
         let need_graph = checks_need_graph(&step.checks);
-        if need_graph || step.edits.iter().any(Edit::is_graph_addressed) {
+        if need_graph || step.verify.is_some() || step.edits.iter().any(Edit::is_graph_addressed) {
             edit_state.ensure_graph(candidate.workspace_path(), config)?;
         }
         let before_graph = need_graph.then(|| edit_state.graph().cloned()).flatten();
+        // A step without `verify` runs as it always has and is reported uncertified.
+        let mut certification = if step.verify.is_some() {
+            None
+        } else {
+            Some(Certification::uncertified())
+        };
+        // Certified steps: judge evidence, resolution, and baseline on a cold graph of the
+        // candidate before anything is applied. A refusal is a step failure; nothing is committed.
+        let mut prepared = None;
+        let mut before_cold = None;
+        if let Some(verify_block) = &step.verify {
+            let (cold, _, _) = build_from_dir_with_config(candidate.workspace_path(), config)?;
+            match verify::pre_check(step, verify_block, &cold, candidate.workspace_path()) {
+                Ok(ready) => {
+                    prepared = Some(ready);
+                    before_cold = Some(cold);
+                }
+                Err(refusal) => {
+                    steps.push(refused_step(&step.id, Vec::new(), refusal));
+                    return finish_run(root, plan, steps, &step.id, &base_existence, dry);
+                }
+            }
+        }
 
         let writes = match apply_step_edits_v2(
             candidate.workspace_path(),
@@ -261,6 +308,16 @@ fn run_plan_v2(
                         detail: error.to_string(),
                     }],
                     write_fingerprints: Some(Vec::new()),
+                    certification: step
+                        .verify
+                        .as_ref()
+                        .map(|_| {
+                            Certification::refused(Refusal {
+                                category: "insufficient_evidence",
+                                detail: format!("the edit could not be applied: {error}"),
+                            })
+                        })
+                        .or(certification),
                 });
                 return finish_run(root, plan, steps, &step.id, &base_existence, dry);
             }
@@ -271,6 +328,32 @@ fn run_plan_v2(
             .map(|write| write.relative().to_path_buf())
             .collect();
         let write_fingerprints = fingerprint_writes(&writes);
+        // Certified steps: rebuild cold, then compare the complete actual delta with the promise.
+        if let (Some(ready), Some(before)) = (&prepared, &before_cold) {
+            let (after_cold, _, _) =
+                build_from_dir_with_config(candidate.workspace_path(), config)?;
+            match verify::post_check(
+                ready,
+                before,
+                &after_cold,
+                edit_state.graph(),
+                candidate.workspace_path(),
+            ) {
+                Ok(delta) => {
+                    let impact = verify::predicted_impact(before, &after_cold, &delta);
+                    certification = Some(Certification {
+                        certified: true,
+                        refusal: None,
+                        delta: Some(delta),
+                        impact: Some(impact),
+                    });
+                }
+                Err(refusal) => {
+                    steps.push(refused_step(&step.id, files_changed, refusal));
+                    return finish_run(root, plan, steps, &step.id, &base_existence, dry);
+                }
+            }
+        }
         let after_graph = need_graph.then(|| edit_state.graph().cloned()).flatten();
         let changed: Vec<aether_graph::NodeId> = match (&before_graph, &after_graph) {
             (Some(before), Some(after)) => changed_node_ids(before, after),
@@ -303,6 +386,7 @@ fn run_plan_v2(
                 files_changed,
                 checks: check_outcomes,
                 write_fingerprints: Some(write_fingerprints),
+                certification,
             });
             return finish_run(root, plan, steps, &step.id, &base_existence, dry);
         }
@@ -316,6 +400,7 @@ fn run_plan_v2(
                 files_changed,
                 checks: check_outcomes,
                 write_fingerprints: Some(write_fingerprints),
+                certification,
             });
             continue;
         }
@@ -330,6 +415,7 @@ fn run_plan_v2(
             files_changed: written,
             checks: check_outcomes,
             write_fingerprints: Some(write_fingerprints),
+            certification,
         });
     }
 
