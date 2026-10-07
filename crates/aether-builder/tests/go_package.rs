@@ -269,3 +269,35 @@ fn call_with_qualified_type_argument_gets_a_claim() {
     assert_eq!(claims.len(), 1, "no claim for the call ending at {end}");
     assert_eq!(claims[0].class, CallClass::Unknown);
 }
+
+/// Policy G1-a: a call that is the direct operand of `go` or `defer` stays
+/// Unknown (same-file and cross-file); calls nested inside such a statement
+/// (an argument, or the body of a deferred literal) remain eligible.
+#[test]
+fn go_and_defer_statement_calls_stay_unknown_but_nested_calls_stay_eligible() {
+    let a = "package p\n\nfunc F() {}\nfunc G() int { return 1 }\nfunc F2(int) {}\n\nfunc Run() {\n\tdefer /* d1 */ F()\n\tgo /* g1 */ H()\n\tdefer /* n1 */ F2(/* n2 */ G())\n\tdefer func() { /* n3 */ G() }()\n}\n";
+    let b = "package p\n\nfunc H() {}\n";
+    let files = vec![
+        ("p/a.go".to_string(), a.to_string()),
+        ("p/b.go".to_string(), b.to_string()),
+    ];
+    let (graph, _) = build(&files);
+    let class = |marker: &str| {
+        let claims = claim_at(&graph, "p/a.go", marked_call_end(a, marker));
+        assert_eq!(claims.len(), 1, "{marker}");
+        claims[0].class
+    };
+    assert_eq!(class("/* d1 */"), CallClass::Unknown, "same-file defer");
+    assert_eq!(class("/* g1 */"), CallClass::Unknown, "cross-file go");
+    assert_eq!(class("/* n1 */"), CallClass::Unknown, "outer deferred call");
+    assert_eq!(
+        class("/* n2 */"),
+        CallClass::Must,
+        "argument of a deferred call"
+    );
+    assert_eq!(
+        class("/* n3 */"),
+        CallClass::Must,
+        "call inside a deferred literal"
+    );
+}

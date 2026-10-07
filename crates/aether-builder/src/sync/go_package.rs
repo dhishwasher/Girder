@@ -109,6 +109,8 @@ struct Call {
     span: Span,
     name: Option<String>,
     enclosed: bool,
+    /// The call is the direct operand of a `go` or `defer` statement (policy G1-a).
+    statement: bool,
 }
 
 #[derive(Default)]
@@ -257,6 +259,7 @@ fn facts(file: &str, state: &FileState) -> Facts {
                     span: span_of(*node),
                     name: None,
                     enclosed: true,
+                    statement: false,
                 });
             }
             "call_expression" => {
@@ -273,10 +276,14 @@ fn facts(file: &str, state: &FileState) -> Facts {
                     }
                     parent = p.parent();
                 }
+                let statement = node
+                    .parent()
+                    .is_some_and(|p| matches!(p.kind(), "go_statement" | "defer_statement"));
                 result.calls.push(Call {
                     span: span_of(*node),
                     name,
                     enclosed,
+                    statement,
                 });
             }
             _ => {}
@@ -351,6 +358,7 @@ pub(super) fn resolve(files: &HashMap<String, FileState>, graph: &mut SemanticGr
             || f.cgo
             || f.dot_import
             || !call.enclosed
+            || call.statement
             || !f.clean(name)
         {
             return None;
