@@ -41,5 +41,14 @@ so setup must not install an instruction into `AGENTS.md` there; it reports that
 | AGENTS.md | same page (second agent) | "Cursor supports AGENTS.md in the project root and subdirectories." |
 | Hooks | <https://cursor.com/docs/hooks> (second agent) | project `<project>/.cursor/hooks.json` or `~/.cursor/hooks.json`; `{ "version": 1, "hooks": { "afterFileEdit": [{ "command": "./hooks/format.sh" }] } }`; `beforeReadFile` stdout is allow/deny only; `postToolUse` can return `additional_context`. |
 
-The repo's earlier statement that Cursor hook semantics are undocumented is stale; the
-adapter decision for Cursor hooks is recorded in the Stage 4 observation.
+| `preToolUse` output (direct, free-form extraction of the page) | <https://cursor.com/docs/hooks> | stdout fields: `"permission": "allow" \| "deny"`, `"user_message"` ("message shown in client when denied"), `"agent_message"` ("message sent to agent when denied"), `"updated_input"`. The page lists **no** `additional_context` for `preToolUse`. |
+
+**Cursor hook decision (frozen before implementation):** Cursor documents hooks, but no documented
+pre-read hook can add model-visible context without blocking: `preToolUse` and `beforeReadFile` can
+only allow, deny, or rewrite input, and only `postToolUse` / `sessionStart` return
+`additional_context` (after the fact). Girder's hook contract is an advisory that never denies a
+read, so the Cursor hook adapter is **documented and deliberately not built** (a hook that can only
+allow/deny cannot deliver the advisory). Cursor receives MCP plus the project instruction rule. The
+repo's earlier wording that Cursor hooks are undocumented is stale and is corrected in the README and
+`docs/setup.md`. Two retries of the second agent on this lookup returned nothing; this row was
+fetched directly.
