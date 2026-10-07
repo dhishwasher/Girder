@@ -11,18 +11,20 @@ Setup writes only under the home directory and records its exact changes in
 `girder-setup-state.json` beside each detected client config. Uninstall restores
 only those owned changes. A foreign server already occupying the `girder` name
 is preserved even with `--force`; force is limited to setup-owned Girder
-artifacts. Cursor receives MCP configuration only: setup leaves its
-`preToolUse` permission hook and its `postToolUse`/`afterFileEdit` hooks
-untouched because their documented input/output contracts differ from this
-launcher's standalone protocol. No Cursor hook is registered or claimed by
-the ownership record.
+artifacts. Cursor receives MCP configuration and, with `--project`, the project
+rule; setup registers no Cursor hook. Cursor documents hooks (`~/.cursor/hooks.json`),
+but `preToolUse` can only return `permission`, `user_message`, `agent_message`, and
+`updated_input`, and `beforeReadFile` can only allow or deny, so no documented
+pre-read hook can add advisory context without blocking; `postToolUse` and
+`sessionStart` return `additional_context` only after the fact. No Cursor hook is
+registered or claimed by the ownership record.
 
-| Client | MCP config | Hook config | Hook coverage |
-| --- | --- | --- | --- |
-| Claude Code | `~/.claude.json` or in-home project `.mcp.json` | `~/.claude/settings.json` | nested `PreToolUse` `Read`; nested `PostToolUse` `Edit\|Write\|NotebookEdit` |
-| Codex | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` | `$CODEX_HOME/hooks.json` or `~/.codex/hooks.json` | nested `PreToolUse` `Read\|read_file\|mcp__.*__read_file`; nested `PostToolUse` `apply_patch\|Edit\|Write` |
-| Cursor | `~/.cursor/mcp.json` | not registered | MCP only |
-| Other clients | documented by that client | no universal path | add MCP manually |
+| Client | MCP config | Hook config | Hook coverage | Instruction |
+| --- | --- | --- | --- | --- |
+| Claude Code | `~/.claude.json` or in-home project `.mcp.json` | `~/.claude/settings.json` | nested `PreToolUse` `Read`; nested `PostToolUse` `Edit\|Write\|NotebookEdit` | block in `~/.claude/CLAUDE.md` |
+| Codex | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` | `$CODEX_HOME/hooks.json` or `~/.codex/hooks.json` | nested `PreToolUse` `Read\|read_file\|mcp__.*__read_file`; nested `PostToolUse` `apply_patch\|Edit\|Write` | block in `$CODEX_HOME/AGENTS.md` (skipped if a non-empty `AGENTS.override.md` exists) |
+| Cursor | `~/.cursor/mcp.json` | not registered | MCP only | `.cursor/rules/girder-orient.mdc` with `--project` |
+| Other clients | documented by that client | no universal path | add MCP manually | paste `npm/instructions/orient-first.md` into the client's instruction file |
 
 Codex also supports inline `[hooks]` in `config.toml`. When that
 representation is present, setup leaves it alone rather than creating a
