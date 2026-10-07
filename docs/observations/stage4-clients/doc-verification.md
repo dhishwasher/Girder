@@ -19,6 +19,16 @@ not state is recorded as NOT STATED, and no adapter step depends on it.
 | Hook stdin | same | JSON with `session_id`, `cwd`, `permission_mode`, `hook_event_name`, `tool_name`, `tool_input`, `tool_use_id` |
 | Hook context output | same | "When several hooks return additionalContext for the same event, Claude receives all of the values."; for `PreToolUse` the reminder appears "next to the tool result" |
 
+### Hook output schemas, fetched directly (added after review)
+
+| Client | Source | Verbatim evidence | Matches `girder hook`? |
+| --- | --- | --- | --- |
+| Claude Code | <https://code.claude.com/docs/en/hooks> | "Return additionalContext inside hookSpecificOutput alongside the event name:" followed by `{"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": "..."}}`; for `PreToolUse` the reminder appears "next to the tool result" | Yes: `girder hook` emits `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": "..."}}` (`crates/aether-app/tests/hook.rs::expected_hook_output`) |
+| Codex | <https://developers.openai.com/codex/hooks> | "To add model-visible context without blocking, return hookSpecificOutput.additionalContext:" followed by `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": "..."}}` | Yes, identical |
+
+The smoke check now asserts this exact shape (an object with only `hookSpecificOutput`, which holds
+only `hookEventName: "PreToolUse"` and a non-empty `additionalContext` string), not a substring.
+
 ## OpenAI Codex (docs: developers.openai.com/codex, now served from learn.chatgpt.com)
 
 | Fact | Source | Verbatim evidence |

@@ -9,9 +9,10 @@ answers `initialize` and `tools/list`, and the installed hook command (Claude Co
 Codex) behaves correctly for normal, missing-graph, malformed-input and hook-failure
 cases. Offline; nothing outside the temporary directories is touched.
 
-The MCP server is launched with the documented alternative entry form
-(`girder mcp <project>`), not the `npx -y girder-mcp .` entry setup writes, because
-the npx path would download the published package. That path is not exercised here.
+Setup writes an MCP entry that launches the installed local binary (`<path> mcp .`);
+the server leg launches exactly the command read from each written config, and the real
+`claude` and `codex` CLIs read the configs in the isolated HOME (no model calls). The
+published-package path (`npx -y girder-mcp ...`) is not exercised.
 
   python3 -m tools.stage4_client_smoke --binary BIN --output report.json
 """
@@ -41,9 +42,9 @@ def run(cmd, cwd, env, stdin=None, timeout=60):
                           text=True, timeout=timeout)
 
 
-def mcp_handshake(binary: Path, project: Path, env) -> dict:
-    """Speak newline-delimited JSON-RPC to `girder mcp <project>`."""
-    proc = subprocess.Popen([str(binary), "mcp", str(project)], cwd=project, env=env,
+def mcp_handshake(entry: dict, project: Path, env) -> dict:
+    """Speak newline-delimited JSON-RPC to the exact command from the written config."""
+    proc = subprocess.Popen([entry["command"], *entry["args"]], cwd=project, env=env,
                             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, text=True)
     try:
@@ -69,12 +70,38 @@ def mcp_handshake(binary: Path, project: Path, env) -> dict:
             "all_expected_tools": EXPECTED_TOOLS <= tools, "stderr_bytes": len(err)}
 
 
+def real_client_reader(client: str, project: Path, env) -> dict:
+    """Ask the real client CLI to read the written config (no model calls, no auth)."""
+    tool = {"claude": ["claude", "mcp", "list"], "codex": ["codex", "mcp", "list"]}.get(client)
+    if tool is None or shutil.which(tool[0]) is None:
+        return {"status": "not available", "reason": "client CLI not installed here" if tool else "no CLI reader for this client"}
+    try:
+        p = run(tool, project, env, timeout=120)
+    except subprocess.TimeoutExpired:
+        return {"status": "timeout"}
+    out = (p.stdout + p.stderr).strip()
+    ok = p.returncode == 0 and "girder" in out and (client != "claude" or "Connected" in out)
+    return {"status": "ok" if ok else "FAILED", "exit": p.returncode, "output": out[:400]}
+
+
 def hook_command(config: Path, event: str) -> str:
     doc = json.loads(config.read_text())
     return doc["hooks"][event][0]["hooks"][0]["command"]
 
 
-def hook_cases(command: str, project: Path, empty_project: Path, env) -> dict:
+def documented_shape(stdout: str) -> bool:
+    """The context-injection shape both clients document for a PreToolUse hook."""
+    try:
+        out = json.loads(stdout)
+    except ValueError:
+        return False
+    specific = out.get("hookSpecificOutput") if isinstance(out, dict) else None
+    return (isinstance(specific, dict) and specific.get("hookEventName") == "PreToolUse"
+            and isinstance(specific.get("additionalContext"), str) and specific["additionalContext"] != ""
+            and set(out) == {"hookSpecificOutput"} and set(specific) == {"hookEventName", "additionalContext"})
+
+
+def hook_cases(command: str, project: Path, empty_project: Path, env, home: Path) -> dict:
     payload = {"hook_event_name": "PreToolUse", "tool_name": "Read",
                "tool_input": {"file_path": str(project / "src/lib.rs")}}
     results = {}
@@ -89,20 +116,25 @@ def hook_cases(command: str, project: Path, empty_project: Path, env) -> dict:
     attempts, advised = 6, 0
     for _ in range(attempts):
         p = run(["sh", "-c", command], project, env, json.dumps(payload))
-        if p.returncode == 0 and "additionalContext" in p.stdout:
+        if p.returncode == 0 and documented_shape(p.stdout):
             advised += 1
-            results["normal"] = {"exit": 0, "stdout": p.stdout.strip()[:300], "stderr_bytes": len(p.stderr)}
+            results["normal"] = {"exit": 0, "stdout": p.stdout.strip(), "stderr_bytes": len(p.stderr)}
     if "normal" not in results:
         results["normal"] = {"exit": p.returncode, "stdout": p.stdout.strip()[:300], "stderr_bytes": len(p.stderr)}
     results["normal_attempts"] = {"attempts": attempts, "advised": advised, "silent": attempts - advised}
     case("missing_graph", command, empty_project, json.dumps(payload))
     case("malformed_input", command, project, "this is not json {")
     broken = command.rsplit("'", 2)[0] + "'/nonexistent/girder-binary'"
-    case("hook_failure", broken, project, json.dumps(payload))
+    case("hook_failure_missing_binary", broken, project, json.dumps(payload))
+    # The binary exists but fails after printing junk: the launcher must stay fail-open and silent.
+    failing = home / "failing-girder.sh"
+    failing.write_text("#!/bin/sh\nprintf 'junk output'\nexit 1\n")
+    failing.chmod(0o755)
+    case("hook_failure_native_exit", command.rsplit("'", 2)[0] + f"'{failing}'", project, json.dumps(payload))
     results["ok"] = (
-        results["normal"]["exit"] == 0 and "additionalContext" in results["normal"]["stdout"]
+        results["normal"]["exit"] == 0 and documented_shape(results["normal"]["stdout"])
         and all(results[k]["exit"] == 0 and results[k]["stdout"] == ""
-                for k in ("missing_graph", "malformed_input", "hook_failure")))
+                for k in ("missing_graph", "malformed_input", "hook_failure_missing_binary", "hook_failure_native_exit")))
     return results
 
 
@@ -130,7 +162,9 @@ def check_client(client: str, binary: Path) -> dict:
             path = home / (".claude.json" if client == "claude" else ".cursor/mcp.json")
             entry = json.loads(path.read_text()).get("mcpServers", {}).get("girder")
         report["checks"]["mcp_entry"] = entry
-        report["checks"]["mcp_entry_ok"] = entry == EXPECTED_ENTRY
+        report["checks"]["mcp_entry_ok"] = (
+            isinstance(entry, dict) and Path(entry.get("command", "")).resolve() == binary
+            and entry.get("args") == ["mcp", "."])
         # B. Shared instruction in the client's native location.
         native = {"claude": home / ".claude/CLAUDE.md", "codex": home / ".codex/AGENTS.md",
                   "cursor": project / ".cursor/rules/girder-orient.mdc"}[client]
@@ -140,21 +174,23 @@ def check_client(client: str, binary: Path) -> dict:
         if client == "cursor":
             report["checks"]["cursor_frontmatter_ok"] = text.startswith("---\n") and "alwaysApply: true" in text.split("---")[1]
         # C. The MCP server answers (documented `girder mcp <project>` form).
-        report["checks"]["server"] = mcp_handshake(binary, project, env)
+        report["checks"]["server"] = mcp_handshake(entry, project, env)
+        report["checks"]["real_client_reader"] = real_client_reader(client, project, env)
         # D. Installed hook command (Claude Code and Codex); Cursor registers none.
         if client == "cursor":
             report["checks"]["hook_registered"] = (home / ".cursor/hooks.json").exists()
             report["checks"]["hook_note"] = "not built: no documented pre-read hook can add advisory context"
         else:
             config = home / (".claude/settings.json" if client == "claude" else ".codex/hooks.json")
-            report["checks"]["hooks"] = hook_cases(hook_command(config, "PreToolUse"), project, empty, env)
+            report["checks"]["hooks"] = hook_cases(hook_command(config, "PreToolUse"), project, empty, env, home)
         # E. Uninstall restores a clean home.
         un = run(args + ["--uninstall"], project, env)
         report["checks"]["uninstall_exit"] = un.returncode
         report["checks"]["instruction_removed"] = (not native.exists()) or BEGIN not in native.read_text()
     c = report["checks"]
     report["passed"] = (
-        c["analyze_exit"] == 0 and c["setup_exit"] == 0 and c["mcp_entry_ok"] and c["instruction_ok"]
+        c["real_client_reader"]["status"] in ("ok", "not available")
+        and c["analyze_exit"] == 0 and c["setup_exit"] == 0 and c["mcp_entry_ok"] and c["instruction_ok"]
         and c["server"]["initialize_ok"] and c["server"]["all_expected_tools"]
         and (c["hooks"]["ok"] if client != "cursor" else not c["hook_registered"])
         and c["uninstall_exit"] == 0 and c["instruction_removed"]
@@ -171,7 +207,7 @@ def main() -> int:
     reports = [check_client(c, binary) for c in ("claude", "codex", "cursor")]
     out = {"binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
            "git_head": subprocess.run(["git", "rev-parse", "HEAD"], cwd=BASE, capture_output=True, text=True).stdout.strip(),
-           "npx_launch_path_exercised": False,
+           "npx_published_package_path_exercised": False,
            "clients": reports, "all_passed": all(r["passed"] for r in reports)}
     Path(a.output).write_text(json.dumps(out, indent=2) + "\n")
     for r in reports:
