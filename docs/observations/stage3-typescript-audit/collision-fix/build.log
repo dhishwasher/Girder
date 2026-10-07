@@ -1,0 +1,9 @@
+   Compiling aether-graph v0.4.0 (/home/corymaynard370/Bit-code/crates/aether-graph)
+   Compiling aether-ai v0.4.0 (/home/corymaynard370/Bit-code/crates/aether-ai)
+   Compiling aether-builder v0.4.0 (/home/corymaynard370/Bit-code/crates/aether-builder)
+   Compiling aether-agents v0.4.0 (/home/corymaynard370/Bit-code/crates/aether-agents)
+   Compiling aether-extensions v0.4.0 (/home/corymaynard370/Bit-code/crates/aether-extensions)
+   Compiling aether-debugger v0.4.0 (/home/corymaynard370/Bit-code/crates/aether-debugger)
+   Compiling aether-dap v0.4.0 (/home/corymaynard370/Bit-code/crates/aether-dap)
+   Compiling aether-app v0.4.0 (/home/corymaynard370/Bit-code/crates/aether-app)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 8m 38s

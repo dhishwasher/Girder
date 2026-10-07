@@ -1,0 +1,68 @@
+{
+  "revision": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+  "binary_sha256": "e8b1c6cad2380b0f9ef15b7625a68717a592d97f3f922ba7dee9cafc00fe16ee",
+  "runner_sha256": "4279199e36a31034d67ce24efd23784792707eb6f7c177aa8bb6d5caf796c4ed",
+  "labels_sha256": "c3979bb15d2040da7a006051bde99374566cbd01e94b62f33bee3f921999c0eb",
+  "environment": {
+    "platform": "Linux-6.6.143-09589-gf9e106250941-x86_64-with-glibc2.36",
+    "RAYON_NUM_THREADS": null,
+    "offline": true
+  },
+  "roots": {
+    "typescript-6.0.3": "/tmp/girder-ts-real-audit-collision-fix-1/typescript-6.0.3",
+    "zod-3.23.8": "/tmp/girder-ts-real-audit-collision-fix-1/zod-3.23.8",
+    "date-fns-4.1.0": "/tmp/girder-ts-real-audit-collision-fix-1/date-fns-4.1.0",
+    "class-validator-0.15.1": "/tmp/girder-ts-real-audit-collision-fix-1/class-validator-0.15.1"
+  },
+  "source_inventories": {
+    "typescript-6.0.3": {
+      "archive_sha256": "c26953b79c1197e02f5666a0b612d5b9707339557aa9744097e7d5719de1a117",
+      "files": 709,
+      "bytes": 21274222,
+      "physical_lines": 452627,
+      "manifest_sha256": "c9122c3a6d108966914a27701a7801104b9d7b018f65ab6e25c60cb464d1355f"
+    },
+    "zod-3.23.8": {
+      "archive_sha256": "ecd3ac7eb5bac88202b1146c308c8bbd48e63fc64d6d7f14b5577dde5da02c48",
+      "files": 165,
+      "bytes": 937060,
+      "physical_lines": 30448,
+      "manifest_sha256": "a8fc1683c9305317f458fea5e7f9523deec9cf55e30888e72431aa34dc8e637e"
+    },
+    "date-fns-4.1.0": {
+      "archive_sha256": "a6694304fccc35587f954f4b79adbbeb9a0c66256a13e48ac0488b55f6616257",
+      "files": 1529,
+      "bytes": 2864829,
+      "physical_lines": 100487,
+      "manifest_sha256": "8cff01e1ed7f2ea7f69b60a09e7b4889883f182be895eb253da18af0da2cf43b"
+    },
+    "class-validator-0.15.1": {
+      "archive_sha256": "100a22e535896aea8901c4b521b45bf25e778a41987df89dcc15054594859863",
+      "files": 176,
+      "bytes": 472294,
+      "physical_lines": 14455,
+      "manifest_sha256": "27c81d40b9306797031c0e0909b5b53e207e5ae2ca83eca9f98da61fe0370595"
+    }
+  },
+  "status": "measured",
+  "original_cells": {
+    "conservative": 43,
+    "exact": 54
+  },
+  "combined_cells": {
+    "conservative": 44,
+    "exact": 56
+  },
+  "acceptance": {
+    "minimum_real_sites": 100,
+    "scored": 100,
+    "not_a_call_site": 10,
+    "all_sites_accounted_for": true,
+    "unsound": 0,
+    "must_numerator": 3,
+    "must_denominator": 3,
+    "must_precision": 1.0,
+    "passed": true
+  },
+  "changed_answers": 45
+}

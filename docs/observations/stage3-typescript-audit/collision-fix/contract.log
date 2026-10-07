@@ -1,0 +1,15 @@
+{
+  "status": "measured",
+  "scope": "cold CLI proof contract only",
+  "candidate": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+  "binary_revision": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+  "must_interpretation": "conditional on the frozen execution assumptions",
+  "binary_sha256": "e8b1c6cad2380b0f9ef15b7625a68717a592d97f3f922ba7dee9cafc00fe16ee",
+  "runner_sha256": "842e55cf792c8ae1aea4d6348f00ffa492dead903469511e80af15665c71df52",
+  "manifest_sha256": "daa7310248f8e2adc3bdbbae340a3301dcca6b18983ca29ef3c6738bb97b94cd",
+  "scratch_root": "/tmp/girder-esm-collision-fix-1-xqk9tl83",
+  "total": 73,
+  "exact_contracts": 73,
+  "errors": 0,
+  "cold_contract_met": true
+}

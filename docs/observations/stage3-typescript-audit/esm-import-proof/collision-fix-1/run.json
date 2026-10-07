@@ -1,0 +1,3235 @@
+{
+  "status": "measured",
+  "scope": "cold CLI proof contract only",
+  "candidate": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+  "binary_revision": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+  "commands": [
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/aliased-import",
+        "--json"
+      ],
+      "stdout": "aliased-import-analyze.json.gz",
+      "stderr": "aliased-import-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.691,
+      "stdout_sha256": "a4d39a897d9c7e410cfae0a12a2baed9c275f8eba96e905cccea6eb341517fbd"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/aliased-import/project.aether",
+        "--json"
+      ],
+      "stdout": "aliased-import-inspect.json.gz",
+      "stderr": "aliased-import-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.378,
+      "stdout_sha256": "d42a2eefeb88195e2de2249ce1f727265a339b4e310933ede0a6e099991214de"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/ambiguous-export-star",
+        "--json"
+      ],
+      "stdout": "ambiguous-export-star-analyze.json.gz",
+      "stderr": "ambiguous-export-star-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.444,
+      "stdout_sha256": "51f609313286206ecad6e753447b605a76adb8f3d1ac78f6691c8e9d34406c63"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/ambiguous-export-star/project.aether",
+        "--json"
+      ],
+      "stdout": "ambiguous-export-star-inspect.json.gz",
+      "stderr": "ambiguous-export-star-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.173,
+      "stdout_sha256": "63b6f67c60d9e6d45efc5bbd4b334f6260c9f83bcbac0116df22937b74a5a5d8"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/async-target",
+        "--json"
+      ],
+      "stdout": "async-target-analyze.json.gz",
+      "stderr": "async-target-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.268,
+      "stdout_sha256": "d5501e802d135c44d923e18d29b59b13bb3657d350da1975a4b945a4a31fac66"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/async-target/project.aether",
+        "--json"
+      ],
+      "stdout": "async-target-inspect.json.gz",
+      "stderr": "async-target-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "1aac716614adf252c667e85653baa58133f427fc800590f4d96c63c1515a9560"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/backslash-specifier",
+        "--json"
+      ],
+      "stdout": "backslash-specifier-analyze.json.gz",
+      "stderr": "backslash-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.218,
+      "stdout_sha256": "6fdfe00861c6d80faa29e89cb1b3e21eff1573b99e5521a8a00d0f3b0fb54b1e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/backslash-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "backslash-specifier-inspect.json.gz",
+      "stderr": "backslash-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.119,
+      "stdout_sha256": "32cd46cf1018d6c2e266be0e378887527f9dbe40e4a0423951aafe526a0f10ff"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/bare-specifier",
+        "--json"
+      ],
+      "stdout": "bare-specifier-analyze.json.gz",
+      "stderr": "bare-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.272,
+      "stdout_sha256": "17fc718bddaa20d71278b08ba23cb853828d5102b02e2dd221a4ea208768861c"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/bare-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "bare-specifier-inspect.json.gz",
+      "stderr": "bare-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.12,
+      "stdout_sha256": "088c09a8ceae6167e3aa70585f3a129baebc566f9d777136ae544f84009b8052"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/cts-extension",
+        "--json"
+      ],
+      "stdout": "cts-extension-analyze.json.gz",
+      "stderr": "cts-extension-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.221,
+      "stdout_sha256": "696999b108b08c4ffae56d7044b2e8368dd31383f32d49331321b68b820b4320"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/cts-extension/project.aether",
+        "--json"
+      ],
+      "stdout": "cts-extension-inspect.json.gz",
+      "stderr": "cts-extension-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "e2dc3abcfe93070471397f702bdc46816146166d4b0a063c5b394baf26f4ddc5"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/declaration-file-target",
+        "--json"
+      ],
+      "stdout": "declaration-file-target-analyze.json.gz",
+      "stderr": "declaration-file-target-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.27,
+      "stdout_sha256": "b22d7b967da01ececd0da2ccffbde80dee5396063ad22846e3d28c6c99ee893d"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/declaration-file-target/project.aether",
+        "--json"
+      ],
+      "stdout": "declaration-file-target-inspect.json.gz",
+      "stderr": "declaration-file-target-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.121,
+      "stdout_sha256": "f4f5f14171fa003a9f239c1377c43d44fa4169f1c1b643886f0812bde323018c"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/declaration-merging",
+        "--json"
+      ],
+      "stdout": "declaration-merging-analyze.json.gz",
+      "stderr": "declaration-merging-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.218,
+      "stdout_sha256": "eac9b0238104f455328164b5f18d98941ebc9fb5a678b7559b0763123683d47f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/declaration-merging/project.aether",
+        "--json"
+      ],
+      "stdout": "declaration-merging-inspect.json.gz",
+      "stderr": "declaration-merging-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "0dd77b6e105f5a782395f9a250c79bd52cc484223d852536071f4418338a1aed"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/default-import",
+        "--json"
+      ],
+      "stdout": "default-import-analyze.json.gz",
+      "stderr": "default-import-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.217,
+      "stdout_sha256": "fbeeea2b27ad88478f2a4aba924aafa2a592276569b175e9d9c53103742034fc"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/default-import/project.aether",
+        "--json"
+      ],
+      "stdout": "default-import-inspect.json.gz",
+      "stderr": "default-import-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.122,
+      "stdout_sha256": "b15480285f9791d3f35aa00f4ab75bf84f4be13e818eb2892a0637ad1e24513c"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/duplicate-export",
+        "--json"
+      ],
+      "stdout": "duplicate-export-analyze.json.gz",
+      "stderr": "duplicate-export-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.276,
+      "stdout_sha256": "ecc916bbe5ddde362d4a68b2d012eeacb48e40a5671244ed47d2b96a81245dd2"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/duplicate-export/project.aether",
+        "--json"
+      ],
+      "stdout": "duplicate-export-inspect.json.gz",
+      "stderr": "duplicate-export-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "dce579d99a7a8f7819a648c9c2676a33063041ae2cc9c0e450241515e0301404"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/dynamic-import",
+        "--json"
+      ],
+      "stdout": "dynamic-import-analyze.json.gz",
+      "stderr": "dynamic-import-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.379,
+      "stdout_sha256": "4a7c9070c776f742ef272ce25d684277a264eefcd45336ac36e5121ca421e4b5"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/dynamic-import/project.aether",
+        "--json"
+      ],
+      "stdout": "dynamic-import-inspect.json.gz",
+      "stderr": "dynamic-import-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.175,
+      "stdout_sha256": "75b1f2d7d635ef4b5c5461f978d534ac6f58d90f1d19b2c2c84e7aed46ea00a3"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/encoded-dot-segment",
+        "--json"
+      ],
+      "stdout": "encoded-dot-segment-analyze.json.gz",
+      "stderr": "encoded-dot-segment-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.527,
+      "stdout_sha256": "65816aeac6a7c68593ffd148c08e54fff8b9c6abefb28773e1148291ddc6129d"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/encoded-dot-segment/project.aether",
+        "--json"
+      ],
+      "stdout": "encoded-dot-segment-inspect.json.gz",
+      "stderr": "encoded-dot-segment-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.183,
+      "stdout_sha256": "02e0f0bf638eaa740773cea2e02477aad68034b5b894c3fe259f25ea7f4e2da8"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/encoded-slash-specifier",
+        "--json"
+      ],
+      "stdout": "encoded-slash-specifier-analyze.json.gz",
+      "stderr": "encoded-slash-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.375,
+      "stdout_sha256": "cdc030e935375139722a9033463f7a4a999ff8d5cdad4f0e8518348ebfb07c25"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/encoded-slash-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "encoded-slash-specifier-inspect.json.gz",
+      "stderr": "encoded-slash-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "d4c65fb969683ce771223081590c05bf7508351dda6b2827f61ff1b42b3977c0"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/escaped-callee",
+        "--json"
+      ],
+      "stdout": "escaped-callee-analyze.json.gz",
+      "stderr": "escaped-callee-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.268,
+      "stdout_sha256": "090ed6ea796087b872ec7f75830e290e011467c4907155df28c9f90bec3a547b"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/escaped-callee/project.aether",
+        "--json"
+      ],
+      "stdout": "escaped-callee-inspect.json.gz",
+      "stderr": "escaped-callee-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "ba05cb6987d131510792de44edd92f45a4361769810e4aa57a9e72cbf2ec1227"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/escaping-value-use",
+        "--json"
+      ],
+      "stdout": "escaping-value-use-analyze.json.gz",
+      "stderr": "escaping-value-use-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.59,
+      "stdout_sha256": "e2869c22ffcdbe1564fc13348b0196438f34d36434127d923b1c6bc82a133135"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/escaping-value-use/project.aether",
+        "--json"
+      ],
+      "stdout": "escaping-value-use-inspect.json.gz",
+      "stderr": "escaping-value-use-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.183,
+      "stdout_sha256": "802ea9dd4e6dbe42343b5ba8c1ea4c3b534b8a36010b1f02c320525ab2cbcb5d"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/explicit-ts",
+        "--json"
+      ],
+      "stdout": "explicit-ts-analyze.json.gz",
+      "stderr": "explicit-ts-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.328,
+      "stdout_sha256": "33802dcf62867e1ab8c9978c35042c2ec8de120a567a809c924be1fa33bf8061"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/explicit-ts/project.aether",
+        "--json"
+      ],
+      "stdout": "explicit-ts-inspect.json.gz",
+      "stderr": "explicit-ts-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "9fe4981e89d759b4ad82412fa0e766c69285faf8e7f06769435e4f8f670bae0f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/export-star-barrel",
+        "--json"
+      ],
+      "stdout": "export-star-barrel-analyze.json.gz",
+      "stderr": "export-star-barrel-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.269,
+      "stdout_sha256": "6b594aa6a6cd16d019a92e1b52c94c68125a1e6b5e804429824086fce3fd8022"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/export-star-barrel/project.aether",
+        "--json"
+      ],
+      "stdout": "export-star-barrel-inspect.json.gz",
+      "stderr": "export-star-barrel-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.119,
+      "stdout_sha256": "76dd983ae474bd2bd7cea2e7bcbb9b92b781b0513d45a78676ad5a12051c56be"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/extensionless-specifier",
+        "--json"
+      ],
+      "stdout": "extensionless-specifier-analyze.json.gz",
+      "stderr": "extensionless-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.817,
+      "stdout_sha256": "e25a530798fc73ab8003f8c57c2d91aa64487374ee5a6b3c710cfdf90f52a582"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/extensionless-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "extensionless-specifier-inspect.json.gz",
+      "stderr": "extensionless-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.235,
+      "stdout_sha256": "68780f96db5d7864dbaaa3cb345617253bdcb9d3af6d583a68c37a5e8a4b1e58"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/generator-target",
+        "--json"
+      ],
+      "stdout": "generator-target-analyze.json.gz",
+      "stderr": "generator-target-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.428,
+      "stdout_sha256": "613c64e3890fdefb8274e63e62848bfe74ef0822c51cbec10844a2066a6b83f1"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/generator-target/project.aether",
+        "--json"
+      ],
+      "stdout": "generator-target-inspect.json.gz",
+      "stderr": "generator-target-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.229,
+      "stdout_sha256": "3f4d7c1f43de95b39ca760f84940117f531c910711c9f40224ed16287fb93a9f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/hex-escape-specifier",
+        "--json"
+      ],
+      "stdout": "hex-escape-specifier-analyze.json.gz",
+      "stderr": "hex-escape-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.399,
+      "stdout_sha256": "15e19f1afac658fb0cac07b27fd635bdb18c2ed44b7d572e46486117ba3b6ed1"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/hex-escape-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "hex-escape-specifier-inspect.json.gz",
+      "stderr": "hex-escape-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.244,
+      "stdout_sha256": "f4af4ceedba15e878e2baa40f6aefc5efdc4b0de4e9f51663cfea9bb19d1edda"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/hook-package-script-flags",
+        "--json"
+      ],
+      "stdout": "hook-package-script-flags-analyze.json.gz",
+      "stderr": "hook-package-script-flags-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.563,
+      "stdout_sha256": "9450924cb0700a447eebdf0ffa852d00a110e2e6becd6cce6b182981b384069b"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/hook-package-script-flags/project.aether",
+        "--json"
+      ],
+      "stdout": "hook-package-script-flags-inspect.json.gz",
+      "stderr": "hook-package-script-flags-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.234,
+      "stdout_sha256": "3ca76fded94b6b81604418c6d887bfcd0389b4d200816b805512b26253d05fd6"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/hook-register-hooks-sync",
+        "--json"
+      ],
+      "stdout": "hook-register-hooks-sync-analyze.json.gz",
+      "stderr": "hook-register-hooks-sync-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.488,
+      "stdout_sha256": "6faecd5a1ed1ca10046d195fd79060bfe9018f3dd144ffa66738658f4c723e5f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/hook-register-hooks-sync/project.aether",
+        "--json"
+      ],
+      "stdout": "hook-register-hooks-sync-inspect.json.gz",
+      "stderr": "hook-register-hooks-sync-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.174,
+      "stdout_sha256": "f7566795bfbdeb8fb7842436dae8c7149c92a6a55090fb3ae36af34c53db71cf"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/hook-register-node-module",
+        "--json"
+      ],
+      "stdout": "hook-register-node-module-analyze.json.gz",
+      "stderr": "hook-register-node-module-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.591,
+      "stdout_sha256": "55294a44f0621994c36e028183def5db5dae5f75321d5ce8ce8b4fcaef94ef46"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/hook-register-node-module/project.aether",
+        "--json"
+      ],
+      "stdout": "hook-register-node-module-inspect.json.gz",
+      "stderr": "hook-register-node-module-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.126,
+      "stdout_sha256": "80e501a2df5e0dfc96826289c5e53f6d13e56e8f615c4a385430c5ac9a9be422"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/hook-unlisted-library",
+        "--json"
+      ],
+      "stdout": "hook-unlisted-library-analyze.json.gz",
+      "stderr": "hook-unlisted-library-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.219,
+      "stdout_sha256": "6bdbefb6cd890d802ed8161b10ff3bf25e32aa1b6b657b7cb60e4651d2c29387"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/hook-unlisted-library/project.aether",
+        "--json"
+      ],
+      "stdout": "hook-unlisted-library-inspect.json.gz",
+      "stderr": "hook-unlisted-library-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "5857643375cb04c53053c56f7ec670805c2bdd84dc3bb5ef58724161241b5c41"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/import-cycle",
+        "--json"
+      ],
+      "stdout": "import-cycle-analyze.json.gz",
+      "stderr": "import-cycle-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.376,
+      "stdout_sha256": "cb8b5de8b9a198d0c2fba30dd713685dc48375938fcf0e742ab5fa3fa4eef47f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/import-cycle/project.aether",
+        "--json"
+      ],
+      "stdout": "import-cycle-inspect.json.gz",
+      "stderr": "import-cycle-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.182,
+      "stdout_sha256": "1c99a892930bd55f74441cc2d52370fe3a6fd0074c4b106b3bc53dc09a850ab2"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/importer-eval",
+        "--json"
+      ],
+      "stdout": "importer-eval-analyze.json.gz",
+      "stderr": "importer-eval-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.535,
+      "stdout_sha256": "7242696ad027427ff006446a32728a7c35420bd8636da11111844a3fba0ebbb1"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/importer-eval/project.aether",
+        "--json"
+      ],
+      "stdout": "importer-eval-inspect.json.gz",
+      "stderr": "importer-eval-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.17,
+      "stdout_sha256": "5c24d2cde1b74ba854d3cd4133c10054a6f573926a46fdcf2ae4ff63659d4dec"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/importer-writes-binding",
+        "--json"
+      ],
+      "stdout": "importer-writes-binding-analyze.json.gz",
+      "stderr": "importer-writes-binding-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.323,
+      "stdout_sha256": "889046b045548363b4964af7485cf2dcc632429ca4128734c4bec6285d62166f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/importer-writes-binding/project.aether",
+        "--json"
+      ],
+      "stdout": "importer-writes-binding-inspect.json.gz",
+      "stderr": "importer-writes-binding-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.173,
+      "stdout_sha256": "b6d272cf98f73aee7952f936c21388c9ae81aff5747a288a420a1bebf4887b2f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/inline-type-specifier",
+        "--json"
+      ],
+      "stdout": "inline-type-specifier-analyze.json.gz",
+      "stderr": "inline-type-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.619,
+      "stdout_sha256": "55656f203e27def51371b56a77a18f86481a85845fa0f56f61ad07b2ce188d99"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/inline-type-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "inline-type-specifier-inspect.json.gz",
+      "stderr": "inline-type-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "7ae3dd3c078133dc852fa8205a14454e6e4c64aafdbd28ca04f2b2870fe01a4c"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/js-extension-specifier",
+        "--json"
+      ],
+      "stdout": "js-extension-specifier-analyze.json.gz",
+      "stderr": "js-extension-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.27,
+      "stdout_sha256": "3e027bf620b0483ad9f434d9b13e4cd9d85a6f645935da37c085fffc707a6c24"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/js-extension-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "js-extension-specifier-inspect.json.gz",
+      "stderr": "js-extension-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.119,
+      "stdout_sha256": "18da9229aac049b696e25cc32a61b1b160a547b2e1be0461e37b380776e1e7d6"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/line-continuation-specifier",
+        "--json"
+      ],
+      "stdout": "line-continuation-specifier-analyze.json.gz",
+      "stderr": "line-continuation-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.269,
+      "stdout_sha256": "d6596914c3e91199c38d06da631143c32d15a45e9ede28602833148cf6d80b8a"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/line-continuation-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "line-continuation-specifier-inspect.json.gz",
+      "stderr": "line-continuation-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.122,
+      "stdout_sha256": "6bd65d179737d031043a4f4040e9fee9113607a97ec5542023b33dfd9dee1672"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/local-export-clause",
+        "--json"
+      ],
+      "stdout": "local-export-clause-analyze.json.gz",
+      "stderr": "local-export-clause-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.218,
+      "stdout_sha256": "9db45b7bb2a266107c8d8dbbcf58b66b4233fed79b4958c85c47a1a05d2d5a79"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/local-export-clause/project.aether",
+        "--json"
+      ],
+      "stdout": "local-export-clause-inspect.json.gz",
+      "stderr": "local-export-clause-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "d8c58f3ae8126b655a4823958bb2636e73836957f6e54c8755070dda0091797a"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/manual-mocks-directory",
+        "--json"
+      ],
+      "stdout": "manual-mocks-directory-analyze.json.gz",
+      "stderr": "manual-mocks-directory-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.27,
+      "stdout_sha256": "9df878e217d9cfa4ea3cf419067a93d97eef1802aa91b793fbcb5581ad522064"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/manual-mocks-directory/project.aether",
+        "--json"
+      ],
+      "stdout": "manual-mocks-directory-inspect.json.gz",
+      "stderr": "manual-mocks-directory-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "632270d7a36e29c126a38a89d375e9e5df3eea7cf135ada66ed132a74fd48c47"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mixed-language-module-collision",
+        "--json"
+      ],
+      "stdout": "mixed-language-module-collision-analyze.json.gz",
+      "stderr": "mixed-language-module-collision-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.268,
+      "stdout_sha256": "054e982819848aae0954f8c0941713c1b6c679a8e1705ca621fb49ba9eb9f7e7"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mixed-language-module-collision/project.aether",
+        "--json"
+      ],
+      "stdout": "mixed-language-module-collision-inspect.json.gz",
+      "stderr": "mixed-language-module-collision-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "3ca76fded94b6b81604418c6d887bfcd0389b4d200816b805512b26253d05fd6"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-alias-specifier",
+        "--json"
+      ],
+      "stdout": "mock-alias-specifier-analyze.json.gz",
+      "stderr": "mock-alias-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.32,
+      "stdout_sha256": "b7c8725331a73ed40bd036bbec74e23398fb0b69ce4e3b657bac84eb069e3b6a"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-alias-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "mock-alias-specifier-inspect.json.gz",
+      "stderr": "mock-alias-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.121,
+      "stdout_sha256": "0420acec440526de68449d9f90a32eb3bb15fbe470fbfa3c84c09475264e3bf1"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-colliding-identity",
+        "--json"
+      ],
+      "stdout": "mock-colliding-identity-analyze.json.gz",
+      "stderr": "mock-colliding-identity-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.271,
+      "stdout_sha256": "b29ad790530b630e23b78328ad93a7b5ba6de4791ca25b1b509436078071f769"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-colliding-identity/project.aether",
+        "--json"
+      ],
+      "stdout": "mock-colliding-identity-inspect.json.gz",
+      "stderr": "mock-colliding-identity-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.218,
+      "stdout_sha256": "f32f622724944649fab87b94c6eac7b7e503305ada0fe67c9671c7cf98ad58ad"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-config-present",
+        "--json"
+      ],
+      "stdout": "mock-config-present-analyze.json.gz",
+      "stderr": "mock-config-present-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.427,
+      "stdout_sha256": "c40e3c519aa18dfb0453c19f17cba0e6e1318cc831bc461ba849e666f7ff43cd"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-config-present/project.aether",
+        "--json"
+      ],
+      "stdout": "mock-config-present-inspect.json.gz",
+      "stderr": "mock-config-present-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "acab35b84f227525e88368f5b18cc6f9ccbf472d9b0f7a4f2a9668bb84f16d1f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-method-alias",
+        "--json"
+      ],
+      "stdout": "mock-method-alias-analyze.json.gz",
+      "stderr": "mock-method-alias-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.269,
+      "stdout_sha256": "88eeb740644f067f70c924f13518fe73a4451de52295c7e45a50cd25ee57f6d4"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-method-alias/project.aether",
+        "--json"
+      ],
+      "stdout": "mock-method-alias-inspect.json.gz",
+      "stderr": "mock-method-alias-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.119,
+      "stdout_sha256": "88c357ecafc49cb503e7f2ac46e543c87abc310ca6c98e98444985b9f1a6ca21"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-missing-module",
+        "--json"
+      ],
+      "stdout": "mock-missing-module-analyze.json.gz",
+      "stderr": "mock-missing-module-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.27,
+      "stdout_sha256": "0e19128709a3b51e16d3a61ba429ab2a661d1589c367e7f1862c0d27662519a2"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-missing-module/project.aether",
+        "--json"
+      ],
+      "stdout": "mock-missing-module-inspect.json.gz",
+      "stderr": "mock-missing-module-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.119,
+      "stdout_sha256": "d85fde67e81bcf6ab72aa03fa0b9ec1e196a4371ac58c48309ca91a46ed1b457"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-non-literal-argument",
+        "--json"
+      ],
+      "stdout": "mock-non-literal-argument-analyze.json.gz",
+      "stderr": "mock-non-literal-argument-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.268,
+      "stdout_sha256": "b36ae04c3ed1aa6071965fb59461f0f5edc73db73c43992d4642d89757f3f729"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-non-literal-argument/project.aether",
+        "--json"
+      ],
+      "stdout": "mock-non-literal-argument-inspect.json.gz",
+      "stderr": "mock-non-literal-argument-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "a2331b061ff2af33444747ac9da84a2512162c93ae6be09486a9d27c64a69112"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-other-module",
+        "--json"
+      ],
+      "stdout": "mock-other-module-analyze.json.gz",
+      "stderr": "mock-other-module-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.27,
+      "stdout_sha256": "934adbc34d49395f729e4ae5f9f37435f043edeb3e36dea0b3b06e76f8e05fdd"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-other-module/project.aether",
+        "--json"
+      ],
+      "stdout": "mock-other-module-inspect.json.gz",
+      "stderr": "mock-other-module-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "0b3f378d373addb05155df391febb3c5738cf13dc60a1d7a2b562ceb8a6f05a6"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-out-of-root",
+        "--json"
+      ],
+      "stdout": "mock-out-of-root-analyze.json.gz",
+      "stderr": "mock-out-of-root-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.268,
+      "stdout_sha256": "55d309030f02647b489a8b2ddf9ba8be915ff5f7861f1302a7789f074c704b34"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-out-of-root/project.aether",
+        "--json"
+      ],
+      "stdout": "mock-out-of-root-inspect.json.gz",
+      "stderr": "mock-out-of-root-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "442da5a49ebc218dedea61a7e489df3f6c86fa87e6924e6fc654ef0c81ed817d"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-setup-different-spelling",
+        "--json"
+      ],
+      "stdout": "mock-setup-different-spelling-analyze.json.gz",
+      "stderr": "mock-setup-different-spelling-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.434,
+      "stdout_sha256": "cbd853ccdc54ff82db8fbff4a4d1df205e9c3c5bfbd5479ff916ebc7d1ea7252"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-setup-different-spelling/project.aether",
+        "--json"
+      ],
+      "stdout": "mock-setup-different-spelling-inspect.json.gz",
+      "stderr": "mock-setup-different-spelling-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.28,
+      "stdout_sha256": "d26626494b6df3a127b2d01b4122c5948c4c997a3e9d4d0c86191a2918507f53"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-symlink-identity",
+        "--json"
+      ],
+      "stdout": "mock-symlink-identity-analyze.json.gz",
+      "stderr": "mock-symlink-identity-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.559,
+      "stdout_sha256": "c2acc82ff3812d2603fe2c6e997000f44adc058877674fdd711fcec2a990f924"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-symlink-identity/project.aether",
+        "--json"
+      ],
+      "stdout": "mock-symlink-identity-inspect.json.gz",
+      "stderr": "mock-symlink-identity-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.119,
+      "stdout_sha256": "ed303945808e52fb264d89fc4fbd5224878b5e2c0a789ee6a9535f3fc8801ffa"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-unindexed-file",
+        "--json"
+      ],
+      "stdout": "mock-unindexed-file-analyze.json.gz",
+      "stderr": "mock-unindexed-file-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.268,
+      "stdout_sha256": "e9d0fc6a40124a6ad2a066140aff296f08cba738c5e4dec9f4fedda003b1f328"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mock-unindexed-file/project.aether",
+        "--json"
+      ],
+      "stdout": "mock-unindexed-file-inspect.json.gz",
+      "stderr": "mock-unindexed-file-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "a5b91b56ee65d7efccd8ff5e181564a0eef975d78b9f802b54e758d5b1e3ee92"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/module-path-collision-src",
+        "--json"
+      ],
+      "stdout": "module-path-collision-src-analyze.json.gz",
+      "stderr": "module-path-collision-src-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.217,
+      "stdout_sha256": "f878172c8bd97f566e2907a88eda233190f1a78c4011ffdcbb19afe785ec92ad"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/module-path-collision-src/project.aether",
+        "--json"
+      ],
+      "stdout": "module-path-collision-src-inspect.json.gz",
+      "stderr": "module-path-collision-src-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "6272a69b4f9e449361617a12ee5e57bdef42c44f169d663a68fffcb08fbc420b"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/module-path-collision-tsx",
+        "--json"
+      ],
+      "stdout": "module-path-collision-tsx-analyze.json.gz",
+      "stderr": "module-path-collision-tsx-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.268,
+      "stdout_sha256": "dee44900b36606849cdebafc3b36df26fdf603fe65cda33659f6887db53cad4e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/module-path-collision-tsx/project.aether",
+        "--json"
+      ],
+      "stdout": "module-path-collision-tsx-inspect.json.gz",
+      "stderr": "module-path-collision-tsx-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.453,
+      "stdout_sha256": "6e0e04868305b0a455dc3e1e15c4a472ee324f2587316f0caef19b81a7738257"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mts-extension",
+        "--json"
+      ],
+      "stdout": "mts-extension-analyze.json.gz",
+      "stderr": "mts-extension-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.329,
+      "stdout_sha256": "675e6f90cd1fc599d9d31b0340c4f7c708640e67de8b4e22f654c57b892ddeb0"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/mts-extension/project.aether",
+        "--json"
+      ],
+      "stdout": "mts-extension-inspect.json.gz",
+      "stderr": "mts-extension-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "8375b8c503c1c576953a4912dfc61e161204282cd6bed332afccf46179d79ed1"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/namespace-import",
+        "--json"
+      ],
+      "stdout": "namespace-import-analyze.json.gz",
+      "stderr": "namespace-import-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.217,
+      "stdout_sha256": "9a3b2d47887e037f6e7a95595251a953de7c5b4d509483f55debdf0d7e7afe57"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/namespace-import/project.aether",
+        "--json"
+      ],
+      "stdout": "namespace-import-inspect.json.gz",
+      "stderr": "namespace-import-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "8954d694cc6e3b97f0418310e869880db98699da8e2981ce3977b1595424e68d"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/new-expression",
+        "--json"
+      ],
+      "stdout": "new-expression-analyze.json.gz",
+      "stderr": "new-expression-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.217,
+      "stdout_sha256": "eb4bf9704c3254c03417726df558cc54dd19db2061b587c42def4767c9725f91"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/new-expression/project.aether",
+        "--json"
+      ],
+      "stdout": "new-expression-inspect.json.gz",
+      "stderr": "new-expression-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "6bb37c8fa3e3ee3e0ba429850b4dcf0e3550459476dc9371ea06e0eee6046aa2"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/non-ascii-specifier",
+        "--json"
+      ],
+      "stdout": "non-ascii-specifier-analyze.json.gz",
+      "stderr": "non-ascii-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.27,
+      "stdout_sha256": "cc9a4dafa2f188600569ca1159ac31e98dd87035a08e0dcebed1520c913998fc"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/non-ascii-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "non-ascii-specifier-inspect.json.gz",
+      "stderr": "non-ascii-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "5e804adbc53d12cd20af3ab19be0aa0d09c8410065e44c601765b24ed9a12001"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/optional-call",
+        "--json"
+      ],
+      "stdout": "optional-call-analyze.json.gz",
+      "stderr": "optional-call-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.28,
+      "stdout_sha256": "f6f557c3387f40376fcb9b41e33683e2c79706b5c44c6450290acc992f4cd2b4"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/optional-call/project.aether",
+        "--json"
+      ],
+      "stdout": "optional-call-inspect.json.gz",
+      "stderr": "optional-call-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "103918617d7a8cfa9f9b283c7552f0b650512e3e23c43896277209c8a49d7f3b"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/overload-signatures",
+        "--json"
+      ],
+      "stdout": "overload-signatures-analyze.json.gz",
+      "stderr": "overload-signatures-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.27,
+      "stdout_sha256": "45f026efdec1b17ec12b4c5ffdd4990b13daa4d4591bab82478aeb7feda1ca7b"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/overload-signatures/project.aether",
+        "--json"
+      ],
+      "stdout": "overload-signatures-inspect.json.gz",
+      "stderr": "overload-signatures-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "0ea1352390f55113233bf05e8f06a1b867b9c99ed96156c5024c77b6ccdb1a99"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/parent-directory",
+        "--json"
+      ],
+      "stdout": "parent-directory-analyze.json.gz",
+      "stderr": "parent-directory-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.217,
+      "stdout_sha256": "9a80b55f301e12be49a68f74d815e7a80a6f20e99e629c81c1dace0e361e1c1e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/parent-directory/project.aether",
+        "--json"
+      ],
+      "stdout": "parent-directory-inspect.json.gz",
+      "stderr": "parent-directory-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "a4b1dfcdc459f6f422528eaffc44feaafd5fe843a69c9cbe1f838a398e3ddbd7"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/percent-encoded-specifier",
+        "--json"
+      ],
+      "stdout": "percent-encoded-specifier-analyze.json.gz",
+      "stderr": "percent-encoded-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.269,
+      "stdout_sha256": "7985938e9a9feff0a4148b548b5d65a031cba413b52e44e87c05eb3cc4970b22"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/percent-encoded-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "percent-encoded-specifier-inspect.json.gz",
+      "stderr": "percent-encoded-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "b1fef8635e6594143639da41611f0dbaafb4922c936bdf4fb41d1db33b736828"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/query-specifier",
+        "--json"
+      ],
+      "stdout": "query-specifier-analyze.json.gz",
+      "stderr": "query-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.219,
+      "stdout_sha256": "a94dc80b6549d4554677e86c26fa2e75f21578e896146012e9862501e8c4313e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/query-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "query-specifier-inspect.json.gz",
+      "stderr": "query-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.119,
+      "stdout_sha256": "7e4c0907b6e7a0b2b6222b9c696cb93c05e9e9024035396646e458275b1d5693"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/raw-tab-byte-specifier",
+        "--json"
+      ],
+      "stdout": "raw-tab-byte-specifier-analyze.json.gz",
+      "stderr": "raw-tab-byte-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.217,
+      "stdout_sha256": "625952470f50e619b3309c6bf4a9d9d3d6e7bd5cc3bd4ee389e0e3993a03f3bc"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/raw-tab-byte-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "raw-tab-byte-specifier-inspect.json.gz",
+      "stderr": "raw-tab-byte-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "90635f0b39b8d339eecaf20f17a609f2d56d67eacb4e1f5441c63a1b0c33f2f6"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/reexport-barrel",
+        "--json"
+      ],
+      "stdout": "reexport-barrel-analyze.json.gz",
+      "stderr": "reexport-barrel-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.273,
+      "stdout_sha256": "2a513c79e37e293902aee44a6c810012735c8359b40aa170c2e720e2321a1487"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/reexport-barrel/project.aether",
+        "--json"
+      ],
+      "stdout": "reexport-barrel-inspect.json.gz",
+      "stderr": "reexport-barrel-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "bb9b8b97b7bca3e819647dbef6568fe22dfe2542d59c588e0d9edc876f5fec03"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/renamed-export",
+        "--json"
+      ],
+      "stdout": "renamed-export-analyze.json.gz",
+      "stderr": "renamed-export-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.219,
+      "stdout_sha256": "8f461d63c148e846ad7e350b2f67934545a264e8b7946387962acbff5136e7e3"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/renamed-export/project.aether",
+        "--json"
+      ],
+      "stdout": "renamed-export-inspect.json.gz",
+      "stderr": "renamed-export-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "273d9c7d6dbb05ae6c3b87b52a21eb31f3778f83ff93bb1f6ee3131c41e97638"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/shadowed-block-declaration",
+        "--json"
+      ],
+      "stdout": "shadowed-block-declaration-analyze.json.gz",
+      "stderr": "shadowed-block-declaration-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.218,
+      "stdout_sha256": "63944b9636274df10f17d27e619bba83df4c46c1763738ba705ae39b1b0fbe32"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/shadowed-block-declaration/project.aether",
+        "--json"
+      ],
+      "stdout": "shadowed-block-declaration-inspect.json.gz",
+      "stderr": "shadowed-block-declaration-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "650b5b09cd14a382eb0d1efc7e6af8aa0de01f099af631cbd97233eb7eb8c806"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/shadowed-parameter",
+        "--json"
+      ],
+      "stdout": "shadowed-parameter-analyze.json.gz",
+      "stderr": "shadowed-parameter-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.218,
+      "stdout_sha256": "f46f6f2d57ee7da9750854d7120ee415e0825f77d6bf984a6de2f0ca033c0630"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/shadowed-parameter/project.aether",
+        "--json"
+      ],
+      "stdout": "shadowed-parameter-inspect.json.gz",
+      "stderr": "shadowed-parameter-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "2c3d6882d5ccd573f8411e9fe7c6b4d232e707437ea8c1c41d5fd6216a44b28f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/symlinked-directory",
+        "--json"
+      ],
+      "stdout": "symlinked-directory-analyze.json.gz",
+      "stderr": "symlinked-directory-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.22,
+      "stdout_sha256": "cd5150570f010f3ce65eb0806259b31fa58751cf04937d473fb5b5b9f93703f4"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/symlinked-directory/project.aether",
+        "--json"
+      ],
+      "stdout": "symlinked-directory-inspect.json.gz",
+      "stderr": "symlinked-directory-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "9f0c8caa2b416fba33f8de42e99359df81ae41787232ef28f67deb182cd10900"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/symlinked-target-file",
+        "--json"
+      ],
+      "stdout": "symlinked-target-file-analyze.json.gz",
+      "stderr": "symlinked-target-file-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.218,
+      "stdout_sha256": "7671c1cb761f1ce94a0131e35bc354e8f12d0ad4996665000ad82d449104faa0"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/symlinked-target-file/project.aether",
+        "--json"
+      ],
+      "stdout": "symlinked-target-file-inspect.json.gz",
+      "stderr": "symlinked-target-file-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "a2647095de1484a3e4844a10aaee4e41a1763af27fe54150b8df63202bdf74f3"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/tab-escape-specifier",
+        "--json"
+      ],
+      "stdout": "tab-escape-specifier-analyze.json.gz",
+      "stderr": "tab-escape-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.218,
+      "stdout_sha256": "e36f236b449b9932cccbce7317fdfa00e100a9daa607c13c60a4f5e795c0e692"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/tab-escape-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "tab-escape-specifier-inspect.json.gz",
+      "stderr": "tab-escape-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "d9d50f65121c516d1d02c56d960162f9a3dfa3d30c8e95fb97246be4d24ce1dd"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/target-eval",
+        "--json"
+      ],
+      "stdout": "target-eval-analyze.json.gz",
+      "stderr": "target-eval-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.219,
+      "stdout_sha256": "64f427c790a20862979e404bf3eefb0e8cac8a65363512283c5e337e02ecca14"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/target-eval/project.aether",
+        "--json"
+      ],
+      "stdout": "target-eval-inspect.json.gz",
+      "stderr": "target-eval-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.119,
+      "stdout_sha256": "ffb89b009caa627ae58076b292dcda348c46475e4948260c87752c1e10db557f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/target-has-export-star",
+        "--json"
+      ],
+      "stdout": "target-has-export-star-analyze.json.gz",
+      "stderr": "target-has-export-star-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.32,
+      "stdout_sha256": "0e5b2bf8610a7e0dc22e098208f51ec976eb19bbe129658df98650bfb0b5ee5f"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/target-has-export-star/project.aether",
+        "--json"
+      ],
+      "stdout": "target-has-export-star-inspect.json.gz",
+      "stderr": "target-has-export-star-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.119,
+      "stdout_sha256": "b77a05c7ae54e7f9dc0cc0c093be767429ebc631adc22a823a5d70ed4e90dc1e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/target-parse-error",
+        "--json"
+      ],
+      "stdout": "target-parse-error-analyze.json.gz",
+      "stderr": "target-parse-error-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.599,
+      "stdout_sha256": "19d34d041e2fa864f5b13101a0d0d0f44b6def504a095e447c51f6b478775096"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/target-parse-error/project.aether",
+        "--json"
+      ],
+      "stdout": "target-parse-error-inspect.json.gz",
+      "stderr": "target-parse-error-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "4b04f1c37aa309835528f91783134697232d278c5ad736ee6c49d81b04cd8354"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/target-reassigns-binding",
+        "--json"
+      ],
+      "stdout": "target-reassigns-binding-analyze.json.gz",
+      "stderr": "target-reassigns-binding-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.32,
+      "stdout_sha256": "11ce38240bcd0e4faafc10ee9346ab34a23116a99399b0c8f188176f0e73c340"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/target-reassigns-binding/project.aether",
+        "--json"
+      ],
+      "stdout": "target-reassigns-binding-inspect.json.gz",
+      "stderr": "target-reassigns-binding-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.121,
+      "stdout_sha256": "eabcffe87a83e516194147d85461cfbffbe03716dd673b8efff748e191983aa7"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/test-module-mocking",
+        "--json"
+      ],
+      "stdout": "test-module-mocking-analyze.json.gz",
+      "stderr": "test-module-mocking-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.648,
+      "stdout_sha256": "343c8b47204f8e21631a0fdd03603417cbdda6fd02d61ef67619595b22fad1a9"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/test-module-mocking/project.aether",
+        "--json"
+      ],
+      "stdout": "test-module-mocking-inspect.json.gz",
+      "stderr": "test-module-mocking-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.119,
+      "stdout_sha256": "1108e7d85dabdbeaf46fea3562ac401eaa9971cee99856f40a7960f7458871fb"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/trailing-space-specifier",
+        "--json"
+      ],
+      "stdout": "trailing-space-specifier-analyze.json.gz",
+      "stderr": "trailing-space-specifier-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.218,
+      "stdout_sha256": "68386b749c85cd0e16f24b4c65938e2f0b5573bd99447a61804ed18b1bed004d"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/trailing-space-specifier/project.aether",
+        "--json"
+      ],
+      "stdout": "trailing-space-specifier-inspect.json.gz",
+      "stderr": "trailing-space-specifier-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.118,
+      "stdout_sha256": "f51128a06b4b0587706a7e6588fdeac78b2e4431ba054cbc177c4bcefc6df821"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/tsx-extension",
+        "--json"
+      ],
+      "stdout": "tsx-extension-analyze.json.gz",
+      "stderr": "tsx-extension-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.268,
+      "stdout_sha256": "2269c0c69d9423f3be243103453bfddc541be15cd8dbc3fc50f700eced967a5d"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/tsx-extension/project.aether",
+        "--json"
+      ],
+      "stdout": "tsx-extension-inspect.json.gz",
+      "stderr": "tsx-extension-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.12,
+      "stdout_sha256": "15e636fafdb69d6c8f77b2f0c4d646c2aefc8e0761589c2d08063b74609a2445"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/type-only-import",
+        "--json"
+      ],
+      "stdout": "type-only-import-analyze.json.gz",
+      "stderr": "type-only-import-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.32,
+      "stdout_sha256": "d768261fc8bd323c7557cf92fc4de7b6c9130f474dc3f71699e5dbe948aa38f2"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/type-only-import/project.aether",
+        "--json"
+      ],
+      "stdout": "type-only-import-inspect.json.gz",
+      "stderr": "type-only-import-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "a214cab57561bee65b9bab37d3727dcf020a32831c4d71921a2a130fb10953dd"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/unrelated-imports-allowed",
+        "--json"
+      ],
+      "stdout": "unrelated-imports-allowed-analyze.json.gz",
+      "stderr": "unrelated-imports-allowed-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.217,
+      "stdout_sha256": "c1c2f3b2f7fdbfe03caa96115ec55aee00a18b02bb1eb4d5b2d916f6622deb81"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/unrelated-imports-allowed/project.aether",
+        "--json"
+      ],
+      "stdout": "unrelated-imports-allowed-inspect.json.gz",
+      "stderr": "unrelated-imports-allowed-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.117,
+      "stdout_sha256": "526da35443703b77150db1ea3502f553611a449d3563a71537c6dacd4accae1d"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "analyze",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/vi-mock-import-expression",
+        "--json"
+      ],
+      "stdout": "vi-mock-import-expression-analyze.json.gz",
+      "stderr": "vi-mock-import-expression-analyze.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.582,
+      "stdout_sha256": "59bd971105353bc7ef48d12551cc61fc073d11ed54e707adfd715e44e8e9671e"
+    },
+    {
+      "argv": [
+        "/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder",
+        "inspect",
+        "/tmp/girder-esm-collision-fix-1-xqk9tl83/vi-mock-import-expression/project.aether",
+        "--json"
+      ],
+      "stdout": "vi-mock-import-expression-inspect.json.gz",
+      "stderr": "vi-mock-import-expression-inspect.stderr.log",
+      "exit_status": 0,
+      "seconds": 0.254,
+      "stdout_sha256": "840d83e77a6a3650d0e207fcb5efd64fdd5c1d2d94be6045a84ae5854fd594f4"
+    }
+  ],
+  "cases": [
+    {
+      "id": "aliased-import",
+      "expected_class": "must",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 160,
+          "end_byte": 163,
+          "class": "must",
+          "reason": "proven-typescript-relative-esm-named-import",
+          "coverage_gap": false,
+          "targets": [
+            "(518818883685712994)"
+          ]
+        }
+      ],
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching",
+        "esm-native-execution",
+        "no-unmodeled-module-hooks-loaders-or-mocks-outside-or-inside-snapshot"
+      ],
+      "expected_target_nodes": [
+        "07333706a0da0462"
+      ]
+    },
+    {
+      "id": "ambiguous-export-star",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "consumer.ts",
+          "caller": "crate::consumer",
+          "start_byte": 71,
+          "end_byte": 79,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "async-target",
+      "expected_class": "must",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 167,
+          "end_byte": 175,
+          "class": "must",
+          "reason": "proven-typescript-relative-esm-named-import",
+          "coverage_gap": false,
+          "targets": [
+            "(518818883685712994)"
+          ]
+        }
+      ],
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching",
+        "esm-native-execution",
+        "no-unmodeled-module-hooks-loaders-or-mocks-outside-or-inside-snapshot"
+      ],
+      "expected_target_nodes": [
+        "07333706a0da0462"
+      ]
+    },
+    {
+      "id": "backslash-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 160,
+          "end_byte": 168,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "bare-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 154,
+          "end_byte": 168,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "cts-extension",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 156,
+          "end_byte": 164,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "declaration-file-target",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "consumer.ts",
+          "caller": "crate::consumer",
+          "start_byte": 73,
+          "end_byte": 81,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "declaration-merging",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "default-import",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 151,
+          "end_byte": 159,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "duplicate-export",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "consumer.ts",
+          "caller": "crate::consumer",
+          "start_byte": 69,
+          "end_byte": 77,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "dynamic-import",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 172,
+          "end_byte": 180,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "encoded-dot-segment",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "sub/consumer.ts",
+          "caller": "crate::sub::consumer::value",
+          "start_byte": 98,
+          "end_byte": 106,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "encoded-slash-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "consumer.ts",
+          "caller": "crate::consumer::value",
+          "start_byte": 97,
+          "end_byte": 105,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "escaped-callee",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 168,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "escaping-value-use",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 234,
+          "end_byte": 242,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "explicit-ts",
+      "expected_class": "must",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "must",
+          "reason": "proven-typescript-relative-esm-named-import",
+          "coverage_gap": false,
+          "targets": [
+            "(518818883685712994)"
+          ]
+        }
+      ],
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching",
+        "esm-native-execution",
+        "no-unmodeled-module-hooks-loaders-or-mocks-outside-or-inside-snapshot"
+      ],
+      "expected_target_nodes": [
+        "07333706a0da0462"
+      ]
+    },
+    {
+      "id": "export-star-barrel",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 157,
+          "end_byte": 165,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "extensionless-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "consumer.ts",
+          "caller": "crate::consumer",
+          "start_byte": 66,
+          "end_byte": 74,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "generator-target",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 163,
+          "end_byte": 171,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "hex-escape-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 158,
+          "end_byte": 166,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "hook-package-script-flags",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "hook-register-hooks-sync",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "hook-register-node-module",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "hook-unlisted-library",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "import-cycle",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "b.ts",
+          "caller": "crate::b::viaB",
+          "start_byte": 88,
+          "end_byte": 96,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "importer-eval",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 173,
+          "end_byte": 181,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "importer-writes-binding",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 353,
+          "end_byte": 361,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "inline-type-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 223,
+          "end_byte": 231,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "js-extension-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "consumer.ts",
+          "caller": "crate::consumer",
+          "start_byte": 69,
+          "end_byte": 77,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "line-continuation-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 157,
+          "end_byte": 165,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "local-export-clause",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "manual-mocks-directory",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "mixed-language-module-collision",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "mock-alias-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 118,
+          "end_byte": 126,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "mock-colliding-identity",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 230,
+          "end_byte": 238,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "mock-config-present",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "mock-method-alias",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 194,
+          "end_byte": 202,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "mock-missing-module",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 269,
+          "end_byte": 277,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "mock-non-literal-argument",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 196,
+          "end_byte": 204,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "mock-other-module",
+      "expected_class": "must",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 246,
+          "end_byte": 254,
+          "class": "must",
+          "reason": "proven-typescript-relative-esm-named-import",
+          "coverage_gap": false,
+          "targets": [
+            "(518818883685712994)"
+          ]
+        }
+      ],
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching",
+        "esm-native-execution",
+        "no-unmodeled-module-hooks-loaders-or-mocks-outside-or-inside-snapshot"
+      ],
+      "expected_target_nodes": [
+        "07333706a0da0462"
+      ]
+    },
+    {
+      "id": "mock-out-of-root",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 275,
+          "end_byte": 283,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "mock-setup-different-spelling",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "mock-symlink-identity",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 160,
+          "end_byte": 168,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "mock-unindexed-file",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 243,
+          "end_byte": 251,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "module-path-collision-src",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 159,
+          "end_byte": 167,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "module-path-collision-tsx",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "mts-extension",
+      "expected_class": "must",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 156,
+          "end_byte": 164,
+          "class": "must",
+          "reason": "proven-typescript-relative-esm-named-import",
+          "coverage_gap": false,
+          "targets": [
+            "(18042096233679707726)"
+          ]
+        }
+      ],
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching",
+        "esm-native-execution",
+        "no-unmodeled-module-hooks-loaders-or-mocks-outside-or-inside-snapshot"
+      ],
+      "expected_target_nodes": [
+        "fa6266eef3e45e4e"
+      ]
+    },
+    {
+      "id": "namespace-import",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 153,
+          "end_byte": 165,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "new-expression",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 214,
+          "end_byte": 226,
+          "class": "unknown",
+          "reason": "unresolved-call-syntax",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "non-ascii-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 156,
+          "end_byte": 164,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "optional-call",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 165,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "overload-signatures",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "parent-directory",
+      "expected_class": "must",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "test/app.test.ts",
+          "caller": "crate::test::app.test::@test[74]#1",
+          "start_byte": 160,
+          "end_byte": 168,
+          "class": "must",
+          "reason": "proven-typescript-relative-esm-named-import",
+          "coverage_gap": false,
+          "targets": [
+            "(10817217415524652723)"
+          ]
+        }
+      ],
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching",
+        "esm-native-execution",
+        "no-unmodeled-module-hooks-loaders-or-mocks-outside-or-inside-snapshot"
+      ],
+      "expected_target_nodes": [
+        "961e79ed668416b3"
+      ]
+    },
+    {
+      "id": "percent-encoded-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 157,
+          "end_byte": 165,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "query-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 325,
+          "end_byte": 333,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "raw-tab-byte-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 156,
+          "end_byte": 164,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "reexport-barrel",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 157,
+          "end_byte": 165,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "renamed-export",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "shadowed-block-declaration",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 221,
+          "end_byte": 229,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "shadowed-parameter",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::run",
+          "start_byte": 170,
+          "end_byte": 178,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "symlinked-directory",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 159,
+          "end_byte": 167,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "symlinked-target-file",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "tab-escape-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 157,
+          "end_byte": 165,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "target-eval",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "target-has-export-star",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 155,
+          "end_byte": 163,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "target-parse-error",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "consumer.ts",
+          "caller": "crate::consumer",
+          "start_byte": 69,
+          "end_byte": 77,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "target-reassigns-binding",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 239,
+          "end_byte": 247,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "test-module-mocking",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 258,
+          "end_byte": 266,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "trailing-space-specifier",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 156,
+          "end_byte": 164,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "tsx-extension",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "consumer.ts",
+          "caller": "crate::consumer::value",
+          "start_byte": 93,
+          "end_byte": 101,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "type-only-import",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 223,
+          "end_byte": 231,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "unrelated-imports-allowed",
+      "expected_class": "must",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 415,
+          "end_byte": 423,
+          "class": "must",
+          "reason": "proven-typescript-relative-esm-named-import",
+          "coverage_gap": false,
+          "targets": [
+            "(518818883685712994)"
+          ]
+        }
+      ],
+      "assumptions": [
+        "indexed-source-snapshot",
+        "no-runtime-rebinding-or-monkey-patching",
+        "esm-native-execution",
+        "no-unmodeled-module-hooks-loaders-or-mocks-outside-or-inside-snapshot"
+      ],
+      "expected_target_nodes": [
+        "07333706a0da0462"
+      ]
+    },
+    {
+      "id": "vi-mock-import-expression",
+      "expected_class": "unknown",
+      "exact_contract": true,
+      "marked_claims": [
+        {
+          "file": "app.test.ts",
+          "caller": "crate::app.test::@test[74]#1",
+          "start_byte": 184,
+          "end_byte": 192,
+          "class": "unknown",
+          "reason": "typescript-binding-or-structural-dispatch-unproven",
+          "coverage_gap": false,
+          "targets": []
+        }
+      ]
+    }
+  ],
+  "must_interpretation": "conditional on the frozen execution assumptions",
+  "binary_sha256": "e8b1c6cad2380b0f9ef15b7625a68717a592d97f3f922ba7dee9cafc00fe16ee",
+  "runner_sha256": "842e55cf792c8ae1aea4d6348f00ffa492dead903469511e80af15665c71df52",
+  "manifest_sha256": "daa7310248f8e2adc3bdbbae340a3301dcca6b18983ca29ef3c6738bb97b94cd",
+  "scratch_root": "/tmp/girder-esm-collision-fix-1-xqk9tl83",
+  "total": 73,
+  "exact_contracts": 73,
+  "errors": 0,
+  "cold_contract_met": true
+}

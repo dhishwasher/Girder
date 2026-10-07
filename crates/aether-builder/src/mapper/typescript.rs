@@ -55,19 +55,33 @@ pub(super) fn extract(tree: &Tree, source: &str, file: &str, lang: Lang) -> Buil
         id: module_id,
         kind: ScopeKind::Module,
     };
-    let mut functions = Vec::new();
-    let mut registrations = HashMap::new();
-    collect_definitions(
-        tree.root_node(),
-        source,
-        file,
-        lang,
-        &scope,
-        &imports,
-        &mut functions,
-        &mut registrations,
-        &mut out,
-    );
+    let mut names = Names::default();
+    let base = out;
+    let mut out;
+    let mut functions;
+    let mut pass = 0;
+    loop {
+        // Each pass rebuilds the definitions from the same starting output;
+        // only the collision table carries over. Four passes bound
+        // pathological nesting.
+        out = base.clone();
+        functions = Vec::new();
+        collect_definitions(
+            tree.root_node(),
+            source,
+            file,
+            lang,
+            &scope,
+            &imports,
+            &mut functions,
+            &mut names,
+            &mut out,
+        );
+        pass += 1;
+        if !names.finish_pass() || pass >= 4 {
+            break;
+        }
+    }
     refuse_colliding_members(&mut out, &mut functions);
     collect_calls(tree.root_node(), source, &imports, &functions, &mut out);
     out
@@ -348,7 +362,7 @@ fn collect_definitions(
     scope: &Scope,
     imports: &HashMap<String, ImportBinding>,
     functions: &mut Vec<FunctionRange>,
-    registrations: &mut HashMap<String, usize>,
+    registrations: &mut Names,
     out: &mut BuildOutput,
 ) {
     match node.kind() {
@@ -367,7 +381,7 @@ fn collect_definitions(
         }
         "function_declaration" | "generator_function_declaration" => {
             if let Some(name) = node.child_by_field_name("name") {
-                add_function(
+                let inner = add_function(
                     node,
                     node_text(name, source),
                     source,
@@ -376,9 +390,9 @@ fn collect_definitions(
                     scope,
                     false,
                     functions,
+                    registrations,
                     out,
                 );
-                let inner = function_scope(scope, node_text(name, source));
                 recurse_definitions(
                     node,
                     source,
@@ -396,8 +410,18 @@ fn collect_definitions(
         "method_definition" => {
             if let Some(name) = node.child_by_field_name("name") {
                 let name = node_text(name, source);
-                add_function(node, name, source, file, lang, scope, false, functions, out);
-                let inner = function_scope(scope, name);
+                let inner = add_function(
+                    node,
+                    name,
+                    source,
+                    file,
+                    lang,
+                    scope,
+                    false,
+                    functions,
+                    registrations,
+                    out,
+                );
                 recurse_definitions(
                     node,
                     source,
@@ -488,8 +512,18 @@ fn collect_definitions(
                     && matches!(value.kind(), "arrow_function" | "function_expression")
                 {
                     let name = node_text(name, source);
-                    add_function(node, name, source, file, lang, scope, false, functions, out);
-                    let inner = function_scope(scope, name);
+                    let inner = add_function(
+                        node,
+                        name,
+                        source,
+                        file,
+                        lang,
+                        scope,
+                        false,
+                        functions,
+                        registrations,
+                        out,
+                    );
                     recurse_definitions(
                         value,
                         source,
@@ -510,10 +544,20 @@ fn collect_definitions(
                 let name = node_text(name, source);
                 let value = node.child_by_field_name("value");
                 if let Some(arrow) = value.filter(|value| value.kind() == "arrow_function") {
-                    add_function(node, name, source, file, lang, scope, false, functions, out);
                     // The arrow body is an ordinary function scope: const-owned
                     // literals inside get identities and refused ones get T1/B1.
-                    let inner = function_scope(scope, name);
+                    let inner = add_function(
+                        node,
+                        name,
+                        source,
+                        file,
+                        lang,
+                        scope,
+                        false,
+                        functions,
+                        registrations,
+                        out,
+                    );
                     recurse_definitions(
                         arrow,
                         source,
@@ -608,7 +652,7 @@ fn recurse_definitions(
     scope: &Scope,
     imports: &HashMap<String, ImportBinding>,
     functions: &mut Vec<FunctionRange>,
-    registrations: &mut HashMap<String, usize>,
+    registrations: &mut Names,
     out: &mut BuildOutput,
 ) {
     let mut cursor = node.walk();
@@ -637,13 +681,99 @@ fn add_function(
     scope: &Scope,
     is_test: bool,
     functions: &mut Vec<FunctionRange>,
+    registrations: &mut Names,
     out: &mut BuildOutput,
-) {
-    let path_name = name.replace("::", ":");
-    let path = format!("{}::{path_name}", scope.path);
+) -> Scope {
+    let accessor = accessor_kind(syntax);
+    let path = registrations.member_path(&scope.path, name, accessor);
     add_function_at_path(
         syntax, name, source, file, lang, scope, &path, is_test, functions, out,
     );
+    Scope {
+        id: NodeId::from_path(&path),
+        path,
+        kind: ScopeKind::Function,
+    }
+}
+
+/// `get`/`set` for a class or object accessor, `None` for everything else.
+fn accessor_kind(syntax: TsNode) -> Option<&'static str> {
+    if syntax.kind() != "method_definition" {
+        return None;
+    }
+    let mut cursor = syntax.walk();
+    let kind = syntax
+        .children(&mut cursor)
+        .find_map(|child| match child.kind() {
+            "get" => Some("get"),
+            "set" => Some("set"),
+            _ => None,
+        });
+    kind
+}
+
+/// Path bookkeeping for one extraction pass.
+///
+/// Two functions that compute the same path (a getter/setter pair, the same
+/// function declared in two blocks, a duplicate declaration) used to be
+/// collapsed into one node, silently discarding the other's body and calls. A
+/// colliding base path is instead qualified for every member: accessors by
+/// `@get`/`@set`, and members still sharing a qualified key by `#<n>` in
+/// source order. Only paths that actually collide change; the pass repeats
+/// until no unqualified collision remains, so nested collisions under a
+/// qualified parent are handled too.
+#[derive(Default)]
+struct Names {
+    /// Suite-registration occurrence counters (see `registration_scope`).
+    counts: HashMap<String, usize>,
+    /// Base paths found colliding in an earlier pass; every member is qualified.
+    qualify: HashSet<String>,
+    /// Members per qualified key in the previous pass (decides `#n`).
+    previous_keys: HashMap<String, usize>,
+    /// Counters for the pass in progress.
+    base_counts: HashMap<String, usize>,
+    key_counts: HashMap<String, usize>,
+    key_seen: HashMap<String, usize>,
+}
+
+impl Names {
+    fn member_path(&mut self, scope_path: &str, name: &str, accessor: Option<&str>) -> String {
+        let base = format!("{scope_path}::{}", name.replace("::", ":"));
+        let key = match accessor {
+            Some(kind) => format!("{base}@{kind}"),
+            None => base.clone(),
+        };
+        *self.base_counts.entry(base.clone()).or_default() += 1;
+        *self.key_counts.entry(key.clone()).or_default() += 1;
+        if !self.qualify.contains(&base) {
+            return base;
+        }
+        let seen = self.key_seen.entry(key.clone()).or_default();
+        *seen += 1;
+        if self.previous_keys.get(&key).copied().unwrap_or(1) > 1 {
+            format!("{key}#{seen}")
+        } else {
+            key
+        }
+    }
+
+    /// Ends a pass. Returns true when new colliding base paths were found and
+    /// the extraction must run again with them qualified.
+    fn finish_pass(&mut self) -> bool {
+        let newly = self
+            .base_counts
+            .iter()
+            .filter(|(base, count)| **count > 1 && !self.qualify.contains(*base))
+            .map(|(base, _)| base.clone())
+            .collect::<Vec<_>>();
+        self.previous_keys = std::mem::take(&mut self.key_counts);
+        self.base_counts.clear();
+        self.key_seen.clear();
+        self.counts.clear();
+        let changed = !newly.is_empty();
+        self.qualify.extend(newly);
+        changed
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -780,7 +910,7 @@ fn collect_object_members(
     scope: &Scope,
     imports: &HashMap<String, ImportBinding>,
     functions: &mut Vec<FunctionRange>,
-    registrations: &mut HashMap<String, usize>,
+    registrations: &mut Names,
     out: &mut BuildOutput,
 ) {
     let mut cursor = object.walk();
@@ -956,7 +1086,7 @@ fn registration_scope(
     scope: &Scope,
     framework: &str,
     title: &str,
-    registrations: &mut HashMap<String, usize>,
+    registrations: &mut Names,
 ) -> Scope {
     use std::fmt::Write;
 
@@ -970,7 +1100,7 @@ fn registration_scope(
         "test"
     };
     let base = format!("{}::@{kind}[{encoded}]", scope.path);
-    let occurrence = registrations.entry(base.clone()).or_default();
+    let occurrence = registrations.counts.entry(base.clone()).or_default();
     *occurrence += 1;
     let path = format!("{base}#{occurrence}");
     if framework == "describe" {
@@ -987,16 +1117,6 @@ fn registration_scope(
             path,
             kind: ScopeKind::Function,
         }
-    }
-}
-
-fn function_scope(scope: &Scope, name: &str) -> Scope {
-    let path_name = name.replace("::", ":");
-    let path = format!("{}::{path_name}", scope.path);
-    Scope {
-        id: NodeId::from_path(&path),
-        path,
-        kind: ScopeKind::Function,
     }
 }
 

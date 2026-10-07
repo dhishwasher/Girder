@@ -45,6 +45,37 @@ and declaration-file aliases. The remaining listed forms are covered by the
 focused integration fixtures in `crates/aether-builder/tests/typescript.rs`, not
 by independent corpus probes in this policy version.
 
+## Semantic paths and collisions
+
+A function or method's semantic path is its container's path plus its name
+(`crate::shapes::Box::put`). Distinct declarations can compute the same path. Each
+shape below keeps its own node, source, and call evidence; none is merged or dropped.
+Only a path that actually collides changes. Every non-colliding path is exactly what it
+was before.
+
+| Shape | Paths |
+| --- | --- |
+| Getter and setter with one name | `Box::value@get` and `Box::value@set`. The ambiguous plain `Box::value` does not exist, so an edit addressed to it fails closed instead of choosing one. |
+| The same function declared in two blocks, or a duplicate top-level declaration | `branch#1` and `branch#2`, numbered in source order. |
+| A collision nested under a colliding parent | Resolved in a further pass; extraction repeats (at most four passes) until no unqualified collision remains. |
+| Test callbacks (`it`, `test`) with the same title | Already distinct through suite ancestry and an occurrence counter (`@describe[..]#n::@test[..]#n`). |
+| Object-literal members that collide | Still refused, by design (frozen structural-member policy R3: colliding members are never told apart). |
+
+The `#n` form numbers by source order, so inserting an identical duplicate before an
+existing one renumbers it. This only affects genuinely duplicated declarations, which are
+already unusual. Rename-stable identities for them are not attempted.
+
+A call whose name matches more than one distinct function is never certified `Must`.
+Before this change the graph silently kept one node and a file-level
+`duplicate-semantic-path` coverage gap hid the loss; with the paths separated, that gap no
+longer appears for these shapes. Evidence:
+[`before-observation-addendum-14.md`](observations/stage3-typescript-audit/before-observation-addendum-14.md)
+and `crates/aether-builder/tests/typescript_function_collisions.rs`.
+
+Namespace bodies (`namespace NS { export function f() {} }`) are still not lowered, so
+their members have no nodes at all. That is the existing ambient/internal-module
+extension point, separate from collisions.
+
 ## Declaration-file boundary
 
 `.d.ts` is not wholly deferred. Ordinary declarations at a declaration file's
