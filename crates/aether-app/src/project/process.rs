@@ -12,6 +12,7 @@
 //!     stdout/stderr with a byte cap; stdin stays inherited so interactive
 //!     test runners keep working.
 
+#[cfg(any(feature = "legacy", test))]
 use std::collections::VecDeque;
 use std::io::{Read, Write};
 use std::process::{Child, Command, ExitStatus, Stdio};
@@ -32,6 +33,7 @@ pub(crate) struct CapturedRun {
     pub(crate) stderr: Vec<u8>,
 }
 
+#[cfg(any(feature = "legacy", test))]
 pub(crate) struct DiagnosticRun {
     pub(crate) status: BoundedStatus,
     pub(crate) exit: Option<ExitStatus>,
@@ -64,6 +66,7 @@ pub(crate) fn run_captured(
     })
 }
 
+#[cfg(any(feature = "legacy", test))]
 /// Run to completion with prefix/suffix-truncated diagnostic capture. Output
 /// volume never kills the child; time and cancellation do.
 pub(crate) fn run_diagnostic(
@@ -199,6 +202,7 @@ fn raw_reader(
     })
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn truncating_reader(
     mut reader: impl Read + Send + 'static,
     limit: usize,
@@ -254,6 +258,7 @@ fn join_reader<T>(handle: std::thread::JoinHandle<std::io::Result<T>>) -> std::i
         .map_err(|_| std::io::Error::other("subprocess output reader panicked"))?
 }
 
+#[cfg(any(feature = "legacy", test))]
 /// Bounded prefix + suffix retention for human diagnostics; the middle of
 /// oversized output is replaced with a truncation marker.
 pub(crate) struct BoundedOutput {
@@ -264,6 +269,7 @@ pub(crate) struct BoundedOutput {
     truncated: bool,
 }
 
+#[cfg(any(feature = "legacy", test))]
 impl BoundedOutput {
     pub(crate) fn new(limit: usize) -> Self {
         let prefix_limit = limit / 2;

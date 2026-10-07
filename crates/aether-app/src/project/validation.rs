@@ -1,17 +1,27 @@
-use crate::project::config::{ConfiguredCommand, ProjectConfig};
+#[cfg(any(feature = "legacy", test))]
+use crate::project::config::ConfiguredCommand;
+use crate::project::config::ProjectConfig;
+#[cfg(any(feature = "legacy", test))]
 use crate::project::process::{run_diagnostic, BoundedOutput, BoundedStatus};
+#[cfg(any(feature = "legacy", test))]
 use crate::project::source::{verify_project_writes, ProjectWrite};
-use std::collections::{BTreeMap, HashSet};
+#[cfg(any(feature = "legacy", test))]
+use std::collections::BTreeMap;
+use std::collections::HashSet;
+#[cfg(any(feature = "legacy", test))]
 use std::io::Write;
 use std::path::{Path, PathBuf};
+#[cfg(any(feature = "legacy", test))]
 use std::process::{Command, ExitStatus};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
+#[cfg(any(feature = "legacy", test))]
 use std::time::{Duration, Instant};
 
 static NEXT_VALIDATION: AtomicUsize = AtomicUsize::new(0);
 const VALIDATION_ROOT: &str = ".girder/validation";
 
+#[cfg(any(feature = "legacy", test))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ValidationPolicy {
     Project,
@@ -19,6 +29,7 @@ enum ValidationPolicy {
     Extension,
 }
 
+#[cfg(any(feature = "legacy", test))]
 impl ValidationPolicy {
     fn is_extension(self) -> bool {
         #[cfg(any(feature = "gui", test))]
@@ -32,6 +43,7 @@ impl ValidationPolicy {
     }
 }
 
+#[cfg(any(feature = "legacy", test))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ValidationStatus {
     Passed,
@@ -41,7 +53,9 @@ pub(crate) enum ValidationStatus {
     Skipped,
 }
 
+#[cfg(any(feature = "legacy", test))]
 impl ValidationStatus {
+    #[cfg(feature = "legacy")]
     pub(crate) fn label(self) -> &'static str {
         match self {
             Self::Passed => "passed",
@@ -53,6 +67,9 @@ impl ValidationStatus {
     }
 }
 
+#[cfg(any(feature = "legacy", test))]
+// `label`, `command` and `duration` are read only by the legacy GUI/agent reports.
+#[cfg_attr(not(feature = "legacy"), allow(dead_code))]
 #[derive(Debug, Clone)]
 pub(crate) struct ValidationStep {
     pub(crate) label: String,
@@ -62,11 +79,13 @@ pub(crate) struct ValidationStep {
     pub(crate) output: String,
 }
 
+#[cfg(any(feature = "legacy", test))]
 #[derive(Debug, Clone)]
 pub(crate) struct ValidationReport {
     pub(crate) steps: Vec<ValidationStep>,
 }
 
+#[cfg(any(feature = "legacy", test))]
 impl ValidationReport {
     pub(crate) fn passed(&self) -> bool {
         self.steps.iter().all(|step| {
@@ -77,6 +96,7 @@ impl ValidationReport {
         })
     }
 
+    #[cfg(feature = "legacy")]
     pub(crate) fn summary(&self) -> String {
         let passed = self
             .steps
@@ -102,6 +122,7 @@ impl ValidationReport {
     }
 }
 
+#[cfg(any(feature = "legacy", test))]
 pub(crate) fn validate_candidate(
     root: &Path,
     config: &ProjectConfig,
@@ -131,6 +152,7 @@ pub(crate) fn validate_extension_command(
     validate_candidate_with_policy(root, &config, &[], cancel, ValidationPolicy::Extension)
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn validate_candidate_with_policy(
     root: &Path,
     config: &ProjectConfig,
@@ -238,6 +260,7 @@ fn validate_candidate_with_policy(
     Ok(ValidationReport { steps })
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn validation_commands(
     candidate: &Path,
     config: &ProjectConfig,
@@ -288,6 +311,7 @@ fn validation_commands(
     commands
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn run_validation_command(
     candidate: &Path,
     project_root: &Path,
@@ -337,6 +361,7 @@ fn run_validation_command(
     })
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn validation_target_dir(project_root: &Path, candidate: &Path) -> PathBuf {
     if let Some(configured) = std::env::var_os("CARGO_TARGET_DIR").map(PathBuf::from) {
         return if configured.is_absolute() {
@@ -356,6 +381,7 @@ fn validation_target_dir(project_root: &Path, candidate: &Path) -> PathBuf {
     }
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn sandboxed_command(
     candidate: &Path,
     configured: &ConfiguredCommand,
@@ -430,6 +456,7 @@ fn sandboxed_command(
     Ok(command)
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn snapshot_candidate(root: &Path) -> std::io::Result<BTreeMap<PathBuf, (u64, u64)>> {
     let mut snapshot = BTreeMap::new();
     let mut stack = vec![root.to_path_buf()];
@@ -454,6 +481,7 @@ fn snapshot_candidate(root: &Path) -> std::io::Result<BTreeMap<PathBuf, (u64, u6
     Ok(snapshot)
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn render_snapshot_diff(
     before: &BTreeMap<PathBuf, (u64, u64)>,
     after: &BTreeMap<PathBuf, (u64, u64)>,
@@ -469,6 +497,7 @@ fn render_snapshot_diff(
     )
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn snapshot_changes(
     before: &BTreeMap<PathBuf, (u64, u64)>,
     after: &BTreeMap<PathBuf, (u64, u64)>,
@@ -485,6 +514,7 @@ fn snapshot_changes(
     changed
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn stable_hash(bytes: &[u8]) -> u64 {
     let mut hash = 0xcbf2_9ce4_8422_2325_u64;
     for byte in bytes {
@@ -494,6 +524,7 @@ fn stable_hash(bytes: &[u8]) -> u64 {
     hash
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn bubblewrap_path() -> Option<PathBuf> {
     let path = std::env::var_os("PATH")?;
     std::env::split_paths(&path)
@@ -501,6 +532,7 @@ fn bubblewrap_path() -> Option<PathBuf> {
         .find(|candidate| candidate.is_file())
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn render_output(exit: Option<ExitStatus>, stdout: BoundedOutput, stderr: BoundedOutput) -> String {
     let mut sections = Vec::new();
     if let Some(exit) = exit {

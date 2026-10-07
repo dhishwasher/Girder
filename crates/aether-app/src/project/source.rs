@@ -685,6 +685,7 @@ pub(crate) fn load_hook_snapshot(root: &Path) -> std::io::Result<Option<Vec<u8>>
     Ok(Some(cache))
 }
 
+#[cfg(any(feature = "legacy", test))]
 /// Rebuild source projections and merge them with the validated durable graph.
 ///
 /// Commands that mutate graph-native state use this strict path so corrupt
@@ -730,6 +731,7 @@ pub(crate) fn read_project_bytes(
     read_optional_bytes(&path)
 }
 
+#[cfg(any(feature = "legacy", test))]
 pub(crate) fn read_project_bytes_bounded(
     root: &Path,
     relative: impl AsRef<Path>,
@@ -964,6 +966,7 @@ fn maybe_fault_exit(point: &str) {
     }
 }
 
+#[cfg(any(feature = "legacy", test))]
 /// Check every transaction baseline without writing anything.
 ///
 /// Validation runs against a candidate copy first; the real commit repeats this

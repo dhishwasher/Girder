@@ -483,7 +483,11 @@ against `sample-project/` — only the two commands that write are refused.
 | `aether-graph` | The living semantic graph: nodes/edges, impact analysis, and `.aether` serialization. **Source of truth.** |
 | `aether-builder` | tree-sitter → graph mapping, incremental edit sync, syntax-highlight spans. |
 | `aether-ai` | `AiProvider` trait, offline `MockProvider`, OpenAI/Anthropic live providers, multi-provider `Router`, provider extension points. |
-| `aether-app` | The `girder` binary: the MCP server and every CLI subcommand. |
+| `aether-app` | The `girder` binary: the MCP server and the graph CLI. |
+
+The workspace also contains older subsystems (agent swarm, collaboration, tracer and
+DAP adapter, extensions, a desktop GUI). They are not part of the public tool, are off
+by default, and build only with `--features legacy`.
 
 ## Status
 

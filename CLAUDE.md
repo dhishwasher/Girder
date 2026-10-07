@@ -32,9 +32,14 @@ status and limitations.
   `--features live-providers`; Gemini/Grok remain compile-clean extension points.
 - `crates/aether-app` — the `girder` binary: MCP server and graph discovery and
   editing CLI.
-- Legacy crates (`aether-agents`, `aether-debugger`, `aether-dap`,
-  `aether-extensions`, and the `gui` feature) are no longer documented. Leave
-  them compiling and their tests green; do not extend them.
+- Legacy code (the crates `aether-agents`, `aether-debugger`, `aether-dap`,
+  `aether-extensions`, plus the `swarm-plan`, `forge`, `collab`, `dap`, `debug`,
+  `extension` commands, the swarm demo and the GUI inside `aether-app`) is no
+  longer documented and sits behind `--features legacy` (`gui` implies it), off by
+  default. Leave it compiling and its tests green; do not extend it. The default
+  `cargo test --workspace` skips the legacy code in `aether-app`; cover it with
+  `cargo test -p aether-app --features legacy`. CI runs that in a separate
+  non-blocking job.
 
 ## Common commands
 
@@ -177,14 +182,12 @@ No file reading required.
 
 ## Environment
 
-- This VM (ChromeOS Crostini, ~2.7 GB RAM) cannot sustain a parallel build.
-  Always build with `-j1` and never run a second `cargo` job concurrently —
-  a concurrent build has starved this VM before.
-- The toolchain and target dir live on
-  `/mnt/chromeos/removable/MOVESPEED`. `cargo install` **ignores
-  `CARGO_TARGET_DIR`**, so `--target-dir` must be passed explicitly on every
-  invocation, e.g. `cargo install --path crates/aether-app --target-dir
-  /mnt/chromeos/removable/MOVESPEED/aetherforge-install`.
+- Always build with `-j1` and never run a second `cargo` job concurrently; a
+  concurrent build has starved the build host before.
+- `cargo install` **ignores `CARGO_TARGET_DIR`**, so pass `--target-dir`
+  explicitly on every invocation, e.g. `cargo install --path crates/aether-app
+  --target-dir <dir>`. Machine-specific paths live in the untracked
+  `CLAUDE.local.md`.
 - Two `girder` binaries exist: the one `cargo install` places on
   `~/.cargo/bin`, and the debug build under `target/debug/`. A stale
   `~/.cargo/bin/girder` left on `PATH` from before a feature change has

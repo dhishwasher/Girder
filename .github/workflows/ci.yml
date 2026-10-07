@@ -83,22 +83,55 @@ jobs:
       - name: Live provider feature compiles
         run: cargo check -p aether-ai --features live-providers
 
+      - name: Default binary runs
+        run: cargo run -p aether-app -- --version
+
+  # The legacy subsystems (agent swarm, collaboration, tracer/DAP, extensions, the
+  # swarm demo, and the GUI) sit behind `--features legacy`, which is off by default
+  # so the public binary matches its public description. They are kept compiling and
+  # their tests are kept green here, but a failure does not block the main job.
+  legacy:
+    name: legacy feature (non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-legacy-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Clippy with legacy
+        run: cargo clippy -p aether-app --features legacy --all-targets
+
+      - name: Tests with legacy
+        run: cargo test -p aether-app --features legacy
+
       - name: Install debugpy adapter
         run: python3 -m pip install debugpy
 
       - name: DAP debugpy integration test
         run: cargo test -p aether-dap --test debugpy -- --ignored
 
-      - name: Smoke demo runs
-        run: cargo run -p aether-app -- demo
+      - name: Swarm demo runs
+        run: cargo run -p aether-app --features legacy -- demo
 
-      # Compile-only guard for the GUI so it can't silently regress. winit/wgpu
-      # dlopen their system libs at runtime, so no -dev packages are needed to
-      # type-check; actually *running* the window needs a GPU or software Vulkan.
+      # Compile-only guard for the GUI. winit/wgpu dlopen their system libs at
+      # runtime, so no -dev packages are needed to type-check.
       - name: GUI compiles
         run: cargo clippy -p aether-app --features gui
 
-  # The same compile-only idea as the GUI guard above, for the platform this
+  # A compile-only guard, like the GUI one in the legacy job, for the platform this
   # workflow cannot otherwise see. The release workflow builds a Windows
   # binary, but until now nothing checked that one compiles: `libc::pid_t`
   # sat outside its `cfg(unix)` block, and the first `workflow_dispatch` dry

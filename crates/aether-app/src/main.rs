@@ -1,10 +1,12 @@
 //! Girder entry point.
 //!
-//! Default (`cargo run -p aether-app`) runs the headless end-to-end demo — it
-//! needs no display, GPU, or API key. The full egui/wgpu GUI is compiled in with
-//! `--features gui` (`cargo run -p aether-app --features gui`).
+//! Default (`cargo run -p aether-app`) is the MCP server and graph CLI; with no
+//! command it prints usage. The legacy subsystems (agent swarm, collaboration,
+//! tracer/DAP, extensions, the swarm demo) are compiled in with `--features legacy`,
+//! and the egui/wgpu GUI with `--features gui` (which implies `legacy`).
 
 mod project;
+#[cfg(feature = "legacy")]
 mod smoke;
 
 #[cfg(feature = "gui")]
@@ -25,7 +27,6 @@ USAGE:
     girder [COMMAND]
 
 COMMANDS:
-    demo                      Run the headless end-to-end pipeline demo (default)
     config <dir> [--init]     Show the validated effective project configuration.
                               --init creates girder.toml without overwriting.
     setup [--agents <list>] [--dry-run] [--force] [--uninstall]
@@ -51,12 +52,6 @@ COMMANDS:
                               things are named X; `search` is substring, not
                               exact. --kind filters to functions, types, or
                               all (default).
-    swarm-plan <dir> <intent...>
-                              Preview what the swarm would build: runs the
-                              graph-aware Planner, prints the multi-function
-                              feature spec, but writes nothing to the graph.
-    forge <dir> <intent...>   Dispatch the agent swarm on a project with a
-                              natural-language intent, then save the graph
     do <dir> \"<intent...>\" [--dry] [--max-repairs N] [--nodes <path>[,<path>...]]
                               Author a plan via a model and execute it. Selects
                               the top few concept-search nodes for the intent,
@@ -182,6 +177,33 @@ COMMANDS:
                               `T=$(girder test-impact . --quiet); if [ -n
                               \"$T\" ]; then cargo test -- $T; else echo \"no
                               impacted tests\"; fi`.
+    query <dir> [<question...>]   Answer a natural-language question about the
+                              codebase by traversing the semantic graph. No code
+                              is generated. Supports: concept search, impact
+                              analysis, callers/callees, node explain, and
+                              subgraph neighbourhood queries. With no question,
+                              enters an interactive REPL (reads from stdin).
+    mcp [dir] [--watch]       Serve the read-only graph commands to an AI
+                              coding agent over the Model Context Protocol
+                              on stdin/stdout. Exposes search, names, query,
+                              context (--source-only shape), review,
+                              test-impact, and orient as MCP tools. No
+                              writes, no model calls, no network.
+    hook                      Internal fail-open PreToolUse advisory helper.
+    --version                 Show the version
+    --help                    Show this help
+";
+
+#[cfg(feature = "legacy")]
+const LEGACY_USAGE: &str = "\
+LEGACY COMMANDS (built with --features legacy; undocumented, not extended):
+    demo                      Run the headless end-to-end pipeline demo (default)
+    swarm-plan <dir> <intent...>
+                              Preview what the swarm would build: runs the
+                              graph-aware Planner, prints the multi-function
+                              feature spec, but writes nothing to the graph.
+    forge <dir> <intent...>   Dispatch the agent swarm on a project with a
+                              natural-language intent, then save the graph
     collab <operation>        Exchange deterministic semantic-graph CRDT bundles.
                               Operations: init, status, fork, member, sync, merge,
                               compact, review, apply, materialize, secret,
@@ -195,12 +217,6 @@ COMMANDS:
                               runs the debuggee, and prints a stop report with
                               stack frames annotated from the semantic graph.
                               --dry-run shows the plan without launching.
-    query <dir> [<question...>]   Answer a natural-language question about the
-                              codebase by traversing the semantic graph. No code
-                              is generated. Supports: concept search, impact
-                              analysis, callers/callees, node explain, and
-                              subgraph neighbourhood queries. With no question,
-                              enters an interactive REPL (reads from stdin).
     debug <file.py> [--what-if <var>=<val> at <step>]
                               Real Python execution tracer. Records every variable
                               at every line/call/return via sys.settrace. With
@@ -214,17 +230,20 @@ COMMANDS:
                               install <recipe.json> [--approve];
                               enable|disable|remove <extension-id>;
                               marketplace list|search|show|adapt.
-    mcp [dir] [--watch]       Serve the read-only graph commands to an AI
-                              coding agent over the Model Context Protocol
-                              on stdin/stdout. Exposes search, names, query,
-                              context (--source-only shape), review,
-                              test-impact, and orient as MCP tools. No
-                              writes, no model calls, no network.
-    hook                      Internal fail-open PreToolUse advisory helper.
     --gui [dir]               Launch the native egui/wgpu window for a project
-    --version                 Show the version
-    --help                    Show this help
 ";
+
+/// The public command list, plus the legacy commands when built with `--features legacy`.
+fn usage() -> String {
+    #[allow(unused_mut)]
+    let mut text = USAGE.to_string();
+    #[cfg(feature = "legacy")]
+    {
+        text.push('\n');
+        text.push_str(LEGACY_USAGE);
+    }
+    text
+}
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -259,10 +278,11 @@ fn main() {
     }
 
     match cmd {
-        Some("--help") | Some("-h") => println!("{USAGE}"),
+        Some("--help") | Some("-h") => println!("{}", usage()),
         Some("--version") | Some("-V") => {
             println!("girder {}", env!("CARGO_PKG_VERSION"));
         }
+        #[cfg(feature = "legacy")]
         Some("--gui") => launch_gui_or_fallback(args.get(1)),
         Some("config") => report(project::config(&args[1..])),
         Some("setup") => report(project::setup(&args[1..])),
@@ -271,6 +291,7 @@ fn main() {
         Some("names") => report(project::names(&args[1..])),
         Some("context") => report(project::context(&args[1..])),
         Some("new") => report(project::new(&args[1..])),
+        #[cfg(feature = "legacy")]
         Some("swarm-plan") => {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             report(rt.block_on(project::swarm_plan(&args[1..])));
@@ -281,9 +302,10 @@ fn main() {
             Some("run") => report(project::plan_run(&args[2..])),
             _ => {
                 eprintln!("usage: girder plan <validate|explain|run> <plan.json> [--dry]\n");
-                println!("{USAGE}");
+                println!("{}", usage());
             }
         },
+        #[cfg(feature = "legacy")]
         Some("forge") => {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             report(rt.block_on(project::forge(&args[1..])));
@@ -297,22 +319,29 @@ fn main() {
         Some("review") => report(project::review(&args[1..])),
         Some("test-impact") => report(project::test_impact(&args[1..])),
         Some("orient") => report(project::orient(&args[1..])),
+        #[cfg(feature = "legacy")]
         Some("collab") => report(project::collaboration(&args[1..])),
+        #[cfg(feature = "legacy")]
         Some("dap") => {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             report(rt.block_on(project::dap(&args[1..])));
         }
         Some("mcp") => report(project::mcp(&args[1..])),
         Some("query") => report(project::query(&args[1..])),
+        #[cfg(feature = "legacy")]
         Some("debug") => report(project::debug(&args[1..])),
+        #[cfg(feature = "legacy")]
         Some("extension") => {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             report(rt.block_on(project::extensions(&args[1..])));
         }
+        #[cfg(feature = "legacy")]
         Some("demo") | None => run_headless(),
+        #[cfg(not(feature = "legacy"))]
+        None => println!("{}", usage()),
         Some(other) => {
             eprintln!("unknown command: {other}\n");
-            println!("{USAGE}");
+            println!("{}", usage());
         }
     }
 }
@@ -335,11 +364,13 @@ fn report(result: std::io::Result<()>) {
     }
 }
 
+#[cfg(feature = "legacy")]
 fn run_headless() {
     let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
     rt.block_on(smoke::run());
 }
 
+#[cfg(feature = "legacy")]
 fn launch_gui_or_fallback(root: Option<&String>) {
     #[cfg(feature = "gui")]
     {

@@ -1,12 +1,17 @@
-use crate::project::config::{ProjectConfig, CONFIG_FILE};
+use crate::project::config::ProjectConfig;
+#[cfg(any(feature = "legacy", test))]
+use crate::project::config::CONFIG_FILE;
 use crate::project::source::{
     commit_project_writes, graph_project_writes, read_project_bytes, ProjectWrite,
 };
 use aether_builder::GraphBuilder;
-use aether_graph::{Node, NodeKind, RenameOutcome, SemanticGraph};
+#[cfg(any(feature = "legacy", test))]
+use aether_graph::NodeKind;
+use aether_graph::{Node, RenameOutcome, SemanticGraph};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
+#[cfg(any(feature = "legacy", test))]
 #[derive(Debug, Clone)]
 pub(crate) struct ProjectionBaseline {
     files: BTreeMap<String, Option<Vec<u8>>>,
@@ -14,11 +19,13 @@ pub(crate) struct ProjectionBaseline {
     config: Option<Vec<u8>>,
 }
 
+#[cfg(any(feature = "legacy", test))]
 pub(crate) struct ProjectionPlan {
     writes: Vec<ProjectWrite>,
     projected: Vec<PathBuf>,
 }
 
+#[cfg(any(feature = "legacy", test))]
 impl ProjectionPlan {
     pub(crate) fn writes(&self) -> &[ProjectWrite] {
         &self.writes
@@ -30,6 +37,7 @@ impl ProjectionPlan {
     }
 }
 
+#[cfg(any(feature = "legacy", test))]
 #[derive(Clone)]
 struct FunctionProjection {
     path: String,
@@ -43,6 +51,7 @@ struct Replacement {
     source: String,
 }
 
+#[cfg(any(feature = "legacy", test))]
 pub(crate) fn capture_agent_baseline(
     root: &Path,
     config: &ProjectConfig,
@@ -59,6 +68,7 @@ pub(crate) fn capture_agent_baseline(
     })
 }
 
+#[cfg(any(feature = "legacy", test))]
 /// Plan Coder-authored source functions and the durable graph together.
 ///
 /// Existing functions are replaced by their parsed spans. New functions are
@@ -229,6 +239,7 @@ fn add_node_replacement(
         .push(new.path.clone());
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn projection_expected(
     baseline: Option<&ProjectionBaseline>,
     relative: &str,
@@ -255,6 +266,7 @@ fn render_function(source: &str) -> String {
     source
 }
 
+#[cfg(any(feature = "legacy", test))]
 fn append_function(text: &mut String, source: &str) {
     if !text.trim().is_empty() {
         while text.ends_with('\n') {

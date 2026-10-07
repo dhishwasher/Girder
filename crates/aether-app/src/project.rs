@@ -1,8 +1,12 @@
 //! Real project loading, CLI subcommands, and `.aether` persistence.
 
+#[cfg(feature = "legacy")]
 mod collaboration_discovery;
+#[cfg(feature = "legacy")]
 mod collaboration_identity;
+#[cfg(feature = "legacy")]
 mod collaboration_projection;
+#[cfg(feature = "legacy")]
 mod collaboration_transport;
 mod commands;
 mod config;
@@ -43,15 +47,16 @@ pub(crate) use commands::extensions::{
     ExtensionMutation, ExtensionMutationOutcome, ExtensionMutationRequest,
 };
 pub(crate) use commands::{
-    analyze, collaboration, config, context, dap, debug, do_intent, extensions, forge, hook,
-    inspect, mcp, names, new, orient, plan_explain, plan_run, plan_validate, query, refactor,
-    review, search, setup, swarm_plan, test_impact,
+    analyze, config, context, do_intent, hook, inspect, mcp, names, new, orient, plan_explain,
+    plan_run, plan_validate, query, refactor, review, search, setup, test_impact,
 };
 #[cfg(feature = "gui")]
 pub(crate) use commands::{
     author, build_context_json, search_nodes_for_authoring, AuthorEvent, AuthorOutcome,
     DEFAULT_MAX_REPAIRS,
 };
+#[cfg(feature = "legacy")]
+pub(crate) use commands::{collaboration, dap, debug, extensions, forge, swarm_plan};
 pub(crate) use license::require_paid;
 #[cfg(feature = "gui")]
 pub(crate) use planfile::{

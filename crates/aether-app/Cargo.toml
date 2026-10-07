@@ -16,7 +16,17 @@ path = "src/main.rs"
 # the `--headless` smoke demo, which exercises every subsystem over stdout.
 # Enable the real egui/wgpu window with `--features gui`.
 default = []
-gui = ["dep:arboard", "dep:eframe", "dep:egui"]
+# Legacy, undocumented subsystems: the agent swarm (`swarm-plan`, `forge`), graph
+# collaboration (`collab`), the execution tracer and DAP adapter (`debug`, `dap`),
+# declarative extensions (`extension`), and the swarm demo. OFF by default so the
+# public binary matches its public description. Kept compiling, not extended.
+legacy = [
+    "dep:aether-agents",
+    "dep:aether-debugger",
+    "dep:aether-dap",
+    "dep:aether-extensions",
+]
+gui = ["legacy", "dep:arboard", "dep:eframe", "dep:egui"]
 # Opt in to the real HTTP-backed OpenAI and Anthropic providers. With this
 # enabled, configured API keys let the router use live models before falling
 # back to the offline mock.
@@ -26,10 +36,10 @@ live-providers = ["aether-ai/live-providers"]
 aether-graph = { workspace = true }
 aether-builder = { workspace = true }
 aether-ai = { workspace = true }
-aether-agents = { workspace = true }
-aether-debugger = { workspace = true }
-aether-dap = { workspace = true }
-aether-extensions = { workspace = true }
+aether-agents = { workspace = true, optional = true }
+aether-debugger = { workspace = true, optional = true }
+aether-dap = { workspace = true, optional = true }
+aether-extensions = { workspace = true, optional = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time"] }
 serde_json = { workspace = true }
 serde = { workspace = true }

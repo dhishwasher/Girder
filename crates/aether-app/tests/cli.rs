@@ -173,6 +173,7 @@ fn run_girder(args: &[&str]) -> String {
     String::from_utf8_lossy(&output.stdout).into_owned()
 }
 
+#[cfg(feature = "legacy")]
 fn generated_identity_fingerprint(output: &str) -> String {
     output
         .lines()
@@ -1171,6 +1172,7 @@ fn unrelated_test() {
     );
 }
 
+#[cfg(feature = "legacy")]
 #[test]
 fn forge_projects_generated_functions_to_source_file() {
     let repo = TempRepo::new("forge-writeback");
@@ -1195,6 +1197,7 @@ fn forge_projects_generated_functions_to_source_file() {
     assert!(generated.contains("generate_token(0)"), "{generated}");
 }
 
+#[cfg(feature = "legacy")]
 #[test]
 fn forge_validation_failure_leaves_project_unchanged() {
     let repo = TempRepo::new("forge-validation-failure");
@@ -1797,6 +1800,7 @@ rust = ["false", "{test}"]
     assert!(stderr.contains("Rust command exited with 1"), "{stderr}");
 }
 
+#[cfg(feature = "legacy")]
 #[test]
 fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
     let repo = TempRepo::new("collaboration");
@@ -1901,6 +1905,7 @@ fn collaboration_cli_forks_syncs_merges_and_materializes_graphs() {
     );
 }
 
+#[cfg(feature = "legacy")]
 #[test]
 fn collaboration_membership_requires_approval_and_rolls_back_failed_invites() {
     let help = run_girder(&["--help"]);
@@ -1971,6 +1976,7 @@ fn collaboration_membership_requires_approval_and_rolls_back_failed_invites() {
     );
 }
 
+#[cfg(feature = "legacy")]
 #[test]
 fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
     let repo = TempRepo::new("live-collaboration");
@@ -2299,6 +2305,7 @@ fn collaboration_cli_live_host_and_join_converge_authenticated_peers() {
     assert!(status.contains("bob:"), "{status}");
 }
 
+#[cfg(feature = "legacy")]
 #[test]
 fn collaboration_cli_reviews_and_applies_whole_file_projection() {
     let repo = TempRepo::new("collaboration-projection");
@@ -2356,6 +2363,7 @@ fn collaboration_cli_reviews_and_applies_whole_file_projection() {
     assert!(graph.find_by_path("crate::new::added").is_some());
 }
 
+#[cfg(feature = "legacy")]
 #[test]
 fn collaboration_apply_validation_failure_leaves_project_unchanged() {
     let repo = TempRepo::new("collaboration-projection-validation");
@@ -2399,6 +2407,7 @@ commands = [["sh", "-c", "printf collaboration-validation-broke >&2; exit 9"]]
     assert!(!repo.path().join("project.aether").exists());
 }
 
+#[cfg(feature = "legacy")]
 #[test]
 fn generated_extension_requires_approval_and_supports_lifecycle() {
     let repo = TempRepo::new("extension-generate");
@@ -2448,6 +2457,7 @@ fn generated_extension_requires_approval_and_supports_lifecycle() {
     );
 }
 
+#[cfg(feature = "legacy")]
 #[test]
 fn marketplace_browse_adapt_and_approval_reuse_extension_security() {
     let repo = TempRepo::new("extension-marketplace");
@@ -2504,6 +2514,7 @@ fn marketplace_browse_adapt_and_approval_reuse_extension_security() {
     );
 }
 
+#[cfg(feature = "legacy")]
 #[test]
 fn extension_project_projections_are_restored_on_remove() {
     let repo = TempRepo::new("extension-projections");
@@ -2761,6 +2772,7 @@ run_max_output_bytes = 4096
     assert!(output.stdout.len() < 64 * 1024);
 }
 
+#[cfg(feature = "legacy")]
 #[cfg(unix)]
 #[test]
 fn analysis_classifies_a_hung_git_subprocess() {
@@ -2806,7 +2818,7 @@ fn analysis_classifies_a_hung_git_subprocess() {
     );
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, feature = "legacy"))]
 fn crash_forge_at(point: &str) -> TempRepo {
     let repo = TempRepo::new(&format!("fault-{point}"));
     repo.write("src/lib.rs", "pub fn existing() -> i64 { 1 }\n");
@@ -2842,7 +2854,7 @@ fn crash_forge_at(point: &str) -> TempRepo {
     repo
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, feature = "legacy"))]
 #[test]
 fn crash_after_staging_recovers_to_all_old_state() {
     let repo = crash_forge_at("after-staging");
@@ -2850,7 +2862,7 @@ fn crash_after_staging_recovers_to_all_old_state() {
     assert!(!repo.path().join("project.aether").exists());
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, feature = "legacy"))]
 #[test]
 fn crash_after_manifest_recovers_to_all_old_state() {
     let repo = crash_forge_at("after-manifest");
@@ -2858,7 +2870,7 @@ fn crash_after_manifest_recovers_to_all_old_state() {
     assert!(!repo.path().join("project.aether").exists());
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, feature = "legacy"))]
 #[test]
 fn crash_mid_apply_recovers_to_all_old_state() {
     let repo = crash_forge_at("mid-apply");
@@ -2866,7 +2878,7 @@ fn crash_mid_apply_recovers_to_all_old_state() {
     assert!(!repo.path().join("project.aether").exists());
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, feature = "legacy"))]
 #[test]
 fn crash_after_committed_marker_keeps_all_new_state() {
     let repo = crash_forge_at("pre-cleanup");
@@ -2876,6 +2888,91 @@ fn crash_after_committed_marker_keeps_all_new_state() {
     assert!(generated.contains("fn authenticate"), "{generated}");
     let graph = aether_graph::SemanticGraph::load(repo.path().join("project.aether")).unwrap();
     assert!(graph.node_count() > 0);
+}
+
+/// The journal's crash recovery, driven through a core command (`plan run`) at each fault point, so
+/// it stays covered by the default build. The same points are also exercised through `forge` under
+/// `--features legacy` above.
+#[cfg(unix)]
+fn crash_plan_run_at(point: &str) -> TempRepo {
+    let repo = TempRepo::new(&format!("plan-fault-{point}"));
+    repo.write("src/lib.rs", "fn old() {}\n");
+    repo.commit_all("baseline");
+    let head = repo.head();
+    let template = r#"{"plan_version":1,"plan_id":"p","intent":"one step, no checks","base_commit":"BASE_COMMIT",
+        "steps":[{"id":"s1","description":"single edit","edits":[
+            {"path":"src/lib.rs","match":"fn old() {}\n","replace":"fn new() {}\n","occurrences":1}
+        ],"checks":[]}]}"#;
+    let plan_path = write_plan(
+        &format!("fault-{point}"),
+        &template.replace("BASE_COMMIT", &head),
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_girder"))
+        .args(["plan", "run", plan_path.to_str().unwrap()])
+        .current_dir(repo.path())
+        .env("GIRDER_FAULT_EXIT", point)
+        .output()
+        .unwrap();
+    assert_eq!(
+        output.status.code(),
+        Some(87),
+        "plan run must crash at the {point} fault point\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        repo.path().join(".girder/transactions").exists(),
+        "the crash must leave a journal behind"
+    );
+    // Any later analysis command triggers recovery of the dead journal.
+    run_girder(&["test-impact", repo.path().to_str().unwrap()]);
+    assert!(
+        !repo.path().join(".girder/transactions").exists(),
+        "recovery must clean the {point} journal"
+    );
+    let _ = std::fs::remove_file(&plan_path);
+    repo
+}
+
+#[cfg(unix)]
+#[test]
+fn plan_run_crash_after_staging_recovers_to_all_old_state() {
+    let repo = crash_plan_run_at("after-staging");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "fn old() {}\n"
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn plan_run_crash_after_manifest_recovers_to_all_old_state() {
+    let repo = crash_plan_run_at("after-manifest");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "fn old() {}\n"
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn plan_run_crash_mid_apply_recovers_to_all_old_state() {
+    let repo = crash_plan_run_at("mid-apply");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "fn old() {}\n"
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn plan_run_crash_after_committed_marker_keeps_all_new_state() {
+    let repo = crash_plan_run_at("pre-cleanup");
+    // The durable marker is the commit point: interruption after it must preserve the write.
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("src/lib.rs")).unwrap(),
+        "fn new() {}\n"
+    );
 }
 
 // --- Girder Plan Format v1/v2 -----------------------------------------

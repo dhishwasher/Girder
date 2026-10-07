@@ -1,11 +1,16 @@
+#[cfg(feature = "legacy")]
 mod agents;
 mod author;
 mod authoring_context;
+#[cfg(feature = "legacy")]
 mod collaboration;
 mod config;
 mod context_cmd;
+#[cfg(feature = "legacy")]
 mod dap;
+#[cfg(feature = "legacy")]
 mod debug;
+#[cfg(feature = "legacy")]
 pub(crate) mod extensions;
 mod graph;
 mod hook;
@@ -19,19 +24,24 @@ mod review;
 mod setup;
 mod test_impact;
 
+#[cfg(feature = "legacy")]
 pub(crate) use agents::{forge, swarm_plan};
 pub(crate) use author::do_intent;
 #[cfg(feature = "gui")]
 pub(crate) use author::{author, AuthorEvent, AuthorOutcome, DEFAULT_MAX_REPAIRS};
 #[cfg(feature = "gui")]
 pub(crate) use authoring_context::search_nodes_for_authoring;
+#[cfg(feature = "legacy")]
 pub(crate) use collaboration::collaboration;
 pub(crate) use config::config;
 #[cfg(feature = "gui")]
 pub(crate) use context_cmd::build_context_json;
 pub(crate) use context_cmd::context;
+#[cfg(feature = "legacy")]
 pub(crate) use dap::dap;
+#[cfg(feature = "legacy")]
 pub(crate) use debug::debug;
+#[cfg(feature = "legacy")]
 pub(crate) use extensions::extensions;
 pub(crate) use graph::{analyze, inspect, refactor, search};
 pub(crate) use hook::{encode_impact_cache, hook};

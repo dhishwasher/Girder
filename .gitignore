@@ -24,3 +24,4 @@ npm/bin/bitcode.exe
 npm/node_modules/
 npm/*.tgz
 node_modules/
+/CLAUDE.local.md
