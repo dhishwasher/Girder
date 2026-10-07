@@ -1,0 +1,1751 @@
+{
+  "binary_revision": "08fcbdc0891d7700b52b1820b6a5bcb10de5a646",
+  "binary_sha256": "c8fb49e3cf83105198871704c9ac591b52e943d8b7494fc766685f108db3b76b",
+  "runner_sha256": "3ca8244fa49c9a43a3339159681a1a86d2831934cc8383dbb1e776734d33da9b",
+  "labels_final_sha256": "1562c9700c01a4eb12a5e3dea9e67df1f7dbcf50a25a56a6548f604fe62619e9",
+  "git_head": "08fcbdc0891d7700b52b1820b6a5bcb10de5a646",
+  "status": "measured",
+  "rows": [
+    {
+      "id": 0,
+      "file": "encoding/json/stream.go",
+      "line": 187,
+      "stratum": "bare_cross_file",
+      "callee_text": "isSpace",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 1,
+      "file": "text/template/exec.go",
+      "line": 790,
+      "stratum": "bare_cross_file",
+      "callee_text": "goodFunc",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "cf49281ab471302a"
+      ],
+      "expected_target_nodes": [
+        "cf49281ab471302a"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 2,
+      "file": "io/multi.go",
+      "line": 54,
+      "stratum": "bare_cross_file",
+      "callee_text": "copyBuffer",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "9d51dd5a7ff25917"
+      ],
+      "expected_target_nodes": [
+        "9d51dd5a7ff25917"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 3,
+      "file": "encoding/json/v2_inject.go",
+      "line": 60,
+      "stratum": "bare_cross_file",
+      "callee_text": "transformSyntacticError",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 4,
+      "file": "fmt/errors.go",
+      "line": 39,
+      "stratum": "bare_cross_file",
+      "callee_text": "newPrinter",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "05f2201e1af73f59"
+      ],
+      "expected_target_nodes": [
+        "05f2201e1af73f59"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 5,
+      "file": "text/template/funcs.go",
+      "line": 339,
+      "stratum": "bare_cross_file",
+      "callee_text": "indirectInterface",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "16158f65669873aa"
+      ],
+      "expected_target_nodes": [
+        "16158f65669873aa"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 6,
+      "file": "text/template/parse/parse.go",
+      "line": 274,
+      "stratum": "bare_cross_file",
+      "callee_text": "lex",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 7,
+      "file": "sync/waitgroup.go",
+      "line": 107,
+      "stratum": "bare_cross_file",
+      "callee_text": "fatal",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 8,
+      "file": "encoding/json/v2_stream.go",
+      "line": 47,
+      "stratum": "bare_cross_file",
+      "callee_text": "DefaultOptionsV1",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 9,
+      "file": "encoding/json/v2_inject.go",
+      "line": 155,
+      "stratum": "bare_cross_file",
+      "callee_text": "transformSyntacticError",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 10,
+      "file": "encoding/json/encode.go",
+      "line": 408,
+      "stratum": "bare_cross_file",
+      "callee_text": "indirect",
+      "label": "unknown",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "exact"
+    },
+    {
+      "id": 11,
+      "file": "encoding/json/v2_indent.go",
+      "line": 58,
+      "stratum": "bare_cross_file",
+      "callee_text": "transformSyntacticError",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 12,
+      "file": "text/template/funcs.go",
+      "line": 376,
+      "stratum": "bare_cross_file",
+      "callee_text": "indirectInterface",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "16158f65669873aa"
+      ],
+      "expected_target_nodes": [
+        "16158f65669873aa"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 13,
+      "file": "encoding/json/v2_stream.go",
+      "line": 149,
+      "stratum": "bare_cross_file",
+      "callee_text": "Indent",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 14,
+      "file": "text/template/helper.go",
+      "line": 81,
+      "stratum": "bare_cross_file",
+      "callee_text": "New",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 15,
+      "file": "encoding/json/encode.go",
+      "line": 226,
+      "stratum": "bare_cross_file",
+      "callee_text": "appendIndent",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-call-evidence-unattributed",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 16,
+      "file": "text/template/funcs.go",
+      "line": 527,
+      "stratum": "bare_cross_file",
+      "callee_text": "indirectInterface",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "16158f65669873aa"
+      ],
+      "expected_target_nodes": [
+        "16158f65669873aa"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 17,
+      "file": "encoding/json/v2_indent.go",
+      "line": 115,
+      "stratum": "bare_cross_file",
+      "callee_text": "ReportErrorsWithLegacySemantics",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 18,
+      "file": "encoding/json/stream.go",
+      "line": 507,
+      "stratum": "bare_cross_file",
+      "callee_text": "isSpace",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 19,
+      "file": "sync/cond.go",
+      "line": 69,
+      "stratum": "bare_cross_file",
+      "callee_text": "runtime_notifyListAdd",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 20,
+      "file": "sync/rwmutex.go",
+      "line": 212,
+      "stratum": "bare_cross_file",
+      "callee_text": "fatal",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 21,
+      "file": "text/template/funcs.go",
+      "line": 766,
+      "stratum": "bare_cross_file",
+      "callee_text": "printableValue",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "a8407db58e5b4c85"
+      ],
+      "expected_target_nodes": [
+        "a8407db58e5b4c85"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 22,
+      "file": "sort/sort.go",
+      "line": 234,
+      "stratum": "bare_cross_file",
+      "callee_text": "stable",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "ef388d137dea17af"
+      ],
+      "expected_target_nodes": [
+        "ef388d137dea17af"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 23,
+      "file": "sync/rwmutex.go",
+      "line": 74,
+      "stratum": "bare_cross_file",
+      "callee_text": "runtime_SemacquireRWMutexR",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 24,
+      "file": "fmt/scan.go",
+      "line": 1204,
+      "stratum": "bare_cross_file",
+      "callee_text": "parsenum",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "381707fa09398662"
+      ],
+      "expected_target_nodes": [
+        "381707fa09398662"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 25,
+      "file": "text/template/funcs.go",
+      "line": 376,
+      "stratum": "bare_cross_file",
+      "callee_text": "isTrue",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "214b8a381fe72841"
+      ],
+      "expected_target_nodes": [
+        "214b8a381fe72841"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 26,
+      "file": "sync/waitgroup.go",
+      "line": 94,
+      "stratum": "bare_cross_file",
+      "callee_text": "fatal",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 27,
+      "file": "text/template/funcs.go",
+      "line": 313,
+      "stratum": "bare_cross_file",
+      "callee_text": "indirectInterface",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "16158f65669873aa"
+      ],
+      "expected_target_nodes": [
+        "16158f65669873aa"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 28,
+      "file": "encoding/json/v2_stream.go",
+      "line": 282,
+      "stratum": "bare_cross_file",
+      "callee_text": "transformSyntacticError",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 29,
+      "file": "sync/cond.go",
+      "line": 84,
+      "stratum": "bare_cross_file",
+      "callee_text": "runtime_notifyListNotifyOne",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 30,
+      "file": "encoding/json/decode.go",
+      "line": 653,
+      "stratum": "bare_cross_file",
+      "callee_text": "cachedTypeFields",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 31,
+      "file": "text/template/funcs.go",
+      "line": 243,
+      "stratum": "bare_cross_file",
+      "callee_text": "indirectInterface",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "16158f65669873aa"
+      ],
+      "expected_target_nodes": [
+        "16158f65669873aa"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 32,
+      "file": "encoding/json/indent.go",
+      "line": 18,
+      "stratum": "bare_cross_file",
+      "callee_text": "appendHTMLEscape",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-call-evidence-unattributed",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 33,
+      "file": "encoding/json/indent.go",
+      "line": 53,
+      "stratum": "bare_cross_file",
+      "callee_text": "newScanner",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 34,
+      "file": "sync/waitgroup.go",
+      "line": 100,
+      "stratum": "bare_cross_file",
+      "callee_text": "fatal",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 35,
+      "file": "text/template/exec.go",
+      "line": 870,
+      "stratum": "bare_cross_file",
+      "callee_text": "safeCall",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "b62caec5297f5a7c"
+      ],
+      "expected_target_nodes": [
+        "b62caec5297f5a7c"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 36,
+      "file": "encoding/json/v2_indent.go",
+      "line": 23,
+      "stratum": "bare_cross_file",
+      "callee_text": "appendHTMLEscape",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-same-package-proof-refused",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 37,
+      "file": "encoding/json/v2_stream.go",
+      "line": 80,
+      "stratum": "bare_cross_file",
+      "callee_text": "transformSyntacticError",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 38,
+      "file": "text/template/funcs.go",
+      "line": 149,
+      "stratum": "bare_cross_file",
+      "callee_text": "canBeNil",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "3cd1e772e8cc3433"
+      ],
+      "expected_target_nodes": [
+        "3cd1e772e8cc3433"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 39,
+      "file": "encoding/json/v2_indent.go",
+      "line": 123,
+      "stratum": "bare_cross_file",
+      "callee_text": "transformSyntacticError",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 40,
+      "file": "fmt/print.go",
+      "line": 572,
+      "stratum": "bare_other",
+      "callee_text": "uint64",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 41,
+      "file": "sort/zsortfunc.go",
+      "line": 473,
+      "stratum": "bare_other",
+      "callee_text": "swapRange_func",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "e72855974f222bbb"
+      ],
+      "expected_target_nodes": [
+        "e72855974f222bbb"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 42,
+      "file": "strings/replace.go",
+      "line": 240,
+      "stratum": "bare_other",
+      "callee_text": "int",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 43,
+      "file": "strings/strings.go",
+      "line": 375,
+      "stratum": "bare_other",
+      "callee_text": "int",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 44,
+      "file": "strings/strings.go",
+      "line": 615,
+      "stratum": "bare_other",
+      "callee_text": "int",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 45,
+      "file": "bytes/bytes.go",
+      "line": 253,
+      "stratum": "bare_other",
+      "callee_text": "rune",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 46,
+      "file": "bytes/bytes.go",
+      "line": 823,
+      "stratum": "bare_other",
+      "callee_text": "Map",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "8264953b832c2c7f"
+      ],
+      "expected_target_nodes": [
+        "8264953b832c2c7f"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 47,
+      "file": "sort/zsortinterface.go",
+      "line": 279,
+      "stratum": "bare_other",
+      "callee_text": "medianAdjacent",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "93d03619c54d36c0"
+      ],
+      "expected_target_nodes": [
+        "93d03619c54d36c0"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 48,
+      "file": "bytes/buffer.go",
+      "line": 53,
+      "stratum": "bare_other",
+      "callee_text": "int",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 49,
+      "file": "text/template/parse/parse.go",
+      "line": 331,
+      "stratum": "bare_other",
+      "callee_text": "New",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "f213a9b29c58326a"
+      ],
+      "expected_target_nodes": [
+        "f213a9b29c58326a"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 50,
+      "file": "bytes/bytes.go",
+      "line": 1207,
+      "stratum": "bare_other",
+      "callee_text": "Replace",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "4f7bdea3e3b36ad9"
+      ],
+      "expected_target_nodes": [
+        "4f7bdea3e3b36ad9"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 51,
+      "file": "text/template/parse/node.go",
+      "line": 707,
+      "stratum": "bare_other",
+      "callee_text": "uint64",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 52,
+      "file": "sort/zsortfunc.go",
+      "line": 280,
+      "stratum": "bare_other",
+      "callee_text": "medianAdjacent_func",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "200a0e36c69622df"
+      ],
+      "expected_target_nodes": [
+        "200a0e36c69622df"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 53,
+      "file": "sort/zsortfunc.go",
+      "line": 389,
+      "stratum": "bare_other",
+      "callee_text": "int",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 54,
+      "file": "fmt/scan.go",
+      "line": 737,
+      "stratum": "bare_other",
+      "callee_text": "string",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 55,
+      "file": "fmt/format.go",
+      "line": 158,
+      "stratum": "bare_other",
+      "callee_text": "rune",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 56,
+      "file": "strings/replace.go",
+      "line": 458,
+      "stratum": "bare_other",
+      "callee_text": "getStringWriter",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "995beb8c4c13190c"
+      ],
+      "expected_target_nodes": [
+        "995beb8c4c13190c"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 57,
+      "file": "fmt/scan.go",
+      "line": 972,
+      "stratum": "bare_other",
+      "callee_text": "complex64",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 58,
+      "file": "strings/iter.go",
+      "line": 41,
+      "stratum": "bare_other",
+      "callee_text": "yield",
+      "label": "unknown",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "exact"
+    },
+    {
+      "id": 59,
+      "file": "sort/search.go",
+      "line": 124,
+      "stratum": "bare_other",
+      "callee_text": "Search",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 60,
+      "file": "strings/strings.go",
+      "line": 1142,
+      "stratum": "bare_other",
+      "callee_text": "Count",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "0b3f747d674c553d"
+      ],
+      "expected_target_nodes": [
+        "0b3f747d674c553d"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 61,
+      "file": "fmt/scan.go",
+      "line": 661,
+      "stratum": "bare_other",
+      "callee_text": "uint",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 62,
+      "file": "strings/strings.go",
+      "line": 134,
+      "stratum": "bare_other",
+      "callee_text": "IndexByte",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 63,
+      "file": "sort/zsortfunc.go",
+      "line": 353,
+      "stratum": "bare_other",
+      "callee_text": "symMerge_func",
+      "label": "must",
+      "observed_class": "must",
+      "observed_reason": "proven-go-same-package-call",
+      "observed_targets": [
+        "cfc3582304aee474"
+      ],
+      "expected_target_nodes": [
+        "cfc3582304aee474"
+      ],
+      "cell": "exact"
+    },
+    {
+      "id": 64,
+      "file": "bufio/bufio.go",
+      "line": 735,
+      "stratum": "bare_other",
+      "callee_text": "string",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 65,
+      "file": "text/template/parse/node.go",
+      "line": 553,
+      "stratum": "builtin",
+      "callee_text": "append",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 66,
+      "file": "bytes/bytes.go",
+      "line": 1079,
+      "stratum": "builtin",
+      "callee_text": "len",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 67,
+      "file": "errors/join.go",
+      "line": 55,
+      "stratum": "builtin",
+      "callee_text": "append",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 68,
+      "file": "encoding/json/v2_decode.go",
+      "line": 145,
+      "stratum": "builtin",
+      "callee_text": "len",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 69,
+      "file": "encoding/json/decode.go",
+      "line": 263,
+      "stratum": "builtin",
+      "callee_text": "append",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 70,
+      "file": "bytes/iter.go",
+      "line": 54,
+      "stratum": "builtin",
+      "callee_text": "len",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 71,
+      "file": "encoding/json/encode.go",
+      "line": 319,
+      "stratum": "builtin",
+      "callee_text": "panic",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 72,
+      "file": "encoding/json/encode.go",
+      "line": 518,
+      "stratum": "generic",
+      "callee_text": "reflect.TypeAssert[encoding.TextMarshaler]",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-call-evidence-unattributed",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 73,
+      "file": "encoding/json/encode.go",
+      "line": 982,
+      "stratum": "generic",
+      "callee_text": "reflect.TypeAssert[encoding.TextMarshaler]",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-call-evidence-unattributed",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 74,
+      "file": "text/template/exec.go",
+      "line": 766,
+      "stratum": "generic",
+      "callee_text": "reflect.TypeFor[reflect.Value]",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-call-evidence-unattributed",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 75,
+      "file": "encoding/json/decode.go",
+      "line": 845,
+      "stratum": "generic",
+      "callee_text": "reflect.TypeFor[float64]",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-reflection-or-ffi",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 76,
+      "file": "encoding/json/decode.go",
+      "line": 490,
+      "stratum": "generic",
+      "callee_text": "reflect.TypeAssert[encoding.TextUnmarshaler]",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-call-evidence-unattributed",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 77,
+      "file": "text/template/parse/parse.go",
+      "line": 264,
+      "stratum": "go_defer",
+      "callee_text": "t.recover",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 78,
+      "file": "encoding/json/stream.go",
+      "line": 222,
+      "stratum": "go_defer",
+      "callee_text": "encodeStatePool.Put",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-call-evidence-unattributed",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 79,
+      "file": "context/context.go",
+      "line": 455,
+      "stratum": "go_defer",
+      "callee_text": "c.mu.Unlock",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 80,
+      "file": "text/template/exec.go",
+      "line": 359,
+      "stratum": "go_defer",
+      "callee_text": "s.pop",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 81,
+      "file": "text/template/template.go",
+      "line": 106,
+      "stratum": "go_defer",
+      "callee_text": "t.muFuncs.RUnlock",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 82,
+      "file": "fmt/scan.go",
+      "line": 1071,
+      "stratum": "go_defer",
+      "callee_text": "errorHandler",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-same-package-proof-refused",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 83,
+      "file": "text/template/parse/parse.go",
+      "line": 401,
+      "stratum": "go_defer",
+      "callee_text": "t.clearActionLine",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 84,
+      "file": "text/template/template.go",
+      "line": 193,
+      "stratum": "go_defer",
+      "callee_text": "t.muTmpl.RUnlock",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 85,
+      "file": "text/template/funcs.go",
+      "line": 357,
+      "stratum": "iife",
+      "callee_text": "func",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 86,
+      "file": "encoding/json/v2_indent.go",
+      "line": 99,
+      "stratum": "iife",
+      "callee_text": "func",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 87,
+      "file": "encoding/json/encode.go",
+      "line": 333,
+      "stratum": "iife",
+      "callee_text": "func",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 88,
+      "file": "text/template/exec.go",
+      "line": 354,
+      "stratum": "iife",
+      "callee_text": "func",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 89,
+      "file": "sync/waitgroup.go",
+      "line": 238,
+      "stratum": "iife",
+      "callee_text": "func",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 90,
+      "file": "sync/waitgroup.go",
+      "line": 209,
+      "stratum": "pkg_qualified",
+      "callee_text": "race.Enable",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 91,
+      "file": "sync/pool.go",
+      "line": 302,
+      "stratum": "pkg_qualified",
+      "callee_text": "unsafe.Sizeof",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 92,
+      "file": "fmt/print.go",
+      "line": 1176,
+      "stratum": "pkg_qualified",
+      "callee_text": "reflect.TypeOf",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-reflection-or-ffi",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 93,
+      "file": "text/template/parse/parse.go",
+      "line": 174,
+      "stratum": "pkg_qualified",
+      "callee_text": "fmt.Sprintf",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 94,
+      "file": "encoding/json/encode.go",
+      "line": 857,
+      "stratum": "pkg_qualified",
+      "callee_text": "fmt.Sprintf",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 95,
+      "file": "encoding/json/v2_indent.go",
+      "line": 55,
+      "stratum": "pkg_qualified",
+      "callee_text": "jsontext.AllowInvalidUTF8",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 96,
+      "file": "sync/runtime.go",
+      "line": 55,
+      "stratum": "pkg_qualified",
+      "callee_text": "unsafe.Sizeof",
+      "label": "not_a_call_site",
+      "cell": "not_scored"
+    },
+    {
+      "id": 97,
+      "file": "sync/rwmutex.go",
+      "line": 89,
+      "stratum": "pkg_qualified",
+      "callee_text": "race.Read",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 98,
+      "file": "context/context.go",
+      "line": 677,
+      "stratum": "pkg_qualified",
+      "callee_text": "time.Until",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 99,
+      "file": "bytes/bytes.go",
+      "line": 229,
+      "stratum": "pkg_qualified",
+      "callee_text": "bytealg.IndexByteString",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 100,
+      "file": "encoding/json/tags.go",
+      "line": 20,
+      "stratum": "pkg_qualified",
+      "callee_text": "strings.Cut",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 101,
+      "file": "context/context.go",
+      "line": 760,
+      "stratum": "pkg_qualified",
+      "callee_text": "reflectlite.TypeOf",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 102,
+      "file": "fmt/print.go",
+      "line": 94,
+      "stratum": "pkg_qualified",
+      "callee_text": "strconv.AppendInt",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 103,
+      "file": "bytes/bytes.go",
+      "line": 1273,
+      "stratum": "pkg_qualified",
+      "callee_text": "unicode.SimpleFold",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 104,
+      "file": "encoding/json/decode.go",
+      "line": 529,
+      "stratum": "pkg_qualified",
+      "callee_text": "reflect.ValueOf",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-reflection-or-ffi",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 105,
+      "file": "bytes/bytes.go",
+      "line": 1099,
+      "stratum": "pkg_qualified",
+      "callee_text": "utf8.DecodeLastRune",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 106,
+      "file": "text/template/parse/lex.go",
+      "line": 29,
+      "stratum": "pkg_qualified",
+      "callee_text": "fmt.Sprintf",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 107,
+      "file": "sync/waitgroup.go",
+      "line": 90,
+      "stratum": "pkg_qualified",
+      "callee_text": "synctest.Associate",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 108,
+      "file": "strings/builder.go",
+      "line": 39,
+      "stratum": "pkg_qualified",
+      "callee_text": "abi.NoEscape",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 109,
+      "file": "text/template/parse/node.go",
+      "line": 140,
+      "stratum": "pkg_qualified",
+      "callee_text": "fmt.Sprintf",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 110,
+      "file": "io/io.go",
+      "line": 549,
+      "stratum": "selector",
+      "callee_text": "s.r.ReadAt",
+      "label": "unknown",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "exact"
+    },
+    {
+      "id": 111,
+      "file": "fmt/scan.go",
+      "line": 1021,
+      "stratum": "selector",
+      "callee_text": "val.Type",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 112,
+      "file": "fmt/print.go",
+      "line": 680,
+      "stratum": "selector",
+      "callee_text": "p.badVerb",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 113,
+      "file": "fmt/print.go",
+      "line": 851,
+      "stratum": "selector",
+      "callee_text": "p.buf.writeString",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 114,
+      "file": "text/template/exec.go",
+      "line": 1047,
+      "stratum": "selector",
+      "callee_text": "s.at",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 115,
+      "file": "text/template/parse/lex.go",
+      "line": 606,
+      "stratum": "selector",
+      "callee_text": "l.accept",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 116,
+      "file": "text/template/parse/node.go",
+      "line": 321,
+      "stratum": "selector",
+      "callee_text": "sb.WriteByte",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 117,
+      "file": "text/template/parse/parse.go",
+      "line": 141,
+      "stratum": "selector",
+      "callee_text": "t.backup",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 118,
+      "file": "fmt/scan.go",
+      "line": 1006,
+      "stratum": "selector",
+      "callee_text": "s.okVerb",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 119,
+      "file": "strings/builder.go",
+      "line": 113,
+      "stratum": "selector",
+      "callee_text": "b.copyCheck",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 120,
+      "file": "text/template/parse/parse.go",
+      "line": 279,
+      "stratum": "selector",
+      "callee_text": "t.stopParse",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 121,
+      "file": "context/context.go",
+      "line": 512,
+      "stratum": "selector",
+      "callee_text": "parent.Err",
+      "label": "unknown",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "exact"
+    },
+    {
+      "id": 122,
+      "file": "sync/waitgroup.go",
+      "line": 135,
+      "stratum": "selector",
+      "callee_text": "wg.state.Store",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 123,
+      "file": "text/template/parse/parse.go",
+      "line": 631,
+      "stratum": "selector",
+      "callee_text": "t.newEnd",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 124,
+      "file": "encoding/json/decode.go",
+      "line": 957,
+      "stratum": "selector",
+      "callee_text": "v.SetBytes",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 125,
+      "file": "container/list/list.go",
+      "line": 231,
+      "stratum": "selector",
+      "callee_text": "l.lazyInit",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 126,
+      "file": "text/template/parse/lex.go",
+      "line": 393,
+      "stratum": "selector",
+      "callee_text": "l.atRightDelim",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 127,
+      "file": "io/multi.go",
+      "line": 45,
+      "stratum": "selector",
+      "callee_text": "mr.writeToWithBuffer",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 128,
+      "file": "fmt/print.go",
+      "line": 887,
+      "stratum": "selector",
+      "callee_text": "p.buf.writeString",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 129,
+      "file": "text/template/parse/node.go",
+      "line": 604,
+      "stratum": "selector",
+      "callee_text": "b.String",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 130,
+      "file": "encoding/json/encode.go",
+      "line": 487,
+      "stratum": "selector",
+      "callee_text": "e.Buffer.Write",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 131,
+      "file": "text/template/parse/parse.go",
+      "line": 580,
+      "stratum": "selector",
+      "callee_text": "t.peek",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 132,
+      "file": "bufio/bufio.go",
+      "line": 226,
+      "stratum": "selector",
+      "callee_text": "b.readErr",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 133,
+      "file": "text/template/exec.go",
+      "line": 136,
+      "stratum": "selector",
+      "callee_text": "s.tmpl.Name",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 134,
+      "file": "fmt/format.go",
+      "line": 436,
+      "stratum": "selector",
+      "callee_text": "f.fmtSbx",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 135,
+      "file": "fmt/print.go",
+      "line": 788,
+      "stratum": "selector",
+      "callee_text": "f.Complex",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 136,
+      "file": "encoding/json/decode.go",
+      "line": 726,
+      "stratum": "selector",
+      "callee_text": "subv.Set",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 137,
+      "file": "text/template/parse/node.go",
+      "line": 414,
+      "stratum": "selector",
+      "callee_text": "sb.WriteString",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 138,
+      "file": "text/template/parse/parse.go",
+      "line": 370,
+      "stratum": "selector",
+      "callee_text": "t.stopParse",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    },
+    {
+      "id": 139,
+      "file": "encoding/json/encode.go",
+      "line": 473,
+      "stratum": "selector",
+      "callee_text": "v.IsNil",
+      "label": "must",
+      "observed_class": "unknown",
+      "observed_reason": "go-binding-or-interface-dispatch-unproven",
+      "observed_targets": [],
+      "cell": "conservative"
+    }
+  ],
+  "summary": {
+    "exact": 27,
+    "conservative": 91,
+    "overclaim": 0,
+    "unsafe_exclusion": 0
+  },
+  "actual_calls": 118,
+  "not_a_call_sites": 22,
+  "unsound": 0,
+  "girder_must_claims": 23,
+  "girder_must_correct": 23,
+  "must_precision": 1.0
+}
