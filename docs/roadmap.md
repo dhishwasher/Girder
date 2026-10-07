@@ -517,7 +517,7 @@ checks, then all common gates. **Observation:** [stage5-verified-edits](observat
 
 ## Stage 6 — Recurring comparative measurements
 
-**Status: NOT STARTED**
+**Status: DONE** (CI green on `048603e`; see the 2026-10-07 Stage 6 DONE checkpoint)
 
 Extend the existing comparative harness and retain its published baseline.
 Schedule at most one campaign every 30 days, starting at this stage; defer
@@ -533,7 +533,7 @@ runner, pinned identities, published deltas including regressions, raw evidence,
 and resource failures. Replaying old archives does not count as a rerun.
 
 **Gate:** pin/harness validation, fresh comparative campaign, then all common
-gates. **Observation:** none. **Blockers:** preceding stages and hardware capacity.
+gates. **Observation:** [stage6-run2](competitor-benchmark/results/stage6-run2/observation.md). **Blockers:** none.
 
 ## Stage 7 — Turns to correct edit
 
@@ -562,6 +562,20 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-07 (Stage 6 DONE) — CI green on the published evidence
+
+CI run 37635134731 passed on `048603e`, the head containing the run 2 results, raw-evidence archives (20 campaigns,
+`artifacts.sha256`), observation, deltas, and the four passing gate logs for candidate `4c63d85`
+(`docs/observations/stage6-comparative/gates-4c63d85/`: cargo test, clippy `-D warnings`, fmt check, npm tests, all exit 0).
+The precommitted criterion (a fresh rerun with Girder and an external runner, pinned identities, published deltas
+including regressions, raw evidence and resource failures; a replay of old archives does not count) is met, so
+**Stage 6 is DONE**. Carried limits: modest fixtures only; the Girder candidate is the published v0.4.0 binary, not the
+branch head; run 1 stays published as INVALID; GitNexus stays `RESOURCE_BLOCKED` and was not rerun; the next campaign
+is not due before 2026-11-06 (at most one per 30 days). **Next: Stage 7**, which ends as a published blocker unless a
+capable agent is available: its harness is frozen to a local Ollama model this 2.7 GB VM cannot run at the needed
+capability, so no comparison will be made. In parallel, the `legacy` feature split is in progress (legacy subsystems
+move behind `--features legacy`, off by default).
 
 ### 2026-10-07 (Stage 6 measured) — fresh campaign complete; gates and CI pending, NOT DONE
 
