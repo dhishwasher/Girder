@@ -7,6 +7,12 @@ use std::io::{self, Write};
 use std::path::{Component, Path, PathBuf};
 
 const STATE_FILE: &str = "girder-setup-state.json";
+/// The canonical orient-first instruction, shared by every client adapter.
+const INSTRUCTION_BODY: &str = include_str!("../../../../../npm/instructions/orient-first.md");
+const BLOCK_BEGIN: &str =
+    "<!-- girder:orient-first begin (managed by `girder setup`; remove with `girder setup --uninstall`) -->";
+const BLOCK_END: &str = "<!-- girder:orient-first end -->";
+const CURSOR_RULE: &str = ".cursor/rules/girder-orient.mdc";
 #[cfg(windows)]
 const HOOK_FILE: &str = "girder_context_advisory.py";
 #[cfg(windows)]
@@ -51,6 +57,9 @@ struct Options {
     dry_run: bool,
     force: bool,
     uninstall: bool,
+    no_instructions: bool,
+    /// Write project-scoped instruction files (the Cursor rule) under the current directory.
+    project: bool,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -101,6 +110,26 @@ struct ScriptState {
     installed_sha256: String,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "lowercase")]
+enum InstructionKind {
+    /// A delimited block inside a file the user also edits (CLAUDE.md, AGENTS.md).
+    Block,
+    /// A whole file setup created and owns (the Cursor project rule).
+    File,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct InstructionState {
+    path: String,
+    kind: InstructionKind,
+    file_created: bool,
+    original_text: Option<String>,
+    installed_sha256: String,
+    /// The exact block (or whole file) setup wrote.
+    installed: String,
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(default)]
 struct SetupState {
@@ -108,6 +137,7 @@ struct SetupState {
     mcps: Vec<McpState>,
     hooks: Vec<HookState>,
     scripts: Vec<ScriptState>,
+    instructions: Vec<InstructionState>,
 }
 
 #[derive(Debug)]
@@ -197,8 +227,9 @@ fn run(args: &[String], env: Environment, out: &mut dyn Write) -> io::Result<()>
             plan_install(
                 detection,
                 &home,
+                &cwd,
                 &executable,
-                options.force,
+                &options,
                 &mut changes,
                 &mut notes,
             )?;
@@ -261,12 +292,16 @@ fn parse_options(args: &[String]) -> io::Result<Options> {
     let mut dry_run = false;
     let mut force = false;
     let mut uninstall = false;
+    let mut no_instructions = false;
+    let mut project = false;
     let mut index = 0;
     while index < args.len() {
         match args[index].as_str() {
             "--dry-run" => dry_run = true,
             "--force" => force = true,
             "--uninstall" => uninstall = true,
+            "--no-instructions" => no_instructions = true,
+            "--project" => project = true,
             "--agents" => {
                 index += 1;
                 let list = args
@@ -288,7 +323,7 @@ fn parse_options(args: &[String]) -> io::Result<Options> {
             }
             "--help" | "-h" => {
                 return Err(invalid(
-                    "usage: girder setup [--agents claude,codex,cursor,generic] [--dry-run] [--force] [--uninstall]",
+                    "usage: girder setup [--agents claude,codex,cursor,generic] [--dry-run] [--force] [--uninstall] [--no-instructions] [--project]",
                 ));
             }
             other => return Err(invalid(format!("unknown setup option: {other}"))),
@@ -304,6 +339,8 @@ fn parse_options(args: &[String]) -> io::Result<Options> {
         dry_run,
         force,
         uninstall,
+        no_instructions,
+        project,
     })
 }
 
@@ -399,11 +436,13 @@ fn detect(
 fn plan_install(
     detection: &Detection,
     home: &Path,
+    cwd: &Path,
     executable: &Path,
-    force: bool,
+    options: &Options,
     changes: &mut Vec<Change>,
     notes: &mut Vec<String>,
 ) -> io::Result<()> {
+    let force = options.force;
     let config_path = safe_target(
         detection.config_path.as_ref().expect("detected config"),
         home,
@@ -472,6 +511,9 @@ fn plan_install(
     plan_hook_install(
         detection, home, executable, force, &mut state, changes, notes,
     )?;
+    if !options.no_instructions {
+        plan_instruction_install(detection, home, cwd, options, &mut state, changes, notes)?;
+    }
     if has_ownership(&state) {
         let state_after = serde_json::to_vec_pretty(&state)
             .map(append_newline)
@@ -546,8 +588,9 @@ fn plan_uninstall(
     state.mcps = retained;
 
     uninstall_hooks(detection, home, &mut state, changes, notes)?;
+    uninstall_instructions(detection, home, &mut state, changes, notes)?;
 
-    if state.mcps.is_empty() && state.hooks.is_empty() && state.scripts.is_empty() {
+    if !has_ownership(&state) {
         push_change(changes, state_path, state_before, None);
     } else {
         let after = serde_json::to_vec_pretty(&state)
@@ -1066,7 +1109,10 @@ fn sha256(bytes: &[u8]) -> String {
 }
 
 fn has_ownership(state: &SetupState) -> bool {
-    !(state.mcps.is_empty() && state.hooks.is_empty() && state.scripts.is_empty())
+    !(state.mcps.is_empty()
+        && state.hooks.is_empty()
+        && state.scripts.is_empty()
+        && state.instructions.is_empty())
 }
 
 fn mcp_entry() -> Value {
@@ -1464,6 +1510,248 @@ fn json_error(error: serde_json::Error) -> io::Error {
 
 fn invalid(message: impl Into<String>) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidInput, message.into())
+}
+
+fn instruction_block() -> String {
+    format!(
+        "{BLOCK_BEGIN}\n{}\n{BLOCK_END}\n",
+        INSTRUCTION_BODY.trim_end()
+    )
+}
+
+/// Cursor project rules need `.mdc` frontmatter; `alwaysApply: true` includes the rule always.
+fn cursor_rule_file() -> String {
+    format!(
+        "---\ndescription: Girder orient-first guidance\nalwaysApply: true\n---\n{}",
+        instruction_block()
+    )
+}
+
+/// Byte range of the managed block (including its trailing newline), if present.
+fn find_block(text: &str) -> Option<(usize, usize)> {
+    let start = text.find(BLOCK_BEGIN)?;
+    let end_marker = text[start..].find(BLOCK_END)? + start + BLOCK_END.len();
+    let end = if text[end_marker..].starts_with('\n') {
+        end_marker + 1
+    } else {
+        end_marker
+    };
+    Some((start, end))
+}
+
+fn plan_instruction_install(
+    detection: &Detection,
+    home: &Path,
+    cwd: &Path,
+    options: &Options,
+    state: &mut SetupState,
+    changes: &mut Vec<Change>,
+    notes: &mut Vec<String>,
+) -> io::Result<()> {
+    let label = detection.agent.label();
+    match detection.agent {
+        Agent::Claude => {
+            let path = safe_target(&home.join(".claude").join("CLAUDE.md"), home)?;
+            plan_block_install(path, label, state, changes, notes)
+        }
+        Agent::Codex => {
+            // Codex reads AGENTS.override.md instead of AGENTS.md when the override exists
+            // and is non-empty, so an instruction written to AGENTS.md would be ignored.
+            let override_path = detection.config_dir.join("AGENTS.override.md");
+            if std::fs::metadata(&override_path).is_ok_and(|m| m.len() > 0) {
+                notes.push(format!(
+                    "{label}: {} exists, so Codex ignores AGENTS.md; instruction not installed.",
+                    override_path.display()
+                ));
+                return Ok(());
+            }
+            let path = safe_target(&detection.config_dir.join("AGENTS.md"), home)?;
+            plan_block_install(path, label, state, changes, notes)
+        }
+        Agent::Cursor => {
+            if options.project {
+                let path = safe_target(&cwd.join(CURSOR_RULE), home)?;
+                plan_file_install(path, cursor_rule_file(), label, state, changes, notes)
+            } else {
+                notes.push(format!(
+                    "{label}: no instruction installed. Cursor user rules have no documented file path; \
+                     re-run with --project inside a project to add {CURSOR_RULE}."
+                ));
+                Ok(())
+            }
+        }
+        Agent::Generic => Ok(()),
+    }
+}
+
+fn plan_block_install(
+    path: PathBuf,
+    label: &str,
+    state: &mut SetupState,
+    changes: &mut Vec<Change>,
+    notes: &mut Vec<String>,
+) -> io::Result<()> {
+    let before = read_optional(&path)?;
+    let text = optional_utf8(&before, &path)?.unwrap_or_default();
+    let desired = instruction_block();
+    let key = path.to_string_lossy().into_owned();
+    let owned = state.instructions.iter().position(|o| o.path == key);
+    let after_text = match find_block(&text) {
+        Some((start, end)) if text[start..end] == desired => {
+            notes.push(format!(
+                "{label}: orient-first instruction already present in {}.",
+                path.display()
+            ));
+            return Ok(());
+        }
+        Some((start, end)) => {
+            let ours = owned.is_some_and(|i| state.instructions[i].installed == text[start..end]);
+            if !ours {
+                notes.push(format!(
+                    "{label}: {} has a differing orient-first block that setup does not own; left unchanged.",
+                    path.display()
+                ));
+                return Ok(());
+            }
+            format!("{}{}{}", &text[..start], desired, &text[end..])
+        }
+        None => {
+            let mut base = text.clone();
+            if !base.is_empty() {
+                if !base.ends_with('\n') {
+                    base.push('\n');
+                }
+                base.push('\n');
+            }
+            base + &desired
+        }
+    };
+    let after = after_text.into_bytes();
+    let record = InstructionState {
+        path: key,
+        kind: InstructionKind::Block,
+        file_created: before.is_none(),
+        original_text: optional_utf8(&before, &path)?,
+        installed_sha256: sha256(&after),
+        installed: desired,
+    };
+    match owned {
+        Some(index) => {
+            state.instructions[index].installed_sha256 = record.installed_sha256;
+            state.instructions[index].installed = record.installed;
+        }
+        None => state.instructions.push(record),
+    }
+    push_change(changes, path, before, Some(after));
+    Ok(())
+}
+
+fn plan_file_install(
+    path: PathBuf,
+    content: String,
+    label: &str,
+    state: &mut SetupState,
+    changes: &mut Vec<Change>,
+    notes: &mut Vec<String>,
+) -> io::Result<()> {
+    let before = read_optional(&path)?;
+    let key = path.to_string_lossy().into_owned();
+    let owned = state.instructions.iter().position(|o| o.path == key);
+    if before.as_deref() == Some(content.as_bytes()) {
+        notes.push(format!("{label}: {} already up to date.", path.display()));
+        return Ok(());
+    }
+    if let Some(bytes) = &before {
+        let ours = owned.is_some_and(|i| sha256(bytes) == state.instructions[i].installed_sha256);
+        if !ours {
+            notes.push(format!(
+                "{label}: {} exists and is not setup-owned; left unchanged.",
+                path.display()
+            ));
+            return Ok(());
+        }
+    }
+    let after = content.clone().into_bytes();
+    match owned {
+        Some(index) => {
+            state.instructions[index].installed_sha256 = sha256(&after);
+            state.instructions[index].installed = content;
+        }
+        None => state.instructions.push(InstructionState {
+            path: key,
+            kind: InstructionKind::File,
+            file_created: true,
+            original_text: None,
+            installed_sha256: sha256(&after),
+            installed: content,
+        }),
+    }
+    push_change(changes, path, before, Some(after));
+    Ok(())
+}
+
+fn uninstall_instructions(
+    detection: &Detection,
+    home: &Path,
+    state: &mut SetupState,
+    changes: &mut Vec<Change>,
+    notes: &mut Vec<String>,
+) -> io::Result<()> {
+    let label = detection.agent.label();
+    let mut retained = Vec::new();
+    for owned in std::mem::take(&mut state.instructions) {
+        let path = safe_target(Path::new(&owned.path), home)?;
+        let before = read_optional(&path)?;
+        let Some(bytes) = before.clone() else {
+            continue; // already gone: drop the record
+        };
+        match owned.kind {
+            InstructionKind::File => {
+                if sha256(&bytes) == owned.installed_sha256 {
+                    push_change(changes, path, before, None);
+                } else {
+                    notes.push(format!(
+                        "{label}: {} changed after setup; left it and its ownership record.",
+                        path.display()
+                    ));
+                    retained.push(owned);
+                }
+            }
+            InstructionKind::Block => {
+                let text = optional_utf8(&before, &path)?.unwrap_or_default();
+                let Some((start, end)) = find_block(&text) else {
+                    continue; // the user removed the block: drop the record
+                };
+                if text[start..end] != owned.installed {
+                    notes.push(format!("{label}: the orient-first block in {} was edited after setup; left it and its ownership record.", path.display()));
+                    retained.push(owned);
+                    continue;
+                }
+                if sha256(&bytes) == owned.installed_sha256 {
+                    push_change(
+                        changes,
+                        path,
+                        before,
+                        owned.original_text.map(String::into_bytes),
+                    );
+                    continue;
+                }
+                // The file changed elsewhere: remove only the block and the blank line setup added.
+                let mut head = text[..start].to_string();
+                if head.ends_with("\n\n") {
+                    head.pop();
+                }
+                let remaining = format!("{head}{}", &text[end..]);
+                if remaining.trim().is_empty() && owned.file_created {
+                    push_change(changes, path, before, None);
+                } else {
+                    push_change(changes, path, before, Some(remaining.into_bytes()));
+                }
+            }
+        }
+    }
+    state.instructions = retained;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -2087,5 +2375,153 @@ mod tests {
                 0o600
             );
         }
+    }
+
+    fn read(home: &TempHome, relative: &str) -> String {
+        std::fs::read_to_string(home.0.join(relative)).unwrap()
+    }
+
+    #[test]
+    fn instruction_dry_run_shows_the_block_and_writes_nothing() {
+        let home = TempHome::new("instruction-dry-run");
+        home.mkdir(".claude");
+        let output = home.run(&["--agents", "claude", "--dry-run"]);
+        assert!(output.contains("CLAUDE.md"));
+        assert!(output.contains("+<!-- girder:orient-first begin"));
+        assert!(!home.0.join(".claude/CLAUDE.md").exists());
+    }
+
+    #[test]
+    fn instruction_block_installs_once_and_uninstall_restores_exact_bytes() {
+        let home = TempHome::new("instruction-round-trip");
+        home.mkdir(".claude");
+        let original = "# Mine\nkeep this\n";
+        home.write(".claude/CLAUDE.md", original);
+        home.run(&["--agents", "claude"]);
+        let installed = read(&home, ".claude/CLAUDE.md");
+        assert!(installed.starts_with(original));
+        assert!(installed.contains(BLOCK_BEGIN) && installed.contains(BLOCK_END));
+        assert!(installed.contains("call Girder's `orient` tool"));
+        let again = home.run(&["--agents", "claude"]);
+        assert!(again.contains("already present"));
+        assert_eq!(read(&home, ".claude/CLAUDE.md"), installed);
+        home.run(&["--agents", "claude", "--uninstall"]);
+        assert_eq!(read(&home, ".claude/CLAUDE.md"), original);
+    }
+
+    #[test]
+    fn instruction_file_created_by_setup_is_deleted_by_uninstall() {
+        let home = TempHome::new("instruction-created");
+        home.mkdir(".codex");
+        home.run(&["--agents", "codex"]);
+        assert!(read(&home, ".codex/AGENTS.md").contains(BLOCK_BEGIN));
+        home.run(&["--agents", "codex", "--uninstall"]);
+        assert!(!home.0.join(".codex/AGENTS.md").exists());
+        assert!(!home.0.join(".codex").join(STATE_FILE).exists());
+    }
+
+    #[test]
+    fn user_edited_instruction_block_survives_uninstall() {
+        let home = TempHome::new("instruction-edited");
+        home.mkdir(".claude");
+        home.run(&["--agents", "claude"]);
+        let edited =
+            read(&home, ".claude/CLAUDE.md").replace("call Girder's", "ALWAYS call Girder's");
+        home.write(".claude/CLAUDE.md", &edited);
+        let output = home.run(&["--agents", "claude", "--uninstall"]);
+        assert!(output.contains("was edited after setup"));
+        assert_eq!(read(&home, ".claude/CLAUDE.md"), edited);
+        assert!(home.0.join(".claude").join(STATE_FILE).exists());
+    }
+
+    #[test]
+    fn uninstall_removes_only_the_block_when_the_file_changed_elsewhere() {
+        let home = TempHome::new("instruction-elsewhere");
+        home.mkdir(".claude");
+        home.write(".claude/CLAUDE.md", "# Mine\nkeep\n");
+        home.run(&["--agents", "claude"]);
+        let mut grown = read(&home, ".claude/CLAUDE.md");
+        grown.push_str("more\n");
+        home.write(".claude/CLAUDE.md", &grown);
+        home.run(&["--agents", "claude", "--uninstall"]);
+        assert_eq!(read(&home, ".claude/CLAUDE.md"), "# Mine\nkeep\nmore\n");
+    }
+
+    #[test]
+    fn codex_override_file_makes_setup_skip_the_agents_instruction() {
+        let home = TempHome::new("instruction-override");
+        home.mkdir(".codex");
+        home.write(".codex/AGENTS.override.md", "temporary override\n");
+        let output = home.run(&["--agents", "codex"]);
+        assert!(output.contains("Codex ignores AGENTS.md"));
+        assert!(!home.0.join(".codex/AGENTS.md").exists());
+        // An empty override is ignored by Codex, so the instruction is installed.
+        let other = TempHome::new("instruction-empty-override");
+        other.mkdir(".codex");
+        other.write(".codex/AGENTS.override.md", "");
+        other.run(&["--agents", "codex"]);
+        assert!(read(&other, ".codex/AGENTS.md").contains(BLOCK_BEGIN));
+    }
+
+    #[test]
+    fn cursor_instruction_needs_project_and_is_owned_whole() {
+        let home = TempHome::new("instruction-cursor");
+        home.mkdir(".cursor");
+        let plain = home.run(&["--agents", "cursor"]);
+        assert!(plain.contains("--project"));
+        assert!(!home.0.join(CURSOR_RULE).exists());
+        home.run(&["--agents", "cursor", "--project"]);
+        let rule = read(&home, CURSOR_RULE);
+        assert!(rule.starts_with(
+            "---\ndescription: Girder orient-first guidance\nalwaysApply: true\n---\n"
+        ));
+        assert!(rule.contains(BLOCK_BEGIN));
+        home.run(&["--agents", "cursor", "--project", "--uninstall"]);
+        assert!(!home.0.join(CURSOR_RULE).exists());
+    }
+
+    #[test]
+    fn cursor_rule_that_setup_does_not_own_is_left_alone() {
+        let home = TempHome::new("instruction-cursor-foreign");
+        home.mkdir(".cursor");
+        home.write(CURSOR_RULE, "---\nalwaysApply: true\n---\nmine\n");
+        let output = home.run(&["--agents", "cursor", "--project"]);
+        assert!(output.contains("not setup-owned"));
+        assert_eq!(
+            read(&home, CURSOR_RULE),
+            "---\nalwaysApply: true\n---\nmine\n"
+        );
+    }
+
+    #[test]
+    fn project_flag_without_cursor_directory_writes_nothing() {
+        let home = TempHome::new("instruction-no-cursor");
+        let output = home.run(&["--agents", "cursor", "--project"]);
+        assert!(output.contains("Cursor: not detected"));
+        assert!(!home.0.join(".cursor").exists());
+    }
+
+    #[test]
+    fn no_instructions_flag_skips_instruction_files() {
+        let home = TempHome::new("instruction-opt-out");
+        home.mkdir(".claude");
+        home.run(&["--agents", "claude", "--no-instructions"]);
+        assert!(!home.0.join(".claude/CLAUDE.md").exists());
+    }
+
+    #[test]
+    fn instruction_text_is_the_canonical_orient_first_guidance() {
+        let block = instruction_block();
+        assert!(block.contains(INSTRUCTION_BODY.trim_end()));
+        for phrase in [
+            "project.aether",
+            "`orient`",
+            "before broad file reads or grep",
+            "fall back to reading the source",
+            "do not guess",
+        ] {
+            assert!(block.contains(phrase), "missing {phrase}");
+        }
+        assert!(INSTRUCTION_BODY.len() < 1500);
     }
 }
