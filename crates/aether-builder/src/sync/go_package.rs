@@ -250,6 +250,15 @@ fn facts(file: &str, state: &FileState) -> Facts {
                     result.dot_import = true;
                 }
             }
+            // `T[X](v)` parses as a conversion to a generic type but is a call
+            // whenever `T` names a generic function, which syntax cannot decide.
+            "type_conversion_expression" => {
+                result.calls.push(Call {
+                    span: span_of(*node),
+                    name: None,
+                    enclosed: true,
+                });
+            }
             "call_expression" => {
                 let function = node.child_by_field_name("function");
                 let name = function

@@ -255,3 +255,17 @@ fn package_level_initializer_call_is_never_must() {
         assert!(claims[0].targets.is_empty());
     }
 }
+
+/// A generic call with a qualified type argument can defeat the grammar. Code
+/// the grammar cannot parse must still produce an explicit Unknown claim at the
+/// call, never an omitted one.
+#[test]
+fn call_with_qualified_type_argument_gets_a_claim() {
+    let source = "package p\n\nfunc F(v any) {\n\tm, ok := reflect.TypeAssert[encoding.TextMarshaler](v)\n\t_, _ = m, ok\n}\n";
+    let files = vec![("p/a.go".to_string(), source.to_string())];
+    let (graph, _) = build(&files);
+    let end = source.find("(v)").unwrap() + 3;
+    let claims = claim_at(&graph, "p/a.go", end);
+    assert_eq!(claims.len(), 1, "no claim for the call ending at {end}");
+    assert_eq!(claims[0].class, CallClass::Unknown);
+}
