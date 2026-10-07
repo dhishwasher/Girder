@@ -1,0 +1,44 @@
+    Checking aether-app v0.3.3 (/home/corymaynard370/Bit-code/crates/aether-app)
+error: this `if` statement can be collapsed
+   --> crates/aether-app/tests/verified_edits.rs:177:17
+    |
+177 | /                 if id.ends_with("wrong-by-fingerprint") || id == "wrong-overload-by-fingerprint" {
+178 | |                     if !stdout.contains("is the fingerprint of") {
+179 | |                         problems
+180 | |                             .push("expected the pre-apply sibling-fingerprint refusal".to_string());
+181 | |                     }
+182 | |                 }
+    | |_________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#collapsible_if
+    = note: `-D clippy::collapsible-if` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::collapsible_if)]`
+help: collapse nested if block
+    |
+177 ~                 if (id.ends_with("wrong-by-fingerprint") || id == "wrong-overload-by-fingerprint") {
+178 ~                     && !stdout.contains("is the fingerprint of") {
+179 |                         problems
+180 |                             .push("expected the pre-apply sibling-fingerprint refusal".to_string());
+181 ~                     }
+    |
+
+error: this `if` statement can be collapsed
+   --> crates/aether-app/tests/verified_edits.rs:183:17
+    |
+183 | /                 if id.ends_with("wrong-by-delta") || id == "wrong-overload-by-delta" {
+184 | |                     if !stdout.contains("the edit changed") {
+185 | |                         problems.push("expected the post-apply wrong-delta refusal".to_string());
+186 | |                     }
+187 | |                 }
+    | |_________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#collapsible_if
+help: collapse nested if block
+    |
+183 ~                 if (id.ends_with("wrong-by-delta") || id == "wrong-overload-by-delta") {
+184 ~                     && !stdout.contains("the edit changed") {
+185 |                         problems.push("expected the post-apply wrong-delta refusal".to_string());
+186 ~                     }
+    |
+
+error: could not compile `aether-app` (test "verified_edits") due to 2 previous errors

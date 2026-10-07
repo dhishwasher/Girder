@@ -174,16 +174,15 @@ fn every_frozen_plan_meets_its_expected_outcome() {
                 }
                 // Which phase refused matters: a baseline that is a sibling's fingerprint is caught
                 // before anything is applied; a wrong declared delta is caught after the edit.
-                if id.ends_with("wrong-by-fingerprint") || id == "wrong-overload-by-fingerprint" {
-                    if !stdout.contains("is the fingerprint of") {
-                        problems
-                            .push("expected the pre-apply sibling-fingerprint refusal".to_string());
-                    }
+                if (id.ends_with("wrong-by-fingerprint") || id == "wrong-overload-by-fingerprint")
+                    && !stdout.contains("is the fingerprint of")
+                {
+                    problems.push("expected the pre-apply sibling-fingerprint refusal".to_string());
                 }
-                if id.ends_with("wrong-by-delta") || id == "wrong-overload-by-delta" {
-                    if !stdout.contains("the edit changed") {
-                        problems.push("expected the post-apply wrong-delta refusal".to_string());
-                    }
+                if (id.ends_with("wrong-by-delta") || id == "wrong-overload-by-delta")
+                    && !stdout.contains("the edit changed")
+                {
+                    problems.push("expected the post-apply wrong-delta refusal".to_string());
                 }
             }
             "committed" | "committed-uncertified" => {

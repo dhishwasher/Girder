@@ -1,0 +1,1 @@
+clippy -D warnings failed on candidate beae7c2 (two collapsible_if in crates/aether-app/tests/verified_edits.rs). Fixed in the next commit; gates were re-run in full on that candidate. Kept as a published failed attempt.
