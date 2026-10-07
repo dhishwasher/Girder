@@ -12,6 +12,9 @@ mod report;
 mod schema;
 mod verify;
 
+/// The node fingerprint `verify.baseline` is checked against; also emitted by `girder context`.
+pub(crate) use verify::fingerprint as node_fingerprint;
+
 use crate::project::config::ProjectConfig;
 use crate::project::output_sink::{out, Sink};
 use schema::Plan;
