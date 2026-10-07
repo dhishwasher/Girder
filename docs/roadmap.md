@@ -8,7 +8,7 @@ verified edits.
 
 Every session starts by reading this file and ends by updating it. Execute stages
 in order, with the language dependency in Stage 3 enforced. Commit and push each
-coherent piece separately; do not tag or release. The first program commit is this
+coherent piece separately; do not tag or release (lifted 2026-10-07 by the user's explicit instruction to merge, tag and release 0.4.0). The first program commit is this
 roadmap, before implementation. Freeze a stage's policy before measuring it.
 
 Statuses are **NOT STARTED**, **IN PROGRESS**, **DONE**, and
@@ -562,6 +562,14 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-07 (release authorized) — merge to main and release 0.4.0
+
+The user explicitly authorized merging, tagging and releasing ("obviously tag release push merge"), lifting the
+no-tag rule above. Plan: bump to 0.4.0 (Cargo.toml, npm/package.json, server.json, READMEs), write RELEASE_NOTES
+from `git log v0.3.3..HEAD`, open a PR, merge only after CI is green on it, then tag `v0.4.0` on the merged
+main commit and verify the release workflow, npm installation and registry as for 0.3.x. Stage 6 remains
+NOT STARTED (pins inspected: the 0.2.6 baseline artifacts exist on the drive; a fresh serial campaign is next).
 
 ### 2026-10-07 (Stage 5 DONE) — CI green on the published evidence
 

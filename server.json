@@ -3,7 +3,7 @@
   "name": "io.github.dhishwasher/girder",
   "title": "Girder",
   "description": "Saves AI coding-agent context by giving exact code instead of whole files, from a local graph.",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "repository": {
     "url": "https://github.com/dhishwasher/Girder",
     "source": "github"
@@ -14,7 +14,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "girder-mcp",
-      "version": "0.3.3",
+      "version": "0.4.0",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"

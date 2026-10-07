@@ -197,7 +197,7 @@ silently falling back to PATH the way a normal run does.
 
 ## License
 
-This package, `girder-mcp` 0.3.3, is licensed under the
+This package, `girder-mcp` 0.4.0, is licensed under the
 [Apache License, Version 2.0](https://github.com/dhishwasher/Girder/blob/main/LICENSE).
 It permits commercial use, modification, redistribution, forks, and hosted
 use, subject to the license terms. Every tool above is ungated — no account,

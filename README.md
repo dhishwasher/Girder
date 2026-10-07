@@ -16,7 +16,7 @@ npx -y girder-mcp setup
 That one command detects and configures Claude Code, Codex, and Cursor.
 
 [![CI](https://github.com/dhishwasher/Girder/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dhishwasher/Girder/actions/workflows/ci.yml)
-Latest stable release: [v0.3.3](https://github.com/dhishwasher/Girder/releases/tag/v0.3.3) (Apache-2.0).
+Latest stable release: [v0.4.0](https://github.com/dhishwasher/Girder/releases/tag/v0.4.0) (Apache-2.0).
 Contributions: see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 **Measured output bytes, not tokens (no tokenizer was run):**
@@ -998,7 +998,7 @@ is the authoritative text.
 
 The previously published v0.3.2 npm package and release binaries remain under
 the BUSL license they shipped with; published releases are immutable. The
-current v0.3.3 npm package and release binaries ship with Apache-2.0.
+current v0.4.0 npm package and release binaries ship with Apache-2.0.
 
 There is no current paid tier, and every shipped tool is ungated: no account
 or license key is required. Anyone who already holds a signed license key from
