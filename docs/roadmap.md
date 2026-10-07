@@ -496,7 +496,7 @@ hook) is recorded as documented but not built.
 
 ## Stage 5 — Verified edits
 
-**Status: NOT STARTED**
+**Status: MEASURED, DONE pending CI** (see the 2026-10-07 Stage 5 checkpoint)
 
 Extend existing graph-addressed edits and journaled projection, not a separate
 editor. The agent names an exact node and baseline fingerprint and declares the
@@ -513,7 +513,7 @@ test execution separately; predicted reachability is not execution evidence.
 without source or graph changes, while the correct-target counterpart succeeds.
 
 **Gate:** wrong-target/correct-target, stale-input, unexpected-edge, and rollback
-checks, then all common gates. **Observation:** none. **Blockers:** preceding stages.
+checks, then all common gates. **Observation:** [stage5-verified-edits](observations/stage5-verified-edits/observation.md). **Blockers:** none.
 
 ## Stage 6 — Recurring comparative measurements
 
@@ -562,6 +562,19 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-07 (Stage 5 measured) — verified edits built; criterion met, DONE pending CI
+
+Certified `replace_node` steps (a `verify` block with path-bound fingerprints and a declared node/edge delta)
+are checked on a disposable candidate before commit: refusal categories insufficient_evidence, ambiguity,
+wrong_overload, stale_input, delta_mismatch, unexpected_edge; projection exactness and incremental-vs-cold
+agreement are enforced. All 19 frozen plans meet their outcome; the wrong-overload plans are refused with the
+whole tree hash-identical and the correct-target plan commits. Nine mutation checks each break a guard test;
+the three fixture-unreachable guards have unit tests. Gates `300fff7` all pass; first candidate `beae7c2`
+failed clippy and is published. Evidence: `docs/observations/stage5-verified-edits/`. Limits: replace_node on
+Rust/Python only, structural delta, no live-agent authoring. Stage 5 is marked DONE only after CI is green on
+the pushed head (recorded next). **Next: Stage 6**, recurring comparisons (needs a frozen pin set and a serial
+campaign over three hours; at most one per 30 days).
 
 ### 2026-10-07 (Stage 4 DONE) — CI green on the published evidence
 
