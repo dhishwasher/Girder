@@ -7,6 +7,11 @@ npx -y girder-mcp setup --dry-run
 npx -y girder-mcp setup
 ```
 
+The MCP entry setup writes launches the installed local binary (`<path-to-girder> mcp .`),
+so clients run Girder without downloading anything at launch. If setup is running from
+npx's transient cache (a path containing `_npx`), no stable binary path exists and the
+entry falls back to `npx -y girder-mcp .`.
+
 Setup writes only under the home directory and records its exact changes in
 `girder-setup-state.json` beside each detected client config. Uninstall restores
 only those owned changes. A foreign server already occupying the `girder` name

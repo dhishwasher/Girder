@@ -220,9 +220,13 @@ against each client's own documentation on 2026-10-06; sources and quotes are in
 [`docs/observations/stage4-clients/`](docs/observations/stage4-clients/doc-verification.md).
 
 **Which form installs what.** `girder setup` from a built or installed binary
-installs MCP, hooks, and the instruction. `npx -y girder-mcp setup` runs the
-*published* package's setup, which installs the instruction only once a release
-that includes it ships; the `npx -y girder-mcp .` server entry is unchanged.
+installs MCP, hooks, and the instruction, and writes an MCP entry that launches
+that installed binary (`<path-to-girder> mcp .`), so clients run local Girder with
+no package download at launch. `npx -y girder-mcp setup` runs the *published*
+package's setup, which installs the instruction only once a release that includes
+it ships; when setup runs from npx's transient cache there is no stable binary path,
+so the entry falls back to the `npx -y girder-mcp .` launcher form and setup says so
+(install Girder, then run `girder setup`, to switch to the local binary).
 
 The packaged hook launcher forwards each event to the pinned native `girder hook`
 executable and fails open on errors. Only standalone `PreToolUse` JSON is
