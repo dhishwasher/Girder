@@ -496,7 +496,7 @@ hook) is recorded as documented but not built.
 
 ## Stage 5 — Verified edits
 
-**Status: MEASURED, DONE pending CI** (see the 2026-10-07 Stage 5 checkpoint)
+**Status: DONE** (CI green on `6f7118c`; see the 2026-10-07 Stage 5 DONE checkpoint)
 
 Extend existing graph-addressed edits and journaled projection, not a separate
 editor. The agent names an exact node and baseline fingerprint and declares the
@@ -562,6 +562,16 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-07 (Stage 5 DONE) — CI green on the published evidence
+
+CI run 37584566098 passed both jobs on `6f7118c`, the head containing the Stage 5 observation (with binary
+identity, commands and disclosures), gate logs for `300fff7`, and the impact-field assertion. The
+precommitted criterion is met, so **Stage 5 is DONE**. Carried limits: certified scope is `replace_node` on
+Rust/Python; the stale-bytes path relies on an existing non-certified test; impact-list truncation is not
+exercised end to end; `~/.cargo/bin/girder` was stale until reinstalled for Stage 6.
+**Next: Stage 6**, recurring comparisons: freeze versions, SHAs, hashes, adapters, corpus, limits and the
+Girder commit; one serial campaign over three hours; at most one per 30 days.
 
 ### 2026-10-07 (Stage 5 measured) — verified edits built; criterion met, DONE pending CI
 
