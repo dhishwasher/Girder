@@ -462,7 +462,8 @@ needs a harder successor appended in a new versioned corpus file, never by editi
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 
-**Status: NOT STARTED**
+**Status: IN PROGRESS** (criterion met on committed evidence; **DONE pending CI**; see the
+2026-10-06 Stage 4 checkpoint)
 
 Build **one shared MCP bundle with per-client adapters**, covering **Claude Code,
 Cursor, and Codex** at minimum. Start with Claude Code because the advisory hook
@@ -488,8 +489,10 @@ adapter keeps this stage incomplete.
 
 **Gate:** isolated per-client install/MCP/instruction smoke checks; advisory-hook
 checks for normal, missing-graph, malformed-input, and hook-failure cases where
-supported; then all common gates. **Observation:** none.
-**Blockers:** preceding stages; formats must be reverified at implementation.
+supported; then all common gates. **Observation:** [stage4-clients/observation.md](observations/stage4-clients/observation.md)
+(formats frozen first in [doc-verification.md](observations/stage4-clients/doc-verification.md)).
+**Blockers:** none; formats were reverified on 2026-10-06 and one adapter step (the Cursor
+hook) is recorded as documented but not built.
 
 ## Stage 5 — Verified edits
 
@@ -559,6 +562,31 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-06 (Stage 4 measured) — client adapters built; criterion met, DONE pending CI
+
+Candidate `aa153de6` (binary `625025fa…`). Detail in the
+[Stage 4 observation](observations/stage4-clients/observation.md); documentation facts were frozen first
+([doc-verification.md](observations/stage4-clients/doc-verification.md), source and date for every format).
+- **Built:** one canonical orient-first instruction (`npm/instructions/orient-first.md`) installed by
+  `girder setup` through each client's native mechanism: a delimited block in `~/.claude/CLAUDE.md`, a block
+  in `$CODEX_HOME/AGENTS.md` (skipped and reported when a non-empty `AGENTS.override.md` exists), and a
+  Cursor project rule `.cursor/rules/girder-orient.mdc` with `--project`. Ownership-tracked, idempotent,
+  exact uninstall; `--no-instructions` opts out. README and `docs/setup.md` cover all three clients and the
+  raw MCP JSON/TOML fallback with per-client placement; raw `npx` setup preserved.
+- **Evidence:** 11 new setup tests (22 existing unchanged; three guards mutation-checked); an isolated
+  per-client smoke (config parses in each client's documented format, instruction present, MCP server
+  answers with all 7 tools, uninstall clean): **Claude Code, Codex, Cursor all PASS**; hook cases (normal,
+  missing graph, malformed input, hook failure) pass through the installed commands for Claude Code and
+  Codex; all four gates passed (799 tests, 0 failed). The first smoke attempt failed one cold-hook check
+  (the hook's 20 ms deadline answers silently) and remains published.
+- **Disclosed:** the `npx -y girder-mcp .` launch path and `npx ... setup` (published package) were not
+  exercised offline; no live client session was driven, so "loads the instruction" rests on vendor docs plus
+  file and protocol checks; Cursor's instruction needs `--project` (user rules are UI-only, no file path is
+  documented) and its hook is documented but not built (no pre-read hook can add context without blocking);
+  Linux only.
+
+Stage 4 is marked DONE only after CI is green on the pushed head (recorded next). Stage 5 follows.
 
 ### 2026-10-06 (Go DONE; Stage 3 complete) — CI green on the published evidence
 

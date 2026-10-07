@@ -1,0 +1,172 @@
+{
+  "binary_sha256": "625025fa7c0f58da4400b4d6df96f489c7f0b254f7abb9dbf0058c72219a47ba",
+  "git_head": "aa153de67afa1397631c287a9ece79b13ab844e1",
+  "npx_launch_path_exercised": false,
+  "clients": [
+    {
+      "client": "claude",
+      "checks": {
+        "analyze_exit": 0,
+        "setup_exit": 0,
+        "mcp_entry": {
+          "args": [
+            "-y",
+            "girder-mcp",
+            "."
+          ],
+          "command": "npx"
+        },
+        "mcp_entry_ok": true,
+        "instruction_path": ".claude/CLAUDE.md",
+        "instruction_ok": true,
+        "server": {
+          "initialize_ok": true,
+          "tools": [
+            "ask_codebase",
+            "find_definition",
+            "get_source",
+            "impacted_tests",
+            "orient",
+            "review_changes",
+            "search_code"
+          ],
+          "all_expected_tools": true,
+          "stderr_bytes": 93
+        },
+        "hooks": {
+          "normal": {
+            "exit": 0,
+            "stdout": "{\"hookSpecificOutput\":{\"additionalContext\":\"Girder: consider `girder context . --nodes <node::path> --json --source-only` before this whole-file read.\",\"hookEventName\":\"PreToolUse\"}}",
+            "stderr_bytes": 0
+          },
+          "normal_attempts": {
+            "attempts": 6,
+            "advised": 6,
+            "silent": 0
+          },
+          "missing_graph": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "malformed_input": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "hook_failure": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "ok": true
+        },
+        "uninstall_exit": 0,
+        "instruction_removed": true
+      },
+      "passed": true
+    },
+    {
+      "client": "codex",
+      "checks": {
+        "analyze_exit": 0,
+        "setup_exit": 0,
+        "mcp_entry": {
+          "args": [
+            "-y",
+            "girder-mcp",
+            "."
+          ],
+          "command": "npx"
+        },
+        "mcp_entry_ok": true,
+        "instruction_path": ".codex/AGENTS.md",
+        "instruction_ok": true,
+        "server": {
+          "initialize_ok": true,
+          "tools": [
+            "ask_codebase",
+            "find_definition",
+            "get_source",
+            "impacted_tests",
+            "orient",
+            "review_changes",
+            "search_code"
+          ],
+          "all_expected_tools": true,
+          "stderr_bytes": 92
+        },
+        "hooks": {
+          "normal": {
+            "exit": 0,
+            "stdout": "{\"hookSpecificOutput\":{\"additionalContext\":\"Girder: consider `girder context . --nodes <node::path> --json --source-only` before this whole-file read.\",\"hookEventName\":\"PreToolUse\"}}",
+            "stderr_bytes": 0
+          },
+          "normal_attempts": {
+            "attempts": 6,
+            "advised": 6,
+            "silent": 0
+          },
+          "missing_graph": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "malformed_input": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "hook_failure": {
+            "exit": 0,
+            "stdout": "",
+            "stderr_bytes": 0
+          },
+          "ok": true
+        },
+        "uninstall_exit": 0,
+        "instruction_removed": true
+      },
+      "passed": true
+    },
+    {
+      "client": "cursor",
+      "checks": {
+        "analyze_exit": 0,
+        "setup_exit": 0,
+        "mcp_entry": {
+          "args": [
+            "-y",
+            "girder-mcp",
+            "."
+          ],
+          "command": "npx"
+        },
+        "mcp_entry_ok": true,
+        "instruction_path": "proj/.cursor/rules/girder-orient.mdc",
+        "instruction_ok": true,
+        "cursor_frontmatter_ok": true,
+        "server": {
+          "initialize_ok": true,
+          "tools": [
+            "ask_codebase",
+            "find_definition",
+            "get_source",
+            "impacted_tests",
+            "orient",
+            "review_changes",
+            "search_code"
+          ],
+          "all_expected_tools": true,
+          "stderr_bytes": 93
+        },
+        "hook_registered": false,
+        "hook_note": "not built: no documented pre-read hook can add advisory context",
+        "uninstall_exit": 0,
+        "instruction_removed": true
+      },
+      "passed": true
+    }
+  ],
+  "all_passed": true
+}
