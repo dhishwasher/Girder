@@ -341,8 +341,8 @@
     "test_inventory": "Each state lists every test node in the fixture. A native whole-test-file prediction expands to every listed node in that file before scoring; this models what will run and retains unrelated nodes as false positives.",
     "tests": "Test nodes in the reverse-transitive impact set."
   },
-  "policy_id": "girder-competitor-benchmark-v1-revision-12",
-  "policy_revision": 12,
+  "policy_id": "girder-competitor-benchmark-v1-revision-13",
+  "policy_revision": 13,
   "primary_question": "Does Girder have a defensible measured advantage in trustworthy coding-agent context and blast-radius/change analysis on this frozen corpus?",
   "required_report_sections": [
     "Where Girder Lost",
@@ -415,6 +415,12 @@
       "reason": "Revision 11 produced twelve valid external modest-language campaigns and eight completed Girder campaigns. Aggregate audit found the Girder adapter did not normalize conventional Rust crate paths, where crate::core omits the filesystem-only src prefix, even though the mapping to src/core.rs was unique. Revision 12 adds only that language-convention normalization and its tests. All eight Girder revision 11 runs are retained and excluded; the twelve external runs remain valid because their policy, adapters, answers, and scoring are unchanged.",
       "revision": 11,
       "status": "external modest campaigns valid; Girder modest campaigns invalidated before aggregate"
+    },
+    {
+      "commit": "37e4d5b3eba6d3cd94a797ce3703506966b92d2f",
+      "reason": "The first Stage 6 campaign ran the Girder 0.4.0 release binary through the revision 12 Girder adapter, which stamped every record with version 0.2.6 and commit 3f7d5ee from a class constant and never checked the binary it launched. All 20 campaigns completed (exit 0) but their Girder rows were mislabeled, so the run is retained as an invalid attempt. Revision 13 changes only the Girder adapter: version and commit are taken from what the launched binary reports (girder --version) and must be a known release (0.2.6 or 0.4.0), otherwise the adapter refuses. No oracle, corpus, target, limit, scorer, or external-runner behavior changed; the revision 11 external campaigns and revision 12 Girder baseline remain valid.",
+      "revision": 12,
+      "status": "valid baseline for 0.2.6; superseded for Girder identity handling"
     }
   ],
   "schema_version": 1,

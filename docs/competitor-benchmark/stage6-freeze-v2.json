@@ -1,0 +1,99 @@
+{
+  "adapters_sha256": {
+    "code_review_graph.py": "9ab8f9b1ad3ba902394def593c3460642c20e76c5d2317987f219fb38d266a06",
+    "codebase_memory.py": "8df7cf09e37a510805624709012807ded04c389cce3207d128dad9f1ad310de0",
+    "girder.py": "3b7503c76499de9771e8cea6ae81a222140d05b3823430f42f552f9323bcbf0b",
+    "ripwire.py": "53c9ac1dbec68f703a5188d44347d5a5f65d5f32d3d9527208afca4ee49042ce"
+  },
+  "campaign_limit": "At most one campaign per 30 days; the previous published campaign (modest-final) ran 2026-09-11/12.",
+  "campaign_order": [
+    "girder",
+    "girder-watch",
+    "ripwire",
+    "codebase-memory-mcp",
+    "code-review-graph"
+  ],
+  "driver": {
+    "run_dir": "runs/stage6-run2",
+    "script": "tools/stage6_run_campaign.sh"
+  },
+  "external_runners": {
+    "code-review-graph": {
+      "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "install": "hash-locked venv from docs/competitor-benchmark/locks/code-review-graph-requirements.txt",
+      "lock_sha256": "7531d4a0dd1357675bcb9151ff8ee44563a6f3e974a10856451fb009396fc3dc",
+      "note": "attempted last; recorded INSTALL_FAILED/blocked if the locked install cannot complete",
+      "pip": "26.2.1 (pip 23.0.1 resolved py-key-value-aio 0.4.6 against the 0.4.5 lock; the lock and hashes are unchanged)",
+      "venv": "/tmp venv (the drive cannot hold symlinks)",
+      "version": "2.3.8"
+    },
+    "codebase-memory-mcp": {
+      "binary": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/codebase-memory-mcp-0.10.8/codebase-memory-mcp",
+      "binary_sha256": "1175645cb30560e7e47d78611cd1bcb509478eaf6d4e51f72fe18327ee9c1351",
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "runs_from": "a fresh writable temp copy, as in the baseline",
+      "version": "0.10.8"
+    },
+    "gitnexus": {
+      "state": "RESOURCE_BLOCKED in the baseline; retained as blocked, not rerun on this host",
+      "version": "1.6.11"
+    },
+    "ripwire": {
+      "binary": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/ripwire-0.5.0/ripwire-0.5.0-linux-x64/ripwire",
+      "binary_sha256": "31595be94f9199a16dfd78b577fe95219366878b41dc5c7858eba2475ad61b14",
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "version": "0.5.0"
+    }
+  },
+  "fixtures": [
+    "modest-rust",
+    "modest-python",
+    "modest-typescript-tsx",
+    "modest-go"
+  ],
+  "frozen_at_utc": "2026-10-07T12:25:28Z",
+  "girder_baseline_for_deltas": {
+    "commit": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+    "published_results": "docs/competitor-benchmark/results/modest-final/",
+    "version": "0.2.6"
+  },
+  "girder_candidate": {
+    "archive_sha256": "80f24114a453dd023941abbfbc9dd47786f662af801aad7ca84c7d589309d555",
+    "binary": "/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1/acquisition/girder-0.4.0/girder",
+    "binary_sha256": "81239a6be95992cd028f3e9bbeef51160f6c0a0eee7cdb0b27e041d9706652b7",
+    "commit": "b38c427b7451814b5ea5a7fe5368ba7d806a2efe",
+    "source": "GitHub release v0.4.0 asset, checksum verified against the published .sha256",
+    "tag": "v0.4.0",
+    "version": "0.4.0"
+  },
+  "harness_sha256": {
+    "campaign.py": "9942ba0455a53e5caf9363ba334ef1e2e7f3fc901340729f2101c35292e56f6a",
+    "fixtures.py": "4c7c23efaecbdd40dfab7c322b6059e80ea59c8f4ab53b157f4264e5e13d6a66",
+    "mcp.py": "034ee211e691787d306abee7deccfe27383e92016ca240a885fc52ba65b3eda6",
+    "process.py": "60fa40ec5fd13ce38775c995cdecfb841e82fa6d378ff783e9b418c98395e9b1",
+    "protocol.py": "96a18f063a5aa1ba2bf6b95078ec5dfe939259987cc5bc1826f8b43843b9e9cf",
+    "reporting.py": "cfbe516766d2f62a3103c2687a08c4e2143ca28577f71b48f9bd536adaec48d6",
+    "resources.py": "c30212bb9762c4afefb6373792634e7d07292600636fe95b13914ff42a1f636d",
+    "scoring.py": "f342d9cf8bb9edd419a3e4dea05a365ee33c2d3984e313ba50ca182f5f497460"
+  },
+  "host": {
+    "nproc": 2,
+    "os": "Linux 6.6 (ChromeOS Crostini)",
+    "ram_mb": 2747
+  },
+  "inputs_sha256": {
+    "corpus.json": "1711d8b456e960f65f5314a55ce3f2f5d200d44cd43fdbd2deb10efaa98c77e1",
+    "oracle.json": "74ea481194be99141992a69cc08aa92663f9b29150943d41df6c8e90752caa8d",
+    "policy.json": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2"
+  },
+  "limits": {
+    "concurrency": 1,
+    "host_limits": "policy.json host_limits, unchanged (min available 768 MiB before an expensive step, emergency 384 MiB, 1 GiB competitor tree RSS)",
+    "per_campaign_timeout_seconds": 1800
+  },
+  "policy_revision": 13,
+  "rule": "Frozen before the campaign runs. Nothing here changes after the commit that adds this file; a different pin set is a new file.",
+  "stage": 6,
+  "supersedes": "stage6-freeze.json (run 1 invalid: Girder adapter mislabeled the binary; see results/stage6-run1-INVALID/INVALID.md)",
+  "unit_tests": "54 tests (girder adapter, foundation, campaign, reporting, matrix reporting) passed before freeze, including identity-from-binary tests"
+}

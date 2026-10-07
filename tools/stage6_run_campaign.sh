@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Stage 6 serial campaign driver. Pins come from docs/competitor-benchmark/stage6-freeze.json.
+# Stage 6 serial campaign driver (run 2, policy revision 13). pins come from docs/competitor-benchmark/stage6-freeze-v2.json.
 # One campaign at a time; memory is checked before each; a failed or blocked campaign is logged and the
 # run continues (never retried with weaker limits).
 set -u
 cd "$(dirname "$0")/.."
 ROOT=/mnt/chromeos/removable/MOVESPEED/girder-competitor-benchmark-v1
 A=$ROOT/acquisition
-RUN=$ROOT/runs/stage6-run1
-WORK=$ROOT/work/stage6-run1
+RUN=$ROOT/runs/stage6-run2
+WORK=$ROOT/work/stage6-run2
 LOG=$RUN/matrix-log.jsonl
 mkdir -p "$RUN" "$WORK"
 CBM=$(mktemp -d /tmp/cbm-stage6-XXXXXX); cp "$A/codebase-memory-mcp-0.10.8/codebase-memory-mcp" "$CBM/" && chmod +x "$CBM/codebase-memory-mcp"

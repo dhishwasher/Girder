@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tools.competitor_benchmark.adapters.girder import GirderAdapter
+from tools.competitor_benchmark.adapters.girder import KNOWN_RELEASES, GirderAdapter, reported_version
 from tools.competitor_benchmark.mcp import McpCall, McpSession
 from tools.competitor_benchmark.protocol import Status
 
@@ -30,9 +30,30 @@ class FakeSession:
 
 
 class GirderNormalizationTests(unittest.TestCase):
+    def fake_binary(self, root: Path, version_line: str) -> Path:
+        script = root / "girder-fake"
+        script.write_text(f"#!/bin/sh\necho '{version_line}'\n")
+        script.chmod(0o755)
+        return script
+
+    def test_recorded_identity_comes_from_the_binary_not_the_class(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            for version, commit in KNOWN_RELEASES.items():
+                adapter = GirderAdapter(self.fake_binary(root, f"girder {version}"), watch=False,
+                                        limits={}, private_home=root / "home")
+                self.assertEqual((adapter.version, adapter.commit), (version, commit))
+
+    def test_an_unknown_or_unrelated_binary_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            for line in ("girder 9.9.9", "something else", ""):
+                with self.assertRaises(ValueError):
+                    reported_version(self.fake_binary(root, line))
+
     def make_adapter(self, root: Path, replies: list[str]) -> GirderAdapter:
-        adapter = GirderAdapter(Path("/bin/true"), watch=False, limits={"query_timeout": 1},
-                                private_home=root / "home")
+        adapter = GirderAdapter(self.fake_binary(root, "girder 0.2.6"), watch=False,
+                                limits={"query_timeout": 1}, private_home=root / "home")
         adapter.fixture_root = root
         adapter.session = FakeSession(replies)  # type: ignore[assignment]
         return adapter

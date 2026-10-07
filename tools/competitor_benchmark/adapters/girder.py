@@ -1,4 +1,4 @@
-"""Girder 0.2.6 adapter for normal and opt-in watch MCP modes."""
+"""Girder adapter for normal and opt-in watch MCP modes (identity taken from the launched binary)."""
 
 from __future__ import annotations
 
@@ -24,12 +24,32 @@ REQUIRED_TOOLS = {
 }
 
 
+# Releases this adapter may run, with their source commits. The recorded version and commit come from
+# what the launched binary reports, never from this class, so a different binary cannot be labeled as
+# another release.
+KNOWN_RELEASES = {
+    "0.2.6": "3f7d5ee645a1b4802cff3c09f1e84494e20e020b",
+    "0.4.0": "b38c427b7451814b5ea5a7fe5368ba7d806a2efe",
+}
+
+
+def reported_version(binary: Path) -> str:
+    import subprocess
+    out = subprocess.run([str(binary), "--version"], capture_output=True, text=True, timeout=30).stdout.strip()
+    match = re.fullmatch(r"girder (\d+\.\d+\.\d+)", out)
+    if not match or match.group(1) not in KNOWN_RELEASES:
+        raise ValueError(f"unrecognized Girder binary identity {out!r}; known releases: {sorted(KNOWN_RELEASES)}")
+    return match.group(1)
+
+
 class GirderAdapter(Adapter):
     version = "0.2.6"
-    commit = "3f7d5ee645a1b4802cff3c09f1e84494e20e020b"
+    commit = KNOWN_RELEASES["0.2.6"]
 
     def __init__(self, binary: Path, *, watch: bool, limits: Mapping[str, Any], private_home: Path) -> None:
         self.binary = binary.resolve()
+        self.version = reported_version(self.binary)
+        self.commit = KNOWN_RELEASES[self.version]
         self.watch = watch
         self.name = "girder-watch" if watch else "girder"
         self.limits = limits
