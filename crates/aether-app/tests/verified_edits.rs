@@ -291,6 +291,17 @@ fn the_report_separates_certification_and_predicted_impact_from_executed_checks(
         step["certification"]["impact"]["label"],
         "predicted, not execution evidence"
     );
+    let impact = &step["certification"]["impact"];
+    for key in [
+        "tests_before",
+        "tests_after",
+        "tests_after_listed",
+        "newly_reachable",
+        "no_longer_reachable",
+        "truncated",
+    ] {
+        assert!(!impact[key].is_null(), "impact is missing {key}");
+    }
     // Executed checks are a separate list; predicted reachability is never placed in it.
     assert!(step["checks"]
         .as_array()

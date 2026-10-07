@@ -49,3 +49,13 @@ plan schema documents the optional `verify` block.
 - Predicted reachability is conservative and dominated by Unknown on real code.
 - No live agent authored a certified plan; fixtures are hand-authored with independently computed fingerprints.
 - Gates ran on this VM only; the real CI result is recorded in the roadmap after the push.
+
+## Addendum: binary identity, commands, and disclosures (after advisor review)
+
+- Binary used by the frozen-plan test (`CARGO_BIN_EXE_girder`, built at `300fff7`; later commits changed docs, tools and one test assertion only):
+  `/mnt/chromeos/removable/MOVESPEED/aetherforge-target/debug/girder`, sha256 `707508f7a6776568d20e94ddc9f1ffa65aa38bdd02bd64fecac36d1bf8db3804`.
+  `which girder` is `/home/corymaynard370/.cargo/bin/girder`, a **stale** pre-Stage-5 install (2026-10-06) that was not used for any Stage 5 evidence.
+- Commands: gates are `gates-300fff7/` (`cargo test --workspace -j1 --quiet`, `cargo clippy --workspace --all-targets -j1 -- -D warnings`, `cargo fmt --all -- --check`, `node --test npm/test/*.test.js`), each with an `.exit` file. Mutations M1 to M6: `tools/stage5_mutation_checks.sh`. M7 to M9 replaced one source line each (`if actual != expected {` with `if false && ...`; `if let Some(incremental) = incremental_after {` with `= None::<&SemanticGraph>`; `c.coverage_gap` with `false`) and ran `cargo test -p aether-app --bin girder -j1 -- planfile::verify`.
+- Predicted-impact fields (before and after test classes, newly and no longer reachable, bounded lists, truncation flag) were checked in a real report and are now asserted by `the_report_separates_certification_and_predicted_impact_from_executed_checks`. In that fixture both reachable lists are empty and `truncated` is false, so truncation behavior at 20 entries is not exercised end to end.
+- Stale on-disk bytes between planning and commit rely on the existing `project_writes_reject_stale_inputs_before_replacing_anything` test (`crates/aether-app/src/project/source.rs`); no Stage 5 fixture drives that path through a certified plan.
+- The authoring envelope grew (a `fingerprint` per node and the `verify` schema), so CLAUDE.md's "about 6 KB" figure is now stale. `--source-only` (the measured 97.85% figure) is unchanged and guarded by a key-set assertion.
