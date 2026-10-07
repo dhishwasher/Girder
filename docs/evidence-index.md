@@ -25,16 +25,38 @@ multi-stage program that built and is still extending this:
   click, pydantic, requests; the TypeScript compiler itself, zod,
   date-fns, class-validator), with every correction, every found bug,
   and every measurement re-run committed in order — not just the final
-  number. Rust and Python are marked DONE (committed passing evidence
-  against their own precommitted criteria); TypeScript is explicitly
-  IN PROGRESS, stated as such in the roadmap, not glossed over.
+  number. Rust, Python, TypeScript and Go are all marked DONE, each
+  against its own precommitted criterion with committed passing evidence
+  (TypeScript's closed with the ESM named-import proof, 73/73 contract and
+  a 100-site audit with zero unsound cells; Go's under
+  `stage3-go-audit/`, audited against a pinned Go 1.27.1 standard
+  library). Failed attempts are kept alongside the passing ones.
+- **Stage 4** (`docs/observations/stage4-clients/`): `girder setup` for
+  Claude Code, Codex and Cursor, with verified client-documentation
+  formats, isolated install and MCP smoke checks, and the limits
+  (no live model session loaded the instruction; Cursor's pre-read hook
+  is not built).
+- **Stage 5** (`docs/observations/stage5-verified-edits/`, policy in
+  `docs/verified-edits-policy.md`): certified `replace_node` edits with a
+  path-bound fingerprint and a declared delta. 19 frozen plans, nine
+  mutation checks that each break a guard test, and a failed first gate
+  run (`gates-beae7c2/`) published next to the passing one.
+- **Stage 6** (`docs/competitor-benchmark/results/stage6-run2/`): a fresh
+  serial campaign of Girder 0.4.0 against ripwire, codebase-memory-mcp and
+  code-review-graph. Its first run is kept as
+  `stage6-run1-INVALID/` because the harness mislabeled the Girder
+  binary; Girder's test-selection precision dropping from 1.0 to 0.667
+  (recall 0.5 to 1.0) is published as a regression, not hidden.
 - **A real extractor bug, found and fixed in this program, not hidden**:
   `docs/observations/stage3-typescript-audit/before-observation-
-  addendum-4.md` through `-13.md` document a node-identity collision
+  addendum-4.md` through `-14.md` document a node-identity collision
   bug found via this program's own review discipline, its full
   investigation (including a wrong first fix caught by its own
-  regression test and corrected before landing), and the eventual fix
-  — commits `ba57090` through `9ad6e4f`. This is offered as evidence
+  regression test and corrected before landing), and the eventual fixes
+  — commits `ba57090` through `9ad6e4f` for Rust, and `-14.md` for
+  TypeScript function and method collisions (which changed no measured
+  number, because the pinned corpora contain none; its tests carry the
+  proof, and 6 of its 8 fail on the old code). This is offered as evidence
   of the program's own rigor: bugs get found, disclosed, and fixed in
   public commit history, not quietly smoothed over.
 

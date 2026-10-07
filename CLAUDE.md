@@ -15,8 +15,6 @@ The program's full stage gates override advisory test selection below.
 
 **Girder** is a semantic-graph MCP server and CLI for coding agents. It provides
 exact function source, symbol lookup, graph queries, and advisory test selection.
-The native GUI, parallel agent swarm, and time-travel debugger are supporting
-components built around the same graph.
 
 It is a Cargo workspace, not a fork of any editor. See `README.md` for usage
 and the measured engineering documentation under `docs/` for implementation
@@ -32,13 +30,11 @@ status and limitations.
 - `crates/aether-ai` — `AiProvider` trait, offline `MockProvider` (default),
   `Router`, and implemented OpenAI, Anthropic, and local Ollama providers behind
   `--features live-providers`; Gemini/Grok remain compile-clean extension points.
-- `crates/aether-agents` — the swarm: broadcast bus, orchestrator, 8 agents.
-- `crates/aether-debugger` — toy-language recording interpreter + branching
-  timeline + what-if.
-- `crates/aether-dap` — Debug Adapter Protocol client/session layer and
-  graph-aware breakpoint support.
-- `crates/aether-app` — the `girder` binary: MCP server, graph discovery and
-  editing CLI, headless smoke, and egui GUI (`--features gui`).
+- `crates/aether-app` — the `girder` binary: MCP server and graph discovery and
+  editing CLI.
+- Legacy crates (`aether-agents`, `aether-debugger`, `aether-dap`,
+  `aether-extensions`, and the `gui` feature) are no longer documented. Leave
+  them compiling and their tests green; do not extend them.
 
 ## Common commands
 
@@ -49,7 +45,6 @@ cargo fmt --all                        # format before committing
 cargo run -p aether-app                # headless end-to-end demo
 cargo run -p aether-app -- analyze sample-project
 cargo check -p aether-ai --features live-providers
-cargo test -p aether-dap --test debugpy -- --ignored
 ```
 
 ## Agent tooling: use Girder's own CLI
@@ -98,9 +93,11 @@ nodes sampled by source-size decile, and cheaper on all ten
 
 Pass `--source-only` whenever you are *reading*. Without it, `context` also
 emits a Plan Format v2 schema and plan skeleton for authoring a plan — a
-fixed ~6 KB that made it *more expensive* than reading the file on 2 of
-those 10 nodes, and 15.6x the file for a small one. Bytes, not tokens; no
-tokenizer was run.
+fixed ~6 KB when that was measured, which made it *more expensive* than
+reading the file on 2 of those 10 nodes, and 15.6x the file for a small one.
+Bytes, not tokens; no tokenizer was run. Since 0.4.0 the authoring output is
+larger (a `fingerprint` per node plus the `verify` schema) and has not been
+re-measured; `--source-only` is unchanged and is what the 97.85% figure covers.
 
 To find the node path: girder search . "<description>"
 
@@ -121,7 +118,8 @@ empty is only trustworthy when stderr shows zero boundaries too. A change
 with no Function-node origin at all (a const-only or type-only edit, a
 `describe`/`beforeEach`-level statement in TypeScript, or a node that lost
 a semantic-path collision — see docs/observations/stage3-typescript-audit/
-before-observation-addendum-4.md) used to return empty here with NO
+before-observation-addendum-4.md; TypeScript function/method collisions
+no longer lose nodes, see addendum-14.md) used to return empty here with NO
 boundary notice regardless of whether boundaries existed elsewhere in the
 graph (`classified_impact(&[])` short-circuiting on an empty origin list,
 before ever computing them) — fixed for every invocation form, in both
@@ -176,20 +174,6 @@ No file reading required.
   Gemini and Grok must remain explicit EXTENSION POINTs until their real
   request/response code exists.
 - Mark unfinished depth with `// EXTENSION POINT` rather than leaving it implicit.
-
-## GUI/DAP notes
-
-CI type-checks the `gui` feature on stable Rust. Rendering needs a GPU or a
-software Vulkan adapter (Mesa **lavapipe**) plus X11 libs (e.g.
-`libxkbcommon-x11`); with no surface it logs the wgpu error and falls back to the
-headless demo. CI builds the default headless profile and keeps GUI compilation
-guarded. To run the GUI headlessly: `Xvfb` + lavapipe (`WGPU_BACKEND=vulkan`,
-`VK_ICD_FILENAMES=.../lvp_icd.json`).
-
-The DAP adapter test is ignored in the default suite because it requires
-`python3 -m debugpy.adapter`. Run it explicitly with
-`cargo test -p aether-dap --test debugpy -- --ignored --nocapture` after
-installing `debugpy`.
 
 ## Environment
 
