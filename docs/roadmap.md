@@ -258,7 +258,8 @@ Logs: [gates-32bd5d2/](observations/stage2-dispatch-corpus/gates-32bd5d2/).
 
 ## Stage 3 — Close dispatch holes one language at a time
 
-**Status: IN PROGRESS**. Rust and Python now meet the corrected 100-actual-site
+**Status: DONE** (all four languages, each on its frozen criterion; see the 2026-10-06
+checkpoints). Rust and Python meet the corrected 100-actual-site
 checkpoint, with [committed evidence](observations/stage3-audit-reconciliation/after-observation.md)
 at `a97b2ea`. Their original 52/85-site audits did not satisfy the sample-size
 requirement; those historical observations and the failed first Rust extension
@@ -266,7 +267,11 @@ remain published. Each corrected audit emitted only one Must claim (1/1) and
 99 Unknown claims; this is limited evidence, not general dispatch completeness.
 **TypeScript is DONE** on its frozen criterion (see the 2026-10-06 checkpoint and
 [after-observation](observations/stage3-typescript-audit/esm-import-proof/after-observation.md));
-Go is IN PROGRESS (see the 2026-10-06 Go checkpoint).
+**Go is DONE** on its frozen criterion (see the 2026-10-06 Go checkpoints and the
+[Go after-observation](observations/stage3-go-audit/after-observation.md)). Dispatch
+completeness is **not** claimed for any language: each result is limited, disclosed
+evidence, and every language keeps Unknown holes (methods, interfaces, package-qualified
+calls, and more).
 
 Order: **Rust → Python → TypeScript → Go**. No fifth language. Each language has
 its own frozen baseline, implementation, after-observation, and gate checkpoint:
@@ -276,7 +281,7 @@ its own frozen baseline, implementation, after-observation, and gate checkpoint:
 | Rust | **DONE — corrected 100-site checkpoint** | [before](observations/stage3-rust-audit/audit-scoring-summary-v2.json) / [after](observations/stage3-rust-audit/after-method-call-fix/after-observation.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) and [retained failed extension](observations/stage3-audit-reconciliation/observation/summary.md) | Stage 2 |
 | Python | **DONE — corrected 100-site checkpoint** | [methodology](observations/stage3-python-audit/methodology.md) / [after-transformed-scope-fix](observations/stage3-python-audit/after-transformed-scope-fix/after-observation.md) + [correction-1](observations/stage3-python-audit/after-transformed-scope-fix/correction-1/correction.md) / [correction-2](observations/stage3-python-audit/after-transformed-scope-fix/correction-2/correction.md) / [correction-3](observations/stage3-python-audit/after-transformed-scope-fix/correction-3/correction.md) + [100-site correction](observations/stage3-audit-reconciliation/after-observation.md) | Rust trustworthy on a real repository |
 | TypeScript | **DONE — frozen criterion met; CI green at `c78f6c9`** (73/73 ESM contract; corpus 22→23 exact, Must 6/6, 0 unsound; audit 56/44, 0 unsound, Must 3/3; gates on `cb2aa11` and `b0c09b6`) | [100-site baseline](observations/stage3-typescript-audit/extension/before/observation.md) / [structural-identity after-audit](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/observation.md) + [retained false-Must baseline](observations/stage3-typescript-audit/lexical-bindings/before-observation.md) + [unchanged dispatch results](observations/stage3-typescript-audit/lexical-bindings/structural-members-after-local-1/dispatch-corpus-scoring.json) + [ESM after-observation](observations/stage3-typescript-audit/esm-import-proof/after-observation.md) | Python trustworthy on a real repository |
-| Go | IN PROGRESS (criterion met on committed evidence: corpus 25/31, audit 27/91/0/0, Must 23/23, 401 Must claims verified; **DONE pending CI**) | none / [frozen policy](observations/stage3-go-audit/policy.md) + [methodology](observations/stage3-go-audit/methodology.md) | TypeScript trustworthy on a real repository |
+| Go | **DONE — frozen criterion met; CI green at `4b35c52`** (contract 21/21; corpus 25/31, Go 7/7; audit 27/91/0/0, Must 23/23; 401 Must claims verified, 0 violations; gates on `08fcbdc`) | [baseline](observations/stage3-go-audit/baseline-observation.md) / [after](observations/stage3-go-audit/after-observation.md) + [frozen policy](observations/stage3-go-audit/policy.md) + [methodology](observations/stage3-go-audit/methodology.md) | TypeScript trustworthy on a real repository |
 
 Use existing pinned Rust repositories and Click first; pin TypeScript compiler
 and Go standard-library snapshots before their language work. Precommit at
@@ -444,19 +449,16 @@ common gates. **Observation:**
 (historical after-result, not current stage-completion proof).
 **Current completion evidence:** [corrected Rust/Python audits](observations/stage3-audit-reconciliation/after-observation.md)
 include their checkpoint-candidate corpus results and all four passing gates.
-**Blockers for the next language:** none remain for starting Go. TypeScript's
-frozen criterion is met. Carried-forward holes (all disclosed in the
-[after-observation](observations/stage3-typescript-audit/esm-import-proof/after-observation.md)):
-Must claims are conditional on the ESM policy's execution assumptions; plan
-projections and workspace buffers have no application-level C-3 test; three of
-the new application tests are not mutation-checked; the retained
-`typescript-structural-object-literal` failure; and the Stage 2 obligation to
-append a harder successor to the newly passing `typescript-direct-cross-file`
-case as a new versioned corpus file remains outstanding.
-**Next:** Go. Pin the Go standard-library snapshot, then freeze the audit
-methodology (at least 100 independently labeled sites) and the Go dispatch
-policy with adversarial fixtures before any resolver change. Record the
-baseline, implement, record the after-observation, then run the common gates.
+**Blockers for the next stage:** none. Stage 3 is complete for all four languages.
+Carried-forward holes, all disclosed in each language's after-observation: TypeScript and Go
+Must claims are conditional on stated execution assumptions; TypeScript plan projections and
+workspace buffers have no application-level C-3 test; Go package-qualified calls, methods,
+interfaces, and generics remain Unknown, and Go safety-net claims anchor on a file's first
+function rather than the real caller; the retained `typescript-structural-object-literal`
+failure. **Outstanding Stage 2 obligation:** three corpus cases now pass
+(`typescript-direct-cross-file`, `go-direct-cross-file`, `go-closure-captures-direct-call`); each
+needs a harder successor appended in a new versioned corpus file, never by editing the frozen one.
+**Next:** Stage 4 (client-agnostic packaging). Reverify each client's documented formats first.
 
 ## Stage 4 — Client-agnostic packaging and orient-first guidance
 
@@ -557,6 +559,15 @@ overclaim — regenerate it from the live tool list before any run of this
 benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
+
+### 2026-10-06 (Go DONE; Stage 3 complete) — CI green on the published evidence
+
+CI run 37563090631 passed both jobs (`fmt · clippy · test`, `windows compiles`) on `4b35c52`, the head
+containing the Go after-observation, the final-candidate gate logs, and the whole-tree Must
+verification. The frozen Go criterion (corpus improvement, nonempty Must precision 1.000, zero
+unsound audit cells) is met on that committed evidence, so **Go is DONE and Stage 3 is complete for
+Rust, Python, TypeScript, and Go.** This is not a claim of dispatch completeness: the disclosed holes
+carry forward, and three corpus cases still owe harder successors. Stage 4 is next.
 
 ### 2026-10-06 (Go measured) — after-observation published; criterion met, DONE pending CI
 
