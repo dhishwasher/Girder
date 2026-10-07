@@ -1,0 +1,97 @@
+I'll read the plan-format schema, edit pipeline, and graph-diff code first and answer from those quotes.## 1. Schema
+
+`Plan` is `plan_version`, `plan_id`, `intent`, optional `author`, `base_commit`, `on_failure`, `steps` (`schema.rs:12-20`). Unknown plan keys are rejected (`schema.rs:57-73`). `OnFailure` is `RollbackPlan` (default), `RollbackStep`, `Stop` (`schema.rs:90-97`).
+
+A `Step` carries only `id`, `description` (default `""`), `edits`, and `checks` (`schema.rs:100-116`, known fields at `132`). `base_commit` and `on_failure` are plan fields, not step fields. There is no promised node/edge delta and no fingerprint field a plan can set.
+
+Edits, one discriminator each (`schema.rs:315-330`):
+
+| Kind | JSON | Fields |
+|---|---|---|
+| `Substitute` | `match` | `path`, `match`, `replace`, `occurrences` (default 1) (`schema.rs:196-201`, `232-238`) |
+| `Create` | `create` | `path`, `create` (`schema.rs:202-205`) |
+| `Delete` | `delete` | `path`, `delete: bool` (`schema.rs:206-209`) |
+| `ReplaceNode` | `replace_node` | `node`, replacement text (`schema.rs:212-215`, `257-259`) |
+| `RenameNode` | `rename_node` | `node`, `new_name` (`schema.rs:216-219`, `264-266`) |
+| `DeleteNode` | `delete_node` | `node`, `delete: bool` (`schema.rs:220-223`, `271-273`) |
+| `InsertIntoModule` | `insert_into_module` | `node`, insertion text (`schema.rs:224-227`, `278-280`) |
+
+`Check` is a `kind`-tagged enum (`schema.rs:459-554`), including `tests.impacted` with only `expect` (`schema.rs:506-510`). `parse_plan` calls `Plan::validate` (`mod.rs:37-49`). Versions other than 1 and 2 fail (`schema.rs:579-583`). Version 1 rejects any graph-addressed edit (`schema.rs:586-597`); version 1 still runs the text path (`executor.rs:65-67`).
+
+A node is a semantic path string (`Edit::node`, `schema.rs:410-417`), for example `crate::m::f` (`schema.rs:773`). `NodeId` is FNV-1a of that path (`node.rs:18-28`), not of the source. Nothing in the plan pins a node or graph hash. Existing hashes are internal: call evidence fingerprints the node source (`claims.rs:45-46`), the builder fingerprints the whole file (`sync.rs:797-799`), and the report records whole-file SHA-256 after the write (`executor.rs:342-351`). `base_commit` only pins git HEAD (`precondition.rs:40-45`).
+
+## 2. Apply pipeline
+
+`run_plan` sends version 2 to `run_plan_v2` (`executor.rs:65-66`). Preconditions already lower every v2 step on a disposable candidate via `apply_step_edits_v2` and discard it (`precondition.rs:56-74`).
+
+For one graph edit inside a real step:
+
+1. `CandidateWorkspace::create`, then `EditState::ensure_graph` → `build_from_dir_with_config` once (`executor.rs:231-241`, `edit.rs:136-145`).
+2. `apply_step_edits_v2` → `apply_graph_edit` (`edit.rs:238-250`, `294`).
+3. `resolve_node`: renamed-path reuse, `path_occurrences`, exact `node.path` match, `NodeId::from_path` consistency (`edit.rs:423-468`).
+4. Kind gate, then `splice_for_node` or `safe_rename_splices`. Both call `validate_projection`, which requires the file bytes in the span to equal `node.source` (`edit.rs:499-524`, `632-682`).
+5. `apply_splices` rejects overlaps and a span that no longer matches, writes the candidate file, then `refresh_file` → `GraphBuilder::update_file` (`edit.rs:686-733`, `sync.rs:807-812`).
+6. `require_occurrences` checks the post-update path count (`edit.rs:488-496`). Rename also requires the old path 0 times and the new path once (`edit.rs:409-410`).
+
+The step's `before_graph` / `after_graph` are clones of that in-memory graph (`executor.rs:242`, `274`). Version 2 does not call `build_from_dir_with_config` again. Version 1 does (`executor.rs:129-132`). There is no declared delta to compare. If a check needs a graph, `changed_node_ids` calls `after.diff_from(before)` (`test_checks.rs:27-29`). Optional `graph.edge_delta` / `graph.no_new_edges_into` compare edge lists themselves (`graph.rs:118-184`); they do not use `GraphDiff`. Call evidence is not diffed here.
+
+`GraphDiff` exists (`diff.rs:27-33`, `diff_from` at `77`). Plan code uses it only through `changed_node_ids`. It counts `Calls`, `Inherits`, and `DataFlow` (`diff.rs:60-66`). `edge_delta` counts every edge `SemanticGraph::edges` returns (`graph.rs:168-176`).
+
+Refusal before commit: ambiguous or unknown path, wrong kind, stale or empty span, overlap, rename unsafety (`edit.rs:356-413`, `527-617`), occurrence mismatch, a failing check (`executor.rs:298-307`), or `commit_project_writes` seeing different on-disk bytes (`source.rs:842-850`). A failed step is not committed (`executor.rs:298-307`).
+
+## 3. Journal and rollback
+
+Real writes go through `commit_project_writes` (`executor.rs:325`), which takes `JournalLock`, runs `recover_transactions_locked(RecoveryScope::All)`, then `commit_project_writes_locked` → `commit_with_output_locks` (`source.rs:771-784`, `805-812`). The journal is `.girder/transactions/{pid}-{counter}/` (`source.rs:19-21`, `862-871`): `{index}.staged`, `{index}.backup`, `manifest.json` (`TransactionManifest` version 2, `TransactionEntry` with `applied_sha256`, `source.rs:260-275`, `894-910`), then `COMMITTED` (`source.rs:929-931`).
+
+Recovery functions: `recover_project_transactions`, `recover_project_transactions_read_only`, `recover_under_lock`, `recover_transactions_locked`, `rollback_transaction`, `journal_owner_is_alive` (`source.rs:166`, `801-803`, `1004-1023`, `1099`). `rollback_transaction` restores each backup, or deletes a file that had no original, and refuses if the current bytes are neither the original nor the recorded applied digest (`source.rs:1104-1156`).
+
+Plan `on_failure` (`executor.rs:531-545`):
+
+- `Stop`: leave prior commits.
+- `RollbackStep`: the failed step was only on the candidate (`executor.rs:1-5`, `report.rs:159-162`).
+- `RollbackPlan`: `rollback_to_base` runs `git_checkout_paths` for paths that existed at `base_commit`, then deletes paths the plan created (`executor.rs:565-590`).
+
+The in-memory `SemanticGraph` lives in the candidate `EditState` and is dropped with `run_plan_v2`. Nothing writes or restores a graph snapshot. Only source files move.
+
+`tests.impacted` runs in `run_check` (`executor.rs:462-467`) by calling `run_tests_impacted` (`test_checks.rs:91`). It is not mandatory unless `apply_authored_guarantees` injects `{ kind: tests.impacted, expect: all_pass }` onto the last step (`mod.rs:196-243`). The CLI prints `ok|FAIL tests.impacted: {detail}` (`mod.rs:319-329`). The report stores that same string (`report.rs:187-194`). Detail is `no impacted tests…` (`test_checks.rs:121-126`), `{n} test(s) passed`, a command failure (`test_checks.rs:227-234`), or `test commands are not configured` (`test_checks.rs:219-224`).
+
+## 4. Ambiguity and overloads
+
+Rust paths are `{scope}::{segment}` (`mapper.rs:581-582`). `collect_rust_method_collisions` counts same-file `(type, method)` pairs (`mapper.rs:913-946`). `qualified_method_name` rewrites only a colliding trait impl to `{name}@{trait}` (`mapper.rs:954-965`). The node's `name` stays unqualified (`mapper.rs:3701-3704`). An inherent method is never qualified (`mapper.rs:907-912`), so two inherent methods of the same name still share a path. `upsert_node` replaces the same id (`lib.rs:116-126`). `path_occurrences` counts pre-upsert declarations so that collapse stays visible (`sync.rs:1220-1228`).
+
+Python uses the same `{scope}::{name}` scheme with an empty collision set (`mapper.rs:299-301`, `574-580`). Two `def target` therefore share `crate::lib::target`. Claims then set `duplicate_paths` and an Unknown `duplicate-semantic-path` gap (`mapper/claims.rs:87`, `563-565`). TypeScript is a separate extractor. `refuse_colliding_members` drops every structural member that shares a path, plus nodes inside those spans, and does not disambiguate them (`mapper/typescript.rs:908-943`). Registration callbacks get an occurrence counter (`mapper/typescript.rs:951-954`). Duplicate TypeScript ids also make ESM proof ineligible (`sync/typescript_esm.rs:190-198`).
+
+A plan path with two parsed declarations fails in `resolve_node`: `ambiguous node path {path:?}: {occurrences} parsed declarations claim it` (`edit.rs:435-439`). Zero matches: `unknown node path…` (`edit.rs:446-454`), or an unsupported-language file message (`edit.rs:447-450`). Two surviving graph nodes with the same path also fail (`edit.rs:456-460`). Graph edits then accept only Rust and Python (`edit.rs:633-637`), so a resolved TypeScript node dies in `validate_projection`.
+
+Rename fails when more than one function shares the identifier (`edit.rs:366-378`), when `rename_node` hits `RenameConflict` (`refactor.rs:89-90`, `edit.rs:386-393`), when a caller does not contain exactly one callee site (`edit.rs:556-561`), when the definition contains a same-named callee (`edit.rs:565-576`), or when any identifier sits outside the definition and proven call sites (`edit.rs:607-617`).
+
+There is no `graph-edit-corpus` directory in this repo. `demo-project/` has no semantic-path collision fixture; `find_duplicates` is a content hash (`demo-project/dupefinder.py:17-18`). Collision fixtures and tests that do exist:
+
+- `docs/observations/stage3-typescript-audit/collision-repro/rust-repro/src/lib.rs:11-29` (traits `A` and `B`, both `go`).
+- `collision-repro/typescript-repro/sample.ts:17-35` (duplicate `describe` / `it`).
+- `mapper.rs:3652` `colliding_trait_impl_methods_get_distinct_nodes_and_consistent_caller_ids`.
+- `rust_methods.rs:834` `two_inherent_methods_of_the_same_name_block_proof`, `:1225` `duplicate_semantic_path_in_the_caller_file_blocks_proof`.
+- `typescript_structural_members.rs:310` `collision_refuses_members_and_every_descendant_without_flattening`.
+- `edit.rs:1053` `duplicate_and_empty_span_targets_fail_closed_with_context` (two Python `def target`).
+
+## 5. Impact reporting
+
+`plan run` prints each check's `kind` and `detail` (`mod.rs:319-329`) and writes `PlanReport` (`report.rs:48-64`). It does not print `Must` / `May` / `Unknown`.
+
+`classified_impact` returns those three id lists plus boundaries (`claims.rs:72-78`, `141`). `run_tests_impacted` first uses `tests_for_nodes` (`test_checks.rs:97`). Only when that set is empty and something changed does it call `classified_impact(changed).tests(graph)` and chain `must`, `may`, and `unknown` into one id list (`test_checks.rs:112-119`). The classes are not kept. The report detail is the execution summary (`test_checks.rs:227-234`), not a class breakdown and not a pairing of predicted reachability with per-test results. `tests.full` and `tests.named` never call `classified_impact` (`test_checks.rs:138-163`). `graph.tests_for` is an expected path-set check (`schema.rs:478-485`), also not the classified union.
+
+## 6. Tests
+
+Plan tests are inline modules, built as temp dirs plus `ProjectConfig`, not corpus files.
+
+- `schema.rs`: `parses_the_worked_example_from_the_spec` (`666`), `graph_edits_parse_in_v2_and_are_rejected_in_v1` (`771`), `unknown_plan_versions_fail_closed` (`826`), `create_edit_without_a_command_check_is_rejected_as_unverified` (`943`).
+- `edit.rs`: `substitute_edit_fails_closed_on_wrong_occurrence_count_and_does_not_retry` (`829`), `graph_edits_in_one_file_re_resolve_shifted_spans` (`943`), `rename_updates_definition_and_graph_proven_callers` (`1015`), `duplicate_and_empty_span_targets_fail_closed_with_context` (`1053`), `unknown_and_fileless_targets_fail_closed_with_step_and_node` (`1096`), `rename_rejects_ambiguous_same_named_call_sites` (`1238`), `rename_rejects_ambiguous_same_named_recursive_call_sites` (`1265`), `a_node_created_earlier_in_the_same_step_can_be_graph_edited_in_that_step` (`1334`).
+- `executor.rs`: `rollback_plan_restores_base_file_deleted_then_recreated_across_steps` (`649`), `tests_impacted_check_is_not_vacuous_for_a_module_level_only_edit` (`709`), `create_only_step_verified_only_by_tests_impacted_passes_while_verifying_nothing` (`786`), `dry_overlay_replays_substitutions_creates_and_deletes` (`857`), `graph_identity_is_independent_of_candidate_root` (`891`).
+- `precondition.rs`: `reports_all_failures_together_not_just_the_first` (`325`), `create_then_graph_edit_in_a_later_step_passes_preconditions` (`364`).
+- `checks/graph.rs`: `callers_of_matches_exact_mode` (`247`), `edge_delta_counts_added_and_removed_edges` (`326`), `no_new_edges_into_detects_a_freshly_introduced_caller` (`336`).
+- `checks/test_checks.rs`: `changed_node_ids_selects_only_the_edited_function_not_the_whole_file` (`251`).
+- `mod.rs`: `run_with_authored_injects_the_mandatory_check_on_the_last_step_only` (`860`), `run_with_authored_forces_rollback_plan_even_when_the_plan_declares_stop` (`948`).
+- `report.rs`: `a_failing_graph_check_carries_its_mismatch_detail_into_the_report` (`322`), `stop_and_rollback_plan_both_produce_a_correct_failed_report` (`360`).
+
+The pattern is a temp git repo or `v2_fixture`, a JSON or `Edit` value, `apply_step_edits_v2` / `run_plan`, then `assert` on the diagnostic string or the candidate bytes. No test declares a baseline node fingerprint or compares a promised delta to the full actual delta.
+grok_exit=0

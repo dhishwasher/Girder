@@ -1,0 +1,20 @@
+{
+  "plan_version": 2,
+  "plan_id": "verified-edit-fixture",
+  "intent": "fixture",
+  "base_commit": "<HEAD>",
+  "on_failure": "rollback_plan",
+  "steps": [
+    {
+      "id": "s1",
+      "description": "",
+      "edits": [
+        {
+          "node": "crate::lib::alpha",
+          "replace_node": "pub fn alpha() -> i32 {\n    10\n}"
+        }
+      ],
+      "checks": []
+    }
+  ]
+}

@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "policy": "docs/verified-edits-policy.md",
+  "fingerprint": "sha256(b'girder-node-fingerprint-v1\\0' + path + b'\\0' + source)",
+  "placeholder": "base_commit '<HEAD>' is replaced by the harness",
+  "fixtures": {
+    "overload": [
+      "Cargo.toml",
+      "src/lib.rs"
+    ],
+    "overload-identical": [
+      "Cargo.toml",
+      "src/lib.rs"
+    ],
+    "basic": [
+      "Cargo.toml",
+      "src/lib.rs"
+    ],
+    "pybasic": [
+      "app.py"
+    ]
+  },
+  "cases": [
+    {
+      "id": "wrong-overload-by-fingerprint",
+      "fixture": "overload",
+      "plan": "plans/wrong-overload-by-fingerprint.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "wrong_overload",
+        "failed_step": "s1"
+      },
+      "note": "addresses the inherent method but pins the trait impl's fingerprint"
+    },
+    {
+      "id": "wrong-overload-by-delta",
+      "fixture": "overload",
+      "plan": "plans/wrong-overload-by-delta.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "wrong_overload",
+        "failed_step": "s1"
+      },
+      "note": "baseline is true of the addressed node but the declared change names the same-named sibling"
+    },
+    {
+      "id": "correct-overload-applies",
+      "fixture": "overload",
+      "plan": "plans/correct-overload-applies.json",
+      "expected": {
+        "outcome": "committed",
+        "category": null,
+        "failed_step": null
+      },
+      "note": "the counterpart of the wrong-overload plans: the trait impl, its own fingerprint and delta"
+    },
+    {
+      "id": "identical-bodies-wrong-by-fingerprint",
+      "fixture": "overload-identical",
+      "plan": "plans/identical-bodies-wrong-by-fingerprint.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "wrong_overload",
+        "failed_step": "s1"
+      },
+      "note": "both bodies are identical; only the path-bound fingerprint tells the overloads apart"
+    },
+    {
+      "id": "identical-bodies-wrong-by-delta",
+      "fixture": "overload-identical",
+      "plan": "plans/identical-bodies-wrong-by-delta.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "wrong_overload",
+        "failed_step": "s1"
+      },
+      "note": ""
+    },
+    {
+      "id": "identical-bodies-correct-applies",
+      "fixture": "overload-identical",
+      "plan": "plans/identical-bodies-correct-applies.json",
+      "expected": {
+        "outcome": "committed",
+        "category": null,
+        "failed_step": null
+      },
+      "note": ""
+    },
+    {
+      "id": "stale-baseline",
+      "fixture": "basic",
+      "plan": "plans/stale-baseline.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "stale_input",
+        "failed_step": "s1"
+      },
+      "note": "the pinned fingerprint is of source that is not the current source"
+    },
+    {
+      "id": "unexpected-edge-refused",
+      "fixture": "basic",
+      "plan": "plans/unexpected-edge-refused.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "unexpected_edge",
+        "failed_step": "s1"
+      },
+      "note": "the replacement adds a call to helper, a Calls edge the delta does not declare"
+    },
+    {
+      "id": "declared-edge-applies",
+      "fixture": "basic",
+      "plan": "plans/declared-edge-applies.json",
+      "expected": {
+        "outcome": "committed",
+        "category": null,
+        "failed_step": null
+      },
+      "note": ""
+    },
+    {
+      "id": "declared-extra-change-refused",
+      "fixture": "basic",
+      "plan": "plans/declared-extra-change-refused.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "delta_mismatch",
+        "failed_step": "s1"
+      },
+      "note": "the delta promises beta changes too; it does not"
+    },
+    {
+      "id": "no-op-replacement-applies",
+      "fixture": "basic",
+      "plan": "plans/no-op-replacement-applies.json",
+      "expected": {
+        "outcome": "committed",
+        "category": null,
+        "failed_step": null
+      },
+      "note": "identical replacement: empty delta"
+    },
+    {
+      "id": "insufficient-missing-baseline",
+      "fixture": "basic",
+      "plan": "plans/insufficient-missing-baseline.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "insufficient_evidence",
+        "failed_step": "s1"
+      },
+      "note": ""
+    },
+    {
+      "id": "insufficient-missing-edge-delta",
+      "fixture": "basic",
+      "plan": "plans/insufficient-missing-edge-delta.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "insufficient_evidence",
+        "failed_step": "s1"
+      },
+      "note": "a complete delta must state edges explicitly"
+    },
+    {
+      "id": "insufficient-text-edit-in-verified-step",
+      "fixture": "basic",
+      "plan": "plans/insufficient-text-edit-in-verified-step.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "insufficient_evidence",
+        "failed_step": "s1"
+      },
+      "note": ""
+    },
+    {
+      "id": "insufficient-unsupported-edit-kind",
+      "fixture": "basic",
+      "plan": "plans/insufficient-unsupported-edit-kind.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "insufficient_evidence",
+        "failed_step": "s1"
+      },
+      "note": "rename_node is outside the certified scope in v1"
+    },
+    {
+      "id": "uncertified-plan-runs-as-before",
+      "fixture": "basic",
+      "plan": "plans/uncertified-plan-runs-as-before.json",
+      "expected": {
+        "outcome": "committed-uncertified",
+        "category": null,
+        "failed_step": null
+      },
+      "note": "no verify block: runs exactly as today and is reported uncertified"
+    },
+    {
+      "id": "second-step-refused-rolls-back",
+      "fixture": "basic",
+      "plan": "plans/second-step-refused-rolls-back.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "delta_mismatch",
+        "failed_step": "s2"
+      },
+      "note": "step 1 commits, step 2 is refused, rollback_plan restores the base"
+    },
+    {
+      "id": "python-correct-applies",
+      "fixture": "pybasic",
+      "plan": "plans/python-correct-applies.json",
+      "expected": {
+        "outcome": "committed",
+        "category": null,
+        "failed_step": null
+      },
+      "note": ""
+    },
+    {
+      "id": "python-stale-refused",
+      "fixture": "pybasic",
+      "plan": "plans/python-stale-refused.json",
+      "expected": {
+        "outcome": "refused",
+        "category": "stale_input",
+        "failed_step": "s1"
+      },
+      "note": ""
+    }
+  ]
+}

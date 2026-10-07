@@ -1,0 +1,38 @@
+{
+  "plan_version": 2,
+  "plan_id": "verified-edit-fixture",
+  "intent": "fixture",
+  "base_commit": "<HEAD>",
+  "on_failure": "rollback_plan",
+  "steps": [
+    {
+      "id": "s1",
+      "description": "",
+      "edits": [
+        {
+          "node": "crate::app::alpha",
+          "replace_node": "def alpha():\n    return 10"
+        }
+      ],
+      "checks": [],
+      "verify": {
+        "baseline": {
+          "crate::app::alpha": "b53eb06f62447f6d6a7498c532f9818a143be92feca4a33dc59101961e57afa9"
+        },
+        "delta": {
+          "nodes": {
+            "changed": [
+              "crate::app::alpha"
+            ],
+            "added": [],
+            "removed": []
+          },
+          "edges": {
+            "added": [],
+            "removed": []
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "plan_version": 2,
+  "plan_id": "verified-edit-fixture",
+  "intent": "fixture",
+  "base_commit": "<HEAD>",
+  "on_failure": "rollback_plan",
+  "steps": [
+    {
+      "id": "s1",
+      "description": "",
+      "edits": [
+        {
+          "node": "crate::lib::beta",
+          "rename_node": "gamma"
+        }
+      ],
+      "checks": [],
+      "verify": {
+        "baseline": {
+          "crate::lib::beta": "a644055a177675a71963244004c55d7a2d8e11aacbd17c5b4c47f9e032d2488e"
+        },
+        "delta": {
+          "nodes": {
+            "changed": [],
+            "added": [
+              "crate::lib::gamma"
+            ],
+            "removed": [
+              "crate::lib::beta"
+            ]
+          },
+          "edges": {
+            "added": [],
+            "removed": []
+          }
+        }
+      }
+    }
+  ]
+}
