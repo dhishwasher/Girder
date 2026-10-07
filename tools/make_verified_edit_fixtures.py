@@ -238,6 +238,10 @@ def main() -> int:
                 "fingerprint": "sha256(b'girder-node-fingerprint-v1\\0' + path + b'\\0' + source)",
                 "placeholder": "base_commit '<HEAD>' is replaced by the harness",
                 "fixtures": {n: sorted(f) for n, f in FIXTURES.items()}, "cases": cases}
+    # Pin every generated file so the frozen inputs cannot drift unnoticed.
+    manifest["files_sha256"] = {
+        str(f.relative_to(ROOT)): hashlib.sha256(f.read_bytes()).hexdigest()
+        for f in sorted(ROOT.rglob("*")) if f.is_file() and f.name != "manifest.json"}
     (ROOT / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(len(cases), "cases")
     return 0

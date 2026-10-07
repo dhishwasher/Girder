@@ -230,5 +230,33 @@
       },
       "note": ""
     }
-  ]
+  ],
+  "files_sha256": {
+    "basic/Cargo.toml": "e76e58458b9421184f49f936ad8dc6296bd23a9d5b992521eab6df9feb8feb7b",
+    "basic/src/lib.rs": "815f8607a37a5f542475f0a980c9b93ee06958c28e3bd8518a5e9e7b7b7237b3",
+    "overload/Cargo.toml": "2b50dd9144282ce846202a4417605b878040982d02624bd6049f7cc6f888be04",
+    "overload/src/lib.rs": "b1e4ea1273ecc9abc1cf2ede4a51d965f73b5ce9601c9f071709289639c480bc",
+    "overload-identical/Cargo.toml": "7ee3966ad6dfa1838bf64175121c1947500a5547e000814e258c04bc39c3b387",
+    "overload-identical/src/lib.rs": "11a15e7836fc4b8f1a68cfd4d1cb18a32bc9b070cb4977ed9633581996e3c2c0",
+    "plans/correct-overload-applies.json": "c2a2cd55a6b7f31ed993b40993c32a3a36fb02fc803af2b0a74940c280f484ae",
+    "plans/declared-edge-applies.json": "521fa6884735682e6170d31f520dd6e67b2d2cee527bfe4fb6d96c5e89697b1f",
+    "plans/declared-extra-change-refused.json": "4b1784936f0f4267b86c917890cd2997528bb25cd003ce9e6ce7c849290b3258",
+    "plans/identical-bodies-correct-applies.json": "19065eda3dce4d15bace98abfdc6572ac77fa343c8c8803e199b9422a62d2e95",
+    "plans/identical-bodies-wrong-by-delta.json": "c5668a2ab5b5c1a4cd0e521ecb3eebb29f64847c30fee99e2cbd36afe8136660",
+    "plans/identical-bodies-wrong-by-fingerprint.json": "9b009682c7282677d0ded72150ab33dfa11675d85dc423e212b1376769a477ef",
+    "plans/insufficient-missing-baseline.json": "72440c8ea17775a96236858b647ba40a90200deaee0352ec1e27223f6090b0f4",
+    "plans/insufficient-missing-edge-delta.json": "dedd271914ec71877cfb9ccc86c38f737f252b076ecdb48ab55ede4a6b185c9f",
+    "plans/insufficient-text-edit-in-verified-step.json": "25f144c230e1a2ee47a1bd63f29aa7550f823a822d6281b09cd95e7c1449ff46",
+    "plans/insufficient-unsupported-edit-kind.json": "4511dc5f1bff1774bce98d72de674a145e74061c7e217df2cbb3860473a87f87",
+    "plans/no-op-replacement-applies.json": "2e96ecb22f8334eaae30bec5fa5180a5dd243f8551346050b48a27b69ea230eb",
+    "plans/python-correct-applies.json": "a3516513bdbca104fb08465bb46dccafa51dffa7fb277508db77dbf455ee99b9",
+    "plans/python-stale-refused.json": "cc32438fda181b426ee72a284c8722ee4abafdafc4dfbd23e34e6755a17df9c6",
+    "plans/second-step-refused-rolls-back.json": "d001672de7c6f8db1d18932a376477721d1e97525956880b695ce756d77e4de3",
+    "plans/stale-baseline.json": "eca97eafa40c2c103c57be7f2a6533c42d23544169356d2be89b4561d5335996",
+    "plans/uncertified-plan-runs-as-before.json": "8ddd2959b3d33f2cd56d909fa78651aec59840ce72faa374ab7ebdeeda7b35b1",
+    "plans/unexpected-edge-refused.json": "360d799d549a22a6a2f65c9618040bf39b1204611a8d02f05d5e9902aa31451e",
+    "plans/wrong-overload-by-delta.json": "c3ed6b21c89bb98ed271176e6cbc9afa51713ac43e381bde360708ce6503cb08",
+    "plans/wrong-overload-by-fingerprint.json": "407abfa005c449a1aee478b5f65d76663387f43bfde3ffb89e6db5888dfd6723",
+    "pybasic/app.py": "7ca0559bad2f4113654c6d04fd2ce8100fb68e036487847c576d287deb525092"
+  }
 }
