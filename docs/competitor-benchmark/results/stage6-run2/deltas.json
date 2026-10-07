@@ -1,0 +1,127 @@
+{
+ "baseline": "results/modest-final (Girder 0.2.6 revision 12; externals revision 11)",
+ "run": "results/stage6-run2 (policy revision 13)",
+ "unchanged_metric_cells": 188,
+ "deltas": [
+  {
+   "product": "girder",
+   "fixture": "modest-go",
+   "metric": "tests_precision",
+   "baseline": "1.0",
+   "now": "0.6666666666666666",
+   "kind": "regression",
+   "baseline_version": "0.2.6",
+   "now_version": "0.4.0"
+  },
+  {
+   "product": "girder",
+   "fixture": "modest-go",
+   "metric": "tests_recall",
+   "baseline": "0.5",
+   "now": "1.0",
+   "kind": "improvement",
+   "baseline_version": "0.2.6",
+   "now_version": "0.4.0"
+  },
+  {
+   "product": "girder",
+   "fixture": "modest-python",
+   "metric": "tests_precision",
+   "baseline": "1.0",
+   "now": "0.6666666666666666",
+   "kind": "regression",
+   "baseline_version": "0.2.6",
+   "now_version": "0.4.0"
+  },
+  {
+   "product": "girder",
+   "fixture": "modest-python",
+   "metric": "tests_recall",
+   "baseline": "0.5",
+   "now": "1.0",
+   "kind": "improvement",
+   "baseline_version": "0.2.6",
+   "now_version": "0.4.0"
+  },
+  {
+   "product": "girder",
+   "fixture": "modest-rust",
+   "metric": "tests_precision",
+   "baseline": "1.0",
+   "now": "0.6666666666666666",
+   "kind": "regression",
+   "baseline_version": "0.2.6",
+   "now_version": "0.4.0"
+  },
+  {
+   "product": "girder",
+   "fixture": "modest-rust",
+   "metric": "tests_recall",
+   "baseline": "0.5",
+   "now": "1.0",
+   "kind": "improvement",
+   "baseline_version": "0.2.6",
+   "now_version": "0.4.0"
+  },
+  {
+   "product": "girder-watch",
+   "fixture": "modest-go",
+   "metric": "tests_precision",
+   "baseline": "1.0",
+   "now": "0.6666666666666666",
+   "kind": "regression",
+   "baseline_version": "0.2.6",
+   "now_version": "0.4.0"
+  },
+  {
+   "product": "girder-watch",
+   "fixture": "modest-go",
+   "metric": "tests_recall",
+   "baseline": "0.5",
+   "now": "1.0",
+   "kind": "improvement",
+   "baseline_version": "0.2.6",
+   "now_version": "0.4.0"
+  },
+  {
+   "product": "girder-watch",
+   "fixture": "modest-python",
+   "metric": "tests_precision",
+   "baseline": "1.0",
+   "now": "0.6666666666666666",
+   "kind": "regression",
+   "baseline_version": "0.2.6",
+   "now_version": "0.4.0"
+  },
+  {
+   "product": "girder-watch",
+   "fixture": "modest-python",
+   "metric": "tests_recall",
+   "baseline": "0.5",
+   "now": "1.0",
+   "kind": "improvement",
+   "baseline_version": "0.2.6",
+   "now_version": "0.4.0"
+  },
+  {
+   "product": "girder-watch",
+   "fixture": "modest-rust",
+   "metric": "tests_precision",
+   "baseline": "1.0",
+   "now": "0.6666666666666666",
+   "kind": "regression",
+   "baseline_version": "0.2.6",
+   "now_version": "0.4.0"
+  },
+  {
+   "product": "girder-watch",
+   "fixture": "modest-rust",
+   "metric": "tests_recall",
+   "baseline": "0.5",
+   "now": "1.0",
+   "kind": "improvement",
+   "baseline_version": "0.2.6",
+   "now_version": "0.4.0"
+  }
+ ]
+}

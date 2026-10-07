@@ -563,6 +563,36 @@ benchmark, don't run it against the stale snapshot.
 
 ## Current checkpoint
 
+### 2026-10-07 (Stage 6 measured) — fresh campaign complete; gates and CI pending, NOT DONE
+
+One serial campaign on the frozen pins (`docs/competitor-benchmark/stage6-freeze-v2.json`): Girder 0.4.0 (normal
+and watch) plus ripwire, codebase-memory-mcp and code-review-graph on four modest fixtures; 20 of 20
+`COMPLETE`, exit 0, no resource failures; GitNexus stays `RESOURCE_BLOCKED` from the baseline and was not rerun.
+**Run 1 is INVALID and published**: the revision 12 Girder adapter stamped every record as 0.2.6 regardless of
+the binary. Fixed as policy revision 13 (identity taken from `girder --version`, unknown releases refused, tests
+added), refrozen, and rerun from scratch as run 2. Result: the three external runners reproduce the baseline in
+zero metric cells; Girder 0.4.0 differs in 12 of 200 cells (six per mode), all test selection: recall 0.5 to
+1.0 and precision 1.0 to 0.667 (published as a regression and an improvement). Evidence:
+`docs/competitor-benchmark/results/stage6-run2/` (observation, report, deltas, summary) and
+`results/stage6-run1-INVALID/`. The next campaign is not due before 2026-11-06. **Stage 6 is DONE only after**
+the raw-evidence archive, the four gate logs on the committed candidate, and a green CI run are recorded here.
+
+### 2026-10-07 (TypeScript collisions fixed) — function and method path collisions no longer drop nodes
+
+The items below marked "TypeScript's own collision mechanism ... STILL OPEN" in the 2026-10-06 addenda
+(sites 23 and 91) are **superseded**. The duplicate-title `it()`/`describe()` shape was already fixed by the
+structural-member work (`230418e`) and has regression tests. What remained was ordinary functions and methods
+that compute the same path (a getter/setter pair, the same function in two blocks, a duplicate declaration):
+the graph kept one node and silently dropped the rest, with a file-level `duplicate-semantic-path` gap keeping
+the result conservative. `crates/aether-builder/src/mapper/typescript.rs` now qualifies only colliding paths
+(`@get`/`@set`, `#n` in source order) by extracting to a fixed point; non-colliding paths are unchanged.
+Evidence: [addendum-14](observations/stage3-typescript-audit/before-observation-addendum-14.md), 8 new tests (6
+fail on the old mapper), full builder suite green, and offline measurements on the fixed tree: 73/73 contract,
+corpus 25/31/0/0/1 with Must 8/8, audit 56/44/0 with Must 3/3 (`collision-fix/`). **The fix changes no measured
+number**; the pinned corpora contain no colliding function paths, so the tests carry the proof. Still open and
+unrelated: namespace bodies are not lowered (existing extension point), `#n` renumbers under an earlier identical
+insertion, and Rust's `correction-3` re-score. User docs updated: `docs/typescript-support.md`, `CLAUDE.md`.
+
 ### 2026-10-07 (v0.4.0 released) — merged, tagged, published, verified
 
 PR #1 merged to `main` (`b38c427`, CI run 37615463638 green; the PR's own checks, including macOS, Windows and

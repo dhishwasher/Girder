@@ -1,0 +1,2918 @@
+{
+  "campaigns": [
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 1,
+          "false_positive": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "callers": {
+          "false_negative": 2,
+          "false_positive": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 4,
+          "false_positive": 2,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "tests": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": null,
+          "recall": 0.0,
+          "true_positive": 0
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "WRONG",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 1,
+        "WRONG": 4
+      },
+      "calls_per_query_record": 1.0285714285714285,
+      "campaign_seconds": 43.15265739901224,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 26.601795670983847,
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "fixture": "modest-go",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "ERROR": 5,
+          "WRONG": 1
+        },
+        "callers": {
+          "ERROR": 5,
+          "WRONG": 1
+        },
+        "definition": {
+          "PASS": 1,
+          "WRONG": 5
+        },
+        "impact": {
+          "ERROR": 5,
+          "WRONG": 1
+        },
+        "tests": {
+          "ERROR": 5,
+          "WRONG": 1
+        }
+      },
+      "freshness_terminal_query_status": {
+        "ERROR": 20,
+        "PASS": 1,
+        "WRONG": 9
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "ERROR": 5,
+        "WRONG": 1
+      },
+      "peak_rss_bytes": 5767168,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "codebase-memory-mcp",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 35,
+          "response_bytes": 16846,
+          "status": {
+            "ERROR": 30,
+            "WRONG": 5
+          },
+          "tool_calls": 35
+        },
+        "callers": {
+          "query_records": 35,
+          "response_bytes": 16826,
+          "status": {
+            "ERROR": 30,
+            "WRONG": 5
+          },
+          "tool_calls": 35
+        },
+        "definition": {
+          "query_records": 35,
+          "response_bytes": 23807,
+          "status": {
+            "PASS": 5,
+            "WRONG": 30
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 35,
+          "response_bytes": 17076,
+          "status": {
+            "ERROR": 30,
+            "WRONG": 5
+          },
+          "tool_calls": 35
+        },
+        "tests": {
+          "query_records": 35,
+          "response_bytes": 17076,
+          "status": {
+            "ERROR": 30,
+            "WRONG": 5
+          },
+          "tool_calls": 35
+        }
+      },
+      "query_record_count": 175,
+      "query_response_bytes": 91631,
+      "query_status": {
+        "ERROR": 120,
+        "PASS": 5,
+        "WRONG": 50
+      },
+      "query_tool_calls": 180,
+      "raw_archive": "codebase-memory-mcp-modest-go",
+      "source_result_sha256": "99680f12bb96d0ecfac648a868b4aeed47fc97ee2f2cd3236e10d17a640e050a",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.10.8",
+      "warm_query_seconds_mean": 0.02855349259916693,
+      "warm_query_seconds_total": 0.14276746299583465
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 2,
+        "WRONG": 3
+      },
+      "calls_per_query_record": 1.0285714285714285,
+      "campaign_seconds": 53.02930192599888,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 32.33936241702759,
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "fixture": "modest-python",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "ERROR": 5,
+          "PASS": 1
+        },
+        "callers": {
+          "ERROR": 5,
+          "WRONG": 1
+        },
+        "definition": {
+          "PASS": 1,
+          "WRONG": 5
+        },
+        "impact": {
+          "ERROR": 5,
+          "WRONG": 1
+        },
+        "tests": {
+          "ERROR": 5,
+          "WRONG": 1
+        }
+      },
+      "freshness_terminal_query_status": {
+        "ERROR": 20,
+        "PASS": 2,
+        "WRONG": 8
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "ERROR": 5,
+        "WRONG": 1
+      },
+      "peak_rss_bytes": 5767168,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "codebase-memory-mcp",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 35,
+          "response_bytes": 17036,
+          "status": {
+            "ERROR": 30,
+            "PASS": 5
+          },
+          "tool_calls": 35
+        },
+        "callers": {
+          "query_records": 35,
+          "response_bytes": 17046,
+          "status": {
+            "ERROR": 30,
+            "WRONG": 5
+          },
+          "tool_calls": 35
+        },
+        "definition": {
+          "query_records": 35,
+          "response_bytes": 23700,
+          "status": {
+            "PASS": 5,
+            "WRONG": 30
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 35,
+          "response_bytes": 17826,
+          "status": {
+            "ERROR": 30,
+            "WRONG": 5
+          },
+          "tool_calls": 35
+        },
+        "tests": {
+          "query_records": 35,
+          "response_bytes": 17826,
+          "status": {
+            "ERROR": 30,
+            "WRONG": 5
+          },
+          "tool_calls": 35
+        }
+      },
+      "query_record_count": 175,
+      "query_response_bytes": 93434,
+      "query_status": {
+        "ERROR": 120,
+        "PASS": 10,
+        "WRONG": 45
+      },
+      "query_tool_calls": 180,
+      "raw_archive": "codebase-memory-mcp-modest-python",
+      "source_result_sha256": "936cd6341db2c6fcd71f05fc81328bc10e0723fcaeb7f30fe126b950d90d5c78",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.10.8",
+      "warm_query_seconds_mean": 0.03647443240042776,
+      "warm_query_seconds_total": 0.1823721620021388
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 2,
+        "WRONG": 3
+      },
+      "calls_per_query_record": 1.037037037037037,
+      "campaign_seconds": 55.09790069999872,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 33.266038838992245,
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "fixture": "modest-rust",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "ERROR": 5,
+          "PASS": 1
+        },
+        "callers": {
+          "ERROR": 5,
+          "WRONG": 1
+        },
+        "definition": {
+          "PASS": 1,
+          "WRONG": 5
+        },
+        "impact": {
+          "ERROR": 5,
+          "WRONG": 1
+        },
+        "tests": {
+          "ERROR": 5,
+          "WRONG": 1
+        }
+      },
+      "freshness_terminal_query_status": {
+        "ERROR": 20,
+        "PASS": 2,
+        "WRONG": 8
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "ERROR": 5,
+        "WRONG": 1
+      },
+      "peak_rss_bytes": 5767168,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "codebase-memory-mcp",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 27,
+          "response_bytes": 13236,
+          "status": {
+            "ERROR": 22,
+            "PASS": 5
+          },
+          "tool_calls": 27
+        },
+        "callers": {
+          "query_records": 27,
+          "response_bytes": 13246,
+          "status": {
+            "ERROR": 22,
+            "WRONG": 5
+          },
+          "tool_calls": 27
+        },
+        "definition": {
+          "query_records": 27,
+          "response_bytes": 19663,
+          "status": {
+            "PASS": 5,
+            "WRONG": 22
+          },
+          "tool_calls": 32
+        },
+        "impact": {
+          "query_records": 27,
+          "response_bytes": 14086,
+          "status": {
+            "ERROR": 22,
+            "WRONG": 5
+          },
+          "tool_calls": 27
+        },
+        "tests": {
+          "query_records": 27,
+          "response_bytes": 14086,
+          "status": {
+            "ERROR": 22,
+            "WRONG": 5
+          },
+          "tool_calls": 27
+        }
+      },
+      "query_record_count": 135,
+      "query_response_bytes": 74317,
+      "query_status": {
+        "ERROR": 88,
+        "PASS": 10,
+        "WRONG": 37
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "codebase-memory-mcp-modest-rust",
+      "source_result_sha256": "008295cfeec2c7c784a196964ffd2ad7c02f2f311b00196c1c5444a6827d2180",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.10.8",
+      "warm_query_seconds_mean": 0.040209565401892175,
+      "warm_query_seconds_total": 0.2010478270094609
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": null,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "WRONG",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 1,
+        "WRONG": 4
+      },
+      "calls_per_query_record": 1.0285714285714285,
+      "campaign_seconds": 58.22975981498894,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 35.162404185015475,
+      "commit": "46ae198fc11cda80e817acbc5f5908d7c2de7032",
+      "fixture": "modest-typescript-tsx",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "ERROR": 5,
+          "WRONG": 1
+        },
+        "callers": {
+          "ERROR": 5,
+          "WRONG": 1
+        },
+        "definition": {
+          "PASS": 1,
+          "WRONG": 5
+        },
+        "impact": {
+          "ERROR": 5,
+          "WRONG": 1
+        },
+        "tests": {
+          "ERROR": 5,
+          "WRONG": 1
+        }
+      },
+      "freshness_terminal_query_status": {
+        "ERROR": 20,
+        "PASS": 1,
+        "WRONG": 9
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "ERROR": 5,
+        "WRONG": 1
+      },
+      "peak_rss_bytes": 5767168,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "codebase-memory-mcp",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 35,
+          "response_bytes": 16256,
+          "status": {
+            "ERROR": 30,
+            "WRONG": 5
+          },
+          "tool_calls": 35
+        },
+        "callers": {
+          "query_records": 35,
+          "response_bytes": 16906,
+          "status": {
+            "ERROR": 30,
+            "WRONG": 5
+          },
+          "tool_calls": 35
+        },
+        "definition": {
+          "query_records": 35,
+          "response_bytes": 24093,
+          "status": {
+            "PASS": 5,
+            "WRONG": 30
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 35,
+          "response_bytes": 17666,
+          "status": {
+            "ERROR": 30,
+            "WRONG": 5
+          },
+          "tool_calls": 35
+        },
+        "tests": {
+          "query_records": 35,
+          "response_bytes": 17666,
+          "status": {
+            "ERROR": 30,
+            "WRONG": 5
+          },
+          "tool_calls": 35
+        }
+      },
+      "query_record_count": 175,
+      "query_response_bytes": 92587,
+      "query_status": {
+        "ERROR": 120,
+        "PASS": 5,
+        "WRONG": 50
+      },
+      "query_tool_calls": 180,
+      "raw_archive": "codebase-memory-mcp-modest-typescript-tsx",
+      "source_result_sha256": "3369d9e8206383a21578d7cadf43b31c6295c0cb35f15869a0a47bf37efed624",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.10.8",
+      "warm_query_seconds_mean": 0.039809605598566125,
+      "warm_query_seconds_total": 0.1990480279928306
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 4,
+          "false_positive": 0,
+          "precision": null,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "tests": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": null,
+          "recall": 0.0,
+          "true_positive": 0
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 2,
+        "WRONG": 3
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 22.048027520999312,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 3.8229229749849765,
+      "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "fixture": "modest-go",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "WRONG": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 6,
+        "WRONG": 24
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 193822720,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "code-review-graph",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 82462,
+          "status": {
+            "PASS": 2,
+            "WRONG": 18
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 68906,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 201845,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 185364,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 36147,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 574724,
+      "query_status": {
+        "PASS": 22,
+        "WRONG": 78
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "code-review-graph-modest-go",
+      "source_result_sha256": "d27525b12f006e70cb76571c2ad9fde5c5d3ebe34fdb2cc1cdfb5b594a73aa32",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "2.3.8",
+      "warm_query_seconds_mean": 0.1033018435962731,
+      "warm_query_seconds_total": 0.5165092179813655
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 1,
+          "precision": 0.5,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.75,
+          "true_positive": 3
+        },
+        "tests": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": null,
+          "recall": 0.0,
+          "true_positive": 0
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "WRONG",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 1,
+        "WRONG": 4
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 24.020484942011535,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 5.4238400860194815,
+      "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "fixture": "modest-python",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "WRONG": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 6,
+        "WRONG": 24
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 109096960,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "code-review-graph",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 79918,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 74326,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 205167,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 475432,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 37927,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 872770,
+      "query_status": {
+        "PASS": 20,
+        "WRONG": 80
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "code-review-graph-modest-python",
+      "source_result_sha256": "b949781b61e33af183ce9b17b87b798848497fea817a31817cb3b3e16a8b45c3",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "2.3.8",
+      "warm_query_seconds_mean": 0.10289084760006517,
+      "warm_query_seconds_total": 0.5144542380003259
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 3,
+          "precision": 0.25,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 3,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.25,
+          "true_positive": 1
+        },
+        "tests": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": null,
+          "recall": 0.0,
+          "true_positive": 0
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "WRONG",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 1,
+        "WRONG": 4
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 25.972421868005767,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 8.013349824002944,
+      "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "fixture": "modest-rust",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "WRONG": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 6,
+        "WRONG": 24
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 109359104,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "code-review-graph",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 101610,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 74602,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 204711,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 360994,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 36747,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 778664,
+      "query_status": {
+        "PASS": 20,
+        "WRONG": 80
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "code-review-graph-modest-rust",
+      "source_result_sha256": "c4219a0dbb21cba7a7aaf6838453518b5fd240cc1f04587b92b1d57912fcae13",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "2.3.8",
+      "warm_query_seconds_mean": 0.09830840400536545,
+      "warm_query_seconds_total": 0.49154202002682723
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 1,
+          "false_positive": 2,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.75,
+          "true_positive": 3
+        },
+        "tests": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": null,
+          "recall": 0.0,
+          "true_positive": 0
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "WRONG",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 1,
+        "WRONG": 4
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 21.84227185699274,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 4.206316976997186,
+      "commit": "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9",
+      "fixture": "modest-typescript-tsx",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 4,
+          "WRONG": 2
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 10,
+        "WRONG": 20
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 109625344,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "code-review-graph",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 63926,
+          "status": {
+            "PASS": 12,
+            "WRONG": 8
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 76304,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 211707,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 480110,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 38007,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 870054,
+      "query_status": {
+        "PASS": 32,
+        "WRONG": 68
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "code-review-graph-modest-typescript-tsx",
+      "source_result_sha256": "71ffbf5acc38c7a00b6c5cdc35c9a4dda59473377503ff0ab19e015e1c01ea8a",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "2.3.8",
+      "warm_query_seconds_mean": 0.10223574040282983,
+      "warm_query_seconds_total": 0.5111787020141492
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 1,
+          "false_positive": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "callers": {
+          "false_negative": 2,
+          "false_positive": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "definition": {
+          "false_negative": 1,
+          "false_positive": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "impact": {
+          "false_negative": 4,
+          "false_positive": 2,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "tests": {
+          "false_negative": 0,
+          "false_positive": 1,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "true_positive": 2
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "WRONG",
+        "callers": "WRONG",
+        "definition": "WRONG",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "WRONG": 5
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 57.31303028199909,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 5.221643703000154,
+      "commit": "b38c427b7451814b5ea5a7fe5368ba7d806a2efe",
+      "fixture": "modest-go",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "WRONG": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "WRONG": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "WRONG": 30
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 3014656,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "girder",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 7145,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 7174,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 11774,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 8257,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 6841,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 41191,
+      "query_status": {
+        "WRONG": 100
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "girder-modest-go",
+      "source_result_sha256": "6d3d7974100730d39140a053fcc967e939381297fd32e93259dc55928a14b49e",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.4.0",
+      "warm_query_seconds_mean": 0.4527737837997847,
+      "warm_query_seconds_total": 2.2638689189989236
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 0,
+          "false_positive": 1,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "true_positive": 2
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 2,
+        "WRONG": 3
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 65.74247343100433,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 4.101921925997885,
+      "commit": "b38c427b7451814b5ea5a7fe5368ba7d806a2efe",
+      "fixture": "modest-python",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 12,
+        "WRONG": 18
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 3276800,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "girder",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 7581,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 7679,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 11860,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 8938,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 7141,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 43199,
+      "query_status": {
+        "PASS": 40,
+        "WRONG": 60
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "girder-modest-python",
+      "source_result_sha256": "c1f894ca74355badbfbe28efdf6445939e76e0d69dd4a6d36ed09b6447d716cd",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.4.0",
+      "warm_query_seconds_mean": 0.2268677983985981,
+      "warm_query_seconds_total": 1.1343389919929905
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 0,
+          "false_positive": 1,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "true_positive": 2
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 2,
+        "WRONG": 3
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 99.84781014599866,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 7.440156967000803,
+      "commit": "b38c427b7451814b5ea5a7fe5368ba7d806a2efe",
+      "fixture": "modest-rust",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 12,
+        "WRONG": 18
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 3407872,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "girder",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 7541,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 7639,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 11562,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 8975,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 7101,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 42818,
+      "query_status": {
+        "PASS": 40,
+        "WRONG": 60
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "girder-modest-rust",
+      "source_result_sha256": "b6da04da3db7eac940fa06edf6905fb7486158900239c446c23aef77aaa695d8",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.4.0",
+      "warm_query_seconds_mean": 0.3470857230000547,
+      "warm_query_seconds_total": 1.7354286150002736
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": null,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 2,
+          "false_positive": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "WRONG",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 1,
+        "WRONG": 4
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 74.68418449700403,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 4.1704847820074065,
+      "commit": "b38c427b7451814b5ea5a7fe5368ba7d806a2efe",
+      "fixture": "modest-typescript-tsx",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 12,
+        "WRONG": 18
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 3670016,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "girder",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 7629,
+          "status": {
+            "PASS": 18,
+            "WRONG": 2
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 7776,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 12342,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 9013,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 6401,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 43161,
+      "query_status": {
+        "PASS": 38,
+        "WRONG": 62
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "girder-modest-typescript-tsx",
+      "source_result_sha256": "2c97dd43928a44e18249d755edc423e31f9bbfeeee44051d10242bb7fed847bb",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.4.0",
+      "warm_query_seconds_mean": 0.27192353019927396,
+      "warm_query_seconds_total": 1.3596176509963698
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 1,
+          "false_positive": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "callers": {
+          "false_negative": 2,
+          "false_positive": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "definition": {
+          "false_negative": 1,
+          "false_positive": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "impact": {
+          "false_negative": 4,
+          "false_positive": 2,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "tests": {
+          "false_negative": 0,
+          "false_positive": 1,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "true_positive": 2
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "WRONG",
+        "callers": "WRONG",
+        "definition": "WRONG",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "WRONG": 5
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 87.12308754900732,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 4.479351712005155,
+      "commit": "b38c427b7451814b5ea5a7fe5368ba7d806a2efe",
+      "fixture": "modest-go",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "WRONG": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "WRONG": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "WRONG": 30
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 4169728,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "girder-watch",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 7265,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 7294,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 14995,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 8377,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 11541,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 49472,
+      "query_status": {
+        "WRONG": 100
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "girder-watch-modest-go",
+      "source_result_sha256": "412b67cd738e43f709db57778a21319dd2bb19935b2c518fd15d3dedf6ce3390",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.4.0",
+      "warm_query_seconds_mean": 0.48541915960086046,
+      "warm_query_seconds_total": 2.427095798004302
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 0,
+          "false_positive": 1,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "true_positive": 2
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 2,
+        "WRONG": 3
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 73.92210548100411,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 2.2266294519940857,
+      "commit": "b38c427b7451814b5ea5a7fe5368ba7d806a2efe",
+      "fixture": "modest-python",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 12,
+        "WRONG": 18
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 4440064,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "girder-watch",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 7701,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 7799,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 15111,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 9058,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 11861,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 51530,
+      "query_status": {
+        "PASS": 40,
+        "WRONG": 60
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "girder-watch-modest-python",
+      "source_result_sha256": "c0910ba9e03b3d45c2861d37940fdc656ea28bc21b3e8b25115d4262d17ca3e7",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.4.0",
+      "warm_query_seconds_mean": 0.1287755423996714,
+      "warm_query_seconds_total": 0.643877711998357
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 0,
+          "false_positive": 1,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "true_positive": 2
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 2,
+        "WRONG": 3
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 104.0020478639999,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 3.2027125699969474,
+      "commit": "b38c427b7451814b5ea5a7fe5368ba7d806a2efe",
+      "fixture": "modest-rust",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 12,
+        "WRONG": 18
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 4702208,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "girder-watch",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 7661,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 7759,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 15215,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 9095,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 11821,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 51551,
+      "query_status": {
+        "PASS": 40,
+        "WRONG": 60
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "girder-watch-modest-rust",
+      "source_result_sha256": "76c60574254982239fb6cbc99d10337dae09ac3152ed72470f406271b42e31e3",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.4.0",
+      "warm_query_seconds_mean": 0.19499326539662434,
+      "warm_query_seconds_total": 0.9749663269831217
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": null,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 2,
+          "false_positive": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "true_positive": 0
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "WRONG",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 1,
+        "WRONG": 4
+      },
+      "calls_per_query_record": 1.4,
+      "campaign_seconds": 113.70856622900465,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 2.2086765180065413,
+      "commit": "b38c427b7451814b5ea5a7fe5368ba7d806a2efe",
+      "fixture": "modest-typescript-tsx",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 12,
+        "WRONG": 18
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 5099520,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "girder-watch",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 7749,
+          "status": {
+            "PASS": 18,
+            "WRONG": 2
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 7896,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 15587,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 9133,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 11121,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 40
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 51486,
+      "query_status": {
+        "PASS": 38,
+        "WRONG": 62
+      },
+      "query_tool_calls": 140,
+      "raw_archive": "girder-watch-modest-typescript-tsx",
+      "source_result_sha256": "085d5173dbf47fdea25dfde005010468c0f7a18cb77615225053e54d7044e838",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.4.0",
+      "warm_query_seconds_mean": 0.31320559319865426,
+      "warm_query_seconds_total": 1.5660279659932712
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 0,
+          "false_positive": 1,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "true_positive": 2
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 2,
+        "WRONG": 3
+      },
+      "calls_per_query_record": 1.2,
+      "campaign_seconds": 50.609997856998234,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 1.2950633989967173,
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "fixture": "modest-go",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 12,
+        "WRONG": 18
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 12947456,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "ripwire",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 8220,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 8377,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 51676,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 10986,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 40702,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 119961,
+      "query_status": {
+        "PASS": 40,
+        "WRONG": 60
+      },
+      "query_tool_calls": 120,
+      "raw_archive": "ripwire-modest-go",
+      "source_result_sha256": "710f676d70ef9097b484666bf827432f10cd433a82ad524c36ea31e4b4e4f249",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.5.0",
+      "warm_query_seconds_mean": 0.41871430479804983,
+      "warm_query_seconds_total": 2.0935715239902493
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 0,
+          "false_positive": 1,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "true_positive": 2
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 2,
+        "WRONG": 3
+      },
+      "calls_per_query_record": 1.2,
+      "campaign_seconds": 63.01157090401102,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 1.3206232540105702,
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "fixture": "modest-python",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 12,
+        "WRONG": 18
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 13529088,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "ripwire",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 8340,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 8500,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 52142,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 13106,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 42188,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 124276,
+      "query_status": {
+        "PASS": 40,
+        "WRONG": 60
+      },
+      "query_tool_calls": 120,
+      "raw_archive": "ripwire-modest-python",
+      "source_result_sha256": "929a8d958c826f5760787468e0c8f87b137f74940034f262cdab793b34681955",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.5.0",
+      "warm_query_seconds_mean": 0.6859743193985196,
+      "warm_query_seconds_total": 3.429871596992598
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 3,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.25,
+          "true_positive": 1
+        },
+        "tests": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": null,
+          "recall": 0.0,
+          "true_positive": 0
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "PASS",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 2,
+        "WRONG": 3
+      },
+      "calls_per_query_record": 1.2,
+      "campaign_seconds": 89.50180297098996,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 2.740393337007845,
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "fixture": "modest-rust",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 12,
+        "WRONG": 18
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 14327808,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "ripwire",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 8226,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 8398,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 52072,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 12313,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 40190,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 121199,
+      "query_status": {
+        "PASS": 40,
+        "WRONG": 60
+      },
+      "query_tool_calls": 120,
+      "raw_archive": "ripwire-modest-rust",
+      "source_result_sha256": "19113bb55a0845d169e68392be57991b56d6b1bf2a7240f2a7ebe760710827b8",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.5.0",
+      "warm_query_seconds_mean": 0.8596138846041868,
+      "warm_query_seconds_total": 4.298069423020934
+    },
+    {
+      "base_score_by_kind": {
+        "callees": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": null,
+          "recall": 0.0,
+          "true_positive": 0
+        },
+        "callers": {
+          "false_negative": 1,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 1
+        },
+        "definition": {
+          "false_negative": 0,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "true_positive": 1
+        },
+        "impact": {
+          "false_negative": 2,
+          "false_positive": 0,
+          "precision": 1.0,
+          "recall": 0.5,
+          "true_positive": 2
+        },
+        "tests": {
+          "false_negative": 0,
+          "false_positive": 1,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "true_positive": 2
+        }
+      },
+      "base_status_by_kind": {
+        "callees": "WRONG",
+        "callers": "WRONG",
+        "definition": "PASS",
+        "impact": "WRONG",
+        "tests": "WRONG"
+      },
+      "base_task_status": {
+        "PASS": 1,
+        "WRONG": 4
+      },
+      "calls_per_query_record": 1.2,
+      "campaign_seconds": 67.11701218399685,
+      "campaign_state": "COMPLETE",
+      "cold_setup_seconds": 2.200848313004826,
+      "commit": "bacfa3b7b3ad13648ce3892de06af05b6b55a2ac",
+      "fixture": "modest-typescript-tsx",
+      "freeze_manifest_sha256": "458edf7a585c7e8f8cb570b044c8eef9a5c6ce09d8e8f7fb00fedff5676a8eff",
+      "freshness_status_by_kind": {
+        "callees": {
+          "PASS": 6
+        },
+        "callers": {
+          "WRONG": 6
+        },
+        "definition": {
+          "PASS": 6
+        },
+        "impact": {
+          "WRONG": 6
+        },
+        "tests": {
+          "WRONG": 6
+        }
+      },
+      "freshness_terminal_query_status": {
+        "PASS": 12,
+        "WRONG": 18
+      },
+      "harness_commit": "e443952bf97e8aaa3f4e99a3bd5d1c15df086276",
+      "mutation_terminal_status": {
+        "WRONG": 6
+      },
+      "peak_rss_bytes": 16650240,
+      "policy_id": "girder-competitor-benchmark-v1-revision-13",
+      "policy_sha256": "7a3b8e5308c7505d909fe3dd53a26d6e6537208e4a1220f2177e51c85e3505d2",
+      "prepare_success": true,
+      "product": "ripwire",
+      "query_cost_by_kind": {
+        "callees": {
+          "query_records": 20,
+          "response_bytes": 8338,
+          "status": {
+            "PASS": 18,
+            "WRONG": 2
+          },
+          "tool_calls": 20
+        },
+        "callers": {
+          "query_records": 20,
+          "response_bytes": 8640,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "definition": {
+          "query_records": 20,
+          "response_bytes": 52884,
+          "status": {
+            "PASS": 20
+          },
+          "tool_calls": 40
+        },
+        "impact": {
+          "query_records": 20,
+          "response_bytes": 13275,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        },
+        "tests": {
+          "query_records": 20,
+          "response_bytes": 40953,
+          "status": {
+            "WRONG": 20
+          },
+          "tool_calls": 20
+        }
+      },
+      "query_record_count": 100,
+      "query_response_bytes": 124090,
+      "query_status": {
+        "PASS": 38,
+        "WRONG": 62
+      },
+      "query_tool_calls": 120,
+      "raw_archive": "ripwire-modest-typescript-tsx",
+      "source_result_sha256": "4c5ff7b35ed7630656319ef10efd1f1752275001a800ea8323199ef547e4227a",
+      "update_to_all_correct_count": 0,
+      "update_to_all_correct_seconds_mean": null,
+      "version": "0.5.0",
+      "warm_query_seconds_mean": 0.5823387222044403,
+      "warm_query_seconds_total": 2.9116936110222014
+    }
+  ],
+  "schema_version": 1,
+  "scope": "Stage 6 fresh comparative campaign (Girder 0.4.0, policy revision 13)"
+}
