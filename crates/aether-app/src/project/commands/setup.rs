@@ -456,7 +456,7 @@ fn plan_install(
 
     let format = detection.format.expect("detected format");
     let before = read_optional(&config_path)?;
-    let desired = mcp_entry();
+    let desired = mcp_entry(executable);
     let mut document = parse_config(before.as_deref(), format, &config_path)?;
     let current = get_mcp_entry(&document, format)?;
     if current.as_ref() == Some(&desired) {
@@ -1115,8 +1115,18 @@ fn has_ownership(state: &SetupState) -> bool {
         && state.instructions.is_empty())
 }
 
-fn mcp_entry() -> Value {
-    json!({"command": "npx", "args": ["-y", "girder-mcp", "."]})
+/// The server entry clients launch. Runtime uses the installed local Girder (the binary
+/// that ran setup); only when setup runs from npx's transient cache, where no stable
+/// binary path exists, does it fall back to the `npx` launcher form.
+fn mcp_entry(executable: &Path) -> Value {
+    let transient = executable
+        .components()
+        .any(|component| component.as_os_str() == "_npx");
+    if transient {
+        json!({"command": "npx", "args": ["-y", "girder-mcp", "."]})
+    } else {
+        json!({"command": executable.to_string_lossy(), "args": ["mcp", "."]})
+    }
 }
 
 fn parse_config(bytes: Option<&[u8]>, format: ConfigFormat, path: &Path) -> io::Result<Value> {
@@ -1627,19 +1637,38 @@ fn plan_block_install(
         }
     };
     let after = after_text.into_bytes();
+    // What uninstall must restore: the file as it is now, minus any block setup placed.
+    // A rewritten record must not keep the first install's text, or uninstall would
+    // overwrite edits made since.
+    let created = owned.map_or(before.is_none(), |i| {
+        state.instructions[i].file_created || before.is_none()
+    });
+    let without_block = match find_block(&text) {
+        Some((start, end)) => {
+            let mut head = text[..start].to_string();
+            if head.ends_with("\n\n") {
+                head.pop();
+            }
+            format!("{head}{}", &text[end..])
+        }
+        None => text.clone(),
+    };
+    let original_text = match (&before, owned) {
+        (None, _) => None,
+        (Some(_), None) => Some(text.clone()),
+        (Some(_), Some(_)) if without_block.trim().is_empty() && created => None,
+        (Some(_), Some(_)) => Some(without_block),
+    };
     let record = InstructionState {
         path: key,
         kind: InstructionKind::Block,
-        file_created: before.is_none(),
-        original_text: optional_utf8(&before, &path)?,
+        file_created: created,
+        original_text,
         installed_sha256: sha256(&after),
         installed: desired,
     };
     match owned {
-        Some(index) => {
-            state.instructions[index].installed_sha256 = record.installed_sha256;
-            state.instructions[index].installed = record.installed;
-        }
+        Some(index) => state.instructions[index] = record,
         None => state.instructions.push(record),
     }
     push_change(changes, path, before, Some(after));
@@ -1819,7 +1848,8 @@ mod tests {
         assert!(output.contains("Codex: detected"));
         assert!(output.contains("--- "));
         assert!(output.contains("+[mcp_servers.girder]"));
-        assert!(output.contains("+command = \"npx\""));
+        assert!(output.contains("+args = ["));
+        assert!(output.contains("+    \"mcp\","));
         assert!(output.contains("Dry run: no files written."));
         assert_eq!(
             std::fs::read_to_string(home.0.join(".codex/config.toml")).unwrap(),
@@ -1966,7 +1996,8 @@ mod tests {
         assert!(output.contains("project .mcp.json exists"));
         let config: Value =
             serde_json::from_slice(&std::fs::read(home.0.join(".mcp.json")).unwrap()).unwrap();
-        assert_eq!(config["mcpServers"]["girder"], mcp_entry());
+        let exe = std::env::current_exe().unwrap().canonicalize().unwrap();
+        assert_eq!(config["mcpServers"]["girder"], mcp_entry(&exe));
     }
 
     #[test]
@@ -2523,5 +2554,57 @@ mod tests {
             assert!(block.contains(phrase), "missing {phrase}");
         }
         assert!(INSTRUCTION_BODY.len() < 1500);
+    }
+
+    #[test]
+    fn rewriting_an_owned_block_does_not_restore_stale_text_on_uninstall() {
+        let home = TempHome::new("instruction-stale");
+        home.mkdir(".claude");
+        home.write(".claude/CLAUDE.md", "A\n");
+        home.run(&["--agents", "claude"]);
+        // The user removes the block and rewrites the file; setup re-appends the block.
+        home.write(".claude/CLAUDE.md", "B\n");
+        home.run(&["--agents", "claude"]);
+        home.run(&["--agents", "claude", "--uninstall"]);
+        assert_eq!(read(&home, ".claude/CLAUDE.md"), "B\n");
+    }
+
+    #[test]
+    fn replacing_an_owned_block_keeps_edits_made_outside_it() {
+        let home = TempHome::new("instruction-replace");
+        home.mkdir(".claude");
+        home.write(".claude/CLAUDE.md", "A\n");
+        home.run(&["--agents", "claude"]);
+        // Simulate an older release's text: swap the block and the ownership record to it.
+        let old_block = format!("{BLOCK_BEGIN}\nOLD INSTRUCTION\n{BLOCK_END}\n");
+        let current = read(&home, ".claude/CLAUDE.md");
+        let (start, end) = find_block(&current).unwrap();
+        let aged = format!("{}{}{}C\n", &current[..start], old_block, &current[end..]);
+        home.write(".claude/CLAUDE.md", &aged);
+        let state_path = home.0.join(".claude").join(STATE_FILE);
+        let mut state: Value =
+            serde_json::from_str(&std::fs::read_to_string(&state_path).unwrap()).unwrap();
+        state["instructions"][0]["installed"] = json!(old_block);
+        std::fs::write(&state_path, serde_json::to_string(&state).unwrap()).unwrap();
+        home.run(&["--agents", "claude"]);
+        assert!(read(&home, ".claude/CLAUDE.md").contains("call Girder's `orient` tool"));
+        home.run(&["--agents", "claude", "--uninstall"]);
+        assert_eq!(read(&home, ".claude/CLAUDE.md"), "A\nC\n");
+    }
+
+    #[test]
+    fn mcp_entry_launches_the_installed_binary_except_from_the_npx_cache() {
+        let local = mcp_entry(Path::new("/opt/girder/bin/girder"));
+        assert_eq!(
+            local,
+            json!({"command": "/opt/girder/bin/girder", "args": ["mcp", "."]})
+        );
+        let transient = mcp_entry(Path::new(
+            "/home/u/.npm/_npx/abc/node_modules/girder-mcp/bin/girder",
+        ));
+        assert_eq!(
+            transient,
+            json!({"command": "npx", "args": ["-y", "girder-mcp", "."]})
+        );
     }
 }
