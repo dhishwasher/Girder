@@ -9,6 +9,7 @@ use crate::parser::{IncrementalParser, Lang};
 use aether_graph::{Edge, EdgeKind, NodeId, NodeKind, SemanticGraph};
 use std::collections::{HashMap, HashSet};
 
+mod go_package;
 mod python_rebinding;
 mod rust_methods;
 mod typescript_esm;
@@ -1094,6 +1095,7 @@ impl GraphBuilder {
             graph,
             &mut self.typescript_environment,
         );
+        go_package::resolve(&self.files, graph);
 
         self.resolve_inherits(graph);
     }

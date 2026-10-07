@@ -59,8 +59,10 @@ def target_node(doc: dict, root: Path, target: str):
         path = Path(node["file"])
         resolved = (path if path.is_absolute() else root / path).resolve()
         if resolved == want and node["path"].rsplit("::", 1)[-1] == symbol:
-            hits.append(node["id"])
-    return hits
+            hits.append((node["id"], node["path"].count("::")))
+    # A same-named method is deeper (crate::T::Target); the top-level function is shallowest.
+    shallow = min((d for _, d in hits), default=None)
+    return [i for i, d in hits if d == shallow]
 
 
 def score(case: dict, root: Path, inspect: Path) -> dict:

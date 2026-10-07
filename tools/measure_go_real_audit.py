@@ -65,6 +65,9 @@ def method_nodes(doc: dict, root: Path, file: str, symbol: str) -> list[str]:
     if owner and len(hits) > 1:
         refined = [h for h in hits if owner in h[1]]
         hits = refined or hits
+    elif not owner and len(hits) > 1:
+        shallow = min(h[1].count("::") for h in hits)
+        hits = [h for h in hits if h[1].count("::") == shallow]
     return [h[0] for h in hits]
 
 
